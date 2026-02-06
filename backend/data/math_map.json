@@ -1,0 +1,792 @@
+{
+  "categories": [
+    {
+      "id": "foundations",
+      "name": "Foundations",
+      "color": "#8B5CF6",
+      "x": 5,
+      "y": 5,
+      "topics": [
+        {
+          "id": "set_theory",
+          "name": "Set Theory",
+          "icon": "∩",
+          "prompts": [
+            "What is a set in mathematics?",
+            "Explain union and intersection of sets",
+            "What is the empty set and why is it important?",
+            "How do Venn diagrams represent set operations?",
+            "What is the difference between subsets and proper subsets?",
+            "How does Carroll's 'Jabberwocky' poem illustrate the concept of well-defined sets?"
+          ]
+        },
+        {
+          "id": "mathematical_logic",
+          "name": "Mathematical Logic",
+          "icon": "∀",
+          "prompts": [
+            "What is propositional logic?",
+            "Explain if-then statements and their truth tables",
+            "What is proof by contradiction?",
+            "How does mathematical induction work?",
+            "What are quantifiers (for all, there exists)?",
+            "How does Lewis Carroll use logical paradoxes in Alice Through the Looking Glass?",
+            "What is the Red Queen's Race and what does it teach about relative motion?"
+          ]
+        },
+        {
+          "id": "axioms",
+          "name": "Axioms & Proofs",
+          "icon": "⊢",
+          "prompts": [
+            "What is an axiom in mathematics?",
+            "Explain Euclid's five postulates",
+            "What is a theorem vs a lemma vs a corollary?",
+            "How do you write a mathematical proof?",
+            "What is Gödel's incompleteness theorem about?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "number_systems",
+      "name": "Number Systems",
+      "color": "#10B981",
+      "x": 50,
+      "y": 25,
+      "topics": [
+        {
+          "id": "natural_numbers",
+          "name": "Natural Numbers",
+          "icon": "ℕ",
+          "prompts": [
+            "What are natural numbers?",
+            "How do we count and why does it work?",
+            "What is Peano's axioms for natural numbers?",
+            "Explain place value and positional notation",
+            "What is the fundamental theorem of arithmetic?"
+          ]
+        },
+        {
+          "id": "integers",
+          "name": "Integers",
+          "icon": "ℤ",
+          "prompts": [
+            "What are integers and why do we need negative numbers?",
+            "How does the number line represent integers?",
+            "Explain addition and subtraction with negative numbers",
+            "What is absolute value?",
+            "How do integers relate to natural numbers?"
+          ]
+        },
+        {
+          "id": "rational_numbers",
+          "name": "Rational Numbers",
+          "icon": "ℚ",
+          "prompts": [
+            "What is a rational number?",
+            "How do fractions work?",
+            "Why can every fraction be written as a decimal?",
+            "What makes a decimal repeating vs terminating?",
+            "How do you add and multiply fractions?"
+          ]
+        },
+        {
+          "id": "real_numbers",
+          "name": "Real Numbers",
+          "icon": "ℝ",
+          "prompts": [
+            "What are real numbers?",
+            "What is an irrational number?",
+            "Prove that √2 is irrational",
+            "What is the continuum and why is it important?",
+            "How do real numbers fill the number line?"
+          ]
+        },
+        {
+          "id": "complex_numbers",
+          "name": "Complex Numbers",
+          "icon": "ℂ",
+          "prompts": [
+            "What is an imaginary number?",
+            "Why was the square root of -1 invented?",
+            "How do you add and multiply complex numbers?",
+            "What is the complex plane?",
+            "What is Euler's formula e^(iπ) + 1 = 0?"
+          ]
+        },
+        {
+          "id": "prime_numbers",
+          "name": "Prime Numbers",
+          "icon": "P",
+          "prompts": [
+            "What is a prime number?",
+            "Why is 1 not considered prime?",
+            "Prove there are infinitely many primes",
+            "What is the Sieve of Eratosthenes?",
+            "What are twin primes and the Riemann hypothesis?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "arithmetic",
+      "name": "Arithmetic",
+      "color": "#F59E0B",
+      "x": 35,
+      "y": 40,
+      "topics": [
+        {
+          "id": "addition",
+          "name": "Addition",
+          "icon": "+",
+          "prompts": [
+            "What is addition conceptually?",
+            "Explain the commutative property of addition",
+            "How does carrying work in addition?",
+            "What is the identity element for addition?",
+            "How is addition related to counting?"
+          ]
+        },
+        {
+          "id": "multiplication",
+          "name": "Multiplication",
+          "icon": "×",
+          "prompts": [
+            "What is multiplication?",
+            "Why is multiplication repeated addition?",
+            "Explain the distributive property",
+            "How do multiplication tables work?",
+            "What is the identity element for multiplication?"
+          ]
+        },
+        {
+          "id": "division",
+          "name": "Division",
+          "icon": "÷",
+          "prompts": [
+            "What is division?",
+            "Why can't we divide by zero?",
+            "What is a remainder?",
+            "How does long division work?",
+            "What is the relationship between division and multiplication?"
+          ]
+        },
+        {
+          "id": "exponents",
+          "name": "Exponents",
+          "icon": "^",
+          "prompts": [
+            "What is an exponent?",
+            "What does a negative exponent mean?",
+            "What does a fractional exponent mean?",
+            "Explain the laws of exponents",
+            "What is exponential growth?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "algebra",
+      "name": "Algebra",
+      "color": "#3B82F6",
+      "x": 25,
+      "y": 30,
+      "topics": [
+        {
+          "id": "variables",
+          "name": "Variables & Expressions",
+          "icon": "x",
+          "prompts": [
+            "What is a variable in algebra?",
+            "How do you simplify algebraic expressions?",
+            "What is the difference between an expression and an equation?",
+            "How do you combine like terms?",
+            "What is substitution in algebra?"
+          ]
+        },
+        {
+          "id": "linear_equations",
+          "name": "Linear Equations",
+          "icon": "=",
+          "prompts": [
+            "What is a linear equation?",
+            "How do you solve for x in a linear equation?",
+            "What does the graph of a linear equation look like?",
+            "What is slope and y-intercept?",
+            "How do you solve systems of linear equations?"
+          ]
+        },
+        {
+          "id": "quadratic_equations",
+          "name": "Quadratic Equations",
+          "icon": "x²",
+          "prompts": [
+            "What is a quadratic equation?",
+            "How do you factor a quadratic?",
+            "Derive the quadratic formula",
+            "What is a parabola?",
+            "What does the discriminant tell us?"
+          ]
+        },
+        {
+          "id": "polynomials",
+          "name": "Polynomials",
+          "icon": "Σ",
+          "prompts": [
+            "What is a polynomial?",
+            "How do you add and multiply polynomials?",
+            "What is polynomial long division?",
+            "What is the degree of a polynomial?",
+            "What is the fundamental theorem of algebra?"
+          ]
+        },
+        {
+          "id": "functions",
+          "name": "Functions",
+          "icon": "f(x)",
+          "prompts": [
+            "What is a function?",
+            "What is domain and range?",
+            "What makes a function one-to-one?",
+            "What is function composition?",
+            "What is an inverse function?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "geometry",
+      "name": "Geometry",
+      "color": "#EC4899",
+      "x": 15,
+      "y": 55,
+      "topics": [
+        {
+          "id": "points_lines",
+          "name": "Points & Lines",
+          "icon": "—",
+          "prompts": [
+            "What is a point in geometry?",
+            "What is a line vs a line segment vs a ray?",
+            "What are parallel and perpendicular lines?",
+            "What is the distance formula?",
+            "What is the midpoint formula?"
+          ]
+        },
+        {
+          "id": "angles",
+          "name": "Angles",
+          "icon": "∠",
+          "prompts": [
+            "What is an angle?",
+            "What are acute, right, and obtuse angles?",
+            "What are complementary and supplementary angles?",
+            "What is a straight angle?",
+            "How do you measure angles in radians?"
+          ]
+        },
+        {
+          "id": "triangles",
+          "name": "Triangles",
+          "icon": "△",
+          "prompts": [
+            "What types of triangles exist?",
+            "What is the Pythagorean theorem?",
+            "Prove the Pythagorean theorem",
+            "What is the triangle inequality?",
+            "How do you find the area of a triangle?"
+          ]
+        },
+        {
+          "id": "circles",
+          "name": "Circles",
+          "icon": "○",
+          "prompts": [
+            "What is a circle mathematically?",
+            "What is pi and where does it come from?",
+            "What is the area and circumference of a circle?",
+            "What are chords, tangents, and secants?",
+            "What is the equation of a circle?"
+          ]
+        },
+        {
+          "id": "polygons",
+          "name": "Polygons",
+          "icon": "⬡",
+          "prompts": [
+            "What is a polygon?",
+            "What is a regular polygon?",
+            "What is the sum of interior angles in a polygon?",
+            "What is a convex vs concave polygon?",
+            "How do you find the area of any polygon?"
+          ]
+        },
+        {
+          "id": "transformations",
+          "name": "Transformations",
+          "icon": "↻",
+          "prompts": [
+            "What are geometric transformations?",
+            "What is a translation?",
+            "What is a rotation?",
+            "What is a reflection?",
+            "What is dilation and similarity?",
+            "Why is 'Through the Looking Glass' about mirror symmetry?",
+            "How does Carroll use chess board geometry in Alice's journey?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trigonometry",
+      "name": "Trigonometry",
+      "color": "#06B6D4",
+      "x": 35,
+      "y": 65,
+      "topics": [
+        {
+          "id": "trig_ratios",
+          "name": "Trig Ratios",
+          "icon": "sin",
+          "prompts": [
+            "What are sine, cosine, and tangent?",
+            "How do you remember SOH-CAH-TOA?",
+            "What is the unit circle?",
+            "What are the special angles (30°, 45°, 60°)?",
+            "What are secant, cosecant, and cotangent?"
+          ]
+        },
+        {
+          "id": "trig_identities",
+          "name": "Trig Identities",
+          "icon": "≡",
+          "prompts": [
+            "What is sin²θ + cos²θ = 1?",
+            "Prove the Pythagorean identity",
+            "What are the angle addition formulas?",
+            "What are double angle formulas?",
+            "How do you verify trigonometric identities?"
+          ]
+        },
+        {
+          "id": "trig_functions",
+          "name": "Trig Functions",
+          "icon": "~",
+          "prompts": [
+            "What does the graph of sine look like?",
+            "What is amplitude, period, and phase shift?",
+            "How are sine and cosine related?",
+            "What are inverse trig functions?",
+            "How do you solve trigonometric equations?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "calculus",
+      "name": "Calculus",
+      "color": "#EF4444",
+      "x": 55,
+      "y": 60,
+      "topics": [
+        {
+          "id": "limits",
+          "name": "Limits",
+          "icon": "lim",
+          "prompts": [
+            "What is a limit?",
+            "How do you evaluate limits?",
+            "What is continuity?",
+            "What is L'Hôpital's rule?",
+            "What are limits at infinity?"
+          ]
+        },
+        {
+          "id": "derivatives",
+          "name": "Derivatives",
+          "icon": "d/dx",
+          "prompts": [
+            "What is a derivative?",
+            "What does the derivative represent physically?",
+            "What are the basic derivative rules?",
+            "What is the chain rule?",
+            "How do you find maxima and minima?"
+          ]
+        },
+        {
+          "id": "integrals",
+          "name": "Integrals",
+          "icon": "∫",
+          "prompts": [
+            "What is an integral?",
+            "What is the relationship between derivatives and integrals?",
+            "How do you find area under a curve?",
+            "What is integration by substitution?",
+            "What is integration by parts?"
+          ]
+        },
+        {
+          "id": "differential_equations",
+          "name": "Differential Equations",
+          "icon": "dy/dx",
+          "prompts": [
+            "What is a differential equation?",
+            "How do you solve first-order differential equations?",
+            "What is exponential growth and decay?",
+            "What are second-order differential equations?",
+            "How do differential equations model real phenomena?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "linear_algebra",
+      "name": "Linear Algebra",
+      "color": "#8B5CF6",
+      "x": 20,
+      "y": 25,
+      "topics": [
+        {
+          "id": "vectors",
+          "name": "Vectors",
+          "icon": "→",
+          "prompts": [
+            "What is a vector?",
+            "How do you add and subtract vectors?",
+            "What is the dot product?",
+            "What is the cross product?",
+            "What is vector magnitude and direction?"
+          ]
+        },
+        {
+          "id": "matrices",
+          "name": "Matrices",
+          "icon": "[ ]",
+          "prompts": [
+            "What is a matrix?",
+            "How do you multiply matrices?",
+            "What is the determinant of a matrix?",
+            "What is the inverse of a matrix?",
+            "How do matrices represent linear transformations?"
+          ]
+        },
+        {
+          "id": "eigenvalues",
+          "name": "Eigenvalues",
+          "icon": "λ",
+          "prompts": [
+            "What is an eigenvalue and eigenvector?",
+            "How do you find eigenvalues?",
+            "What is the geometric meaning of eigenvalues?",
+            "What is matrix diagonalization?",
+            "Where are eigenvalues used in real applications?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "probability",
+      "name": "Probability & Statistics",
+      "color": "#F97316",
+      "x": 75,
+      "y": 20,
+      "topics": [
+        {
+          "id": "basic_probability",
+          "name": "Probability",
+          "icon": "P",
+          "prompts": [
+            "What is probability?",
+            "What is the difference between theoretical and experimental probability?",
+            "What are independent and dependent events?",
+            "What is conditional probability?",
+            "What is Bayes' theorem?"
+          ]
+        },
+        {
+          "id": "combinatorics",
+          "name": "Combinatorics",
+          "icon": "C",
+          "prompts": [
+            "What is combinatorics?",
+            "What is the difference between permutations and combinations?",
+            "How do you use factorials?",
+            "What is Pascal's triangle?",
+            "What is the binomial theorem?"
+          ]
+        },
+        {
+          "id": "statistics",
+          "name": "Statistics",
+          "icon": "μ",
+          "prompts": [
+            "What is mean, median, and mode?",
+            "What is standard deviation?",
+            "What is a normal distribution?",
+            "What is correlation vs causation?",
+            "What is hypothesis testing?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "discrete_math",
+      "name": "Discrete Math",
+      "color": "#14B8A6",
+      "x": 70,
+      "y": 40,
+      "topics": [
+        {
+          "id": "graph_theory",
+          "name": "Graph Theory",
+          "icon": "◯—◯",
+          "prompts": [
+            "What is a graph in mathematics?",
+            "What are vertices and edges?",
+            "What is the Königsberg bridge problem?",
+            "What is a spanning tree?",
+            "What is the shortest path problem?"
+          ]
+        },
+        {
+          "id": "number_theory",
+          "name": "Number Theory",
+          "icon": "mod",
+          "prompts": [
+            "What is number theory about?",
+            "What is modular arithmetic?",
+            "What is the greatest common divisor (GCD)?",
+            "What is the Euclidean algorithm?",
+            "What is Fermat's Little Theorem?"
+          ]
+        },
+        {
+          "id": "sequences",
+          "name": "Sequences & Series",
+          "icon": "...",
+          "prompts": [
+            "What is a sequence vs a series?",
+            "What is the Fibonacci sequence?",
+            "What is an arithmetic sequence?",
+            "What is a geometric sequence?",
+            "What is convergence of a series?",
+            "How do poets use Fibonacci numbers in verse structure?",
+            "What mathematical patterns appear in sonnets and haiku?",
+            "How does Oulipo literature use mathematical constraints creatively?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "applied",
+      "name": "Applied Mathematics",
+      "color": "#FBBF24",
+      "x": 80,
+      "y": 55,
+      "topics": [
+        {
+          "id": "optimization",
+          "name": "Optimization",
+          "icon": "↗",
+          "prompts": [
+            "What is mathematical optimization?",
+            "What is linear programming?",
+            "How do you find optimal solutions?",
+            "What is the simplex method?",
+            "What are constraints in optimization?"
+          ]
+        },
+        {
+          "id": "cryptography",
+          "name": "Cryptography",
+          "icon": "🔐",
+          "prompts": [
+            "How does math relate to encryption?",
+            "What is RSA encryption?",
+            "Why are prime numbers important for cryptography?",
+            "What is public key cryptography?",
+            "What is a hash function?"
+          ]
+        },
+        {
+          "id": "game_theory",
+          "name": "Game Theory",
+          "icon": "⚔",
+          "prompts": [
+            "What is game theory?",
+            "What is the prisoner's dilemma?",
+            "What is a Nash equilibrium?",
+            "What is zero-sum game?",
+            "How is game theory used in economics?",
+            "What game theory concepts appear in the chess game in Through the Looking Glass?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advanced",
+      "name": "Advanced Topics",
+      "color": "#A855F7",
+      "x": 5,
+      "y": 75,
+      "topics": [
+        {
+          "id": "topology",
+          "name": "Topology",
+          "icon": "☕",
+          "prompts": [
+            "What is topology?",
+            "Why is a coffee cup the same as a donut?",
+            "What is a Möbius strip?",
+            "What are open and closed sets?",
+            "What is the Euler characteristic?"
+          ]
+        },
+        {
+          "id": "fractals",
+          "name": "Fractals",
+          "icon": "❄",
+          "prompts": [
+            "What is a fractal?",
+            "What is the Mandelbrot set?",
+            "What is self-similarity?",
+            "What is fractal dimension?",
+            "Where do fractals appear in nature?",
+            "How do self-similar narrative structures work like fractals in literature?"
+          ]
+        },
+        {
+          "id": "chaos",
+          "name": "Chaos Theory",
+          "icon": "🦋",
+          "prompts": [
+            "What is chaos theory?",
+            "What is the butterfly effect?",
+            "What is a strange attractor?",
+            "Why are some systems unpredictable?",
+            "How does chaos relate to weather prediction?"
+          ]
+        },
+        {
+          "id": "infinity",
+          "name": "Infinity",
+          "icon": "∞",
+          "prompts": [
+            "What is infinity?",
+            "Are some infinities bigger than others?",
+            "What is Cantor's diagonal argument?",
+            "What is countable vs uncountable infinity?",
+            "What is the continuum hypothesis?",
+            "How does Carroll's 'What the Tortoise Said to Achilles' explore infinite regress?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ml_mathematics",
+      "name": "ML Mathematics",
+      "color": "#059669",
+      "x": 85,
+      "y": 75,
+      "topics": [
+        {
+          "id": "lora",
+          "name": "LoRA",
+          "icon": "🔧",
+          "prompts": [
+            "What is LoRA (Low-Rank Adaptation) and why is it used?",
+            "Explain low-rank matrix approximation with an example",
+            "How does SVD (Singular Value Decomposition) relate to LoRA?",
+            "Why does LoRA dramatically reduce the number of trainable parameters?",
+            "What is the mathematical formula for LoRA: W = W₀ + BA?"
+          ]
+        },
+        {
+          "id": "rag",
+          "name": "RAG",
+          "icon": "🔍",
+          "prompts": [
+            "What is RAG (Retrieval-Augmented Generation)?",
+            "How do vector embeddings represent text mathematically?",
+            "Explain cosine similarity and why it's used for semantic search",
+            "What is approximate nearest neighbor (ANN) search?",
+            "How do FAISS and other vector indexes work mathematically?"
+          ]
+        },
+        {
+          "id": "attention",
+          "name": "Attention Mechanism",
+          "icon": "👁",
+          "prompts": [
+            "What is the attention mechanism formula: Attention(Q,K,V)?",
+            "Why do we divide by sqrt(d_k) in scaled dot-product attention?",
+            "What is multi-head attention and why use multiple heads?",
+            "How does self-attention capture relationships between tokens?",
+            "What is positional encoding and why is it needed?"
+          ]
+        },
+        {
+          "id": "backpropagation",
+          "name": "Backpropagation",
+          "icon": "⬅",
+          "prompts": [
+            "What is backpropagation and how does it use the chain rule?",
+            "How do gradients flow backward through a neural network?",
+            "What is the vanishing gradient problem and how to solve it?",
+            "How does automatic differentiation (autograd) work?",
+            "Explain gradient descent optimization step by step"
+          ]
+        },
+        {
+          "id": "loss_functions",
+          "name": "Loss Functions",
+          "icon": "📉",
+          "prompts": [
+            "What is cross-entropy loss and when is it used?",
+            "Explain mean squared error (MSE) loss mathematically",
+            "What is KL divergence and how does it measure distribution difference?",
+            "How do you choose the right loss function for a problem?",
+            "What is contrastive loss in representation learning?"
+          ]
+        },
+        {
+          "id": "neural_network_math",
+          "name": "Neural Network Math",
+          "icon": "🧠",
+          "prompts": [
+            "What is the mathematical formula for a neural network layer: y = Wx + b?",
+            "Explain common activation functions: ReLU, sigmoid, tanh",
+            "What is the softmax function and how does it create probabilities?",
+            "How does batch normalization work mathematically?",
+            "What is dropout and how does it act as regularization?"
+          ]
+        },
+        {
+          "id": "transformers",
+          "name": "Transformers",
+          "icon": "🤖",
+          "prompts": [
+            "What is the transformer architecture mathematically?",
+            "How do encoder and decoder differ in transformers?",
+            "What is layer normalization and why is it used?",
+            "Explain the feedforward network in transformer blocks",
+            "What are the key differences between BERT and GPT architectures?"
+          ]
+        },
+        {
+          "id": "dimensionality_reduction",
+          "name": "Dimensionality Reduction",
+          "icon": "📊",
+          "prompts": [
+            "What is PCA (Principal Component Analysis) mathematically?",
+            "How does t-SNE work for visualization?",
+            "What is UMAP and how does it differ from t-SNE?",
+            "When should you use PCA vs t-SNE vs UMAP?",
+            "How do autoencoders learn compressed representations?"
+          ]
+        }
+      ]
+    }
+  ]
+}

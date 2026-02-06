@@ -1,0 +1,211 @@
+{
+  "concepts": [
+    {
+      "slug": "unit",
+      "name": "Unit",
+      "description": "The number one; the fundamental building block of all numbers.",
+      "level": 0,
+      "category": "number_theory",
+      "euclid_ref": "VII.Def.1",
+      "prerequisites": []
+    },
+    {
+      "slug": "number",
+      "name": "Number",
+      "description": "A multitude composed of units.",
+      "level": 0,
+      "category": "number_theory",
+      "euclid_ref": "VII.Def.2",
+      "prerequisites": ["unit"]
+    },
+    {
+      "slug": "counting",
+      "name": "Counting",
+      "description": "The process of determining the number of elements in a set.",
+      "level": 1,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["number"]
+    },
+    {
+      "slug": "natural_numbers",
+      "name": "Natural Numbers",
+      "description": "The counting numbers: 1, 2, 3, 4, ...",
+      "level": 1,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["counting"]
+    },
+    {
+      "slug": "integers",
+      "name": "Integers",
+      "description": "Whole numbers including negatives: ..., -2, -1, 0, 1, 2, ...",
+      "level": 2,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["natural_numbers"]
+    },
+    {
+      "slug": "place_value",
+      "name": "Place Value",
+      "description": "The value of a digit based on its position in a number.",
+      "level": 1,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["natural_numbers"]
+    },
+    {
+      "slug": "number_systems",
+      "name": "Number Systems (Bases)",
+      "description": "Different bases for representing numbers (binary, decimal, etc.).",
+      "level": 2,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["place_value", "natural_numbers"]
+    },
+    {
+      "slug": "divisibility",
+      "name": "Divisibility",
+      "description": "When one number divides another without remainder.",
+      "level": 2,
+      "category": "number_theory",
+      "euclid_ref": "VII.Def.3",
+      "prerequisites": ["natural_numbers"]
+    },
+    {
+      "slug": "prime_numbers",
+      "name": "Prime Numbers",
+      "description": "Numbers greater than 1 with exactly two divisors: 1 and itself.",
+      "level": 2,
+      "category": "number_theory",
+      "euclid_ref": "VII.Def.11",
+      "prerequisites": ["divisibility"]
+    },
+    {
+      "slug": "point",
+      "name": "Point",
+      "description": "That which has no part; a location with no size.",
+      "level": 0,
+      "category": "geometry",
+      "euclid_ref": "I.Def.1",
+      "prerequisites": []
+    },
+    {
+      "slug": "line",
+      "name": "Line",
+      "description": "Breadthless length; extends infinitely in both directions.",
+      "level": 0,
+      "category": "geometry",
+      "euclid_ref": "I.Def.2",
+      "prerequisites": ["point"]
+    },
+    {
+      "slug": "angle",
+      "name": "Angle",
+      "description": "The inclination of two lines meeting at a point.",
+      "level": 1,
+      "category": "geometry",
+      "euclid_ref": "I.Def.8",
+      "prerequisites": ["line"]
+    },
+    {
+      "slug": "right_angle",
+      "name": "Right Angle",
+      "description": "An angle of 90 degrees; when a line stands on another making equal adjacent angles.",
+      "level": 1,
+      "category": "geometry",
+      "euclid_ref": "I.Def.10",
+      "prerequisites": ["angle"]
+    },
+    {
+      "slug": "triangle",
+      "name": "Triangle",
+      "description": "A polygon with three sides and three angles.",
+      "level": 1,
+      "category": "geometry",
+      "euclid_ref": "I.Def.19",
+      "prerequisites": ["line", "angle"]
+    },
+    {
+      "slug": "right_triangle",
+      "name": "Right Triangle",
+      "description": "A triangle with one right angle.",
+      "level": 2,
+      "category": "geometry",
+      "euclid_ref": null,
+      "prerequisites": ["triangle", "right_angle"]
+    },
+    {
+      "slug": "area",
+      "name": "Area",
+      "description": "The measure of the size of a two-dimensional surface.",
+      "level": 1,
+      "category": "geometry",
+      "euclid_ref": null,
+      "prerequisites": ["line"]
+    },
+    {
+      "slug": "square",
+      "name": "Square",
+      "description": "A rectangle with four equal sides and four right angles.",
+      "level": 2,
+      "category": "geometry",
+      "euclid_ref": "I.Def.22",
+      "prerequisites": ["right_angle", "area"]
+    },
+    {
+      "slug": "pythagorean_theorem",
+      "name": "Pythagorean Theorem",
+      "description": "In a right triangle, a² + b² = c² where c is the hypotenuse.",
+      "level": 3,
+      "category": "geometry",
+      "euclid_ref": "I.47",
+      "prerequisites": ["right_triangle", "square", "area"]
+    },
+    {
+      "slug": "function",
+      "name": "Function",
+      "description": "A relation that assigns exactly one output to each input.",
+      "level": 2,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["number"]
+    },
+    {
+      "slug": "polynomial",
+      "name": "Polynomial",
+      "description": "An expression of variables and coefficients with addition, subtraction, and multiplication.",
+      "level": 2,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["function"]
+    },
+    {
+      "slug": "quadratic_function",
+      "name": "Quadratic Function",
+      "description": "A polynomial of degree 2: f(x) = ax² + bx + c.",
+      "level": 3,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["polynomial"]
+    },
+    {
+      "slug": "parabola",
+      "name": "Parabola",
+      "description": "The graph of a quadratic function; a U-shaped curve.",
+      "level": 3,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["quadratic_function"]
+    },
+    {
+      "slug": "number_line",
+      "name": "Number Line",
+      "description": "A visual representation of numbers on a straight line.",
+      "level": 1,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["integers", "line"]
+    }
+  ]
+}

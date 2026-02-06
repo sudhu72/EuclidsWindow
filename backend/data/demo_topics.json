@@ -1,0 +1,2663 @@
+{
+  "topics": [
+    {
+      "id": "recreational_math",
+      "name": "Recreational Mathematics & Puzzles",
+      "keywords": [
+        "puzzle",
+        "brain teaser",
+        "recreational math",
+        "martin gardner",
+        "moscow puzzles"
+      ],
+      "response_text": "**In plain English**: Recreational math is math done for FUN—puzzles, brain teasers, and games that teach deep concepts through the joy of discovery.\n\n**The \"Aha!\" Method**: Instead of memorizing formulas, you wrestle with a puzzle until—click!—the answer becomes obvious. That moment of insight cements understanding far better than rote learning.\n\n**Classic puzzle (try it!)**:\n> Three missionaries and three cannibals must cross a river using a boat that holds at most two people. If cannibals ever outnumber missionaries on either bank, the missionaries will be eaten. How do they all cross safely?\n\n**Why puzzles teach better**:\n- You DISCOVER the concept yourself\n- Struggle creates memorable learning\n- Multiple approaches reveal mathematical structure\n- Fun keeps you engaged longer\n\n**The Masters**:\n- **Martin Gardner** (1914-2010): His \"Mathematical Games\" column in Scientific American ran 25 years and inspired generations of mathematicians.\n- **Boris Kordemsky**: *The Moscow Puzzles* (1956) brought Russian puzzle traditions to the world.\n- **Henry Dudeney** (1857-1930): British puzzler whose newspaper columns and books are still enjoyed today.\n- **Sam Loyd** (1841-1911): Created the famous 15-puzzle and countless others.\n\n**Start with these books**:\n- *My Best Mathematical and Logic Puzzles* by Gardner\n- *The Moscow Puzzles* by Kordemsky\n- *Amusements in Mathematics* by Dudeney\n- *Professor Stewart's Cabinet of Mathematical Curiosities*\n\n**The tradition continues**: Modern puzzles like Sudoku, KenKen, and logic grid puzzles all teach mathematical thinking disguised as games!",
+      "related_concepts": [
+        "logic",
+        "problem_solving",
+        "games"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "river_crossing",
+      "name": "River Crossing Puzzles",
+      "keywords": [
+        "river crossing",
+        "missionaries",
+        "cannibals",
+        "boat puzzle",
+        "crossing puzzle"
+      ],
+      "response_text": "**The Classic Puzzle**: Three missionaries and three cannibals need to cross a river. The boat holds at most 2 people. Someone must row back. If cannibals ever outnumber missionaries on either bank, disaster!\n\n**Try to solve it before reading on!**\n\n---\n\n**Solution** (11 crossings):\n1. Two cannibals cross →\n2. One cannibal returns ←\n3. Two cannibals cross →\n4. One cannibal returns ←\n5. Two missionaries cross →\n6. One missionary + one cannibal return ←\n7. Two missionaries cross →\n8. One cannibal returns ←\n9. Two cannibals cross →\n10. One cannibal returns ←\n11. Two cannibals cross →\n\n**The math underneath**: This is a **state-space search** problem! Each \"state\" is (M_left, C_left, boat_position). Valid states have missionaries safe. We search for a path from (3,3,left) to (0,0,right).\n\n**Why it teaches computer science**: This exact technique—representing problems as states and searching for solutions—underlies GPS navigation, game AI, and automated planning.\n\n**Variations to try**:\n- 4 missionaries, 4 cannibals, boat holds 3\n- Jealous husbands (each husband jealous if wife alone with another man)\n- The farmer, fox, chicken, and grain\n\n**From The Moscow Puzzles**: Kordemsky includes several river-crossing variants. Try the \"wolf, goat, and cabbage\" version!\n\n**Historical note**: This puzzle dates to at least the 9th century (Alcuin of York). Humans have loved logical puzzles for over 1,000 years!",
+      "related_concepts": [
+        "logic",
+        "graph_theory",
+        "algorithms"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "logic_puzzles",
+      "name": "Logic Puzzles & Deduction",
+      "keywords": [
+        "logic puzzle",
+        "deduction",
+        "knights and knaves",
+        "truth teller",
+        "liar puzzle"
+      ],
+      "response_text": "**Knights and Knaves** (a Martin Gardner favorite):\n\nOn an island, Knights ALWAYS tell the truth. Knaves ALWAYS lie. You meet two people, A and B.\n\nA says: \"We are both knaves.\"\n\nWhat are A and B?\n\n**Work it out**:\n- If A is a Knight (truth-teller), then \"We are both knaves\" is true. But then A would be a knave—contradiction!\n- So A must be a Knave (liar). Then \"We are both knaves\" is false.\n- If they're not BOTH knaves, and A IS a knave, then B must be a Knight!\n\n**Answer**: A is a Knave, B is a Knight.\n\n**Why this teaches logic**:\n- You must consider ALL cases systematically\n- Contradictions eliminate possibilities\n- The answer emerges from pure deduction\n\n**Classic puzzle types**:\n- **Grid puzzles**: \"Einstein's Riddle\"—5 houses, 5 nationalities, 5 pets...\n- **Syllogisms**: All A are B. Some B are C. What follows?\n- **Truth-teller/Liar**: Like Knights and Knaves above\n- **Self-reference**: \"This statement is false\" (a paradox!)\n\n**Try this** (from Dudeney):\n> Three boxes are labeled \"Apples,\" \"Oranges,\" and \"Mixed.\" ALL labels are wrong. You may pick ONE fruit from ONE box. How do you correctly label all boxes?\n\n**The insight**: Pick from \"Mixed\" (which is mislabeled). Whatever you get tells you that box's true contents. The rest follows!\n\n**Books to explore**:\n- *What Is the Name of This Book?* by Raymond Smullyan (Knights and Knaves master)\n- Gardner's *Aha! Insight* and *Aha! Gotcha*",
+      "related_concepts": [
+        "logic",
+        "reasoning",
+        "paradoxes"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "matchstick_puzzles",
+      "name": "Matchstick & Geometric Puzzles",
+      "keywords": [
+        "matchstick",
+        "geometric puzzle",
+        "toothpick puzzle",
+        "dissection"
+      ],
+      "response_text": "**Classic Matchstick Puzzle**:\nArrange 6 matchsticks to form 4 equilateral triangles, all the same size.\n\n**Hint**: Think in 3D!\n\n**Solution**: Build a tetrahedron (triangular pyramid). Four faces, each an equilateral triangle, using exactly 6 edges.\n\n**Why these puzzles teach geometry**:\n- They force you to SEE spatial relationships\n- 2D thinking fails; you must expand your mental toolkit\n- Physical manipulation builds geometric intuition\n\n**More matchstick challenges**:\n1. **24 matchsticks form 9 small squares** (3×3 grid). Remove 8 matchsticks to leave exactly 2 squares (no loose ends).\n\n2. **Move 2 matchsticks** to make this equation true:\n   ```\n   |  |  | = | | |\n   (This shows 3 = 3 matchsticks per side)\n   ```\n   (Many variations of this type exist!)\n\n**Dissection puzzles** (Dudeney's specialty):\n- Cut a shape into pieces that rearrange to form another shape\n- Dudeney's \"Haberdasher's Problem\": Cut an equilateral triangle into 4 pieces that form a square!\n- This puzzle is remarkable because the pieces can be HINGED to swing from one shape to the other\n\n**Tangrams**: 7 pieces that form countless shapes. Ancient Chinese puzzle, still used to teach geometry.\n\n**From The Moscow Puzzles**: Kordemsky includes dozens of matchstick and coin-moving puzzles, each teaching spatial reasoning.\n\n**Why physical puzzles matter**: Manipulating objects engages different brain regions than abstract symbols. Many mathematicians credit puzzles for their spatial intuition.",
+      "related_concepts": [
+        "geometry",
+        "spatial_reasoning",
+        "creativity"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "number_puzzles",
+      "name": "Number Puzzles & Arithmetic Tricks",
+      "keywords": [
+        "number puzzle",
+        "magic square",
+        "arithmetic trick",
+        "number trick"
+      ],
+      "response_text": "**The Magic Square**:\n```\n2 | 7 | 6\n---------\n9 | 5 | 1\n---------\n4 | 3 | 8\n```\nEvery row, column, and diagonal sums to 15!\n\n**Why it works**: The numbers 1-9 sum to 45. Three rows mean each row sums to 15. The \"magic\" is arranging them so diagonals work too.\n\n**Mind-reading number trick** (try on friends!):\n1. Think of a number\n2. Double it\n3. Add 10\n4. Divide by 2\n5. Subtract your original number\n\n**You always get 5!** Why? Let x be the number:\n\\((2x + 10)/2 - x = x + 5 - x = 5\\)\n\nThe algebra GUARANTEES the result. Magic is just hidden math!\n\n**The 1089 trick** (from Gardner):\n1. Write any 3-digit number with decreasing digits (e.g., 853)\n2. Reverse it (358)\n3. Subtract smaller from larger (853 - 358 = 495)\n4. Reverse the result (594)\n5. ADD these two (495 + 594 = **1089**)\n\nAlways 1089! (Try it with 741 → 741-147=594 → 594+495=1089)\n\n**Divisibility rules** (arithmetic shortcuts):\n- Divisible by 3? Sum of digits divisible by 3\n- Divisible by 9? Sum of digits divisible by 9\n- Divisible by 11? Alternating sum of digits divisible by 11\n\n**The Moscow Puzzles** is full of these! Kordemsky shows how arithmetic \"tricks\" reveal deep number properties.\n\n**Why puzzles beat drills**: Figuring out WHY a trick works teaches more than solving 100 practice problems.",
+      "related_concepts": [
+        "arithmetic",
+        "algebra",
+        "number_theory"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "probability_puzzles",
+      "name": "Probability Puzzles & Counterintuition",
+      "keywords": [
+        "monty hall",
+        "birthday paradox",
+        "probability puzzle",
+        "counterintuitive"
+      ],
+      "response_text": "🚪 **The Monty Hall Problem**\n\nYou're on a game show with 3 doors:\n• 🚗 One has a car\n• 🐐 Two have goats\n\nYou pick **Door 1**. The host opens **Door 3**, revealing a goat.\n\n> *\"Switch to Door 2, or stay?\"*\n\n---\n\n🎯 **The Answer: SWITCH!**\n\n| Strategy | Win rate |\n|----------|----------|\n| Stay | 1/3 (33%) |\n| Switch | 2/3 (67%) |\n\n**Why?** Your first pick was 1/3 likely to be right. That doesn't change! The other 2/3 probability *concentrates* on the remaining door.\n\n---\n\n🎂 **The Birthday Paradox**\n\n| People in room | Chance of shared birthday |\n|---------------|---------------------------|\n| 23 | >50% |\n| 50 | 97% |\n| 70 | 99.9% |\n\n**Why it surprises us**: We think \"365 days, need many people.\"\n\nBut we're counting **pairs**: 23 people = 253 pairs to check!\n\n---\n\n💰 **Two Envelope Problem**\n\nTwo envelopes: one has twice the other's money. You pick one and see $100.\n\nShould you switch?\n• Might get $200 (+$100)\n• Might get $50 (-$50)\n• Average seems better... but the OTHER person has the same argument!\n\n*What's wrong with this reasoning?*\n\n---\n\n🧠 **Why Probability Tricks Us**\n\nOur brains evolved for quick survival judgments, not careful counting. Probability puzzles expose these blind spots.\n\n---\n\n📚 *Go deeper:*\n• Mlodinow's **The Drunkard's Walk**\n• Ellenberg's **How Not to Be Wrong**",
+      "related_concepts": [
+        "probability",
+        "statistics",
+        "psychology"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "topology_puzzles",
+      "name": "Topology Puzzles",
+      "keywords": [
+        "topology",
+        "mobius",
+        "möbius strip",
+        "klein bottle",
+        "knot",
+        "seven bridges"
+      ],
+      "response_text": "**The Seven Bridges of Königsberg** (1736):\n\nThe city of Königsberg had 7 bridges connecting 4 land masses. Residents wondered: can you walk through the city, crossing each bridge EXACTLY once?\n\n**Euler's insight**: It's IMPOSSIBLE! He proved this by inventing graph theory. Each land mass is a node; each bridge is an edge. For such a walk to exist, at most 2 nodes can have an odd number of edges. Königsberg had 4 odd nodes.\n\n**This founded topology**—the study of properties preserved under continuous deformation (stretching, bending, but not tearing).\n\n**The Möbius Strip** (try this at home!):\n1. Take a strip of paper\n2. Give it a half-twist\n3. Tape the ends together\n4. Draw a line down the middle... you'll draw on \"both sides\" without lifting your pen!\n\nIt has only ONE side and ONE edge. Cut it down the middle—what happens? (Try it!)\n\n**Puzzle**: Can you remove your vest without removing your jacket? (Topologically, yes!)\n\n**The Handcuffs Puzzle**: Two people, each with a loop of string around their wrists, loops interlinked. Can they separate without cutting or removing loops from wrists? (Yes, but it's tricky!)\n\n**Why topology matters**:\n- DNA molecules are knots—topology helps biologists understand them\n- Network analysis (social networks, internet)\n- Robotics motion planning\n\n**Fun fact**: Topologically, a coffee mug and a donut are THE SAME THING (both have one hole). This is why topologists joke they can't tell their coffee from their breakfast!",
+      "related_concepts": [
+        "geometry",
+        "graph_theory",
+        "spatial_reasoning"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "chess_puzzles",
+      "name": "Chess & Board Puzzles",
+      "keywords": [
+        "chess puzzle",
+        "eight queens",
+        "knight's tour",
+        "mutilated chessboard"
+      ],
+      "response_text": "**The Eight Queens Problem**:\nPlace 8 queens on a chessboard so that no two attack each other (no shared row, column, or diagonal).\n\n**There are 92 solutions!** (12 unique, the rest are rotations/reflections)\n\nThis puzzle teaches **backtracking**—a fundamental algorithm. Place queens row by row; when stuck, backtrack and try a different position.\n\n**The Knight's Tour**:\nCan a knight visit every square on a chessboard exactly once?\n\n**Yes!** And there are over 26 trillion tours on an 8×8 board. Finding one teaches systematic exploration and graph traversal.\n\n**The Mutilated Chessboard** (a Dudeney classic):\nRemove two opposite corners of a chessboard (a1 and h8). Can you cover the remaining 62 squares with 31 dominoes (each covering 2 squares)?\n\n**Answer**: IMPOSSIBLE!\n\n**Proof** (beautiful!): Each domino covers one white and one black square. The 62 remaining squares have 32 of one color and 30 of another (opposite corners are same color). You can't pair them evenly!\n\n**Why chess puzzles teach math**:\n- Systematic thinking and exhaustive search\n- Parity arguments (like the mutilated chessboard)\n- Graph theory (the board is a graph!)\n- Combinatorics (counting solutions)\n\n**Sam Loyd's 15-Puzzle**: Slide 15 numbered tiles in a 4×4 grid. Loyd offered $1,000 to swap just tiles 14 and 15. Impossible! (Parity again.)\n\n**From Gardner**: His columns feature many chess-based puzzles, including fairy chess pieces with unusual moves.",
+      "related_concepts": [
+        "combinatorics",
+        "algorithms",
+        "parity"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "cryptarithmetic",
+      "name": "Cryptarithmetic & Word Puzzles",
+      "keywords": [
+        "cryptarithmetic",
+        "send more money",
+        "send + more",
+        "alphametic",
+        "verbal arithmetic",
+        "letter arithmetic"
+      ],
+      "response_text": "**The Classic** (invented by Dudeney, 1924):\n```\n    S E N D\n  + M O R E\n  ---------\n  M O N E Y\n```\nEach letter represents a unique digit (0-9). Find them!\n\n**Hint**: M must be 1 (the carry from adding two 4-digit numbers).\n\n**Solution**:\n```\n    9 5 6 7\n  + 1 0 8 5\n  ---------\n  1 0 6 5 2\n```\nS=9, E=5, N=6, D=7, M=1, O=0, R=8, Y=2\n\n**Why this teaches algebra**:\n- Variables represent unknowns (letters = digits)\n- Constraints must be satisfied simultaneously\n- Logical deduction narrows possibilities\n- Carrying creates relationships between columns\n\n**More to try**:\n```\n    E A T\n  + T H A T\n  ---------\n  A P P L E\n```\n\n```\n    C R O S S\n  + R O A D S\n  -----------\n  D A N G E R\n```\n\n**Solving strategies**:\n1. Look for carries (especially leading digits)\n2. Check column by column\n3. Use digit uniqueness to eliminate options\n4. Trial and error with the remaining cases\n\n**Computer science connection**: These are **constraint satisfaction problems**. The same techniques solve Sudoku, scheduling, and resource allocation!\n\n**From The Moscow Puzzles**: Kordemsky includes several \"rebus\" puzzles where you deduce the hidden arithmetic.\n\n**Gardner's tip**: Start with what you KNOW (like M=1 above), then propagate constraints.",
+      "related_concepts": [
+        "algebra",
+        "logic",
+        "constraints"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "paradoxes",
+      "name": "Mathematical Paradoxes",
+      "keywords": [
+        "paradox",
+        "zeno",
+        "barber paradox",
+        "russell's paradox",
+        "achilles tortoise"
+      ],
+      "response_text": "**Zeno's Paradox** (Achilles and the Tortoise):\n\nAchilles races a tortoise. The tortoise gets a head start. When Achilles reaches where the tortoise WAS, it has moved ahead. When he reaches THAT spot, it's moved again. Infinitely! Does Achilles ever catch up?\n\n**The math resolution**: Infinite sums can have finite totals!\n\\(1/2 + 1/4 + 1/8 + ... = 1\\)\n\nAchilles catches up in finite time. Zeno confused \"infinitely many steps\" with \"infinite time.\"\n\n**The Barber Paradox** (Russell):\nA barber shaves all those—and only those—who don't shave themselves. Does the barber shave himself?\n\n- If yes → he shaves himself → he shouldn't (only shaves those who don't)\n- If no → he doesn't shave himself → he should (shaves all who don't)\n\nContradiction! This exposed a flaw in naive set theory and revolutionized mathematical foundations.\n\n**The Unexpected Hanging**:\nA prisoner will be hanged on a weekday next week, but won't know which day until the morning of. He reasons: \"Can't be Friday (I'd know Thursday night). Can't be Thursday (Friday ruled out, I'd know Wednesday night)...\" He concludes he can't be hanged. Then he's hanged on Wednesday—totally surprised!\n\n**What paradoxes teach**:\n- Our intuitions have limits\n- Careful definitions matter\n- Self-reference creates trouble\n- Math must be built on solid foundations\n\n**More paradoxes**: Newcomb's Problem, the Two Envelope Problem, the Surprise Test, the Ship of Theseus...\n\n**Read**: Smullyan's books are paradox treasure troves!",
+      "related_concepts": [
+        "logic",
+        "infinity",
+        "philosophy"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "jabberwocky_sets",
+      "name": "Jabberwocky & Well-Defined Sets",
+      "keywords": [
+        "jabberwocky",
+        "carroll well-defined",
+        "jabberwocky sets",
+        "carroll sets",
+        "how does carroll's 'jabberwocky' poem illustrate the concept of well-defined sets?",
+        "how does carroll's 'jabberwocky' poem illustrate the concept of well-defined sets"
+      ],
+      "response_text": "**The Math-Literature Connection**: Lewis Carroll's *Jabberwocky* brilliantly illustrates a fundamental problem in set theory: what makes a set \"well-defined\"?\n\n**The poem's opening**:\n> *'Twas brillig, and the slithy toves*\n> *Did gyre and gimble in the wabe*\n\n**The set theory problem**: Can you form \"the set of all slithy toves\"? In mathematics, a set must have CLEAR membership criteria. Given any object, you must be able to say definitively: is it in the set or not?\n\n**Why Jabberwocky words fail**: What exactly is a \"tove\"? Is your coffee mug a tove? Is the number 7? We literally cannot answer! The word has no definition, so \"the set of all toves\" is **not well-defined**.\n\n**Contrast with good sets**:\n- \"The set of even numbers\" ✓ (we can check any number)\n- \"The set of US presidents\" ✓ (clear historical record)\n- \"The set of beautiful paintings\" ✗ (who decides what's beautiful?)\n- \"The set of slithy toves\" ✗ (meaningless!)\n\n**Carroll knew this!**: Charles Dodgson (Carroll's real name) was a mathematics lecturer at Oxford. His nonsense words weren't random—they deliberately probe the boundaries of meaning and definition.\n\n**The deeper insight**: Jabberwocky SOUNDS like it means something (you feel the slithy toves!), but semantically it's empty. This mirrors how some mathematical statements LOOK meaningful but aren't.\n\n**Russell's Paradox connection**: \"The set of all sets that don't contain themselves\" sounds meaningful but leads to contradiction—similar to how \"all mimsy borogoves\" sounds meaningful but isn't.\n\n**Read more**: *Once Upon a Prime* by Sarah Hart explores math in literature beautifully!",
+      "related_concepts": [
+        "sets",
+        "logic",
+        "literature"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "red_queen_race",
+      "name": "Red Queen's Race & Relative Motion",
+      "keywords": [
+        "red queen",
+        "red queen's race",
+        "looking glass motion",
+        "carroll motion",
+        "what is the red queen's race and what does it teach about relative motion?",
+        "what is the red queen's race and what does it teach about relative motion"
+      ],
+      "response_text": "**The Scene**: In *Through the Looking-Glass*, Alice runs as fast as she can with the Red Queen, yet stays in the same place!\n\n> *\"Now, HERE, you see, it takes all the running you can do, to keep in the same place. If you want to get somewhere else, you must run at least twice as fast as that!\"*\n\n**The Math: Relative Motion**\n\nThe Red Queen's world illustrates **frames of reference**:\n\n**Scenario 1**: You're on a train. You walk toward the front at 3 mph. The train goes 60 mph. How fast are you moving?\n- Relative to the train: 3 mph\n- Relative to the ground: 63 mph\n- Both answers are correct!\n\n**Scenario 2 (Red Queen)**: Imagine the ground itself moves backward at exactly your running speed. You run forward at 5 mph, ground slides back at 5 mph. Net movement: 0!\n\n**Real-world examples**:\n- **Escalators**: Walk down an up-escalator and you can stay in place\n- **Treadmills**: Run at 6 mph, belt moves at 6 mph—you go nowhere!\n- **Swimming**: Swim upstream in a river at exactly the current's speed\n- **Airplanes**: Headwinds can double travel time\n\n**In physics**: Einstein showed there's NO \"absolute\" motion—only motion relative to something else. The Red Queen's world isn't absurd; it's just a different reference frame!\n\n**The evolutionary \"Red Queen Hypothesis\"**: Species must constantly evolve just to maintain their position relative to competing species. Standing still means falling behind!\n\n**Carroll the mathematician**: Lewis Carroll (Charles Dodgson) was an Oxford math lecturer. The Looking-Glass world isn't nonsense—it's a thought experiment about reference frames!\n\n**Further reading**: Try *Alice's Adventures in Wonderland Decoded* by David Day.",
+      "related_concepts": [
+        "physics",
+        "motion",
+        "frames_of_reference"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "alice_logic_paradoxes",
+      "name": "Alice & Logical Paradoxes",
+      "keywords": [
+        "logical paradoxes",
+        "looking glass",
+        "cheshire cat",
+        "mad tea party",
+        "wonderland logic",
+        "carroll paradox",
+        "how does lewis carroll use logical paradoxes in alice through the looking glass?",
+        "how does lewis carroll use logical paradoxes in alice through the looking glass"
+      ],
+      "response_text": "**Carroll's Hidden Logic Lessons**: Lewis Carroll wasn't just a children's author—he was Charles Dodgson, an Oxford logic lecturer. The Alice books are packed with logical puzzles!\n\n**The Cheshire Cat's Logic**:\n> *\"We're all mad here. I'm mad. You're mad.\"*\n> *\"How do you know I'm mad?\" said Alice.*\n> *\"You must be, or you wouldn't have come here.\"*\n\nThis is a **circular argument** (begging the question). The Cat assumes what he's trying to prove!\n\n**The Mad Tea Party & Time**:\nThe Hatter's watch shows the DAY but not the time. He explains time has stopped because he quarreled with it. This plays with our assumptions about what clocks \"should\" measure—a reminder that definitions are conventions!\n\n**\"Sentence first—verdict afterwards!\"**:\nThe Queen's trial inverts logical order. In real logic:\n1. Evidence → 2. Verdict → 3. Sentence\n\nThe Queen does: 3 → 2 → 1. Carroll shows how absurd reversed reasoning looks.\n\n**The Caterpillar's Identity Puzzle**:\n> *\"Who are YOU?\"*\n\nAlice struggles to prove she's herself after changing size repeatedly. This anticipates the philosophical \"Ship of Theseus\" problem: if everything about you changes, are you still you?\n\n**Tweedledee's Logical Trickery**:\n> *\"If it was so, it might be; and if it were so, it would be; but as it isn't, it ain't. That's logic.\"*\n\nThis is actually VALID conditional logic, just stated confusingly!\n\n**Carroll's serious logic work**: He wrote *Symbolic Logic* and invented logic diagrams still used today. The Alice books were his playground for testing ideas.\n\n**Read more**: *The Annotated Alice* by Martin Gardner explains every logical joke!",
+      "related_concepts": [
+        "logic",
+        "philosophy",
+        "reasoning"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "math_literature_infinity",
+      "name": "Infinity in Literature",
+      "keywords": [
+        "infinity literature",
+        "borges infinity",
+        "literary infinity",
+        "tortoise said to achilles",
+        "infinite regress"
+      ],
+      "response_text": "**When Writers Grapple with the Infinite**\n\nMathematicians aren't the only ones fascinated by infinity—great writers have explored it in profound ways.\n\n**Jorge Luis Borges: The Library of Babel**\nA library containing EVERY possible 410-page book. Most are gibberish, but somewhere exists every truth, every lie, every biography (including yours!). Borges calculated: 25 characters, 410 pages of 40 lines of 80 characters = 25^(1,312,000) books. A number so vast it makes the atoms in the universe look tiny.\n\n**The mathematical insight**: This is a finite but incomprehensibly large number. True infinity is even stranger!\n\n**David Foster Wallace: Everything and More**\nThe novelist wrote an entire book about the history of infinity in mathematics. He called Cantor's work on infinite sets \"the most beautiful and profound achievement in modern mathematics.\"\n\n**Lewis Carroll's Infinite Regress**:\n> *\"What the Tortoise Said to Achilles\"*\n\nCarroll wrote a famous logic paper disguised as a dialogue. To prove anything, you need rules. But then you need rules about applying rules. And rules about those rules... forever!\n\n**Jonathan Swift's Scale**:\n*Gulliver's Travels* plays with size ratios (1:12 in Lilliput). Swift correctly calculated that Lilliputians would need 1,728 times less food (12³)—showing mathematical thinking about scale.\n\n**Why infinity fascinates writers**: It pushes against the limits of language and imagination—exactly where great literature lives.\n\n**Read more**: *Once Upon a Prime* by Sarah Hart explores math throughout literary history.",
+      "related_concepts": [
+        "infinity",
+        "literature",
+        "philosophy"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "math_in_poetry",
+      "name": "Mathematics in Poetry",
+      "keywords": [
+        "math poetry",
+        "poetry math",
+        "fibonacci poetry",
+        "mathematical verse"
+      ],
+      "response_text": "**Where Numbers Meet Verses**\n\nPoetry and mathematics share a love of pattern, structure, and elegant compression of meaning.\n\n**The Fibonacci Sequence in Poetry**:\nThe Fib is a poetry form where syllable counts follow Fibonacci numbers:\n> One (1)\n> small (1)  \n> haiku (2)\n> spirals out (3)\n> like a chambered nautilus (5)\n> growing ever larger, seeking the infinite (8)\n\n**Dante's Divine Comedy**:\nDante structured his epic with obsessive mathematical precision:\n- 3 books (Inferno, Purgatorio, Paradiso)\n- 33 cantos each (plus 1 intro = 100 total)\n- Terza rima: ABA BCB CDC rhyme scheme (groups of 3)\n- Why 3? The Holy Trinity!\n\n**Oulipo: Constraint-Based Writing**:\nFrench writers experimented with mathematical constraints:\n- **Lipogram**: Write without using certain letters (Georges Perec wrote a 300-page novel without the letter 'e'!)\n- **S+7**: Replace every noun with the 7th noun after it in the dictionary\n\n**The Sonnet's Math**:\n14 lines, usually iambic pentameter (10 syllables/line), specific rhyme schemes. Shakespeare's sonnets: ABAB CDCD EFEF GG. The constraints ENABLE creativity!\n\n**Archimedes' Mathematical Poetry**:\nHis \"Cattle Problem\" was posed as a poem with number constraints. Solution? 7.76 × 10^206544 cattle! (Not solved until 1965 with computers.)\n\n**Why math and poetry connect**: Both seek to express complex truths with minimal means. Both prize elegance. Both find beauty in structure.\n\n**Read more**: *Strange Attractors: Poems of Love and Mathematics* (anthology)",
+      "related_concepts": [
+        "fibonacci",
+        "patterns",
+        "art"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "binomial_theorem",
+      "name": "Binomial Theorem",
+      "keywords": [
+        "binomial",
+        "binomial theorem",
+        "pascal",
+        "expansion",
+        "choose",
+        "what is pascal's triangle?",
+        "what is pascal's triangle",
+        "what is the binomial theorem?",
+        "what is the binomial theorem"
+      ],
+      "response_text": "**In plain English**: The binomial theorem tells you how to expand expressions like \\((a + b)^n\\) without multiplying everything out the long way.\n\n**Simple examples**:\n- \\((a + b)^2 = a^2 + 2ab + b^2\\) (you probably memorized this!)\n- \\((a + b)^3 = a^3 + 3a^2b + 3ab^2 + b^3\\)\n\n**The pattern** (Pascal's Triangle):\n```\n        1           (a+b)⁰\n       1 1          (a+b)¹\n      1 2 1         (a+b)²\n     1 3 3 1        (a+b)³\n    1 4 6 4 1       (a+b)⁴\n```\nEach number is the sum of the two above it. These numbers are the coefficients!\n\n**Real example**: What's \\((x + 1)^4\\)? Pascal's row gives 1, 4, 6, 4, 1, so:\n\\(x^4 + 4x^3 + 6x^2 + 4x + 1\\)\n\n**Fun history**: Pascal's Triangle was known in China (Jia Xian, 1050 AD), Persia (Omar Khayyam, 1100 AD), and India before Pascal. But Pascal (1654) studied its properties deeply, so it bears his name in the West.\n\n**Where it's used**:\n- Probability (coin flips, dice)\n- Compound interest calculations\n- Computer algorithms\n\n**The formula**: \\((a+b)^n = \\sum_{k=0}^{n} \\binom{n}{k} a^{n-k} b^k\\)\n\nDon't panic! \\(\\binom{n}{k}\\) (\"n choose k\") just means pick numbers from Pascal's Triangle.\n\n**Want to learn more?** Any precalculus book covers this, or search \"Pascal's Triangle\" on YouTube!",
+      "related_concepts": [
+        "algebra",
+        "combinations",
+        "pascal"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "pythagorean_theorem",
+      "name": "Pythagorean Theorem",
+      "keywords": [
+        "pythagorean",
+        "right triangle",
+        "a^2 + b^2",
+        "hypotenuse",
+        "what is the pythagorean theorem?",
+        "what is the pythagorean theorem",
+        "prove the pythagorean theorem"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nIn a right triangle, the two shorter sides squared and added together equal the longest side squared.\n\n---\n\n📐 **The Formula**\n\n$$a^2 + b^2 = c^2$$\n\nwhere *c* is the hypotenuse (longest side)\n\n---\n\n🔍 **Real Example: Your TV**\n\nA \"50-inch TV\" is measured diagonally. If the width is 40 inches:\n\n$$\\text{height} = \\sqrt{50^2 - 40^2} = 30 \\text{ inches}$$\n\nNow you know if it'll fit on your wall!\n\n---\n\n⚡ **Where It's Hiding in Your Life**\n\n• 📱 **GPS** uses this in 3D to pinpoint your location\n• 🗺️ **Google Maps** solves Pythagorean equations constantly\n• 🏗️ **Construction** — every right angle depends on it\n• ✈️ **Navigation** — calculating distances\n\n---\n\n📖 **The Legend**\n\nPythagoras was so excited by this discovery that he allegedly sacrificed 100 oxen to celebrate! His followers kept math secrets so closely guarded that one member was supposedly *drowned* for revealing that √2 can't be written as a fraction.\n\n---\n\n📚 *Want to learn more?* Singh's **Fermat's Enigma** reads like a detective novel!",
+      "related_concepts": [
+        "geometry",
+        "distance",
+        "triangles"
+      ],
+      "visualization": {
+        "viz_id": "pythagorean_svg",
+        "viz_type": "svg",
+        "title": "Pythagorean theorem (areas)"
+      }
+    },
+    {
+      "id": "bayes_theorem",
+      "name": "Bayes' Theorem",
+      "keywords": [
+        "bayes",
+        "bayes theorem",
+        "conditional probability",
+        "posterior",
+        "prior",
+        "what is bayes' theorem?",
+        "what is bayes' theorem"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nBayes' theorem helps you update your beliefs when you get new evidence. It answers:\n\n> *\"Given what I just learned, how should I change my mind?\"*\n\n---\n\n🔍 **Surprising Example: Medical Tests**\n\nA test is 99% accurate. You test positive for a rare disease (1 in 10,000 have it).\n\n**Are you doomed?** NO!\n\n| Group | Out of 10,000 | Test Result |\n|-------|---------------|-------------|\n| Sick | ~1 person | True positive |\n| Healthy | ~100 people | False positive |\n\nYou're more likely one of the 100 false positives than the 1 true case!\n\n---\n\n📐 **The Formula**\n\n$$P(A|B) = \\frac{P(B|A) \\cdot P(A)}{P(B)}$$\n\n**In words:**\n> Chance of A given B = (chance of B given A) × (base rate of A) ÷ (overall chance of B)\n\n---\n\n⚡ **Where It Powers Your Life**\n\n• 📧 **Spam filters** — \"Given these words, is this spam?\"\n• 🏥 **Medical diagnosis** — weighing symptoms and test results\n• ⚖️ **Court cases** — evaluating DNA evidence\n• 🎬 **Netflix** — predicting what you'll watch\n• 🤖 **AI** — nearly all modern machine learning\n\n---\n\n📖 **The Unlikely Origin**\n\nReverend Thomas Bayes (1701-1761) was a minister who did math as a hobby. His theorem was published *after his death* and ignored for 200 years. Now it powers modern AI!\n\n---\n\n📚 *Deep dive:* McGrayne's **The Theory That Would Not Die**",
+      "related_concepts": [
+        "probability",
+        "statistics",
+        "reasoning"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "division",
+      "name": "Division",
+      "keywords": [
+        "division",
+        "divide",
+        "divided by",
+        "quotient",
+        "remainder",
+        "long division",
+        "what is division?",
+        "what is division",
+        "why can't we divide by zero?",
+        "why can't we divide by zero",
+        "what is a remainder?",
+        "what is a remainder",
+        "how does long division work?",
+        "how does long division work",
+        "what is the relationship between division and multiplication?",
+        "what is the relationship between division and multiplication"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nDivision is splitting things into equal groups. \"12 ÷ 3 = 4\" means 12 things split into 3 groups gives 4 per group.\n\n---\n\n🔍 **Two Ways to Think About It**\n\n| View | Example: 12 ÷ 3 | Question |\n|------|-----------------|----------|\n| **Sharing** | 12 cookies among 3 friends | How many each? |\n| **Grouping** | 12 items into groups of 3 | How many groups? |\n\nBoth give 4, but the mental picture differs!\n\n---\n\n📐 **The Parts of Division**\n\n• **Dividend** — the number being divided (12)\n• **Divisor** — what you divide by (3)\n• **Quotient** — the answer (4)\n• **Remainder** — what's left over (if any)\n\n---\n\n⚡ **Division in Real Life**\n\n• 💰 Splitting a restaurant bill\n• 🍕 Sharing pizza slices equally\n• 📦 Packing items into boxes\n• ⏱️ Time per task (8 hours ÷ 4 tasks = 2 hrs each)\n\n---\n\n🎯 **Key Insight: Division is Inverse of Multiplication**\n\n12 ÷ 3 = 4 because 4 × 3 = 12\n\nIf you know multiplication, you know division!\n\n---\n\n⚠️ **The Big Rule**\n\n**You cannot divide by zero!** Why? There's no number that multiplied by 0 gives you back the original number. It's undefined.\n\n---\n\n📖 **Fun History**\n\nThe ÷ symbol was introduced by Johann Rahn in 1659. Before that, people wrote fractions or used words!",
+      "related_concepts": [
+        "multiplication",
+        "fractions",
+        "arithmetic"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "multiplication",
+      "name": "Multiplication",
+      "keywords": [
+        "multiplication",
+        "times",
+        "product",
+        "what is multiplication?",
+        "what is multiplication",
+        "why is multiplication repeated addition?",
+        "why is multiplication repeated addition",
+        "how do multiplication tables work?",
+        "how do multiplication tables work",
+        "what is the identity element for multiplication?",
+        "what is the identity element for multiplication"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nMultiplication is repeated addition. 4 × 3 means \"add 4 three times\" = 4 + 4 + 4 = 12.\n\n---\n\n📐 **Visual: The Area Model**\n\n4 × 3 is also the area of a rectangle 4 units by 3 units:\n```\n● ● ● ●\n● ● ● ●\n● ● ● ●\n```\nCount the dots: 12!\n\n---\n\n🎯 **Key Properties**\n\n| Property | Example | Why it matters |\n|----------|---------|----------------|\n| **Commutative** | 3 × 4 = 4 × 3 | Order doesn't matter |\n| **Associative** | (2 × 3) × 4 = 2 × (3 × 4) | Grouping doesn't matter |\n| **Distributive** | 3 × (4 + 5) = 3×4 + 3×5 | Break apart for easier math |\n| **Identity** | n × 1 = n | Multiplying by 1 changes nothing |\n| **Zero property** | n × 0 = 0 | Anything times 0 is 0 |\n\n---\n\n⚡ **Multiplication in Real Life**\n\n• 🛒 Unit pricing (3 items at $5 each)\n• 📐 Area calculations\n• 🔢 Scaling recipes\n• 💹 Compound growth\n\n---\n\n📖 **Fun History**\n\nThe × symbol was introduced by William Oughtred in 1631. Ancient Egyptians used doubling instead—they could multiply any numbers just by doubling and adding!",
+      "related_concepts": [
+        "division",
+        "area",
+        "arithmetic"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "addition",
+      "name": "Addition",
+      "keywords": [
+        "addition",
+        "add",
+        "plus",
+        "sum",
+        "adding",
+        "what is addition conceptually?",
+        "what is addition conceptually",
+        "explain the commutative property of addition",
+        "how does carrying work in addition?",
+        "how does carrying work in addition",
+        "what is the identity element for addition?",
+        "what is the identity element for addition",
+        "how is addition related to counting?",
+        "how is addition related to counting"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nAddition is combining quantities. Put 3 apples and 4 apples together, you have 7 apples.\n\n---\n\n📐 **The Number Line View**\n\n3 + 4 means: start at 3, move 4 steps right → land on 7\n\n```\n0  1  2  3  4  5  6  7  8\n         ⟹⟹⟹⟹\n```\n\n---\n\n🎯 **Key Properties**\n\n| Property | Example | Meaning |\n|----------|---------|----------|\n| **Commutative** | 3 + 4 = 4 + 3 | Order doesn't matter |\n| **Associative** | (1 + 2) + 3 = 1 + (2 + 3) | Grouping doesn't matter |\n| **Identity** | n + 0 = n | Adding 0 changes nothing |\n\n---\n\n⚡ **Addition in Real Life**\n\n• 💰 Totaling a shopping cart\n• 📊 Combining scores\n• 🚗 Adding miles to a trip\n• ⏱️ Totaling time spent\n\n---\n\n📖 **Fun History**\n\nThe + symbol first appeared in print in 1489 in Germany. Before that, people wrote \"and\" or used the Latin word \"et\" (which eventually became &, and then +)!",
+      "related_concepts": [
+        "subtraction",
+        "counting",
+        "arithmetic"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "distributive_property",
+      "name": "Distributive Property",
+      "keywords": [
+        "distributive property",
+        "distributive",
+        "a(b+c)",
+        "distribution",
+        "explain the distributive property"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nThe distributive property tells you that you can multiply a sum term‑by‑term:\n\n$$a(b + c) = ab + ac$$\n\n---\n\n🔍 **Simple Example**\n\n\\(3(4 + 5) = 3\\cdot4 + 3\\cdot5 = 12 + 15 = 27\\)\n\nBoth sides give the same answer.\n\n---\n\n📐 **Why It Works (Area Model)**\n\nThink of a rectangle with side lengths \\(a\\) and \\(b + c\\):\n- Total area = \\(a(b + c)\\)\n- Split into two rectangles: \\(ab\\) and \\(ac\\)\n- Total area = \\(ab + ac\\)\n\nSame area, two ways to count it.\n\n---\n\n🎯 **Algebra Use**\n\n• Expand: \\(2(x + 7) = 2x + 14\\)\n• Factor: \\(6x + 12 = 6(x + 2)\\)\n\nFactoring is just distributing in reverse.\n\n---\n\n⚡ **Why It Matters**\n\n• Simplifies expressions\n• Solves equations\n• Multiplies polynomials\n\nTry it: \\(5(x - 3)\\) → ?",
+      "related_concepts": [
+        "multiplication",
+        "polynomials",
+        "factoring"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "subtraction",
+      "name": "Subtraction",
+      "keywords": [
+        "subtraction",
+        "subtract",
+        "minus",
+        "difference",
+        "take away"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nSubtraction finds the difference between quantities, or what remains after taking away.\n\n---\n\n🔍 **Two Mental Models**\n\n| Model | 7 - 3 = ? | Question |\n|-------|-----------|----------|\n| **Take away** | Start with 7, remove 3 | What's left? |\n| **Difference** | Distance from 3 to 7 | How far apart? |\n\nBoth give 4!\n\n---\n\n📐 **The Number Line View**\n\n7 - 3 means: start at 7, move 3 steps left → land on 4\n\n```\n0  1  2  3  4  5  6  7  8\n         ⟸⟸⟸\n```\n\n---\n\n🎯 **Key Facts**\n\n• **NOT commutative**: 7 - 3 ≠ 3 - 7\n• **Identity**: n - 0 = n\n• **Self-inverse**: n - n = 0\n• **Connection to addition**: If a - b = c, then c + b = a\n\n---\n\n⚡ **Subtraction in Real Life**\n\n• 💰 Making change\n• 📊 Finding differences (scores, prices)\n• ⏱️ Time remaining\n• 🌡️ Temperature drops\n\n---\n\n📖 **Fun History**\n\nThe − symbol was first used in a German manuscript in 1481. Before that, people wrote \"minus\" or used the letter 'm' with a line over it!",
+      "related_concepts": [
+        "addition",
+        "negative_numbers",
+        "arithmetic"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "algebra_basics",
+      "name": "Algebra Basics",
+      "keywords": [
+        "algebra",
+        "variable",
+        "unknown",
+        "solve for x",
+        "what is algebra",
+        "expression",
+        "equation",
+        "like terms",
+        "substitution",
+        "simplify expression",
+        "combine like terms",
+        "variable in algebra",
+        "what is a variable in algebra?",
+        "what is a variable in algebra",
+        "how do you simplify algebraic expressions?",
+        "how do you simplify algebraic expressions",
+        "what is the difference between an expression and an equation?",
+        "what is the difference between an expression and an equation",
+        "how do you combine like terms?",
+        "how do you combine like terms",
+        "what is substitution in algebra?",
+        "what is substitution in algebra"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nAlgebra uses letters (like x) to represent unknown numbers. Instead of “what plus 5 equals 8?”, we write **x + 5 = 8** and solve for x.\n\n---\n\n🧩 **Expressions vs Equations**\n\n• **Expression**: a math phrase (e.g., 3x + 2)\n• **Equation**: a statement that two expressions are equal (e.g., 3x + 2 = 11)\n\n---\n\n🧱 **Like Terms & Simplifying**\n\nLike terms have the same variable and power.\nExample: 2x + 3x = 5x, but 2x + 3 ≠ 5x.\n\n---\n\n🔁 **Substitution**\n\nReplace a variable with a number or expression.\nIf x = 4, then 3x + 2 = 3(4) + 2 = 14.\n\n---\n\n⚖️ **The Balance Principle**\n\nWhatever you do to one side of an equation, do to the other.\n\n---\n\n📖 **Fun History**\n\n“Algebra” comes from Arabic *al-jabr*, meaning “reunion of broken parts,” from al-Khwarizmi’s 9th‑century book.",
+      "related_concepts": [
+        "equations",
+        "variables",
+        "solving"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "number_line",
+      "name": "Number Line",
+      "keywords": [
+        "number line",
+        "integers",
+        "negative numbers",
+        "real line"
+      ],
+      "response_text": "**In plain English**: A number line is just a ruler that goes forever in both directions. Positive numbers go right, negative numbers go left, and zero sits in the middle.\n\n**Why it matters**: It's how we visualize numbers. Temperature (above/below zero), bank accounts (savings vs. debt), and elevations (above/below sea level) all work like number lines.\n\n**Fun history**: Negative numbers were once considered absurd! In 1759, a mathematician wrote that negatives \"darken the very whole doctrines of equations.\" Even zero was banned in Florence in 1299—merchants feared it could be used for fraud (turning 10 into 100)!\n\n**The mind-bending part**: Between ANY two numbers, there's always another number. Between 0 and 1? There's 0.5. Between 0 and 0.5? There's 0.25. This goes on forever—there are infinitely many numbers packed into any tiny space!\n\n**Real-world connection**: When you check the weather and see \"feels like -5°\" or your bank shows \"-$50\" (overdraft), you're using number line thinking.\n\n**Want to learn more?** Seife's *Zero: The Biography of a Dangerous Idea* is a wild ride through the history of nothing!",
+      "related_concepts": [
+        "integers",
+        "real_numbers",
+        "temperature"
+      ],
+      "visualization": {
+        "viz_id": "number_line_plotly",
+        "viz_type": "plotly",
+        "title": "Integer number line"
+      }
+    },
+    {
+      "id": "base_conversion",
+      "name": "Binary & Number Bases",
+      "keywords": [
+        "base",
+        "binary",
+        "base 2",
+        "base 10",
+        "convert",
+        "radix"
+      ],
+      "response_text": "**In plain English**: We normally count in base 10 (digits 0-9). Computers count in base 2 (just 0 and 1), called binary. It's the same numbers, just written differently!\n\n**Example**: The number 13 in binary is 1101. Why? Because \\(13 = 8 + 4 + 0 + 1 = 1×8 + 1×4 + 0×2 + 1×1\\). The 1s and 0s tell you which powers of 2 to add.\n\n**Why computers use binary**: Transistors (tiny switches in your phone) are either ON or OFF—that's it. So computers speak in 1s and 0s. Every photo, song, and text you've ever sent was converted to binary!\n\n**Fun story**: Leibniz (who co-invented calculus) was obsessed with binary in the 1700s. He saw it as mystical—creation from nothing using just 0 and 1. He even corresponded with Jesuit missionaries in China who showed him the I Ching, an ancient book that uses a binary-like system!\n\n**Cryptography connection**: When you send a secure message, it's converted to binary, mathematically scrambled, then unscrambled by the receiver. Alan Turing used binary logic to crack Nazi codes in WWII.\n\n**Want to learn more?** Petzold's *Code: The Hidden Language* explains how computers work from scratch—brilliantly accessible!",
+      "related_concepts": [
+        "computers",
+        "encryption",
+        "counting"
+      ],
+      "visualization": {
+        "viz_id": "base_conversion_svg",
+        "viz_type": "svg",
+        "title": "Base conversion steps"
+      }
+    },
+    {
+      "id": "quadratic_equation",
+      "name": "Quadratic Equations",
+      "keywords": [
+        "quadratic equation",
+        "solve quadratic",
+        "quadratic formula",
+        "quadratic",
+        "what is quadratic",
+        "discriminant",
+        "b^2 - 4ac",
+        "factor a quadratic",
+        "what is a quadratic equation?",
+        "what is a quadratic equation",
+        "how do you factor a quadratic?",
+        "how do you factor a quadratic",
+        "derive the quadratic formula",
+        "what does the discriminant tell us?",
+        "what does the discriminant tell us"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nQuadratic equations have the form ax² + bx + c = 0. Their solutions come from the quadratic formula.\n\n---\n\n🧠 **The Discriminant**\n\nThe expression **b² − 4ac** tells you what kind of solutions you get:\n• **> 0** → two real solutions\n• **= 0** → one real solution (double root)\n• **< 0** → two complex solutions\n\n---\n\n📐 **Quadratic Formula**\n\n$$x = \frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$\n\n---\n\n✨ **Why it matters**\n\nQuadratics model trajectories, areas, and optimization problems everywhere in physics and engineering.",
+      "related_concepts": [
+        "polynomials",
+        "parabola",
+        "complex numbers"
+      ],
+      "visualization": {
+        "viz_id": "parabola_plotly",
+        "viz_type": "plotly",
+        "title": "Quadratic function"
+      }
+    },
+    {
+      "id": "parabola",
+      "name": "Parabola",
+      "keywords": [
+        "parabola",
+        "graph parabola",
+        "conic section",
+        "focus",
+        "what is a parabola?",
+        "what is a parabola"
+      ],
+      "response_text": "**In plain English**: A parabola is a U-shaped curve. It's the path a thrown ball takes, the shape of satellite dishes, and what you get when you graph \\(y = x^2\\).\n\n**Why this shape is magic**: Every parabola has a \"focus\" point. Any signal (light, sound, radio) hitting the curve bounces straight to the focus. That's why satellite dishes are parabolic—they concentrate signals to one spot!\n\n**Real examples**:\n- Car headlights: Bulb at focus, light bounces out parallel\n- Satellite dishes: Signals bounce to receiver at focus\n- Whisper galleries: Parabolic ceilings let whispers travel across huge rooms\n\n**Fun legend**: Archimedes supposedly used parabolic mirrors to set Roman ships on fire by focusing sunlight! (Probably myth, but the physics would work.)\n\n**The math**: A parabola is all points equally distant from a fixed point (focus) and a line (directrix). This elegant definition leads to \\(y = ax^2\\).\n\n**NBA connection**: A basketball's arc is a parabola. The best shooters have a high arc—more margin for error at the rim!\n\n**Want to learn more?** Any physics textbook covers projectile motion, or try the 3Blue1Brown YouTube channel for visual math.",
+      "related_concepts": [
+        "quadratic",
+        "physics",
+        "optics"
+      ],
+      "visualization": {
+        "viz_id": "parabola_plotly",
+        "viz_type": "plotly",
+        "title": "Quadratic function"
+      }
+    },
+    {
+      "id": "prime_numbers",
+      "name": "Prime Numbers",
+      "keywords": [
+        "prime",
+        "primes",
+        "prime number",
+        "divisible",
+        "sieve of eratosthenes",
+        "prime sieve",
+        "twin primes",
+        "riemann hypothesis",
+        "what is a prime number?",
+        "what is a prime number",
+        "why is 1 not considered prime?",
+        "why is 1 not considered prime",
+        "prove there are infinitely many primes",
+        "what is the sieve of eratosthenes?",
+        "what is the sieve of eratosthenes",
+        "what are twin primes and the riemann hypothesis?",
+        "what are twin primes and the riemann hypothesis"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nPrime numbers are numbers greater than 1 that have no divisors except 1 and themselves.\n\n---\n\n🔍 **The Sieve of Eratosthenes**\n\nA classic method to find primes:\n1. List numbers from 2 to N\n2. Circle 2, cross out its multiples\n3. Move to the next uncrossed number (3), cross out its multiples\n4. Repeat until you’ve processed primes ≤ √N\n\n---\n\n🧩 **Twin Primes**\n\nPairs like (11, 13) or (29, 31) are **twin primes**.\nIt’s still unknown whether there are infinitely many twin primes.\n\n---\n\n🌌 **Riemann Hypothesis**\n\nThe deepest open problem about primes: it predicts how primes are distributed among the integers.\nSolving it would unlock many results in number theory.\n\n---\n\n📚 **Historical note**\n\nEuclid proved there are infinitely many primes by a simple, elegant contradiction.",
+      "related_concepts": [
+        "number theory",
+        "modular arithmetic",
+        "cryptography"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "probability",
+      "name": "Probability",
+      "keywords": [
+        "probability",
+        "chance",
+        "odds",
+        "likely",
+        "random",
+        "independent events",
+        "dependent events",
+        "theoretical probability",
+        "experimental probability",
+        "conditional probability",
+        "what is probability?",
+        "what is probability",
+        "what is the difference between theoretical and experimental probability?",
+        "what is the difference between theoretical and experimental probability",
+        "what are independent and dependent events?",
+        "what are independent and dependent events",
+        "what is conditional probability?",
+        "what is conditional probability"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nProbability measures how likely an event is, from 0 (impossible) to 1 (certain).\n\n---\n\n🎲 **Independent vs Dependent Events**\n\n• **Independent**: One event doesn’t change the other\n  Example: Two coin flips.\n• **Dependent**: The first event affects the second\n  Example: Drawing two cards without replacement.\n\nRule: P(A and B) = P(A)P(B) if independent.\n\n---\n\n📌 **Why it matters**\n\nDependence shows up in real life: disease spread, reliability, finance, and AI.",
+      "related_concepts": [
+        "statistics",
+        "bayes",
+        "combinatorics"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "percentage",
+      "name": "Percentages",
+      "keywords": [
+        "percent",
+        "percentage",
+        "per cent",
+        "out of 100"
+      ],
+      "response_text": "**In plain English**: Percent means \"out of 100.\" So 25% = 25 out of 100 = 1/4 = 0.25. They're all the same thing!\n\n**Quick conversions**:\n- To get % of something: multiply by the decimal (20% of 80 = 0.20 × 80 = 16)\n- Fraction to %: divide, then × 100 (3/4 = 0.75 = 75%)\n\n**Common trap**: A 50% increase followed by a 50% decrease does NOT get you back to the start! $100 → +50% → $150 → -50% → $75. You lost $25!\n\n**Sales trick**: \"50% more FREE!\" vs \"33% off!\" sound different but give the same deal. Marketers know most people don't do the math.\n\n**Real-world percentages**:\n- Tips: 20% of $45? Move decimal (10% = $4.50), double it ($9)\n- Sales tax: 8% of $25 = $2\n- Interest: 5% annually on $1000 = $50/year\n\n**Fun fact**: The % symbol evolved from writing \"per 100\" → \"per cento\" → \"pc\" → \"p/c\" → \"%\". The slash became the line!\n\n**Where it gets tricky**: \"Our product is 300% better!\" Better than what? By what measure? Always ask these questions!",
+      "related_concepts": [
+        "fractions",
+        "decimals",
+        "sales"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "fractions",
+      "name": "Fractions",
+      "keywords": [
+        "fraction",
+        "numerator",
+        "denominator",
+        "half",
+        "third",
+        "quarter"
+      ],
+      "response_text": "**In plain English**: A fraction is just division you haven't done yet. \\(\\frac{3}{4}\\) means 3 divided by 4, or \"3 out of 4 pieces.\"\n\n**The parts**:\n- Top number (numerator) = how many pieces you have\n- Bottom number (denominator) = how many pieces make a whole\n\n**Pizza math**: If a pizza has 8 slices and you eat 3, you ate \\(\\frac{3}{8}\\) of the pizza.\n\n**Adding fractions**: You need the same bottom number first! \\(\\frac{1}{2} + \\frac{1}{3} = \\frac{3}{6} + \\frac{2}{6} = \\frac{5}{6}\\)\n\n**Ancient fractions**: Egyptians 4,000 years ago only used fractions with 1 on top! To write \\(\\frac{2}{3}\\), they'd say \\(\\frac{1}{2} + \\frac{1}{6}\\). Weird, but it worked for dividing bread fairly.\n\n**Fun story**: The mathematician Ramanujan, a self-taught genius from India, amazed the world with his fraction work. When a colleague mentioned his taxi was #1729 (\"boring number\"), Ramanujan instantly said it was fascinating—the smallest number expressible as two different sums of cubes!\n\n**Real life**: Recipes (½ cup), time (¾ hour), measurements, music (¾ time signature).\n\n**Want to learn more?** Kanigel's *The Man Who Knew Infinity* about Ramanujan is inspiring!",
+      "related_concepts": [
+        "division",
+        "ratios",
+        "cooking"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "slope",
+      "name": "Slope",
+      "keywords": [
+        "slope",
+        "steepness",
+        "gradient",
+        "rise over run",
+        "rate of change"
+      ],
+      "response_text": "**In plain English**: Slope measures steepness. A steeper hill has a bigger slope. Flat = 0. Going up = positive. Going down = negative.\n\n**The formula**: Slope = rise ÷ run = (vertical change) ÷ (horizontal change)\n\nA ramp that rises 3 feet over 12 feet horizontal has slope = 3/12 = 0.25 = 25%.\n\n**Real examples**:\n- Road signs: \"6% grade\" means 6 feet rise per 100 feet forward\n- Wheelchair ramps: ADA requires max 1:12 slope (about 8%)\n- Ski slopes: Bunny hills ~6%, black diamonds ~40%+\n\n**Slope in life**: It's rate of change! If you save $200/month, your savings-vs-time graph has slope $200/month. COVID curves? Steep slope = fast spread.\n\n**Fun math history**: Newton and Leibniz both invented calculus (the math of slopes that change). Their priority dispute was so nasty that Newton secretly wrote a \"neutral\" report finding himself the true inventor. The feud split European math for a century!\n\n**The formula for lines**: \\(y = mx + b\\), where \\(m\\) is slope. A bigger \\(m\\) = steeper line.\n\n**Want to learn more?** Bardi's *The Calculus Wars* tells the Newton vs. Leibniz drama!",
+      "related_concepts": [
+        "lines",
+        "calculus",
+        "rates"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "average",
+      "name": "Average (Mean)",
+      "keywords": [
+        "average",
+        "mean",
+        "arithmetic mean"
+      ],
+      "response_text": "**In plain English**: Add up all the numbers, divide by how many there are. That's the average!\n\n**Example**: Test scores of 80, 90, 85, 95, 90. Average = (80+90+85+95+90)/5 = 440/5 = 88.\n\n**Why averages can lie**: If Bill Gates walks into a bar, the AVERAGE wealth skyrockets, but nobody else got richer! One extreme value skews everything.\n\n**Types of \"average\"**:\n- **Mean**: Add and divide (what most people mean by \"average\")\n- **Median**: The middle value when sorted (better for income data!)\n- **Mode**: Most frequent value (useful for \"most common shoe size\")\n\n**Real trap**: \"Average salary at our company is $200,000!\" (But the CEO makes $5 million and everyone else makes $50k. Median would be more honest.)\n\n**Sports stats**: Batting average, points per game, yards per carry—all averages.\n\n**Fun fact**: The word \"average\" comes from Arabic \"awar\" (damaged goods). Merchants used it to fairly distribute losses when cargo was damaged at sea!\n\n**When to be suspicious**: Always ask \"mean or median?\" and \"are there outliers?\"",
+      "related_concepts": [
+        "statistics",
+        "median",
+        "data"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "exponents",
+      "name": "Exponents & Powers",
+      "keywords": [
+        "exponent",
+        "power",
+        "squared",
+        "cubed",
+        "exponential",
+        "negative exponent",
+        "fractional exponent",
+        "laws of exponents",
+        "exponential growth",
+        "what is an exponent?",
+        "what is an exponent",
+        "what does a negative exponent mean?",
+        "what does a negative exponent mean",
+        "what does a fractional exponent mean?",
+        "what does a fractional exponent mean",
+        "explain the laws of exponents",
+        "what is exponential growth?",
+        "what is exponential growth"
+      ],
+      "response_text": "**In plain English**: An exponent tells you how many times to multiply a number by itself. \\(2^3 = 2 × 2 × 2 = 8\\).\n\n**Key powers**:\n- Squared (\\(n^2\\)): \\(5^2 = 25\\)\n- Cubed (\\(n^3\\)): \\(5^3 = 125\\)\n- To the zero: Anything to the 0 power = 1 (weird but true!)\n\n**The chessboard legend**: A king offered a reward. The wise man asked for 1 grain of rice on square 1, 2 on square 2, 4 on square 3, doubling each time. Total? \\(2^{64} - 1\\) grains—more rice than exists on Earth! That's exponential growth.\n\n**Real examples**:\n- Compound interest: Your money grows exponentially (that's why starting early matters!)\n- Viruses: COVID cases doubled every few days early on\n- Computer storage: Went from KB → MB → GB → TB exponentially\n\n**Cryptography connection**: Your banking security uses exponents with HUGE numbers. Computing \\(3^{12345} \\mod 67891\\) is easy; going backwards is nearly impossible. That asymmetry protects your money!\n\n**Einstein allegedly said**: \"Compound interest is the eighth wonder of the world.\"\n\n**Want to learn more?** Singh's *The Code Book* explains how exponents protect your data.",
+      "related_concepts": [
+        "growth",
+        "compound_interest",
+        "cryptography"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "logarithm",
+      "name": "Logarithms",
+      "keywords": [
+        "logarithm",
+        "logarithms",
+        "natural log",
+        "log base"
+      ],
+      "response_text": "**In plain English**: A logarithm asks \"what power gives me this number?\" If \\(2^3 = 8\\), then \\(\\log_2(8) = 3\\). It's exponents in reverse!\n\n**Why they were invented**: Before calculators, multiplying big numbers was torture. John Napier spent 20 YEARS (!) creating log tables. They let you turn multiplication into addition. Astronomers said logs \"doubled their lifespan\" by halving calculation time!\n\n**Where you see logs without knowing**:\n- **Decibels**: Sound uses log scale (10 dB increase = 10× louder)\n- **Earthquakes**: Richter scale is log (magnitude 6 is 10× stronger than 5)\n- **pH**: Acidity is logarithmic\n\n**Why these scales?**: Our senses perceive RATIOS, not differences. A 100W speaker doesn't sound twice as loud as 50W. Logs match how we actually hear/feel.\n\n**The slide rule era**: Before 1970, engineers used slide rules—physical log calculators. They put humans on the Moon with them!\n\n**Cryptography connection**: The \"discrete logarithm problem\" protects modern encryption. It's easy to compute \\(g^x\\), but finding \\(x\\) from the answer is effectively impossible for big numbers.\n\n**Want to learn more?** Havil's *John Napier* tells the story.",
+      "related_concepts": [
+        "exponents",
+        "sound",
+        "calculators"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "area",
+      "name": "Area",
+      "keywords": [
+        "area",
+        "square feet",
+        "square meters",
+        "surface area"
+      ],
+      "response_text": "**In plain English**: Area measures how much surface something covers. Think: how much paint to cover a wall, or how much carpet for a room.\n\n**Key formulas**:\n- Rectangle: length × width\n- Triangle: ½ × base × height\n- Circle: \\(\\pi r^2\\) (pi times radius squared)\n\n**Real examples**:\n- Your apartment is listed as \"800 sq ft\"—that's area\n- Pizza sizes: A 16\" pizza has 4× the area of an 8\" pizza (not 2×!)\n- Buying land: Measured in acres (1 acre ≈ a football field)\n\n**The pizza trap**: Double the diameter = 4× the pizza. So a 16\" pizza is way more food than two 8\" pizzas! (Area = π×8² = 201 vs π×4² = 50, times 2 = 100)\n\n**Fun history**: The word \"geometry\" means \"earth measurement.\" Ancient Egyptians needed to re-measure farm plots after the Nile flooded each year. Surveying land = calculating area.\n\n**Square units matter**: 1 square meter ≠ 1 meter! A 3m × 3m room is 9 square meters, not 3.\n\n**Real estate tip**: Price per square foot helps compare homes of different sizes. $500,000 for 2,000 sq ft = $250/sq ft.",
+      "related_concepts": [
+        "geometry",
+        "measurement",
+        "pizza"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "pi",
+      "name": "Pi (π)",
+      "keywords": [
+        "pi",
+        "3.14",
+        "circle constant",
+        "circumference",
+        "what is pi and where does it come from?",
+        "what is pi and where does it come from"
+      ],
+      "response_text": "**In plain English**: Pi (π ≈ 3.14159...) is the ratio of any circle's circumference to its diameter. Every circle, no matter the size, has this same ratio. It's a universal constant!\n\n**Where pi shows up**:\n- Circumference = π × diameter\n- Area of circle = π × radius²\n- Surprisingly, in probability, pendulums, and waves!\n\n**The digits go forever**: Pi never repeats and never ends. People have calculated trillions of digits, but for practical purposes, 3.14159 is plenty (NASA uses just 15 digits for interplanetary navigation!).\n\n**Pi Day**: March 14 (3/14) is celebrated by math lovers with pie-eating contests!\n\n**Fun history**: Ancient Babylonians used 3.125 for pi. Egyptians used 3.16. Archimedes (250 BC) proved it's between 3.1408 and 3.1429 by drawing polygons inside and outside circles—pure genius without calculators!\n\n**A bizarre appearance**: If you drop a needle randomly on lined paper, the probability involves pi! (Buffon's needle problem)\n\n**Record**: In 2024, pi was computed to 100 trillion digits. Why? Mostly to test supercomputers and because humans love challenges!\n\n**Want to learn more?** Beckmann's *A History of Pi* covers 4,000 years of circular obsession.",
+      "related_concepts": [
+        "circles",
+        "geometry",
+        "irrational_numbers"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "infinity",
+      "name": "Infinity",
+      "keywords": [
+        "infinity",
+        "infinite",
+        "forever",
+        "endless",
+        "cantor",
+        "continuum hypothesis",
+        "bigger infinities",
+        "cantor's diagonal argument",
+        "countable",
+        "uncountable",
+        "infinite regress",
+        "what is infinity?",
+        "what is infinity",
+        "are some infinities bigger than others?",
+        "are some infinities bigger than others",
+        "what is cantor's diagonal argument?",
+        "what is cantor's diagonal argument",
+        "what is countable vs uncountable infinity?",
+        "what is countable vs uncountable infinity",
+        "what is the continuum hypothesis?",
+        "what is the continuum hypothesis",
+        "how does carroll's 'what the tortoise said to achilles' explore infinite regress?",
+        "how does carroll's 'what the tortoise said to achilles' explore infinite regress"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nInfinity isn’t just “a huge number.” There are **different sizes of infinity**.\n\n---\n\n🔁 **Countable vs Uncountable**\n\n• Natural numbers are **countable**\n• Real numbers are **uncountable** (Cantor’s diagonal argument)\n\n---\n\n📐 **The Continuum Hypothesis**\n\nIs there an infinity size between the naturals and the reals?\n\n---\n\n♾️ **Infinite Regress**\n\nLewis Carroll’s “What the Tortoise Said to Achilles” highlights how explanations can stretch into infinity.\n\nInfinity touches set theory, logic, and the foundations of mathematics.",
+      "related_concepts": [
+        "set theory",
+        "proof",
+        "real numbers"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "equation",
+      "name": "Equations",
+      "keywords": [
+        "equation",
+        "solve",
+        "equals",
+        "unknown",
+        "variable"
+      ],
+      "response_text": "**In plain English**: An equation is a math sentence with an equals sign. It says \"these two things are the same.\" Solving means finding what number makes it true.\n\n**Simple example**: \\(x + 5 = 12\\). What's x? Whatever plus 5 gives 12... it's 7!\n\n**The key insight**: You can do ANYTHING to an equation as long as you do it to both sides. It stays balanced, like a scale.\n\n**Types**:\n- Linear: \\(2x + 3 = 11\\) (one answer: x = 4)\n- Quadratic: \\(x^2 = 9\\) (two answers: x = 3 or -3)\n- No solution: \\(x + 1 = x + 2\\) (impossible!)\n\n**Real-world equations**:\n- Distance = speed × time\n- Ohm's law: V = IR (voltage = current × resistance)\n- Einstein: E = mc² (energy = mass × speed of light squared)\n\n**Fun history**: The equals sign (=) was invented in 1557 by Robert Recorde, who was tired of writing \"is equal to.\" He chose parallel lines because \"no two things can be more equal.\"\n\n**Why they matter**: Every scientific law, every engineering formula, every economic model is an equation. They're the language of how the universe works!",
+      "related_concepts": [
+        "algebra",
+        "balance",
+        "unknowns"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "cryptography",
+      "name": "Cryptography & Codes",
+      "keywords": [
+        "cryptography",
+        "encryption",
+        "cipher",
+        "code",
+        "secret",
+        "rsa",
+        "encrypt",
+        "public key cryptography",
+        "hash function",
+        "how does math relate to encryption?",
+        "how does math relate to encryption",
+        "what is rsa encryption?",
+        "what is rsa encryption",
+        "why are prime numbers important for cryptography?",
+        "why are prime numbers important for cryptography",
+        "what is public key cryptography?",
+        "what is public key cryptography",
+        "what is a hash function?",
+        "what is a hash function"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nCryptography uses math to keep information secret and verifiable.\n\n---\n\n🔑 **Public Key Cryptography**\n\nYou have a public key (shared) and a private key (secret).\n\n---\n\n🔒 **RSA**\n\nSecurity comes from the difficulty of factoring large numbers.\n\n---\n\n#️⃣ **Hash Functions**\n\nTurn data into a fixed‑size fingerprint. Small changes in input create huge changes in output.\n\n---\n\nPrime numbers and modular arithmetic are the backbone of modern encryption.",
+      "related_concepts": [
+        "primes",
+        "security",
+        "computers"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "modular_arithmetic",
+      "name": "Modular Arithmetic (Clock Math)",
+      "keywords": [
+        "modular",
+        "mod",
+        "clock arithmetic",
+        "remainder",
+        "what is modular arithmetic?",
+        "what is modular arithmetic"
+      ],
+      "response_text": "**In plain English**: Modular arithmetic is \"clock math.\" On a 12-hour clock, after 11 comes 12, then back to 1. In math terms: 13 o'clock = 1 o'clock, or \\(13 \\mod 12 = 1\\).\n\n**The notation**: \\(17 \\mod 5 = 2\\) means 17 ÷ 5 has remainder 2.\n\n**Where you already use it**:\n- Clocks (12 or 24 hour)\n- Days of the week (every 7 days repeats)\n- Months (every 12)\n\n**Cryptography connection**: This is THE foundation of internet security!\n- Caesar cipher: shift letters by 3 (mod 26)\n- RSA encryption: uses giant numbers mod other giant numbers\n- Your credit card check digit uses mod 10\n\n**Fun history**: In WWII, the Enigma machine used modular arithmetic with rotating wheels. Breaking it required understanding how mod operations chain together. Polish and British codebreakers saved countless lives!\n\n**Error detection**: ISBN book codes, credit cards, and UPC barcodes all use mod arithmetic to catch typos. That's why a wrong digit is usually rejected!\n\n**The genius insight**: Gauss (age 24!) used mod arithmetic to prove you can construct a 17-sided polygon with compass and straightedge—a 2,000-year-old mystery solved!\n\n**Want to learn more?** Singh's *The Code Book*, chapters 2-3, covers this beautifully.",
+      "related_concepts": [
+        "clocks",
+        "encryption",
+        "remainders"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "graph",
+      "name": "Graphs & Plotting",
+      "keywords": [
+        "graph",
+        "plot",
+        "x-axis",
+        "y-axis",
+        "coordinate",
+        "chart"
+      ],
+      "response_text": "**In plain English**: A graph turns numbers into pictures. The horizontal line is x (left-right), vertical is y (up-down). Each point shows how two things relate.\n\n**Why graphs are powerful**: Humans are visual. A table of 1,000 numbers is meaningless; a graph of the same data shows patterns instantly.\n\n**Common graph types**:\n- **Line graph**: Shows change over time (stock prices, temperature)\n- **Bar chart**: Compares categories (sales by region)\n- **Scatter plot**: Shows if two things are related (height vs. weight)\n- **Pie chart**: Shows parts of a whole (budget breakdown)\n\n**The origin**: The point (0,0) where axes meet is called the origin. René Descartes invented coordinate graphing in the 1600s—supposedly while watching a fly on his ceiling and wondering how to describe its position!\n\n**Reading graphs critically**:\n- Check if y-axis starts at zero (truncating exaggerates changes)\n- Look at the scale (logarithmic vs. linear)\n- Ask what's NOT shown\n\n**Fun fact**: \"Chartjunk\" is the term for unnecessary decoration that makes graphs harder to read. Edward Tufte's books on data visualization are legendary.\n\n**Real examples**: COVID curves, election polls, stock charts, weather forecasts—all graphs!",
+      "related_concepts": [
+        "coordinates",
+        "data",
+        "visualization"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "ratio",
+      "name": "Ratios & Proportions",
+      "keywords": [
+        "ratio",
+        "proportion",
+        "scale",
+        "compared to"
+      ],
+      "response_text": "**In plain English**: A ratio compares two numbers. \"3 to 2\" (written 3:2) means for every 3 of one thing, there are 2 of another.\n\n**Real examples**:\n- Recipe: 2 cups flour to 1 cup sugar (2:1 ratio)\n- Map scale: 1 inch = 10 miles (1:633,600 in reality!)\n- Aspect ratio: Your TV is 16:9 (width to height)\n\n**Proportions**: When two ratios are equal. If 2 pizzas feed 6 people, how many for 15 people? Set up: 2/6 = x/15, solve: x = 5 pizzas.\n\n**The Golden Ratio** (≈1.618): Found in art, architecture, and nature. The Parthenon, Mona Lisa, and spiral shells all feature it. Whether it's \"naturally beautiful\" is debated, but it's mathematically fascinating!\n\n**Gear ratios**: Your bike's gears use ratios. A 3:1 ratio means pedaling once turns the wheel 3 times—more speed, more effort.\n\n**Fun fact**: The term \"ratio\" comes from Latin \"ratus\" (to reckon or calculate). The ancient Greeks were obsessed with ratios—they called numbers that COULDN'T be expressed as ratios \"irrational\" (literally \"without ratio\")!\n\n**Scale models**: A 1:24 scale model car is 24× smaller than the real thing in every dimension.",
+      "related_concepts": [
+        "fractions",
+        "scaling",
+        "cooking"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "complex_numbers",
+      "name": "Imaginary & Complex Numbers",
+      "keywords": [
+        "imaginary number",
+        "complex number",
+        "square root of negative",
+        "square root of -1",
+        "complex plane",
+        "imaginary unit",
+        "i",
+        "what is an imaginary number?",
+        "what is an imaginary number",
+        "why was the square root of -1 invented?",
+        "why was the square root of -1 invented",
+        "how do you add and multiply complex numbers?",
+        "how do you add and multiply complex numbers",
+        "what is the complex plane?",
+        "what is the complex plane",
+        "what is euler's formula e^(iπ) + 1 = 0?",
+        "what is euler's formula e^(iπ) + 1 = 0"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nComplex numbers extend real numbers by introducing **i**, where i² = −1. This lets us solve equations like x² + 1 = 0.\n\n---\n\n🧠 **Why invent √−1?**\n\nSome equations have no real solutions. By defining i, we can solve *all* polynomial equations.\n\nExample: x² + 1 = 0 → x = ±i\n\n---\n\n🗺️ **The Complex Plane**\n\nComplex numbers look like **a + bi** and live on a plane:\n• Horizontal axis = real part (a)\n• Vertical axis = imaginary part (b)\n\nSo 3 + 2i is the point (3, 2).\n\n---\n\n⚡ **Why it matters**\n\n• Electrical engineering (AC circuits)\n• Signal processing\n• Quantum mechanics\n\nComplex numbers feel “imaginary,” but they describe real-world waves beautifully.",
+      "related_concepts": [
+        "real numbers",
+        "polynomials",
+        "euler"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "derivative",
+      "name": "Derivatives (Calculus)",
+      "keywords": [
+        "derivative",
+        "calculus",
+        "rate of change",
+        "differentiation",
+        "maxima",
+        "minima",
+        "optimization",
+        "chain rule",
+        "derivative rules",
+        "velocity",
+        "what is a derivative?",
+        "what is a derivative",
+        "what does the derivative represent physically?",
+        "what does the derivative represent physically",
+        "what are the basic derivative rules?",
+        "what are the basic derivative rules",
+        "what is the chain rule?",
+        "what is the chain rule",
+        "how do you find maxima and minima?",
+        "how do you find maxima and minima"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA derivative measures how fast something changes at an instant—its slope.\n\n---\n\n📈 **Physical Meaning**\n\nPosition → derivative is **velocity**. Velocity → derivative is **acceleration**.\n\n---\n\n🧰 **Basic Rules**\n\n• (x^n)' = n x^{n-1}\n• (f + g)' = f' + g'\n• (fg)' = f'g + fg'\n\n**Chain Rule**: (f(g(x)))' = f'(g(x))·g'(x)\n\n---\n\n🎯 **Maxima & Minima**\n\nAt a highest or lowest point, the slope is zero (f'(x)=0).\n\n---\n\n⚡ **Applications**\n\nOptimization, physics, economics, and machine learning.",
+      "related_concepts": [
+        "limits",
+        "optimization",
+        "integrals"
+      ],
+      "visualization": {
+        "viz_id": "manim_derivative_slope",
+        "viz_type": "manim",
+        "title": "Derivative as slope (Manim)",
+        "data": {
+          "scene_name": "DerivativeAsSlope",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "integral",
+      "name": "Integrals (Calculus)",
+      "keywords": [
+        "integral",
+        "integration",
+        "area under curve",
+        "calculus",
+        "area under a curve",
+        "integration by substitution",
+        "integration by parts",
+        "what is an integral?",
+        "what is an integral",
+        "what is the relationship between derivatives and integrals?",
+        "what is the relationship between derivatives and integrals",
+        "how do you find area under a curve?",
+        "how do you find area under a curve",
+        "what is integration by substitution?",
+        "what is integration by substitution",
+        "what is integration by parts?",
+        "what is integration by parts"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nAn integral adds up infinitely many tiny pieces—like total area under a curve.\n\n---\n\n🔁 **Fundamental Theorem of Calculus**\n\nIntegration and differentiation are opposites. If F' = f, then:\n$$\\int_a^b f(x)\\,dx = F(b) - F(a)$$\n\n---\n\n🧮 **Techniques**\n\n• **Substitution**: undo the chain rule\n• **Integration by parts**: \\(\\int u\\,dv = uv - \\int v\\,du\\)\n\n---\n\n🎯 **Applications**\n\nAreas, volumes, work, probability, and signals.",
+      "related_concepts": [
+        "calculus",
+        "area",
+        "accumulation"
+      ],
+      "visualization": {
+        "viz_id": "manim_integral_area",
+        "viz_type": "manim",
+        "title": "Integral as area (Manim)",
+        "data": {
+          "scene_name": "IntegralAsArea",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "inverse_function",
+      "name": "Inverse Functions",
+      "keywords": [
+        "inverse function",
+        "inverse",
+        "undo",
+        "reverse function",
+        "what is an inverse function?",
+        "what is an inverse function"
+      ],
+      "response_text": "**In plain English**: An inverse function \"undoes\" what the original function did. If f(x) turns 2 into 5, then the inverse f⁻¹(x) turns 5 back into 2.\n\n**Simple examples**:\n- f(x) = x + 3 adds 3 → inverse f⁻¹(x) = x - 3 subtracts 3\n- f(x) = 2x doubles → inverse f⁻¹(x) = x/2 halves\n- f(x) = x² squares → inverse f⁻¹(x) = √x takes square root (with restrictions!)\n\n**Real-world analogy**: Think of a cipher. Encoding a message is like f(x). Decoding is f⁻¹(x). You need both to communicate!\n\n**How to find an inverse**:\n1. Write y = f(x)\n2. Swap x and y\n3. Solve for y\n4. That's f⁻¹(x)!\n\n**Not all functions have inverses!** A function must be \"one-to-one\" (each output from exactly one input). f(x) = x² fails because both 3 and -3 give 9—so from 9, which do we go back to?\n\n**The graph trick**: The inverse is the original reflected over the line y = x. They're mirror images!\n\n**Common inverses**:\n- Addition ↔ Subtraction\n- Multiplication ↔ Division\n- Exponentials ↔ Logarithms\n- Sine ↔ Arcsine\n\n**Why it matters**: Solving equations is finding inverses! To solve 2x + 3 = 11, you apply inverse operations: subtract 3, then divide by 2.",
+      "related_concepts": [
+        "functions",
+        "algebra",
+        "solving"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "function",
+      "name": "Functions",
+      "keywords": [
+        "function",
+        "input output",
+        "mapping",
+        "f of x",
+        "domain",
+        "range",
+        "domain and range",
+        "one-to-one",
+        "function composition",
+        "what is a function?",
+        "what is a function",
+        "what is domain and range?",
+        "what is domain and range",
+        "what makes a function one-to-one?",
+        "what makes a function one-to-one",
+        "what is function composition?",
+        "what is function composition"
+      ],
+      "response_text": "**In plain English**: A function is a machine: you put something in, you get something out. Every input gives exactly ONE output. That's the only rule!\n\n**Examples**:\n- f(x) = x² : Put in 3, get out 9. Put in -3, also get 9.\n- \"Your age\" is a function of \"today's date\"\n- Temperature(city) gives the current temp for any city\n\n**The notation**: f(x) means \"the function f applied to x.\" The x is just a placeholder—we could use any letter!\n\n**Domain & Range**:\n- Domain = all possible inputs (what you CAN put in)\n- Range = all possible outputs (what you CAN get out)\n\nFor f(x) = √x, domain is x ≥ 0 (can't take √ of negatives), range is y ≥ 0.\n\n**What's NOT a function?** If one input gives multiple outputs, it fails! A circle equation gives two y-values for most x-values, so it's not a function.\n\n**Real-world functions everywhere**:\n- GPS: coordinates → location name\n- Vending machines: button → product (assuming no malfunctions!)\n- Conversion: Celsius → Fahrenheit\n\n**Fun history**: The word \"function\" was introduced by Leibniz in 1673. The modern notation f(x) was popularized by Euler in the 1700s.\n\n**Why functions matter**: They let us describe relationships precisely. Physics, economics, computer science—all built on functions!",
+      "related_concepts": [
+        "algebra",
+        "graphs",
+        "equations"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "set_theory",
+      "name": "Sets",
+      "keywords": [
+        "set",
+        "sets",
+        "union",
+        "intersection",
+        "venn diagram",
+        "element",
+        "subset",
+        "empty set",
+        "proper subset",
+        "venn diagrams",
+        "what is a set in mathematics?",
+        "what is a set in mathematics",
+        "explain union and intersection of sets",
+        "what is the empty set and why is it important?",
+        "what is the empty set and why is it important",
+        "how do venn diagrams represent set operations?",
+        "how do venn diagrams represent set operations",
+        "what is the difference between subsets and proper subsets?",
+        "what is the difference between subsets and proper subsets"
+      ],
+      "response_text": "**In plain English**: A set is just a collection of things. The set of even numbers. The set of fruits. The set of people in this room. That's it!\n\n**Notation**:\n- {1, 2, 3} is a set containing 1, 2, and 3\n- ∈ means \"is in\" (5 ∈ {1, 3, 5} = \"5 is in the set\")\n- ∅ is the empty set (contains nothing)\n\n**Set operations**:\n- **Union (∪)**: Everything in either set. {1,2} ∪ {2,3} = {1,2,3}\n- **Intersection (∩)**: Only things in BOTH sets. {1,2} ∩ {2,3} = {2}\n- **Complement**: Everything NOT in the set\n\n**Venn diagrams**: Those overlapping circles! The overlap is intersection, the whole thing is union.\n\n**Mind-bending fact**: The set of all sets that don't contain themselves... does it contain itself? (If yes, it shouldn't. If no, it should!) This is Russell's Paradox, which almost broke mathematics in 1901.\n\n**Fun history**: Cantor invented set theory in the 1870s-80s and was viciously attacked by other mathematicians who thought his ideas about infinity were \"a grave disease\" infecting mathematics. He died in a mental asylum. Today, set theory is the foundation of ALL modern math!\n\n**Real use**: Database queries use set theory (UNION, INTERSECT). Every SQL query is secretly set operations!",
+      "related_concepts": [
+        "logic",
+        "databases",
+        "infinity"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "matrices",
+      "name": "Matrices",
+      "keywords": [
+        "matrix",
+        "matrices",
+        "linear algebra",
+        "array",
+        "matrix multiplication",
+        "determinant",
+        "inverse of a matrix",
+        "linear transformations",
+        "what is a matrix?",
+        "what is a matrix",
+        "how do you multiply matrices?",
+        "how do you multiply matrices",
+        "what is the determinant of a matrix?",
+        "what is the determinant of a matrix",
+        "what is the inverse of a matrix?",
+        "what is the inverse of a matrix",
+        "how do matrices represent linear transformations?",
+        "how do matrices represent linear transformations",
+        "determinants",
+        "determinents"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA matrix is a grid of numbers that represents a linear transformation.\n\n---\n\n✖️ **Matrix Multiplication**\n\nCombines transformations. Order matters: AB ≠ BA.\n\n---\n\n🔍 **Determinant**\n\nThe determinant measures **volume scaling** and whether a matrix is invertible.\n• det(A) = 0 → not invertible (squashes space)\n• det(A) < 0 → flips orientation\n\n---\n\n↩️ **Inverse**\n\nIf A has an inverse, then A^{-1}A = I. It “undoes” the transformation.\n\n---\n\n🎯 **Why it matters**\n\nMatrices solve systems, rotate graphics, and power neural networks.",
+      "related_concepts": [
+        "linear_algebra",
+        "graphics",
+        "ai"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "vectors",
+      "name": "Vectors",
+      "keywords": [
+        "vector",
+        "vectors",
+        "direction",
+        "magnitude",
+        "vector space",
+        "dot product",
+        "cross product",
+        "vector magnitude",
+        "what is a vector?",
+        "what is a vector",
+        "how do you add and subtract vectors?",
+        "how do you add and subtract vectors",
+        "what is the dot product?",
+        "what is the dot product",
+        "what is the cross product?",
+        "what is the cross product",
+        "what is vector magnitude and direction?",
+        "what is vector magnitude and direction"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA vector is a quantity with both magnitude and direction, like velocity or force.\n\n---\n\n➕ **Addition & Subtraction**\n\nAdd tip‑to‑tail or component‑wise.\n\n---\n\n• **Dot product**: a·b = |a||b|cosθ (measures alignment)\n• **Cross product**: a×b gives a vector perpendicular to both (3D)\n\n---\n\n📐 **Magnitude**\n\n|v| = √(v₁² + v₂² + v₃²)\n\nVectors power physics, graphics, and machine learning.",
+      "related_concepts": [
+        "physics",
+        "ai",
+        "coordinates"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "trigonometry",
+      "name": "Trigonometry",
+      "keywords": [
+        "trigonometry",
+        "sine",
+        "cosine",
+        "tangent",
+        "trig",
+        "sin",
+        "cos",
+        "tan",
+        "angle",
+        "soh-cah-toa",
+        "soh cah toa",
+        "amplitude",
+        "period",
+        "phase shift",
+        "sine wave",
+        "cosine wave",
+        "unit circle",
+        "special angles",
+        "secant",
+        "cosecant",
+        "cotangent",
+        "inverse trig functions",
+        "trigonometric equations",
+        "graph of sine",
+        "what are sine, cosine, and tangent?",
+        "what are sine, cosine, and tangent",
+        "how do you remember soh-cah-toa?",
+        "how do you remember soh-cah-toa",
+        "what is the unit circle?",
+        "what is the unit circle",
+        "what are the special angles (30°, 45°, 60°)?",
+        "what are the special angles (30°, 45°, 60°)",
+        "what are secant, cosecant, and cotangent?",
+        "what are secant, cosecant, and cotangent",
+        "what does the graph of sine look like?",
+        "what does the graph of sine look like",
+        "what is amplitude, period, and phase shift?",
+        "what is amplitude, period, and phase shift",
+        "how are sine and cosine related?",
+        "how are sine and cosine related",
+        "what are inverse trig functions?",
+        "what are inverse trig functions",
+        "how do you solve trigonometric equations?",
+        "how do you solve trigonometric equations"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nTrigonometry connects angles to side lengths in triangles—and also describes waves and cycles.\n\n---\n\n📐 **SOH-CAH-TOA (Right Triangles)**\n\nFor a right triangle with angle θ:\n• **sin θ = opposite / hypotenuse**\n• **cos θ = adjacent / hypotenuse**\n• **tan θ = opposite / adjacent**\n\nThat’s **SOH-CAH-TOA**.\n\n---\n\n📊 **Trig Functions as Waves**\n\nSine and cosine are smooth, repeating waves:\n• **Amplitude**: height of the wave (max value)\n• **Period**: length of one full cycle\n• **Phase shift**: horizontal shift left or right\n\nExample: y = 2 sin(3x − π) has amplitude 2, period 2π/3, and shifts right by π/3.\n\n---\n\n🎯 **Why it matters**\n\n• Sound waves, light waves, tides\n• Rotations and circular motion\n• Signals and Fourier analysis\n\nTrigonometry is the math of everything periodic.",
+      "related_concepts": [
+        "angles",
+        "trig identities",
+        "functions"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "limit",
+      "name": "Limits",
+      "keywords": [
+        "limit",
+        "approaches",
+        "tends to",
+        "converge",
+        "continuity",
+        "continuous",
+        "l'hôpital",
+        "lhopital",
+        "limits at infinity",
+        "what is a limit?",
+        "what is a limit",
+        "how do you evaluate limits?",
+        "how do you evaluate limits",
+        "what is continuity?",
+        "what is continuity",
+        "what is l'hôpital's rule?",
+        "what is l'hôpital's rule",
+        "what are limits at infinity?",
+        "what are limits at infinity"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA limit describes what a function approaches as the input gets closer to some value.\n\n---\n\n📌 **Continuity**\n\nA function is **continuous** at a point if the limit exists, the function is defined, and both values match.\n\n---\n\n⚡ **L'Hôpital's Rule**\n\nIf you get 0/0 or ∞/∞, differentiate top and bottom:\n$$\\lim_{x\to a} \frac{f(x)}{g(x)} = \\lim_{x\to a} \frac{f'(x)}{g'(x)}$$\n\n---\n\n🌌 **Limits at Infinity**\n\nUsed to find horizontal asymptotes and end behavior.\n\n---\n\n📌 **Why it matters**\n\nLimits define derivatives and integrals—the foundation of calculus.",
+      "related_concepts": [
+        "derivative",
+        "integral",
+        "continuity"
+      ],
+      "visualization": {
+        "viz_id": "manim_limit_concept",
+        "viz_type": "manim",
+        "title": "Limit concept (Manim)",
+        "data": {
+          "scene_name": "LimitConcept",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "curve_fitting",
+      "name": "Curve Fitting",
+      "keywords": [
+        "curve fitting",
+        "fit a curve",
+        "least squares",
+        "regression line",
+        "best fit"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nCurve fitting finds a function (a line, parabola, etc.) that **best matches a set of data points**.\n\n---\n\n🎯 **Why We Do It**\n\nReal data is messy. Curve fitting helps us:\n• Describe trends\n• Make predictions\n• Smooth out noise\n\n---\n\n📐 **The Simplest Case: Best-Fit Line**\n\nA line looks like: \\(y = mx + b\\)\n\nWe choose **m** and **b** to make the line as close as possible to all points.\n\n---\n\n🔍 **Least Squares Idea**\n\nFor each data point, measure the vertical error (residual):\n\n\\(\\text{error}_i = y_i - \\hat{y}_i\\)\n\nThen minimize the **sum of squared errors**:\n\n\\(\\sum (y_i - \\hat{y}_i)^2\\)\n\nSquaring makes all errors positive and penalizes big mistakes.\n\n---\n\n📈 **Common Fits**\n\n• **Linear**: straight line\n• **Quadratic**: parabola\n• **Exponential**: growth/decay\n• **Sinusoidal**: waves\n\n---\n\n⚡ **Where You'll See It**\n\n• 📊 Trend lines in charts\n• 🧪 Lab experiments\n• 💹 Forecasting sales\n• 🛰️ Sensor data smoothing\n\n---\n\n📖 **Quick Intuition**\n\nCurve fitting is like drawing the **best smooth path** through a noisy trail of dots.\n\nTry it: plot your daily steps and fit a line—are you trending up?",
+      "related_concepts": [
+        "polynomials",
+        "statistics",
+        "regression"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "polynomial_operations",
+      "name": "Adding & Multiplying Polynomials",
+      "keywords": [
+        "add polynomials",
+        "multiply polynomials",
+        "polynomial multiplication",
+        "polynomial addition",
+        "add and multiply polynomials",
+        "polynomial long division",
+        "long division of polynomials",
+        "divide polynomials",
+        "polynomial division",
+        "how do you add and multiply polynomials?",
+        "how do you add and multiply polynomials",
+        "what is polynomial long division?",
+        "what is polynomial long division"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nPolynomial long division is the same idea as numeric long division: divide leading terms, multiply, subtract, and repeat.\n\n---\n\n🧮 **Worked Example**\n\nDivide **(2x³ + 3x² − 5x + 6)** by **(x − 2)**.\n\n**Step 1: Divide leading terms**\n2x³ ÷ x = 2x² → this is the first term of the quotient.\n\n**Step 2: Multiply back**\n2x²(x − 2) = 2x³ − 4x²\n\n**Step 3: Subtract**\n(2x³ + 3x² − 5x + 6) − (2x³ − 4x²) = 7x² − 5x + 6\n\n**Step 4: Repeat**\n7x² ÷ x = 7x\n7x(x − 2) = 7x² − 14x\nSubtract: (7x² − 5x + 6) − (7x² − 14x) = 9x + 6\n\n**Step 5: Repeat again**\n9x ÷ x = 9\n9(x − 2) = 9x − 18\nSubtract: (9x + 6) − (9x − 18) = 24\n\nSo the result is:\n$$2x^2 + 7x + 9 + \frac{24}{x - 2}$$\n\n---\n\n📌 **Quick Checklist**\n• Arrange terms by descending degree\n• Divide leading terms\n• Multiply, subtract, bring down\n• Stop when the remainder degree is smaller than the divisor\n\n---\n\n✨ **Why it matters**\n\nPolynomial division is used in partial fractions, asymptotes, and simplifying rational expressions.",
+      "related_concepts": [
+        "polynomials",
+        "division",
+        "rational expressions"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "polynomial",
+      "name": "Polynomials",
+      "keywords": [
+        "polynomial",
+        "degree",
+        "coefficient",
+        "term",
+        "galois",
+        "degree of a polynomial",
+        "fundamental theorem of algebra",
+        "what is a polynomial?",
+        "what is a polynomial",
+        "what is the degree of a polynomial?",
+        "what is the degree of a polynomial",
+        "what is the fundamental theorem of algebra?",
+        "what is the fundamental theorem of algebra"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA polynomial is a sum of terms of the form **a·x^n** where n is a non‑negative integer.\n\nExample: 3x² + 2x − 5\n\n---\n\n📐 **Degree**\n\nThe **degree** is the highest power of x:\n• 3x² + 2x − 5 has degree 2\n• 7x⁴ − x + 1 has degree 4\n\n---\n\n🔑 **Fundamental Theorem of Algebra**\n\nEvery non‑constant polynomial has at least one complex root.\nSo a degree‑n polynomial has exactly n roots (counting multiplicity).\n\n---\n\n🎯 **Why it matters**\n\nPolynomials model curves, physics, and optimization—and their roots describe where a function crosses zero.",
+      "related_concepts": [
+        "algebra",
+        "equations",
+        "roots"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "statistics",
+      "name": "Statistics",
+      "keywords": [
+        "statistics",
+        "mean",
+        "median",
+        "standard deviation",
+        "data",
+        "correlation vs causation",
+        "hypothesis testing",
+        "p-value",
+        "mean median mode",
+        "normal distribution",
+        "what is mean, median, and mode?",
+        "what is mean, median, and mode",
+        "what is standard deviation?",
+        "what is standard deviation",
+        "what is a normal distribution?",
+        "what is a normal distribution",
+        "what is correlation vs causation?",
+        "what is correlation vs causation",
+        "what is hypothesis testing?",
+        "what is hypothesis testing"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nStatistics turns data into summaries and decisions under uncertainty.\n\n---\n\n📊 **Mean, Median, Mode**\n\n• **Mean**: average\n• **Median**: middle value\n• **Mode**: most frequent\n\n---\n\n📏 **Standard Deviation**\n\nMeasures how spread out data is around the mean.\n\n---\n\n🔔 **Normal Distribution**\n\nThe classic bell curve; many real‑world measurements cluster around a mean.\n\n---\n\n🔗 **Correlation vs Causation**\n\nCorrelation does not prove cause.\n\n---\n\n🧪 **Hypothesis Testing**\n\nUse p‑values to judge how surprising data is under a null hypothesis.",
+      "related_concepts": [
+        "probability",
+        "average",
+        "data"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "proof",
+      "name": "Mathematical Proof",
+      "keywords": [
+        "mathematical proof",
+        "how to prove",
+        "proof technique",
+        "proof method",
+        "qed",
+        "how do you write a mathematical proof?",
+        "how do you write a mathematical proof"
+      ],
+      "response_text": "**In plain English**: A proof is an airtight argument that something MUST be true. Not \"probably true\" or \"true in all cases we checked\"—but absolutely, logically certain.\n\n**Why proofs matter**: Science does experiments. Math does proofs. A proven theorem is TRUE forever—no experiment can disprove it!\n\n**Types of proof**:\n- **Direct**: Start with what you know, deduce the result step by step\n- **Contradiction**: Assume the opposite is true, show that leads to nonsense\n- **Induction**: Prove it for 1, then prove \"if true for n, true for n+1.\" Dominoes!\n\n**Simple proof example** (infinitely many primes):\n1. Assume there are finitely many primes: p₁, p₂, ..., pₙ\n2. Multiply them all and add 1: N = p₁×p₂×...×pₙ + 1\n3. N isn't divisible by any of our primes (always remainder 1)\n4. So N is either prime or has a prime factor not in our list\n5. Contradiction! There must be infinitely many primes. QED.\n\n**Fun history**: QED stands for \"quod erat demonstrandum\" (Latin: \"what was to be demonstrated\"). It's like a mathematician's mic drop!\n\n**Famous proofs**:\n- Fermat's Last Theorem: 350 years to prove (Andrew Wiles, 1995)\n- Four Color Theorem: First proof using computers (controversial!)\n\n**The joy**: Proofs give certainty in an uncertain world. Mathematics is the one place where we can KNOW something is absolutely true.",
+      "related_concepts": [
+        "logic",
+        "axioms",
+        "certainty"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "symmetry",
+      "name": "Symmetry",
+      "keywords": [
+        "symmetry",
+        "symmetric",
+        "reflection",
+        "rotation",
+        "group",
+        "through the looking glass",
+        "mirror symmetry"
+      ],
+      "response_text": "**In plain English**: Symmetry means something looks the same after a transformation. A butterfly has mirror symmetry. A snowflake has rotational symmetry (rotate 60° and it looks identical).\n\n**Types of symmetry**:\n- **Reflection**: Mirror image (butterfly wings, human face)\n- **Rotation**: Turn it and it looks the same (starfish, logos)\n- **Translation**: Shift it and it repeats (wallpaper patterns)\n\n**Why symmetry matters in physics**:\n- Every symmetry implies a conservation law! (Noether's theorem)\n- Space symmetry → conservation of momentum\n- Time symmetry → conservation of energy\n- This is one of the deepest ideas in physics!\n\n**Group theory**: Mathematicians study symmetry through \"groups\"—collections of transformations. A square's symmetry group has 8 elements (4 rotations, 4 reflections).\n\n**Fun history**: Évariste Galois invented group theory at age 18-20 while investigating which polynomial equations can be solved by formulas. He died in a duel at 20, leaving notes written the night before that took decades to understand. His work revolutionized algebra!\n\n**Beauty and symmetry**: Psychologists find that humans rate symmetric faces as more attractive. Nature favors symmetry for good evolutionary reasons!\n\n**Symmetry breaking**: The Higgs boson comes from symmetry breaking! Particles get mass when a perfect symmetry is broken.",
+      "related_concepts": [
+        "geometry",
+        "physics",
+        "art"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "sequence",
+      "name": "Sequences & Series",
+      "keywords": [
+        "sequence",
+        "series",
+        "pattern",
+        "fibonacci",
+        "arithmetic series",
+        "geometric series",
+        "gauss sum 1 to 100",
+        "sum of numbers",
+        "oulipo",
+        "convergence of a series",
+        "sequence vs series",
+        "geometric sequence",
+        "arithmetic sequence",
+        "fibonacci sequence",
+        "what is a sequence vs a series?",
+        "what is a sequence vs a series",
+        "what is the fibonacci sequence?",
+        "what is the fibonacci sequence",
+        "what is an arithmetic sequence?",
+        "what is an arithmetic sequence",
+        "what is a geometric sequence?",
+        "what is a geometric sequence",
+        "what is convergence of a series?",
+        "what is convergence of a series",
+        "how do poets use fibonacci numbers in verse structure?",
+        "how do poets use fibonacci numbers in verse structure",
+        "what mathematical patterns appear in sonnets and haiku?",
+        "what mathematical patterns appear in sonnets and haiku",
+        "how does oulipo literature use mathematical constraints creatively?",
+        "how does oulipo literature use mathematical constraints creatively"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA sequence is a list of numbers following a pattern. A series is what you get when you add them up.\n\n---\n\n📖 **The Story of Young Gauss** (c. 1786)\n\nWhen Carl Friedrich Gauss was about 10, his teacher assigned busy-work: “Add all numbers from 1 to 100.” While classmates laboriously added, Gauss wrote ONE number and sat back: **5050**.\n\n**How did he do it?** He paired numbers:\n• 1 + 100 = 101\n• 2 + 99 = 101\n• 3 + 98 = 101\n• ...50 pairs, each = 101\n\nSo: **50 × 101 = 5050** ✓\n\nThis insight became the formula:\n\n$$S = \\frac{n(a_1 + a_n)}{2}$$\n\n---\n\n📐 **Types of Sequences**\n\n| Type | Example | Pattern |\n|------|---------|--------|\n| **Arithmetic** | 2, 5, 8, 11... | Add 3 each time |\n| **Geometric** | 2, 6, 18, 54... | Multiply by 3 |\n| **Fibonacci** | 1, 1, 2, 3, 5, 8... | Add previous two |\n\n---\n\n📚 **Oulipo & Literary Constraints**\n\nWriters in the Oulipo movement used mathematical patterns as creative rules—like avoiding certain letters or using structured sequences. It’s a literary version of building a sequence with constraints.\n\n---\n\n🌻 **Fibonacci in Nature**\n\n• Flower petals: lilies=3, buttercups=5, daisies=34\n• Pinecone spirals: 8 one way, 13 the other\n• Consecutive ratios → Golden Ratio (1.618...)",
+      "related_concepts": [
+        "patterns",
+        "infinity",
+        "literature"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "natural_numbers",
+      "name": "Natural Numbers",
+      "keywords": [
+        "natural numbers",
+        "counting numbers",
+        "whole numbers",
+        "counting",
+        "place value",
+        "positional notation",
+        "fundamental theorem of arithmetic",
+        "what are natural numbers?",
+        "what are natural numbers",
+        "how do we count and why does it work?",
+        "how do we count and why does it work",
+        "what is peano's axioms for natural numbers?",
+        "what is peano's axioms for natural numbers",
+        "explain place value and positional notation",
+        "what is the fundamental theorem of arithmetic?",
+        "what is the fundamental theorem of arithmetic"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nNatural numbers are the counting numbers: 1, 2, 3, 4, 5... They are the first numbers we meet, built directly from counting.\n\n---\n\n🔢 **Counting and Why It Works**\n\nCounting assumes two simple rules:\n• Every number has a next number (successor)\n• Counting order doesn’t change the total (5 apples is always 5 apples)\n\nThese ideas are formalized by the **Peano axioms**, which build all natural numbers from a starting point (0 or 1, depending on convention).\n\n---\n\n🏗️ **Place Value & Positional Notation**\n\nOur base-10 system uses position to encode value:\n• 3,472 = 3×1000 + 4×100 + 7×10 + 2\n• The same idea works in any base (binary, base-12, base-60)\n\nThis positional system is why arithmetic algorithms work so efficiently.\n\n---\n\n🔑 **Fundamental Theorem of Arithmetic**\n\nEvery natural number greater than 1 can be written **uniquely** as a product of primes.\nExample: 84 = 2² × 3 × 7\n\nThis uniqueness is the backbone of divisibility, primes, and encryption.\n\n---\n\n📚 **Fun note**\n\nKronecker said: *“God made the integers; all else is the work of man.”*",
+      "related_concepts": [
+        "integers",
+        "prime numbers",
+        "axioms"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "real_numbers",
+      "name": "Real Numbers",
+      "keywords": [
+        "real number system",
+        "irrational number",
+        "what are real numbers",
+        "reals and irrationals",
+        "what are real numbers?",
+        "what is an irrational number?",
+        "what is an irrational number",
+        "prove that √2 is irrational",
+        "what is the continuum and why is it important?",
+        "what is the continuum and why is it important",
+        "how do real numbers fill the number line?",
+        "how do real numbers fill the number line"
+      ],
+      "response_text": "**In plain English**: Real numbers are ALL the numbers on the number line—fractions, decimals, and weird numbers like π and √2 that go on forever without repeating.\n\n**The types**:\n- Natural: 1, 2, 3...\n- Integers: ...−2, −1, 0, 1, 2...\n- Rational: Any fraction p/q (includes repeating decimals)\n- Irrational: √2, π, e (cannot be written as fractions!)\n\n**The shocking discovery**: √2 is irrational! The Pythagoreans discovered this and were horrified—legend says they drowned a member for revealing this \"scandal.\" A diagonal of a 1×1 square can't be measured by ANY fraction!\n\n**How many real numbers?**: Between 0 and 1, there are MORE real numbers than there are natural numbers (1, 2, 3...)! Cantor proved this with his diagonal argument—mind-blowing stuff.\n\n**Why \"real\"?**: To distinguish from \"imaginary\" numbers (involving √−1). Bad naming! Imaginary numbers are just as legitimate.\n\n**The completeness property**: Real numbers have no \"gaps.\" Every point on the line IS a real number. Rationals have gaps (√2 is missing!), but reals fill everything.\n\n**Real numbers in computing**: Computers approximate real numbers with floating-point. That's why 0.1 + 0.2 = 0.30000000000000004 in many programs!\n\n**Fun quote**: \"God made the integers, all else is the work of man.\" – Kronecker (he didn't trust irrationals!)",
+      "related_concepts": [
+        "irrationals",
+        "number_line",
+        "infinity"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "geometry",
+      "name": "Geometry",
+      "keywords": [
+        "geometry",
+        "shapes",
+        "angles",
+        "euclidean",
+        "chess board geometry",
+        "chessboard geometry"
+      ],
+      "response_text": "**In plain English**: Geometry is the study of shapes, sizes, positions, and properties of space. It's the math of the physical world around you.\n\n**The beginning**: The word means \"earth measurement.\" Ancient Egyptians needed to re-measure farm plots after the Nile flooded each year. Practical surveying became abstract mathematics!\n\n**Euclid's Elements** (300 BC):\n- Started with 5 simple postulates (assumptions)\n- Built ALL of geometry logically from there\n- Was THE textbook for 2,000+ years\n- Second most printed book in history (after the Bible)!\n\n**The 5th postulate problem**: Euclid's 5th postulate (about parallel lines) seemed more complicated than the others. For 2,000 years, mathematicians tried to prove it from the other four. They failed—because it's INDEPENDENT! Changing it gives \"non-Euclidean\" geometries.\n\n**Non-Euclidean geometry**:\n- On a sphere, \"straight lines\" are great circles\n- Parallel lines can meet!\n- Triangle angles can sum to MORE than 180°\n- Einstein showed our universe actually IS non-Euclidean!\n\n**Real uses**:\n- Architecture and construction\n- Computer graphics and animation\n- GPS (uses spherical geometry)\n- Art (perspective drawing)\n\n**Fun history**: Einstein needed non-Euclidean geometry for General Relativity. Space itself is curved!",
+      "related_concepts": [
+        "shapes",
+        "euclid",
+        "space"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "neural_network_math",
+      "name": "Neural Network Math",
+      "keywords": [
+        "neural network",
+        "y = wx + b",
+        "wx + b",
+        "activation function",
+        "relu",
+        "sigmoid",
+        "softmax",
+        "neural layer",
+        "batch normalization",
+        "dropout",
+        "regularization",
+        "what is the mathematical formula for a neural network layer: y = wx + b?",
+        "what is the mathematical formula for a neural network layer: y = wx + b",
+        "explain common activation functions: relu, sigmoid, tanh",
+        "what is the softmax function and how does it create probabilities?",
+        "what is the softmax function and how does it create probabilities",
+        "how does batch normalization work mathematically?",
+        "how does batch normalization work mathematically",
+        "what is dropout and how does it act as regularization?",
+        "what is dropout and how does it act as regularization"
+      ],
+      "response_text": "💡 **The Surprising Truth**\n\nA neural network is just **matrix multiplication + a simple function**, repeated many times!\n\n---\n\n📐 **The Core Formula**\n\n$$y = f(Wx + b)$$\n\n---\n\n🧰 **Batch Normalization**\n\nNormalize activations within a batch to stabilize training:\n• Speeds up learning\n• Reduces sensitivity to initialization\n\n---\n\n🧯 **Dropout (Regularization)**\n\nRandomly zero out neurons during training. This prevents over-reliance on any single pathway and improves generalization.\n\n---\n\n⚡ **Why it works**\n\nBy adjusting W and b through training, the network learns to approximate complex functions.",
+      "related_concepts": [
+        "matrices",
+        "linear algebra",
+        "backpropagation"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "lora",
+      "name": "LoRA (Low-Rank Adaptation)",
+      "keywords": [
+        "lora",
+        "low-rank",
+        "low rank adaptation",
+        "fine-tuning",
+        "w = w0 + ba",
+        "what is lora (low-rank adaptation) and why is it used?",
+        "what is lora (low-rank adaptation) and why is it used",
+        "explain low-rank matrix approximation with an example",
+        "how does svd (singular value decomposition) relate to lora?",
+        "how does svd (singular value decomposition) relate to lora",
+        "why does lora dramatically reduce the number of trainable parameters?",
+        "why does lora dramatically reduce the number of trainable parameters",
+        "what is the mathematical formula for lora: w = w₀ + ba?",
+        "what is the mathematical formula for lora: w = w₀ + ba"
+      ],
+      "response_text": "**In plain English**: LoRA is a clever trick to fine-tune giant AI models cheaply by only training small \"adapter\" matrices instead of the whole model.\n\n**The problem**: GPT-4 has ~1 trillion parameters. Fine-tuning all of them requires enormous compute and memory!\n\n**The LoRA solution**: Instead of updating the full weight matrix W, we freeze it and add a small learned update:\n\n\\(W_{new} = W_0 + BA\\)\n\nWhere:\n- **W₀**: Original frozen weights (huge, e.g., 4096 × 4096)\n- **B**: Small matrix (e.g., 4096 × 8)\n- **A**: Small matrix (e.g., 8 × 4096)\n- **BA**: The product is full-sized but has low rank!\n\n**Why it works** (the math insight): Most weight updates during fine-tuning live in a low-dimensional subspace. You don't NEED to update all parameters—a low-rank approximation captures most of the useful change!\n\n**The numbers**: If rank r = 8 and dimensions are 4096:\n- Full fine-tuning: 16 million parameters per layer\n- LoRA: (4096 × 8) + (8 × 4096) = 65,536 parameters per layer\n- That's **250× fewer** trainable parameters!\n\n**SVD connection**: Singular Value Decomposition shows that any matrix can be approximated by low-rank matrices. LoRA exploits this by learning the low-rank update directly.\n\n**Real impact**: You can fine-tune a 7B parameter model on a single GPU. Hobbyists can now customize large language models at home!\n\n**Fun fact**: LoRA was published in 2021 and immediately became the standard for efficient fine-tuning.",
+      "related_concepts": [
+        "matrices",
+        "svd",
+        "ai"
+      ],
+      "visualization": {
+        "viz_id": "manim_lora_visualization",
+        "viz_type": "manim",
+        "title": "LoRA low-rank update (Manim)",
+        "data": {
+          "scene_name": "LoRAVisualization",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "rag",
+      "name": "RAG (Retrieval-Augmented Generation)",
+      "keywords": [
+        "rag",
+        "retrieval augmented",
+        "vector embedding",
+        "cosine similarity",
+        "semantic search",
+        "vector database",
+        "what is rag (retrieval-augmented generation)?",
+        "what is rag (retrieval-augmented generation)",
+        "how do vector embeddings represent text mathematically?",
+        "how do vector embeddings represent text mathematically",
+        "explain cosine similarity and why it's used for semantic search",
+        "what is approximate nearest neighbor (ann) search?",
+        "what is approximate nearest neighbor (ann) search",
+        "how do faiss and other vector indexes work mathematically?",
+        "how do faiss and other vector indexes work mathematically"
+      ],
+      "response_text": "**In plain English**: RAG lets AI models look up information before answering, like a student who can check their notes during a test!\n\n**The problem**: LLMs have a knowledge cutoff and can hallucinate. RAG fixes this by retrieving real documents.\n\n**How it works**:\n1. **Embed** your documents into vectors (lists of ~1000 numbers)\n2. **Store** vectors in a database (like Pinecone, FAISS)\n3. **Query**: Convert user question to a vector\n4. **Retrieve**: Find most similar document vectors\n5. **Generate**: Feed retrieved docs + question to LLM\n\n**Vector Embeddings**:\nWords/sentences become points in high-dimensional space where similar meanings are nearby:\n- \"king\" - \"man\" + \"woman\" ≈ \"queen\" (famous example!)\n- \"What's the weather?\" is close to \"Tell me the forecast\"\n\n**Cosine Similarity** (the key formula):\n\\(\\text{similarity} = \\frac{A \\cdot B}{|A| |B|} = \\cos(\\theta)\\)\n\nMeasures the angle between vectors:\n- 1.0 = identical direction (same meaning)\n- 0.0 = perpendicular (unrelated)\n- -1.0 = opposite (antonyms)\n\n**ANN Search**: Finding exact nearest neighbors in billions of vectors is slow. Approximate algorithms (HNSW, IVF) trade tiny accuracy loss for 1000× speedup.\n\n**Why RAG matters**:\n- Up-to-date information (no retraining needed!)\n- Citable sources (you can verify!)\n- Domain-specific knowledge\n- Reduces hallucinations\n\n**Real examples**: Perplexity AI, ChatGPT with browsing, enterprise search.",
+      "related_concepts": [
+        "vectors",
+        "embeddings",
+        "ai"
+      ],
+      "visualization": {
+        "viz_id": "manim_vector_embeddings",
+        "viz_type": "manim",
+        "title": "Vector embeddings (Manim)",
+        "data": {
+          "scene_name": "VectorEmbeddings",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "attention",
+      "name": "Attention Mechanism",
+      "keywords": [
+        "attention",
+        "attention mechanism",
+        "self-attention",
+        "transformer attention",
+        "q k v",
+        "query key value",
+        "multi-head",
+        "positional encoding",
+        "what is the attention mechanism formula: attention(q,k,v)?",
+        "what is the attention mechanism formula: attention(q,k,v)",
+        "why do we divide by sqrt(d_k) in scaled dot-product attention?",
+        "why do we divide by sqrt(d_k) in scaled dot-product attention",
+        "what is multi-head attention and why use multiple heads?",
+        "what is multi-head attention and why use multiple heads",
+        "how does self-attention capture relationships between tokens?",
+        "how does self-attention capture relationships between tokens",
+        "what is positional encoding and why is it needed?",
+        "what is positional encoding and why is it needed"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nAttention lets a model focus on the most relevant parts of an input sequence when producing an output.\n\n---\n\n📌 **Why Positional Encoding?**\n\nAttention alone doesn’t know order—“dog bites man” and “man bites dog” look the same.\nPositional encodings add a signal so the model knows **which token is first, second, third**, and so on.\n\n---\n\n⚙️ **How attention scores are computed**\n\n1. Turn tokens into query, key, value vectors\n2. Compare queries to keys (dot products)\n3. Use softmax to weight values\n\nAttention is the mathematical heart of Transformers.",
+      "related_concepts": [
+        "transformers",
+        "matrices",
+        "softmax"
+      ],
+      "visualization": {
+        "viz_id": "manim_attention_mechanism",
+        "viz_type": "manim",
+        "title": "Attention mechanism (Manim)",
+        "data": {
+          "scene_name": "AttentionMechanism",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "backpropagation",
+      "name": "Backpropagation",
+      "keywords": [
+        "backpropagation",
+        "backprop",
+        "chain rule",
+        "gradient descent",
+        "gradient",
+        "autograd",
+        "vanishing gradient",
+        "what is backpropagation and how does it use the chain rule?",
+        "what is backpropagation and how does it use the chain rule",
+        "how do gradients flow backward through a neural network?",
+        "how do gradients flow backward through a neural network",
+        "what is the vanishing gradient problem and how to solve it?",
+        "what is the vanishing gradient problem and how to solve it",
+        "how does automatic differentiation (autograd) work?",
+        "how does automatic differentiation (autograd) work",
+        "explain gradient descent optimization step by step"
+      ],
+      "response_text": "**In plain English**: Backpropagation is how neural networks learn. It figures out how much each weight contributed to the error, then adjusts accordingly.\n\n**The key insight**: Use calculus (the chain rule) to efficiently compute gradients through many layers.\n\n**The Chain Rule**: If y depends on x through intermediate variable z:\n\\(\\frac{dy}{dx} = \\frac{dy}{dz} \\cdot \\frac{dz}{dx}\\)\n\nFor neural networks with many layers, we chain many derivatives together!\n\n**Step by step**:\n1. **Forward pass**: Input flows through network, producing output\n2. **Compute loss**: How wrong is the output? (e.g., cross-entropy)\n3. **Backward pass**: Compute gradient of loss w.r.t. each weight\n4. **Update**: Adjust weights to reduce loss\n\n\\(W_{new} = W_{old} - \\eta \\cdot \\frac{\\partial L}{\\partial W}\\)\n\nWhere η (eta) is the learning rate.\n\n**Why it's efficient**: Instead of computing each gradient separately (expensive!), backprop reuses intermediate results. Computing gradients for millions of parameters takes only ~2× the cost of one forward pass!\n\n**The vanishing gradient problem**: In deep networks, gradients can shrink exponentially as they propagate back. Solutions: ReLU activation, skip connections (ResNet), better initialization.\n\n**Automatic differentiation** (autograd): Libraries like PyTorch track operations and automatically compute backprop. You write forward code; gradients come free!\n\n**Fun history**: Backprop was invented multiple times (1960s-80s). Rumelhart, Hinton & Williams's 1986 paper made it famous. It's THE algorithm that makes deep learning work.",
+      "related_concepts": [
+        "calculus",
+        "derivatives",
+        "optimization"
+      ],
+      "visualization": {
+        "viz_id": "manim_gradient_descent",
+        "viz_type": "manim",
+        "title": "Gradient descent (Manim)",
+        "data": {
+          "scene_name": "GradientDescent",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "loss_functions",
+      "name": "Loss Functions",
+      "keywords": [
+        "loss function",
+        "cross-entropy",
+        "mse",
+        "mean squared error",
+        "kl divergence",
+        "loss",
+        "contrastive loss",
+        "what is cross-entropy loss and when is it used?",
+        "what is cross-entropy loss and when is it used",
+        "explain mean squared error (mse) loss mathematically",
+        "what is kl divergence and how does it measure distribution difference?",
+        "what is kl divergence and how does it measure distribution difference",
+        "how do you choose the right loss function for a problem?",
+        "how do you choose the right loss function for a problem",
+        "what is contrastive loss in representation learning?",
+        "what is contrastive loss in representation learning"
+      ],
+      "response_text": "**In plain English**: A loss function measures how wrong your model is. Training = minimizing loss.\n\n**Cross-Entropy Loss** (for classification):\n\\(L = -\\sum_i y_i \\log(\\hat{y}_i)\\)\n\n- y: True labels (one-hot: [0, 0, 1, 0])\n- ŷ: Predicted probabilities ([0.1, 0.1, 0.7, 0.1])\n- Penalizes confident wrong predictions heavily!\n\n**Why logarithm?** If you're 90% sure it's a cat (correct), loss ≈ 0.1. If you're 10% sure (wrong!), loss ≈ 2.3. The log makes being confidently wrong VERY costly.\n\n**Mean Squared Error** (for regression):\n\\(L = \\frac{1}{n}\\sum_i (y_i - \\hat{y}_i)^2\\)\n\n- Measures average squared difference between predictions and truth\n- Squaring penalizes large errors more than small ones\n\n**KL Divergence** (comparing distributions):\n\\(D_{KL}(P || Q) = \\sum_i P(i) \\log\\frac{P(i)}{Q(i)}\\)\n\n- Measures how different distribution Q is from true distribution P\n- Used in VAEs, knowledge distillation, language models\n\n**Choosing loss functions**:\n- Classification → Cross-entropy\n- Regression → MSE or MAE\n- Generative models → Various (GAN loss, reconstruction loss)\n- Ranking → Contrastive loss, triplet loss\n\n**Important**: Loss is differentiable! That's what lets backpropagation work. Non-differentiable metrics (like accuracy) can't be directly optimized.\n\n**Fun fact**: The choice of loss function encodes your assumptions about the problem. MSE assumes Gaussian noise; cross-entropy assumes categorical outcomes.",
+      "related_concepts": [
+        "probability",
+        "optimization",
+        "training"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "transformers",
+      "name": "Transformers",
+      "keywords": [
+        "transformer",
+        "transformers",
+        "bert",
+        "gpt",
+        "encoder decoder",
+        "layer normalization",
+        "encoder",
+        "decoder",
+        "feedforward network",
+        "what is the transformer architecture mathematically?",
+        "what is the transformer architecture mathematically",
+        "how do encoder and decoder differ in transformers?",
+        "how do encoder and decoder differ in transformers",
+        "what is layer normalization and why is it used?",
+        "what is layer normalization and why is it used",
+        "explain the feedforward network in transformer blocks",
+        "what are the key differences between bert and gpt architectures?",
+        "what are the key differences between bert and gpt architectures"
+      ],
+      "response_text": "**In plain English**: A Transformer is an architecture that processes sequences using attention instead of recurrence. It's the foundation of GPT, BERT, and modern AI.\n\n**The architecture** (each block):\n1. Multi-head self-attention\n2. Add & normalize (residual connection)\n3. Feedforward network (two linear layers with ReLU)\n4. Add & normalize again\n\n**Why attention over RNNs?**\n- **Parallelization**: RNNs process sequentially; Transformers process all positions at once\n- **Long-range dependencies**: Attention directly connects any two positions\n- **No vanishing gradients**: Information flows directly, not through many steps\n\n**Encoder vs Decoder**:\n- **Encoder** (BERT-style): Sees full input. Good for understanding. \"Fill in the blank.\"\n- **Decoder** (GPT-style): Sees only past. Good for generation. \"What comes next?\"\n- **Encoder-Decoder** (T5, original): Translation, summarization.\n\n**Layer Normalization**:\n\\(\\text{LayerNorm}(x) = \\gamma \\cdot \\frac{x - \\mu}{\\sigma} + \\beta\\)\n\nNormalizes across features (not batch). Stabilizes training, allows deeper networks.\n\n**Positional Encoding**: Attention has no notion of position! We add sin/cos patterns or learned embeddings to inject position information.\n\n**Scale**: GPT-4 has ~1 trillion parameters. Training cost: ~$100 million.\n\n**The paper**: \"Attention Is All You Need\" (Vaswani et al., 2017) at Google introduced Transformers. One of the most influential ML papers ever.\n\n**Fun fact**: The Transformer was invented for translation but turned out to be a general-purpose sequence processor—now used for text, images, proteins, code, music, and more!",
+      "related_concepts": [
+        "attention",
+        "neural_networks",
+        "nlp"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "dimensionality_reduction",
+      "name": "Dimensionality Reduction",
+      "keywords": [
+        "dimensionality reduction",
+        "pca",
+        "principal component",
+        "t-sne",
+        "umap",
+        "autoencoder",
+        "autoencoders",
+        "what is pca (principal component analysis) mathematically?",
+        "what is pca (principal component analysis) mathematically",
+        "how does t-sne work for visualization?",
+        "how does t-sne work for visualization",
+        "what is umap and how does it differ from t-sne?",
+        "what is umap and how does it differ from t-sne",
+        "when should you use pca vs t-sne vs umap?",
+        "when should you use pca vs t-sne vs umap",
+        "how do autoencoders learn compressed representations?",
+        "how do autoencoders learn compressed representations"
+      ],
+      "response_text": "**In plain English**: Dimensionality reduction takes high-dimensional data (many features) and represents it in fewer dimensions while preserving important structure.\n\n**Why reduce dimensions?**\n- **Visualization**: Can't visualize 1000 dimensions; can visualize 2-3\n- **Noise removal**: Low dimensions often capture signal, high dimensions capture noise\n- **Computation**: Faster algorithms in lower dimensions\n\n**PCA (Principal Component Analysis)**:\nFinds directions of maximum variance.\n1. Center the data (subtract mean)\n2. Compute covariance matrix\n3. Find eigenvectors (principal components)\n4. Project onto top k eigenvectors\n\n**The key formula**: PCA finds W that maximizes \\(\\text{Var}(Wx)\\)\n\n**t-SNE** (t-distributed Stochastic Neighbor Embedding):\n- Preserves LOCAL structure (nearby points stay nearby)\n- Great for visualization but not for general dimensionality reduction\n- Non-linear; can reveal clusters\n\n**UMAP** (Uniform Manifold Approximation):\n- Like t-SNE but faster and preserves more global structure\n- Based on topological data analysis\n- Becoming the default for visualization\n\n**PCA vs t-SNE vs UMAP**:\n- PCA: Fast, linear, preserves global structure, interpretable\n- t-SNE: Slow, nonlinear, good clusters, bad global structure\n- UMAP: Medium speed, nonlinear, good balance of local/global\n\n**Autoencoders**: Neural networks that compress then reconstruct. The compressed \"bottleneck\" is a learned low-dimensional representation.\n\n**Real examples**: Visualizing word embeddings, gene expression analysis, image compression, anomaly detection.",
+      "related_concepts": [
+        "linear_algebra",
+        "visualization",
+        "ml"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "game_of_life",
+      "name": "Conway's Game of Life",
+      "keywords": [
+        "game of life",
+        "conway",
+        "cellular automata",
+        "automaton"
+      ],
+      "response_text": "💡 **The Brilliant Idea**\n\nJohn Conway's Game of Life is a \"zero-player game\" — you set up an initial pattern, then watch it evolve by simple rules!\n\n---\n\n📐 **The Rules** (just 4!)\n\nA grid of cells, each alive or dead. Each generation:\n\n| Condition | Result |\n|-----------|--------|\n| Alive + 2-3 neighbors | **Survives** |\n| Alive + <2 neighbors | **Dies** (underpopulation) |\n| Alive + >3 neighbors | **Dies** (overcrowding) |\n| Dead + exactly 3 neighbors | **Born** |\n\n---\n\n🎯 **Famous Patterns**\n\n• **Glider** — walks diagonally across the grid forever\n• **Blinker** — oscillates between two states\n• **Glider Gun** — produces new gliders periodically!\n• **Spaceship** — moves across the grid\n\n---\n\n✨ **Mind-Blowing Facts**\n\n• Life is **Turing complete** — it can compute anything a computer can!\n• Some patterns simulate entire computers inside the game\n• Conway proved Life is **unpredictable** — no shortcut to see the future\n\n---\n\n📖 **Conway's Story**\n\nJohn Conway (1937-2020) created Life in 1970 while \"wasting time\" at Cambridge. It became one of the most studied mathematical objects ever. Conway joked he wished to be remembered for his other work (surreal numbers, monstrous moonshine), but Life made him a celebrity.\n\n---\n\n⚡ **Why It Matters**\n\n• Shows how **complexity emerges from simplicity**\n• Foundation of **artificial life** research\n• Used to study **self-organization** in biology\n\n📚 *Try it*: Search \"Conway's Game of Life online\" to play!",
+      "related_concepts": [
+        "cellular_automata",
+        "emergence",
+        "computation"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "surreal_numbers",
+      "name": "Surreal Numbers",
+      "keywords": [
+        "surreal numbers",
+        "conway numbers",
+        "surreal number"
+      ],
+      "response_text": "💡 **Conway's Mind-Bending Creation**\n\nSurreal numbers are a number system that includes ALL real numbers, ALL infinities, ALL infinitesimals, and more — built from scratch using sets!\n\n---\n\n📐 **How They're Built**\n\nEvery surreal number is written { L | R } where L and R are sets of earlier surreals:\n\n• **0** = { | } (nothing on either side)\n• **1** = { 0 | } (0 on left, nothing on right)\n• **-1** = { | 0 } (nothing on left, 0 on right)\n• **1/2** = { 0 | 1 }\n• **ω** (infinity) = { 1, 2, 3, ... | }\n• **ε** (infinitesimal) = { 0 | 1, 1/2, 1/4, ... }\n\n---\n\n🎯 **What Makes Them Special**\n\n| Number System | Contains |\n|---------------|----------|\n| Integers | ...-2, -1, 0, 1, 2... |\n| Reals | All points on number line |\n| **Surreals** | Reals + infinities + infinitesimals + more! |\n\nSurreals can express:\n• ω - 1 (infinity minus one)\n• √ω (square root of infinity)\n• 1/ω (infinitesimally small)\n\n---\n\n📖 **The Origin Story**\n\nConway invented surreals in 1972. Donald Knuth wrote a novel about them: **\"Surreal Numbers: How Two Ex-Students Turned On to Pure Mathematics and Found Total Happiness.\"**\n\n---\n\n✨ **Connection to Games**\n\nConway showed surreal numbers naturally arise from analyzing two-player games! The \"value\" of a game position IS a surreal number. Games and numbers are secretly the same thing.\n\n📚 *Read*: Knuth's novella is a wonderful introduction!",
+      "related_concepts": [
+        "infinity",
+        "set_theory",
+        "games"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "look_and_say",
+      "name": "Look-and-Say Sequence",
+      "keywords": [
+        "look and say",
+        "look-and-say",
+        "conway sequence",
+        "1 11 21"
+      ],
+      "response_text": "💡 **The Deceptively Simple Sequence**\n\nStart with 1. To get the next term, **describe what you see**:\n\n```\n1      → \"one 1\"       → 11\n11     → \"two 1s\"      → 21\n21     → \"one 2, one 1\" → 1211\n1211   → \"one 1, one 2, two 1s\" → 111221\n```\n\n---\n\n📐 **First Terms**\n\n`1, 11, 21, 1211, 111221, 312211, 13112221, ...`\n\n---\n\n✨ **Conway's Amazing Discovery**\n\nConway proved this sequence has **incredible structure**:\n\n• Every term eventually breaks into unchanging \"atoms\"\n• There are exactly **92 atoms** (like chemical elements!)\n• The sequence grows by factor **λ ≈ 1.303577** each step\n• This λ is an algebraic number — a root of a degree-71 polynomial!\n\n---\n\n🎯 **The Cosmological Theorem**\n\nConway proved: Starting from ANY seed (except 22), the sequence eventually contains all 92 atoms. He named them after real chemical elements (Hydrogen, Helium, etc.)\n\n| Element | Atom | Decays to |\n|---------|------|----------|\n| Hydrogen | 22 | (stable!) |\n| Helium | 13112221... | ... |\n\n---\n\n📖 **Why It's Profound**\n\nA sequence that seems like a party trick reveals:\n• Deep algebraic structure\n• Connection to chemistry analogies\n• A universal constant (λ)\n\n**Conway's genius**: Finding deep mathematics in playful puzzles!",
+      "related_concepts": [
+        "sequences",
+        "patterns",
+        "recursion"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "conway_soldiers",
+      "name": "Conway's Soldiers",
+      "keywords": [
+        "conway soldiers",
+        "peg solitaire",
+        "soldier puzzle"
+      ],
+      "response_text": "💡 **The Puzzle**\n\nOn an infinite checkerboard, soldiers fill the lower half. Goal: Advance one soldier as far north as possible using peg-solitaire moves (jump over adjacent soldier, removing it).\n\n---\n\n📐 **The Rules**\n\n• Soldiers can jump horizontally or vertically (not diagonally)\n• A soldier jumps over an adjacent soldier to an empty square\n• The jumped soldier is removed\n• Goal: Get a soldier as far north as possible\n\n---\n\n🎯 **Conway's Shocking Proof**\n\n**You can reach row 4, but NEVER row 5!**\n\nNo matter how you play, no matter how many soldiers you have, the 5th row is impossible!\n\n---\n\n📐 **The Proof** (elegant!)\n\nConway assigned values using the golden ratio φ = (1+√5)/2:\n\n• Distance d from goal line → value φ^(-d)\n• Row 1: φ^(-1), Row 2: φ^(-2), etc.\n• Total value of lower half = exactly 1\n• Reaching row 5 requires value > 1\n• But moves **never increase** total value!\n\n---\n\n✨ **Why The Golden Ratio?**\n\nφ satisfies φ^(-1) + φ^(-2) = 1, which matches exactly what happens in a jump. The proof is beautiful because it uses this algebraic coincidence.\n\n---\n\n📖 **What It Teaches**\n\n• Some impossibilities have elegant proofs\n• Invariants (quantities that don't increase) prove limitations\n• The golden ratio appears in unexpected places!\n\n*Try*: See how far YOU can get on a physical board!",
+      "related_concepts": [
+        "golden_ratio",
+        "proof",
+        "games"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "sprouts",
+      "name": "Sprouts Game",
+      "keywords": [
+        "sprouts",
+        "sprouts game",
+        "conway game"
+      ],
+      "response_text": "💡 **A Game On Paper**\n\nInvented by Conway and Michael Paterson in 1967, Sprouts is played with just pencil and paper!\n\n---\n\n📐 **The Rules**\n\n1. Start with n dots on paper\n2. Players alternate drawing a curve connecting two dots (or a dot to itself)\n3. Place a new dot on the curve\n4. No dot can have more than 3 lines\n5. Curves can't cross\n6. Last player able to move **wins**\n\n---\n\n🎯 **Example** (2 dots)\n\n```\n●  ●     Start: 2 dots\n\n●--●     Player 1: Connect them, add dot\n   •\n\n●--●     Player 2: Loop from one dot\n  (•)\n```\n\nGame continues until no moves possible!\n\n---\n\n✨ **Mathematical Mysteries**\n\n• Starting with n dots, game lasts at least 2n moves, at most 3n-1\n• Who wins from n dots? Known only up to n ≈ 47!\n• No formula exists — each case needs analysis\n\n| Starting dots | Winner |\n|--------------|--------|\n| 1 | Second player |\n| 2 | Second player |\n| 3 | First player |\n| 4 | First player |\n| 5 | First player |\n| 6 | Second player |\n\nNo simple pattern!\n\n---\n\n📖 **Why It's Important**\n\n• Simple rules, deep complexity\n• Example of **combinatorial game theory**\n• Still not fully solved after 50+ years!\n\n*Try it*: All you need is paper and a friend!",
+      "related_concepts": [
+        "game_theory",
+        "topology",
+        "combinatorics"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "integers_topic",
+      "name": "Integers",
+      "keywords": [
+        "integer",
+        "integers",
+        "negative number",
+        "positive number",
+        "whole number",
+        "absolute value",
+        "negative numbers",
+        "whole numbers",
+        "what are integers and why do we need negative numbers?",
+        "what are integers and why do we need negative numbers",
+        "how does the number line represent integers?",
+        "how does the number line represent integers",
+        "explain addition and subtraction with negative numbers",
+        "what is absolute value?",
+        "what is absolute value",
+        "how do integers relate to natural numbers?",
+        "how do integers relate to natural numbers"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nIntegers extend the counting numbers to include negatives and zero: ... −3, −2, −1, 0, 1, 2, 3 ...\n\n---\n\n📌 **Why Integers Matter**\n\nThey let us model deficits, temperatures below zero, and direction on a number line.\n\n---\n\n📏 **Absolute Value**\n\nAbsolute value measures distance from 0:\n• |−7| = 7\n• |5| = 5\n\nIt ignores sign and focuses on size.\n\n---\n\n🎯 **Key Properties**\n\n• a + (−a) = 0\n• Subtraction is “adding the opposite”\n• On the number line, moving left means negative\n\n---\n\n📚 **Historical note**\n\nNegative numbers were controversial for centuries. Merchants used them for debts long before mathematicians fully accepted them.",
+      "related_concepts": [
+        "number line",
+        "real numbers",
+        "addition"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "circles",
+      "name": "Circles",
+      "keywords": [
+        "circle",
+        "radius",
+        "diameter",
+        "circumference",
+        "arc",
+        "circle mathematically",
+        "chords",
+        "tangents",
+        "secants",
+        "equation of a circle",
+        "what is a circle mathematically?",
+        "what is a circle mathematically",
+        "what is the area and circumference of a circle?",
+        "what is the area and circumference of a circle",
+        "what are chords, tangents, and secants?",
+        "what are chords, tangents, and secants",
+        "what is the equation of a circle?",
+        "what is the equation of a circle"
+      ],
+      "response_text": "💡 **The Perfect Shape**\n\nA circle is all points at the same distance (radius) from a center point.\n\n---\n\n📐 **Key Measurements**\n\n| Part | Definition | Formula |\n|------|------------|--------|\n| **Radius** (r) | Center to edge | — |\n| **Diameter** (d) | Edge to edge through center | d = 2r |\n| **Circumference** | Distance around | C = 2πr = πd |\n| **Area** | Space inside | A = πr² |\n\n---\n\n✨ **Where π Comes From**\n\nπ ≈ 3.14159... is the ratio of circumference to diameter for ANY circle!\n\n$$\\pi = \\frac{C}{d}$$\n\nThis ratio is the same whether your circle is a coin or a planet!\n\n---\n\n🎯 **Parts of a Circle**\n\n• **Chord** — line segment inside, touching two points\n• **Tangent** — line touching circle at exactly one point\n• **Secant** — line cutting through circle twice\n• **Arc** — part of the circumference\n• **Sector** — \"pizza slice\" (two radii + arc)\n\n---\n\n📐 **Equation of a Circle**\n\nCenter at (h, k), radius r:\n\n$$(x-h)^2 + (y-k)^2 = r^2$$\n\nThis comes directly from the Pythagorean theorem!\n\n---\n\n📖 **Fun Fact**\n\nCircles have the largest area for a given perimeter. That's why soap bubbles are spherical — nature minimizes surface area!",
+      "related_concepts": [
+        "pi",
+        "geometry",
+        "area"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "triangles",
+      "name": "Triangles",
+      "keywords": [
+        "triangle",
+        "triangles",
+        "isosceles",
+        "equilateral",
+        "scalene",
+        "right triangle",
+        "types of triangles",
+        "triangle inequality",
+        "area of a triangle",
+        "what types of triangles exist?",
+        "what types of triangles exist",
+        "what is the triangle inequality?",
+        "what is the triangle inequality",
+        "how do you find the area of a triangle?",
+        "how do you find the area of a triangle"
+      ],
+      "response_text": "💡 **The Fundamental Shape**\n\nA triangle is a polygon with 3 sides and 3 angles. Every polygon can be divided into triangles!\n\n---\n\n📐 **Types by Sides**\n\n| Type | Sides | Example |\n|------|-------|---------|\n| **Equilateral** | All equal | △ with 60°-60°-60° |\n| **Isosceles** | Two equal | △ with two equal angles |\n| **Scalene** | All different | Most triangles |\n\n---\n\n📐 **Types by Angles**\n\n| Type | Largest Angle |\n|------|---------------|\n| **Acute** | All < 90° |\n| **Right** | One = 90° |\n| **Obtuse** | One > 90° |\n\n---\n\n🎯 **Key Facts**\n\n• **Angle sum**: Always exactly 180°\n• **Area**: A = ½ × base × height\n• **Triangle inequality**: Sum of any two sides > third side\n• **Pythagorean theorem**: For right triangles, a² + b² = c²\n\n---\n\n✨ **Why Triangles Are Rigid**\n\nTriangles can't be deformed without changing side lengths. That's why bridges and buildings use triangular supports (trusses)!\n\nA square can collapse into a rhombus; a triangle cannot.\n\n---\n\n📖 **Fun Fact**\n\nThe \"Bermuda Triangle\" isn't actually more dangerous than other ocean areas. Triangles just sound mysterious!",
+      "related_concepts": [
+        "pythagorean_theorem",
+        "geometry",
+        "angles"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "angles",
+      "name": "Angles",
+      "keywords": [
+        "angle",
+        "angles",
+        "degree",
+        "radian",
+        "acute",
+        "obtuse",
+        "right angle",
+        "complementary",
+        "supplementary",
+        "straight angle",
+        "measure angles in radians",
+        "what is an angle?",
+        "what is an angle",
+        "what are acute, right, and obtuse angles?",
+        "what are acute, right, and obtuse angles",
+        "what are complementary and supplementary angles?",
+        "what are complementary and supplementary angles",
+        "what is a straight angle?",
+        "what is a straight angle",
+        "how do you measure angles in radians?",
+        "how do you measure angles in radians"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nAn angle measures the rotation between two rays sharing a starting point (vertex).\n\n---\n\n📐 **Measuring Angles**\n\n| Unit | Full circle | Right angle |\n|------|-------------|-------------|\n| **Degrees** | 360° | 90° |\n| **Radians** | 2π | π/2 |\n\nWhy 360? Ancient Babylonians used base-60; 360 has many divisors (2, 3, 4, 5, 6, 8, 9, 10, 12...)\n\n---\n\n🎯 **Types of Angles**\n\n| Type | Degrees | Example |\n|------|---------|----------|\n| **Acute** | 0° - 90° | Pizza slice |\n| **Right** | 90° | Corner of paper |\n| **Obtuse** | 90° - 180° | Open book |\n| **Straight** | 180° | Flat line |\n| **Reflex** | 180° - 360° | \"Outside\" angle |\n\n---\n\n📐 **Angle Pairs**\n\n• **Complementary**: Sum to 90° (30° + 60°)\n• **Supplementary**: Sum to 180° (120° + 60°)\n• **Vertical**: Opposite angles when lines cross (always equal)\n\n---\n\n✨ **Why Radians?**\n\nRadians connect angles to arc length:\n\n$$\\text{Arc length} = r \\times \\theta$$\n\nwhere θ is in radians. This makes calculus with trig functions MUCH cleaner!\n\n---\n\n📖 **Fun Fact**\n\nThe degree symbol (°) comes from writing a tiny zero, representing 1/360 of a full circle!",
+      "related_concepts": [
+        "trigonometry",
+        "geometry",
+        "radians"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "eigenvalues",
+      "name": "Eigenvalues & Eigenvectors",
+      "keywords": [
+        "eigenvalue",
+        "eigenvector",
+        "eigen",
+        "characteristic",
+        "what is an eigenvalue and eigenvector?",
+        "what is an eigenvalue and eigenvector",
+        "how do you find eigenvalues?",
+        "how do you find eigenvalues",
+        "what is the geometric meaning of eigenvalues?",
+        "what is the geometric meaning of eigenvalues",
+        "what is matrix diagonalization?",
+        "what is matrix diagonalization",
+        "where are eigenvalues used in real applications?",
+        "where are eigenvalues used in real applications",
+        "eigenvectors",
+        "eigenvalues",
+        "characteristic equation"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nAn **eigenvector** of a matrix is a direction that doesn’t change when the matrix acts on it—only its length changes.\nThe amount it stretches (or flips) by is the **eigenvalue**.\n\n---\n\n🧮 **The Equation**\n\n$$A\\mathbf{v} = \\lambda \\mathbf{v}$$\n\n• **A** = matrix\n• **v** = eigenvector (non‑zero)\n• **λ** = eigenvalue\n\n---\n\n🔍 **How to Find Them**\n\nSolve the **characteristic equation**:\n$$\\det(A - \\lambda I) = 0$$\n\nThen plug each λ back into (A − λI)v = 0 to get eigenvectors.\n\n---\n\n🎯 **Intuition**\n\nThink of a transformation that stretches space. Most directions rotate, but eigenvectors are the “special” directions that stay aligned.\n\n---\n\n⚡ **Where they show up**\n\n• PCA and dimensionality reduction\n• Vibrations and stability analysis\n• Google PageRank\n• Quantum mechanics",
+      "related_concepts": [
+        "matrices",
+        "linear algebra",
+        "dimensionality reduction"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "combinatorics",
+      "name": "Combinatorics",
+      "keywords": [
+        "combinatorics",
+        "permutation",
+        "combination",
+        "counting",
+        "factorial",
+        "choose",
+        "pascal's triangle",
+        "what is combinatorics?",
+        "what is combinatorics",
+        "what is the difference between permutations and combinations?",
+        "what is the difference between permutations and combinations",
+        "how do you use factorials?",
+        "how do you use factorials"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nCombinatorics counts how many ways things can be arranged or chosen.\n\n---\n\n🔢 **Factorials**\n\nn! = n × (n−1) × ... × 1 counts arrangements.\n\n---\n\n🎲 **Permutations vs Combinations**\n\n• **Permutations**: order matters\n• **Combinations**: order doesn’t matter\n\n---\n\n🔺 **Pascal’s Triangle**\n\nEach entry is the sum of the two above it; it gives binomial coefficients.\n\n---\n\nThe binomial theorem and probability formulas come from combinatorics.",
+      "related_concepts": [
+        "probability",
+        "factorial",
+        "pascal"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "graph_theory",
+      "name": "Graph Theory",
+      "keywords": [
+        "graph theory",
+        "vertex",
+        "edge",
+        "node",
+        "network",
+        "konigsberg",
+        "königsberg",
+        "spanning tree",
+        "shortest path",
+        "vertices and edges",
+        "graph in mathematics",
+        "what is a graph in mathematics?",
+        "what is a graph in mathematics",
+        "what are vertices and edges?",
+        "what are vertices and edges",
+        "what is the königsberg bridge problem?",
+        "what is the königsberg bridge problem",
+        "what is a spanning tree?",
+        "what is a spanning tree",
+        "what is the shortest path problem?",
+        "what is the shortest path problem"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nGraph theory studies networks of **nodes** (points) and **edges** (connections).\n\n---\n\n🌉 **The Konigsberg Bridge Problem**\n\nEuler asked: Can you walk across all seven bridges exactly once?\nAnswer: **No**—and that insight created graph theory.\n\n---\n\n🌳 **Spanning Trees**\n\nA spanning tree connects all nodes with **no cycles** and the minimum number of edges.\nUsed in network design and circuit layout.\n\n---\n\n🧭 **Shortest Path**\n\nAlgorithms like Dijkstra’s find the shortest route in a weighted graph.\nUsed in GPS, routing, and AI.",
+      "related_concepts": [
+        "networks",
+        "optimization",
+        "combinatorics"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "game_theory",
+      "name": "Game Theory",
+      "keywords": [
+        "game theory",
+        "nash equilibrium",
+        "prisoner dilemma",
+        "zero sum",
+        "strategy",
+        "prisoner's dilemma",
+        "prisoners dilemma",
+        "zero-sum game",
+        "economics",
+        "what is game theory?",
+        "what is game theory",
+        "what is the prisoner's dilemma?",
+        "what is the prisoner's dilemma",
+        "what is a nash equilibrium?",
+        "what is a nash equilibrium",
+        "what is zero-sum game?",
+        "what is zero-sum game",
+        "how is game theory used in economics?",
+        "how is game theory used in economics",
+        "what game theory concepts appear in the chess game in through the looking glass?",
+        "what game theory concepts appear in the chess game in through the looking glass"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nGame theory studies strategic decision‑making when outcomes depend on multiple players.\n\n---\n\n🤝 **The Prisoner’s Dilemma**\n\nSelf‑interest can lead to worse outcomes for everyone.\n\n---\n\n⚖️ **Nash Equilibrium**\n\nA stable state where no player benefits by changing strategy alone.\n\n---\n\n🎯 **Zero‑Sum Games**\n\nOne player’s gain is another’s loss (like chess).\n\n---\n\nUsed in economics, politics, biology, and AI.",
+      "related_concepts": [
+        "optimization",
+        "probability",
+        "economics"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "fractals",
+      "name": "Fractals",
+      "keywords": [
+        "fractal",
+        "mandelbrot",
+        "self-similar",
+        "koch",
+        "sierpinski",
+        "mandelbrot set",
+        "self-similarity",
+        "fractal dimension",
+        "what is a fractal?",
+        "what is a fractal",
+        "what is the mandelbrot set?",
+        "what is the mandelbrot set",
+        "what is self-similarity?",
+        "what is self-similarity",
+        "what is fractal dimension?",
+        "what is fractal dimension",
+        "where do fractals appear in nature?",
+        "where do fractals appear in nature",
+        "how do self-similar narrative structures work like fractals in literature?",
+        "how do self-similar narrative structures work like fractals in literature"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nFractals are shapes that repeat at different scales—zoom in and you see the same patterns.\n\n---\n\n🌀 **Self‑Similarity**\n\nThe same structure appears at many zoom levels.\n\n---\n\n🌌 **Mandelbrot Set**\n\nThe iconic fractal defined by z → z² + c, producing infinite complexity.\n\n---\n\n📏 **Fractal Dimension**\n\nFractals can have non‑integer dimensions (between 1 and 2, etc.).\n\n---\n\n📚 **Literary Connection**\n\nSome stories use self‑similar structures—patterns that repeat across chapters—like narrative fractals.",
+      "related_concepts": [
+        "chaos",
+        "geometry",
+        "self_similarity"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "chaos_theory",
+      "name": "Chaos Theory",
+      "keywords": [
+        "chaos theory",
+        "butterfly effect",
+        "lorenz",
+        "attractor",
+        "deterministic chaos",
+        "weather prediction",
+        "strange attractor",
+        "what is chaos theory?",
+        "what is chaos theory",
+        "what is the butterfly effect?",
+        "what is the butterfly effect",
+        "what is a strange attractor?",
+        "what is a strange attractor",
+        "why are some systems unpredictable?",
+        "why are some systems unpredictable",
+        "how does chaos relate to weather prediction?",
+        "how does chaos relate to weather prediction"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nChaos theory studies deterministic systems that are extremely sensitive to initial conditions.\n\n---\n\n🦋 **Butterfly Effect**\n\nTiny changes can lead to huge differences over time.\n\n---\n\n🌪️ **Strange Attractors**\n\nTrajectories that never repeat but stay in a bounded region.\n\n---\n\n🌦️ **Weather Prediction**\n\nImperfect measurements make long‑term forecasts unreliable.\n\nChaos appears in fluids, populations, finance, and planetary motion.",
+      "related_concepts": [
+        "fractals",
+        "differential equations",
+        "probability"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "differential_equations",
+      "name": "Differential Equations",
+      "keywords": [
+        "differential equation",
+        "ode",
+        "pde",
+        "dy/dx",
+        "first-order differential equation",
+        "second-order differential equation",
+        "exponential growth",
+        "exponential decay",
+        "what is a differential equation?",
+        "what is a differential equation",
+        "how do you solve first-order differential equations?",
+        "how do you solve first-order differential equations",
+        "what is exponential growth and decay?",
+        "what is exponential growth and decay",
+        "what are second-order differential equations?",
+        "what are second-order differential equations",
+        "how do differential equations model real phenomena?",
+        "how do differential equations model real phenomena"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA differential equation relates a function to its derivatives. It describes change over time.\n\n---\n\n📌 **First vs Second Order**\n\n• **First‑order**: involves y'\n• **Second‑order**: involves y''\n\n---\n\n📈 **Exponential Growth & Decay**\n\nIf y' = ky, then y = Ce^{kt}.\nk>0 grows, k<0 decays.\n\n---\n\n🎯 **Why it matters**\n\nModels populations, springs, circuits, heat flow, and epidemics.",
+      "related_concepts": [
+        "calculus",
+        "derivatives",
+        "physics"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "linear_equations",
+      "name": "Linear Equations",
+      "keywords": [
+        "linear equation",
+        "y = mx + b",
+        "slope intercept",
+        "systems of equations",
+        "solve for x",
+        "graph of a linear equation",
+        "slope and y-intercept",
+        "what is a linear equation?",
+        "what is a linear equation",
+        "how do you solve for x in a linear equation?",
+        "how do you solve for x in a linear equation",
+        "what does the graph of a linear equation look like?",
+        "what does the graph of a linear equation look like",
+        "what is slope and y-intercept?",
+        "what is slope and y-intercept",
+        "how do you solve systems of linear equations?",
+        "how do you solve systems of linear equations"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA linear equation graphs as a straight line. The highest power of any variable is 1.\n\n---\n\n📐 **Forms of Linear Equations**\n\n| Form | Equation | Best for |\n|------|----------|----------|\n| **Slope-intercept** | y = mx + b | Graphing quickly |\n| **Point-slope** | y - y₁ = m(x - x₁) | Given a point and slope |\n| **Standard** | Ax + By = C | Systems of equations |\n\n---\n\n🎯 **The Key: Slope (m)**\n\n$$m = \\frac{\\text{rise}}{\\text{run}} = \\frac{y_2 - y_1}{x_2 - x_1}$$\n\n| Slope | Line |\n|-------|------|\n| Positive | Goes up ↗ |\n| Negative | Goes down ↘ |\n| Zero | Horizontal — |\n| Undefined | Vertical | |\n\n---\n\n📐 **Systems of Linear Equations**\n\nTwo lines can:\n• **Intersect once** → One solution\n• **Be parallel** → No solution\n• **Be the same** → Infinite solutions\n\n---\n\n⚡ **Solving Methods**\n\n• **Graphing**: Plot both, find intersection\n• **Substitution**: Solve one equation for a variable, plug in\n• **Elimination**: Add equations to cancel a variable\n\n---\n\n📖 **Why \"Linear\"?**\n\nFrom Latin \"linea\" (line). Linear equations give straight lines; linear algebra generalizes this to higher dimensions!\n\n*Every straight line you see — roads, edges, laser beams — is a linear equation in disguise!*",
+      "related_concepts": [
+        "slope",
+        "algebra",
+        "graphing"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "trig_identities",
+      "name": "Trigonometric Identities",
+      "keywords": [
+        "trig identity",
+        "pythagorean identity",
+        "sin squared",
+        "double angle",
+        "what is sin²θ + cos²θ = 1?",
+        "what is sin²θ + cos²θ = 1",
+        "prove the pythagorean identity",
+        "what are the angle addition formulas?",
+        "what are the angle addition formulas",
+        "what are double angle formulas?",
+        "what are double angle formulas",
+        "how do you verify trigonometric identities?",
+        "how do you verify trigonometric identities"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nTrig identities are equations that are TRUE for all angles. They let you simplify and transform expressions.\n\n---\n\n📐 **The Pythagorean Identities**\n\n$$\\sin^2\\theta + \\cos^2\\theta = 1$$\n\nDivide by cos²θ: tan²θ + 1 = sec²θ\nDivide by sin²θ: 1 + cot²θ = csc²θ\n\n---\n\n🎯 **Why sin² + cos² = 1?**\n\nOn the unit circle:\n• x = cos θ\n• y = sin θ\n• Point is on circle: x² + y² = 1\n\nThat's it! It's just Pythagoras on the unit circle!\n\n---\n\n📐 **Angle Sum Formulas**\n\n$$\\sin(A + B) = \\sin A \\cos B + \\cos A \\sin B$$\n$$\\cos(A + B) = \\cos A \\cos B - \\sin A \\sin B$$\n\n---\n\n📐 **Double Angle Formulas**\n\n$$\\sin(2\\theta) = 2\\sin\\theta\\cos\\theta$$\n$$\\cos(2\\theta) = \\cos^2\\theta - \\sin^2\\theta = 2\\cos^2\\theta - 1 = 1 - 2\\sin^2\\theta$$\n\n---\n\n⚡ **Why Bother?**\n\nIdentities let you:\n• Simplify complex expressions\n• Solve trig equations\n• Integrate trig functions\n• Model waves and oscillations\n\n---\n\n📖 **Pro Tip**\n\nMost identities derive from just TWO:\n1. sin²θ + cos²θ = 1\n2. sin(A+B) and cos(A+B)\n\nLearn these, derive the rest!",
+      "related_concepts": [
+        "trigonometry",
+        "unit_circle",
+        "proofs"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "optimization",
+      "name": "Mathematical Optimization",
+      "keywords": [
+        "optimization",
+        "maximize",
+        "minimize",
+        "linear programming",
+        "optimal",
+        "simplex method",
+        "constraints in optimization",
+        "optimal solution",
+        "what is mathematical optimization?",
+        "what is mathematical optimization",
+        "what is linear programming?",
+        "what is linear programming",
+        "how do you find optimal solutions?",
+        "how do you find optimal solutions",
+        "what is the simplex method?",
+        "what is the simplex method",
+        "what are constraints in optimization?",
+        "what are constraints in optimization"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nOptimization finds the best possible solution under constraints.\n\n---\n\n📈 **Linear Programming**\n\nWhen objectives and constraints are linear, the optimum lies at a corner of the feasible region.\n\n---\n\n🧭 **Constraints**\n\nConstraints define what solutions are allowed (budgets, capacities, limits).\n\n---\n\n⚙️ **Simplex Method**\n\nMoves between corners of the feasible region to find the best one.\n\n---\n\nUsed in logistics, scheduling, and machine learning.",
+      "related_concepts": [
+        "linear equations",
+        "calculus",
+        "game theory"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "ramanujan",
+      "name": "Ramanujan",
+      "keywords": [
+        "ramanujan",
+        "taxicab",
+        "1729",
+        "hardy"
+      ],
+      "response_text": "💡 **The Man Who Knew Infinity**\n\nSrinivasa Ramanujan (1887-1920) was a self-taught genius from India who produced some of the most beautiful mathematics ever discovered.\n\n---\n\n📖 **The Taxicab Number** (1919)\n\n> G.H. Hardy visited Ramanujan in a London hospital. \"I came in taxi number **1729**,\" Hardy mentioned. \"A rather dull number, I hope it's not a bad omen.\"\n\n> *\"No, Hardy!\"* Ramanujan said immediately. *\"It's a very interesting number! It's the smallest number expressible as the sum of two cubes in TWO different ways.\"*\n\n$$1729 = 1^3 + 12^3 = 9^3 + 10^3$$\n\n*He knew this instantly, lying sick in bed.*\n\n---\n\n📖 **Letters from India** (1913)\n\n> Ramanujan, a clerk with no formal training, sent letters to Cambridge professors filled with strange formulas. Most ignored him. G.H. Hardy didn't.\n\n> \"They must be true,\" Hardy said, \"because if they weren't, nobody would have the imagination to invent them.\"\n\nHardy brought Ramanujan to England. Together, they did extraordinary work.\n\n---\n\n📖 **Goddess of Mathematics**\n\nRamanujan said his formulas came from the Hindu goddess Namagiri in dreams:\n\n> *\"An equation has no meaning to me unless it expresses a thought of God.\"*\n\n---\n\n😢 **Tragedy**\n\nRamanujan, unused to English weather and food, fell ill with tuberculosis. He died at 32, leaving notebooks full of formulas mathematicians are STILL proving today.\n\n---\n\n📚 *Read*: Kanigel's **The Man Who Knew Infinity** (also a film)",
+      "related_concepts": [
+        "number_theory",
+        "genius",
+        "formulas"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "euler",
+      "name": "Euler's Identity",
+      "keywords": [
+        "euler",
+        "e^i pi",
+        "most beautiful",
+        "euler identity"
+      ],
+      "response_text": "💡 **The Most Beautiful Equation**\n\n$$e^{i\\pi} + 1 = 0$$\n\nFive fundamental constants, three basic operations, one elegant truth.\n\n---\n\n📐 **The Players**\n\n| Symbol | Name | Origin |\n|--------|------|--------|\n| **e** | Euler's number | Growth/decay (≈ 2.718) |\n| **i** | Imaginary unit | √(-1) |\n| **π** | Pi | Circles (≈ 3.14159) |\n| **1** | Unity | The building block |\n| **0** | Zero | The void |\n\n---\n\n📖 **Euler: The Master**\n\n> Leonhard Euler (1707-1783) was the most prolific mathematician in history—his collected works fill 90+ volumes!\n\n• Blind in one eye by 30, totally blind by 60\n• Continued working, dictating to scribes\n• Could recite the entire Aeneid from memory\n• Had 13 children and did math while holding a baby\n\n*\"Euler calculated without apparent effort, as men breathe, as eagles sustain themselves in the air.\"* — Arago\n\n---\n\n🎯 **Why It's Beautiful**\n\n• Connects arithmetic (+, ×, =) with analysis (e), algebra (i), geometry (π)\n• Different civilizations discovered these concepts independently\n• Yet they're bound by this single equation!\n\n---\n\n📖 **Feynman's Reaction**\n\nPhysicist Richard Feynman called it *\"the most remarkable formula in mathematics.\"*\n\n📚 *See also*: Nahin's **Dr. Euler's Fabulous Formula**",
+      "related_concepts": [
+        "complex_numbers",
+        "e",
+        "pi"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "fermat_last",
+      "name": "Fermat's Last Theorem",
+      "keywords": [
+        "fermat last",
+        "fermats last",
+        "andrew wiles",
+        "xn yn zn",
+        "fermat margin",
+        "fermats theorem"
+      ],
+      "response_text": "💡 **The Problem**\n\nFor n > 2, there are NO whole number solutions to:\n\n$$x^n + y^n = z^n$$\n\nSimple to state. Took 358 years to prove.\n\n---\n\n📖 **The Margin Note** (1637)\n\n> Pierre de Fermat scribbled in his copy of Arithmetica:\n\n> *\"I have discovered a truly marvelous proof of this, which this margin is too narrow to contain.\"*\n\nThen he died. No proof was ever found.\n\n*Did he have one? Probably not—the eventual proof uses 20th-century math he couldn't have known.*\n\n---\n\n📖 **Centuries of Failure**\n\nEvery great mathematician tried: Euler, Gauss, Germain... They proved special cases (n=3, n=4) but not the general theorem.\n\nPrizes were offered. Amateur proofs flooded in—all wrong.\n\n---\n\n📖 **Andrew Wiles' Obsession** (1993)\n\n> Andrew Wiles first read about Fermat's theorem at age 10. *\"I knew from that moment I would never let it go.\"*\n\nHe worked in secret for 7 years, told no one—not even his wife.\n\nIn 1993, he announced a proof at Cambridge. The audience wept.\n\n---\n\n📖 **The Gap**\n\nThen a colleague found an error. Wiles spent another agonizing year. Finally, in 1995, he fixed it.\n\n*\"I had this incredible sense of relief.\"*\n\n---\n\n📚 *Read*: Singh's **Fermat's Enigma** — reads like a thriller!",
+      "related_concepts": [
+        "number_theory",
+        "proof",
+        "history"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "emmy_noether",
+      "name": "Symmetry & Emmy Noether",
+      "keywords": [
+        "emmy noether",
+        "noether theorem",
+        "symmetry physics"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nEmmy Noether proved that every symmetry in physics corresponds to a conservation law—one of the deepest insights ever.\n\n---\n\n📖 **The Theorem** (1915)\n\n| Symmetry | Conservation Law |\n|----------|------------------|\n| Time translation | Energy |\n| Space translation | Momentum |\n| Rotation | Angular momentum |\n\n*If the laws of physics don't change over time, energy is conserved.*\n\nThis is WHY conservation laws exist!\n\n---\n\n📖 **The Woman Who Wasn't Allowed**\n\n> Emmy Noether (1882-1935) was one of the greatest mathematicians ever—but couldn't get a real job because she was a woman.\n\n> At Göttingen, David Hilbert argued for her appointment. Faculty objected: *\"What will our soldiers think when they return and find they must learn at the feet of a woman?\"*\n\n> Hilbert: *\"I do not see that the sex of the candidate is relevant. This is a university, not a bathhouse.\"*\n\nShe taught anyway, unpaid, listed as Hilbert's \"assistant.\"\n\n---\n\n📖 **Einstein's Praise**\n\n> Einstein called Noether's theorem *\"the most important mathematical theorem ever proved in guiding the development of modern physics.\"*\n\n---\n\n📖 **Exile and Death**\n\nFleeing Nazi Germany in 1933 (she was Jewish), Noether came to America. She died of complications from surgery at 53.\n\nEinstein wrote her obituary.\n\n📚 *Watch*: Looking Glass Universe explains Noether's theorem beautifully",
+      "related_concepts": [
+        "symmetry",
+        "physics",
+        "conservation"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "mathematical_logic",
+      "name": "Mathematical Logic",
+      "keywords": [
+        "mathematical logic",
+        "propositional logic",
+        "truth table",
+        "if-then",
+        "implication",
+        "proof by contradiction",
+        "mathematical induction",
+        "induction",
+        "quantifiers",
+        "for all",
+        "there exists",
+        "what is propositional logic?",
+        "what is propositional logic",
+        "explain if-then statements and their truth tables",
+        "what is proof by contradiction?",
+        "what is proof by contradiction",
+        "how does mathematical induction work?",
+        "how does mathematical induction work",
+        "what are quantifiers (for all, there exists)?",
+        "what are quantifiers (for all, there exists)"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nMathematical logic is the language of precise reasoning. It explains how proofs work and how statements combine.\n\n---\n\n✅ **Propositional Logic**\n\nStatements are either true or false. We combine them with AND (∧), OR (∨), and NOT (¬).\n\n**If-then (implication)** is true except in one case:\nIf P is true and Q is false, then “P → Q” is false. Otherwise it’s true.\n\n---\n\n🧪 **Proof by Contradiction**\n\nAssume the opposite of what you want, show it leads to a contradiction, and conclude the original statement is true.\n\n---\n\n🧱 **Mathematical Induction**\n\n1) Prove a base case (like n=1)\n2) Assume it’s true for n, then prove for n+1\n\n---\n\n🔎 **Quantifiers**\n\n• **For all (∀)**: every element\n• **There exists (∃)**: at least one element\n\nThey’re the backbone of formal statements like “for all x, there exists y...”",
+      "related_concepts": [
+        "proof",
+        "axioms",
+        "set theory"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "axioms",
+      "name": "Axioms & Proofs",
+      "keywords": [
+        "axiom",
+        "axioms",
+        "postulate",
+        "euclid's postulates",
+        "theorem",
+        "lemma",
+        "corollary",
+        "godel",
+        "incompleteness",
+        "what is an axiom in mathematics?",
+        "what is an axiom in mathematics",
+        "explain euclid's five postulates",
+        "what is a theorem vs a lemma vs a corollary?",
+        "what is a theorem vs a lemma vs a corollary",
+        "what is gödel's incompleteness theorem about?",
+        "what is gödel's incompleteness theorem about"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nAxioms are starting assumptions you accept without proof. From them, you build theorems with logic.\n\n---\n\n📐 **Euclid’s Five Postulates**\n\n1. A straight line can be drawn between any two points\n2. A line segment can be extended indefinitely\n3. A circle can be drawn with any center and radius\n4. All right angles are equal\n5. Through a point not on a line, exactly one parallel line can be drawn\n\n---\n\n📚 **Theorem vs Lemma vs Corollary**\n\n• **Theorem**: a proven result\n• **Lemma**: a helpful mini-theorem used in a larger proof\n• **Corollary**: an easy consequence of a theorem\n\n---\n\n🧩 **Gödel’s Incompleteness Theorem**\n\nIn any system strong enough to do arithmetic, there are true statements that cannot be proven within that system.\n\nThis shows that no finite set of axioms can capture all mathematical truth.",
+      "related_concepts": [
+        "proof",
+        "logic",
+        "geometry"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "points_lines",
+      "name": "Points & Lines",
+      "keywords": [
+        "points and lines",
+        "line segment",
+        "ray",
+        "midpoint formula",
+        "parallel lines",
+        "perpendicular lines",
+        "line vs line segment",
+        "distance formula",
+        "point in geometry",
+        "what is a point in geometry?",
+        "what is a point in geometry",
+        "what is a line vs a line segment vs a ray?",
+        "what is a line vs a line segment vs a ray",
+        "what are parallel and perpendicular lines?",
+        "what are parallel and perpendicular lines",
+        "what is the distance formula?",
+        "what is the distance formula",
+        "what is the midpoint formula?",
+        "what is the midpoint formula"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nPoints have no size. Lines are infinite in both directions. Segments and rays are parts of lines.\n\n---\n\n📌 **Line vs Segment vs Ray**\n\n• **Line**: infinite both ways\n• **Segment**: finite piece with two endpoints\n• **Ray**: one endpoint, infinite in one direction\n\n---\n\n📏 **Parallel & Perpendicular**\n\n• Parallel lines never meet (same slope)\n• Perpendicular lines meet at 90° (slopes multiply to −1)\n\n---\n\n🎯 **Midpoint Formula**\n\nFor points (x₁, y₁) and (x₂, y₂):\n$$\\left(\frac{x_1+x_2}{2},\frac{y_1+y_2}{2}\right)$$",
+      "related_concepts": [
+        "geometry",
+        "slope",
+        "linear equations"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "polygons",
+      "name": "Polygons",
+      "keywords": [
+        "polygon",
+        "regular polygon",
+        "convex polygon",
+        "concave polygon",
+        "sum of interior angles",
+        "area of any polygon",
+        "what is a polygon?",
+        "what is a polygon",
+        "what is a regular polygon?",
+        "what is a regular polygon",
+        "what is the sum of interior angles in a polygon?",
+        "what is the sum of interior angles in a polygon",
+        "what is a convex vs concave polygon?",
+        "what is a convex vs concave polygon",
+        "how do you find the area of any polygon?",
+        "how do you find the area of any polygon"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA polygon is a closed shape made of straight line segments.\n\n---\n\n🔷 **Regular Polygon**\n\nAll sides and angles are equal (like an equilateral triangle or regular pentagon).\n\n---\n\n↔️ **Convex vs Concave**\n\n• **Convex**: all interior angles < 180°\n• **Concave**: at least one interior angle > 180°\n\n---\n\n📐 **Angle Sum Formula**\n\nFor an n-sided polygon: (n − 2) × 180°.\nExample: a hexagon has (6 − 2) × 180° = 720° of interior angles.",
+      "related_concepts": [
+        "geometry",
+        "angles",
+        "triangles"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "transformations",
+      "name": "Transformations",
+      "keywords": [
+        "geometric transformation",
+        "transformation",
+        "translation",
+        "rotation",
+        "reflection",
+        "dilation",
+        "similarity",
+        "scale factor",
+        "what are geometric transformations?",
+        "what are geometric transformations",
+        "what is a translation?",
+        "what is a translation",
+        "what is a rotation?",
+        "what is a rotation",
+        "what is a reflection?",
+        "what is a reflection",
+        "what is dilation and similarity?",
+        "what is dilation and similarity",
+        "why is 'through the looking glass' about mirror symmetry?",
+        "why is 'through the looking glass' about mirror symmetry",
+        "how does carroll use chess board geometry in alice's journey?",
+        "how does carroll use chess board geometry in alice's journey"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nTransformations move or resize shapes while preserving some properties.\n\n---\n\n🔁 **Common Transformations**\n\n• **Translation**: slide without turning\n• **Rotation**: spin around a point\n• **Reflection**: mirror flip\n• **Dilation**: resize by a scale factor\n\n---\n\n📏 **Similarity & Dilation**\n\nDilation changes size but keeps angles. Similar shapes have the same angles and proportional sides.\n\n---\n\n🧭 **Why it matters**\n\nTransformations power geometry proofs, art, computer graphics, and physics.",
+      "related_concepts": [
+        "geometry",
+        "symmetry",
+        "matrices"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "number_theory",
+      "name": "Number Theory",
+      "keywords": [
+        "number theory",
+        "greatest common divisor",
+        "gcd",
+        "euclid algorithm",
+        "fermat's little theorem",
+        "congruence",
+        "euclidean algorithm",
+        "what is number theory about?",
+        "what is number theory about",
+        "what is the greatest common divisor (gcd)?",
+        "what is the greatest common divisor (gcd)",
+        "what is the euclidean algorithm?",
+        "what is the euclidean algorithm",
+        "what is fermat's little theorem?",
+        "what is fermat's little theorem"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nNumber theory studies whole numbers—their patterns, divisibility, and structure.\n\n---\n\n🧮 **Greatest Common Divisor (GCD)**\n\nThe GCD of a and b is the largest number that divides both.\nEuclid’s algorithm finds it quickly using repeated remainders.\n\n---\n\n🔒 **Fermat’s Little Theorem**\n\nIf p is prime and a is not divisible by p, then:\n$$a^{p-1} \\equiv 1 \\pmod{p}$$\n\nThis is fundamental in cryptography.\n\n---\n\n📌 **Why it matters**\n\nNumber theory powers encryption, coding theory, and some of the most beautiful problems in math.",
+      "related_concepts": [
+        "prime numbers",
+        "modular arithmetic",
+        "cryptography"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "topology",
+      "name": "Topology",
+      "keywords": [
+        "topology",
+        "coffee cup",
+        "donut",
+        "torus",
+        "homeomorphism",
+        "mobius strip",
+        "möbius strip",
+        "open sets",
+        "closed sets",
+        "euler characteristic",
+        "what is topology?",
+        "what is topology",
+        "why is a coffee cup the same as a donut?",
+        "why is a coffee cup the same as a donut",
+        "what is a möbius strip?",
+        "what is a möbius strip",
+        "what are open and closed sets?",
+        "what are open and closed sets",
+        "what is the euler characteristic?",
+        "what is the euler characteristic"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nTopology studies properties of shapes that don’t change under stretching or bending.\n\n---\n\n☕ **Coffee Cup = Donut**\n\nBoth have one hole, so they’re equivalent in topology.\n\n---\n\n🌀 **Möbius Strip**\n\nA surface with only one side and one edge.\n\n---\n\n🔎 **Open vs Closed Sets**\n\nOpen sets don’t include their boundary; closed sets do.\n\n---\n\n🧮 **Euler Characteristic**\n\nFor many shapes: V − E + F is constant (like 2 for a sphere).\n\n---\n\nUsed in data analysis, robotics, and physics.",
+      "related_concepts": [
+        "geometry",
+        "continuity",
+        "graph theory"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "rational_numbers",
+      "name": "Rational Numbers",
+      "keywords": [
+        "rational number",
+        "rational numbers",
+        "fraction as decimal",
+        "terminating decimal",
+        "repeating decimal",
+        "p/q",
+        "ratio of integers",
+        "what is a rational number?",
+        "what is a rational number",
+        "how do fractions work?",
+        "how do fractions work",
+        "why can every fraction be written as a decimal?",
+        "why can every fraction be written as a decimal",
+        "what makes a decimal repeating vs terminating?",
+        "what makes a decimal repeating vs terminating",
+        "how do you add and multiply fractions?",
+        "how do you add and multiply fractions"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA rational number is any number that can be written as a fraction **p/q**, where p and q are integers and q ≠ 0.\n\n---\n\n🔍 **Fractions and Decimals**\n\nEvery fraction becomes either:\n• a **terminating** decimal (like 0.75)\n• a **repeating** decimal (like 0.333...)\n\nWhy? Long division of p by q eventually repeats a remainder.\n\n---\n\n🧮 **Examples**\n\n• 3/4 = 0.75 (terminating)\n• 2/3 = 0.666... (repeating)\n• -5 = -5/1 (still rational)\n\n---\n\n🎯 **Why it matters**\n\nRational numbers are the numbers you can measure exactly with fractions: money, recipes, ratios, and probabilities.",
+      "related_concepts": [
+        "fractions",
+        "real numbers",
+        "division"
+      ],
+      "visualization": null
+    }
+  ]
+}
