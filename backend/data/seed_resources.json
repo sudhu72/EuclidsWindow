@@ -1,0 +1,199 @@
+{
+  "resources": [
+    {
+      "title": "Euclid's Elements",
+      "author": "Euclid (translated by Thomas Heath)",
+      "resource_type": "book",
+      "difficulty": "intermediate",
+      "url": "https://mathcs.clarku.edu/~djoyce/elements/elements.html",
+      "description": "The foundational text of geometry, online with commentary.",
+      "concepts": ["point", "line", "angle", "triangle", "pythagorean_theorem", "euclidean_geometry"]
+    },
+    {
+      "title": "The Princeton Companion to Mathematics",
+      "author": "Timothy Gowers, June Barrow-Green, Imre Leader (eds.)",
+      "resource_type": "book",
+      "difficulty": "intermediate",
+      "url": null,
+      "isbn": "978-0691118802",
+      "description": "Comprehensive reference covering all major areas of pure and applied mathematics. Essential for understanding the landscape of modern mathematics.",
+      "concepts": ["algebra", "analysis", "geometry", "number_theory", "combinatorics", "logic", "probability"]
+    },
+    {
+      "title": "Principles of Mathematical Analysis (Baby Rudin)",
+      "author": "Walter Rudin",
+      "resource_type": "book",
+      "difficulty": "advanced",
+      "url": null,
+      "isbn": "978-0070542358",
+      "description": "Classic rigorous introduction to real analysis. The standard text for undergraduate analysis courses.",
+      "concepts": ["real_numbers", "limits", "continuity", "derivatives", "integrals", "sequences", "series"]
+    },
+    {
+      "title": "Linear Algebra Done Right",
+      "author": "Sheldon Axler",
+      "resource_type": "book",
+      "difficulty": "intermediate",
+      "url": null,
+      "isbn": "978-3319110790",
+      "description": "Modern approach to linear algebra emphasizing abstract vector spaces over determinants.",
+      "concepts": ["linear_algebra", "vector_spaces", "matrices", "eigenvalues", "linear_transformations"]
+    },
+    {
+      "title": "An Introduction to the Theory of Numbers",
+      "author": "G.H. Hardy and E.M. Wright",
+      "resource_type": "book",
+      "difficulty": "advanced",
+      "url": null,
+      "isbn": "978-0199219865",
+      "description": "The classic comprehensive introduction to number theory, covering prime numbers, congruences, and more.",
+      "concepts": ["prime_numbers", "number_theory", "divisibility", "congruences", "diophantine_equations"]
+    },
+    {
+      "title": "Abstract Algebra",
+      "author": "David Dummit and Richard Foote",
+      "resource_type": "book",
+      "difficulty": "advanced",
+      "url": null,
+      "isbn": "978-0471433347",
+      "description": "Comprehensive text on groups, rings, fields, and Galois theory. Standard graduate reference.",
+      "concepts": ["groups", "rings", "fields", "polynomials", "galois_theory"]
+    },
+    {
+      "title": "Calculus",
+      "author": "Michael Spivak",
+      "resource_type": "book",
+      "difficulty": "intermediate",
+      "url": null,
+      "isbn": "978-0914098911",
+      "description": "Rigorous single-variable calculus with emphasis on proofs. Bridges calculus and analysis.",
+      "concepts": ["limits", "derivatives", "integrals", "continuity", "functions"]
+    },
+    {
+      "title": "Visual Complex Analysis",
+      "author": "Tristan Needham",
+      "resource_type": "book",
+      "difficulty": "advanced",
+      "url": null,
+      "isbn": "978-0198534464",
+      "description": "Revolutionary geometric approach to complex analysis with beautiful illustrations.",
+      "concepts": ["complex_numbers", "conformal_mapping", "analytic_functions"]
+    },
+    {
+      "title": "Topology",
+      "author": "James Munkres",
+      "resource_type": "book",
+      "difficulty": "advanced",
+      "url": null,
+      "isbn": "978-0134689517",
+      "description": "Standard introduction to point-set and algebraic topology.",
+      "concepts": ["topology", "continuity", "compactness", "connectedness"]
+    },
+    {
+      "title": "Naive Set Theory",
+      "author": "Paul Halmos",
+      "resource_type": "book",
+      "difficulty": "intermediate",
+      "url": null,
+      "isbn": "978-1614271314",
+      "description": "Elegant introduction to set theory, the foundation of modern mathematics.",
+      "concepts": ["set_theory", "cardinality", "axiom_of_choice", "ordinals"]
+    },
+    {
+      "title": "A First Course in Probability",
+      "author": "Sheldon Ross",
+      "resource_type": "book",
+      "difficulty": "intermediate",
+      "url": null,
+      "isbn": "978-0321794772",
+      "description": "Clear introduction to probability theory with many applications and examples.",
+      "concepts": ["probability", "random_variables", "distributions", "expected_value"]
+    },
+    {
+      "title": "The Art of Computer Programming",
+      "author": "Donald Knuth",
+      "resource_type": "book",
+      "difficulty": "advanced",
+      "url": null,
+      "isbn": "978-0201896831",
+      "description": "Monumental work on algorithms and their mathematical analysis.",
+      "concepts": ["algorithms", "combinatorics", "number_systems", "data_structures"]
+    },
+    {
+      "title": "3Blue1Brown - Essence of Linear Algebra",
+      "author": "Grant Sanderson",
+      "resource_type": "video",
+      "difficulty": "beginner",
+      "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab",
+      "description": "Visually stunning explanations of linear algebra fundamentals.",
+      "concepts": ["linear_algebra", "matrices", "vectors", "eigenvalues"]
+    },
+    {
+      "title": "3Blue1Brown - Essence of Calculus",
+      "author": "Grant Sanderson",
+      "resource_type": "video",
+      "difficulty": "beginner",
+      "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr",
+      "description": "Visual intuition for derivatives, integrals, and the fundamental theorem.",
+      "concepts": ["derivatives", "integrals", "limits", "calculus"]
+    },
+    {
+      "title": "Khan Academy Mathematics",
+      "author": "Khan Academy",
+      "resource_type": "course",
+      "difficulty": "beginner",
+      "url": "https://www.khanacademy.org/math",
+      "description": "Comprehensive free courses from arithmetic through calculus and beyond.",
+      "concepts": ["arithmetic", "algebra", "geometry", "trigonometry", "calculus"]
+    },
+    {
+      "title": "MIT OpenCourseWare - Mathematics",
+      "author": "MIT",
+      "resource_type": "course",
+      "difficulty": "advanced",
+      "url": "https://ocw.mit.edu/courses/mathematics/",
+      "description": "Free university-level mathematics courses with lecture notes and problem sets.",
+      "concepts": ["linear_algebra", "calculus", "differential_equations", "real_analysis"]
+    },
+    {
+      "title": "How to Prove It",
+      "author": "Daniel Velleman",
+      "resource_type": "book",
+      "difficulty": "intermediate",
+      "url": null,
+      "isbn": "978-1108439534",
+      "description": "Essential guide to understanding and writing mathematical proofs.",
+      "concepts": ["logic", "proofs", "set_theory", "induction"]
+    },
+    {
+      "title": "What Is Mathematics?",
+      "author": "Richard Courant and Herbert Robbins",
+      "resource_type": "book",
+      "difficulty": "intermediate",
+      "url": null,
+      "isbn": "978-0195105193",
+      "description": "Classic overview of mathematics written for intelligent laypersons, updated by Ian Stewart.",
+      "concepts": ["number_theory", "geometry", "topology", "calculus"]
+    },
+    {
+      "title": "Gödel, Escher, Bach",
+      "author": "Douglas Hofstadter",
+      "resource_type": "book",
+      "difficulty": "intermediate",
+      "url": null,
+      "isbn": "978-0465026562",
+      "description": "Pulitzer Prize-winning exploration of logic, self-reference, and intelligence.",
+      "concepts": ["logic", "recursion", "incompleteness", "formal_systems"]
+    },
+    {
+      "title": "The Mathematical Experience",
+      "author": "Philip Davis and Reuben Hersh",
+      "resource_type": "book",
+      "difficulty": "beginner",
+      "url": null,
+      "isbn": "978-0395929681",
+      "description": "Accessible exploration of what mathematicians actually do and how mathematics develops.",
+      "concepts": ["philosophy_of_math", "history", "proof"]
+    }
+  ]
+}

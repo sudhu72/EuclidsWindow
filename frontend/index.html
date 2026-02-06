@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Euclid's Window</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">Euclid's Window</div>
+      <div class="subtitle">Learn math from first principles</div>
+      <nav class="nav-tabs">
+        <button class="tab-btn active" data-tab="chat">Chat</button>
+        <a href="mathmap.html" class="tab-btn tab-link">Math Map</a>
+        <button class="tab-btn" data-tab="mindmap">Concept Graph</button>
+        <button class="tab-btn" data-tab="euclid">Euclid</button>
+        <button class="tab-btn" data-tab="resources">Resources</button>
+      </nav>
+    </header>
+
+    <main class="app-layout">
+      <!-- Chat Tab -->
+      <div id="tab-chat" class="tab-content active">
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <span>Conversations</span>
+            <button id="new-conversation" class="btn-icon" title="New conversation">+</button>
+          </div>
+          <div id="conversation-list" class="conversation-list"></div>
+        </aside>
+
+        <section class="chat-panel">
+          <div id="messages" class="messages"></div>
+          <div id="suggestions" class="suggestions"></div>
+          <form id="chat-form" class="chat-form">
+            <input
+              id="chat-input"
+              type="text"
+              placeholder="Ask about number lines, parabolas, or base conversion..."
+              autocomplete="off"
+            />
+            <button type="submit" id="send-btn">Send</button>
+          </form>
+        </section>
+
+        <aside class="viz-panel">
+          <div class="viz-header">Visualization</div>
+          <div id="viz-content" class="viz-content">
+            <div class="viz-placeholder">No visualization yet.</div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Mind Map Tab -->
+      <div id="tab-mindmap" class="tab-content">
+        <div class="mindmap-controls">
+          <label for="concept-select">Select concept:</label>
+          <select id="concept-select"></select>
+          <button id="load-mindmap" class="btn-primary">Load Mind Map</button>
+        </div>
+        <div id="mindmap-container" class="mindmap-container">
+          <div class="viz-placeholder">Select a concept to view its mind map.</div>
+        </div>
+        <div id="concept-details" class="concept-details"></div>
+      </div>
+
+      <!-- Euclid Tab -->
+      <div id="tab-euclid" class="tab-content">
+        <div class="euclid-controls">
+          <select id="euclid-book">
+            <option value="">All Books</option>
+            <option value="1">Book I (Geometry)</option>
+            <option value="7">Book VII (Number Theory)</option>
+          </select>
+          <select id="euclid-type">
+            <option value="">All Types</option>
+            <option value="definition">Definitions</option>
+            <option value="postulate">Postulates</option>
+            <option value="common_notion">Common Notions</option>
+            <option value="proposition">Propositions</option>
+          </select>
+          <input type="text" id="euclid-search" placeholder="Search..." />
+          <button id="search-euclid" class="btn-primary">Search</button>
+        </div>
+        <div id="euclid-results" class="euclid-results"></div>
+      </div>
+
+      <!-- Resources Tab -->
+      <div id="tab-resources" class="tab-content">
+        <div class="resource-controls">
+          <select id="resource-type">
+            <option value="">All Types</option>
+            <option value="book">Books</option>
+            <option value="video">Videos</option>
+            <option value="course">Courses</option>
+          </select>
+          <select id="resource-difficulty">
+            <option value="">All Levels</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+          <input type="text" id="resource-search" placeholder="Search..." />
+          <button id="search-resources" class="btn-primary">Search</button>
+        </div>
+        <div id="resource-results" class="resource-results"></div>
+      </div>
+    </main>
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="error-toast" class="error-toast hidden"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.30.0/plotly.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

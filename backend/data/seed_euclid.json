@@ -1,0 +1,156 @@
+{
+  "entries": [
+    {
+      "reference": "I.Def.1",
+      "book": 1,
+      "entry_type": "definition",
+      "number": 1,
+      "original_text": "A point is that which has no part.",
+      "modern_text": "A point represents a location in space with no dimensions—no length, width, or height."
+    },
+    {
+      "reference": "I.Def.2",
+      "book": 1,
+      "entry_type": "definition",
+      "number": 2,
+      "original_text": "A line is breadthless length.",
+      "modern_text": "A line has length but no width; it extends infinitely in both directions."
+    },
+    {
+      "reference": "I.Def.3",
+      "book": 1,
+      "entry_type": "definition",
+      "number": 3,
+      "original_text": "The ends of a line are points.",
+      "modern_text": "The endpoints of a line segment are points."
+    },
+    {
+      "reference": "I.Def.4",
+      "book": 1,
+      "entry_type": "definition",
+      "number": 4,
+      "original_text": "A straight line is a line which lies evenly with the points on itself.",
+      "modern_text": "A straight line is the shortest path between any two of its points."
+    },
+    {
+      "reference": "I.Def.8",
+      "book": 1,
+      "entry_type": "definition",
+      "number": 8,
+      "original_text": "A plane angle is the inclination to one another of two lines in a plane which meet one another and do not lie in a straight line.",
+      "modern_text": "An angle is formed when two lines meet at a point; it measures the rotation between them."
+    },
+    {
+      "reference": "I.Def.10",
+      "book": 1,
+      "entry_type": "definition",
+      "number": 10,
+      "original_text": "When a straight line standing on a straight line makes the adjacent angles equal to one another, each of the equal angles is right, and the straight line standing on the other is called a perpendicular to that on which it stands.",
+      "modern_text": "A right angle is exactly 90 degrees; two lines forming right angles are perpendicular."
+    },
+    {
+      "reference": "I.Def.19",
+      "book": 1,
+      "entry_type": "definition",
+      "number": 19,
+      "original_text": "Rectilinear figures are those which are contained by straight lines, trilateral figures being those contained by three...",
+      "modern_text": "A triangle is a polygon with three straight sides."
+    },
+    {
+      "reference": "I.Def.22",
+      "book": 1,
+      "entry_type": "definition",
+      "number": 22,
+      "original_text": "Of quadrilateral figures, a square is that which is both equilateral and right-angled...",
+      "modern_text": "A square has four equal sides and four right angles (90 degrees each)."
+    },
+    {
+      "reference": "I.Post.1",
+      "book": 1,
+      "entry_type": "postulate",
+      "number": 1,
+      "original_text": "To draw a straight line from any point to any point.",
+      "modern_text": "Any two points can be connected by exactly one straight line."
+    },
+    {
+      "reference": "I.Post.2",
+      "book": 1,
+      "entry_type": "postulate",
+      "number": 2,
+      "original_text": "To produce a finite straight line continuously in a straight line.",
+      "modern_text": "Any line segment can be extended indefinitely in either direction."
+    },
+    {
+      "reference": "I.Post.3",
+      "book": 1,
+      "entry_type": "postulate",
+      "number": 3,
+      "original_text": "To describe a circle with any center and radius.",
+      "modern_text": "A circle can be drawn with any center point and any radius."
+    },
+    {
+      "reference": "I.Post.4",
+      "book": 1,
+      "entry_type": "postulate",
+      "number": 4,
+      "original_text": "That all right angles equal one another.",
+      "modern_text": "All right angles are congruent (equal to 90 degrees)."
+    },
+    {
+      "reference": "I.Post.5",
+      "book": 1,
+      "entry_type": "postulate",
+      "number": 5,
+      "original_text": "That, if a straight line falling on two straight lines makes the interior angles on the same side less than two right angles, the two straight lines, if produced indefinitely, meet on that side on which are the angles less than the two right angles.",
+      "modern_text": "The parallel postulate: if two lines are cut by a transversal such that interior angles on one side sum to less than 180°, the lines meet on that side."
+    },
+    {
+      "reference": "I.CN.1",
+      "book": 1,
+      "entry_type": "common_notion",
+      "number": 1,
+      "original_text": "Things which equal the same thing also equal one another.",
+      "modern_text": "If A = C and B = C, then A = B (transitivity of equality)."
+    },
+    {
+      "reference": "I.47",
+      "book": 1,
+      "entry_type": "proposition",
+      "number": 47,
+      "original_text": "In right-angled triangles the square on the side opposite the right angle equals the sum of the squares on the sides containing the right angle.",
+      "modern_text": "The Pythagorean Theorem: In a right triangle, a² + b² = c², where c is the hypotenuse."
+    },
+    {
+      "reference": "VII.Def.1",
+      "book": 7,
+      "entry_type": "definition",
+      "number": 1,
+      "original_text": "A unit is that by virtue of which each of the things that exist is called one.",
+      "modern_text": "The unit (1) is the fundamental building block from which all numbers are composed."
+    },
+    {
+      "reference": "VII.Def.2",
+      "book": 7,
+      "entry_type": "definition",
+      "number": 2,
+      "original_text": "A number is a multitude composed of units.",
+      "modern_text": "A number is a collection of units; e.g., 5 is five units combined."
+    },
+    {
+      "reference": "VII.Def.3",
+      "book": 7,
+      "entry_type": "definition",
+      "number": 3,
+      "original_text": "A number is a part of a number, the less of the greater, when it measures the greater.",
+      "modern_text": "A number divides another if it measures it exactly (no remainder)."
+    },
+    {
+      "reference": "VII.Def.11",
+      "book": 7,
+      "entry_type": "definition",
+      "number": 11,
+      "original_text": "A prime number is that which is measured by a unit alone.",
+      "modern_text": "A prime number has exactly two divisors: 1 and itself."
+    }
+  ]
+}
