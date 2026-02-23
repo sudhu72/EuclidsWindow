@@ -1,0 +1,32 @@
+[
+  {
+    "question": "Explain Euler's identity in plain English.",
+    "learner_level": "teen",
+    "answer": "Euler's identity connects five important constants: e, i, pi, 1, and 0. It says e^(i*pi) + 1 = 0. You can think of it as a bridge between exponential growth and rotation on the complex plane."
+  },
+  {
+    "question": "Show one worked example for solving x^2 - 5x + 6 = 0.",
+    "learner_level": "teen",
+    "answer": "Factor the quadratic: x^2 - 5x + 6 = (x - 2)(x - 3). Set each factor to zero. So the roots are x = 2 and x = 3. Verify: 2^2 - 5*2 + 6 = 0 and 3^2 - 5*3 + 6 = 0."
+  },
+  {
+    "question": "Give a kid-friendly explanation of fractions.",
+    "learner_level": "kids",
+    "answer": "A fraction is a way to share something fairly. If you cut a pizza into 4 equal slices and eat 1 slice, you ate 1/4. The top number tells how many slices you have, and the bottom number tells total equal slices."
+  },
+  {
+    "question": "Can you derive the derivative of x^3 from first principles?",
+    "learner_level": "college",
+    "answer": "Using the limit definition, f'(x)=lim_{h->0}[(x+h)^3-x^3]/h. Expand: x^3+3x^2h+3xh^2+h^3-x^3. Divide by h to get 3x^2+3xh+h^2. Take h->0, result is 3x^2."
+  },
+  {
+    "instruction": "Explain Hamiltonian cycle intuition with one analogy.",
+    "input": "Learner level: adult",
+    "output": "A Hamiltonian cycle is like planning a city tour that visits each landmark exactly once and returns to the start. The challenge is finding a route that never repeats landmarks while still forming a closed loop."
+  },
+  {
+    "prompt": "Ask me a 2-question quiz on imaginary numbers.",
+    "student_level": "teen",
+    "response": "Quiz Q1: What does i represent? Q2: Simplify i^4. Answers: i is the square root of -1, and i^4 = 1."
+  }
+]
