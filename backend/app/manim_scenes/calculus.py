@@ -21,15 +21,15 @@ class DerivativeAsSlope(Scene):
         )
         axes.shift(DOWN * 0.5)
 
-        # Labels
-        x_label = axes.get_x_axis_label("x")
-        y_label = axes.get_y_axis_label("y")
+        # Labels (avoid LaTeX dependencies)
+        x_label = Text("x", font_size=24).next_to(axes.x_axis, RIGHT)
+        y_label = Text("y", font_size=24).next_to(axes.y_axis, UP)
 
         self.play(Create(axes), Write(x_label), Write(y_label))
 
         # Create function f(x) = x^2
         func = axes.plot(lambda x: x**2, color=BLUE, x_range=[0, 3])
-        func_label = MathTex("f(x) = x^2", font_size=32, color=BLUE)
+        func_label = Text("f(x) = x^2", font_size=28, color=BLUE)
         func_label.to_corner(UR)
 
         self.play(Create(func), Write(func_label))
@@ -66,9 +66,9 @@ class DerivativeAsSlope(Scene):
 
         # Slope label
         slope_text = always_redraw(
-            lambda: MathTex(
-                f"\\text{{slope}} = 2x = {2 * x_val.get_value():.1f}",
-                font_size=28,
+            lambda: Text(
+                f"slope = 2x = {2 * x_val.get_value():.1f}",
+                font_size=24,
             ).to_corner(DL)
         )
 
@@ -83,7 +83,7 @@ class DerivativeAsSlope(Scene):
         self.play(x_val.animate.set_value(2.5), run_time=2)
 
         # Show derivative formula
-        deriv = MathTex("f'(x) = 2x", font_size=36, color=RED)
+        deriv = Text("f'(x) = 2x", font_size=28, color=RED)
         deriv.next_to(func_label, DOWN)
         self.play(Write(deriv))
 
@@ -108,14 +108,14 @@ class IntegralAsArea(Scene):
         )
         axes.shift(DOWN * 0.5)
 
-        x_label = axes.get_x_axis_label("x")
-        y_label = axes.get_y_axis_label("y")
+        x_label = Text("x", font_size=24).next_to(axes.x_axis, RIGHT)
+        y_label = Text("y", font_size=24).next_to(axes.y_axis, UP)
 
         self.play(Create(axes), Write(x_label), Write(y_label))
 
         # Create function
         func = axes.plot(lambda x: x**2 / 2 + 0.5, color=BLUE, x_range=[0, 3.5])
-        func_label = MathTex("f(x)", font_size=32, color=BLUE).next_to(func, RIGHT)
+        func_label = Text("f(x)", font_size=28, color=BLUE).next_to(func, RIGHT)
 
         self.play(Create(func), Write(func_label))
 
@@ -126,10 +126,7 @@ class IntegralAsArea(Scene):
         self.wait(0.5)
 
         # Add integral notation
-        integral = MathTex(
-            r"\int_a^b f(x)\,dx = \text{Area}",
-            font_size=36,
-        )
+        integral = Text("Integral = area under curve", font_size=28)
         integral.to_corner(DR)
         self.play(Write(integral))
 
@@ -156,7 +153,7 @@ class LimitConcept(Scene):
 
         # Target point
         target = Dot(number_line.n2p(2), color=RED, radius=0.15)
-        target_label = MathTex("L = 2", font_size=32).next_to(target, UP)
+        target_label = Text("L = 2", font_size=28).next_to(target, UP)
 
         self.play(Create(target), Write(target_label))
 
@@ -178,10 +175,7 @@ class LimitConcept(Scene):
         )
 
         # Limit notation
-        limit_text = MathTex(
-            r"\lim_{x \to 2} f(x) = 2",
-            font_size=40,
-        )
+        limit_text = Text("limit as x → 2 is 2", font_size=28)
         limit_text.to_edge(DOWN)
         self.play(Write(limit_text))
 

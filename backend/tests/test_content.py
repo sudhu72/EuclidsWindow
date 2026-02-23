@@ -35,8 +35,18 @@ class TestTopicCatalog:
         assert topic is not None
         assert topic["id"] == "prime_numbers"
 
+    def test_match_hamiltonian_graph_over_generic_graph(self, catalog):
+        topic = catalog.match_topic("Explain hamiltonian graphs with visualization")
+        assert topic is not None
+        assert topic["id"] == "hamiltonian_graph"
+
+    def test_match_systems_of_equations_topic(self, catalog):
+        topic = catalog.match_topic("Explain systems of equations with visualization")
+        assert topic is not None
+        assert topic["id"] == "systems_of_equations"
+
     def test_no_match(self, catalog):
-        topic = catalog.match_topic("recipe for chocolate cake")
+        topic = catalog.match_topic("how to bake sourdough bread")
         assert topic is None
 
     def test_build_visualization_with_viz(self, catalog):

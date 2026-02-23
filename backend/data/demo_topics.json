@@ -641,7 +641,7 @@
         "what is conditional probability?",
         "what is conditional probability"
       ],
-      "response_text": "💡 **The Core Idea**\n\nProbability measures how likely an event is, from 0 (impossible) to 1 (certain).\n\n---\n\n🎲 **Independent vs Dependent Events**\n\n• **Independent**: One event doesn’t change the other\n  Example: Two coin flips.\n• **Dependent**: The first event affects the second\n  Example: Drawing two cards without replacement.\n\nRule: P(A and B) = P(A)P(B) if independent.\n\n---\n\n📌 **Why it matters**\n\nDependence shows up in real life: disease spread, reliability, finance, and AI.",
+      "response_text": "💡 **The Core Idea**\n\nProbability measures how likely an event is, from 0 (impossible) to 1 (certain).\n\n---\n\n🎲 **Simple Example**\n\nRolling a fair die: P(rolling a 5) = 1/6.\n\n---\n\n🔗 **Independent vs Dependent**\n\n• **Independent**: One event doesn’t change the other (two coin flips)\n• **Dependent**: The first event affects the second (cards without replacement)\n\nRule: If independent, P(A and B) = P(A)P(B).\n\n---\n\n🧠 **Conditional Probability**\n\nP(A | B) = P(A and B) / P(B).\n\nExample: If a card is known to be red, P(heart) = 1/2.\n\n---\n\n📌 **Why it matters**\n\nProbability powers risk, forecasting, reliability, and AI.",
       "related_concepts": [
         "statistics",
         "bayes",
@@ -928,6 +928,24 @@
       "visualization": null
     },
     {
+      "id": "hamiltonian_graph",
+      "name": "Hamiltonian Graphs",
+      "keywords": [
+        "hamiltonian graph",
+        "hamiltonian graphs",
+        "hamiltonian cycle",
+        "graph theory hamiltonian",
+        "visit each vertex exactly once"
+      ],
+      "response_text": "🧠 **What it means (plain English)**\n\nA **Hamiltonian graph** is a graph that contains a cycle that visits **every vertex exactly once** and returns to the start.\n\n- The special cycle is called a **Hamiltonian cycle**.\n- A **Hamiltonian path** visits every vertex once but does not need to return to the start.\n\n---\n\n📐 **Axiomatic view**\n\nGiven a finite graph \\(G=(V,E)\\), a Hamiltonian cycle is a cyclic ordering \\((v_1,\\dots,v_n,v_1)\\) of all vertices in \\(V\\) such that:\n1. Every vertex of \\(V\\) appears exactly once in \\((v_1,\\dots,v_n)\\), and\n2. \\((v_i,v_{i+1}) \\in E\\) for each \\(i\\), with \\((v_n,v_1) \\in E\\).\n\nIf such a cycle exists, \\(G\\) is Hamiltonian.\n\n---\n\n✅ **Quick example**\n\nA hexagon graph with vertices \\(v_0,\\dots,v_5\\) is Hamiltonian because:\n\\(v_0 \\to v_1 \\to v_2 \\to v_3 \\to v_4 \\to v_5 \\to v_0\\)\nuses every vertex once and closes the loop.\n\n---\n\n⚠️ **Common confusion**\n\n- **Hamiltonian**: concerns visiting **vertices** once.\n- **Eulerian**: concerns traversing **edges** once.\n\nThese are different properties.",
+      "related_concepts": [
+        "graph theory",
+        "hamiltonian cycle",
+        "eulerian graph"
+      ],
+      "visualization": null
+    },
+    {
       "id": "ratio",
       "name": "Ratios & Proportions",
       "keywords": [
@@ -954,7 +972,6 @@
         "square root of -1",
         "complex plane",
         "imaginary unit",
-        "i",
         "what is an imaginary number?",
         "what is an imaginary number",
         "why was the square root of -1 invented?",
@@ -1038,7 +1055,7 @@
         "what is integration by parts?",
         "what is integration by parts"
       ],
-      "response_text": "💡 **The Core Idea**\n\nAn integral adds up infinitely many tiny pieces—like total area under a curve.\n\n---\n\n🔁 **Fundamental Theorem of Calculus**\n\nIntegration and differentiation are opposites. If F' = f, then:\n$$\\int_a^b f(x)\\,dx = F(b) - F(a)$$\n\n---\n\n🧮 **Techniques**\n\n• **Substitution**: undo the chain rule\n• **Integration by parts**: \\(\\int u\\,dv = uv - \\int v\\,du\\)\n\n---\n\n🎯 **Applications**\n\nAreas, volumes, work, probability, and signals.",
+      "response_text": "💡 **The Core Idea**\n\nAn integral adds up infinitely many tiny pieces — like total **area under a curve**.\n\n---\n\n📏 **Riemann Sum Intuition**\n\nBreak the area into thin rectangles and add them. As the rectangles get thinner, the sum becomes the integral.\n\n**Example**: Area under y = x from 0 to 1:\n$$\\int_0^1 x\\,dx = \\frac{1}{2}$$\n\n---\n\n🔁 **Fundamental Theorem of Calculus**\n\nIntegration and differentiation are opposites. If F' = f, then:\n$$\\int_a^b f(x)\\,dx = F(b) - F(a)$$\n\n---\n\n🧮 **Techniques**\n\n• **Substitution**: undo the chain rule\n• **Integration by parts**: \\(\\int u\\,dv = uv - \\int v\\,du\\)\n\n---\n\n🎯 **Applications**\n\nAreas, volumes, work, probability, and signals.",
       "related_concepts": [
         "calculus",
         "area",
@@ -1192,7 +1209,7 @@
         "what is vector magnitude and direction?",
         "what is vector magnitude and direction"
       ],
-      "response_text": "💡 **The Core Idea**\n\nA vector is a quantity with both magnitude and direction, like velocity or force.\n\n---\n\n➕ **Addition & Subtraction**\n\nAdd tip‑to‑tail or component‑wise.\n\n---\n\n• **Dot product**: a·b = |a||b|cosθ (measures alignment)\n• **Cross product**: a×b gives a vector perpendicular to both (3D)\n\n---\n\n📐 **Magnitude**\n\n|v| = √(v₁² + v₂² + v₃²)\n\nVectors power physics, graphics, and machine learning.",
+      "response_text": "💡 **The Core Idea**\n\nA vector has **magnitude** and **direction** — like velocity, force, or displacement.\n\n---\n\n🧩 **Components**\n\nA vector v in 2D can be written as v = (x, y). The arrow from the origin to (x, y) represents it.\n\n---\n\n➕ **Addition (Example)**\n\nIf a = (2, 1) and b = (−1, 3), then a + b = (1, 4).\n\n---\n\n📐 **Magnitude**\n\n|v| = √(v₁² + v₂² + v₃²)\nA **unit vector** is v / |v| (length 1).\n\n---\n\n🧠 **Dot & Cross**\n\n• **Dot product**: a·b = |a||b|cosθ → measures alignment\n• **Cross product**: a×b → perpendicular vector (3D), area of parallelogram\n\nVectors power physics, graphics, robotics, and machine learning.",
       "related_concepts": [
         "physics",
         "ai",
@@ -2084,7 +2101,7 @@
         "how do you use factorials?",
         "how do you use factorials"
       ],
-      "response_text": "💡 **The Core Idea**\n\nCombinatorics counts how many ways things can be arranged or chosen.\n\n---\n\n🔢 **Factorials**\n\nn! = n × (n−1) × ... × 1 counts arrangements.\n\n---\n\n🎲 **Permutations vs Combinations**\n\n• **Permutations**: order matters\n• **Combinations**: order doesn’t matter\n\n---\n\n🔺 **Pascal’s Triangle**\n\nEach entry is the sum of the two above it; it gives binomial coefficients.\n\n---\n\nThe binomial theorem and probability formulas come from combinatorics.",
+      "response_text": "💡 **The Core Idea**\n\nCombinatorics counts how many ways things can be **arranged** or **chosen**.\n\n---\n\n🔢 **Factorials**\n\nn! = n × (n−1) × ... × 1 counts arrangements.\n\n**Example**: 4! = 24 ways to arrange ABCD.\n\n---\n\n🎲 **Permutations vs Combinations**\n\n• **Permutations** (order matters): arrange 3 of 5 → \\(P(5,3)=5\\cdot4\\cdot3=60\\)\n• **Combinations** (order doesn’t matter): choose 2 of 5 → \\(C(5,2)=\\frac{5\\cdot4}{2}=10\\)\n\n---\n\n🔺 **Pascal’s Triangle**\n\nEach entry is the sum of the two above it; it gives binomial coefficients.\n\n---\n\nCombinatorics powers probability, coding, scheduling, and search.",
       "related_concepts": [
         "probability",
         "factorial",
@@ -2246,7 +2263,7 @@
         "how do differential equations model real phenomena?",
         "how do differential equations model real phenomena"
       ],
-      "response_text": "💡 **The Core Idea**\n\nA differential equation relates a function to its derivatives. It describes change over time.\n\n---\n\n📌 **First vs Second Order**\n\n• **First‑order**: involves y'\n• **Second‑order**: involves y''\n\n---\n\n📈 **Exponential Growth & Decay**\n\nIf y' = ky, then y = Ce^{kt}.\nk>0 grows, k<0 decays.\n\n---\n\n🎯 **Why it matters**\n\nModels populations, springs, circuits, heat flow, and epidemics.",
+      "response_text": "💡 **The Core Idea**\n\nA differential equation relates a function to its derivatives — it tells you how something **changes** over time or space.\n\n---\n\n📌 **First vs Second Order**\n\n• **First‑order**: involves y' (rate of change)\n• **Second‑order**: involves y'' (acceleration/curvature)\n\n---\n\n📈 **Classic Example: Exponential Growth/Decay**\n\nIf y' = ky, then $$y = Ce^{kt}$$\n• k > 0 → growth\n• k < 0 → decay\n\n**Worked example**: y' = 2y, y(0)=3 → $$y = 3e^{2t}$$\n\n---\n\n🧭 **Slope Fields (Visual Intuition)**\n\nA slope field draws tiny line segments showing the derivative at many points. Solution curves “follow the arrows.”\n\n---\n\n🎯 **Why it matters**\n\nUsed for populations, springs, circuits, heat flow, and epidemics.",
       "related_concepts": [
         "calculus",
         "derivatives",
@@ -2281,6 +2298,29 @@
         "slope",
         "algebra",
         "graphing"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "systems_of_equations",
+      "name": "Systems of Equations",
+      "keywords": [
+        "system of equations",
+        "systems of equations",
+        "simultaneous equations",
+        "explain systems of equations with visualization",
+        "solve a system",
+        "linear system",
+        "how do you solve systems of linear equations with visualization",
+        "how to solve systems by elimination",
+        "how to solve systems by substitution",
+        "intersection of two lines"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA system of equations means two or more equations must be true at the same time. The solution is the value(s) that satisfy all equations.\n\n---\n\n📐 **Geometric intuition**\n\nFor two linear equations in x and y, each equation is a line.\n\n- If the lines intersect once → one solution\n- If they are parallel → no solution\n- If they are the same line → infinitely many solutions\n\n---\n\n🧮 **Worked example**\n\nSolve:\n\\(y = 2x + 1\\)\n\\(y = -x + 4\\)\n\nSet them equal:\n\\(2x + 1 = -x + 4\\)\n\\(3x = 3\\Rightarrow x = 1\\)\nThen \\(y = 2(1)+1 = 3\\)\n\n✅ Solution: \\((x,y)=(1,3)\\)\n\n---\n\n⚙️ **Main methods**\n\n- **Substitution**: isolate one variable, plug into the other equation.\n- **Elimination**: add/subtract equations to cancel a variable.\n- **Graphing**: find intersection point visually.\n\n---\n\n🎯 **Why it matters**\n\nUsed in budgeting, mixture problems, physics constraints, and optimization models.",
+      "related_concepts": [
+        "linear_equations",
+        "graphing",
+        "algebra"
       ],
       "visualization": null
     },
@@ -2365,15 +2405,27 @@
         "euler",
         "e^i pi",
         "most beautiful",
-        "euler identity"
+        "euler identity",
+        "euclid's identity",
+        "euclids identity",
+        "euclid identity"
       ],
-      "response_text": "💡 **The Most Beautiful Equation**\n\n$$e^{i\\pi} + 1 = 0$$\n\nFive fundamental constants, three basic operations, one elegant truth.\n\n---\n\n📐 **The Players**\n\n| Symbol | Name | Origin |\n|--------|------|--------|\n| **e** | Euler's number | Growth/decay (≈ 2.718) |\n| **i** | Imaginary unit | √(-1) |\n| **π** | Pi | Circles (≈ 3.14159) |\n| **1** | Unity | The building block |\n| **0** | Zero | The void |\n\n---\n\n📖 **Euler: The Master**\n\n> Leonhard Euler (1707-1783) was the most prolific mathematician in history—his collected works fill 90+ volumes!\n\n• Blind in one eye by 30, totally blind by 60\n• Continued working, dictating to scribes\n• Could recite the entire Aeneid from memory\n• Had 13 children and did math while holding a baby\n\n*\"Euler calculated without apparent effort, as men breathe, as eagles sustain themselves in the air.\"* — Arago\n\n---\n\n🎯 **Why It's Beautiful**\n\n• Connects arithmetic (+, ×, =) with analysis (e), algebra (i), geometry (π)\n• Different civilizations discovered these concepts independently\n• Yet they're bound by this single equation!\n\n---\n\n📖 **Feynman's Reaction**\n\nPhysicist Richard Feynman called it *\"the most remarkable formula in mathematics.\"*\n\n📚 *See also*: Nahin's **Dr. Euler's Fabulous Formula**",
+      "response_text": "💡 **The Most Beautiful Equation**\n\n$$e^{i\\pi} + 1 = 0$$\n\nFive fundamental constants, three basic operations, one elegant truth.\n\n---\n\n🧭 **Euler’s Formula**\n\n$$e^{i\\theta} = \\cos\\theta + i\\sin\\theta$$\n\nThis means complex exponentials trace the **unit circle**. When \\(\\theta = \\pi\\), the point is −1.\n\n---\n\n📐 **The Players**\n\n| Symbol | Name | Origin |\n|--------|------|--------|\n| **e** | Euler's number | Growth/decay (≈ 2.718) |\n| **i** | Imaginary unit | √(-1) |\n| **π** | Pi | Circles (≈ 3.14159) |\n| **1** | Unity | The building block |\n| **0** | Zero | The void |\n\n---\n\n📖 **Euler: The Master**\n\n> Leonhard Euler (1707-1783) was the most prolific mathematician in history—his collected works fill 90+ volumes!\n\n• Blind in one eye by 30, totally blind by 60\n• Continued working, dictating to scribes\n• Could recite the entire Aeneid from memory\n• Had 13 children and did math while holding a baby\n\n*\"Euler calculated without apparent effort, as men breathe, as eagles sustain themselves in the air.\"* — Arago\n\n---\n\n🎯 **Why It's Beautiful**\n\n• Connects arithmetic (+, ×, =) with analysis (e), algebra (i), geometry (π)\n• Different civilizations discovered these concepts independently\n• Yet they're bound by this single equation!\n\n---\n\n📖 **Feynman's Reaction**\n\nPhysicist Richard Feynman called it *\"the most remarkable formula in mathematics.\"*\n\n📚 *See also*: Nahin's **Dr. Euler's Fabulous Formula**",
       "related_concepts": [
         "complex_numbers",
         "e",
         "pi"
       ],
-      "visualization": null
+      "visualization": {
+        "viz_id": "manim_euler_identity",
+        "viz_type": "manim",
+        "title": "Euler identity on the unit circle",
+        "data": {
+          "scene_name": "EulerIdentityCircle",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
     },
     {
       "id": "fermat_last",
@@ -2656,6 +2708,242 @@
         "fractions",
         "real numbers",
         "division"
+      ],
+      "visualization": null
+    }
+    ,
+    {
+      "id": "mathematics_and_music",
+      "name": "Mathematics and Music",
+      "keywords": [
+        "math and music",
+        "mathematics and music",
+        "music and mathematics",
+        "ratios in music",
+        "music intervals",
+        "harmonic series",
+        "overtones",
+        "just intonation",
+        "equal temperament",
+        "pitches and ratios",
+        "rhythm and fractions",
+        "time signature",
+        "beats and measures",
+        "music sheet math",
+        "sheet music and math",
+        "classical music math",
+        "what is the math in music?",
+        "what is the math in music",
+        "how does music relate to math?",
+        "how does music relate to math",
+        "explain math using music notation",
+        "explain math using music sheets"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nMusic is structured by **ratios, fractions, and patterns**. Sheet music makes that structure visible: pitch ratios for harmony and time ratios for rhythm.\n\n---\n\n🎼 **Pitch = Ratios (Harmony)**\n\nClassical Western music is built on frequency ratios:\n• **Octave** = 2:1 (A4 = 440 Hz → A5 = 880 Hz)\n• **Perfect Fifth** = 3:2\n• **Perfect Fourth** = 4:3\n\nOn a staff, the **distance between notes** corresponds to musical intervals; the math behind those intervals is ratio-based.\n\n---\n\n⏱️ **Rhythm = Fractions (Time)**\n\nSheet music is literally a fraction system:\n• **Whole note** = 1\n• **Half note** = 1/2\n• **Quarter note** = 1/4\n• **Eighth note** = 1/8\n\nA **4/4 time signature** means *4 quarter notes per measure*. In 3/4, it’s *3 quarter notes per measure*. The bar lines are a visual grid of fractions.\n\n---\n\n🎻 **Harmonic Series (Why chords sound stable)**\n\nThe harmonic series is: 1f, 2f, 3f, 4f, 5f…\nThese overtones naturally create the **octave (2:1)**, **fifth (3:2)**, and **fourth (4:3)**—the core of classical harmony.\n\n---\n\n🎹 **Equal Temperament (Modern tuning)**\n\nTo make every key usable, we divide the octave into 12 equal steps:\n$$r = 2^{1/12}$$\nEach semitone multiplies frequency by r. This is *geometric progression* in sound.\n\n---\n\n📚 **See it on the sheet**\n\n• **Intervals**: measure by counting staff steps; math = ratio of frequencies.\n• **Chords**: stacked thirds (e.g., C–E–G) map to simple ratios.\n• **Rhythm grids**: subdivisions (eighths, sixteenths) show fractions in time.\n\n---\n\n🎯 **Why it matters**\n\nMusic is a living example of **number, ratio, symmetry, and pattern**—math you can hear. Classical scores make the math visible through notation, structure, and repetition.",
+      "related_concepts": [
+        "fractions",
+        "ratios",
+        "exponents",
+        "sequences",
+        "symmetry"
+      ],
+      "visualization": null
+    }
+    ,
+    {
+      "id": "mathematics_and_art_architecture",
+      "name": "Mathematics and Art & Architecture",
+      "keywords": [
+        "math and art",
+        "mathematics and art",
+        "math and architecture",
+        "mathematics and architecture",
+        "art and geometry",
+        "architecture and geometry",
+        "golden ratio",
+        "golden rectangle",
+        "proportion in art",
+        "symmetry in art",
+        "tessellations",
+        "mosaics",
+        "perspective drawing",
+        "vanishing point",
+        "scale and proportion",
+        "fractal art",
+        "sacred geometry",
+        "what is the math in architecture?",
+        "what is the math in architecture",
+        "how does math relate to art?",
+        "how does math relate to art",
+        "explain math using architecture"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nArt and architecture use **geometry, proportion, and symmetry** to create beauty, balance, and structure. Math is the blueprint behind visual harmony.\n\n---\n\n🏛️ **Proportion & Scale**\n\nBuildings and artworks feel “right” when parts relate by clear ratios.\n• **Golden ratio**: $$\\varphi = \\frac{1+\\sqrt{5}}{2} \\approx 1.618$$\n• **Golden rectangle**: dividing it leaves a smaller, similar rectangle.\n\n---\n\n🧭 **Perspective (Projective Geometry)**\n\nRenaissance artists used **vanishing points** to map 3D scenes onto 2D canvases.\nStraight parallel lines in space appear to converge in a drawing.\n\n---\n\n🧩 **Symmetry & Tessellations**\n\nPatterns repeat by rules:\n• **Reflection** and **rotation** symmetry\n• **Tessellations** fill a plane with no gaps (like mosaics)\n\n---\n\n🌀 **Fractals & Pattern**\n\nSelf‑similar patterns appear in both art and architecture (e.g., spirals, branching, recursive ornament).\n\n---\n\n🎯 **Why it matters**\n\nMath makes visual design **coherent and timeless**—from cathedral proportions to modern parametric architecture.",
+      "related_concepts": [
+        "geometry",
+        "symmetry",
+        "transformations",
+        "ratios",
+        "fractal"
+      ],
+      "visualization": null
+    }
+    ,
+    {
+      "id": "polar_coordinates",
+      "name": "Polar Coordinates",
+      "keywords": [
+        "polar coordinates",
+        "polar coordinate",
+        "r theta",
+        "radius and angle",
+        "convert cartesian to polar",
+        "convert polar to cartesian",
+        "what are polar coordinates?",
+        "what are polar coordinates",
+        "how do polar coordinates work?"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nPolar coordinates describe a point by **distance from the origin** and **angle**.\n\n---\n\n📌 **Coordinates**\n\n• **r** = distance from origin\n• **θ** = angle from the positive x‑axis\n\n---\n\n🧮 **Conversions**\n\nFrom polar to Cartesian:\n$$x = r\\cos\\theta,\\quad y = r\\sin\\theta$$\n\nFrom Cartesian to polar:\n$$r = \\sqrt{x^2 + y^2},\\quad \\theta = \\tan^{-1}(y/x)$$\n\n---\n\n🧭 **Example**\n\nIf r = 2 and θ = 60°, then:\n$$x = 2\\cos 60° = 1,\\quad y = 2\\sin 60° = \\sqrt{3}$$\n\n---\n\n🎯 **Why it matters**\n\nPolar coordinates simplify circles, spirals, waves, and rotations.",
+      "related_concepts": [
+        "trigonometry",
+        "coordinates",
+        "geometry"
+      ],
+      "visualization": {
+        "viz_id": "manim_polar_coordinates",
+        "viz_type": "manim",
+        "title": "Polar coordinates (Manim)",
+        "data": {
+          "scene_name": "PolarCoordinates",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "taylor_series",
+      "name": "Taylor Series",
+      "keywords": [
+        "taylor series",
+        "taylor expansion",
+        "maclaurin series",
+        "power series",
+        "approximation by polynomials",
+        "what is a taylor series?",
+        "what is a taylor series",
+        "how does taylor series approximate functions?"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA Taylor series approximates a function by a polynomial near a point.\n\n---\n\n🧮 **Formula**\n\n$$f(x) = f(a) + f'(a)(x-a) + \\frac{f''(a)}{2!}(x-a)^2 + \\cdots$$\n\n---\n\n📍 **Maclaurin Series**\n\nTaylor series at a = 0.\n\nExample for sin(x):\n$$\\sin x = x - \\frac{x^3}{3!} + \\frac{x^5}{5!} - \\cdots$$\n\n---\n\n🧠 **Why it works**\n\nPolynomials are easy to compute and can closely match smooth functions near a point.\n\n---\n\n🎯 **Why it matters**\n\nUsed in physics, numerical methods, and approximations everywhere.",
+      "related_concepts": [
+        "derivative",
+        "series",
+        "approximation"
+      ],
+      "visualization": {
+        "viz_id": "manim_taylor_series",
+        "viz_type": "manim",
+        "title": "Taylor series approximation (Manim)",
+        "data": {
+          "scene_name": "TaylorSeriesApprox",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "roots_of_unity",
+      "name": "Roots of Unity",
+      "keywords": [
+        "roots of unity",
+        "root of unity",
+        "complex roots",
+        "unit circle roots",
+        "nth roots of unity",
+        "what are roots of unity?",
+        "what are roots of unity",
+        "roots of unity on unit circle"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nThe roots of unity are complex numbers that satisfy $$z^n = 1$$.\n\n---\n\n🧭 **Geometry**\n\nThey lie evenly spaced on the **unit circle**.\nFor n = 4, the roots are: 1, i, −1, −i.\n\n---\n\n🧮 **Formula**\n\n$$z_k = e^{2\\pi i k / n},\\quad k=0,1,\\dots,n-1$$\n\n---\n\n🎯 **Why it matters**\n\nRoots of unity are the backbone of the DFT/FFT and many symmetry arguments.",
+      "related_concepts": [
+        "complex_numbers",
+        "euler",
+        "fft_dft"
+      ],
+      "visualization": {
+        "viz_id": "manim_roots_unity",
+        "viz_type": "manim",
+        "title": "Roots of unity (Manim)",
+        "data": {
+          "scene_name": "RootsOfUnity",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "fft_dft",
+      "name": "DFT & FFT",
+      "keywords": [
+        "dft",
+        "fft",
+        "discrete fourier transform",
+        "fast fourier transform",
+        "fourier transform",
+        "frequency domain",
+        "time domain",
+        "signal processing",
+        "what is the fft?",
+        "what is the fft",
+        "what is the dft?",
+        "what is the dft"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nThe DFT converts a signal from **time domain** into **frequency domain**.\nThe FFT is an efficient algorithm to compute the DFT.\n\n---\n\n🧮 **DFT Formula**\n\n$$X_k = \\sum_{n=0}^{N-1} x_n e^{-2\\pi i kn/N}$$\n\n---\n\n🧠 **Intuition**\n\nA signal is a mix of simple waves. The DFT finds *how much* of each frequency is present.\n\n---\n\n⚡ **Why FFT matters**\n\nFFT reduces computation from O(N²) to O(N log N), enabling real‑time audio, images, and communications.\n\n---\n\n🎯 **Applications**\n\nAudio compression, image processing, spectral analysis, and machine learning.",
+      "related_concepts": [
+        "complex_numbers",
+        "roots_of_unity",
+        "signals"
+      ],
+      "visualization": {
+        "viz_id": "manim_fft_dft",
+        "viz_type": "manim",
+        "title": "Time to frequency (Manim)",
+        "data": {
+          "scene_name": "FourierTransformDemo",
+          "quality": "low",
+          "output_format": "gif"
+        }
+      }
+    },
+    {
+      "id": "systems_of_equations_graphical",
+      "name": "Systems of Equations (Graphical)",
+      "keywords": [
+        "solve systems of equations graphically",
+        "systems of equations graphically",
+        "simultaneous equations graphically",
+        "intersection of two lines"
+      ],
+      "response_text": "💡 **Core idea**\n\nA system of two linear equations asks for a point that satisfies **both equations** at once.\n\n---\n\n📐 **Graphical method**\n\n1. Rewrite each equation in slope-intercept form \\(y=mx+b\\).\n2. Plot both lines on the same axes.\n3. The intersection point is the solution.\n\n---\n\n🧮 **Example**\n\n\\(y=2x+1\\) and \\(y=-x+4\\)\n\nSet equal: \\(2x+1=-x+4\\Rightarrow 3x=3\\Rightarrow x=1\\).\nThen \\(y=2(1)+1=3\\).\n\nSo the solution is \\((1,3)\\).\n\n---\n\n🎯 **Special cases**\n\n- One intersection: exactly one solution\n- Parallel lines: no solution\n- Same line: infinitely many solutions",
+      "related_concepts": [
+        "linear_equations",
+        "graph",
+        "algebra"
+      ],
+      "visualization": null
+    },
+    {
+      "id": "fractions_visual_intuition",
+      "name": "Fractions (Visual Intuition)",
+      "keywords": [
+        "fractions visual intuition",
+        "fraction as parts of a whole",
+        "show fractions with pie chart",
+        "visual fraction model"
+      ],
+      "response_text": "💡 **Core idea**\n\nA fraction \\(a/b\\) means \"a equal parts out of b total equal parts.\"\n\n---\n\n🍕 **Pizza model**\n\nIf a pizza is cut into 8 equal slices and you eat 3, then you've eaten \\(3/8\\).\n\n---\n\n🧮 **Equivalent fractions**\n\n\\(1/2 = 2/4 = 3/6\\) because you multiply top and bottom by the same number.\n\n---\n\n🎯 **Number line meaning**\n\nFractions are numbers between whole numbers. For example, \\(3/4\\) is between 0 and 1.\n\n---\n\n✅ **Quick check**\n\nWhich is bigger: \\(2/3\\) or \\(3/5\\)?\nCross-multiply: \\(2\\cdot 5=10\\), \\(3\\cdot 3=9\\), so \\(2/3\\) is bigger.",
+      "related_concepts": [
+        "fractions",
+        "number_line",
+        "ratio"
       ],
       "visualization": null
     }

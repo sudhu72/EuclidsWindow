@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -138,3 +138,20 @@ class Resource(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     concepts = relationship("Concept", secondary=concept_resources, back_populates="resources")
+
+
+class EvalRun(Base):
+    """Stored evaluation reports for trend tracking."""
+
+    __tablename__ = "eval_runs"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    mode = Column(String(32), nullable=False, default="catalog")
+    total_prompts = Column(Integer, nullable=False, default=0)
+    avg_duration_ms = Column(Integer, nullable=False, default=0)
+    visualization_coverage = Column(Float, nullable=False, default=0.0)
+    avg_checks_pass_rate = Column(Float, nullable=False, default=0.0)
+    timeout_count = Column(Integer, nullable=False, default=0)
+    error_count = Column(Integer, nullable=False, default=0)
+    report_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
