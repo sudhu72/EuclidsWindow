@@ -46,6 +46,75 @@ The app is designed for iterative, interactive learning from basic to advanced t
 - **OCR**: Tesseract + Pillow + pytesseract
 - **Infra**: Docker, docker-compose
 
+## Architecture Diagram
+
+```mermaid
+flowchart TB
+    U[User Browser]
+
+    subgraph FE[Frontend]
+      UI[index.html + app.js + styles.css]
+      MM[mathmap.html + mathmap.js]
+      D3[D3 Concept Graph]
+      PLT[Plotly + KaTeX Renderers]
+      SP[Math Scratchpad Canvas]
+    end
+
+    subgraph BE[FastAPI Backend]
+      API[app.main routes]
+      TUTOR[Tutor Service]
+      DID[Didactics + Symbolic Checker]
+      RAG[Web RAG]
+      VIZ[Visualization Service]
+      VP[Visual Planner]
+      MANIM[Manim Service + Job Queue]
+      OCR[Handwriting Service]
+      STORE[Settings Store]
+      RES[Resource/Euclid/MathMap Services]
+    end
+
+    subgraph DATA[Data + Persistence]
+      SQLITE[(SQLite DB)]
+      JSON[(JSON Seeds: topics, resources, math_map)]
+      STATIC[(backend/static visualizations/media)]
+    end
+
+    subgraph LOCALAI[Local AI Runtime]
+      OLLAMA[Ollama LLM]
+      DIFF[Diffusion Models]
+      MUSIC[MusicGen]
+      TESS[Tesseract OCR]
+    end
+
+    U --> UI
+    U --> MM
+    UI --> API
+    MM --> API
+    UI --> D3
+    UI --> PLT
+    UI --> SP
+
+    API --> TUTOR
+    TUTOR --> DID
+    TUTOR --> RAG
+    TUTOR --> VP
+    VP --> VIZ
+    API --> MANIM
+    API --> OCR
+    API --> STORE
+    API --> RES
+
+    RES --> SQLITE
+    TUTOR --> SQLITE
+    API --> STATIC
+    RES --> JSON
+
+    TUTOR --> OLLAMA
+    API --> DIFF
+    API --> MUSIC
+    OCR --> TESS
+```
+
 ## Repository Layout
 
 ```text
@@ -175,6 +244,27 @@ See `docs/OLLAMA_TUNING.md` for local model tuning workflow.
 1. Open **Concept Graph**
 2. Click a node for details
 3. Open learning path to jump to Prompt Collections
+
+## Product Flow With Screenshots
+
+> Note: The screenshots below point to local files captured during development on this machine.
+> For a portable repo README, move images to `docs/images/` and update links to relative paths.
+
+### A) Ask + Understand + Follow-up
+
+1. Ask a concept question in **Local Tutor**.
+2. Use suggestion chips to deepen understanding step-by-step.
+3. Review plain + axiomatic explanations and checks.
+
+![Tutor flow screenshot](file:///Users/sudhakar.kakarakayalac3.ai/.cursor/projects/Users-sudhakar-kakarakayalac3-ai-Research-EuclidsWindow/assets/image-a4f174a7-f519-439a-ac4e-fa08cf0eee14.png)
+
+### B) Visualize + Scratchpad + Validate
+
+1. Render a diagram/animation for the same topic.
+2. Write work in the scratchpad grid.
+3. Convert handwriting to text and validate answer.
+
+![Visualization and scratchpad screenshot](file:///Users/sudhakar.kakarakayalac3.ai/.cursor/projects/Users-sudhakar-kakarakayalac3-ai-Research-EuclidsWindow/assets/image-60afbf68-aa73-4f17-bba4-44251ce29a32.png)
 
 ## API Overview
 
