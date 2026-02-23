@@ -215,7 +215,74 @@ Important keys:
 - `DATABASE_URL`
 - `JWT_SECRET`
 
-See `docs/OLLAMA_TUNING.md` for local model tuning workflow.
+See:
+
+- `docs/OLLAMA_TUNING.md` for quick Ollama tuning defaults
+- `docs/LORA_TUNING_PLAYBOOK.md` for full LoRA/QLoRA training-to-serving workflow
+
+## Local Model Tuning (LoRA / QLoRA)
+
+You can tune a local math model for this app using LoRA adapters, then serve the tuned model through Ollama.
+
+### What LoRA gives you here
+
+- Better adherence to Euclid's Window response style (structured math explanations)
+- Improved domain behavior on your custom prompt/eval set
+- Lower compute cost versus full-model fine-tuning
+
+### Practical workflow
+
+1. **Pick a base model** (example: `qwen2.5-math:7b` family).
+2. **Prepare training data** from your target interactions:
+   - tutor QA pairs,
+   - prompt-collection style step-by-step responses,
+   - failure/regression examples from eval runs.
+3. **Run QLoRA training** (typically with Hugging Face PEFT/TRL or Unsloth).
+4. **Merge adapter into base model** (or keep adapter + base for runtime frameworks that support it).
+5. **Export to GGUF** for Ollama serving (if your toolchain requires conversion).
+6. **Create an Ollama model** and point app settings to it.
+
+### Minimal serving step (after training/export)
+
+Create `Modelfile`:
+
+```text
+FROM /absolute/path/to/your-tuned-model.gguf
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER num_ctx 8192
+SYSTEM You are a math tutor for Euclid's Window. Be concise, accurate, and structured.
+```
+
+Build and test:
+
+```bash
+ollama create euclid-math-lora -f Modelfile
+ollama run euclid-math-lora
+```
+
+Configure app to use tuned model:
+
+```bash
+export LOCAL_LLM_MODEL=euclid-math-lora
+```
+
+or set it in the UI under **Settings → Local LLM Model**.
+
+### Evaluation loop (recommended)
+
+- Run app eval endpoints (`/api/eval/report`, `/api/eval/history`, `/api/eval/compare`)
+- Track improvements in:
+  - checks pass rate,
+  - visualization coverage,
+  - latency/timeout behavior,
+  - quality on follow-up flow prompts.
+
+### Notes
+
+- Ollama itself is primarily an inference/runtime layer; LoRA training is usually done in external training frameworks, then imported.
+- Keep a baseline model (e.g., `euclid-math-base`) and tuned variants (e.g., `euclid-math-lora-v1`) for safe rollback.
+- Respect base model license constraints when distributing tuned weights.
 
 ## Main User Flows
 
@@ -247,8 +314,7 @@ See `docs/OLLAMA_TUNING.md` for local model tuning workflow.
 
 ## Product Flow With Screenshots
 
-> Note: The screenshots below point to local files captured during development on this machine.
-> For a portable repo README, move images to `docs/images/` and update links to relative paths.
+> Screenshots are stored in `docs/images/`.
 
 ### A) Ask + Understand + Follow-up
 
@@ -256,7 +322,7 @@ See `docs/OLLAMA_TUNING.md` for local model tuning workflow.
 2. Use suggestion chips to deepen understanding step-by-step.
 3. Review plain + axiomatic explanations and checks.
 
-![Tutor flow screenshot](file:///Users/sudhakar.kakarakayalac3.ai/.cursor/projects/Users-sudhakar-kakarakayalac3-ai-Research-EuclidsWindow/assets/image-a4f174a7-f519-439a-ac4e-fa08cf0eee14.png)
+![Tutor flow screenshot](docs/images/tutor-followup-flow.png)
 
 ### B) Visualize + Scratchpad + Validate
 
@@ -264,7 +330,7 @@ See `docs/OLLAMA_TUNING.md` for local model tuning workflow.
 2. Write work in the scratchpad grid.
 3. Convert handwriting to text and validate answer.
 
-![Visualization and scratchpad screenshot](file:///Users/sudhakar.kakarakayalac3.ai/.cursor/projects/Users-sudhakar-kakarakayalac3-ai-Research-EuclidsWindow/assets/image-60afbf68-aa73-4f17-bba4-44251ce29a32.png)
+![Visualization and scratchpad screenshot](docs/images/tutor-viz-scratchpad-flow.png)
 
 ## API Overview
 
@@ -360,6 +426,42 @@ pytest backend/tests -q
 
 ```bash
 docker compose run --rm euclids-window sh -lc "pip install -q -r /app/backend/requirements-dev.txt && pytest /app/backend/tests -q"
+```
+
+## LoRA Developer Shortcuts
+
+Use the Makefile helpers:
+
+```bash
+cp backend/data/raw_tuning_records.sample.json backend/data/raw_tuning_records.json
+make lora-prepare LORA_INPUT=backend/data/raw_tuning_records.json
+make lora-train
+make lora-eval API_BASE=http://localhost:8000
+```
+
+Optional (follow-up-focused dataset for conversational flow tuning):
+
+```bash
+cp backend/data/raw_tuning_records.followup.sample.json backend/data/raw_tuning_records.json
+make lora-prepare LORA_INPUT=backend/data/raw_tuning_records.json
+```
+
+Weighted merge (example: 2x follow-up samples in one combined set):
+
+```bash
+make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_OUTPUT=backend/data/lora_train.jsonl
+```
+
+Reproducible shuffling (fixed seed):
+
+```bash
+make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_SHUFFLE_SEED=42 LORA_OUTPUT=backend/data/lora_train.jsonl
+```
+
+Disable shuffling entirely (deterministic concatenation order):
+
+```bash
+make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_NO_SHUFFLE=1 LORA_OUTPUT=backend/data/lora_train.jsonl
 ```
 
 ## Troubleshooting
