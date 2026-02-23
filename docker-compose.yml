@@ -1,39 +1,32 @@
-# Docker Compose for local development and DigitalOcean deployment
-version: "3.8"
-
 services:
-  api:
+  euclids-window:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "${HOST_PORT:-8000}:8000"
     environment:
-      - DATABASE_URL=sqlite:///./euclids_window.db
-      - CORS_ORIGINS=["http://localhost:3000","http://localhost:8000"]
-      - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      LOCAL_AI_ENABLED: "true"
+      LOCAL_LLM_PROVIDER: "ollama"
+      LOCAL_LLM_MODEL: "llama3.1:8b"
+      LOCAL_LLM_TIMEOUT_SECONDS: "300"
+      LOCAL_AI_EXECUTION_TIMEOUT_SECONDS: "60"
+      LOCAL_LLM_BASE_URL: "${LOCAL_LLM_BASE_URL:-http://ollama:11434}"
     volumes:
-      - ./backend/data:/app/data:ro
-      - db-data:/app
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    restart: unless-stopped
+      - ./backend/static:/app/backend/static
 
-  frontend:
-    image: nginx:alpine
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
     ports:
-      - "3000:80"
+      - "11434:11434"
     volumes:
-      - ./frontend:/usr/share/nginx/html:ro
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - api
-    restart: unless-stopped
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
 volumes:
-  db-data:
+  ollama-data:

@@ -194,6 +194,94 @@
       "isbn": "978-0395929681",
       "description": "Accessible exploration of what mathematicians actually do and how mathematics develops.",
       "concepts": ["philosophy_of_math", "history", "proof"]
+    },
+    {
+      "title": "Awesome Math (Curated Resource Index)",
+      "author": "Cyrille Rossant and contributors",
+      "resource_type": "reference",
+      "difficulty": "beginner",
+      "url": "https://github.com/rossant/awesome-math",
+      "source": "awesome-math",
+      "awesome_categories": ["general", "all"],
+      "description": "Curated index of free mathematics resources across algebra, analysis, geometry, topology, probability, and more.",
+      "concepts": ["algebra", "analysis", "geometry", "number_theory", "combinatorics", "logic", "probability"]
+    },
+    {
+      "title": "ProofWiki",
+      "author": "ProofWiki contributors",
+      "resource_type": "reference",
+      "difficulty": "intermediate",
+      "url": "https://proofwiki.org/",
+      "source": "awesome-math",
+      "awesome_categories": ["foundations", "logic"],
+      "description": "Crowdsourced repository of mathematical definitions, theorems, and proofs with cross-linked dependencies.",
+      "concepts": ["proof", "logic", "set_theory", "algebra", "analysis"]
+    },
+    {
+      "title": "Wolfram MathWorld",
+      "author": "Eric W. Weisstein",
+      "resource_type": "reference",
+      "difficulty": "intermediate",
+      "url": "https://mathworld.wolfram.com/",
+      "source": "awesome-math",
+      "awesome_categories": ["general", "all"],
+      "description": "Comprehensive encyclopedia of mathematical objects and results with formulas and references.",
+      "concepts": ["algebra", "geometry", "number_theory", "probability", "calculus"]
+    },
+    {
+      "title": "Open Logic Project",
+      "author": "Open Logic contributors",
+      "resource_type": "textbook",
+      "difficulty": "advanced",
+      "url": "https://openlogicproject.org/",
+      "source": "awesome-math",
+      "awesome_categories": ["foundations", "logic"],
+      "description": "Open-source textbook covering formal logic, proofs, and semantics with modular chapters.",
+      "concepts": ["logic", "proof", "set_theory"]
+    },
+    {
+      "title": "Interactive Linear Algebra",
+      "author": "Dan Margalit and Joseph Rabinoff",
+      "resource_type": "textbook",
+      "difficulty": "intermediate",
+      "url": "https://textbooks.math.gatech.edu/ila/",
+      "source": "awesome-math",
+      "awesome_categories": ["linear_algebra", "algebra"],
+      "description": "Free interactive textbook for linear algebra with visual intuition and worked examples.",
+      "concepts": ["linear_algebra", "matrices", "vectors", "eigenvalues"]
+    },
+    {
+      "title": "An Introduction to Measure Theory",
+      "author": "Terence Tao",
+      "resource_type": "textbook",
+      "difficulty": "advanced",
+      "url": "https://terrytao.files.wordpress.com/2011/01/measure-book1.pdf",
+      "source": "awesome-math",
+      "awesome_categories": ["analysis", "measure_theory"],
+      "description": "Graduate-level lecture notes introducing sigma-algebras, integration, and convergence theorems.",
+      "concepts": ["analysis", "probability", "integrals", "real_numbers"]
+    },
+    {
+      "title": "Graph Theory (Diestel)",
+      "author": "Reinhard Diestel",
+      "resource_type": "textbook",
+      "difficulty": "advanced",
+      "url": "https://diestel-graph-theory.com/",
+      "source": "awesome-math",
+      "awesome_categories": ["combinatorics", "graph_theory"],
+      "description": "Author-maintained graph theory text covering foundational and modern graph concepts.",
+      "concepts": ["graph", "combinatorics", "hamiltonian_graph"]
+    },
+    {
+      "title": "Paul's Online Math Notes",
+      "author": "Paul Dawkins",
+      "resource_type": "course",
+      "difficulty": "beginner",
+      "url": "https://tutorial.math.lamar.edu/",
+      "source": "awesome-math",
+      "awesome_categories": ["calculus", "algebra", "differential_equations"],
+      "description": "Clear notes and exercises for algebra, calculus, and differential equations.",
+      "concepts": ["algebra", "derivatives", "integrals", "differential_equations", "linear_equations"]
     }
   ]
 }

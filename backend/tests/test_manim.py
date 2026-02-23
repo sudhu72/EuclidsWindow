@@ -2,6 +2,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app import main as main_module
 from app.main import app
 from app.services.manim_service import ManimService
 
@@ -53,6 +54,13 @@ class TestAnimationEndpoints:
         assert "scenes" in data
         assert isinstance(data["scenes"], list)
 
+    def test_list_animation_jobs(self, client):
+        response = client.get("/api/animations/jobs")
+        assert response.status_code == 200
+        data = response.json()
+        assert "jobs" in data
+        assert isinstance(data["jobs"], list)
+
     def test_get_animation_not_found(self, client):
         """Test getting non-existent animation."""
         response = client.get("/api/animations/nonexistent123")
@@ -83,6 +91,34 @@ class TestAnimationEndpoints:
         data = response.json()
         # Either Manim not available or scene not found
         assert data["status"] == "error"
+
+    def test_render_animation_background_mode(self, client, monkeypatch):
+        monkeypatch.setattr(
+            main_module.manim_service,
+            "start_render_animation",
+            lambda scene_name, quality="low", output_format="gif": {
+                "id": "job123",
+                "status": "running",
+                "progress": 25,
+                "format": output_format,
+                "url": None,
+                "error": None,
+            },
+        )
+        response = client.post(
+            "/api/animations/render",
+            json={
+                "scene_name": "NonExistentScene123",
+                "quality": "low",
+                "output_format": "gif",
+                "background": True,
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == "job123"
+        assert data["status"] == "running"
+        assert data["progress"] == 25
 
 
 class TestMLMathCategory:

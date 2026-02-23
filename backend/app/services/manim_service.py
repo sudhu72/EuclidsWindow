@@ -1,10 +1,12 @@
 """Manim animation rendering service."""
+import concurrent.futures
 import hashlib
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -26,6 +28,9 @@ class ManimService:
         self.animations_dir = ANIMATIONS_DIR
         self.scenes_dir = SCENES_DIR
         self.manim_cmd = [sys.executable, "-m", "manim"]
+        self._jobs: Dict[str, Dict[str, Any]] = {}
+        self._jobs_lock = threading.Lock()
+        self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
         self._check_manim_available()
 
     def _check_manim_available(self) -> bool:
@@ -211,6 +216,115 @@ class ManimService:
                 "status": "error",
                 "error": str(e),
             }
+
+    def start_render_animation(
+        self,
+        scene_name: str,
+        quality: str = "low",
+        output_format: str = "gif",
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """Start rendering in background and return job snapshot."""
+        animation_id = self.get_animation_id(scene_name, quality=quality, **kwargs)
+        cached = self.get_cached_animation(animation_id)
+        if cached:
+            return {**cached, "progress": 100}
+
+        with self._jobs_lock:
+            existing = self._jobs.get(animation_id)
+            if existing and existing.get("status") in {"queued", "running"}:
+                return dict(existing)
+            self._jobs[animation_id] = {
+                "id": animation_id,
+                "scene_name": scene_name,
+                "status": "queued",
+                "progress": 5,
+                "url": None,
+                "format": output_format,
+                "error": None,
+            }
+
+        self._executor.submit(
+            self._run_render_job,
+            animation_id,
+            scene_name,
+            quality,
+            output_format,
+            kwargs,
+        )
+        return self.get_animation_status(animation_id)
+
+    def _run_render_job(
+        self,
+        animation_id: str,
+        scene_name: str,
+        quality: str,
+        output_format: str,
+        kwargs: Dict[str, Any],
+    ) -> None:
+        self._update_job(animation_id, status="running", progress=25)
+        result = self.render_animation(
+            scene_name=scene_name,
+            quality=quality,
+            output_format=output_format,
+            **kwargs,
+        )
+        if result.get("status") == "completed":
+            self._update_job(
+                animation_id,
+                status="completed",
+                progress=100,
+                url=result.get("url"),
+                format=result.get("format"),
+                error=None,
+            )
+            return
+        self._update_job(
+            animation_id,
+            status="error",
+            progress=100,
+            error=result.get("error") or "Animation rendering failed",
+        )
+
+    def _update_job(self, animation_id: str, **updates) -> None:
+        with self._jobs_lock:
+            snapshot = self._jobs.get(animation_id) or {
+                "id": animation_id,
+                "scene_name": None,
+                "status": "queued",
+                "progress": 0,
+                "url": None,
+                "format": None,
+                "error": None,
+            }
+            snapshot.update(updates)
+            self._jobs[animation_id] = snapshot
+
+    def get_animation_status(self, animation_id: str) -> Dict[str, Any]:
+        """Get best known job status (running/cached/not_found)."""
+        with self._jobs_lock:
+            snapshot = self._jobs.get(animation_id)
+            if snapshot and snapshot.get("status") in {"queued", "running"}:
+                return dict(snapshot)
+            if snapshot and snapshot.get("status") in {"completed", "error"}:
+                return dict(snapshot)
+
+        cached = self.get_cached_animation(animation_id)
+        if cached:
+            return {**cached, "progress": 100}
+
+        return {
+            "id": animation_id,
+            "scene_name": None,
+            "status": "not_found",
+            "progress": 0,
+            "error": "Animation not found",
+        }
+
+    def list_jobs(self, limit: int = 20) -> list[Dict[str, Any]]:
+        with self._jobs_lock:
+            jobs = list(self._jobs.values())[-max(1, min(limit, 100)) :]
+        return [dict(job) for job in reversed(jobs)]
 
     def _find_scene_file(self, scene_name: str) -> Optional[Path]:
         """Find the Python file containing the scene."""

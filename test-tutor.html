@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Local Tutor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        #status.pending { background: #fef3c7; color: #92400e; }
+        #status.success { background: #d1fae5; color: #065f46; }
+        #status.error { background: #fee2e2; color: #991b1b; }
+        #response {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #network {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f9fafb;
+        }
+        #console {
+            border: 1px solid #dc2626;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #fef2f2;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-error { color: #dc2626; }
+        .log-warn { color: #d97706; }
+        .log-info { color: #2563eb; }
+        button {
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Local Tutor Test</h1>
+    <p>This page will test the /api/ai/tutor endpoint and monitor for UI responsiveness issues.</p>
+    
+    <button id="testBtn" onclick="runTest()">Run Test: Explain eigenvalues with visualization</button>
+    
+    <div id="status" style="display: none;"></div>
+    
+    <h3>Network Request Status</h3>
+    <div id="network">No request made yet.</div>
+    
+    <h3>Console Errors</h3>
+    <div id="console">No errors logged yet.</div>
+    
+    <h3>Response</h3>
+    <div id="response">No response yet.</div>
+
+    <script>
+        const consoleDiv = document.getElementById('console');
+        const networkDiv = document.getElementById('network');
+        const statusDiv = document.getElementById('status');
+        const responseDiv = document.getElementById('response');
+        const testBtn = document.getElementById('testBtn');
+        
+        // Capture console errors
+        const consoleErrors = [];
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        const originalLog = console.log;
+        
+        console.error = function(...args) {
+            consoleErrors.push({type: 'error', msg: args.join(' ')});
+            logToConsole('error', args.join(' '));
+            originalError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            consoleErrors.push({type: 'warn', msg: args.join(' ')});
+            logToConsole('warn', args.join(' '));
+            originalWarn.apply(console, args);
+        };
+        
+        function logToConsole(type, message) {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${type.toUpperCase()}] ${new Date().toISOString()} - ${message}`;
+            consoleDiv.appendChild(entry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+        
+        function updateStatus(text, className) {
+            statusDiv.textContent = text;
+            statusDiv.className = className;
+            statusDiv.style.display = 'block';
+        }
+        
+        function updateNetwork(text) {
+            networkDiv.innerHTML = text;
+        }
+        
+        async function runTest() {
+            testBtn.disabled = true;
+            consoleErrors.length = 0;
+            consoleDiv.innerHTML = '<div class="log-entry log-info">Starting test...</div>';
+            
+            updateStatus('Sending request...', 'pending');
+            updateNetwork('Request pending...');
+            responseDiv.textContent = 'Waiting for response...';
+            
+            const startTime = Date.now();
+            let requestCompleted = false;
+            let uiResponsive = true;
+            
+            // Check UI responsiveness every 100ms
+            const responsiveCheck = setInterval(() => {
+                const now = Date.now();
+                if (now - startTime > 100) {
+                    logToConsole('info', `UI check at ${now - startTime}ms - still responsive`);
+                }
+            }, 100);
+            
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => {
+                    controller.abort();
+                    logToConsole('error', 'Request aborted after 12 seconds');
+                }, 12000);
+                
+                updateNetwork(`
+                    <strong>Request URL:</strong> http://localhost:8000/api/ai/tutor<br>
+                    <strong>Method:</strong> POST<br>
+                    <strong>Body:</strong> {"question": "Explain eigenvalues with visualization", "history": []}<br>
+                    <strong>Status:</strong> Pending...<br>
+                    <strong>Duration:</strong> ${Date.now() - startTime}ms
+                `);
+                
+                const response = await fetch('http://localhost:8000/api/ai/tutor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        question: 'Explain eigenvalues with visualization',
+                        history: []
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeout);
+                requestCompleted = true;
+                const duration = Date.now() - startTime;
+                
+                const data = await response.json();
+                
+                updateNetwork(`
+                    <strong>Request URL:</strong> http://localhost:8000/api/ai/tutor<br>
+                    <strong>Method:</strong> POST<br>
+                    <strong>Status Code:</strong> ${response.status}<br>
+                    <strong>Status Text:</strong> ${response.statusText}<br>
+                    <strong>Duration:</strong> ${duration}ms<br>
+                    <strong>Response Size:</strong> ${JSON.stringify(data).length} bytes
+                `);
+                
+                if (response.ok) {
+                    updateStatus(`✓ Request completed successfully in ${duration}ms`, 'success');
+                    responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    logToConsole('info', `Request completed successfully in ${duration}ms`);
+                } else {
+                    updateStatus(`✗ Request failed with status ${response.status}`, 'error');
+                    responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    logToConsole('error', `Request failed: ${response.status} - ${JSON.stringify(data)}`);
+                }
+                
+            } catch (error) {
+                const duration = Date.now() - startTime;
+                
+                if (error.name === 'AbortError') {
+                    updateStatus(`✗ Request timed out after ${duration}ms`, 'error');
+                    updateNetwork(`
+                        <strong>Request URL:</strong> http://localhost:8000/api/ai/tutor<br>
+                        <strong>Status:</strong> TIMEOUT (aborted after 12s)<br>
+                        <strong>Duration:</strong> ${duration}ms
+                    `);
+                    logToConsole('error', `Request timed out after ${duration}ms`);
+                } else {
+                    updateStatus(`✗ Request failed: ${error.message}`, 'error');
+                    updateNetwork(`
+                        <strong>Request URL:</strong> http://localhost:8000/api/ai/tutor<br>
+                        <strong>Status:</strong> ERROR<br>
+                        <strong>Error:</strong> ${error.message}<br>
+                        <strong>Stack:</strong> ${error.stack || 'N/A'}
+                    `);
+                    logToConsole('error', `Request failed: ${error.message}\nStack: ${error.stack}`);
+                }
+                
+                responseDiv.textContent = `Error: ${error.message}`;
+            } finally {
+                clearInterval(responsiveCheck);
+                testBtn.disabled = false;
+                
+                if (consoleErrors.length > 0) {
+                    logToConsole('warn', `Total console errors captured: ${consoleErrors.length}`);
+                }
+            }
+        }
+        
+        // Test if UI is responsive after page load
+        window.addEventListener('load', () => {
+            logToConsole('info', 'Page loaded successfully');
+        });
+    </script>
+</body>
+</html>

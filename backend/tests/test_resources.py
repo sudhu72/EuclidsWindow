@@ -56,3 +56,14 @@ class TestResourceEndpoints:
         assert "resources" in data
         # Pythagorean theorem should have resources linked
         assert len(data["resources"]) > 0
+
+    def test_import_awesome_math_dry_run(self, client):
+        response = client.post(
+            "/api/resources/import/awesome-math",
+            json={"categories": ["graph_theory"], "dry_run": True},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["matched_count"] >= 1
+        assert "imported_count" in data
+        assert "existing_count" in data

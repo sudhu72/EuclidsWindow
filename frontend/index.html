@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260217-1" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
@@ -15,44 +15,100 @@
       <div class="brand">Euclid's Window</div>
       <div class="subtitle">Learn math from first principles</div>
       <nav class="nav-tabs">
-        <button class="tab-btn active" data-tab="chat">Chat</button>
+        <button class="tab-btn active" data-tab="tutor">Local Tutor</button>
         <a href="mathmap.html" class="tab-btn tab-link">Math Map</a>
         <button class="tab-btn" data-tab="mindmap">Concept Graph</button>
         <button class="tab-btn" data-tab="euclid">Euclid</button>
         <button class="tab-btn" data-tab="resources">Resources</button>
+        <button class="tab-btn" data-tab="collections">Prompt Collections</button>
+        <button class="tab-btn" data-tab="settings">Settings</button>
+        <button class="tab-btn" data-tab="eval">Eval</button>
       </nav>
     </header>
 
     <main class="app-layout">
-      <!-- Chat Tab -->
-      <div id="tab-chat" class="tab-content active">
-        <aside class="sidebar">
-          <div class="sidebar-header">
-            <span>Conversations</span>
-            <button id="new-conversation" class="btn-icon" title="New conversation">+</button>
+      <!-- Local Tutor Tab -->
+      <div id="tab-tutor" class="tab-content active">
+        <section class="tutor-panel">
+          <div class="tutor-header">
+            <h3>Local Generative Tutor</h3>
+            <p>Runs fully offline with a local model and generates visuals on demand.</p>
           </div>
-          <div id="conversation-list" class="conversation-list"></div>
-        </aside>
-
-        <section class="chat-panel">
-          <div id="messages" class="messages"></div>
-          <div id="suggestions" class="suggestions"></div>
-          <form id="chat-form" class="chat-form">
+          <form id="tutor-form" class="tutor-form">
+            <select id="tutor-response-mode" title="Tutor explanation mode">
+              <option value="both" selected>Plain + Axiomatic</option>
+              <option value="plain">Plain English</option>
+              <option value="axiomatic">Axiomatic</option>
+            </select>
+            <select id="tutor-learner-level" title="Learner level">
+              <option value="kids">Kids</option>
+              <option value="teen" selected>Teen</option>
+              <option value="college">College</option>
+              <option value="adult">Adult</option>
+            </select>
             <input
-              id="chat-input"
+              id="tutor-input"
               type="text"
-              placeholder="Ask about number lines, parabolas, or base conversion..."
+              placeholder="Ask a math question (context-aware, like ChatGPT)"
               autocomplete="off"
             />
-            <button type="submit" id="send-btn">Send</button>
+            <button type="submit" id="tutor-send" class="btn-primary">Solve</button>
           </form>
+          <div class="tutor-context-hint">Context window: last 10 messages</div>
+          <div id="tutor-followups" class="suggestions"></div>
+          <div id="tutor-solution" class="tutor-solution">
+            <div class="viz-placeholder">Your step-by-step solution will appear here.</div>
+          </div>
+          <div class="tutor-media">
+            <button type="button" id="tutor-render-diagram" class="btn-secondary">
+              Render Diagram Now
+            </button>
+            <button type="button" id="tutor-render-animation" class="btn-secondary">
+              Render Animation Now
+            </button>
+            <button type="button" id="tutor-generate-image" class="btn-secondary">
+              Generate Visual (Diffusion)
+            </button>
+            <button type="button" id="tutor-generate-music" class="btn-secondary">
+              Generate Music (Harmonics)
+            </button>
+          </div>
+          <div id="tutor-animation-jobs" class="settings-agents" style="margin-top: 12px;">
+            <div class="settings-subheader" style="display:flex; justify-content:space-between; align-items:center;">
+              <span>Render Jobs</span>
+              <button type="button" id="tutor-jobs-refresh" class="btn-secondary">Refresh</button>
+            </div>
+            <div id="tutor-jobs-list" class="agents-list">
+              <div class="viz-placeholder">No render jobs yet.</div>
+            </div>
+          </div>
         </section>
-
-        <aside class="viz-panel">
-          <div class="viz-header">Visualization</div>
-          <div id="viz-content" class="viz-content">
+        <aside class="tutor-viz-panel">
+          <div class="viz-header">Tutor Visualization</div>
+          <div id="tutor-viz" class="viz-content">
             <div class="viz-placeholder">No visualization yet.</div>
           </div>
+          <section class="scratchpad-panel" style="margin-top: 12px;">
+            <div class="scratchpad-header">
+              <strong>Math Scratchpad</strong>
+              <span>Write with mouse/trackpad, convert to text, validate answer.</span>
+            </div>
+            <canvas id="scratchpad-canvas" width="720" height="280" aria-label="Math scratchpad canvas"></canvas>
+            <div class="scratchpad-controls">
+              <button type="button" id="scratchpad-pen" class="btn-secondary">Pen</button>
+              <button type="button" id="scratchpad-eraser" class="btn-secondary">Eraser</button>
+              <button type="button" id="scratchpad-undo" class="btn-secondary">Undo</button>
+              <button type="button" id="scratchpad-clear" class="btn-secondary">Clear</button>
+              <button type="button" id="scratchpad-convert" class="btn-primary">Convert to Text</button>
+              <button type="button" id="scratchpad-validate" class="btn-primary">Validate Answer</button>
+            </div>
+            <textarea
+              id="scratchpad-text"
+              class="scratchpad-text"
+              placeholder="Converted text appears here. You can edit before validation."
+            ></textarea>
+            <div id="scratchpad-result" class="scratchpad-result"></div>
+          </section>
         </aside>
       </div>
 
@@ -110,6 +166,198 @@
         </div>
         <div id="resource-results" class="resource-results"></div>
       </div>
+
+      <!-- Prompt Collections Tab -->
+      <div id="tab-collections" class="tab-content">
+        <section class="settings-panel">
+          <div class="settings-header">
+            <h3>Prompt Collections</h3>
+            <p>Systematic step-by-step prompts organized by category and topic.</p>
+          </div>
+          <div class="resource-controls">
+            <select id="collections-category">
+              <option value="">All Categories</option>
+            </select>
+            <input type="text" id="collections-search" placeholder="Search topics or prompts..." />
+            <button id="collections-refresh" class="btn-primary">Load Collections</button>
+          </div>
+          <div id="collections-summary" class="tutor-context-hint"></div>
+          <div id="collections-results" class="resource-results">
+            <div class="viz-placeholder">Load a category to view systematic prompt paths.</div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="tab-settings" class="tab-content">
+        <section class="settings-panel">
+          <div class="settings-header">
+            <h3>Settings</h3>
+            <p>Manage local models and generation options.</p>
+          </div>
+          <div id="settings-agents" class="settings-agents">
+            <div class="settings-subheader">Agents</div>
+            <div id="agents-list" class="agents-list">
+              <div class="viz-placeholder">Loading agents...</div>
+            </div>
+          </div>
+          <form id="settings-form" class="settings-form">
+            <label>
+              Preset
+              <select id="settings-preset">
+                <option value="math">Math-focused</option>
+                <option value="literature">Literature-focused</option>
+                <option value="auto">Auto</option>
+              </select>
+            </label>
+            <label>
+              Local Tutor Enabled
+              <input type="checkbox" id="settings-local-ai-enabled" />
+            </label>
+            <label>
+              Multi-Agent Mode
+              <input type="checkbox" id="settings-multi-agent-enabled" />
+            </label>
+            <label>
+              Web RAG Enrichment
+              <input type="checkbox" id="settings-local-web-rag-enabled" />
+            </label>
+            <label>
+              Fast Mode
+              <input type="checkbox" id="settings-fast-mode-enabled" />
+            </label>
+            <label>
+              Local LLM Model (Ollama)
+              <input type="text" id="settings-local-llm-model" placeholder="llama3.1:8b" />
+            </label>
+            <button type="button" class="btn-secondary" id="settings-test-ollama">Test Ollama Model</button>
+            <label>
+              Media Generation Enabled
+              <input type="checkbox" id="settings-local-media-enabled" />
+            </label>
+            <label>
+              Diffusion Model (HF)
+              <input type="text" id="settings-local-diffusion-model" placeholder="stabilityai/sdxl-turbo" />
+            </label>
+            <label>
+              Diffusion Timeout (seconds)
+              <input type="text" id="settings-local-diffusion-timeout" placeholder="60" />
+            </label>
+            <button type="button" class="btn-secondary" id="settings-test-diffusion">Test Diffusion</button>
+            <label>
+              Music Model (HF)
+              <input type="text" id="settings-local-music-model" placeholder="facebook/musicgen-small" />
+            </label>
+            <label>
+              Music Fast Mode
+              <input type="checkbox" id="settings-local-music-fast" />
+            </label>
+            <label>
+              Music Timeout (seconds)
+              <input type="text" id="settings-local-music-timeout" placeholder="180" />
+            </label>
+            <button type="button" class="btn-secondary" id="settings-test-music">Test Music</button>
+            <label>
+              Media Device
+              <select id="settings-local-media-device">
+                <option value="cpu">CPU</option>
+                <option value="cuda">CUDA</option>
+                <option value="mps">MPS</option>
+              </select>
+            </label>
+            <button type="button" class="btn-secondary" id="settings-validate">Validate Models</button>
+            <label>
+              Awesome Math Categories
+              <select id="settings-awesome-categories" multiple size="6">
+                <option value="all">All / General</option>
+                <option value="graph_theory">Graph Theory</option>
+                <option value="linear_algebra">Linear Algebra</option>
+                <option value="analysis">Analysis</option>
+                <option value="logic">Logic / Foundations</option>
+                <option value="calculus">Calculus</option>
+              </select>
+            </label>
+            <label>
+              Preview Import Only
+              <input type="checkbox" id="settings-awesome-dry-run" />
+            </label>
+            <button type="button" class="btn-secondary" id="settings-import-awesome">
+              Import Awesome Math Resources
+            </button>
+            <div class="settings-actions">
+              <button type="submit" class="btn-primary" id="settings-save">Save Settings</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <!-- Eval Tab -->
+      <div id="tab-eval" class="tab-content">
+        <section class="settings-panel">
+          <div class="settings-header">
+            <h3>Evaluation Dashboard</h3>
+            <p>Track tutor quality, latency, and visualization coverage over time.</p>
+          </div>
+          <div class="settings-form" style="grid-template-columns: 1fr 1fr;">
+            <label>
+              Run Label
+              <input type="text" id="eval-run-label" placeholder="e.g., after prompt tuning v2" />
+            </label>
+            <label>
+              Run Tags (comma-separated)
+              <input type="text" id="eval-run-tags" placeholder="baseline,fast-mode,on-device" />
+            </label>
+          </div>
+          <div class="settings-actions">
+            <button type="button" id="eval-refresh" class="btn-primary">Refresh Catalog Eval</button>
+            <button type="button" id="eval-refresh-live" class="btn-secondary">Run Live Eval</button>
+            <button type="button" id="eval-export-json" class="btn-secondary">Export JSON</button>
+            <button type="button" id="eval-export-csv" class="btn-secondary">Export CSV</button>
+          </div>
+          <div class="settings-form" style="grid-template-columns: 1fr 1fr 1fr;">
+            <label>
+              Filter Mode
+              <select id="eval-filter-mode">
+                <option value="">All</option>
+                <option value="catalog">Catalog</option>
+                <option value="live">Live</option>
+              </select>
+            </label>
+            <label>
+              Filter Tag
+              <input type="text" id="eval-filter-tag" placeholder="e.g., baseline" />
+            </label>
+            <label>
+              Label Contains
+              <input type="text" id="eval-filter-label" placeholder="e.g., tuning" />
+            </label>
+          </div>
+          <div class="settings-actions">
+            <label>
+              Compare A
+              <select id="eval-compare-a"></select>
+            </label>
+            <label>
+              Compare B
+              <select id="eval-compare-b"></select>
+            </label>
+            <button type="button" id="eval-compare-run" class="btn-secondary">Compare Runs</button>
+          </div>
+          <div id="eval-compare-result" class="concept-details">
+            <div class="viz-placeholder">No comparison selected.</div>
+          </div>
+          <div id="eval-charts" class="settings-form" style="grid-template-columns: 1fr 1fr;">
+            <div id="eval-latency-chart" class="concept-details" style="min-height: 240px;"></div>
+            <div id="eval-trend-chart" class="concept-details" style="min-height: 240px;"></div>
+          </div>
+          <div id="eval-summary" class="concept-details">
+            <div class="viz-placeholder">No evaluation report loaded yet.</div>
+          </div>
+          <div id="eval-history" class="agents-list">
+            <div class="viz-placeholder">No eval history yet.</div>
+          </div>
+        </section>
+      </div>
     </main>
 
     <div id="loading-overlay" class="loading-overlay hidden">
@@ -122,6 +370,6 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=20260217-1"></script>
   </body>
 </html>
