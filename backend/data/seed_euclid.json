@@ -1,156 +1,408 @@
 {
   "entries": [
-    {
-      "reference": "I.Def.1",
-      "book": 1,
-      "entry_type": "definition",
-      "number": 1,
-      "original_text": "A point is that which has no part.",
-      "modern_text": "A point represents a location in space with no dimensions—no length, width, or height."
-    },
-    {
-      "reference": "I.Def.2",
-      "book": 1,
-      "entry_type": "definition",
-      "number": 2,
-      "original_text": "A line is breadthless length.",
-      "modern_text": "A line has length but no width; it extends infinitely in both directions."
-    },
-    {
-      "reference": "I.Def.3",
-      "book": 1,
-      "entry_type": "definition",
-      "number": 3,
-      "original_text": "The ends of a line are points.",
-      "modern_text": "The endpoints of a line segment are points."
-    },
-    {
-      "reference": "I.Def.4",
-      "book": 1,
-      "entry_type": "definition",
-      "number": 4,
-      "original_text": "A straight line is a line which lies evenly with the points on itself.",
-      "modern_text": "A straight line is the shortest path between any two of its points."
-    },
-    {
-      "reference": "I.Def.8",
-      "book": 1,
-      "entry_type": "definition",
-      "number": 8,
-      "original_text": "A plane angle is the inclination to one another of two lines in a plane which meet one another and do not lie in a straight line.",
-      "modern_text": "An angle is formed when two lines meet at a point; it measures the rotation between them."
-    },
-    {
-      "reference": "I.Def.10",
-      "book": 1,
-      "entry_type": "definition",
-      "number": 10,
-      "original_text": "When a straight line standing on a straight line makes the adjacent angles equal to one another, each of the equal angles is right, and the straight line standing on the other is called a perpendicular to that on which it stands.",
-      "modern_text": "A right angle is exactly 90 degrees; two lines forming right angles are perpendicular."
-    },
-    {
-      "reference": "I.Def.19",
-      "book": 1,
-      "entry_type": "definition",
-      "number": 19,
-      "original_text": "Rectilinear figures are those which are contained by straight lines, trilateral figures being those contained by three...",
-      "modern_text": "A triangle is a polygon with three straight sides."
-    },
-    {
-      "reference": "I.Def.22",
-      "book": 1,
-      "entry_type": "definition",
-      "number": 22,
-      "original_text": "Of quadrilateral figures, a square is that which is both equilateral and right-angled...",
-      "modern_text": "A square has four equal sides and four right angles (90 degrees each)."
-    },
-    {
-      "reference": "I.Post.1",
-      "book": 1,
-      "entry_type": "postulate",
-      "number": 1,
-      "original_text": "To draw a straight line from any point to any point.",
-      "modern_text": "Any two points can be connected by exactly one straight line."
-    },
-    {
-      "reference": "I.Post.2",
-      "book": 1,
-      "entry_type": "postulate",
-      "number": 2,
-      "original_text": "To produce a finite straight line continuously in a straight line.",
-      "modern_text": "Any line segment can be extended indefinitely in either direction."
-    },
-    {
-      "reference": "I.Post.3",
-      "book": 1,
-      "entry_type": "postulate",
-      "number": 3,
-      "original_text": "To describe a circle with any center and radius.",
-      "modern_text": "A circle can be drawn with any center point and any radius."
-    },
-    {
-      "reference": "I.Post.4",
-      "book": 1,
-      "entry_type": "postulate",
-      "number": 4,
-      "original_text": "That all right angles equal one another.",
-      "modern_text": "All right angles are congruent (equal to 90 degrees)."
-    },
-    {
-      "reference": "I.Post.5",
-      "book": 1,
-      "entry_type": "postulate",
-      "number": 5,
-      "original_text": "That, if a straight line falling on two straight lines makes the interior angles on the same side less than two right angles, the two straight lines, if produced indefinitely, meet on that side on which are the angles less than the two right angles.",
-      "modern_text": "The parallel postulate: if two lines are cut by a transversal such that interior angles on one side sum to less than 180°, the lines meet on that side."
-    },
-    {
-      "reference": "I.CN.1",
-      "book": 1,
-      "entry_type": "common_notion",
-      "number": 1,
-      "original_text": "Things which equal the same thing also equal one another.",
-      "modern_text": "If A = C and B = C, then A = B (transitivity of equality)."
-    },
-    {
-      "reference": "I.47",
-      "book": 1,
-      "entry_type": "proposition",
-      "number": 47,
-      "original_text": "In right-angled triangles the square on the side opposite the right angle equals the sum of the squares on the sides containing the right angle.",
-      "modern_text": "The Pythagorean Theorem: In a right triangle, a² + b² = c², where c is the hypotenuse."
-    },
-    {
-      "reference": "VII.Def.1",
-      "book": 7,
-      "entry_type": "definition",
-      "number": 1,
-      "original_text": "A unit is that by virtue of which each of the things that exist is called one.",
-      "modern_text": "The unit (1) is the fundamental building block from which all numbers are composed."
-    },
-    {
-      "reference": "VII.Def.2",
-      "book": 7,
-      "entry_type": "definition",
-      "number": 2,
-      "original_text": "A number is a multitude composed of units.",
-      "modern_text": "A number is a collection of units; e.g., 5 is five units combined."
-    },
-    {
-      "reference": "VII.Def.3",
-      "book": 7,
-      "entry_type": "definition",
-      "number": 3,
-      "original_text": "A number is a part of a number, the less of the greater, when it measures the greater.",
-      "modern_text": "A number divides another if it measures it exactly (no remainder)."
-    },
-    {
-      "reference": "VII.Def.11",
-      "book": 7,
-      "entry_type": "definition",
-      "number": 11,
-      "original_text": "A prime number is that which is measured by a unit alone.",
-      "modern_text": "A prime number has exactly two divisors: 1 and itself."
-    }
+
+    {"reference": "I.Def.1", "book": 1, "entry_type": "definition", "number": 1,
+     "original_text": "A point is that which has no part.",
+     "modern_text": "A point represents a location in space with no dimensions—no length, width, or height."},
+
+    {"reference": "I.Def.2", "book": 1, "entry_type": "definition", "number": 2,
+     "original_text": "A line is breadthless length.",
+     "modern_text": "A line has length but no width; it extends infinitely in both directions."},
+
+    {"reference": "I.Def.3", "book": 1, "entry_type": "definition", "number": 3,
+     "original_text": "The ends of a line are points.",
+     "modern_text": "The endpoints of a line segment are points."},
+
+    {"reference": "I.Def.4", "book": 1, "entry_type": "definition", "number": 4,
+     "original_text": "A straight line is a line which lies evenly with the points on itself.",
+     "modern_text": "A straight line is the shortest path between any two of its points."},
+
+    {"reference": "I.Def.5", "book": 1, "entry_type": "definition", "number": 5,
+     "original_text": "A surface is that which has length and breadth only.",
+     "modern_text": "A surface is a two-dimensional region—it has length and width but no thickness."},
+
+    {"reference": "I.Def.7", "book": 1, "entry_type": "definition", "number": 7,
+     "original_text": "A plane surface is a surface which lies evenly with the straight lines on itself.",
+     "modern_text": "A plane is a flat surface that extends infinitely; any straight line between two of its points lies entirely within it."},
+
+    {"reference": "I.Def.8", "book": 1, "entry_type": "definition", "number": 8,
+     "original_text": "A plane angle is the inclination to one another of two lines in a plane which meet one another and do not lie in a straight line.",
+     "modern_text": "An angle is formed when two lines meet at a point; it measures the rotation between them."},
+
+    {"reference": "I.Def.10", "book": 1, "entry_type": "definition", "number": 10,
+     "original_text": "When a straight line standing on a straight line makes the adjacent angles equal to one another, each of the equal angles is right, and the straight line standing on the other is called a perpendicular to that on which it stands.",
+     "modern_text": "A right angle is exactly 90 degrees; two lines forming right angles are perpendicular."},
+
+    {"reference": "I.Def.15", "book": 1, "entry_type": "definition", "number": 15,
+     "original_text": "A circle is a plane figure contained by one line such that all the straight lines falling upon it from one point among those lying within the figure equal one another.",
+     "modern_text": "A circle is the set of all points in a plane at a fixed distance (the radius) from a given point (the center)."},
+
+    {"reference": "I.Def.19", "book": 1, "entry_type": "definition", "number": 19,
+     "original_text": "Rectilinear figures are those which are contained by straight lines, trilateral figures being those contained by three, quadrilateral those contained by four, and multilateral those contained by more than four straight lines.",
+     "modern_text": "A polygon is a closed figure made of straight line segments. Three sides make a triangle, four a quadrilateral, and so on."},
+
+    {"reference": "I.Def.22", "book": 1, "entry_type": "definition", "number": 22,
+     "original_text": "Of quadrilateral figures, a square is that which is both equilateral and right-angled; an oblong is that which is right-angled but not equilateral; a rhombus that which is equilateral but not right-angled; and a rhomboid that which has its opposite sides and angles equal to one another but is neither equilateral nor right-angled.",
+     "modern_text": "A square has four equal sides and four right angles. A rectangle has right angles but unequal adjacent sides. A rhombus has equal sides but non-right angles. A parallelogram has opposite sides equal."},
+
+    {"reference": "I.Def.23", "book": 1, "entry_type": "definition", "number": 23,
+     "original_text": "Parallel straight lines are straight lines which, being in the same plane and being produced indefinitely in both directions, do not meet one another in either direction.",
+     "modern_text": "Parallel lines are coplanar lines that never intersect, no matter how far they are extended."},
+
+    {"reference": "I.Post.1", "book": 1, "entry_type": "postulate", "number": 1,
+     "original_text": "To draw a straight line from any point to any point.",
+     "modern_text": "Given any two points, a straight line segment can be drawn connecting them."},
+
+    {"reference": "I.Post.2", "book": 1, "entry_type": "postulate", "number": 2,
+     "original_text": "To produce a finite straight line continuously in a straight line.",
+     "modern_text": "Any line segment can be extended indefinitely in either direction."},
+
+    {"reference": "I.Post.3", "book": 1, "entry_type": "postulate", "number": 3,
+     "original_text": "To describe a circle with any center and radius.",
+     "modern_text": "A circle can be drawn with any given center and any given radius."},
+
+    {"reference": "I.Post.4", "book": 1, "entry_type": "postulate", "number": 4,
+     "original_text": "That all right angles equal one another.",
+     "modern_text": "All right angles are congruent (each measures exactly 90°)."},
+
+    {"reference": "I.Post.5", "book": 1, "entry_type": "postulate", "number": 5,
+     "original_text": "That, if a straight line falling on two straight lines makes the interior angles on the same side less than two right angles, the two straight lines, if produced indefinitely, meet on that side on which are the angles less than the two right angles.",
+     "modern_text": "The Parallel Postulate: if two lines are cut by a transversal and the interior angles on one side sum to less than 180°, the lines meet on that side. Equivalent to: through a point not on a line, exactly one parallel can be drawn. Denial of this postulate leads to non-Euclidean geometry."},
+
+    {"reference": "I.CN.1", "book": 1, "entry_type": "common_notion", "number": 1,
+     "original_text": "Things which equal the same thing also equal one another.",
+     "modern_text": "The transitive property of equality: if A = C and B = C, then A = B."},
+
+    {"reference": "I.CN.2", "book": 1, "entry_type": "common_notion", "number": 2,
+     "original_text": "If equals are added to equals, then the wholes are equal.",
+     "modern_text": "If A = B, then A + C = B + C. Equals can be added to both sides of an equation."},
+
+    {"reference": "I.CN.3", "book": 1, "entry_type": "common_notion", "number": 3,
+     "original_text": "If equals are subtracted from equals, then the remainders are equal.",
+     "modern_text": "If A = B, then A − C = B − C. Equals can be subtracted from both sides."},
+
+    {"reference": "I.CN.4", "book": 1, "entry_type": "common_notion", "number": 4,
+     "original_text": "Things which coincide with one another equal one another.",
+     "modern_text": "Figures that can be superimposed exactly are congruent (equal in shape and size)."},
+
+    {"reference": "I.CN.5", "book": 1, "entry_type": "common_notion", "number": 5,
+     "original_text": "The whole is greater than the part.",
+     "modern_text": "A whole quantity is always greater than any of its proper parts."},
+
+    {"reference": "I.1", "book": 1, "entry_type": "proposition", "number": 1,
+     "original_text": "To construct an equilateral triangle on a given finite straight line.",
+     "modern_text": "Given a line segment, construct an equilateral triangle with that segment as one side. This is the very first proposition in the Elements—Euclid's geometry begins with construction."},
+
+    {"reference": "I.4", "book": 1, "entry_type": "proposition", "number": 4,
+     "original_text": "If two triangles have two sides equal to two sides respectively, and have the angles contained by the equal straight lines equal, then they also have the base equal to the base, the triangle equals the triangle, and the remaining angles equal the remaining angles respectively, namely those opposite the equal sides.",
+     "modern_text": "Side-Angle-Side (SAS) congruence: if two sides and the included angle of one triangle equal those of another, the triangles are congruent."},
+
+    {"reference": "I.5", "book": 1, "entry_type": "proposition", "number": 5,
+     "original_text": "In isosceles triangles the angles at the base equal one another, and, if the equal straight lines are produced further, then the angles under the base equal one another.",
+     "modern_text": "The base angles of an isosceles triangle are equal. Historically called the 'Pons Asinorum' (Bridge of Asses)—the first serious test of a geometry student's ability."},
+
+    {"reference": "I.26", "book": 1, "entry_type": "proposition", "number": 26,
+     "original_text": "If two triangles have two angles equal to two angles respectively, and one side equal to one side, namely, either the side adjoining the equal angles, or that opposite one of the equal angles, then the remaining sides equal the remaining sides and the remaining angle equals the remaining angle.",
+     "modern_text": "Angle-Side-Angle (ASA) and Angle-Angle-Side (AAS) congruence of triangles."},
+
+    {"reference": "I.29", "book": 1, "entry_type": "proposition", "number": 29,
+     "original_text": "A straight line falling on parallel straight lines makes the alternate angles equal to one another, the exterior angle equal to the interior and opposite angle, and the sum of the interior angles on the same side equal to two right angles.",
+     "modern_text": "When a transversal crosses parallel lines: alternate interior angles are equal, corresponding angles are equal, and co-interior angles sum to 180°. This is the first proposition that depends on the Parallel Postulate (I.Post.5)."},
+
+    {"reference": "I.32", "book": 1, "entry_type": "proposition", "number": 32,
+     "original_text": "In any triangle, if one of the sides is produced, then the exterior angle equals the sum of the two interior and opposite angles, and the sum of the three interior angles of the triangle equals two right angles.",
+     "modern_text": "The angle sum of a triangle is 180°. One of the most fundamental results in Euclidean geometry, and one that fails in non-Euclidean geometries."},
+
+    {"reference": "I.47", "book": 1, "entry_type": "proposition", "number": 47,
+     "original_text": "In right-angled triangles the square on the side opposite the right angle equals the sum of the squares on the sides containing the right angle.",
+     "modern_text": "The Pythagorean Theorem: a² + b² = c², where c is the hypotenuse. Perhaps the most famous theorem in all of mathematics."},
+
+    {"reference": "I.48", "book": 1, "entry_type": "proposition", "number": 48,
+     "original_text": "If in a triangle the square on one of the sides equals the sum of the squares on the remaining two sides of the triangle, then the angle contained by the remaining two sides of the triangle is right.",
+     "modern_text": "Converse of the Pythagorean Theorem: if a² + b² = c², then the angle opposite side c is a right angle."},
+
+
+    {"reference": "II.Def.1", "book": 2, "entry_type": "definition", "number": 1,
+     "original_text": "Any rectangular parallelogram is said to be contained by the two straight lines containing the right angle.",
+     "modern_text": "A rectangle is described by its two adjacent sides; its area equals the product of those sides."},
+
+    {"reference": "II.1", "book": 2, "entry_type": "proposition", "number": 1,
+     "original_text": "If there are two straight lines, and one of them is cut into any number of segments whatever, then the rectangle contained by the two straight lines equals the sum of the rectangles contained by the uncut straight line and each of the segments.",
+     "modern_text": "The distributive law expressed geometrically: a(b + c + d) = ab + ac + ad. Book II is 'geometric algebra'—algebra done with shapes."},
+
+    {"reference": "II.4", "book": 2, "entry_type": "proposition", "number": 4,
+     "original_text": "If a straight line is cut at random, the square on the whole equals the squares on the segments plus twice the rectangle contained by the segments.",
+     "modern_text": "The geometric version of (a + b)² = a² + 2ab + b². Euclid proved the binomial expansion with rectangles and squares."},
+
+    {"reference": "II.11", "book": 2, "entry_type": "proposition", "number": 11,
+     "original_text": "To cut a given straight line so that the rectangle contained by the whole and one of the segments equals the square on the remaining segment.",
+     "modern_text": "Divide a line segment in the Golden Ratio φ = (1+√5)/2 ≈ 1.618. This construction connects Euclid directly to the golden ratio, Fibonacci numbers, and the regular pentagon."},
+
+    {"reference": "II.14", "book": 2, "entry_type": "proposition", "number": 14,
+     "original_text": "To construct a square equal to a given rectilinear figure.",
+     "modern_text": "Any polygon can be converted into a square of equal area—'squaring' a figure. This is the culmination of Book II."},
+
+
+    {"reference": "III.Def.1", "book": 3, "entry_type": "definition", "number": 1,
+     "original_text": "Equal circles are those whose diameters are equal, or whose radii are equal.",
+     "modern_text": "Two circles are equal (congruent) if and only if they have the same radius."},
+
+    {"reference": "III.1", "book": 3, "entry_type": "proposition", "number": 1,
+     "original_text": "To find the center of a given circle.",
+     "modern_text": "Construct the center of a circle by finding the intersection of two perpendicular bisectors of chords."},
+
+    {"reference": "III.20", "book": 3, "entry_type": "proposition", "number": 20,
+     "original_text": "In a circle the angle at the center is double the angle at the circumference when the angles have the same circumference as base.",
+     "modern_text": "The Inscribed Angle Theorem: a central angle is twice the inscribed angle that subtends the same arc."},
+
+    {"reference": "III.31", "book": 3, "entry_type": "proposition", "number": 31,
+     "original_text": "In a circle the angle in the semicircle is right, that in a greater segment less than a right angle, and that in a less segment greater than a right angle.",
+     "modern_text": "Thales' Theorem: an angle inscribed in a semicircle is always a right angle (90°)."},
+
+    {"reference": "III.35", "book": 3, "entry_type": "proposition", "number": 35,
+     "original_text": "If in a circle two straight lines cut one another, then the rectangle contained by the segments of the one equals the rectangle contained by the segments of the other.",
+     "modern_text": "Power of a Point (internal): if two chords intersect inside a circle at point P, then PA·PB = PC·PD."},
+
+    {"reference": "III.36", "book": 3, "entry_type": "proposition", "number": 36,
+     "original_text": "If a point is taken outside a circle and two straight lines fall from it on the circle, and if one of them cuts the circle and the other touches it, then the rectangle contained by the whole of the straight line which cuts the circle and the part of it intercepted without the circle equals the square on the tangent.",
+     "modern_text": "Power of a Point (external): if from a point outside a circle a secant and tangent are drawn, then (secant whole)(secant external) = (tangent)²."},
+
+
+    {"reference": "IV.1", "book": 4, "entry_type": "proposition", "number": 1,
+     "original_text": "To inscribe in a given circle a triangle equiangular with a given triangle.",
+     "modern_text": "Construct a triangle with given angles inside a given circle. Book IV is about inscribing and circumscribing regular figures in circles."},
+
+    {"reference": "IV.6", "book": 4, "entry_type": "proposition", "number": 6,
+     "original_text": "To inscribe a square in a given circle.",
+     "modern_text": "Construct a square whose four vertices lie on a given circle, using perpendicular diameters."},
+
+    {"reference": "IV.11", "book": 4, "entry_type": "proposition", "number": 11,
+     "original_text": "To inscribe an equilateral and equiangular pentagon in a given circle.",
+     "modern_text": "Construct a regular pentagon inscribed in a circle. This uses the golden ratio from II.11 and is essential to the construction of the dodecahedron and icosahedron in Book XIII."},
+
+    {"reference": "IV.15", "book": 4, "entry_type": "proposition", "number": 15,
+     "original_text": "To inscribe an equilateral and equiangular hexagon in a given circle.",
+     "modern_text": "Construct a regular hexagon inscribed in a circle. The side length equals the radius—a fact exploited throughout geometry and tiling theory."},
+
+    {"reference": "IV.16", "book": 4, "entry_type": "proposition", "number": 16,
+     "original_text": "To inscribe an equilateral and equiangular fifteen-angled figure in a given circle.",
+     "modern_text": "Construct a regular 15-gon in a circle by combining the constructions of the equilateral triangle and the regular pentagon."},
+
+
+    {"reference": "V.Def.3", "book": 5, "entry_type": "definition", "number": 3,
+     "original_text": "A ratio is a sort of relation in respect of size between two magnitudes of the same kind.",
+     "modern_text": "A ratio compares two quantities of the same type (length to length, area to area). Ratios are the precursor to real numbers."},
+
+    {"reference": "V.Def.5", "book": 5, "entry_type": "definition", "number": 5,
+     "original_text": "Magnitudes are said to be in the same ratio, the first to the second and the third to the fourth, when, if any equimultiples whatever are taken of the first and third, and any equimultiples whatever of the second and fourth, the former equimultiples alike exceed, are alike equal to, or alike fall short of, the latter equimultiples respectively taken in corresponding order.",
+     "modern_text": "Eudoxus's definition of equal ratios: a/b = c/d iff for all positive integers m,n: ma > nb ⟺ mc > nd. This brilliant definition handles irrational ratios 2000 years before Dedekind cuts."},
+
+    {"reference": "V.8", "book": 5, "entry_type": "proposition", "number": 8,
+     "original_text": "Of unequal magnitudes, the greater has to the same a greater ratio than the less has; and the same has to the less a greater ratio than it has to the greater.",
+     "modern_text": "If A > B, then A/C > B/C and C/B > C/A. The basic order properties of ratios."},
+
+    {"reference": "V.16", "book": 5, "entry_type": "proposition", "number": 16,
+     "original_text": "If four magnitudes are proportional, then they are also proportional alternately.",
+     "modern_text": "If a/b = c/d, then a/c = b/d (alternando). One of the fundamental rules for manipulating proportions."},
+
+    {"reference": "V.25", "book": 5, "entry_type": "proposition", "number": 25,
+     "original_text": "If four magnitudes are proportional, then the sum of the greatest and the least is greater than the sum of the remaining two.",
+     "modern_text": "If a/b = c/d with a the largest and d the smallest, then a + d > b + c. A subtle inequality result from proportion theory."},
+
+
+    {"reference": "VI.Def.1", "book": 6, "entry_type": "definition", "number": 1,
+     "original_text": "Similar rectilinear figures are such as have their angles severally equal and the sides about the equal angles proportional.",
+     "modern_text": "Similar figures have the same shape but possibly different sizes: all corresponding angles are equal and all corresponding sides are in the same ratio."},
+
+    {"reference": "VI.2", "book": 6, "entry_type": "proposition", "number": 2,
+     "original_text": "If a straight line is drawn parallel to one of the sides of a triangle, then it cuts the sides of the triangle proportionally; and, if the sides of the triangle are cut proportionally, then the line joining the points of section is parallel to the remaining side of the triangle.",
+     "modern_text": "The Basic Proportionality Theorem (Thales' intercept theorem): a line parallel to one side of a triangle divides the other two sides proportionally. And conversely."},
+
+    {"reference": "VI.4", "book": 6, "entry_type": "proposition", "number": 4,
+     "original_text": "In equiangular triangles the sides about the equal angles are proportional.",
+     "modern_text": "AA similarity: if two triangles have equal angles, their corresponding sides are proportional. The fundamental theorem of similar triangles."},
+
+    {"reference": "VI.19", "book": 6, "entry_type": "proposition", "number": 19,
+     "original_text": "Similar triangles are to one another in the duplicate ratio of the corresponding sides.",
+     "modern_text": "The ratio of areas of similar triangles equals the square of the ratio of their corresponding sides: Area₁/Area₂ = (s₁/s₂)²."},
+
+    {"reference": "VI.31", "book": 6, "entry_type": "proposition", "number": 31,
+     "original_text": "In right-angled triangles the figure on the side opposite the right angle equals the sum of the similar and similarly described figures on the sides containing the right angle.",
+     "modern_text": "The generalized Pythagorean Theorem: it holds for any similar figures on the sides, not just squares. a² + b² = c² is a special case."},
+
+
+    {"reference": "VII.Def.1", "book": 7, "entry_type": "definition", "number": 1,
+     "original_text": "A unit is that by virtue of which each of the things that exist is called one.",
+     "modern_text": "The unit (1) is the fundamental building block from which all natural numbers are composed."},
+
+    {"reference": "VII.Def.2", "book": 7, "entry_type": "definition", "number": 2,
+     "original_text": "A number is a multitude composed of units.",
+     "modern_text": "A number (in Euclid's sense) is a positive integer greater than 1, built by combining units."},
+
+    {"reference": "VII.Def.3", "book": 7, "entry_type": "definition", "number": 3,
+     "original_text": "A number is a part of a number, the less of the greater, when it measures the greater.",
+     "modern_text": "A number a is a divisor (factor, part) of b when a divides b evenly with no remainder."},
+
+    {"reference": "VII.Def.11", "book": 7, "entry_type": "definition", "number": 11,
+     "original_text": "A prime number is that which is measured by a unit alone.",
+     "modern_text": "A prime number has exactly two divisors: 1 and itself. This is the foundational definition of primality."},
+
+    {"reference": "VII.Def.12", "book": 7, "entry_type": "definition", "number": 12,
+     "original_text": "Numbers prime to one another are those which are measured by a unit alone as a common measure.",
+     "modern_text": "Two numbers are coprime (relatively prime) when their only common divisor is 1, i.e., gcd(a,b) = 1."},
+
+    {"reference": "VII.Def.22", "book": 7, "entry_type": "definition", "number": 22,
+     "original_text": "A perfect number is that which is equal to the sum of its own parts.",
+     "modern_text": "A perfect number equals the sum of its proper divisors. Example: 6 = 1+2+3, 28 = 1+2+4+7+14."},
+
+    {"reference": "VII.1", "book": 7, "entry_type": "proposition", "number": 1,
+     "original_text": "When two unequal numbers are set out, and the less is continually subtracted in turn from the greater, if the number which is left never measures the one before it until a unit is left, then the original numbers are prime to one another.",
+     "modern_text": "If the Euclidean algorithm terminates at 1, the original numbers are coprime. This proposition describes the algorithm implicitly."},
+
+    {"reference": "VII.2", "book": 7, "entry_type": "proposition", "number": 2,
+     "original_text": "To find the greatest common measure of two given numbers not prime to one another.",
+     "modern_text": "The Euclidean Algorithm: find the GCD of two numbers by repeated division. One of the oldest algorithms still in practical use (2300+ years), essential in RSA cryptography and computational number theory."},
+
+    {"reference": "VII.30", "book": 7, "entry_type": "proposition", "number": 30,
+     "original_text": "If a prime number measures the product of two numbers, then it measures at least one of them.",
+     "modern_text": "Euclid's Lemma: if a prime p divides ab, then p divides a or p divides b. This is the key step in proving the Fundamental Theorem of Arithmetic (unique factorization)."},
+
+
+    {"reference": "VIII.2", "book": 8, "entry_type": "proposition", "number": 2,
+     "original_text": "To find as many numbers as are prescribed in continued proportion, and the least that are in a given ratio.",
+     "modern_text": "Construct the smallest geometric sequence a, ar, ar², ..., ar^n with a given common ratio r. Book VIII studies geometric progressions."},
+
+    {"reference": "VIII.8", "book": 8, "entry_type": "proposition", "number": 8,
+     "original_text": "If between two numbers there fall numbers in continued proportion with them, then, however many numbers fall between them in continued proportion, so many also fall in continued proportion between the numbers which have the same ratios as the original numbers.",
+     "modern_text": "Geometric sequences of the same ratio can be constructed between any pair of numbers in the same ratio. This develops the theory of geometric means and progressions."},
+
+    {"reference": "VIII.14", "book": 8, "entry_type": "proposition", "number": 14,
+     "original_text": "If a square measures a square, then the side also measures the side; and, if the side measures the side, then the square also measures the square.",
+     "modern_text": "a² | b² if and only if a | b. Divisibility of perfect squares reduces to divisibility of their roots."},
+
+
+    {"reference": "IX.14", "book": 9, "entry_type": "proposition", "number": 14,
+     "original_text": "If a number is the least that is measured by prime numbers, then it is not measured by any other prime number except those originally measuring it.",
+     "modern_text": "The Fundamental Theorem of Arithmetic (existence direction): every number has a unique prime factorization. The primes dividing the LCM of a set of primes are exactly those primes."},
+
+    {"reference": "IX.20", "book": 9, "entry_type": "proposition", "number": 20,
+     "original_text": "Prime numbers are more than any assigned multitude of prime numbers.",
+     "modern_text": "There are infinitely many prime numbers. Euclid's proof by contradiction: if p₁,...,pₙ were all the primes, then p₁·p₂·...·pₙ + 1 is not divisible by any of them—contradiction. One of the most celebrated proofs in mathematics."},
+
+    {"reference": "IX.35", "book": 9, "entry_type": "proposition", "number": 35,
+     "original_text": "If as many numbers as we please are in continued proportion, and there is subtracted from the second and the last numbers equal to the first, then the excess of the second is to the first as the excess of the last is to the sum of all those before it.",
+     "modern_text": "The formula for the sum of a geometric series: a + ar + ar² + ... + ar^n = a(r^(n+1) - 1)/(r - 1)."},
+
+    {"reference": "IX.36", "book": 9, "entry_type": "proposition", "number": 36,
+     "original_text": "If as many numbers as we please beginning from a unit are set out continuously in double proportion until the sum of all becomes prime, and if the sum multiplied into the last makes some number, then the product is perfect.",
+     "modern_text": "The Euclid–Euler theorem on even perfect numbers: if 2^p − 1 is prime (a Mersenne prime), then 2^(p−1)(2^p − 1) is a perfect number. Euler later proved the converse: every even perfect number has this form. Examples: 6, 28, 496, 8128."},
+
+
+    {"reference": "X.Def.1", "book": 10, "entry_type": "definition", "number": 1,
+     "original_text": "Those magnitudes are said to be commensurable which are measured by the same measure, and those incommensurable which cannot have any common measure.",
+     "modern_text": "Two lengths are commensurable if their ratio is rational (a/b with a,b integers). Incommensurable lengths have irrational ratios—like the diagonal and side of a square (ratio √2)."},
+
+    {"reference": "X.1", "book": 10, "entry_type": "proposition", "number": 1,
+     "original_text": "Two unequal magnitudes being set out, if from the greater there is subtracted a magnitude greater than its half, and from that which is left a magnitude greater than its half, and if this process is repeated continually, then there will be left some magnitude less than the lesser magnitude set out.",
+     "modern_text": "The Archimedean property / method of exhaustion: by repeatedly halving (or more), any magnitude can be made smaller than any given magnitude. This is the ancient precursor to limits and the foundation of Archimedes' area calculations."},
+
+    {"reference": "X.9", "book": 10, "entry_type": "proposition", "number": 9,
+     "original_text": "The squares on straight lines commensurable in length have to one another the ratio which a square number has to a square number; and squares which have to one another the ratio which a square number has to a square number also have their sides commensurable in length. But the squares on straight lines incommensurable in length do not have to one another the ratio which a square number has to a square number; and squares which do not have to one another the ratio which a square number has to a square number do not have their sides commensurable in length either.",
+     "modern_text": "Two lines are commensurable iff the ratio of their squares is a ratio of perfect squares. Corollary: √2 is irrational, because the diagonal and side of a square have squares in ratio 2:1, and 2 is not a perfect square."},
+
+    {"reference": "X.117", "book": 10, "entry_type": "proposition", "number": 117,
+     "original_text": "A scholium appended to Book X demonstrates that the diagonal of a square is incommensurable with its side.",
+     "modern_text": "The irrationality of √2: the diagonal and side of a square have no common measure. Often attributed to Hippasus of Metapontum (~5th century BC), this discovery shocked the Pythagoreans, who believed all magnitudes were commensurable."},
+
+
+    {"reference": "XI.Def.1", "book": 11, "entry_type": "definition", "number": 1,
+     "original_text": "A solid is that which has length, breadth, and depth.",
+     "modern_text": "A solid (3D object) has three dimensions: length, width, and height. Book XI extends geometry from plane to space."},
+
+    {"reference": "XI.Def.14", "book": 11, "entry_type": "definition", "number": 14,
+     "original_text": "When a semicircle with fixed diameter is carried round and restored again to the same position from which it began to be moved, the figure so comprehended is a sphere.",
+     "modern_text": "A sphere is the surface of revolution generated by rotating a semicircle about its diameter."},
+
+    {"reference": "XI.Def.18", "book": 11, "entry_type": "definition", "number": 18,
+     "original_text": "When a right triangle with one side about the right angle remains fixed is carried round and restored again to the same position from which it began to be moved, the figure so comprehended is a cone.",
+     "modern_text": "A cone is generated by rotating a right triangle about one of its legs."},
+
+    {"reference": "XI.Def.25", "book": 11, "entry_type": "definition", "number": 25,
+     "original_text": "A cube is a solid figure contained by six equal squares.",
+     "modern_text": "A cube has 6 square faces, 12 edges, and 8 vertices. It is one of the five Platonic solids."},
+
+    {"reference": "XI.Def.26", "book": 11, "entry_type": "definition", "number": 26,
+     "original_text": "An octahedron is a solid figure contained by eight equal and equilateral triangles.",
+     "modern_text": "An octahedron has 8 equilateral triangular faces, 12 edges, and 6 vertices. It is dual to the cube."},
+
+    {"reference": "XI.Def.28", "book": 11, "entry_type": "definition", "number": 28,
+     "original_text": "An icosahedron is a solid figure contained by twenty equal and equilateral triangles.",
+     "modern_text": "An icosahedron has 20 equilateral triangular faces, 30 edges, and 12 vertices. It is dual to the dodecahedron."},
+
+    {"reference": "XI.1", "book": 11, "entry_type": "proposition", "number": 1,
+     "original_text": "A part of a straight line cannot be in the plane of reference and a part in a plane more elevated.",
+     "modern_text": "A straight line cannot have one segment in one plane and another segment in a different plane—a line lies entirely within any plane that contains it."},
+
+    {"reference": "XI.4", "book": 11, "entry_type": "proposition", "number": 4,
+     "original_text": "If a straight line is set up at right angles to two straight lines which cut one another at their common point of section, then it is also at right angles to the plane passing through them.",
+     "modern_text": "A line perpendicular to two intersecting lines at their point of intersection is perpendicular to the entire plane containing those lines."},
+
+
+    {"reference": "XII.2", "book": 12, "entry_type": "proposition", "number": 2,
+     "original_text": "Circles are to one another as the squares on their diameters.",
+     "modern_text": "The area of a circle is proportional to the square of its diameter (equivalently, A = πr²). Proved using the method of exhaustion—inscribing polygons with more and more sides."},
+
+    {"reference": "XII.5", "book": 12, "entry_type": "proposition", "number": 5,
+     "original_text": "Pyramids of the same height with triangular bases are to one another as their bases.",
+     "modern_text": "Pyramids of equal height have volumes proportional to their base areas. A key step toward V = (1/3)Bh."},
+
+    {"reference": "XII.7", "book": 12, "entry_type": "proposition", "number": 7,
+     "original_text": "Any prism with a triangular base is divided into three pyramids equal to one another with triangular bases.",
+     "modern_text": "A triangular prism can be cut into three pyramids of equal volume. This proves that the volume of a pyramid is exactly one-third the volume of the prism with the same base and height: V = (1/3)Bh."},
+
+    {"reference": "XII.10", "book": 12, "entry_type": "proposition", "number": 10,
+     "original_text": "Any cone is a third part of the cylinder with the same base and equal height.",
+     "modern_text": "The volume of a cone is one-third the volume of the cylinder with the same base and height: V_cone = (1/3)πr²h. Proved by exhaustion."},
+
+    {"reference": "XII.18", "book": 12, "entry_type": "proposition", "number": 18,
+     "original_text": "Spheres are to one another in triplicate ratio of their respective diameters.",
+     "modern_text": "The volume of a sphere is proportional to the cube of its diameter: V ∝ d³ (equivalently, V = (4/3)πr³). This is one of the greatest achievements of Greek mathematics."},
+
+
+    {"reference": "XIII.Def.1", "book": 13, "entry_type": "definition", "number": 1,
+     "original_text": "The Elements concludes with the five regular solids. An equilateral and equiangular figure inscribed in a sphere is a regular solid.",
+     "modern_text": "A regular (Platonic) solid has identical regular polygon faces with the same number of faces meeting at each vertex, and can be inscribed in a sphere."},
+
+    {"reference": "XIII.1", "book": 13, "entry_type": "proposition", "number": 1,
+     "original_text": "If a straight line is cut in extreme and mean ratio, then the square on the greater segment added to the half of the whole is five times the square on the half.",
+     "modern_text": "If a line is divided in the golden ratio φ, and the larger segment is a, the whole is a+b, then (a + (a+b)/2)² = 5·((a+b)/2)². The golden ratio pervades the geometry of the regular pentagon and all constructions in Book XIII."},
+
+    {"reference": "XIII.7", "book": 13, "entry_type": "proposition", "number": 7,
+     "original_text": "If three angles of an equilateral pentagon, taken either in order or not in order, are equal, then the pentagon is equiangular.",
+     "modern_text": "In a regular pentagon, if any three angles are equal, all five must be. Properties of the regular pentagon and its diagonals (which form a pentagram) are developed extensively here."},
+
+    {"reference": "XIII.13", "book": 13, "entry_type": "proposition", "number": 13,
+     "original_text": "To construct a pyramid, to comprehend it in a given sphere, and to prove that the square on the diameter of the sphere is one and a half times the square on the side of the pyramid.",
+     "modern_text": "Construct a regular tetrahedron (4 equilateral triangular faces) inscribed in a sphere. If the sphere has diameter d, the edge length is d√(2/3)."},
+
+    {"reference": "XIII.14", "book": 13, "entry_type": "proposition", "number": 14,
+     "original_text": "To construct an octahedron and comprehend it in a sphere.",
+     "modern_text": "Construct a regular octahedron (8 equilateral triangular faces) inscribed in a sphere. Edge length = d/√2."},
+
+    {"reference": "XIII.15", "book": 13, "entry_type": "proposition", "number": 15,
+     "original_text": "To construct a cube and comprehend it in a sphere, and to prove that the square on the diameter of the sphere is triple the square on the side of the cube.",
+     "modern_text": "Construct a cube inscribed in a sphere. If the sphere has diameter d, the edge length is d/√3, since the space diagonal of the cube equals the diameter."},
+
+    {"reference": "XIII.16", "book": 13, "entry_type": "proposition", "number": 16,
+     "original_text": "To construct an icosahedron and comprehend it in a sphere.",
+     "modern_text": "Construct a regular icosahedron (20 equilateral triangular faces) inscribed in a sphere. The construction uses the golden ratio and the regular pentagon from Book IV."},
+
+    {"reference": "XIII.17", "book": 13, "entry_type": "proposition", "number": 17,
+     "original_text": "To construct a dodecahedron and comprehend it in a sphere.",
+     "modern_text": "Construct a regular dodecahedron (12 regular pentagonal faces) inscribed in a sphere. Each face is a regular pentagon; the construction depends critically on the golden ratio."},
+
+    {"reference": "XIII.18", "book": 13, "entry_type": "proposition", "number": 18,
+     "original_text": "To set out the sides of the five figures and compare them with one another.",
+     "modern_text": "The grand finale of the Elements: a comparison of the edge lengths of all five Platonic solids inscribed in the same sphere. Euclid then proves that these are the ONLY five regular solids that exist—a profound classification theorem."}
   ]
 }

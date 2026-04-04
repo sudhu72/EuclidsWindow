@@ -72,7 +72,7 @@
   });
 
   // =========================================================================
-  // 1. Mozart's Dice Game
+  // 1. Mozart's Dice Game — with staff notation & probability visualization
   // =========================================================================
   const MOZART_TABLE = [
     [96,22,141,41,105,122,11,30,70,121,26,9,112,49,109,14],
@@ -88,39 +88,361 @@
     [54,130,10,103,28,37,106,5,35,20,108,92,12,124,44,131]
   ];
 
-  const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-  function measureToNotes(measureNum) {
-    const seed = measureNum * 7 + 3;
-    const notes = [];
-    for (let i = 0; i < 4; i++) {
-      const idx = (seed + i * 13) % 12;
-      const octave = 4 + Math.floor((seed + i * 7) % 3);
-      notes.push({ name: NOTE_NAMES[idx], freq: 440 * Math.pow(2, (idx - 9 + (octave - 4) * 12) / 12) });
+  // Harmonic structure for each of the 16 bar positions (C major minuet)
+  // Each bar has a harmonic function; melody varies by measure number.
+  // Format: { chord: [bass MIDI notes], scale: [treble MIDI notes pool] }
+  const BAR_HARMONY = [
+    { chord: [48,52,55],  scale: [72,74,76,79,72,67] },   // 1:  C  (I)
+    { chord: [48,52,55],  scale: [76,74,72,71,72,74] },   // 2:  C  (I)
+    { chord: [53,57,48],  scale: [77,76,74,72,74,76] },   // 3:  F  (IV)
+    { chord: [55,59,50],  scale: [79,77,76,74,72,71] },   // 4:  G  (V)
+    { chord: [48,52,55],  scale: [72,74,76,77,79,76] },   // 5:  C  (I)
+    { chord: [50,53,57],  scale: [74,76,77,79,81,79] },   // 6:  Dm (ii)
+    { chord: [55,59,50],  scale: [79,77,76,74,71,67] },   // 7:  G  (V)
+    { chord: [48,52,55],  scale: [72,76,79,76,72,67] },   // 8:  C  (I) half cad.
+    { chord: [55,59,50],  scale: [67,71,74,71,67,74] },   // 9:  G  (V)
+    { chord: [55,59,50],  scale: [79,77,76,74,72,74] },   // 10: G  (V)
+    { chord: [48,52,55],  scale: [76,74,72,74,76,79] },   // 11: C  (I)
+    { chord: [53,57,48],  scale: [77,76,74,72,77,76] },   // 12: F  (IV)
+    { chord: [48,52,55],  scale: [72,76,79,84,79,76] },   // 13: C  (I)
+    { chord: [50,53,57],  scale: [74,77,74,72,71,72] },   // 14: Dm (ii)
+    { chord: [55,59,50],  scale: [71,74,67,71,74,79] },   // 15: G  (V7)
+    { chord: [48,52,55],  scale: [72,76,72,67,72,76] },   // 16: C  (I) final
+  ];
+
+  // Deterministically generate a musically coherent measure from its ID + bar position
+  function measureToMelody(measureNum, barPos) {
+    const harm = BAR_HARMONY[barPos];
+    const seed = measureNum * 17 + barPos * 7;
+    const pool = harm.scale;
+    const n = pool.length;
+
+    // 3/4 time: generate 3–6 notes per measure with varying rhythms
+    const patternType = seed % 5;
+    let notes = [];
+
+    if (patternType === 0) {
+      notes = [
+        { midi: pool[(seed) % n],     beat: 0, dur: 1 },
+        { midi: pool[(seed+1) % n],   beat: 1, dur: 1 },
+        { midi: pool[(seed+2) % n],   beat: 2, dur: 1 },
+      ];
+    } else if (patternType === 1) {
+      notes = [
+        { midi: pool[(seed) % n],     beat: 0, dur: 0.5 },
+        { midi: pool[(seed+3) % n],   beat: 0.5, dur: 0.5 },
+        { midi: pool[(seed+1) % n],   beat: 1, dur: 1 },
+        { midi: pool[(seed+4) % n],   beat: 2, dur: 1 },
+      ];
+    } else if (patternType === 2) {
+      notes = [
+        { midi: pool[(seed+2) % n],   beat: 0, dur: 1 },
+        { midi: pool[(seed) % n],     beat: 1, dur: 0.5 },
+        { midi: pool[(seed+1) % n],   beat: 1.5, dur: 0.5 },
+        { midi: pool[(seed+3) % n],   beat: 2, dur: 0.5 },
+        { midi: pool[(seed+4) % n],   beat: 2.5, dur: 0.5 },
+      ];
+    } else if (patternType === 3) {
+      notes = [
+        { midi: pool[(seed) % n],     beat: 0, dur: 2 },
+        { midi: pool[(seed+2) % n],   beat: 2, dur: 1 },
+      ];
+    } else {
+      notes = [
+        { midi: pool[(seed+1) % n],   beat: 0, dur: 0.5 },
+        { midi: pool[(seed+2) % n],   beat: 0.5, dur: 0.5 },
+        { midi: pool[(seed+3) % n],   beat: 1, dur: 0.5 },
+        { midi: pool[(seed+4) % n],   beat: 1.5, dur: 0.5 },
+        { midi: pool[(seed) % n],     beat: 2, dur: 1 },
+      ];
     }
-    return notes;
+
+    const bass = [
+      { midi: harm.chord[(seed) % harm.chord.length],   beat: 0, dur: 1 },
+      { midi: harm.chord[(seed+1) % harm.chord.length], beat: 1, dur: 1 },
+      { midi: harm.chord[(seed+2) % harm.chord.length], beat: 2, dur: 1 },
+    ];
+
+    return { treble: notes, bass };
+  }
+
+  function midiToFreq(midi) {
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  const MIDI_NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  function midiToName(midi) {
+    return MIDI_NOTE_NAMES[midi % 12] + Math.floor(midi / 12 - 1);
   }
 
   function rollTwoDice() {
     return Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1;
   }
 
+  // ---------- Staff Notation Renderer (Canvas) ----------
+  function drawStaff(canvas, measures) {
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const staffTop = 30;
+    const lineGap = 8;
+    const staffH = lineGap * 4;
+    const trebleTop = staffTop;
+    const bassTop = staffTop + staffH + 40;
+    const barW = (W - 50) / 8;
+    const leftMargin = 42;
+
+    function drawFiveLines(yTop, startX, endX) {
+      ctx.strokeStyle = "#a8a29e";
+      ctx.lineWidth = 0.8;
+      for (let i = 0; i < 5; i++) {
+        const y = yTop + i * lineGap;
+        ctx.beginPath();
+        ctx.moveTo(startX, y);
+        ctx.lineTo(endX, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawClef(yTop, isTreble) {
+      ctx.font = "bold 12px 'EB Garamond', Georgia, serif";
+      ctx.fillStyle = "#1c1917";
+      ctx.textAlign = "left";
+      if (isTreble) {
+        ctx.font = "28px serif";
+        ctx.fillText("\uD834\uDD1E", 4, yTop + staffH - 2);
+      } else {
+        ctx.font = "22px serif";
+        ctx.fillText("\uD834\uDD22", 4, yTop + lineGap * 2 + 4);
+      }
+    }
+
+    function drawTimeSig(yTop) {
+      ctx.font = "bold 14px 'EB Garamond', Georgia, serif";
+      ctx.fillStyle = "#1c1917";
+      ctx.textAlign = "center";
+      ctx.fillText("3", 32, yTop + lineGap * 1.5 + 1);
+      ctx.fillText("4", 32, yTop + lineGap * 3.5 + 1);
+    }
+
+    // midiToStaffY: maps MIDI note to Y position on staff
+    // Treble: middle line = B4 (71), bottom line = E4 (64), top line = F5 (77)
+    // Bass: middle line = D3 (50), bottom line = G2 (43), top line = A3 (57)
+    function midiToStaffY(midi, staffYTop, isTreble) {
+      const notePositions = {
+        0: 0, 2: 1, 4: 2, 5: 3, 7: 4, 9: 5, 11: 6,
+        1: 0.5, 3: 1.5, 6: 3.5, 8: 4.5, 10: 5.5
+      };
+      const pc = midi % 12;
+      const octave = Math.floor(midi / 12) - 1;
+      const posInOctave = notePositions[pc];
+      const absPos = octave * 7 + posInOctave;
+
+      let refPos, refY;
+      if (isTreble) {
+        refPos = 4 * 7 + 2;
+        refY = staffYTop + staffH;
+      } else {
+        refPos = 2 * 7 + 4;
+        refY = staffYTop + staffH;
+      }
+      const y = refY - (absPos - refPos) * (lineGap / 2);
+      return y;
+    }
+
+    function drawNoteHead(x, y, filled) {
+      ctx.fillStyle = "#1c1917";
+      ctx.strokeStyle = "#1c1917";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(x, y, 4.5, 3.2, -0.3, 0, Math.PI * 2);
+      if (filled) ctx.fill(); else ctx.stroke();
+    }
+
+    function drawStem(x, y, up) {
+      ctx.strokeStyle = "#1c1917";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (up) {
+        ctx.moveTo(x + 4, y);
+        ctx.lineTo(x + 4, y - 24);
+      } else {
+        ctx.moveTo(x - 4, y);
+        ctx.lineTo(x - 4, y + 24);
+      }
+      ctx.stroke();
+    }
+
+    function drawLedgerLines(x, y, staffYTop, staffYBottom) {
+      ctx.strokeStyle = "#a8a29e";
+      ctx.lineWidth = 0.8;
+      if (y > staffYBottom + 2) {
+        for (let ly = staffYBottom + lineGap; ly <= y + 1; ly += lineGap) {
+          ctx.beginPath();
+          ctx.moveTo(x - 6, ly);
+          ctx.lineTo(x + 6, ly);
+          ctx.stroke();
+        }
+      }
+      if (y < staffYTop - 2) {
+        for (let ly = staffYTop - lineGap; ly >= y - 1; ly -= lineGap) {
+          ctx.beginPath();
+          ctx.moveTo(x - 6, ly);
+          ctx.lineTo(x + 6, ly);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function renderRow(rowMeasures, rowIdx) {
+      const yOffset = rowIdx * (staffH * 2 + 70);
+      const tTop = trebleTop + yOffset;
+      const bTop = bassTop + yOffset;
+      const endX = leftMargin + barW * rowMeasures.length;
+
+      drawFiveLines(tTop, 0, endX);
+      drawFiveLines(bTop, 0, endX);
+
+      if (rowIdx === 0) {
+        drawClef(tTop, true);
+        drawClef(bTop, false);
+        drawTimeSig(tTop);
+        drawTimeSig(bTop);
+      } else {
+        drawClef(tTop, true);
+        drawClef(bTop, false);
+      }
+
+      rowMeasures.forEach((m, i) => {
+        const barX = leftMargin + i * barW;
+
+        // Bar number
+        ctx.font = "9px 'EB Garamond', Georgia, serif";
+        ctx.fillStyle = "#a8a29e";
+        ctx.textAlign = "center";
+        ctx.fillText(String(m.barNum), barX + barW / 2, tTop - 5);
+
+        // Highlight playing bar
+        if (m.playing) {
+          ctx.fillStyle = "rgba(28,25,23,0.06)";
+          ctx.fillRect(barX, tTop - 2, barW, bTop + staffH - tTop + 4);
+        }
+
+        // Treble notes
+        m.melody.treble.forEach((note) => {
+          const nx = barX + 10 + (note.beat / 3) * (barW - 20);
+          const ny = midiToStaffY(note.midi, tTop, true);
+          const filled = note.dur <= 1;
+          drawLedgerLines(nx, ny, tTop, tTop + staffH);
+          drawNoteHead(nx, ny, filled);
+          const up = ny > tTop + staffH / 2;
+          drawStem(nx, ny, up);
+        });
+
+        // Bass notes
+        m.melody.bass.forEach((note) => {
+          const nx = barX + 10 + (note.beat / 3) * (barW - 20);
+          const ny = midiToStaffY(note.midi, bTop, false);
+          const filled = note.dur <= 1;
+          drawLedgerLines(nx, ny, bTop, bTop + staffH);
+          drawNoteHead(nx, ny, filled);
+          const up = ny > bTop + staffH / 2;
+          drawStem(nx, ny, up);
+        });
+
+        // Barline
+        ctx.strokeStyle = "#78716c";
+        ctx.lineWidth = (i === rowMeasures.length - 1) ? 2 : 0.8;
+        const bx = barX + barW;
+        ctx.beginPath();
+        ctx.moveTo(bx, tTop);
+        ctx.lineTo(bx, tTop + staffH);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(bx, bTop);
+        ctx.lineTo(bx, bTop + staffH);
+        ctx.stroke();
+      });
+    }
+
+    const row1 = measures.slice(0, 8);
+    const row2 = measures.slice(8, 16);
+    renderRow(row1, 0);
+    renderRow(row2, 1);
+  }
+
+  // ---------- Dice Probability Chart ----------
+  function drawDiceProbChart() {
+    const el = document.getElementById("dice-prob-viz");
+    if (!el || typeof Plotly === "undefined") return;
+
+    const sums = [];
+    const probs = [];
+    const ways = [1,2,3,4,5,6,5,4,3,2,1];
+    for (let i = 0; i < 11; i++) {
+      sums.push(i + 2);
+      probs.push((ways[i] / 36 * 100));
+    }
+
+    Plotly.newPlot(el, [{
+      x: sums, y: probs, type: "bar",
+      marker: { color: sums.map(s => s >= 6 && s <= 8 ? "#1c1917" : "#a8a29e") },
+      text: probs.map(p => p.toFixed(1) + "%"),
+      textposition: "outside",
+      textfont: { size: 10 },
+    }], {
+      margin: { t: 10, r: 5, b: 35, l: 35 },
+      paper_bgcolor: "transparent",
+      plot_bgcolor: "transparent",
+      font: { family: "'EB Garamond', Georgia, serif", size: 11, color: "#1c1917" },
+      xaxis: { title: "Dice Sum", dtick: 1, gridcolor: "#e7e5e4" },
+      yaxis: { title: "Probability %", gridcolor: "#e7e5e4", range: [0, 20] },
+      bargap: 0.3,
+    }, { responsive: true, displayModeBar: false });
+  }
+
+  // ---------- Mini Mozart Table ----------
+  function buildMiniTable(results) {
+    const el = document.getElementById("dice-table-mini");
+    if (!el) return;
+    let html = "<table><tr><th>Roll</th>";
+    for (let c = 1; c <= 16; c++) html += `<th>${c}</th>`;
+    html += "</tr>";
+    for (let r = 0; r < 11; r++) {
+      html += `<tr><th>${r + 2}</th>`;
+      for (let c = 0; c < 16; c++) {
+        const m = MOZART_TABLE[r][c];
+        const isSelected = results[c] && results[c].roll - 2 === r;
+        html += `<td${isSelected ? ' class="hl"' : ""}>${m}</td>`;
+      }
+      html += "</tr>";
+    }
+    html += "</table>";
+    el.innerHTML = html;
+  }
+
+  // ---------- Main dice game logic ----------
   const diceRollAll = document.getElementById("dice-roll-all");
   const dicePlay = document.getElementById("dice-play");
   const diceStopBtn = document.getElementById("dice-stop");
   const diceBarsEl = document.getElementById("dice-bars");
   const diceScoreEl = document.getElementById("dice-score");
   const diceStatus = document.getElementById("dice-status");
+  const staffCanvas = document.getElementById("dice-staff-canvas");
   let diceResults = [];
   let dicePlayingInterval = null;
 
   function renderDiceBars() {
+    if (!diceBarsEl) return;
     diceBarsEl.innerHTML = "";
     for (let i = 0; i < 16; i++) {
       const bar = document.createElement("div");
       bar.className = "dice-bar";
       bar.id = "dice-bar-" + i;
       if (diceResults[i]) {
-        bar.innerHTML = `<div class="bar-num">${diceResults[i].measure}</div><div class="bar-roll">dice: ${diceResults[i].roll}</div>`;
+        bar.innerHTML = `<div class="bar-num">${diceResults[i].measure}</div><div class="bar-roll">&#9856; ${diceResults[i].roll}</div>`;
       } else {
         bar.innerHTML = `<div class="bar-num">?</div><div class="bar-roll">bar ${i + 1}</div>`;
       }
@@ -128,8 +450,19 @@
     }
   }
 
+  function getStaffMeasures(playingIdx) {
+    return diceResults.map((d, i) => ({
+      barNum: i + 1,
+      measure: d.measure,
+      melody: measureToMelody(d.measure, i),
+      playing: i === playingIdx,
+    }));
+  }
+
   if (diceRollAll) {
     renderDiceBars();
+    drawDiceProbChart();
+    buildMiniTable([]);
 
     diceRollAll.addEventListener("click", () => {
       diceResults = [];
@@ -142,9 +475,11 @@
         measures.push(measure);
       }
       renderDiceBars();
+      buildMiniTable(diceResults);
       diceScoreEl.textContent = "Measures: " + measures.join(" · ");
       dicePlay.disabled = false;
-      diceStatus.textContent = "Ready — press Play";
+      diceStatus.textContent = "Ready — press Play Minuet";
+      drawStaff(staffCanvas, getStaffMeasures(-1));
     });
 
     dicePlay.addEventListener("click", () => {
@@ -153,7 +488,8 @@
       dicePlay.disabled = true;
       diceStopBtn.disabled = false;
       let barIdx = 0;
-      const tempo = 0.5;
+      const beatDur = 0.28;
+      const barDur = beatDur * 3 + 0.15;
 
       function playBar() {
         if (barIdx >= 16) {
@@ -163,20 +499,29 @@
           diceStopBtn.disabled = true;
           diceStatus.textContent = "Finished!";
           document.querySelectorAll(".dice-bar").forEach((b) => b.classList.remove("playing"));
+          drawStaff(staffCanvas, getStaffMeasures(-1));
           return;
         }
         document.querySelectorAll(".dice-bar").forEach((b) => b.classList.remove("playing"));
         const el = document.getElementById("dice-bar-" + barIdx);
         if (el) el.classList.add("playing");
-        diceStatus.textContent = `Playing bar ${barIdx + 1}/16`;
+        diceStatus.textContent = `Playing bar ${barIdx + 1}/16 (measure ${diceResults[barIdx].measure})`;
+        drawStaff(staffCanvas, getStaffMeasures(barIdx));
 
-        const notes = measureToNotes(diceResults[barIdx].measure);
-        notes.forEach((n, i) => playTone(n.freq, 0.35, i * 0.12, "triangle"));
+        const melody = measureToMelody(diceResults[barIdx].measure, barIdx);
+
+        melody.treble.forEach((note) => {
+          playTone(midiToFreq(note.midi), note.dur * beatDur * 0.9, note.beat * beatDur, "triangle");
+        });
+        melody.bass.forEach((note) => {
+          playTone(midiToFreq(note.midi), note.dur * beatDur * 0.8, note.beat * beatDur, "sine");
+        });
+
         barIdx++;
       }
 
       playBar();
-      dicePlayingInterval = setInterval(playBar, tempo * 1000);
+      dicePlayingInterval = setInterval(playBar, barDur * 1000);
     });
 
     diceStopBtn.addEventListener("click", () => {
@@ -187,6 +532,7 @@
       diceStopBtn.disabled = true;
       diceStatus.textContent = "Stopped.";
       document.querySelectorAll(".dice-bar").forEach((b) => b.classList.remove("playing"));
+      if (diceResults.length) drawStaff(staffCanvas, getStaffMeasures(-1));
     });
   }
 

@@ -222,6 +222,11 @@ async def serve_musiclab_js():
     return FileResponse(FRONTEND_DIR / "musiclab.js", headers=FRONTEND_NO_CACHE_HEADERS)
 
 
+@app.get("/calclab.js", include_in_schema=False)
+async def serve_calclab_js():
+    return FileResponse(FRONTEND_DIR / "calclab.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
 @app.get("/fftlab.js", include_in_schema=False)
 async def serve_fftlab_js():
     return FileResponse(FRONTEND_DIR / "fftlab.js", headers=FRONTEND_NO_CACHE_HEADERS)
@@ -1468,7 +1473,7 @@ async def get_mind_map(
 @app.get("/api/concepts", response_model=ConceptListResponse)
 async def list_concepts(
     category: Optional[str] = None,
-    limit: int = 100,
+    limit: int = 500,
     db: Session = Depends(get_db),
 ) -> ConceptListResponse:
     service = MindMapService(db)

@@ -3887,6 +3887,99 @@
         "linear_algebra"
       ],
       "visualization": null
+    },
+    {
+      "id": "riemann_sums",
+      "name": "Riemann Sums & Numerical Integration",
+      "keywords": [
+        "riemann sum",
+        "riemann sums",
+        "numerical integration",
+        "trapezoidal rule",
+        "simpson's rule",
+        "left endpoint",
+        "right endpoint",
+        "midpoint rule",
+        "area approximation",
+        "definite integral approximation",
+        "how do riemann sums work?",
+        "how do riemann sums work",
+        "what is a riemann sum?",
+        "what is a riemann sum"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nA Riemann sum approximates the area under a curve by dividing it into thin rectangles and adding their areas.\n\n---\n\n📏 **Methods**\n\n• **Left endpoint**: height = f(xᵢ)\n• **Right endpoint**: height = f(xᵢ₊₁)\n• **Midpoint**: height = f((xᵢ+xᵢ₊₁)/2)\n• **Trapezoidal**: average of left and right\n\n---\n\n📐 **As n → ∞**\n\nAll methods converge to the definite integral ∫ₐᵇ f(x) dx.\n\n---\n\n⚡ **Error Bounds**\n\nLeft/right: O(1/n), Midpoint: O(1/n²), Simpson's: O(1/n⁴).\n\n---\n\n🎯 **Why it matters**\n\nMost real-world integrals have no closed-form solution and must be computed numerically.",
+      "kids_content": "🎪 **Counting Area with Rectangles!** 📐\n\nImagine you drew a hill on graph paper. How much space does it take up? You can find out by filling it with rectangles!\n\n---\n\n🎮 **The Rectangle Stacking Game**\n\nDraw a big curve on graph paper. Now fill the space under it with rectangles:\n- Use 3 wide rectangles — some parts stick out, some are missed. Not very exact!\n- Use 10 thinner rectangles — much better!\n- Use 100 super-thin rectangles — almost perfect!\n\nThe more rectangles you use, the closer you get to the real area. That is the idea behind a Riemann sum!\n\n---\n\n🧩 **Core Concept in Simple Words**\n\nA Riemann sum is just: multiply each rectangle's height by its width, then add them all up. Simple multiplication and addition give you the area under ANY curve!\n\n---\n\n🏆 **Where Do We See This?**\n\n- 🚗 Adding up speed every second to find total distance\n- 🌧️ Measuring total rainfall from readings each minute\n- 🏊 Finding the volume of an oddly shaped pool\n\n---\n\n🎯 **Quick Check**\n\n1. If you use more rectangles, does the answer get better or worse? (Better!)\n2. Can you find the exact area with rectangles? (Almost — use infinitely thin ones!)\n3. Is adding lots of thin rectangles easy for a computer? (Yes!)",
+      "related_concepts": [
+        "integral",
+        "calculus",
+        "approximation"
+      ],
+      "visualization": null,
+      "teen_content": "📱 **From Rectangles to Exact Area** 📐\n\nHow do you find the area under a curve when there is no simple formula? Stack up rectangles and add their areas — that is a Riemann sum.\n\n🎯 **Core Idea:**\nSplit the interval [a, b] into n strips of width Δx = (b−a)/n. Pick a sample point in each strip, evaluate f there, and multiply by Δx. Sum = Σ f(xᵢ*)·Δx. As n → ∞, this becomes the definite integral.\n\n💡 **Methods:**\n- Left endpoint: use the left edge of each strip\n- Right endpoint: use the right edge\n- Midpoint: use the center (more accurate)\n- Trapezoid: average left and right (even better)\n\n🔥 **Real Example:**\nEstimate ∫₀³ x² dx with n=3 left rectangles: Δx=1, heights f(0)=0, f(1)=1, f(2)=4. Sum = (0+1+4)·1 = 5. Exact answer = 9. With n=100: sum ≈ 8.87. The more rectangles, the closer you get!\n\n⚡ **Where This Shows Up:**\n- Every numerical calculation on a computer uses this idea\n- Estimating total distance from a speedometer\n- Computing areas of irregular shapes in CAD software\n\n⚡ **Challenge:**\nUse 4 right-endpoint rectangles to estimate ∫₀² x² dx. How close is it to the exact answer (8/3)?",
+      "college_content": "🎓 **Riemann Integration & Numerical Quadrature** 📋\n\n📋 **Definition:**\nFor a partition P = {x₀, ..., xₙ} of [a,b] with sample points xᵢ* ∈ [xᵢ₋₁, xᵢ], the Riemann sum is S(f,P) = Σ f(xᵢ*)Δxᵢ. f is Riemann integrable on [a,b] iff for every ε>0, there exists δ>0 such that |S(f,P) − I| < ε whenever ||P|| < δ.\n\n📐 **Darboux Sums:**\nUpper: U(f,P) = Σ sup{f(x): x ∈ [xᵢ₋₁,xᵢ]}·Δxᵢ. Lower: L(f,P) = Σ inf{...}·Δxᵢ. f is integrable iff inf U(f,P) = sup L(f,P). Every continuous function on [a,b] is Riemann integrable (uniform continuity argument).\n\n⚙️ **Error Analysis:**\n- Left/right: |E| ≤ M₁(b−a)²/(2n), M₁ = sup|f′|\n- Midpoint: |E| ≤ M₂(b−a)³/(24n²), M₂ = sup|f″|\n- Trapezoidal: |E| ≤ M₂(b−a)³/(12n²)\n- Simpson's: |E| ≤ M₄(b−a)⁵/(180n⁴), M₄ = sup|f⁽⁴⁾|\n- Gaussian quadrature: exact for polynomials of degree ≤ 2n−1 using n points\n\n📐 **Richardson Extrapolation:**\nCombine estimates at different step sizes to cancel leading error terms, achieving higher accuracy without finer grids. Romberg integration applies this repeatedly to the trapezoidal rule.\n\n**Connections:** Lebesgue integration (generalization), Monte Carlo methods, adaptive quadrature, finite element methods.",
+      "adult_content": "💼 **Numerical Integration in Practice** 🛠️\n\n💡 **Why It Matters:**\nMost real-world integrals (sensor data, probability distributions, physical simulations) have no closed-form solution. Numerical integration is how computers actually compute them.\n\n🛠️ **The Methods:**\n- Trapezoidal rule: simple, robust, O(1/n²) error. The workhorse for regularly sampled data.\n- Simpson's rule: O(1/n⁴) error for smooth functions — four orders of magnitude better accuracy for the same work.\n- Gaussian quadrature: exact for polynomials up to degree 2n−1 with n evaluation points. Used when function evaluations are expensive.\n- Monte Carlo: integrates in any number of dimensions with error O(1/√N) regardless of dimension — essential for high-dimensional integrals in finance and physics.\n\n📊 **Practical Application:**\nComputing AUC (Area Under the ROC Curve) in ML: given N discrete (FPR, TPR) points, the trapezoidal rule gives AUC = Σ (FPR_{i+1} − FPR_i) · (TPR_i + TPR_{i+1})/2. This is literally a Riemann sum.\n\n💡 **Worked Example:**\nSampled power data at 1-second intervals for 3600 seconds: total energy = Σ P(tᵢ)·Δt (Joules). With Δt=1s and 3600 samples, trapezoidal rule gives energy accurate to within 0.01% for smoothly varying power.\n\n🏢 **Industry Uses:**\nFinance (option pricing via numerical integration), physics (simulations), engineering (FEM), data science (probability computations), and all scientific computing."
+    },
+    {
+      "id": "calculus_optimization",
+      "name": "Calculus Optimization Problems",
+      "keywords": [
+        "calculus optimization",
+        "optimization problem",
+        "maximize area",
+        "minimize surface area",
+        "max volume",
+        "fence problem",
+        "box problem",
+        "open box problem",
+        "can problem",
+        "constrained optimization",
+        "maximize area with fixed perimeter",
+        "how do you use derivatives to solve optimization problems?",
+        "how do you use derivatives to solve optimization problems",
+        "how to find maximum area",
+        "how to minimize cost"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nOptimization uses derivatives to find the maximum or minimum of a quantity, often subject to constraints.\n\n---\n\n📐 **The Method**\n\n1. Write the objective as a function of one variable.\n2. Take the derivative and set it equal to zero: f'(x) = 0.\n3. Use the second derivative test to verify: f''(x) < 0 → max, f''(x) > 0 → min.\n\n---\n\n📏 **Classic Problems**\n\n• **Fence**: max area with fixed perimeter → square\n• **Box**: max volume from a flat sheet → cut x = s/6\n• **Can**: min surface area for fixed volume → r = (V/2π)^(1/3)\n\n---\n\n🎯 **Why it matters**\n\nEvery engineering design, economic decision, and ML algorithm has an optimization problem at its core.",
+      "kids_content": "🎪 **Finding the BEST Shape!** ✨\n\nImagine you have a rope and want to make the biggest pen for your pet. What shape should you choose?\n\n---\n\n🎮 **The Fence Challenge**\n\nYou have 20 sticks to build a fence around a garden:\n- Make it 1 stick wide and 9 long: area = 1 × 9 = 9 square units\n- Make it 3 wide and 7 long: area = 3 × 7 = 21 square units\n- Make it 5 wide and 5 long: area = 5 × 5 = 25 square units — the biggest!\n\nA square always gives the MOST area for a fixed border length!\n\n---\n\n🎁 **The Box Challenge**\n\nCut squares from the corners of a piece of paper, fold up the sides, and make a box. Tiny cuts = shallow box. Huge cuts = tiny box. Somewhere in between is the BIGGEST box!\n\n---\n\n🧩 **Core Concept**\n\nOptimization means finding the \"just right\" answer that makes something as big (or as small) as possible. Not too much, not too little — the Goldilocks of math!\n\n---\n\n🏆 **Where Do We See This?**\n\n- 📦 Amazon fitting items into the smallest box\n- 🍕 Pizza shops cutting slices to be fair\n- 🏗️ Builders using materials efficiently\n\n---\n\n🎯 **Quick Check**\n\n1. What shape gives the most area with a fixed perimeter? (Square!)\n2. If you cut bigger corners from your paper, does the box get taller or shorter? (Taller — but narrower!)\n3. Is there a \"perfect\" cut size? (Yes! That is what optimization finds!)",
+      "related_concepts": [
+        "derivative",
+        "calculus",
+        "linear_equations"
+      ],
+      "visualization": null,
+      "teen_content": "📱 **Using Calculus to Find the Best Possible Answer** 🏆\n\nOptimization is about finding the maximum or minimum of something — the biggest area, the shortest path, the least cost. Calculus gives you the exact tool to find it.\n\n🎯 **Core Idea:**\nAt a maximum or minimum, the slope is zero (the function is momentarily flat). So: take the derivative, set it to zero, solve for x. That is the optimal point.\n\n💡 **Fence Problem:**\nYou have 100 m of fencing and want to enclose the maximum area. If width = x, then length = 50 − x. Area A(x) = x(50 − x) = 50x − x². Take derivative: A'(x) = 50 − 2x. Set to 0: x = 25. A square 25 × 25 gives max area = 625 m².\n\n🔥 **Box Problem:**\nCut squares of side x from a 30×30 sheet and fold up. Volume V(x) = x(30−2x)². V'(x) = 0 when x = 5. Max volume = 5·(20)² = 2000 cm³.\n\n📱 **Where This Shows Up:**\n- App developers optimize button placement for most clicks\n- Athletes optimize launch angles for maximum distance\n- Amazon optimizes packaging to minimize shipping cost\n\n⚡ **Challenge:**\nYou sell lemonade at price p dollars and sell (100−2p) cups. Revenue R(p) = p(100−2p). What price maximizes revenue?",
+      "college_content": "🎓 **Constrained Optimization: Theory & Methods** 📋\n\n📋 **Unconstrained Optimization:**\nNecessary condition: ∇f(x*) = 0. Sufficient (for local min): ∇²f(x*) is positive definite. For single-variable: f'(c) = 0, f''(c) > 0 → local min.\n\n📐 **Constrained Optimization — Lagrange Multipliers:**\nOptimize f(x) subject to g(x) = 0: at the optimum, ∇f = λ∇g. The multiplier λ gives the sensitivity of the optimal value to the constraint.\n\nExample: Maximize f(x,y) = xy subject to 2x+2y = 100. ∇f = (y, x), ∇g = (2, 2). So y = 2λ, x = 2λ → x = y → x = y = 25, area = 625.\n\n⚙️ **KKT Conditions (Inequality Constraints):**\nOptimize f(x) s.t. gᵢ(x) ≤ 0: ∇f + Σλᵢ∇gᵢ = 0, λᵢ ≥ 0, λᵢgᵢ = 0 (complementary slackness). If f, gᵢ are convex, KKT conditions are sufficient for global optimality.\n\n📐 **Isoperimetric Inequality:**\nAmong all closed curves of length L, the circle encloses maximum area A ≤ L²/(4π). This is the continuous analog of the fence problem — proven using calculus of variations.\n\n**Connections:** Linear/quadratic programming, convex optimization, gradient descent, variational calculus, control theory.",
+      "adult_content": "💼 **Optimization in Industry** 🛠️\n\n💡 **Intuition:**\nEvery business decision is an optimization problem: maximize profit, minimize cost, find the best tradeoff. Calculus gives the exact framework: model the objective, take derivatives, find where the rate of change hits zero.\n\n🛠️ **The Classic Framework:**\n1. Identify the objective function f(x)\n2. Express constraints to reduce to one variable\n3. f'(x) = 0 finds critical points; f''(x) confirms max/min\n4. Check boundary conditions (real-world constraints like x > 0)\n\n📊 **Worked Example — Packaging:**\nDesign a cylindrical can holding V = 1000 cm³. Surface area S(r) = 2πr² + 2000/r. S'(r) = 4πr − 2000/r² = 0 → r = (500/π)^(1/3) ≈ 5.42 cm, h ≈ 10.84 cm. This minimizes material usage (= cost). The optimal can has height = diameter — a well-known engineering rule of thumb.\n\n💡 **Advanced Applications:**\n- Revenue maximization: R(p) = p·D(p), set R'(p) = 0\n- Portfolio optimization: maximize return subject to risk constraint (Markowitz)\n- Supply chain: minimize total inventory + shipping cost\n- Machine learning: gradient descent minimizes loss function — the same f'(x) = 0 idea, scaled to millions of parameters\n\n🏢 **Industry Uses:**\nOperations research, logistics, engineering design, financial engineering, and every ML training loop."
+    },
+    {
+      "id": "calculus_physics",
+      "name": "Calculus in Physics: Motion & Forces",
+      "keywords": [
+        "projectile motion",
+        "calculus in physics",
+        "kinematics",
+        "position velocity acceleration",
+        "projectile",
+        "trajectory",
+        "launch angle",
+        "newton's second law calculus",
+        "how does calculus describe projectile motion?",
+        "how does calculus describe projectile motion",
+        "what is the math behind projectile motion?",
+        "what is the math behind projectile motion",
+        "relationship between position velocity and acceleration"
+      ],
+      "response_text": "💡 **The Core Idea**\n\nPosition, velocity, and acceleration are linked by calculus:\n- Velocity = derivative of position\n- Acceleration = derivative of velocity\n- Position = integral of velocity\n\n---\n\n🚀 **Projectile Motion**\n\nx(t) = v₀ cos(θ) · t\ny(t) = v₀ sin(θ) · t − ½gt²\n\nRange R = v₀² sin(2θ) / g (max at θ = 45°)\nMax height H = v₀² sin²(θ) / (2g)\n\n---\n\n🎯 **Key Insight**\n\nGravity provides a constant downward acceleration. Integrating gives velocity; integrating again gives position — the parabolic trajectory.\n\n---\n\n⚡ **Why it matters**\n\nThis is the simplest application of differential equations: a = constant → v = at + v₀ → x = ½at² + v₀t + x₀.",
+      "kids_content": "🎪 **Throwing Balls with Math!** ⚾\n\nWhen you throw a ball, it goes up, curves, and comes back down. Calculus explains exactly why!\n\n---\n\n🎮 **The Throwing Game**\n\nThrow a ball at different angles:\n- Throw it straight up → it goes really high but lands right where you are\n- Throw it sideways → it barely gets off the ground but goes far forward\n- Throw at 45 degrees → it goes the FARTHEST! (This is a real math fact!)\n\n---\n\n🧩 **Core Concept**\n\n- **Position** tells you WHERE the ball is\n- **Velocity** (speed) tells you how FAST it is moving\n- **Acceleration** tells you how the speed is CHANGING (gravity pulls it down!)\n\nEach one is the \"rate of change\" of the one before — that is calculus!\n\n---\n\n🏆 **Where Do We See This?**\n\n- ⚽ Every kicked soccer ball follows a curved path\n- 🏀 Basketball free throws — players use the best angle!\n- 🚀 Rockets launching into space\n- 🎮 Every video game with physics (Angry Birds!)\n\n---\n\n🎯 **Quick Check**\n\n1. What angle gives the farthest throw? (45 degrees!)\n2. Does a heavier ball fall faster than a light one (ignoring air)? (No — same speed!)\n3. At the very top of the arc, is the ball going up or down? (Neither — it pauses for an instant!)",
+      "related_concepts": [
+        "derivative",
+        "integral",
+        "differential_equations"
+      ],
+      "visualization": null,
+      "teen_content": "📱 **Calculus IS Physics** 🚀\n\nEvery time you throw, kick, or launch anything, calculus is running behind the scenes. Position, velocity, and acceleration are connected by derivatives and integrals.\n\n🎯 **Core Idea:**\n- Position x(t): where the object is at time t\n- Velocity v(t) = dx/dt: derivative of position (how fast it's moving)\n- Acceleration a(t) = dv/dt = d²x/dt²: derivative of velocity (how fast the speed changes)\n\nGoing the other way: integrate acceleration to get velocity, integrate velocity to get position.\n\n💡 **Projectile Motion:**\nLaunch at speed v₀ and angle θ. Gravity pulls down at g = 9.8 m/s².\n- Horizontal: x(t) = v₀ cos(θ) · t (constant speed — no horizontal force)\n- Vertical: y(t) = v₀ sin(θ) · t − ½gt² (gravity decelerates, stops, accelerates down)\n- Range: R = v₀² sin(2θ)/g — maximum at 45°!\n- Max height: H = v₀² sin²(θ)/(2g) — when vertical velocity = 0\n\n🔥 **Where This Shows Up:**\n- Angry Birds uses this exact math\n- NASA trajectory calculations for rockets\n- Sports science: optimal serve angles in tennis\n- Forensic science: bullet trajectory analysis\n\n⚡ **Challenge:**\nIf you throw a ball at 20 m/s at 30°, how far does it go? (R = 400·sin(60°)/9.8 ≈ 35.3 m)",
+      "college_content": "🎓 **Kinematics from First Principles** 📋\n\n📋 **Newton's Second Law as an ODE:**\nF = ma = m·d²r/dt². For projectile motion with only gravity: d²r/dt² = (0, −g). This is a second-order ODE with constant coefficients.\n\n📐 **Solution by Integration:**\nIntegrate once: v(t) = v₀ + (0, −g)t = (v₀ cosθ, v₀ sinθ − gt).\nIntegrate again: r(t) = (v₀t cosθ, v₀t sinθ − gt²/2).\nEliminate t: y = x tanθ − gx²/(2v₀² cos²θ) — a parabola.\n\n⚙️ **Analysis:**\n- Range R = v₀² sin(2θ)/g. ∂R/∂θ = 0 when θ = π/4 (maximum range).\n- Time of flight T = 2v₀ sinθ/g. Max height H = v₀² sin²θ/(2g).\n- Envelope of all trajectories: y = v₀²/(2g) − gx²/(2v₀²) (safety parabola).\n\n📐 **With Air Resistance:**\nF_drag = −½C_d ρ A |v| v. The ODE becomes nonlinear: m dv/dt = mg + F_drag. No closed-form solution; requires numerical integration (Runge-Kutta). The range is significantly shorter and the optimal angle shifts below 45°.\n\n📐 **Lagrangian Mechanics:**\nFor more complex systems, the Euler-Lagrange equation d/dt(∂L/∂q̇) − ∂L/∂q = 0 with L = T − V generalizes Newton's laws to arbitrary coordinate systems.\n\n**Connections:** ODEs, calculus of variations, Hamiltonian mechanics, numerical methods.",
+      "adult_content": "💼 **Calculus-Based Physics in Engineering & Sports** 🛠️\n\n💡 **Intuition:**\nThe chain position → velocity → acceleration (each the derivative of the previous) is the foundation of all physics simulations. Whether designing a bridge, aiming a satellite, or analyzing an athlete's performance, it starts with d²r/dt² = F/m.\n\n🛠️ **Projectile Basics:**\nFor launch speed v₀ and angle θ, ideal range R = v₀² sin(2θ)/g. In vacuum, 45° is optimal. With drag: the optimal angle is 30–35° depending on the drag coefficient. Baseball analytics: exit velocity of 100 mph at 25–30° (not 45°!) maximizes distance because of air resistance.\n\n📊 **Practical Application — Sports Analytics:**\nA baseball hit at 100 mph (44.7 m/s) at 28° with C_d = 0.35:\n- Ideal (no drag): R = 44.7² · sin(56°)/9.8 ≈ 169 m (554 ft)\n- With drag (numerical ODE solution): R ≈ 120 m (394 ft)\n- Drag reduces range by ~30%! That is why exit velocity matters as much as angle.\n\n💡 **Worked Example — Satellite Orbits:**\nOrbital mechanics: gravitational force F = −GMm/r² gives a second-order ODE. The solutions are conic sections (Kepler's laws). Transfer orbits (Hohmann) require integrating the velocity change Δv from the rocket equation.\n\n🏢 **Industry Uses:**\nAerospace (trajectory planning), automotive (crash simulation), robotics (motion planning), sports science (biomechanics), gaming (physics engines like Unity/Unreal use numerical integration of F = ma every frame at 60+ Hz)."
     }
   ]
 }

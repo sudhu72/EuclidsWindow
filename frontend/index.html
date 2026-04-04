@@ -23,6 +23,7 @@
           <div class="nav-dropdown-menu">
             <button class="nav-dropdown-item" data-tab="matrixlab"><span class="tab-icon">&#9638;</span> Matrix Lab</button>
             <button class="nav-dropdown-item" data-tab="musiclab"><span class="tab-icon">&#9835;</span> Music Lab</button>
+            <button class="nav-dropdown-item" data-tab="calclab"><span class="tab-icon">&#8747;</span> Calculus Lab</button>
             <button class="nav-dropdown-item" data-tab="fftlab"><span class="tab-icon">&#8767;</span> FFT Lab</button>
           </div>
         </div>
@@ -171,8 +172,19 @@
         <div class="euclid-controls">
           <select id="euclid-book">
             <option value="">All Books</option>
-            <option value="1">Book I (Geometry)</option>
-            <option value="7">Book VII (Number Theory)</option>
+            <option value="1">Book I — Plane Geometry</option>
+            <option value="2">Book II — Geometric Algebra</option>
+            <option value="3">Book III — Circles</option>
+            <option value="4">Book IV — Inscribed Figures</option>
+            <option value="5">Book V — Proportion Theory</option>
+            <option value="6">Book VI — Similar Figures</option>
+            <option value="7">Book VII — Number Theory</option>
+            <option value="8">Book VIII — Continued Proportions</option>
+            <option value="9">Book IX — Primes &amp; Perfect Numbers</option>
+            <option value="10">Book X — Irrational Magnitudes</option>
+            <option value="11">Book XI — Solid Geometry</option>
+            <option value="12">Book XII — Method of Exhaustion</option>
+            <option value="13">Book XIII — Platonic Solids</option>
           </select>
           <select id="euclid-type">
             <option value="">All Types</option>
@@ -457,21 +469,43 @@
           <!-- Mozart's Dice Game -->
           <div id="game-dice" class="music-game active">
             <div class="music-game-header">
-              <h4>Musikalisches W&uuml;rfelspiel (K. 516f)</h4>
-              <p>Mozart composed 176 musical measures. By rolling two dice for each of 16 bars, you select measures from a table to compose a unique minuet. There are <strong>11<sup>16</sup> &asymp; 4.6 &times; 10<sup>16</sup></strong> possible compositions.</p>
+              <h4>Musikalisches W&uuml;rfelspiel &mdash; Mozart&rsquo;s Musical Dice Game</h4>
+              <p>Mozart composed 176 pre-written measures for a minuet in C major, 3/4 time. By rolling two dice for each of 16 bars, you select one measure per column from an 11&times;16 table. The result is a unique, properly harmonized minuet &mdash; one of <strong>11<sup>16</sup> &asymp; 4.6 &times; 10<sup>16</sup></strong> possible compositions.</p>
             </div>
             <div class="dice-game-area">
               <div class="dice-controls">
                 <button id="dice-roll-all" class="btn-primary">Roll All 16 Bars</button>
-                <button id="dice-play" class="btn-secondary" disabled>Play Composition</button>
+                <button id="dice-play" class="btn-secondary" disabled>Play Minuet</button>
                 <button id="dice-stop" class="btn-secondary" disabled>Stop</button>
                 <span id="dice-status" style="font-size:12px;color:#78716c;"></span>
               </div>
               <div id="dice-bars" class="dice-bars-grid"></div>
+
+              <!-- Sheet music display -->
+              <div id="dice-sheet-music" class="dice-sheet-music">
+                <div class="sheet-header">
+                  <span class="sheet-title">Minuet in C &mdash; composed by dice</span>
+                  <span class="sheet-sig">3/4 time &bull; C major</span>
+                </div>
+                <canvas id="dice-staff-canvas" width="920" height="310"></canvas>
+              </div>
+
+              <!-- Dice probability chart -->
+              <div id="dice-prob-chart" class="dice-prob-section">
+                <div class="dice-prob-header"><strong>Dice Roll Probability &amp; the Table</strong></div>
+                <div class="dice-prob-flex">
+                  <div id="dice-prob-viz" style="flex:1;min-height:200px;"></div>
+                  <div class="dice-table-mini" id="dice-table-mini"></div>
+                </div>
+                <div class="dice-prob-explain">
+                  Two dice produce sums 2&ndash;12, but not uniformly. Sum 7 has <strong>6/36 = 16.7%</strong> probability (6 ways: 1+6, 2+5, 3+4, 4+3, 5+2, 6+1), while sums 2 and 12 each have only <strong>1/36 = 2.8%</strong>. Mozart placed his most characteristic measures in rows 6&ndash;8 (dice sums 7&ndash;9) &mdash; the rows you&rsquo;re most likely to land on.
+                </div>
+              </div>
+
               <div id="dice-score" class="dice-score"></div>
               <div class="music-math-note">
-                <strong>The Mathematics:</strong> Two dice produce sums 2–12, but not uniformly. Sum 7 has probability 6/36 = 1/6 (most likely), while 2 and 12 each have probability 1/36. Mozart weighted his most interesting measures toward the center of the table, where dice land most often.
-                <div class="music-explore-link"><a href="#" data-music-prompt="What is Mozart's Musikalisches Würfelspiel and how does combinatorics create musical compositions?">Explore in Tutor →</a></div>
+                <strong>Why it always sounds good:</strong> Each column in the table represents a fixed harmonic function &mdash; bars 1&ndash;4 establish the key of C major, bars 5&ndash;8 move to the dominant (G major), bars 9&ndash;12 return, and bars 13&ndash;16 cadence home. Every measure in a column shares this harmonic skeleton, so ANY combination produces a coherent minuet. The melody varies, but the harmony is locked.
+                <div class="music-explore-link"><a href="#" data-music-prompt="What is Mozart's Musikalisches Würfelspiel and how does combinatorics create musical compositions?">Explore in Tutor &rarr;</a></div>
               </div>
             </div>
           </div>
@@ -562,6 +596,263 @@
                 <strong>The Mathematics:</strong> A pure fifth is &times;3/2. Stacking 12 fifths: (3/2)<sup>12</sup> = 129.746... but 7 octaves = 2<sup>7</sup> = 128. The ratio 129.746/128 &asymp; 1.01364 is the Pythagorean comma (~23.46 cents). Equal temperament compromises: each semitone = 2<sup>1/12</sup> &asymp; 1.05946, so a tempered fifth = 2<sup>7/12</sup> &asymp; 1.4983 instead of exactly 1.5.
                 <div class="music-explore-link"><a href="#" data-music-prompt="What is Pythagorean tuning and why can't you tune a piano perfectly using pure ratios?">Explore in Tutor →</a></div>
               </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+
+      <!-- Calculus Lab Tab -->
+      <div id="tab-calclab" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div class="tutor-header">
+            <h3>Calculus Lab</h3>
+            <p>Explore derivatives, integrals, optimization, and differential equations through interactive games and visualizations.</p>
+          </div>
+
+          <!-- Game Selector -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary calc-game-btn active" data-game="slope">Slope Explorer</button>
+            <button class="btn-secondary calc-game-btn" data-game="riemann">Area Under Curve</button>
+            <button class="btn-secondary calc-game-btn" data-game="optimize">Optimization</button>
+            <button class="btn-secondary calc-game-btn" data-game="diffeq">Differential Equations</button>
+            <button class="btn-secondary calc-game-btn" data-game="projectile">Projectile Lab</button>
+          </div>
+
+          <!-- 1  Slope Explorer -->
+          <div id="calc-slope" class="calc-game active">
+            <div class="calc-game-header">
+              <h4>Slope Explorer &mdash; Tangent Line &amp; Derivative</h4>
+              <p>Drag the point along the curve to see the tangent line and instantaneous slope (derivative) change in real time.</p>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls">
+                <label>Function:
+                  <select id="slope-fn">
+                    <option value="x2">f(x) = x&sup2;</option>
+                    <option value="x3">f(x) = x&sup3;</option>
+                    <option value="sin">f(x) = sin(x)</option>
+                    <option value="ex">f(x) = e<sup>x</sup></option>
+                    <option value="ln">f(x) = ln(x)</option>
+                  </select>
+                </label>
+                <label>x = <input type="range" id="slope-x" min="-3" max="3" step="0.05" value="1" style="width:180px;" /><span id="slope-x-val">1.00</span></label>
+                <label class="calc-cb"><input type="checkbox" id="slope-show-secant" /> Show secant (&Delta;x)</label>
+                <label>h = <input type="range" id="slope-h" min="0.01" max="2" step="0.01" value="1" style="width:120px;" /><span id="slope-h-val">1.00</span></label>
+              </div>
+              <div id="slope-plot" class="calc-viz-box"></div>
+              <div id="slope-readout" class="calc-readout"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="slope" data-level="kids">
+                  Imagine rolling a ball on a hill. Where the hill is steep, the ball speeds up. Where it flattens, the ball slows down. The <strong>derivative</strong> tells you exactly how steep the hill is at every point &mdash; it is the &ldquo;steepness number.&rdquo; A steepness of 0 means the top of the hill (the ball pauses before rolling back down).
+                </div>
+                <div class="calc-math-content hidden" data-game="slope" data-level="teen">
+                  The derivative f&prime;(x) is the slope of the tangent line at x. For f(x)&nbsp;=&nbsp;x&sup2;, the derivative is f&prime;(x)&nbsp;=&nbsp;2x. At x&nbsp;=&nbsp;3 the slope is 6 &mdash; steep uphill. At x&nbsp;=&nbsp;0 the slope is 0 &mdash; a flat turning point. The <em>secant line</em> through two points approaches the tangent as the gap h&nbsp;&rarr;&nbsp;0. This limit IS the derivative: f&prime;(x) = lim<sub>h&rarr;0</sub> [f(x+h)&minus;f(x)] / h.
+                </div>
+                <div class="calc-math-content hidden" data-game="slope" data-level="college">
+                  <strong>Definition:</strong> f&prime;(a) = lim<sub>h&rarr;0</sub> [f(a+h)&minus;f(a)]/h, provided the limit exists. Geometrically, this is the slope of the tangent to the graph at (a, f(a)). The tangent line y = f(a) + f&prime;(a)(x&minus;a) is the best linear approximation &mdash; the first-order Taylor polynomial. The secant slope [f(a+h)&minus;f(a)]/h converges to f&prime;(a) as h&rarr;0; the convergence rate is O(h) for differentiable functions, O(h&sup2;) when we use the symmetric difference quotient.
+                </div>
+                <div class="calc-math-content hidden" data-game="slope" data-level="adult">
+                  In engineering and data science, the derivative is the instantaneous rate of change. For f(x)&nbsp;=&nbsp;x&sup2;, f&prime;(x)&nbsp;=&nbsp;2x, meaning each unit increase in x produces roughly 2x additional units of f. This is the foundation of gradient descent: to minimize a loss L(&theta;), update &theta; &larr; &theta; &minus; &alpha;&nabla;L(&theta;). The tangent line visualized here is exactly what the optimizer &ldquo;sees&rdquo; at each step &mdash; a linear approximation guiding the next move.
+                </div>
+              </div>
+              <div class="music-explore-link"><a href="#" data-calc-prompt="What is a derivative and how does the tangent line relate to instantaneous rate of change?">Explore in Tutor &rarr;</a></div>
+            </div>
+          </div>
+
+          <!-- 2  Riemann Sums / Area Under Curve -->
+          <div id="calc-riemann" class="calc-game">
+            <div class="calc-game-header">
+              <h4>Area Under a Curve &mdash; Riemann Sums</h4>
+              <p>See how thin rectangles approximate the area under a curve. Increase the number of rectangles and watch the sum converge to the true integral.</p>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls">
+                <label>Function:
+                  <select id="riemann-fn">
+                    <option value="x2">f(x) = x&sup2;</option>
+                    <option value="sin">f(x) = sin(x) + 1</option>
+                    <option value="sqrt">f(x) = &radic;x</option>
+                    <option value="ex">f(x) = e<sup>&minus;x&sup2;</sup> (bell curve)</option>
+                  </select>
+                </label>
+                <label>Rectangles: <input type="range" id="riemann-n" min="1" max="200" value="5" style="width:180px;" /><span id="riemann-n-val">5</span></label>
+                <label>Method:
+                  <select id="riemann-method">
+                    <option value="left">Left endpoint</option>
+                    <option value="right">Right endpoint</option>
+                    <option value="mid">Midpoint</option>
+                    <option value="trap">Trapezoid</option>
+                  </select>
+                </label>
+                <label>a = <input type="number" id="riemann-a" value="0" step="0.5" style="width:60px;" /></label>
+                <label>b = <input type="number" id="riemann-b" value="3" step="0.5" style="width:60px;" /></label>
+              </div>
+              <div id="riemann-plot" class="calc-viz-box"></div>
+              <div id="riemann-readout" class="calc-readout"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="riemann" data-level="kids">
+                  Imagine you want to know the area of an oddly shaped swimming pool. You can&rsquo;t use length &times; width because it&rsquo;s curvy! Instead, fill the pool with thin rectangles. Count them up &mdash; that&rsquo;s roughly the area. Use thinner rectangles? You get closer to the true answer. That&rsquo;s what an <strong>integral</strong> does &mdash; it uses infinitely thin slices for the perfect answer.
+                </div>
+                <div class="calc-math-content hidden" data-game="riemann" data-level="teen">
+                  A Riemann sum splits [a,&thinsp;b] into n strips of width &Delta;x&nbsp;=&nbsp;(b&minus;a)/n. Each rectangle&rsquo;s height is f(x<sub>i</sub><sup>*</sup>). The sum &sum;f(x<sub>i</sub><sup>*</sup>)&Delta;x approximates the area. As n&nbsp;&rarr;&nbsp;&infin;, this converges to the definite integral &int;<sub>a</sub><sup>b</sup>f(x)dx. The Fundamental Theorem of Calculus says &int;<sub>a</sub><sup>b</sup>f(x)dx = F(b)&minus;F(a), where F&prime;&nbsp;=&nbsp;f.
+                </div>
+                <div class="calc-math-content hidden" data-game="riemann" data-level="college">
+                  <strong>Riemann Integral:</strong> For a partition P of [a,b], the upper/lower Darboux sums satisfy L(P,f) &le; &int;f &le; U(P,f). f is Riemann integrable iff for every &epsilon;&gt;0 there exists P with U&minus;L &lt; &epsilon;. Continuous functions on [a,b] are always integrable. Error bounds: left/right sums have error O(1/n), midpoint O(1/n&sup2;), Simpson&rsquo;s O(1/n&sup4;).
+                </div>
+                <div class="calc-math-content hidden" data-game="riemann" data-level="adult">
+                  Numerical integration is ubiquitous: Monte Carlo integration for high-dimensional spaces (finance, physics), Gaussian quadrature for precise low-dimensional integrals, adaptive Simpson&rsquo;s for general-purpose computation. The Riemann sum you see here is the conceptual foundation. In machine learning, the area under the ROC curve (AUC) is computed via the trapezoidal rule on discrete points. In engineering, total energy = &int;P(t)dt is computed from sampled power data.
+                </div>
+              </div>
+              <div class="music-explore-link"><a href="#" data-calc-prompt="What is a Riemann sum and how does it converge to the definite integral?">Explore in Tutor &rarr;</a></div>
+            </div>
+          </div>
+
+          <!-- 3  Optimization Playground -->
+          <div id="calc-optimize" class="calc-game">
+            <div class="calc-game-header">
+              <h4>Optimization Playground</h4>
+              <p>Classic calculus word problems brought to life: adjust dimensions and see how the objective function changes. Find the maximum or minimum!</p>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls">
+                <label>Problem:
+                  <select id="opt-problem">
+                    <option value="fence">Fence: max area with 100 m of fencing</option>
+                    <option value="box">Box: max volume from 30&times;30 sheet</option>
+                    <option value="can">Can: min surface area for 1 L volume</option>
+                  </select>
+                </label>
+                <label>x = <input type="range" id="opt-x" min="0.1" max="49" step="0.1" value="25" style="width:200px;" /><span id="opt-x-val">25.0</span></label>
+                <button id="opt-find-max" class="btn-primary">Find Optimum</button>
+              </div>
+              <div class="calc-opt-display">
+                <div id="opt-shape" class="calc-viz-box" style="flex:1;min-height:220px;"></div>
+                <div id="opt-graph" class="calc-viz-box" style="flex:1;min-height:220px;"></div>
+              </div>
+              <div id="opt-readout" class="calc-readout"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="optimize" data-level="kids">
+                  Imagine you have a fixed length of rope and want to make the biggest possible pen for your pet. If you make it very long and skinny, the area is small. If you make it a square, the area is biggest! <strong>Optimization</strong> means finding the &ldquo;just right&rdquo; shape that gives the most (or least) of something.
+                </div>
+                <div class="calc-math-content hidden" data-game="optimize" data-level="teen">
+                  Optimization uses derivatives to find max/min values. For the fence problem: perimeter = 2x + 2y = 100, so y = 50&minus;x. Area A = x(50&minus;x) = 50x&minus;x&sup2;. Take the derivative: A&prime; = 50&minus;2x. Set A&prime; = 0 &rArr; x = 25. Since A&Prime; = &minus;2 &lt; 0, this is a maximum. The optimal shape is a 25&times;25 square with area 625 m&sup2;.
+                </div>
+                <div class="calc-math-content hidden" data-game="optimize" data-level="college">
+                  <strong>Second Derivative Test:</strong> If f&prime;(c) = 0 and f&Prime;(c) &lt; 0, then c is a local maximum; if f&Prime;(c) &gt; 0, a local minimum. For the open-top box cut from a sheet of side s: V(x) = x(s&minus;2x)&sup2;. Setting V&prime;(x) = 0 yields x = s/6 (the physically valid root). Lagrange multipliers generalize this to constrained optimization: &nabla;f = &lambda;&nabla;g at the optimum.
+                </div>
+                <div class="calc-math-content hidden" data-game="optimize" data-level="adult">
+                  These classic problems illustrate the core of operations research. The fence problem is a quadratic program with a linear constraint &mdash; always solvable in closed form. The box and can problems are nonlinear but single-variable after substitution. In industry, the same first-order condition f&prime;(x) = 0 generalizes to gradient descent (&nabla;L = 0) for high-dimensional loss surfaces in ML, and to KKT conditions for constrained problems in logistics, finance, and engineering design.
+                </div>
+              </div>
+              <div class="music-explore-link"><a href="#" data-calc-prompt="How do you use derivatives to solve optimization problems like maximizing area with a fixed perimeter?">Explore in Tutor &rarr;</a></div>
+            </div>
+          </div>
+
+          <!-- 4  Differential Equations Simulator -->
+          <div id="calc-diffeq" class="calc-game">
+            <div class="calc-game-header">
+              <h4>Differential Equations Simulator</h4>
+              <p>Watch how populations, temperatures, and epidemics evolve over time. Adjust parameters and see the solution curves change.</p>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls">
+                <label>Model:
+                  <select id="de-model">
+                    <option value="growth">Exponential Growth / Decay</option>
+                    <option value="logistic">Logistic Growth</option>
+                    <option value="predator">Predator&ndash;Prey (Lotka-Volterra)</option>
+                    <option value="sir">SIR Epidemic</option>
+                  </select>
+                </label>
+                <div id="de-params" class="calc-de-params"></div>
+                <button id="de-run" class="btn-primary">Run Simulation</button>
+                <button id="de-reset" class="btn-secondary">Reset</button>
+              </div>
+              <div id="de-plot" class="calc-viz-box"></div>
+              <div id="de-readout" class="calc-readout"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="diffeq" data-level="kids">
+                  A differential equation is like a recipe for change. It says: &ldquo;How fast something grows depends on how much you already have.&rdquo; Rabbits make baby rabbits &mdash; the more rabbits, the more babies, so the population speeds up! But if foxes eat rabbits, both populations go up and down in waves. These &ldquo;recipes for change&rdquo; predict the future.
+                </div>
+                <div class="calc-math-content hidden" data-game="diffeq" data-level="teen">
+                  <strong>Exponential:</strong> dy/dt = ky &rArr; y = y<sub>0</sub>e<sup>kt</sup>. Positive k = growth, negative = decay. <strong>Logistic:</strong> dy/dt = ky(1&minus;y/K) caps growth at carrying capacity K. <strong>Lotka-Volterra:</strong> dx/dt = &alpha;x&minus;&beta;xy, dy/dt = &delta;xy&minus;&gamma;y (prey x, predator y) produce oscillating populations. <strong>SIR:</strong> dS/dt = &minus;&beta;SI, dI/dt = &beta;SI&minus;&gamma;I, dR/dt = &gamma;I models disease spread.
+                </div>
+                <div class="calc-math-content hidden" data-game="diffeq" data-level="college">
+                  <strong>Existence &amp; Uniqueness (Picard-Lindel&ouml;f):</strong> If f(t,y) is Lipschitz in y, then y&prime; = f(t,y), y(t<sub>0</sub>) = y<sub>0</sub> has a unique local solution. The Lotka-Volterra system has a conserved quantity H(x,y) = &delta;x &minus; &gamma;ln(x) + &beta;y &minus; &alpha;ln(y), yielding closed orbits in the phase plane. The SIR threshold theorem: an epidemic occurs iff R<sub>0</sub> = &beta;S(0)/&gamma; &gt; 1.
+                </div>
+                <div class="calc-math-content hidden" data-game="diffeq" data-level="adult">
+                  These ODE models underpin epidemiology (SIR/SEIR for COVID forecasting), ecology (Lotka-Volterra for fishery management), pharmacokinetics (drug concentration decay), and financial modeling (Black-Scholes PDE). Numerical methods used here: 4th-order Runge-Kutta gives O(h&sup4;) local error. In production, adaptive step-size (Dormand-Prince / RK45) balances accuracy and computation. Stiff systems (e.g., chemical kinetics) require implicit methods like BDF.
+                </div>
+              </div>
+              <div class="music-explore-link"><a href="#" data-calc-prompt="How do differential equations model real-world phenomena like population growth and epidemics?">Explore in Tutor &rarr;</a></div>
+            </div>
+          </div>
+
+          <!-- 5  Projectile Lab -->
+          <div id="calc-projectile" class="calc-game">
+            <div class="calc-game-header">
+              <h4>Projectile Lab &mdash; Calculus Meets Physics</h4>
+              <p>Launch a projectile and see position, velocity, and acceleration as functions of time. The derivative of position IS velocity; the derivative of velocity IS acceleration.</p>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls">
+                <label>Launch angle (&deg;): <input type="range" id="proj-angle" min="5" max="85" step="1" value="45" style="width:150px;" /><span id="proj-angle-val">45</span></label>
+                <label>Speed (m/s): <input type="range" id="proj-speed" min="5" max="50" step="1" value="30" style="width:150px;" /><span id="proj-speed-val">30</span></label>
+                <label>Gravity: <input type="range" id="proj-g" min="1" max="25" step="0.5" value="9.8" style="width:120px;" /><span id="proj-g-val">9.8</span></label>
+                <button id="proj-launch" class="btn-primary">Launch</button>
+                <button id="proj-reset" class="btn-secondary">Reset</button>
+              </div>
+              <div class="calc-opt-display">
+                <div id="proj-trajectory" class="calc-viz-box" style="flex:2;min-height:250px;"></div>
+                <div id="proj-graphs" class="calc-viz-box" style="flex:1;min-height:250px;"></div>
+              </div>
+              <div id="proj-readout" class="calc-readout"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="projectile" data-level="kids">
+                  When you throw a ball, gravity pulls it down. The harder you throw, the farther it goes. If you throw at 45&deg;, you get the <em>maximum distance</em>! The ball&rsquo;s speed changes every instant because gravity keeps pulling &mdash; that changing speed is what calculus measures.
+                </div>
+                <div class="calc-math-content hidden" data-game="projectile" data-level="teen">
+                  Position: x(t)&nbsp;=&nbsp;v<sub>0</sub>cos(&theta;)t, y(t)&nbsp;=&nbsp;v<sub>0</sub>sin(&theta;)t &minus; &frac12;gt&sup2;. Velocity is the derivative of position: v<sub>y</sub>(t) = v<sub>0</sub>sin(&theta;) &minus; gt. Acceleration is the derivative of velocity: a<sub>y</sub> = &minus;g (constant). The max height occurs when v<sub>y</sub> = 0, and the range is R = v<sub>0</sub>&sup2;sin(2&theta;)/g, maximized at &theta; = 45&deg;.
+                </div>
+                <div class="calc-math-content hidden" data-game="projectile" data-level="college">
+                  The equations of motion follow from Newton&rsquo;s 2nd law F = ma with F = (0, &minus;mg). Integrating a(t) = (0, &minus;g) gives v(t) = (v<sub>0</sub>cos&theta;, v<sub>0</sub>sin&theta; &minus; gt). Integrating again: r(t) = (v<sub>0</sub>t cos&theta;, v<sub>0</sub>t sin&theta; &minus; gt&sup2;/2). Eliminating t yields the parabolic trajectory y = x tan&theta; &minus; gx&sup2;/(2v<sub>0</sub>&sup2;cos&sup2;&theta;). With drag F<sub>d</sub> = &minus;bv, the ODE has no closed-form solution and requires numerical integration.
+                </div>
+                <div class="calc-math-content hidden" data-game="projectile" data-level="adult">
+                  Projectile motion is the simplest ODE initial-value problem in mechanics: r&Prime;(t) = g. Adding air resistance (F<sub>d</sub> = &minus;&frac12;C<sub>d</sub>&rho;A|v|v) makes it a nonlinear system requiring Runge-Kutta. In ballistics, the Magnus effect (spin) adds a lateral force. In sports analytics, launch angle optimization (e.g., baseball exit velocity at 25&ndash;30&deg;, not 45&deg;, due to drag) uses numerical solutions of these ODEs with measured C<sub>d</sub> values.
+                </div>
+              </div>
+              <div class="music-explore-link"><a href="#" data-calc-prompt="How does calculus describe projectile motion through derivatives and integrals?">Explore in Tutor &rarr;</a></div>
             </div>
           </div>
 
@@ -968,6 +1259,7 @@
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="app.js?v=20260327-2"></script>
     <script src="musiclab.js?v=20260403"></script>
+    <script src="calclab.js?v=20260404"></script>
     <script src="fftlab.js?v=20260404b"></script>
     <script src="fftlab-image.js?v=20260404"></script>
   </body>

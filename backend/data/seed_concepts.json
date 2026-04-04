@@ -46,6 +46,33 @@
       "prerequisites": ["natural_numbers"]
     },
     {
+      "slug": "rational_numbers",
+      "name": "Rational Numbers",
+      "description": "Numbers expressible as a ratio p/q of two integers where q ≠ 0. Includes fractions and terminating/repeating decimals.",
+      "level": 2,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["integers", "fractions"]
+    },
+    {
+      "slug": "real_numbers",
+      "name": "Real Numbers",
+      "description": "All rational and irrational numbers; every point on the number line. Includes √2, π, e, and all decimals.",
+      "level": 3,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["rational_numbers"]
+    },
+    {
+      "slug": "complex_numbers",
+      "name": "Complex Numbers",
+      "description": "Numbers of the form a + bi where i² = −1. Extend the reals to solve all polynomial equations (Fundamental Theorem of Algebra).",
+      "level": 4,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["real_numbers"]
+    },
+    {
       "slug": "place_value",
       "name": "Place Value",
       "description": "The value of a digit based on its position in a number.",
@@ -57,7 +84,7 @@
     {
       "slug": "number_systems",
       "name": "Number Systems (Bases)",
-      "description": "Different bases for representing numbers (binary, decimal, etc.).",
+      "description": "Different bases for representing numbers: binary (2), octal (8), decimal (10), hexadecimal (16).",
       "level": 2,
       "category": "number_theory",
       "euclid_ref": null,
@@ -75,12 +102,159 @@
     {
       "slug": "prime_numbers",
       "name": "Prime Numbers",
-      "description": "Numbers greater than 1 with exactly two divisors: 1 and itself.",
+      "description": "Numbers greater than 1 with exactly two divisors: 1 and itself. The atoms of arithmetic.",
       "level": 2,
       "category": "number_theory",
       "euclid_ref": "VII.Def.11",
       "prerequisites": ["divisibility"]
     },
+    {
+      "slug": "number_theory",
+      "name": "Number Theory",
+      "description": "The study of integers and their properties: primes, divisibility, congruences, and Diophantine equations.",
+      "level": 3,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["prime_numbers", "divisibility"]
+    },
+
+    {
+      "slug": "addition",
+      "name": "Addition",
+      "description": "Combining two quantities to get a total. The most fundamental arithmetic operation from which all others are built.",
+      "level": 1,
+      "category": "arithmetic",
+      "euclid_ref": null,
+      "prerequisites": ["number"]
+    },
+    {
+      "slug": "subtraction",
+      "name": "Subtraction",
+      "description": "Finding the difference between two quantities; the inverse of addition.",
+      "level": 1,
+      "category": "arithmetic",
+      "euclid_ref": null,
+      "prerequisites": ["addition"]
+    },
+    {
+      "slug": "multiplication",
+      "name": "Multiplication",
+      "description": "Repeated addition; scaling one quantity by another.",
+      "level": 1,
+      "category": "arithmetic",
+      "euclid_ref": null,
+      "prerequisites": ["addition"]
+    },
+    {
+      "slug": "division",
+      "name": "Division",
+      "description": "Splitting a quantity into equal parts; the inverse of multiplication. Leads to fractions and the division algorithm.",
+      "level": 1,
+      "category": "arithmetic",
+      "euclid_ref": null,
+      "prerequisites": ["multiplication"]
+    },
+    {
+      "slug": "fractions",
+      "name": "Fractions",
+      "description": "Numbers expressed as a/b representing parts of a whole. Foundation for ratios, proportions, and rational numbers.",
+      "level": 2,
+      "category": "arithmetic",
+      "euclid_ref": null,
+      "prerequisites": ["division"]
+    },
+    {
+      "slug": "ratio",
+      "name": "Ratio & Proportion",
+      "description": "A ratio compares two quantities; a proportion states two ratios are equal. Central to similarity, scaling, and musical intervals.",
+      "level": 2,
+      "category": "arithmetic",
+      "euclid_ref": "V.Def.3",
+      "prerequisites": ["fractions"]
+    },
+    {
+      "slug": "percentage",
+      "name": "Percentage",
+      "description": "A ratio expressed as parts per hundred. Used universally in finance, statistics, and everyday comparisons.",
+      "level": 2,
+      "category": "arithmetic",
+      "euclid_ref": null,
+      "prerequisites": ["ratio"]
+    },
+    {
+      "slug": "exponents",
+      "name": "Exponents & Powers",
+      "description": "Repeated multiplication: aⁿ = a × a × ... × a (n times). Foundation for exponential growth, logarithms, and polynomial algebra.",
+      "level": 2,
+      "category": "arithmetic",
+      "euclid_ref": null,
+      "prerequisites": ["multiplication"]
+    },
+    {
+      "slug": "logarithm",
+      "name": "Logarithms",
+      "description": "The inverse of exponentiation: log_b(x) = y means b^y = x. Converts multiplication to addition; foundational in information theory.",
+      "level": 3,
+      "category": "arithmetic",
+      "euclid_ref": null,
+      "prerequisites": ["exponents"]
+    },
+    {
+      "slug": "average",
+      "name": "Average (Mean, Median, Mode)",
+      "description": "Measures of central tendency: mean (sum/count), median (middle value), mode (most frequent).",
+      "level": 2,
+      "category": "arithmetic",
+      "euclid_ref": null,
+      "prerequisites": ["addition", "division"]
+    },
+    {
+      "slug": "modular_arithmetic",
+      "name": "Modular Arithmetic",
+      "description": "Arithmetic of remainders: a ≡ b (mod n) means n divides (a − b). Clock arithmetic, cryptography, error detection.",
+      "level": 3,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["division", "integers"]
+    },
+
+    {
+      "slug": "set_theory",
+      "name": "Set Theory",
+      "description": "The study of collections of objects: union, intersection, complement. The language underlying all of modern mathematics.",
+      "level": 2,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["number"]
+    },
+    {
+      "slug": "mathematical_logic",
+      "name": "Mathematical Logic",
+      "description": "Formal reasoning: propositions, connectives (and, or, not, implies), quantifiers (for all, there exists), and proof methods.",
+      "level": 3,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["set_theory"]
+    },
+    {
+      "slug": "axioms",
+      "name": "Axioms & Proof",
+      "description": "Self-evident starting truths from which theorems are derived. Euclid's five postulates defined geometry; ZFC axioms define modern set theory.",
+      "level": 3,
+      "category": "foundations",
+      "euclid_ref": "I.Post",
+      "prerequisites": ["mathematical_logic"]
+    },
+    {
+      "slug": "proof",
+      "name": "Methods of Proof",
+      "description": "Direct proof, proof by contradiction, proof by induction, and contrapositive — the tools for establishing mathematical truth.",
+      "level": 3,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["axioms"]
+    },
+
     {
       "slug": "point",
       "name": "Point",
@@ -102,7 +276,7 @@
     {
       "slug": "angle",
       "name": "Angle",
-      "description": "The inclination of two lines meeting at a point.",
+      "description": "The inclination of two lines meeting at a point, measured in degrees or radians.",
       "level": 1,
       "category": "geometry",
       "euclid_ref": "I.Def.8",
@@ -120,7 +294,7 @@
     {
       "slug": "triangle",
       "name": "Triangle",
-      "description": "A polygon with three sides and three angles.",
+      "description": "A polygon with three sides and three angles. The simplest polygon and building block of all geometry.",
       "level": 1,
       "category": "geometry",
       "euclid_ref": "I.Def.19",
@@ -129,7 +303,7 @@
     {
       "slug": "right_triangle",
       "name": "Right Triangle",
-      "description": "A triangle with one right angle.",
+      "description": "A triangle with one right angle — the foundation of trigonometry and the Pythagorean theorem.",
       "level": 2,
       "category": "geometry",
       "euclid_ref": null,
@@ -154,36 +328,146 @@
       "prerequisites": ["right_angle", "area"]
     },
     {
+      "slug": "circle",
+      "name": "Circle",
+      "description": "The set of all points equidistant from a center. Circumference = 2πr, Area = πr².",
+      "level": 2,
+      "category": "geometry",
+      "euclid_ref": "I.Def.15",
+      "prerequisites": ["point", "line"]
+    },
+    {
+      "slug": "pi",
+      "name": "Pi (π)",
+      "description": "The ratio of a circle's circumference to its diameter, approximately 3.14159. Irrational and transcendental.",
+      "level": 2,
+      "category": "geometry",
+      "euclid_ref": null,
+      "prerequisites": ["circle", "ratio"]
+    },
+    {
+      "slug": "polygon",
+      "name": "Polygons",
+      "description": "Closed plane figures with straight sides: quadrilaterals, pentagons, hexagons, and beyond.",
+      "level": 2,
+      "category": "geometry",
+      "euclid_ref": null,
+      "prerequisites": ["triangle", "angle"]
+    },
+    {
+      "slug": "transformations",
+      "name": "Geometric Transformations",
+      "description": "Translation, rotation, reflection, and dilation — operations that move or resize figures while preserving or scaling properties.",
+      "level": 3,
+      "category": "geometry",
+      "euclid_ref": null,
+      "prerequisites": ["polygon", "angle"]
+    },
+    {
+      "slug": "symmetry",
+      "name": "Symmetry",
+      "description": "Invariance under transformation. Reflective, rotational, and translational symmetry connect geometry to group theory.",
+      "level": 3,
+      "category": "geometry",
+      "euclid_ref": null,
+      "prerequisites": ["transformations"]
+    },
+    {
       "slug": "pythagorean_theorem",
       "name": "Pythagorean Theorem",
-      "description": "In a right triangle, a² + b² = c² where c is the hypotenuse.",
+      "description": "In a right triangle, a² + b² = c² where c is the hypotenuse. Over 370 known proofs.",
       "level": 3,
       "category": "geometry",
       "euclid_ref": "I.47",
       "prerequisites": ["right_triangle", "square", "area"]
     },
+
     {
-      "slug": "function",
-      "name": "Function",
-      "description": "A relation that assigns exactly one output to each input.",
+      "slug": "number_line",
+      "name": "Number Line",
+      "description": "A visual representation of numbers on a straight line, bridging arithmetic and geometry.",
+      "level": 1,
+      "category": "number_theory",
+      "euclid_ref": null,
+      "prerequisites": ["integers", "line"]
+    },
+    {
+      "slug": "coordinate_plane",
+      "name": "Coordinate Plane",
+      "description": "The Cartesian plane: two perpendicular number lines creating an x-y grid for plotting points, lines, and curves.",
       "level": 2,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["number"]
+      "prerequisites": ["number_line", "right_angle"]
     },
     {
-      "slug": "polynomial",
-      "name": "Polynomial",
-      "description": "An expression of variables and coefficients with addition, subtraction, and multiplication.",
+      "slug": "slope",
+      "name": "Slope",
+      "description": "The steepness of a line: rise/run = (y₂−y₁)/(x₂−x₁). Foreshadows the derivative in calculus.",
       "level": 2,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["coordinate_plane", "ratio"]
+    },
+
+    {
+      "slug": "variable",
+      "name": "Variables & Expressions",
+      "description": "Letters representing unknown quantities. Algebraic expressions combine variables with operations.",
+      "level": 2,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["addition", "multiplication"]
+    },
+    {
+      "slug": "equation",
+      "name": "Equations",
+      "description": "Statements that two expressions are equal. Solving means finding the values that make the equation true.",
+      "level": 2,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["variable"]
+    },
+    {
+      "slug": "linear_equations",
+      "name": "Linear Equations",
+      "description": "Equations of degree 1: y = mx + b. Their graphs are straight lines; solving systems finds intersection points.",
+      "level": 2,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["equation", "slope"]
+    },
+    {
+      "slug": "function",
+      "name": "Function",
+      "description": "A relation that assigns exactly one output to each input. The central object of modern mathematics.",
+      "level": 2,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["equation"]
+    },
+    {
+      "slug": "inverse_function",
+      "name": "Inverse Function",
+      "description": "A function that reverses another: if f(a) = b then f⁻¹(b) = a. Exists when f is one-to-one.",
+      "level": 3,
       "category": "algebra",
       "euclid_ref": null,
       "prerequisites": ["function"]
     },
     {
+      "slug": "polynomial",
+      "name": "Polynomial",
+      "description": "An expression of variables and coefficients with addition, subtraction, and non-negative integer exponents.",
+      "level": 2,
+      "category": "algebra",
+      "euclid_ref": null,
+      "prerequisites": ["variable", "exponents"]
+    },
+    {
       "slug": "quadratic_function",
       "name": "Quadratic Function",
-      "description": "A polynomial of degree 2: f(x) = ax² + bx + c.",
+      "description": "A polynomial of degree 2: f(x) = ax² + bx + c. Roots given by the quadratic formula.",
       "level": 3,
       "category": "algebra",
       "euclid_ref": null,
@@ -192,56 +476,397 @@
     {
       "slug": "parabola",
       "name": "Parabola",
-      "description": "The graph of a quadratic function; a U-shaped curve.",
+      "description": "The graph of a quadratic function; a U-shaped curve. Also a conic section.",
       "level": 3,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["quadratic_function"]
+      "prerequisites": ["quadratic_function", "coordinate_plane"]
     },
     {
-      "slug": "number_line",
-      "name": "Number Line",
-      "description": "A visual representation of numbers on a straight line.",
-      "level": 1,
-      "category": "number_theory",
+      "slug": "sequence",
+      "name": "Sequences & Series",
+      "description": "Ordered lists of numbers following a rule. Arithmetic, geometric, and Fibonacci sequences; convergent and divergent series.",
+      "level": 3,
+      "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["integers", "line"]
+      "prerequisites": ["function", "natural_numbers"]
     },
+    {
+      "slug": "infinity",
+      "name": "Infinity",
+      "description": "The concept of unboundedness. Cantor proved some infinities are larger than others; connects to limits, series, and set theory.",
+      "level": 4,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["sequence", "set_theory"]
+    },
+
+    {
+      "slug": "trigonometry",
+      "name": "Trigonometric Ratios",
+      "description": "sin, cos, tan — ratios of sides in a right triangle. Extend to the unit circle for all angles.",
+      "level": 3,
+      "category": "trigonometry",
+      "euclid_ref": null,
+      "prerequisites": ["right_triangle", "ratio"]
+    },
+    {
+      "slug": "trig_identities",
+      "name": "Trigonometric Identities",
+      "description": "Fundamental relationships: sin²θ + cos²θ = 1, addition formulas, double-angle formulas.",
+      "level": 3,
+      "category": "trigonometry",
+      "euclid_ref": null,
+      "prerequisites": ["trigonometry"]
+    },
+    {
+      "slug": "polar_coordinates",
+      "name": "Polar Coordinates",
+      "description": "Representing points as (r, θ) — distance from origin and angle. Natural for circular and spiral shapes.",
+      "level": 3,
+      "category": "trigonometry",
+      "euclid_ref": null,
+      "prerequisites": ["trigonometry", "coordinate_plane"]
+    },
+
+    {
+      "slug": "limits",
+      "name": "Limits",
+      "description": "The value a function approaches as input approaches some value. The foundation on which all of calculus is built.",
+      "level": 3,
+      "category": "calculus",
+      "euclid_ref": null,
+      "prerequisites": ["function", "real_numbers"]
+    },
+    {
+      "slug": "derivatives",
+      "name": "Derivatives",
+      "description": "The instantaneous rate of change: f′(x) = lim[f(x+h)−f(x)]/h. Slope of tangent line; velocity from position.",
+      "level": 4,
+      "category": "calculus",
+      "euclid_ref": null,
+      "prerequisites": ["limits", "slope"]
+    },
+    {
+      "slug": "integrals",
+      "name": "Integrals",
+      "description": "Accumulation of quantities: area under a curve. The Fundamental Theorem connects integrals to derivatives.",
+      "level": 4,
+      "category": "calculus",
+      "euclid_ref": null,
+      "prerequisites": ["limits", "area"]
+    },
+    {
+      "slug": "differential_equations",
+      "name": "Differential Equations",
+      "description": "Equations relating a function to its derivatives. Model growth, decay, oscillation, and virtually all physical phenomena.",
+      "level": 5,
+      "category": "calculus",
+      "euclid_ref": null,
+      "prerequisites": ["derivatives", "integrals"]
+    },
+    {
+      "slug": "taylor_series",
+      "name": "Taylor Series",
+      "description": "Approximating any smooth function by a polynomial: f(x) ≈ Σ f⁽ⁿ⁾(a)(x−a)ⁿ/n!. Powers calculators and numerical methods.",
+      "level": 5,
+      "category": "calculus",
+      "euclid_ref": null,
+      "prerequisites": ["derivatives", "sequence"]
+    },
+    {
+      "slug": "riemann_sums",
+      "name": "Riemann Sums & Numerical Integration",
+      "description": "Approximating definite integrals by summing rectangular areas; the conceptual foundation of the integral.",
+      "level": 4,
+      "category": "calculus",
+      "euclid_ref": null,
+      "prerequisites": ["limits", "integrals"]
+    },
+    {
+      "slug": "calculus_optimization",
+      "name": "Calculus Optimization",
+      "description": "Using derivatives to find maxima and minima: set f′(x) = 0, check f″(x). The basis of engineering design and ML.",
+      "level": 4,
+      "category": "calculus",
+      "euclid_ref": null,
+      "prerequisites": ["derivatives"]
+    },
+    {
+      "slug": "calculus_physics",
+      "name": "Calculus in Physics: Motion & Forces",
+      "description": "Position → velocity → acceleration via derivatives; F = ma as an ODE; projectile trajectories via integration.",
+      "level": 4,
+      "category": "calculus",
+      "euclid_ref": null,
+      "prerequisites": ["derivatives", "integrals"]
+    },
+
+    {
+      "slug": "vectors",
+      "name": "Vectors",
+      "description": "Quantities with magnitude and direction. Addition, scaling, dot product, cross product. Foundation of physics and linear algebra.",
+      "level": 3,
+      "category": "linear_algebra",
+      "euclid_ref": null,
+      "prerequisites": ["coordinate_plane"]
+    },
+    {
+      "slug": "matrices",
+      "name": "Matrices",
+      "description": "Rectangular arrays of numbers representing linear transformations. Multiplication, inverse, determinant.",
+      "level": 3,
+      "category": "linear_algebra",
+      "euclid_ref": null,
+      "prerequisites": ["vectors", "linear_equations"]
+    },
+    {
+      "slug": "linear_algebra",
+      "name": "Linear Algebra",
+      "description": "The study of vector spaces and linear maps: spans, bases, rank, null space. The language of ML, graphics, and quantum mechanics.",
+      "level": 4,
+      "category": "linear_algebra",
+      "euclid_ref": null,
+      "prerequisites": ["matrices"]
+    },
+    {
+      "slug": "eigenvalues",
+      "name": "Eigenvalues & Eigenvectors",
+      "description": "Av = λv — vectors unchanged in direction by a transformation. Govern stability, principal components, and quantum states.",
+      "level": 4,
+      "category": "linear_algebra",
+      "euclid_ref": null,
+      "prerequisites": ["linear_algebra"]
+    },
+    {
+      "slug": "svd",
+      "name": "Singular Value Decomposition",
+      "description": "A = UΣVᵀ — every matrix factors into rotation, scaling, rotation. The Swiss army knife of data science.",
+      "level": 5,
+      "category": "linear_algebra",
+      "euclid_ref": null,
+      "prerequisites": ["eigenvalues"]
+    },
+
+    {
+      "slug": "probability",
+      "name": "Probability",
+      "description": "Measuring the likelihood of events: P(A) = favorable outcomes / total outcomes. Axioms, conditional probability, Bayes' theorem.",
+      "level": 3,
+      "category": "probability",
+      "euclid_ref": null,
+      "prerequisites": ["fractions", "counting"]
+    },
+    {
+      "slug": "combinatorics",
+      "name": "Combinatorics",
+      "description": "Counting arrangements: permutations (order matters), combinations (order doesn't). Pascal's triangle, binomial theorem.",
+      "level": 3,
+      "category": "probability",
+      "euclid_ref": null,
+      "prerequisites": ["multiplication", "natural_numbers"]
+    },
+    {
+      "slug": "statistics",
+      "name": "Statistics",
+      "description": "Collecting, analyzing, and interpreting data. Distributions, hypothesis testing, regression, confidence intervals.",
+      "level": 3,
+      "category": "probability",
+      "euclid_ref": null,
+      "prerequisites": ["probability", "average"]
+    },
+    {
+      "slug": "binomial_theorem",
+      "name": "Binomial Theorem",
+      "description": "(a+b)ⁿ = Σ C(n,k) aⁿ⁻ᵏ bᵏ — expanding powers using Pascal's triangle. Connects combinatorics and algebra.",
+      "level": 3,
+      "category": "probability",
+      "euclid_ref": null,
+      "prerequisites": ["combinatorics", "exponents"]
+    },
+    {
+      "slug": "bayes_theorem",
+      "name": "Bayes' Theorem",
+      "description": "P(A|B) = P(B|A)·P(A)/P(B) — updating beliefs with evidence. Foundation of Bayesian inference and spam filters.",
+      "level": 4,
+      "category": "probability",
+      "euclid_ref": null,
+      "prerequisites": ["probability"]
+    },
+
+    {
+      "slug": "graph_theory",
+      "name": "Graph Theory",
+      "description": "The study of vertices and edges: paths, cycles, trees, connectivity. Models networks, maps, and social connections.",
+      "level": 3,
+      "category": "discrete_math",
+      "euclid_ref": null,
+      "prerequisites": ["set_theory"]
+    },
+    {
+      "slug": "game_theory",
+      "name": "Game Theory",
+      "description": "Mathematical modeling of strategic interaction. Nash equilibrium, prisoner's dilemma, minimax theorem.",
+      "level": 4,
+      "category": "discrete_math",
+      "euclid_ref": null,
+      "prerequisites": ["probability", "linear_equations"]
+    },
+    {
+      "slug": "cryptography",
+      "name": "Cryptography",
+      "description": "Securing communication using mathematics: RSA (prime factoring), Diffie-Hellman (discrete log), AES, elliptic curves.",
+      "level": 5,
+      "category": "discrete_math",
+      "euclid_ref": null,
+      "prerequisites": ["modular_arithmetic", "prime_numbers"]
+    },
+
+    {
+      "slug": "optimization",
+      "name": "Optimization",
+      "description": "Finding the best solution: linear programming, gradient descent, convex optimization. The engine of ML and operations research.",
+      "level": 4,
+      "category": "applied",
+      "euclid_ref": null,
+      "prerequisites": ["calculus_optimization", "linear_algebra"]
+    },
+    {
+      "slug": "topology",
+      "name": "Topology",
+      "description": "The study of properties preserved under continuous deformation: connectedness, compactness, genus. A donut = coffee mug.",
+      "level": 5,
+      "category": "advanced",
+      "euclid_ref": null,
+      "prerequisites": ["set_theory", "real_numbers"]
+    },
+    {
+      "slug": "fractals",
+      "name": "Fractals",
+      "description": "Self-similar structures with fractional dimension: Mandelbrot set, Koch snowflake, Sierpiński triangle.",
+      "level": 4,
+      "category": "advanced",
+      "euclid_ref": null,
+      "prerequisites": ["sequence", "complex_numbers"]
+    },
+    {
+      "slug": "chaos_theory",
+      "name": "Chaos Theory",
+      "description": "Deterministic systems with sensitive dependence on initial conditions. Lyapunov exponents, strange attractors, the butterfly effect.",
+      "level": 5,
+      "category": "advanced",
+      "euclid_ref": null,
+      "prerequisites": ["differential_equations"]
+    },
+
+    {
+      "slug": "neural_network_math",
+      "name": "Neural Network Mathematics",
+      "description": "Weighted sums, activation functions, and universal approximation. The mathematical framework for deep learning.",
+      "level": 5,
+      "category": "ml_mathematics",
+      "euclid_ref": null,
+      "prerequisites": ["linear_algebra", "calculus_optimization"]
+    },
+    {
+      "slug": "backpropagation",
+      "name": "Backpropagation",
+      "description": "Computing gradients via the chain rule through a computational graph. The algorithm that makes deep learning trainable.",
+      "level": 5,
+      "category": "ml_mathematics",
+      "euclid_ref": null,
+      "prerequisites": ["derivatives", "neural_network_math"]
+    },
+    {
+      "slug": "loss_functions",
+      "name": "Loss Functions",
+      "description": "Quantifying prediction error: MSE, cross-entropy, hinge loss. The objective that training minimizes.",
+      "level": 5,
+      "category": "ml_mathematics",
+      "euclid_ref": null,
+      "prerequisites": ["calculus_optimization", "probability"]
+    },
+    {
+      "slug": "attention",
+      "name": "Attention Mechanism",
+      "description": "Softmax(QKᵀ/√d)V — learned relevance weighting. The core of Transformers, enabling context-aware processing.",
+      "level": 6,
+      "category": "ml_mathematics",
+      "euclid_ref": null,
+      "prerequisites": ["linear_algebra", "neural_network_math"]
+    },
+    {
+      "slug": "transformers",
+      "name": "Transformers",
+      "description": "Multi-head self-attention + feedforward layers. The architecture behind GPT, BERT, and modern AI.",
+      "level": 6,
+      "category": "ml_mathematics",
+      "euclid_ref": null,
+      "prerequisites": ["attention", "backpropagation"]
+    },
+    {
+      "slug": "lora",
+      "name": "LoRA (Low-Rank Adaptation)",
+      "description": "Fine-tuning large models by learning low-rank weight updates ΔW = BA, reducing trainable parameters by 100–1000×.",
+      "level": 6,
+      "category": "ml_mathematics",
+      "euclid_ref": null,
+      "prerequisites": ["svd", "neural_network_math"]
+    },
+    {
+      "slug": "rag",
+      "name": "Retrieval-Augmented Generation",
+      "description": "Combining vector-similarity search with language generation. Reduces hallucination by grounding answers in retrieved documents.",
+      "level": 6,
+      "category": "ml_mathematics",
+      "euclid_ref": null,
+      "prerequisites": ["transformers", "vectors"]
+    },
+    {
+      "slug": "dimensionality_reduction",
+      "name": "Dimensionality Reduction",
+      "description": "PCA, t-SNE, UMAP — projecting high-dimensional data to fewer dimensions while preserving structure.",
+      "level": 5,
+      "category": "ml_mathematics",
+      "euclid_ref": null,
+      "prerequisites": ["eigenvalues", "statistics"]
+    },
+
     {
       "slug": "harmonic_series_music",
       "name": "Harmonic Series in Music",
-      "description": "The mathematical relationship between overtones: integer multiples of a fundamental frequency that determine timbre and consonance.",
+      "description": "Integer multiples of a fundamental frequency that determine timbre and consonance.",
       "level": 3,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["ratio", "proportion"]
+      "prerequisites": ["ratio"]
     },
     {
       "slug": "pythagorean_tuning",
       "name": "Pythagorean Tuning",
-      "description": "A tuning system based on stacking pure fifths (3:2 ratio). Reveals the Pythagorean comma — the impossibility of closing the circle of fifths with pure intervals.",
+      "description": "A tuning system based on stacking pure fifths (3:2 ratio). Reveals the Pythagorean comma.",
       "level": 3,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["ratio", "proportion"]
+      "prerequisites": ["ratio"]
     },
     {
       "slug": "fibonacci_music",
       "name": "Fibonacci & Golden Ratio in Music",
-      "description": "The Fibonacci sequence appears in the chromatic scale (13 notes, 8 white, 5 black, 3+2 grouping) and the golden ratio governs climax placement in compositions.",
+      "description": "Fibonacci numbers in the chromatic scale (13, 8, 5, 3, 2) and golden ratio in composition structure.",
       "level": 3,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["natural_numbers"]
+      "prerequisites": ["sequence"]
     },
     {
       "slug": "mozarts_dice_game",
       "name": "Mozart's Musical Dice Game",
-      "description": "A combinatorial composition system (K. 516f) where two dice select from 176 pre-composed measures to generate 11^16 unique minuets.",
+      "description": "A combinatorial composition system where two dice select from 176 pre-composed measures to generate 11^16 unique minuets.",
       "level": 4,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["counting"]
+      "prerequisites": ["probability", "combinatorics"]
     },
     {
       "slug": "euclidean_rhythm",
@@ -250,16 +875,16 @@
       "level": 4,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["natural_numbers"]
+      "prerequisites": ["modular_arithmetic", "divisibility"]
     },
     {
       "slug": "group_theory_music",
       "name": "Group Theory in Music",
-      "description": "Musical transformations (transposition, inversion, retrograde) form algebraic groups. The 48 forms of a tone row in serial music are generated by group operations.",
+      "description": "Musical transformations (transposition, inversion, retrograde) form algebraic groups.",
       "level": 6,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["harmonic_series_music"]
+      "prerequisites": ["symmetry", "harmonic_series_music"]
     },
     {
       "slug": "fractal_music",
@@ -268,30 +893,31 @@
       "level": 5,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["fibonacci_music"]
+      "prerequisites": ["fractals", "fibonacci_music"]
     },
     {
       "slug": "wave_equation_sound",
       "name": "Wave Equation & Acoustics",
-      "description": "The partial differential equation governing sound propagation, standing waves, and resonant frequencies of musical instruments.",
+      "description": "The PDE governing sound propagation, standing waves, and resonant frequencies of musical instruments.",
       "level": 6,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["harmonic_series_music"]
+      "prerequisites": ["differential_equations", "harmonic_series_music"]
     },
+
     {
       "slug": "fft_algorithm",
       "name": "Fast Fourier Transform",
-      "description": "The Cooley-Tukey algorithm computes the DFT in O(N log N) time via divide-and-conquer on even/odd indices, exploiting roots of unity symmetry.",
+      "description": "The Cooley-Tukey algorithm computes the DFT in O(N log N) via divide-and-conquer, exploiting roots of unity symmetry.",
       "level": 5,
       "category": "signal_processing",
       "euclid_ref": null,
-      "prerequisites": ["complex_numbers"]
+      "prerequisites": ["complex_numbers", "trigonometry"]
     },
     {
       "slug": "inverse_fft",
       "name": "Inverse FFT & Signal Reconstruction",
-      "description": "The inverse DFT recovers a time-domain signal from its frequency representation, using the unitarity of the DFT matrix.",
+      "description": "Recovering a time-domain signal from its frequency representation using the unitarity of the DFT matrix.",
       "level": 5,
       "category": "signal_processing",
       "euclid_ref": null,
@@ -300,7 +926,7 @@
     {
       "slug": "frequency_filtering",
       "name": "Frequency Domain Filtering",
-      "description": "Filtering via the convolution theorem: multiply spectra in the frequency domain instead of convolving in time, reducing O(N²) to O(N log N).",
+      "description": "Filtering via the convolution theorem: multiply spectra in the frequency domain instead of convolving in time.",
       "level": 5,
       "category": "signal_processing",
       "euclid_ref": null,
@@ -309,7 +935,7 @@
     {
       "slug": "image_fft_2d",
       "name": "2D FFT & Image Processing",
-      "description": "The separable 2D DFT decomposes images into spatial frequencies. Low frequencies encode gradients, high frequencies encode edges and textures.",
+      "description": "The separable 2D DFT decomposes images into spatial frequencies for edge detection, denoising, and compression.",
       "level": 6,
       "category": "signal_processing",
       "euclid_ref": null,
@@ -318,7 +944,7 @@
     {
       "slug": "fourier_image_compression",
       "name": "Fourier Transform & Image Compression",
-      "description": "DCT-based compression (JPEG) and the Fourier Slice Theorem (CT/MRI reconstruction) connect frequency analysis to practical image processing.",
+      "description": "DCT-based compression (JPEG) and the Fourier Slice Theorem (CT/MRI reconstruction).",
       "level": 6,
       "category": "signal_processing",
       "euclid_ref": null,

@@ -45,6 +45,18 @@
             "How do you write a mathematical proof?",
             "What is Gödel's incompleteness theorem about?"
           ]
+        },
+        {
+          "id": "proof",
+          "name": "Methods of Proof",
+          "icon": "∎",
+          "prompts": [
+            "What is a direct proof and when do you use it?",
+            "How does proof by contradiction work?",
+            "Explain mathematical induction with an example",
+            "What is a proof by contrapositive?",
+            "How do constructive and non-constructive proofs differ?"
+          ]
         }
       ]
     },
@@ -55,6 +67,42 @@
       "x": 50,
       "y": 25,
       "topics": [
+        {
+          "id": "unit",
+          "name": "The Unit (One)",
+          "icon": "1",
+          "prompts": [
+            "Why is the number one called the 'unit' in mathematics?",
+            "What role does 1 play as the multiplicative identity?",
+            "How did Euclid define 'unit' in the Elements?",
+            "Why is 1 not considered a prime number?",
+            "What is the unit element in different number systems?"
+          ]
+        },
+        {
+          "id": "number",
+          "name": "What Is a Number?",
+          "icon": "#",
+          "prompts": [
+            "What is a number, philosophically and mathematically?",
+            "How did the concept of number evolve through history?",
+            "What is the difference between cardinal and ordinal numbers?",
+            "How did Euclid define 'number' as a multitude of units?",
+            "What are the different kinds of numbers in mathematics?"
+          ]
+        },
+        {
+          "id": "counting",
+          "name": "Counting",
+          "icon": "⑴",
+          "prompts": [
+            "Why is counting the most fundamental mathematical operation?",
+            "What is one-to-one correspondence in counting?",
+            "How do different cultures develop counting systems?",
+            "What is the counting principle in combinatorics?",
+            "How does counting connect to set theory?"
+          ]
+        },
         {
           "id": "natural_numbers",
           "name": "Natural Numbers",
@@ -126,6 +174,78 @@
             "What is the Sieve of Eratosthenes?",
             "What are twin primes and the Riemann hypothesis?"
           ]
+        },
+        {
+          "id": "place_value",
+          "name": "Place Value",
+          "icon": "⑽",
+          "prompts": [
+            "What is place value and why does it matter?",
+            "How does the decimal system use powers of 10?",
+            "Why was the invention of zero revolutionary for place value?",
+            "How does carrying in addition relate to place value?",
+            "How does place value work in non-decimal bases?"
+          ]
+        },
+        {
+          "id": "number_systems",
+          "name": "Number Bases & Systems",
+          "icon": "₂",
+          "prompts": [
+            "What is a number base (radix)?",
+            "How does binary (base 2) work?",
+            "How do you convert between decimal, binary, and hexadecimal?",
+            "Why do computers use binary?",
+            "What is base 60 and where is it used historically?"
+          ]
+        },
+        {
+          "id": "number_line",
+          "name": "The Number Line",
+          "icon": "↔",
+          "prompts": [
+            "What is the number line and what does it represent?",
+            "How are negative numbers placed on the number line?",
+            "How do you find distance between two points on a number line?",
+            "How does the number line connect arithmetic to geometry?",
+            "Why is the real number line 'complete'?"
+          ]
+        },
+        {
+          "id": "divisibility",
+          "name": "Divisibility",
+          "icon": "|",
+          "prompts": [
+            "What does it mean for one number to divide another?",
+            "What are the divisibility rules for 2, 3, 5, 9, and 11?",
+            "What is the greatest common divisor (GCD)?",
+            "How does the Euclidean algorithm find GCD?",
+            "What is the relationship between GCD and LCM?"
+          ]
+        },
+        {
+          "id": "number_theory",
+          "name": "Number Theory",
+          "icon": "mod",
+          "prompts": [
+            "What is number theory about?",
+            "What is modular arithmetic?",
+            "What is the greatest common divisor (GCD)?",
+            "What is the Euclidean algorithm?",
+            "What is Fermat's Little Theorem?"
+          ]
+        },
+        {
+          "id": "modular_arithmetic",
+          "name": "Modular Arithmetic",
+          "icon": "⊕",
+          "prompts": [
+            "What is modular arithmetic and how is it like clock math?",
+            "How does modular arithmetic work in cryptography?",
+            "What is the modular inverse and when does it exist?",
+            "Explain the Chinese Remainder Theorem",
+            "How does ISBN error detection use modular arithmetic?"
+          ]
         }
       ]
     },
@@ -146,6 +266,18 @@
             "How does carrying work in addition?",
             "What is the identity element for addition?",
             "How is addition related to counting?"
+          ]
+        },
+        {
+          "id": "subtraction",
+          "name": "Subtraction",
+          "icon": "−",
+          "prompts": [
+            "What is subtraction and how is it the inverse of addition?",
+            "How does borrowing work in subtraction?",
+            "Why is subtraction not commutative?",
+            "What is the relationship between subtraction and negative numbers?",
+            "How do you subtract large numbers efficiently?"
           ]
         },
         {
@@ -173,6 +305,42 @@
           ]
         },
         {
+          "id": "fractions",
+          "name": "Fractions",
+          "icon": "½",
+          "prompts": [
+            "What is a fraction and what do the numerator and denominator mean?",
+            "How do you add and subtract fractions with different denominators?",
+            "How do you multiply and divide fractions?",
+            "What are equivalent fractions?",
+            "How do you convert between fractions, decimals, and percentages?"
+          ]
+        },
+        {
+          "id": "ratio",
+          "name": "Ratio & Proportion",
+          "icon": "∷",
+          "prompts": [
+            "What is a ratio and how is it different from a fraction?",
+            "What is a proportion and how do you solve one?",
+            "How are ratios used in real-world scaling and recipes?",
+            "What is the golden ratio and where does it appear?",
+            "How did Euclid define proportion in Book V of the Elements?"
+          ]
+        },
+        {
+          "id": "percentage",
+          "name": "Percentage",
+          "icon": "%",
+          "prompts": [
+            "What is a percentage and why is it useful?",
+            "How do you convert between fractions, decimals, and percentages?",
+            "How do you calculate percentage increase and decrease?",
+            "What is compound interest and how does it use percentages?",
+            "What is the difference between 'percentage of' and 'percentage points'?"
+          ]
+        },
+        {
           "id": "exponents",
           "name": "Exponents",
           "icon": "^",
@@ -182,6 +350,30 @@
             "What does a fractional exponent mean?",
             "Explain the laws of exponents",
             "What is exponential growth?"
+          ]
+        },
+        {
+          "id": "logarithm",
+          "name": "Logarithms",
+          "icon": "log",
+          "prompts": [
+            "What is a logarithm and how is it the inverse of exponentiation?",
+            "What are the laws of logarithms?",
+            "What is the natural logarithm and why is e special?",
+            "How were logarithms used before calculators existed?",
+            "Where do logarithms appear in nature and science?"
+          ]
+        },
+        {
+          "id": "average",
+          "name": "Averages & Central Tendency",
+          "icon": "x̄",
+          "prompts": [
+            "What is the difference between mean, median, and mode?",
+            "When is the median a better measure than the mean?",
+            "What is a weighted average and when is it used?",
+            "How can averages be misleading?",
+            "What is the geometric mean and when do you use it?"
           ]
         }
       ]
@@ -194,7 +386,7 @@
       "y": 30,
       "topics": [
         {
-          "id": "variables",
+          "id": "variable",
           "name": "Variables & Expressions",
           "icon": "x",
           "prompts": [
@@ -206,9 +398,21 @@
           ]
         },
         {
+          "id": "equation",
+          "name": "Equations",
+          "icon": "=",
+          "prompts": [
+            "What is an equation and how is it different from an expression?",
+            "What does it mean to 'solve' an equation?",
+            "How do you keep an equation balanced?",
+            "What is a solution set?",
+            "How do you check if a value satisfies an equation?"
+          ]
+        },
+        {
           "id": "linear_equations",
           "name": "Linear Equations",
-          "icon": "=",
+          "icon": "⟋",
           "prompts": [
             "What is a linear equation?",
             "How do you solve for x in a linear equation?",
@@ -218,19 +422,43 @@
           ]
         },
         {
-          "id": "quadratic_equations",
-          "name": "Quadratic Equations",
-          "icon": "x²",
+          "id": "slope",
+          "name": "Slope",
+          "icon": "⟋",
           "prompts": [
-            "What is a quadratic equation?",
-            "How do you factor a quadratic?",
-            "Derive the quadratic formula",
-            "What is a parabola?",
-            "What does the discriminant tell us?"
+            "What is slope and what does it measure?",
+            "How do you calculate slope from two points?",
+            "What do positive, negative, zero, and undefined slopes look like?",
+            "How does slope relate to rate of change?",
+            "How does slope foreshadow the derivative in calculus?"
           ]
         },
         {
-          "id": "polynomials",
+          "id": "coordinate_plane",
+          "name": "Coordinate Plane",
+          "icon": "⊞",
+          "prompts": [
+            "What is the Cartesian coordinate plane?",
+            "Who invented the coordinate plane and why?",
+            "What are the four quadrants and how do you plot points?",
+            "How does the coordinate plane connect algebra and geometry?",
+            "What is the distance formula on the coordinate plane?"
+          ]
+        },
+        {
+          "id": "quadratic_function",
+          "name": "Quadratic Functions",
+          "icon": "x²",
+          "prompts": [
+            "What is a quadratic function f(x) = ax² + bx + c?",
+            "How do you find the vertex of a parabola?",
+            "What is the discriminant and what does it reveal?",
+            "How do you factor a quadratic expression?",
+            "How do you complete the square?"
+          ]
+        },
+        {
+          "id": "polynomial",
           "name": "Polynomials",
           "icon": "Σ",
           "prompts": [
@@ -242,15 +470,51 @@
           ]
         },
         {
-          "id": "functions",
+          "id": "function",
           "name": "Functions",
           "icon": "f(x)",
           "prompts": [
-            "What is a function?",
+            "What is a function in mathematics?",
             "What is domain and range?",
             "What makes a function one-to-one?",
             "What is function composition?",
-            "What is an inverse function?"
+            "How do you graph a function?"
+          ]
+        },
+        {
+          "id": "inverse_function",
+          "name": "Inverse Functions",
+          "icon": "f⁻¹",
+          "prompts": [
+            "What is an inverse function?",
+            "How do you find the inverse of a function?",
+            "When does a function have an inverse?",
+            "What is the horizontal line test?",
+            "How are inverse functions related to reflections over y = x?"
+          ]
+        },
+        {
+          "id": "parabola",
+          "name": "Parabolas",
+          "icon": "⌒",
+          "prompts": [
+            "What is a parabola and where does it appear?",
+            "How is a parabola defined as a conic section?",
+            "What are the focus and directrix of a parabola?",
+            "Why do satellite dishes and headlights use parabolic shapes?",
+            "How does the vertex form y = a(x-h)² + k describe a parabola?"
+          ]
+        },
+        {
+          "id": "sequence",
+          "name": "Sequences & Series",
+          "icon": "…",
+          "prompts": [
+            "What is a sequence and how is it different from a series?",
+            "What is the Fibonacci sequence and where does it appear?",
+            "What is an arithmetic vs geometric sequence?",
+            "What does it mean for a series to converge?",
+            "What is the sum formula for a geometric series?"
           ]
         }
       ]
@@ -263,43 +527,103 @@
       "y": 55,
       "topics": [
         {
-          "id": "points_lines",
-          "name": "Points & Lines",
-          "icon": "—",
+          "id": "point",
+          "name": "Points",
+          "icon": "·",
           "prompts": [
             "What is a point in geometry?",
-            "What is a line vs a line segment vs a ray?",
-            "What are parallel and perpendicular lines?",
-            "What is the distance formula?",
-            "What is the midpoint formula?"
+            "How did Euclid define 'that which has no part'?",
+            "What is the difference between a point and a dot?",
+            "How do coordinates describe the position of a point?",
+            "What is a point in higher dimensions?"
           ]
         },
         {
-          "id": "angles",
+          "id": "line",
+          "name": "Lines",
+          "icon": "—",
+          "prompts": [
+            "What is a line in geometry?",
+            "What is the difference between a line, ray, and line segment?",
+            "What are parallel and perpendicular lines?",
+            "How did Euclid define 'breadthless length'?",
+            "What is the equation of a line?"
+          ]
+        },
+        {
+          "id": "angle",
           "name": "Angles",
           "icon": "∠",
           "prompts": [
-            "What is an angle?",
-            "What are acute, right, and obtuse angles?",
+            "What is an angle and how is it measured?",
+            "What are acute, right, obtuse, and reflex angles?",
             "What are complementary and supplementary angles?",
-            "What is a straight angle?",
-            "How do you measure angles in radians?"
+            "How do you convert between degrees and radians?",
+            "What are vertical angles and why are they equal?"
           ]
         },
         {
-          "id": "triangles",
+          "id": "right_angle",
+          "name": "Right Angles",
+          "icon": "⊾",
+          "prompts": [
+            "What makes a right angle special (90°)?",
+            "How did Euclid define a right angle?",
+            "Why are right angles fundamental to perpendicularity?",
+            "Where do right angles appear in architecture and engineering?",
+            "How do you construct a right angle with compass and straightedge?"
+          ]
+        },
+        {
+          "id": "triangle",
           "name": "Triangles",
           "icon": "△",
           "prompts": [
             "What types of triangles exist?",
-            "What is the Pythagorean theorem?",
-            "Prove the Pythagorean theorem",
             "What is the triangle inequality?",
-            "How do you find the area of a triangle?"
+            "How do you find the area of a triangle?",
+            "What are congruence conditions (SSS, SAS, ASA)?",
+            "Why do the interior angles of a triangle sum to 180°?"
           ]
         },
         {
-          "id": "circles",
+          "id": "right_triangle",
+          "name": "Right Triangles",
+          "icon": "◺",
+          "prompts": [
+            "What is a right triangle?",
+            "How does the Pythagorean theorem apply to right triangles?",
+            "What are the special right triangles (30-60-90, 45-45-90)?",
+            "Why is the right triangle the foundation of trigonometry?",
+            "How do you find the hypotenuse given two legs?"
+          ]
+        },
+        {
+          "id": "area",
+          "name": "Area",
+          "icon": "▢",
+          "prompts": [
+            "What is area and how is it measured?",
+            "How do you derive the area formula for a triangle?",
+            "How do you find the area of irregular shapes?",
+            "What is the relationship between area and integration?",
+            "How did the Greeks compute areas using the method of exhaustion?"
+          ]
+        },
+        {
+          "id": "square",
+          "name": "Squares & Rectangles",
+          "icon": "□",
+          "prompts": [
+            "What is a square and what properties make it special?",
+            "How is a square both a rectangle and a rhombus?",
+            "What is the relationship between side length and area?",
+            "Why are perfect squares important in algebra?",
+            "How did Euclid use squares in his proof of the Pythagorean theorem?"
+          ]
+        },
+        {
+          "id": "circle",
           "name": "Circles",
           "icon": "○",
           "prompts": [
@@ -311,7 +635,19 @@
           ]
         },
         {
-          "id": "polygons",
+          "id": "pi",
+          "name": "Pi (π)",
+          "icon": "π",
+          "prompts": [
+            "What is π and why is it approximately 3.14159?",
+            "How did Archimedes estimate the value of π?",
+            "Why is π irrational and what does that mean?",
+            "Where does π appear outside of circles?",
+            "What are the most famous formulas involving π?"
+          ]
+        },
+        {
+          "id": "polygon",
           "name": "Polygons",
           "icon": "⬡",
           "prompts": [
@@ -320,6 +656,18 @@
             "What is the sum of interior angles in a polygon?",
             "What is a convex vs concave polygon?",
             "How do you find the area of any polygon?"
+          ]
+        },
+        {
+          "id": "pythagorean_theorem",
+          "name": "Pythagorean Theorem",
+          "icon": "a²",
+          "prompts": [
+            "What does the Pythagorean theorem state?",
+            "How did Euclid prove the Pythagorean theorem (I.47)?",
+            "What are Pythagorean triples like (3, 4, 5)?",
+            "How is the Pythagorean theorem used in the distance formula?",
+            "Why are there over 370 proofs of the Pythagorean theorem?"
           ]
         },
         {
@@ -335,6 +683,18 @@
             "Why is 'Through the Looking Glass' about mirror symmetry?",
             "How does Carroll use chess board geometry in Alice's journey?"
           ]
+        },
+        {
+          "id": "symmetry",
+          "name": "Symmetry",
+          "icon": "⟷",
+          "prompts": [
+            "What is symmetry in mathematics?",
+            "What are the different types of symmetry (reflective, rotational, translational)?",
+            "How does Noether's theorem connect symmetry to physics conservation laws?",
+            "What are symmetry groups and why do they matter?",
+            "Where does symmetry appear in nature and art?"
+          ]
         }
       ]
     },
@@ -346,8 +706,8 @@
       "y": 65,
       "topics": [
         {
-          "id": "trig_ratios",
-          "name": "Trig Ratios",
+          "id": "trigonometry",
+          "name": "Trigonometric Ratios",
           "icon": "sin",
           "prompts": [
             "What are sine, cosine, and tangent?",
@@ -379,6 +739,18 @@
             "How are sine and cosine related?",
             "What are inverse trig functions?",
             "How do you solve trigonometric equations?"
+          ]
+        },
+        {
+          "id": "polar_coordinates",
+          "name": "Polar Coordinates",
+          "icon": "⊙",
+          "prompts": [
+            "What are polar coordinates (r, θ)?",
+            "How do you convert between polar and Cartesian coordinates?",
+            "What do common polar curves look like (rose, cardioid, spiral)?",
+            "When is it better to use polar coordinates than Cartesian?",
+            "How do you find area enclosed by a polar curve?"
           ]
         }
       ]
@@ -437,6 +809,54 @@
             "What are second-order differential equations?",
             "How do differential equations model real phenomena?"
           ]
+        },
+        {
+          "id": "taylor_series",
+          "name": "Taylor Series",
+          "icon": "Σ∞",
+          "prompts": [
+            "What is a Taylor series and why is it useful?",
+            "How do you find the Taylor series for eˣ, sin x, and cos x?",
+            "What is the radius of convergence?",
+            "How do calculators use Taylor series to compute functions?",
+            "What is the Maclaurin series (Taylor series centered at 0)?"
+          ]
+        },
+        {
+          "id": "riemann_sums",
+          "name": "Riemann Sums",
+          "icon": "Σ▮",
+          "prompts": [
+            "What is a Riemann sum?",
+            "How do Riemann sums approximate integrals?",
+            "What are left, right, and midpoint methods?",
+            "What is the trapezoidal rule?",
+            "How does numerical integration work?"
+          ]
+        },
+        {
+          "id": "calculus_optimization",
+          "name": "Optimization",
+          "icon": "max",
+          "prompts": [
+            "How do you use derivatives to solve optimization problems?",
+            "What is the fence problem in calculus?",
+            "How do you maximize area with a fixed perimeter?",
+            "What is constrained optimization?",
+            "How does gradient descent relate to calculus optimization?"
+          ]
+        },
+        {
+          "id": "calculus_physics",
+          "name": "Calculus & Physics",
+          "icon": "→g",
+          "prompts": [
+            "How does calculus describe projectile motion?",
+            "What is the relationship between position, velocity, and acceleration?",
+            "What is the math behind projectile motion?",
+            "How does Newton's second law use calculus?",
+            "What is the optimal launch angle for maximum range?"
+          ]
         }
       ]
     },
@@ -472,6 +892,18 @@
           ]
         },
         {
+          "id": "linear_algebra",
+          "name": "Linear Algebra Foundations",
+          "icon": "V",
+          "prompts": [
+            "What is a vector space and what are its axioms?",
+            "What is a basis and what does 'spanning' mean?",
+            "What is the rank of a matrix and why does it matter?",
+            "What is the null space (kernel) of a linear transformation?",
+            "Why is linear algebra essential for machine learning and graphics?"
+          ]
+        },
+        {
           "id": "eigenvalues",
           "name": "Eigenvalues",
           "icon": "λ",
@@ -481,6 +913,18 @@
             "What is the geometric meaning of eigenvalues?",
             "What is matrix diagonalization?",
             "Where are eigenvalues used in real applications?"
+          ]
+        },
+        {
+          "id": "svd",
+          "name": "Singular Value Decomposition",
+          "icon": "Σ",
+          "prompts": [
+            "What is Singular Value Decomposition (SVD)?",
+            "How does SVD factor a matrix into UΣVᵀ?",
+            "How is SVD used for image compression?",
+            "What is the connection between SVD and PCA?",
+            "Why is SVD called the Swiss army knife of linear algebra?"
           ]
         }
       ]
@@ -493,15 +937,15 @@
       "y": 20,
       "topics": [
         {
-          "id": "basic_probability",
+          "id": "probability",
           "name": "Probability",
           "icon": "P",
           "prompts": [
-            "What is probability?",
+            "What is probability and how is it measured?",
             "What is the difference between theoretical and experimental probability?",
             "What are independent and dependent events?",
             "What is conditional probability?",
-            "What is Bayes' theorem?"
+            "What is the law of large numbers?"
           ]
         },
         {
@@ -514,6 +958,30 @@
             "How do you use factorials?",
             "What is Pascal's triangle?",
             "What is the binomial theorem?"
+          ]
+        },
+        {
+          "id": "binomial_theorem",
+          "name": "Binomial Theorem",
+          "icon": "(a+b)ⁿ",
+          "prompts": [
+            "What is the binomial theorem?",
+            "How does Pascal's triangle relate to binomial coefficients?",
+            "How do you expand (a + b)⁵ using the binomial theorem?",
+            "What is the connection between the binomial theorem and combinatorics?",
+            "How is the binomial theorem used in probability?"
+          ]
+        },
+        {
+          "id": "bayes_theorem",
+          "name": "Bayes' Theorem",
+          "icon": "P(A|B)",
+          "prompts": [
+            "What is Bayes' theorem and what does it compute?",
+            "How does Bayes' theorem update beliefs with evidence?",
+            "Explain the medical test paradox using Bayes' theorem",
+            "How is Bayes' theorem used in spam filtering?",
+            "What is the difference between Bayesian and frequentist statistics?"
           ]
         },
         {
@@ -547,18 +1015,6 @@
             "What is the Königsberg bridge problem?",
             "What is a spanning tree?",
             "What is the shortest path problem?"
-          ]
-        },
-        {
-          "id": "number_theory",
-          "name": "Number Theory",
-          "icon": "mod",
-          "prompts": [
-            "What is number theory about?",
-            "What is modular arithmetic?",
-            "What is the greatest common divisor (GCD)?",
-            "What is the Euclidean algorithm?",
-            "What is Fermat's Little Theorem?"
           ]
         },
         {
@@ -657,7 +1113,7 @@
           ]
         },
         {
-          "id": "chaos",
+          "id": "chaos_theory",
           "name": "Chaos Theory",
           "icon": "🦋",
           "prompts": [
@@ -820,8 +1276,8 @@
           ]
         },
         {
-          "id": "fibonacci_rhythm",
-          "name": "Fibonacci & the Golden Ratio in Music",
+          "id": "fibonacci_music",
+          "name": "Fibonacci & Golden Ratio in Music",
           "icon": "φ",
           "prompts": [
             "Where does the Fibonacci sequence appear in musical structure?",
@@ -841,6 +1297,18 @@
             "What is the Pythagorean comma and why does it matter?",
             "How does equal temperament solve the tuning problem?",
             "Explain the mathematics behind the 12-tone chromatic scale"
+          ]
+        },
+        {
+          "id": "euclidean_rhythm",
+          "name": "Euclidean Rhythms",
+          "icon": "◉",
+          "prompts": [
+            "What are Euclidean rhythms?",
+            "How does Bjorklund's algorithm distribute beats evenly?",
+            "Why do Euclidean rhythms appear in world music traditions?",
+            "How is the Euclidean algorithm related to rhythm generation?",
+            "What makes the tresillo (E(3,8)) such a universal rhythm?"
           ]
         },
         {

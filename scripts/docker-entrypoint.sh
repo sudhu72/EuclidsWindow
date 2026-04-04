@@ -17,4 +17,7 @@ if [[ -n "${LOCAL_LLM_BASE_URL:-}" && -n "${LOCAL_LLM_MODEL:-}" ]]; then
     -d "{\"name\":\"${LOCAL_LLM_MODEL}\"}" >/dev/null || true
 fi
 
+echo "Seeding database (skips existing entries)..."
+python /app/backend/scripts/seed_db.py || echo "Warning: seed_db.py failed (non-fatal)"
+
 exec "$@"

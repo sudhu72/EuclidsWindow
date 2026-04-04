@@ -393,7 +393,7 @@ const formatTutorOutput = (payload) => {
 // =============================================================================
 // Tab Navigation
 // =============================================================================
-const LAB_TABS = new Set(["matrixlab", "musiclab", "fftlab"]);
+const LAB_TABS = new Set(["matrixlab", "musiclab", "calclab", "fftlab"]);
 const labsDropdown = document.getElementById("labs-dropdown");
 const labsToggle = labsDropdown ? labsDropdown.querySelector(".nav-dropdown-toggle") : null;
 const labsItems = document.querySelectorAll(".nav-dropdown-item");
@@ -1035,16 +1035,58 @@ const renderMindMap = (data) => {
   }
 };
 
-const showConceptDetails = (concept) => {
+const showConceptDetails = async (concept) => {
   conceptDetails.innerHTML = `
     <h3>${concept.name}</h3>
     <p>${concept.description || "No description available."}</p>
     ${concept.euclid_ref ? `<p class="euclid-ref">Euclid's Elements: ${concept.euclid_ref}</p>` : ""}
     <p><strong>Level:</strong> ${concept.level} | <strong>Category:</strong> ${concept.category}</p>
+    <div id="concept-prompts-area" style="margin-top:12px;">
+      <p style="opacity:0.5;">Loading prompts...</p>
+    </div>
     <div style="margin-top:10px;">
-      <button type="button" id="concept-open-learning-path" class="btn-primary">Open Learning Path</button>
+      <button type="button" id="concept-explore-tutor" class="btn-primary">Explore in Tutor</button>
+      <button type="button" id="concept-open-learning-path" class="btn-secondary" style="margin-left:6px;">All Prompts</button>
     </div>
   `;
+
+  const promptsArea = document.getElementById("concept-prompts-area");
+  try {
+    const resp = await fetch(`${API_BASE}/api/mathmap/topic/${concept.id}`);
+    if (resp.ok) {
+      const topic = await resp.json();
+      const prompts = topic.prompts || [];
+      if (prompts.length) {
+        promptsArea.innerHTML = `
+          <p style="font-weight:600; margin-bottom:6px;">Explore:</p>
+          <div style="display:flex; flex-direction:column; gap:5px;">
+            ${prompts.map(p => `<button type="button" class="btn-secondary concept-prompt-btn" style="text-align:left; font-size:0.85rem;" data-prompt="${encodeURIComponent(p)}">${p}</button>`).join("")}
+          </div>
+        `;
+        promptsArea.querySelectorAll(".concept-prompt-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const prompt = decodeURIComponent(btn.dataset.prompt);
+            switchToTab("tutor");
+            if (tutorInput) { tutorInput.value = prompt; }
+          });
+        });
+      } else {
+        promptsArea.innerHTML = "";
+      }
+    } else {
+      promptsArea.innerHTML = "";
+    }
+  } catch {
+    promptsArea.innerHTML = "";
+  }
+
+  const exploreBtn = document.getElementById("concept-explore-tutor");
+  if (exploreBtn) {
+    exploreBtn.addEventListener("click", () => {
+      switchToTab("tutor");
+      if (tutorInput) { tutorInput.value = `Explain ${concept.name}`; }
+    });
+  }
   const openBtn = document.getElementById("concept-open-learning-path");
   if (openBtn) {
     openBtn.addEventListener("click", () => openLearningPathForConcept(concept));
@@ -1054,12 +1096,11 @@ const showConceptDetails = (concept) => {
 const openLearningPathForConcept = async (concept) => {
   if (!concept) return;
   switchToTab("collections");
-  const query = `${concept.id || ""} ${concept.name || ""}`.trim();
+  const query = (concept.name || "").trim();
   if (collectionsSearch) {
     collectionsSearch.value = query;
   }
   await loadPromptCollections();
-  showError(`Loaded prompt paths for: ${concept.name}`);
 };
 
 loadMindmapBtn.addEventListener("click", async () => {
@@ -1093,6 +1134,7 @@ const searchEuclid = async () => {
   if (euclidBook.value) params.append("book", euclidBook.value);
   if (euclidType.value) params.append("entry_type", euclidType.value);
   if (euclidSearch.value) params.append("query", euclidSearch.value);
+  params.append("limit", "200");
 
   showLoading(true);
   try {

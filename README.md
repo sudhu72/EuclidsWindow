@@ -1,27 +1,29 @@
 # Euclid's Window
 
-Euclid's Window is a local-first math tutoring platform that combines:
+**Learn math from first principles** — like Euclid's *Elements*: start from self-evident axioms, derive everything step by step.
 
-- structured AI tutoring (plain English + axiomatic modes),
-- dynamic visualizations and Manim animations,
-- concept graph + curated resources,
-- guided prompt collections,
-- and a handwriting scratchpad with answer validation.
-
-The app is designed for iterative, interactive learning from basic to advanced topics.
+Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, interactive labs, dynamic visualizations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 60+ topics spanning arithmetic through signal processing.
 
 ## What You Get
 
-- **Local Tutor workflow**
+- **Generative Tutor**
   - Context-aware tutor with response modes (`plain`, `axiomatic`, `both`)
-  - Learner-level adaptation (`kids`, `teen`, `college`, `adult`)
+  - Learner-level adaptation (`kids`, `teen`, `college`, `adult`) with rich, differentiated content per topic
   - Follow-up prompts, key takeaways, quality checks, improvement hints
-  - Web RAG enrichment (toggleable in settings) for long-tail topics
+  - Semantic conversation history via ChromaDB vector store
+  - Web RAG enrichment (toggleable) for long-tail topics
+
+- **Interactive Labs** (collapsed under a single "Labs" dropdown in the nav)
+  - **Matrix / Vector Lab** — 2×2 and 3×3 matrix operations, by-hand checking, coordinate-grid visualization of transformations with 3×3 homogeneous projection
+  - **Music & Mathematics Lab** — five interactive games: Mozart's Musical Dice Game, Harmonic Series Explorer, Euclidean Rhythms (Bjorklund), Fibonacci Scales, Pythagorean Tuning
+  - **FFT Lab (Audio)** — record/load audio, forward FFT (Cooley-Tukey), 10-band frequency editor, inverse FFT, playback of original vs. modified signal
+  - **FFT Lab (Image)** — load/upload image, 2D FFT (row-column decomposition), magnitude spectrum + phase display, frequency-domain filtering (low-pass / high-pass / band-pass / band-stop with adjustable radius), inverse 2D FFT with side-by-side comparison
+  - Each lab step includes tabbed math explanations for all four learner levels
 
 - **On-demand visuals**
   - Diagram rendering via deterministic planner + tutor fallback
   - Animation rendering via Manim (background jobs with progress)
-  - Unified Render Jobs panel in UI
+  - LaTeX equation editor with live preview, quick templates, insert/copy actions
 
 - **Math scratchpad**
   - Mouse/trackpad grid canvas
@@ -31,18 +33,20 @@ The app is designed for iterative, interactive learning from basic to advanced t
 - **Learning navigation**
   - Prompt Collections organized by category/topic
   - Concept Graph (D3 force graph) with node-to-learning-path handoff
-  - Euclid references, resources catalog, and math map
+  - Euclid references, resources catalog, and interactive Math Map
+  - Cross-navigation: "Explore in Tutor" links in labs route questions directly to the tutor
 
 - **Evaluation and ops**
-  - Eval dashboard/history/compare
-  - Health/readiness/metrics endpoints
+  - Eval dashboard / history / compare
+  - Health / readiness / metrics endpoints
   - Docker-first deployment path
 
 ## Tech Stack
 
-- **Backend**: FastAPI, Pydantic v2, SQLAlchemy, SymPy
-- **Frontend**: Vanilla JS/HTML/CSS, D3.js, Plotly, KaTeX
+- **Backend**: FastAPI, Pydantic v2, SQLAlchemy, SymPy, ChromaDB (vector store)
+- **Frontend**: Vanilla JS/HTML/CSS, D3.js, Plotly.js, KaTeX, Web Audio API
 - **AI/Media**: Ollama (local LLM), Manim, Diffusers, MusicGen
+- **Algorithms**: Cooley-Tukey FFT/IFFT (1D + 2D), Bjorklund's algorithm (Euclidean rhythms)
 - **OCR**: Tesseract + Pillow + pytesseract
 - **Infra**: Docker, docker-compose
 
@@ -55,16 +59,21 @@ flowchart TB
     subgraph FE[Frontend]
       UI[index.html + app.js + styles.css]
       MM[mathmap.html + mathmap.js]
+      ML[musiclab.js]
+      FL[fftlab.js + fftlab-image.js]
       D3[D3 Concept Graph]
       PLT[Plotly + KaTeX Renderers]
+      WA[Web Audio API]
       SP[Math Scratchpad Canvas]
     end
 
     subgraph BE[FastAPI Backend]
       API[app.main routes]
       TUTOR[Tutor Service]
+      CONTENT[Content Catalog + Topic Matcher]
       DID[Didactics + Symbolic Checker]
       RAG[Web RAG]
+      CTX[Context Window - ChromaDB]
       VIZ[Visualization Service]
       VP[Visual Planner]
       MANIM[Manim Service + Job Queue]
@@ -75,7 +84,8 @@ flowchart TB
 
     subgraph DATA[Data + Persistence]
       SQLITE[(SQLite DB)]
-      JSON[(JSON Seeds: topics, resources, math_map)]
+      CHROMA[(ChromaDB Vector Store)]
+      JSON[(JSON Seeds: topics, resources, math_map, concepts)]
       STATIC[(backend/static visualizations/media)]
     end
 
@@ -93,10 +103,15 @@ flowchart TB
     UI --> D3
     UI --> PLT
     UI --> SP
+    UI --> WA
+    UI --> ML
+    UI --> FL
 
     API --> TUTOR
+    TUTOR --> CONTENT
     TUTOR --> DID
     TUTOR --> RAG
+    TUTOR --> CTX
     TUTOR --> VP
     VP --> VIZ
     API --> MANIM
@@ -106,6 +121,7 @@ flowchart TB
 
     RES --> SQLITE
     TUTOR --> SQLITE
+    CTX --> CHROMA
     API --> STATIC
     RES --> JSON
 
@@ -125,7 +141,7 @@ EuclidsWindow/
 │   │   ├── models.py                # Pydantic request/response models
 │   │   ├── config.py                # Settings/env defaults
 │   │   ├── settings_store.py        # Persistent UI/runtime setting overrides
-│   │   ├── content.py               # Topic catalog matcher
+│   │   ├── content.py               # Topic catalog + keyword scoring matcher
 │   │   ├── ai/
 │   │   │   ├── service.py           # Tutor orchestration + diagram jobs
 │   │   │   ├── coordinator.py       # Multi-agent coordination
@@ -141,29 +157,57 @@ EuclidsWindow/
 │   │   │   ├── mathmap.py
 │   │   │   ├── euclid.py
 │   │   │   ├── resource.py
-│   │   │   └── conversation.py
+│   │   │   └── conversation.py      # Semantic context window (ChromaDB)
 │   │   ├── db/
 │   │   └── manim_scenes/
-│   ├── data/                        # seed + domain JSON data
-│   ├── tests/                       # unit/integration tests
+│   ├── data/
+│   │   ├── demo_topics.json         # 60+ topics with 4 learner-level variants
+│   │   ├── math_map.json            # Categories + topic prompts for Math Map
+│   │   ├── seed_concepts.json       # Concept graph nodes + prerequisites
+│   │   ├── seed_euclid.json         # Euclid's Elements references
+│   │   └── seed_resources.json      # Curated resource catalog
+│   ├── scripts/
+│   │   └── seed_db.py               # Database seeding utility
+│   ├── tests/
 │   └── requirements*.txt
 ├── frontend/
 │   ├── index.html                   # Main multi-tab app UI
-│   ├── app.js                       # UI behavior + API integration
-│   ├── styles.css
+│   ├── app.js                       # UI behavior, tab navigation, API integration
+│   ├── styles.css                   # Monochrome scholarly theme
+│   ├── musiclab.js                  # Music & Mathematics Lab (5 games)
+│   ├── fftlab.js                    # FFT Lab: audio mode + mode switcher
+│   ├── fftlab-image.js              # FFT Lab: image mode (2D FFT)
 │   ├── mathmap.html                 # Dedicated map page
 │   ├── mathmap.js
-│   └── mathmap.css
+│   ├── mathmap.css
+│   └── euclids-window-logo.png      # B&W logo
 ├── docs/
-│   └── OLLAMA_TUNING.md
+│   ├── OLLAMA_TUNING.md
+│   └── LORA_TUNING_PLAYBOOK.md
 ├── scripts/
 │   ├── start-local-tutor.sh
 │   ├── start-all.sh
 │   └── docker-entrypoint.sh
+├── Makefile                         # LoRA shortcuts
 ├── Dockerfile
 ├── docker-compose.yml
 └── nginx.conf
 ```
+
+## Topic Coverage
+
+Content in `demo_topics.json` spans these Math Map categories, each with 4-level (kids/teen/college/adult) explanations:
+
+| Category | Example Topics |
+|---|---|
+| **Foundations** | Addition, Division, Fractions, Primes, Modular Arithmetic |
+| **Algebra** | Quadratic Equations, Logarithms, Matrices, Polynomials |
+| **Geometry** | Pythagorean Theorem, Coordinate Geometry, Conic Sections |
+| **Calculus** | Limits, Derivatives, Integrals, Taylor Series |
+| **Discrete Math** | Graph Theory, Combinatorics, Probability, Cryptography |
+| **Linear Algebra** | Vectors, Eigenvalues, Singular Value Decomposition |
+| **Music & Mathematics** | Harmonic Series, Pythagorean Tuning, Euclidean Rhythms, Mozart's Dice Game, Fibonacci Scales, Fractal Music, Group Theory in Music |
+| **Signal Processing & FFT** | FFT Algorithm, Inverse FFT, Frequency Filtering, 2D Image FFT, Fourier Image Compression, Sampling Theorem |
 
 ## Quick Start
 
@@ -171,6 +215,12 @@ EuclidsWindow/
 
 ```bash
 docker compose up -d --build
+```
+
+Seed the database (first run, or after adding new topics):
+
+```bash
+docker compose exec euclids-window python scripts/seed_db.py
 ```
 
 Open:
@@ -288,29 +338,45 @@ or set it in the UI under **Settings → Local LLM Model**.
 
 ### 1) Tutor + progressive follow-ups
 
-1. Ask a question in **Local Tutor**
-2. Pick response mode + learner level
-3. Use generated follow-up chips for progressive flow
-4. Render diagram/animation on demand when needed
+1. Ask a question in **Tutor** (e.g., "Explain modular arithmetic")
+2. Pick response mode + learner level — content adapts accordingly
+3. Use generated follow-up chips for progressive depth
+4. Render diagram/animation on demand
+5. Conversation context persists via semantic vector store
 
-### 2) Scratchpad answer checking
+### 2) Interactive Labs
+
+1. Open the **Labs** dropdown in the navigation bar
+2. **Matrix Lab**: Enter matrices, perform operations, check by hand, visualize transformations
+3. **Music Lab**: Play Mozart's Dice Game, explore harmonics, generate Euclidean rhythms, compare Pythagorean vs. equal-tempered tuning
+4. **FFT Lab (Audio)**: Record voice or load a sample tone → Run FFT → Edit frequency bands with sliders → Reconstruct with IFFT → Play original vs. modified
+5. **FFT Lab (Image)**: Upload an image or load a sample → Run 2D FFT → View magnitude spectrum + phase → Apply low-pass/high-pass/band-pass/band-stop filters → Reconstruct with inverse 2D FFT → Compare original vs. filtered
+6. Each step has inline math explanations for Kids, Teen, College, and Adult levels
+
+### 3) Scratchpad answer checking
 
 1. Write on grid canvas (mouse/trackpad)
 2. Convert handwriting to typed text
 3. Edit OCR text if needed
 4. Validate against current tutor question
 
-### 3) Guided learning paths
+### 4) Guided learning paths
 
-1. Open **Prompt Collections**
+1. Open **Prompts** (Prompt Collections)
 2. Filter by category/query
 3. Click a prompt to auto-run it in Tutor
 
-### 4) Concept graph navigation
+### 5) Concept graph navigation
 
-1. Open **Concept Graph**
-2. Click a node for details
+1. Open **Concepts** (Concept Graph)
+2. Click a node for details + prerequisites
 3. Open learning path to jump to Prompt Collections
+
+### 6) Math Map exploration
+
+1. Open **Math Map** (dedicated page)
+2. Browse categories: Foundations, Algebra, Geometry, Calculus, Music & Math, Signal Processing, etc.
+3. Click any topic prompt to jump to the Tutor
 
 ## Product Flow With Screenshots
 
@@ -318,7 +384,7 @@ or set it in the UI under **Settings → Local LLM Model**.
 
 ### A) Ask + Understand + Follow-up
 
-1. Ask a concept question in **Local Tutor**.
+1. Ask a concept question in **Tutor**.
 2. Use suggestion chips to deepen understanding step-by-step.
 3. Review plain + axiomatic explanations and checks.
 
@@ -377,6 +443,12 @@ or set it in the UI under **Settings → Local LLM Model**.
 - `GET /api/animations/{animation_id}`
 - `DELETE /api/animations/{animation_id}`
 - `GET /api/animations/status/manim`
+
+### Context Window
+
+- `POST /api/context/store`
+- `POST /api/context/retrieve`
+- `DELETE /api/context/session/{session_id}`
 
 ### Learning Data
 
@@ -484,8 +556,25 @@ make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_NO_SHUFFLE=1 LORA_OUTPUT=ba
   - Verify Ollama availability and model name
   - Check settings (`/api/settings`) and model tests (`/api/settings/test`)
 
+- **FFT Lab microphone not working**
+  - Browser requires HTTPS or localhost for microphone access
+  - Grant microphone permission when prompted
+
+- **2D Image FFT is slow**
+  - 256×256 images require 512 FFTs of size 256 — computation runs in a `setTimeout` to avoid freezing the UI
+  - Larger images are automatically resized to 256×256
+
+## Design Philosophy
+
+- **First principles**: Every concept is built up from axioms, not handed as rote formulas
+- **Four-level content**: Kids get analogies and games; teens get real-world connections; college gets proofs and theorems; adults get industry applications and worked examples
+- **Local-first**: All core functionality works offline with a local LLM; no cloud dependency required
+- **Lab-driven learning**: Interactive labs let you *do* the math, not just read about it — record audio and see its frequency spectrum, upload an image and blur it with a low-pass filter, play Mozart's dice game
+- **Monochrome scholarly aesthetic**: Black, white, and warm grays — the content speaks for itself
+
 ## Notes
 
 - This project prioritizes local-first learning and iterative pedagogical improvements.
 - Prompt collections, concept graph, and render jobs are designed to support long learning sessions.
 - `docs/OLLAMA_TUNING.md` contains model-specific tuning guidance for stricter output behavior.
+- `docs/LORA_TUNING_PLAYBOOK.md` contains the full LoRA/QLoRA training-to-serving workflow.
