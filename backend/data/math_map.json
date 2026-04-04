@@ -787,6 +787,204 @@
           ]
         }
       ]
+    },
+    {
+      "id": "music_and_math",
+      "name": "Music & Mathematics",
+      "color": "#1c1917",
+      "x": 12,
+      "y": 2,
+      "topics": [
+        {
+          "id": "mozarts_dice_game",
+          "name": "Mozart's Musical Dice Game",
+          "icon": "🎲",
+          "prompts": [
+            "What is Mozart's Musikalisches Würfelspiel?",
+            "How does combinatorics create musical compositions?",
+            "How many unique minuets can the dice game produce?",
+            "Explain the probability behind the two-dice roll distribution",
+            "What is the connection between randomness and musical structure?"
+          ]
+        },
+        {
+          "id": "harmonic_series_music",
+          "name": "Harmonic Series & Overtones",
+          "icon": "∿",
+          "prompts": [
+            "What is the harmonic series and how does it relate to music?",
+            "Why does a guitar string produce overtones?",
+            "How do frequency ratios create consonance and dissonance?",
+            "Explain the mathematical basis of the octave (2:1 ratio)",
+            "What is the connection between Fourier analysis and musical timbre?"
+          ]
+        },
+        {
+          "id": "fibonacci_rhythm",
+          "name": "Fibonacci & the Golden Ratio in Music",
+          "icon": "φ",
+          "prompts": [
+            "Where does the Fibonacci sequence appear in musical structure?",
+            "How did Bartók use the golden ratio in his compositions?",
+            "Why do Fibonacci numbers relate to musical scales?",
+            "How does the golden ratio affect the climax point of a composition?",
+            "What is the connection between phyllotaxis and rhythmic patterns?"
+          ]
+        },
+        {
+          "id": "pythagorean_tuning",
+          "name": "Pythagorean Tuning & Temperament",
+          "icon": "♯",
+          "prompts": [
+            "What is Pythagorean tuning and how does it use ratios?",
+            "Why can't you tune a piano perfectly using pure ratios?",
+            "What is the Pythagorean comma and why does it matter?",
+            "How does equal temperament solve the tuning problem?",
+            "Explain the mathematics behind the 12-tone chromatic scale"
+          ]
+        },
+        {
+          "id": "group_theory_music",
+          "name": "Group Theory in Music",
+          "icon": "⟲",
+          "prompts": [
+            "How do musical transformations form mathematical groups?",
+            "What is a transposition group in music theory?",
+            "How does inversion relate to group operations?",
+            "What are the 48 forms of a tone row in serial music?",
+            "How did the mathematician Mazzola formalize music with category theory?"
+          ]
+        },
+        {
+          "id": "fractal_music",
+          "name": "Fractal Music & Self-Similarity",
+          "icon": "∞",
+          "prompts": [
+            "What is fractal music and how is it generated?",
+            "How does 1/f noise relate to musical aesthetics?",
+            "What self-similar patterns exist in Bach's compositions?",
+            "How can the Mandelbrot set be turned into music?",
+            "What is the connection between L-systems and algorithmic composition?"
+          ]
+        },
+        {
+          "id": "rhythm_math",
+          "name": "Rhythm, Meter & Modular Arithmetic",
+          "icon": "◉",
+          "prompts": [
+            "How does modular arithmetic describe rhythmic cycles?",
+            "What are Euclidean rhythms and why do they sound good?",
+            "How do polyrhythms relate to least common multiples?",
+            "What is a time signature mathematically?",
+            "How do African drum patterns encode mathematical structure?"
+          ]
+        },
+        {
+          "id": "wave_equation_sound",
+          "name": "Wave Equation & Sound Physics",
+          "icon": "∂",
+          "prompts": [
+            "What is the wave equation and how does it model sound?",
+            "How do standing waves create musical notes on a string?",
+            "What determines the resonant frequencies of an instrument?",
+            "How does the wave equation explain organ pipe harmonics?",
+            "What is the connection between PDEs and acoustics?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "signal_processing",
+      "name": "Signal Processing & FFT",
+      "color": "#1c1917",
+      "x": 14,
+      "y": 4,
+      "topics": [
+        {
+          "id": "fft_algorithm",
+          "name": "Fast Fourier Transform",
+          "icon": "∿",
+          "prompts": [
+            "What is the Fast Fourier Transform and why is it important?",
+            "How does the Cooley-Tukey FFT algorithm work step by step?",
+            "Why is the FFT O(N log N) instead of O(N²)?",
+            "Prove that the DFT matrix is invertible using roots of unity",
+            "How does the butterfly operation work in the FFT?"
+          ]
+        },
+        {
+          "id": "inverse_fft",
+          "name": "Inverse FFT & Signal Reconstruction",
+          "icon": "↺",
+          "prompts": [
+            "How does the Inverse FFT reconstruct a signal from its frequencies?",
+            "Prove that applying FFT then IFFT returns the original signal",
+            "What is the relationship between FFT and IFFT formulas?",
+            "Explain Parseval's theorem and energy conservation",
+            "How can you compute IFFT using only a forward FFT routine?"
+          ]
+        },
+        {
+          "id": "frequency_filtering",
+          "name": "Frequency Domain Filtering",
+          "icon": "⊗",
+          "prompts": [
+            "How does frequency domain filtering work?",
+            "Explain the convolution theorem and why it matters",
+            "What is the difference between low-pass, high-pass, and band-pass filters?",
+            "How does noise cancellation use FFT-based filtering?",
+            "What are window functions and why do they reduce spectral leakage?"
+          ]
+        },
+        {
+          "id": "sampling_theorem",
+          "name": "Nyquist-Shannon Sampling Theorem",
+          "icon": "⋮",
+          "prompts": [
+            "What is the Nyquist-Shannon sampling theorem?",
+            "Why must we sample at 2× the highest frequency?",
+            "What is aliasing and how does it distort signals?",
+            "How does anti-aliasing filtering work?",
+            "Why is CD audio sampled at 44.1 kHz?"
+          ]
+        },
+        {
+          "id": "dft_foundations",
+          "name": "Discrete Fourier Transform",
+          "icon": "Σ",
+          "prompts": [
+            "What is the Discrete Fourier Transform mathematically?",
+            "How do roots of unity form the basis for the DFT?",
+            "What do the magnitude and phase of DFT bins represent?",
+            "How does the DFT relate to the continuous Fourier Transform?",
+            "What is spectral leakage and how does zero-padding help?"
+          ]
+        },
+        {
+          "id": "image_fft_2d",
+          "name": "2D FFT & Image Processing",
+          "icon": "🖼",
+          "prompts": [
+            "How does the 2D FFT decompose an image into spatial frequencies?",
+            "Why does low-pass filtering in frequency domain blur an image?",
+            "How does high-pass filtering in the frequency domain detect edges?",
+            "Explain the separability of the 2D DFT into row and column transforms",
+            "How does MRI use inverse 2D FFT to reconstruct body images?"
+          ]
+        },
+        {
+          "id": "fourier_image_compression",
+          "name": "Fourier Transform & Image Compression",
+          "icon": "📦",
+          "prompts": [
+            "How does JPEG compression relate to the Fourier Transform?",
+            "What is the difference between DFT and DCT for images?",
+            "Why does discarding high-frequency components compress an image?",
+            "Explain the Fourier Slice Theorem in CT scan reconstruction",
+            "How does phase carry more perceptual information than magnitude?"
+          ]
+        }
+      ]
     }
   ]
 }

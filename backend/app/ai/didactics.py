@@ -85,6 +85,14 @@ def extract_learning_focus(question: str) -> str:
             "can you test me ",
             "could you explain ",
             "please explain ",
+            "what is the ",
+            "what is a ",
+            "what is an ",
+            "what is ",
+            "what are ",
+            "what does ",
+            "how do you ",
+            "how does ",
             "explain ",
             "show ",
             "give me ",
@@ -134,14 +142,11 @@ def adapt_plain_for_learner_level(plain: str, learner_level: str, question: str)
     level = normalize_learner_level(learner_level)
     q = (question or "this topic").strip()
     body = (plain or "").strip()
+    if _is_curated_level_content(body):
+        return body
     if level == "kids":
-        return (
-            f"Kid-friendly mode for **{q}**:\n"
-            "- We use very simple words.\n"
-            "- We connect ideas to everyday objects.\n"
-            "- We do one tiny step at a time.\n\n"
-            f"{body}"
-        ).strip()
+        focus = extract_learning_focus(q)
+        return _simplify_for_kids(body, focus)
     if level == "college":
         return (
             f"College mode for **{q}**:\n"
@@ -157,6 +162,81 @@ def adapt_plain_for_learner_level(plain: str, learner_level: str, question: str)
             f"{body}"
         ).strip()
     return body
+
+
+_CURATED_MARKERS = (
+    "🎪", "🎮", "🧩", "🏆", "Quick Check",
+    "📱", "🎯", "🔥", "⚡",
+    "🎓", "📋", "🔬", "📐", "⚙️",
+    "💼", "🛠️", "📊", "🏢",
+)
+
+
+def _is_curated_level_content(text: str) -> bool:
+    """Detect if text is already curated for a specific learner level."""
+    return sum(1 for m in _CURATED_MARKERS if m in text) >= 3
+
+
+_COMPLEX_NOTATION_RE = re.compile(
+    r"\$\$.*?\$\$"
+    r"|\\\(.*?\\\)"
+    r"|\\\[.*?\\\]"
+    r"|\\begin\{.*?\}.*?\\end\{.*?\}",
+    re.DOTALL,
+)
+_ADVANCED_TERMS = [
+    ("orthogonal", "at right angles"),
+    ("eigenvalue", "stretching amount"),
+    ("eigenvector", "special direction"),
+    ("determinant", "a special number from a grid"),
+    ("matrix", "number grid"),
+    ("polynomial", "math expression"),
+    ("coefficient", "multiplier"),
+    ("theorem", "rule"),
+    ("hypothesis", "guess"),
+    ("convergence", "getting closer"),
+    ("derivative", "rate of change"),
+    ("integral", "total area"),
+    ("asymptote", "line it gets close to"),
+    ("logarithm", "the undo of powers"),
+    ("denominator", "bottom number"),
+    ("numerator", "top number"),
+]
+
+
+def _simplify_for_kids(body: str, question: str) -> str:
+    """Best-effort transformation of advanced content into kid-friendly language."""
+    text = body
+    text = _COMPLEX_NOTATION_RE.sub("(a math formula)", text)
+    for advanced, simple in _ADVANCED_TERMS:
+        text = re.sub(
+            r"\b" + re.escape(advanced) + r"s?\b",
+            simple,
+            text,
+            flags=re.IGNORECASE,
+        )
+    text = re.sub(r"[σλΣ∑∫∂∇]", "", text)
+    lines = text.splitlines()
+    simplified = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            simplified.append("")
+            continue
+        if stripped.startswith(("Axiomatic", "Formal proof", "QED")):
+            continue
+        simplified.append(line)
+
+    text = "\n".join(simplified).strip()
+    return (
+        f"🎪 **Let's learn about {question}!**\n\n"
+        "We'll use simple words and go one step at a time.\n\n"
+        f"{text}\n\n"
+        "---\n\n"
+        f"🎯 **Quick Check — Can You Answer?**\n\n"
+        f"- What is the main idea of {question}?\n"
+        f"- Can you explain {question} to a friend in your own words?"
+    ).strip()
 
 
 def normalize_learner_level(level: str) -> str:
@@ -246,8 +326,7 @@ def _build_axiomatic_explanation(question: str, solution: str) -> str:
         "1. State the core definitions and symbols first.\n"
         "2. List assumptions/conditions where the statement holds.\n"
         "3. Derive the result step-by-step from definitions.\n"
-        "4. Conclude with the formal statement and scope.\n\n"
-        f"Reference explanation:\n{body[:600]}"
+        "4. Conclude with the formal statement and scope."
     )
 
 
@@ -305,6 +384,9 @@ def _build_improvement_hints(checks: List[TutorCheck]) -> List[str]:
     return deduped[:4]
 
 
+_HEADING_LINE_RE = re.compile(r"^\W*\*\*.{2,45}\*\*\W*$")
+
+
 def _extract_takeaways(text: str) -> List[str]:
     lines = [ln.strip(" -•\t") for ln in (text or "").splitlines() if ln.strip()]
     bullets = []
@@ -312,6 +394,10 @@ def _extract_takeaways(text: str) -> List[str]:
         if len(ln) < 18:
             continue
         if ln.lower().startswith(("example", "self-correction", "axiomatic")):
+            continue
+        if _HEADING_LINE_RE.match(ln):
+            continue
+        if ln.startswith("---"):
             continue
         bullets.append(ln)
         if len(bullets) >= 3:

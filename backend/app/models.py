@@ -82,6 +82,7 @@ class ChatMessageResponse(BaseModel):
 class TutorRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=4000)
     history: Optional[List["TutorHistoryMessage"]] = None
+    session_id: Optional[str] = Field(None, max_length=64)
     response_mode: str = Field("both", pattern="^(plain|axiomatic|both)$")
     learner_level: str = Field("teen", pattern="^(kids|teen|college|adult)$")
 
@@ -447,3 +448,19 @@ class HandwritingValidateResponse(BaseModel):
     checks: List[TutorCheck] = Field(default_factory=list)
     rag_feedback: List[str] = Field(default_factory=list)
     message: Optional[str] = None
+
+
+# Context window models
+class ContextSessionResponse(BaseModel):
+    session_id: str
+    message_count: int = 0
+    created_at: Optional[float] = None
+    last_active: Optional[float] = None
+
+
+class ContextStatsResponse(BaseModel):
+    backend: str
+    chromadb_available: bool = False
+    total_vectors: int = 0
+    active_sessions: int = 0
+    config: Dict[str, Any] = Field(default_factory=dict)

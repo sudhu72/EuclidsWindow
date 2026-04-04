@@ -103,7 +103,9 @@ const categoryIcons = {
   probability: "🎲",
   discrete_math: "◯",
   applied: "⚙",
-  advanced: "∞"
+  advanced: "∞",
+  music_and_math: "♪",
+  signal_processing: "∿"
 };
 
 // Load and render the math map
@@ -281,7 +283,10 @@ function makeTopicLinksClickable(html) {
     'complex numbers', 'real numbers', 'integers', 'fractions', 'logarithms',
     'exponents', 'functions', 'sequences', 'series', 'proof', 'axioms',
     'neural network', 'backpropagation', 'attention mechanism', 'transformers',
-    'game of life', 'conway', 'fibonacci', 'golden ratio', 'pascal'
+    'game of life', 'conway', 'fibonacci', 'golden ratio', 'pascal',
+    'harmonic series', 'overtones', 'fourier', 'pythagorean tuning',
+    'equal temperament', 'euclidean rhythm', 'wave equation', 'acoustics',
+    'group theory', 'fractal music', 'musical dice', 'modular arithmetic'
   ];
   
   linkableTopics.forEach(topic => {

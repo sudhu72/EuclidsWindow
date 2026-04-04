@@ -49,6 +49,8 @@ class DiffusionImageService:
             pipeline = StableDiffusionPipeline.from_pretrained(
                 self.model_id,
                 torch_dtype=torch.float16 if self.device in ("cuda", "mps") else torch.float32,
+                safety_checker=None,
+                requires_safety_checker=False,
             )
             pipeline = pipeline.to(self.device)
             self._pipeline = pipeline
@@ -68,7 +70,11 @@ class DiffusionImageService:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(pipeline, prompt, num_inference_steps=20)
                 result = future.result(timeout=self._timeout)
-            image = result.images[0]
+            images = getattr(result, "images", None) or []
+            if not images:
+                logger.error("Diffusion pipeline returned no images")
+                return None
+            image = images[0]
             media_id = f"image-{uuid4().hex[:12]}"
             output_path = MEDIA_DIR / f"{media_id}.png"
             image.save(output_path)

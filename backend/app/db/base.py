@@ -16,7 +16,10 @@ Base = declarative_base()
 
 
 def init_db() -> None:
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+    except Exception:
+        pass
 
 
 def get_db() -> Generator[Session, None, None]:

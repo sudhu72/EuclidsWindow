@@ -123,7 +123,7 @@ class MultiAgentCoordinator:
         if not history:
             return ""
         lines = []
-        for msg in history[-6:]:
+        for msg in history[-12:]:
             role = msg.get("role", "user")
             content = msg.get("content", "")
             if content:

@@ -32,6 +32,12 @@ COPY backend /app/backend
 COPY frontend /app/frontend
 COPY scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
 
+RUN mkdir -p /app/backend/data/context_db
+
+# Pre-download ChromaDB's ONNX embedding model so the first request
+# doesn't block for ~10s while it fetches 80 MB.
+RUN python -c "import chromadb; c=chromadb.Client(); col=c.get_or_create_collection('warmup'); col.add(ids=['w'],documents=['warmup']); c.delete_collection('warmup')"
+
 WORKDIR /app/backend
 
 ENV PYTHONUNBUFFERED=1
@@ -40,4 +46,4 @@ ENV LOCAL_AI_ENABLED=true
 EXPOSE 8000
 
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

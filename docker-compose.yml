@@ -14,6 +14,7 @@ services:
       LOCAL_LLM_BASE_URL: "${LOCAL_LLM_BASE_URL:-http://ollama:11434}"
     volumes:
       - ./backend/static:/app/backend/static
+      - context-db:/app/backend/data/context_db
 
   ollama:
     image: ollama/ollama:latest
@@ -30,3 +31,4 @@ services:
 
 volumes:
   ollama-data:
+  context-db:

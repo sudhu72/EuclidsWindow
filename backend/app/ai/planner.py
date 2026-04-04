@@ -22,7 +22,7 @@ class TutorPlanner:
         history_block = ""
         if history:
             lines = []
-            for msg in history[-10:]:
+            for msg in history[-12:]:
                 role = msg.get("role", "user")
                 content = msg.get("content", "")
                 if content:

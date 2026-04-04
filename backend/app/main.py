@@ -1,4 +1,5 @@
 """Euclid's Window API - Main application."""
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -36,11 +37,14 @@ from .ai.didactics import (
     extract_learning_focus,
 )
 from .settings_store import SettingsStore
+from .context import ContextWindowService
 from .models import (
     ChatMessageRequest,
     ChatMessageResponse,
     ConceptListResponse,
     ConceptResponse,
+    ContextSessionResponse,
+    ContextStatsResponse,
     ConversationListResponse,
     ConversationResponse,
     EuclidEntryResponse,
@@ -142,6 +146,7 @@ settings_store = SettingsStore()
 handwriting_service = HandwritingService()
 symbolic_checker = SymbolicChecker()
 web_rag = WebMathRAG()
+context_service = ContextWindowService(persist_dir=str(BASE_DIR / "data" / "context_db"))
 
 app.add_middleware(MetricsMiddleware)
 app.add_middleware(
@@ -210,6 +215,26 @@ async def serve_mathmap_js():
 async def serve_mathmap_css():
     """Serve mathmap.css."""
     return FileResponse(FRONTEND_DIR / "mathmap.css")
+
+
+@app.get("/musiclab.js", include_in_schema=False)
+async def serve_musiclab_js():
+    return FileResponse(FRONTEND_DIR / "musiclab.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
+@app.get("/fftlab.js", include_in_schema=False)
+async def serve_fftlab_js():
+    return FileResponse(FRONTEND_DIR / "fftlab.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
+@app.get("/fftlab-image.js", include_in_schema=False)
+async def serve_fftlab_image_js():
+    return FileResponse(FRONTEND_DIR / "fftlab-image.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
+@app.get("/euclids-window-logo.png", include_in_schema=False)
+async def serve_logo():
+    return FileResponse(FRONTEND_DIR / "euclids-window-logo.png")
 
 
 # =============================================================================
@@ -494,7 +519,7 @@ async def chat_message(
     # Generate response
     topic = catalog.match_topic(payload.message)
     if not topic:
-        tutor_result = tutor_service.answer(payload.message)
+        tutor_result = await asyncio.to_thread(tutor_service.answer, payload.message)
         if tutor_result:
             solution, visualization = tutor_result
             viz_id = visualization.viz_id if visualization else None
@@ -510,7 +535,7 @@ async def chat_message(
                 related_concepts=[],
                 visualization=visualization,
             )
-        llm_response = generate_llm_response(payload.message)
+        llm_response = await asyncio.to_thread(generate_llm_response, payload.message)
         if llm_response:
             service.add_message(conversation_id, role="assistant", content=llm_response)
             logger.info(f"LLM response for conversation {conversation_id}")
@@ -565,8 +590,6 @@ async def ai_tutor(payload: TutorRequest) -> TutorResponse:
             "proof-oriented",
             "i am still confused",
         )
-        # Frontend includes current user turn in history. A length >= 3 implies
-        # there is at least one earlier assistant response and this is a follow-up.
         has_prior_turns = bool(history_messages and len(history_messages) >= 3)
         return has_prior_turns or any(marker in q for marker in followup_markers)
 
@@ -595,14 +618,47 @@ async def ai_tutor(payload: TutorRequest) -> TutorResponse:
             visualization=visualization_payload,
         )
 
-    history = [msg.model_dump() for msg in payload.history] if payload.history else None
-    followup_request = _is_followup_request(payload.question, history)
+    # --- Context window: build smart history from vector store -----------
+    raw_history = [msg.model_dump() for msg in payload.history] if payload.history else None
+    session_id = payload.session_id
+    matched_topic_id = ""
+
+    if session_id:
+        context_service.create_session(session_id)
+        await asyncio.to_thread(
+            context_service.add_message, session_id, "user", payload.question
+        )
+        history = await asyncio.to_thread(
+            context_service.build_context,
+            session_id, payload.question, raw_history,
+        )
+    else:
+        history = raw_history
+    # --------------------------------------------------------------------
+
+    followup_request = _is_followup_request(payload.question, raw_history)
     topic = catalog.match_topic(payload.question)
-    if topic and not followup_request:
+    _level_key = {
+        "kids": "kids_content", "teen": "teen_content",
+        "college": "college_content", "adult": "adult_content",
+    }.get((payload.learner_level or "").strip().lower())
+    has_curated_level = bool(topic and _level_key and topic.get(_level_key))
+    if topic and (not followup_request or has_curated_level):
+        matched_topic_id = topic.get("id", "")
         visualization = viz_service.build_payload(catalog.build_visualization(topic))
         if visualization is None:
             visualization = tutor_service.fallback_visualization(payload.question)
-        return _compose_response(topic["response_text"], visualization)
+        topic_text = catalog.get_response_for_level(topic, payload.learner_level)
+        response = _compose_response(topic_text, visualization)
+        if session_id:
+            _tid = matched_topic_id
+            asyncio.get_running_loop().run_in_executor(
+                None,
+                lambda: context_service.add_message(
+                    session_id, "assistant", response.solution, topic=_tid
+                ),
+            )
+        return response
 
     followup_prompt = payload.question
     if followup_request:
@@ -613,17 +669,33 @@ async def ai_tutor(payload: TutorRequest) -> TutorResponse:
             "Do not repeat the same explanation verbatim. Continue the learning flow: "
             "1) one concise recap sentence, 2) one deeper step, 3) one worked example or quick check."
         )
-    result = tutor_service.answer(followup_prompt, history=history)
+    result = await asyncio.to_thread(tutor_service.answer, followup_prompt, history)
     if not result:
         topic = catalog.match_topic(payload.question)
         if topic:
             visualization = viz_service.build_payload(catalog.build_visualization(topic))
-            return _compose_response(topic["response_text"], visualization)
+            topic_text = catalog.get_response_for_level(topic, payload.learner_level)
+            response = _compose_response(topic_text, visualization)
+            if session_id:
+                _ftid = topic.get("id", "")
+                asyncio.get_running_loop().run_in_executor(
+                    None,
+                    lambda: context_service.add_message(
+                        session_id, "assistant", response.solution, topic=_ftid
+                    ),
+                )
+            return response
         raise HTTPException(status_code=503, detail="Local tutor not available")
     solution, visualization = result
     if visualization is None:
         visualization = tutor_service.fallback_visualization(payload.question)
-    return _compose_response(solution, visualization)
+    response = _compose_response(solution, visualization)
+    if session_id:
+        asyncio.get_running_loop().run_in_executor(
+            None,
+            lambda: context_service.add_message(session_id, "assistant", response.solution),
+        )
+    return response
 
 
 @app.post("/api/ai/handwriting/recognize", response_model=HandwritingRecognizeResponse)
@@ -665,6 +737,48 @@ async def ai_handwriting_validate(payload: HandwritingValidateRequest) -> Handwr
         rag_feedback=rag_feedback,
         message=message,
     )
+
+
+# =============================================================================
+# Context window endpoints
+# =============================================================================
+@app.post("/api/context/session", response_model=ContextSessionResponse)
+async def context_create_session(
+    session_id: Optional[str] = None,
+) -> ContextSessionResponse:
+    sid = context_service.create_session(session_id)
+    sess = context_service.get_session(sid)
+    return ContextSessionResponse(
+        session_id=sid,
+        message_count=sess.get("message_count", 0) if sess else 0,
+        created_at=sess.get("created_at") if sess else None,
+        last_active=sess.get("last_active") if sess else None,
+    )
+
+
+@app.get("/api/context/session/{session_id}", response_model=ContextSessionResponse)
+async def context_get_session(session_id: str) -> ContextSessionResponse:
+    sess = context_service.get_session(session_id)
+    if not sess:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return ContextSessionResponse(
+        session_id=sess["id"],
+        message_count=sess.get("message_count", 0),
+        created_at=sess.get("created_at"),
+        last_active=sess.get("last_active"),
+    )
+
+
+@app.delete("/api/context/session/{session_id}")
+async def context_clear_session(session_id: str):
+    context_service.clear_session(session_id)
+    return {"status": "cleared", "session_id": session_id}
+
+
+@app.get("/api/context/stats", response_model=ContextStatsResponse)
+async def context_stats() -> ContextStatsResponse:
+    stats = context_service.get_stats()
+    return ContextStatsResponse(**stats)
 
 
 def _pick_animation_scene(question: str) -> Optional[str]:
@@ -710,8 +824,9 @@ async def ai_visualize(payload: VisualizationOnDemandRequest) -> VisualizationOn
                 message="Generated diagram from deterministic visualization planner.",
                 visualization=viz,
             )
-        # Ask tutor pipeline for visualization-specific response as fallback.
-        result = tutor_service.answer(f"{payload.question}. Provide a visualization.", history=None)
+        result = await asyncio.to_thread(
+            tutor_service.answer, f"{payload.question}. Provide a visualization.", None
+        )
         if result and result[1]:
             return VisualizationOnDemandResponse(
                 message="Generated diagram from tutor visualization pipeline.",
@@ -783,7 +898,7 @@ async def ai_visualize(payload: VisualizationOnDemandRequest) -> VisualizationOn
 
 @app.post("/api/ai/media/image", response_model=MediaImageResponse)
 async def ai_media_image(payload: MediaImageRequest) -> MediaImageResponse:
-    url = diffusion_service.generate(payload.prompt)
+    url = await asyncio.to_thread(diffusion_service.generate, payload.prompt)
     if not url:
         raise HTTPException(status_code=503, detail="Image generation not available")
     return MediaImageResponse(url=url, model=diffusion_service.model_id)
@@ -791,7 +906,9 @@ async def ai_media_image(payload: MediaImageRequest) -> MediaImageResponse:
 
 @app.post("/api/ai/media/music", response_model=MediaMusicResponse)
 async def ai_media_music(payload: MediaMusicRequest) -> MediaMusicResponse:
-    url = music_service.generate(payload.prompt, duration_seconds=payload.duration_seconds)
+    url = await asyncio.to_thread(
+        music_service.generate, payload.prompt, payload.duration_seconds
+    )
     if not url:
         raise HTTPException(status_code=503, detail="Music generation not available")
     return MediaMusicResponse(url=url, model=music_service.model_id)
@@ -1109,11 +1226,15 @@ async def eval_report(
 @app.get("/api/eval/history", response_model=EvalHistoryResponse)
 async def eval_history(
     limit: int = Query(20, ge=1, le=200),
-    mode: Optional[str] = Query(None, pattern="^(catalog|live)$"),
+    mode: Optional[str] = Query(None),
     tag: Optional[str] = Query(None),
     label_contains: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ) -> EvalHistoryResponse:
+    if mode and mode not in ("catalog", "live"):
+        mode = None
+    tag = tag or None
+    label_contains = label_contains or None
     rows = db.query(EvalRun).order_by(EvalRun.created_at.desc()).limit(limit).all()
     runs = []
     for row in rows:

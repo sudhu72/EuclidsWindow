@@ -231,7 +231,10 @@ const demoPrompts = [
   "Show a number line",
   "Explain base conversion",
   "Graph a parabola",
-  "What is a prime number?"
+  "What is a prime number?",
+  "How does the harmonic series relate to music?",
+  "What is Mozart's Musical Dice Game?",
+  "What are Euclidean rhythms?"
 ];
 
 // =============================================================================
@@ -390,22 +393,60 @@ const formatTutorOutput = (payload) => {
 // =============================================================================
 // Tab Navigation
 // =============================================================================
+const LAB_TABS = new Set(["matrixlab", "musiclab", "fftlab"]);
+const labsDropdown = document.getElementById("labs-dropdown");
+const labsToggle = labsDropdown ? labsDropdown.querySelector(".nav-dropdown-toggle") : null;
+const labsItems = document.querySelectorAll(".nav-dropdown-item");
+
 tabBtns.forEach(btn => {
+  if (btn.classList.contains("nav-dropdown-toggle")) return;
   btn.addEventListener("click", () => {
     const tabId = btn.dataset.tab;
     switchToTab(tabId);
   });
 });
 
+labsItems.forEach(item => {
+  item.addEventListener("click", () => {
+    const tabId = item.dataset.tab;
+    if (labsDropdown) labsDropdown.classList.remove("open");
+    switchToTab(tabId);
+  });
+});
+
+if (labsToggle) {
+  labsToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    labsDropdown.classList.toggle("open");
+  });
+}
+
+document.addEventListener("click", () => {
+  if (labsDropdown) labsDropdown.classList.remove("open");
+});
+if (labsDropdown) {
+  labsDropdown.addEventListener("click", (e) => e.stopPropagation());
+}
+
 const switchToTab = (tabId) => {
   tabBtns.forEach(b => b.classList.remove("active"));
   tabContents.forEach(c => c.classList.remove("active"));
-  const activeBtn = [...tabBtns].find((b) => b.dataset.tab === tabId);
-  if (activeBtn) activeBtn.classList.add("active");
+  labsItems.forEach(i => i.classList.remove("active"));
+
+  if (LAB_TABS.has(tabId)) {
+    if (labsToggle) labsToggle.classList.add("active");
+    const activeItem = [...labsItems].find(i => i.dataset.tab === tabId);
+    if (activeItem) activeItem.classList.add("active");
+  } else {
+    const activeBtn = [...tabBtns].find((b) => b.dataset.tab === tabId);
+    if (activeBtn) activeBtn.classList.add("active");
+  }
+
   const target = document.getElementById(`tab-${tabId}`);
   if (target) target.classList.add("active");
 
   if (tabId === "mindmap") loadConceptsForMindmap();
+  if (tabId === "matrixlab") loadMatrixLab();
   if (tabId === "euclid") searchEuclid();
   if (tabId === "resources") searchResources();
   if (tabId === "collections") loadPromptCollections();
@@ -1099,6 +1140,16 @@ const resourceDifficulty = document.getElementById("resource-difficulty");
 const resourceSearch = document.getElementById("resource-search");
 const searchResourcesBtn = document.getElementById("search-resources");
 const resourceResults = document.getElementById("resource-results");
+const matrixSize = document.getElementById("matrix-size");
+const matrixOperation = document.getElementById("matrix-operation");
+const matrixPracticeMode = document.getElementById("matrix-practice-mode");
+const matrixCompute = document.getElementById("matrix-compute");
+const matrixCheckWork = document.getElementById("matrix-check-work");
+const matrixExample = document.getElementById("matrix-example");
+const matrixReset = document.getElementById("matrix-reset");
+const matrixFeedback = document.getElementById("matrix-feedback");
+const matrixResults = document.getElementById("matrix-results");
+const matrixPlot = document.getElementById("matrix-plot");
 const collectionsCategory = document.getElementById("collections-category");
 const collectionsSearch = document.getElementById("collections-search");
 const collectionsRefresh = document.getElementById("collections-refresh");
@@ -1121,6 +1172,356 @@ const searchResources = async () => {
     showError("Failed to search resources");
   } finally {
     showLoading(false);
+  }
+};
+
+const matrixInput = (id, fallback = 0) => {
+  const el = document.getElementById(id);
+  const value = Number(el?.value);
+  return Number.isFinite(value) ? value : fallback;
+};
+
+const currentMatrixSize = () => Number(matrixSize?.value) === 3 ? 3 : 2;
+
+const readMatrixByPrefix = (prefix, size) => {
+  const m = [];
+  for (let i = 1; i <= size; i += 1) {
+    const row = [];
+    for (let j = 1; j <= size; j += 1) {
+      const fallback = i === j ? 1 : 0;
+      row.push(matrixInput(`${prefix}-${i}${j}`, fallback));
+    }
+    m.push(row);
+  }
+  return m;
+};
+
+const readVectorByPrefix = (prefix, size, defaults = [1, 1, 1]) => {
+  const ids = [`${prefix}-x`, `${prefix}-y`, `${prefix}-z`];
+  const out = [];
+  for (let i = 0; i < size; i += 1) {
+    out.push(matrixInput(ids[i], defaults[i] ?? 0));
+  }
+  return out;
+};
+
+const readMatrixA = () => readMatrixByPrefix("matrix-a", currentMatrixSize());
+const readMatrixB = () => readMatrixByPrefix("matrix-b", currentMatrixSize());
+const readPredictedMatrixC = () => readMatrixByPrefix("matrix-c", currentMatrixSize());
+const readVectorV = () => readVectorByPrefix("matrix-v", currentMatrixSize(), [1, 1, 1]);
+const readPredictedCv = () => readVectorByPrefix("matrix-cv", currentMatrixSize(), [0, 0, 0]);
+
+const addMatricesN = (a, b) => a.map((row, i) => row.map((value, j) => value + b[i][j]));
+const subtractMatricesN = (a, b) => a.map((row, i) => row.map((value, j) => value - b[i][j]));
+const multiplyMatricesN = (a, b) => a.map((row, i) => row.map((_, j) =>
+  row.reduce((sum, __, k) => sum + a[i][k] * b[k][j], 0)
+));
+const applyMatrixToVectorN = (m, v) => m.map((row) => row.reduce((sum, value, i) => sum + value * v[i], 0));
+
+const formatMatrixN = (m) => {
+  const rows = m.map((row) =>
+    `<tr>${row.map((value) => `<td style="padding:2px 8px;">${Number(value).toFixed(2)}</td>`).join("")}</tr>`
+  ).join("");
+  return `<table style="border-collapse:collapse; font-family:ui-monospace, monospace;">${rows}</table>`;
+};
+
+const formatVectorN = (v) => `(${v.map((n) => Number(n).toFixed(2)).join(", ")})`;
+
+let matrixPracticePassed = false;
+
+const approxEq = (a, b, eps = 1e-6) => Math.abs((a || 0) - (b || 0)) <= eps;
+
+const byHandStepsHtml = (a, b, op, v) => {
+  const n = a.length;
+  const termsFor = (i, j) => {
+    const terms = [];
+    for (let k = 0; k < n; k += 1) terms.push(`(${a[i][k]})(${b[k][j]})`);
+    return terms.join(" + ");
+  };
+  const addSubFor = (i, j, symbol) => `${a[i][j]} ${symbol} ${b[i][j]}`;
+  const matrixLines = [];
+  for (let i = 0; i < n; i += 1) {
+    for (let j = 0; j < n; j += 1) {
+      const label = `C${i + 1}${j + 1}`;
+      if (op === "multiply") matrixLines.push(`<div>${label} = ${termsFor(i, j)}</div>`);
+      else matrixLines.push(`<div>${label} = ${addSubFor(i, j, op === "subtract" ? "-" : "+")}</div>`);
+    }
+  }
+  const vectorLines = [];
+  for (let i = 0; i < n; i += 1) {
+    const axis = ["x", "y", "z"][i] || `c${i + 1}`;
+    const terms = [];
+    for (let j = 0; j < n; j += 1) {
+      terms.push(`C${i + 1}${j + 1}·(${v[j]})`);
+    }
+    vectorLines.push(`<div>${axis}' = ${terms.join(" + ")}</div>`);
+  }
+  if (op === "multiply") {
+    return `
+      <div><strong>Compute C = A × B by hand:</strong></div>
+      ${matrixLines.join("")}
+      <div style="margin-top:8px;"><strong>Then compute C·v:</strong></div>
+      ${vectorLines.join("")}
+    `;
+  }
+  const symbol = op === "subtract" ? "-" : "+";
+  return `
+    <div><strong>Compute C = A ${symbol} B by hand:</strong></div>
+    ${matrixLines.join("")}
+    <div style="margin-top:8px;"><strong>Then compute C·v:</strong></div>
+    ${vectorLines.join("")}
+  `;
+};
+
+const vectorTrace = (vec, color, name) => ({
+  type: "scatter",
+  mode: "lines+markers",
+  x: [0, vec[0]],
+  y: [0, vec[1]],
+  line: { color, width: 3 },
+  marker: { color, size: 8 },
+  name
+});
+
+const transformPoint = (m, p) => [
+  m[0][0] * p[0] + m[0][1] * p[1],
+  m[1][0] * p[0] + m[1][1] * p[1]
+];
+
+const renderMatrixLabPlot = (a, b, c, v) => {
+  if (!matrixPlot || !window.Plotly) return;
+  const n = c.length;
+  const avRaw = applyMatrixToVectorN(a, v);
+  const bvRaw = applyMatrixToVectorN(b, v);
+  const cvRaw = applyMatrixToVectorN(c, v);
+  const projectXY = (vec) => {
+    if (n === 2) return [vec[0], vec[1]];
+    const z = Math.abs(vec[2]) < 1e-8 ? 1 : vec[2];
+    return [vec[0] / z, vec[1] / z];
+  };
+  const av = projectXY(avRaw);
+  const bv = projectXY(bvRaw);
+  const cv = projectXY(cvRaw);
+  const vxy = projectXY(v);
+
+  const square = [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]];
+  const tsquare = square.map((p) => {
+    if (n === 2) return transformPoint(c, p);
+    const out = applyMatrixToVectorN(c, [p[0], p[1], 1]);
+    return projectXY(out);
+  });
+  const values = [
+    ...square.flat(),
+    ...tsquare.flat(),
+    ...vxy, ...av, ...bv, ...cv
+  ];
+  const maxAbs = Math.max(2, ...values.map((n) => Math.abs(n)));
+  const axisRange = [-Math.ceil(maxAbs + 1), Math.ceil(maxAbs + 1)];
+
+  const traces = [
+    {
+      type: "scatter",
+      mode: "lines",
+      x: square.map((p) => p[0]),
+      y: square.map((p) => p[1]),
+      line: { color: "#94a3b8", dash: "dot", width: 2 },
+      name: "Unit Square"
+    },
+    {
+      type: "scatter",
+      mode: "lines",
+      fill: "toself",
+      x: tsquare.map((p) => p[0]),
+      y: tsquare.map((p) => p[1]),
+      line: { color: "#f59e0b", width: 2 },
+      fillcolor: "rgba(245, 158, 11, 0.18)",
+      name: "C-transform(Unit Square)"
+    },
+    vectorTrace(vxy, "#475569", "v"),
+    vectorTrace(av, "#2563eb", "A·v"),
+    vectorTrace(bv, "#7c3aed", "B·v"),
+    vectorTrace(cv, "#dc2626", "C·v"),
+  ];
+
+  const layout = {
+    title: n === 3
+      ? "Vector outputs on x-y grid (3x3 projected with homogeneous coordinates)"
+      : "Vector outputs on x-y coordinate grid",
+    paper_bgcolor: "#ffffff",
+    plot_bgcolor: "#ffffff",
+    xaxis: { range: axisRange, zeroline: true, gridcolor: "#e2e8f0", title: "x", scaleanchor: "y", scaleratio: 1 },
+    yaxis: { range: axisRange, zeroline: true, gridcolor: "#e2e8f0", title: "y" },
+    legend: { orientation: "h", y: 1.1 },
+    margin: { l: 50, r: 20, t: 70, b: 45 },
+  };
+  Plotly.newPlot(matrixPlot, traces, layout, { displayModeBar: false, responsive: true });
+};
+
+const computeMatrixLab = () => {
+  const a = readMatrixA();
+  const b = readMatrixB();
+  const v = readVectorV();
+  const op = matrixOperation?.value || "add";
+  const n = currentMatrixSize();
+  const c = op === "subtract"
+    ? subtractMatricesN(a, b)
+    : op === "multiply"
+      ? multiplyMatricesN(a, b)
+      : addMatricesN(a, b);
+
+  const av = applyMatrixToVectorN(a, v);
+  const bv = applyMatrixToVectorN(b, v);
+  const cv = applyMatrixToVectorN(c, v);
+  const opLabel = op === "subtract" ? "A - B" : op === "multiply" ? "A × B" : "A + B";
+  const practiceMode = !!matrixPracticeMode?.checked;
+  const revealAnswers = !practiceMode || matrixPracticePassed;
+
+  if (matrixResults) {
+    matrixResults.innerHTML = `
+      <h3>Computed Outputs</h3>
+      <p><strong>Operation:</strong> C = ${opLabel}</p>
+      <div class="tutor-context-hint" style="margin-bottom:8px;">
+        ${practiceMode && !matrixPracticePassed
+          ? "Practice mode is ON. Final answers are hidden until your check passes."
+          : "Answers are visible."}
+      </div>
+      <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;">
+        <div><strong>A</strong>${formatMatrixN(a)}</div>
+        <div><strong>B</strong>${formatMatrixN(b)}</div>
+        <div><strong>C</strong>${revealAnswers ? formatMatrixN(c) : "<div style='padding:8px 0; color:#64748b;'>Hidden (solve by hand first)</div>"}</div>
+      </div>
+      <p style="margin-top:10px;"><strong>Dimension:</strong> ${n}×${n}</p>
+      <p><strong>v</strong> = ${formatVectorN(v)}</p>
+      <p><strong>A·v</strong> = ${formatVectorN(av)} | <strong>B·v</strong> = ${formatVectorN(bv)} | <strong>C·v</strong> = ${revealAnswers ? formatVectorN(cv) : "Hidden"}</p>
+      <div style="margin-top:10px;"><strong>By-hand steps</strong>${byHandStepsHtml(a, b, op, v)}</div>
+    `;
+  }
+
+  renderMatrixLabPlot(a, b, c, v);
+};
+
+const checkMatrixWork = () => {
+  const a = readMatrixA();
+  const b = readMatrixB();
+  const v = readVectorV();
+  const op = matrixOperation?.value || "add";
+  const n = currentMatrixSize();
+  const c = op === "subtract"
+    ? subtractMatricesN(a, b)
+    : op === "multiply"
+      ? multiplyMatricesN(a, b)
+      : addMatricesN(a, b);
+  const cv = applyMatrixToVectorN(c, v);
+  const predictedC = readPredictedMatrixC();
+  const predictedCv = readPredictedCv();
+
+  const cells = [];
+  for (let i = 0; i < n; i += 1) {
+    for (let j = 0; j < n; j += 1) {
+      cells.push([`C${i + 1}${j + 1}`, predictedC[i][j], c[i][j]]);
+    }
+  }
+  const axes = ["x", "y", "z"];
+  for (let i = 0; i < n; i += 1) {
+    cells.push([`C·v ${axes[i] || `c${i + 1}`}`, predictedCv[i], cv[i]]);
+  }
+  const wrong = cells.filter(([, got, expected]) => !approxEq(got, expected));
+  matrixPracticePassed = wrong.length === 0;
+
+  if (matrixFeedback) {
+    if (matrixPracticePassed) {
+      matrixFeedback.textContent = "Excellent. Your by-hand solution is correct. Answers unlocked.";
+      matrixFeedback.style.color = "#065f46";
+    } else {
+      const hints = wrong.slice(0, 3).map(([name, got, expected]) =>
+        `${name}: expected ${expected.toFixed(2)} (you entered ${Number(got).toFixed(2)})`
+      );
+      matrixFeedback.textContent = `Keep going. ${wrong.length} value(s) need correction. ${hints.join(" | ")}`;
+      matrixFeedback.style.color = "#92400e";
+    }
+  }
+  computeMatrixLab();
+};
+
+const loadMatrixLabExample = () => {
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.value = String(value);
+  };
+  const n = currentMatrixSize();
+  if (n === 3) {
+    // Homogeneous affine example: shear then translate.
+    set("matrix-a-11", 1); set("matrix-a-12", 0.5); set("matrix-a-13", 0);
+    set("matrix-a-21", 0); set("matrix-a-22", 1); set("matrix-a-23", 0);
+    set("matrix-a-31", 0); set("matrix-a-32", 0); set("matrix-a-33", 1);
+    set("matrix-b-11", 1); set("matrix-b-12", 0); set("matrix-b-13", 2);
+    set("matrix-b-21", 0); set("matrix-b-22", 1); set("matrix-b-23", 1);
+    set("matrix-b-31", 0); set("matrix-b-32", 0); set("matrix-b-33", 1);
+    set("matrix-v-x", 1); set("matrix-v-y", 2); set("matrix-v-z", 1);
+  } else {
+    // Shear + stretch example (2x2).
+    set("matrix-a-11", 1); set("matrix-a-12", 1);
+    set("matrix-a-21", 0); set("matrix-a-22", 1);
+    set("matrix-b-11", 2); set("matrix-b-12", 0);
+    set("matrix-b-21", 0); set("matrix-b-22", 1);
+    set("matrix-v-x", 1); set("matrix-v-y", 2);
+  }
+  set("matrix-c-11", 0); set("matrix-c-12", 0); set("matrix-c-13", 0);
+  set("matrix-c-21", 0); set("matrix-c-22", 0); set("matrix-c-23", 0);
+  set("matrix-c-31", 0); set("matrix-c-32", 0); set("matrix-c-33", 1);
+  set("matrix-cv-x", 0); set("matrix-cv-y", 0); set("matrix-cv-z", 0);
+  if (matrixOperation) matrixOperation.value = "multiply";
+  matrixPracticePassed = false;
+  if (matrixFeedback) {
+    matrixFeedback.textContent = "Example loaded. Try solving by hand before reveal.";
+    matrixFeedback.style.color = "#475569";
+  }
+  computeMatrixLab();
+};
+
+const resetMatrixLab = () => {
+  const ids = [
+    "matrix-a-11", "matrix-a-12", "matrix-a-13", "matrix-a-21", "matrix-a-22", "matrix-a-23", "matrix-a-31", "matrix-a-32", "matrix-a-33",
+    "matrix-b-11", "matrix-b-12", "matrix-b-13", "matrix-b-21", "matrix-b-22", "matrix-b-23", "matrix-b-31", "matrix-b-32", "matrix-b-33",
+    "matrix-c-11", "matrix-c-12", "matrix-c-13", "matrix-c-21", "matrix-c-22", "matrix-c-23", "matrix-c-31", "matrix-c-32", "matrix-c-33",
+    "matrix-v-x", "matrix-v-y", "matrix-v-z",
+    "matrix-cv-x", "matrix-cv-y", "matrix-cv-z"
+  ];
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = id.endsWith("11") || id.endsWith("22") || id.endsWith("33") ? "1" : "0";
+  });
+  const vx = document.getElementById("matrix-v-x");
+  const vy = document.getElementById("matrix-v-y");
+  const vz = document.getElementById("matrix-v-z");
+  if (vx) vx.value = "1";
+  if (vy) vy.value = "1";
+  if (vz) vz.value = "1";
+  if (matrixSize) matrixSize.value = "2";
+  updateMatrixLabVisibility();
+  if (matrixOperation) matrixOperation.value = "add";
+  if (matrixPracticeMode) matrixPracticeMode.checked = true;
+  matrixPracticePassed = false;
+  if (matrixFeedback) {
+    matrixFeedback.textContent = "Waiting for your attempt.";
+    matrixFeedback.style.color = "#64748b";
+  }
+  if (matrixResults) matrixResults.innerHTML = '<div class="viz-placeholder">Run an operation to view matrix and vector outputs.</div>';
+  if (matrixPlot) matrixPlot.innerHTML = '<div class="viz-placeholder">Transformation grid will appear here.</div>';
+};
+
+const updateMatrixLabVisibility = () => {
+  const tab = document.getElementById("tab-matrixlab");
+  if (!tab) return;
+  tab.classList.toggle("matrix-size-2", currentMatrixSize() === 2);
+};
+
+const loadMatrixLab = () => {
+  updateMatrixLabVisibility();
+  // Render once on first open if not already drawn.
+  if (matrixResults && matrixResults.querySelector(".viz-placeholder")) {
+    computeMatrixLab();
   }
 };
 
@@ -1225,13 +1626,145 @@ const scratchpadConvert = document.getElementById("scratchpad-convert");
 const scratchpadValidate = document.getElementById("scratchpad-validate");
 const scratchpadText = document.getElementById("scratchpad-text");
 const scratchpadResult = document.getElementById("scratchpad-result");
+const latexMode = document.getElementById("latex-mode");
+const latexInput = document.getElementById("latex-input");
+const latexPreview = document.getElementById("latex-preview");
+const latexStatus = document.getElementById("latex-status");
+const latexTemplateFrac = document.getElementById("latex-template-frac");
+const latexTemplateSqrt = document.getElementById("latex-template-sqrt");
+const latexTemplateMatrix = document.getElementById("latex-template-matrix");
+const latexInsertTutor = document.getElementById("latex-insert-tutor");
+const latexInsertScratchpad = document.getElementById("latex-insert-scratchpad");
+const latexCopy = document.getElementById("latex-copy");
 
 let lastTutorQuestion = "";
 let tutorHistory = [];
+let tutorSessionId = localStorage.getItem("ew_tutor_session_id") || "";
 let scratchpadMode = "pen";
 let scratchpadDrawing = false;
 let scratchpadCtx = null;
 let scratchpadUndoStack = [];
+
+const insertTextAtCursor = (el, text) => {
+  if (!el) return;
+  const start = el.selectionStart ?? el.value.length;
+  const end = el.selectionEnd ?? el.value.length;
+  const before = el.value.slice(0, start);
+  const after = el.value.slice(end);
+  el.value = `${before}${text}${after}`;
+  const cursor = start + text.length;
+  el.focus();
+  el.setSelectionRange(cursor, cursor);
+};
+
+const latexDelimiterWrap = (source) => {
+  const raw = String(source || "").trim();
+  if (!raw) return "";
+  const mode = latexMode?.value === "display" ? "display" : "inline";
+  return mode === "display" ? `\\[${raw}\\]` : `\\(${raw}\\)`;
+};
+
+const setLatexStatus = (message, color = "#475569") => {
+  if (!latexStatus) return;
+  latexStatus.textContent = message;
+  latexStatus.style.color = color;
+};
+
+const renderLatexEditorPreview = () => {
+  if (!latexPreview) return;
+  const expr = (latexInput?.value || "").trim();
+  if (!expr) {
+    latexPreview.innerHTML = '<div class="viz-placeholder">Live LaTeX preview appears here.</div>';
+    setLatexStatus("");
+    return;
+  }
+  if (!window.katex || typeof window.katex.render !== "function") {
+    latexPreview.textContent = expr;
+    setLatexStatus("KaTeX not available. Showing raw text preview.", "#92400e");
+    return;
+  }
+  try {
+    window.katex.render(expr, latexPreview, {
+      throwOnError: false,
+      displayMode: latexMode?.value === "display",
+      strict: "ignore"
+    });
+    setLatexStatus("Preview updated.");
+  } catch (error) {
+    latexPreview.textContent = expr;
+    setLatexStatus(`LaTeX parse warning: ${error.message || "invalid expression"}`, "#92400e");
+  }
+};
+
+const insertLatexTemplate = (template) => {
+  if (!latexInput) return;
+  insertTextAtCursor(latexInput, template);
+  renderLatexEditorPreview();
+};
+
+const insertDelimitedLatexInto = (target, label) => {
+  if (!target) {
+    showError(`${label} is not available.`);
+    return;
+  }
+  const wrapped = latexDelimiterWrap(latexInput?.value || "");
+  if (!wrapped) {
+    showError("Type a LaTeX expression first.");
+    return;
+  }
+  const spacer = target.value && !/\s$/.test(target.value) ? " " : "";
+  insertTextAtCursor(target, `${spacer}${wrapped}`);
+  setLatexStatus(`Inserted into ${label}.`, "#065f46");
+};
+
+const copyLatexExpression = async () => {
+  const expr = (latexInput?.value || "").trim();
+  if (!expr) {
+    showError("Type a LaTeX expression first.");
+    return;
+  }
+  const wrapped = latexDelimiterWrap(expr);
+  try {
+    await navigator.clipboard.writeText(wrapped);
+    setLatexStatus("Copied delimited LaTeX to clipboard.", "#065f46");
+  } catch (error) {
+    showError("Clipboard write failed. Copy manually from the editor.");
+  }
+};
+
+const initLatexEditor = () => {
+  if (!latexInput) return;
+  renderLatexEditorPreview();
+};
+
+const MUSIC_LAB_GAMES = {
+  dice: ["mozart", "dice game", "würfelspiel", "musikalisches", "aleatory"],
+  harmonics: ["harmonic series", "overtone", "fourier", "timbre", "consonance", "frequency ratio"],
+  euclidean: ["euclidean rhythm", "polyrhythm", "modular arithmetic", "rhythm", "meter", "african drum"],
+  fibonacci: ["fibonacci", "golden ratio", "pentatonic", "musical scale", "bartók"],
+  pythagorean: ["pythagorean tuning", "temperament", "comma", "chromatic scale", "12-tone", "equal temperament"]
+};
+
+const addMusicLabLink = (container, question) => {
+  const q = (question || "").toLowerCase();
+  for (const [game, keywords] of Object.entries(MUSIC_LAB_GAMES)) {
+    if (keywords.some((kw) => q.includes(kw))) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "♫ Try it in Music Lab";
+      btn.style.cssText = "background:#1c1917;color:#fafaf9;border:none;padding:6px 14px;border-radius:999px;font-size:12px;cursor:pointer;";
+      btn.addEventListener("click", () => {
+        switchToTab("musiclab");
+        setTimeout(() => {
+          const gameBtn = document.querySelector(`.music-game-btn[data-game="${game}"]`);
+          if (gameBtn) gameBtn.click();
+        }, 100);
+      });
+      container.appendChild(btn);
+      break;
+    }
+  }
+};
 
 const renderTutorFollowups = (question) => {
   if (!tutorFollowups) return;
@@ -1254,6 +1787,7 @@ const renderTutorFollowups = (question) => {
     btn.addEventListener("click", () => sendTutorQuestion(p));
     tutorFollowups.appendChild(btn);
   });
+  addMusicLabLink(tutorFollowups, base);
 };
 
 const renderTutorFollowupsFromPayload = (question, payload) => {
@@ -1271,6 +1805,7 @@ const renderTutorFollowupsFromPayload = (question, payload) => {
     btn.addEventListener("click", () => sendTutorQuestion(p));
     tutorFollowups.appendChild(btn);
   });
+  addMusicLabLink(tutorFollowups, question);
 };
 
 const buildTutorMarkdown = (payload) => {
@@ -1334,6 +1869,21 @@ const renderTutorSolution = (payloadOrText) => {
   }
 };
 
+const ensureTutorSession = async () => {
+  if (tutorSessionId) return tutorSessionId;
+  try {
+    const resp = await fetch(`${API_BASE}/api/context/session`, { method: "POST" });
+    if (resp.ok) {
+      const data = await resp.json();
+      tutorSessionId = data.session_id;
+      localStorage.setItem("ew_tutor_session_id", tutorSessionId);
+    }
+  } catch (e) {
+    console.warn("Could not create context session:", e);
+  }
+  return tutorSessionId;
+};
+
 const sendTutorQuestion = async (question) => {
   if (!question || isLoading) return;
   showLoading(true);
@@ -1345,20 +1895,22 @@ const sendTutorQuestion = async (question) => {
   showVisualizationIn(tutorViz, null);
 
   try {
-    // Keep history lightweight to avoid oversized request payloads.
-    const compactHistory = tutorHistory.slice(-10).map((msg) => ({
+    await ensureTutorSession();
+
+    const compactHistory = tutorHistory.slice(-6).map((msg) => ({
       role: msg.role,
       content: String(msg.content || "").slice(0, 1200)
     }));
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 120000);
     const response = await fetch(`${API_BASE}/api/ai/tutor`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         question,
         history: compactHistory,
+        session_id: tutorSessionId || undefined,
         response_mode: tutorResponseMode?.value || "both",
         learner_level: tutorLearnerLevel?.value || "teen"
       }),
@@ -1382,6 +1934,7 @@ const sendTutorQuestion = async (question) => {
     showVisualizationIn(tutorViz, payload.visualization);
     tutorHistory.push({ role: "assistant", content: payload.solution || "" });
     renderTutorFollowupsFromPayload(question, payload);
+    updateContextStatus();
   } catch (error) {
     // Retry via static chat pipeline if tutor request hangs/times out.
     if (error?.name === "AbortError") {
@@ -1494,6 +2047,28 @@ const renderMediaPreview = (container, url, type) => {
   audio.controls = true;
   audio.style.width = "100%";
   container.appendChild(audio);
+};
+
+const updateMediaButtons = (enabled) => {
+  if (tutorGenerateImage) {
+    tutorGenerateImage.disabled = !enabled;
+    tutorGenerateImage.title = enabled ? "" : "Enable Media Generation in Settings to use this";
+    tutorGenerateImage.style.opacity = enabled ? "1" : "0.45";
+  }
+  if (tutorGenerateMusic) {
+    tutorGenerateMusic.disabled = !enabled;
+    tutorGenerateMusic.title = enabled ? "" : "Enable Media Generation in Settings to use this";
+    tutorGenerateMusic.style.opacity = enabled ? "1" : "0.45";
+  }
+};
+
+const syncMediaButtonState = async () => {
+  try {
+    const resp = await fetch(`${API_BASE}/api/settings`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    updateMediaButtons(!!data.local_media_enabled);
+  } catch (_) { /* ignore */ }
 };
 
 const generateMedia = async (type) => {
@@ -1753,7 +2328,95 @@ if (scratchpadValidate) {
   scratchpadValidate.addEventListener("click", validateScratchpadAnswer);
 }
 
+if (latexInput) {
+  latexInput.addEventListener("input", renderLatexEditorPreview);
+}
+
+if (latexMode) {
+  latexMode.addEventListener("change", renderLatexEditorPreview);
+}
+
+if (latexTemplateFrac) {
+  latexTemplateFrac.addEventListener("click", () => insertLatexTemplate("\\frac{a}{b}"));
+}
+
+if (latexTemplateSqrt) {
+  latexTemplateSqrt.addEventListener("click", () => insertLatexTemplate("\\sqrt{x}"));
+}
+
+if (latexTemplateMatrix) {
+  latexTemplateMatrix.addEventListener(
+    "click",
+    () => insertLatexTemplate("\\begin{bmatrix}a & b \\\\ c & d\\end{bmatrix}")
+  );
+}
+
+if (latexInsertTutor) {
+  latexInsertTutor.addEventListener("click", () => insertDelimitedLatexInto(tutorInput, "Tutor input"));
+}
+
+if (latexInsertScratchpad) {
+  latexInsertScratchpad.addEventListener("click", () => insertDelimitedLatexInto(scratchpadText, "Scratchpad text"));
+}
+
+if (latexCopy) {
+  latexCopy.addEventListener("click", copyLatexExpression);
+}
+
 initScratchpad();
+initLatexEditor();
+syncMediaButtonState();
+
+// =============================================================================
+// Context Window
+// =============================================================================
+const contextStatusEl = document.getElementById("context-status");
+const contextResetBtn = document.getElementById("context-reset-btn");
+
+const updateContextStatus = async () => {
+  if (!contextStatusEl) return;
+  if (!tutorSessionId) {
+    contextStatusEl.textContent = "Context: vector store (new session)";
+    return;
+  }
+  try {
+    const resp = await fetch(`${API_BASE}/api/context/session/${tutorSessionId}`);
+    if (resp.ok) {
+      const s = await resp.json();
+      const n = s.message_count || 0;
+      contextStatusEl.textContent = `Context: vector store \u2022 ${n} message${n !== 1 ? "s" : ""} indexed`;
+    } else if (resp.status === 404) {
+      tutorSessionId = "";
+      localStorage.removeItem("ew_tutor_session_id");
+      contextStatusEl.textContent = "Context: vector store (new session)";
+    }
+  } catch {
+    contextStatusEl.textContent = "Context: offline (fallback mode)";
+  }
+};
+
+const resetTutorSession = async () => {
+  if (tutorSessionId) {
+    try {
+      await fetch(`${API_BASE}/api/context/session/${tutorSessionId}`, { method: "DELETE" });
+    } catch { /* ignore */ }
+  }
+  tutorSessionId = "";
+  tutorHistory = [];
+  localStorage.removeItem("ew_tutor_session_id");
+  await ensureTutorSession();
+  updateContextStatus();
+  renderTutorSolution("Session cleared. Ask a new question to start fresh.");
+};
+
+if (contextResetBtn) {
+  contextResetBtn.addEventListener("click", resetTutorSession);
+}
+
+(async () => {
+  await ensureTutorSession();
+  updateContextStatus();
+})();
 
 // =============================================================================
 // Settings Tab
@@ -1777,6 +2440,7 @@ const loadSettings = async () => {
     settingsLocalMusicTimeout.value = data.local_music_timeout_seconds || 180;
     settingsLocalMediaDevice.value = data.local_media_device || "cpu";
     updateFastModeState();
+    updateMediaButtons(!!data.local_media_enabled);
     await loadAgents();
   } catch (error) {
     showError("Failed to load settings");
@@ -1805,6 +2469,7 @@ const saveSettings = async () => {
       body: JSON.stringify(payload)
     });
     if (!response.ok) throw new Error("Failed to save settings");
+    updateMediaButtons(settingsLocalMediaEnabled.checked);
     showError("Settings saved.");
   } catch (error) {
     showError("Failed to save settings");
@@ -2021,11 +2686,15 @@ const loadEvalDashboard = async (live = false) => {
     const report = await reportResp.json();
     renderEvalSummary(report);
 
-    const mode = encodeURIComponent((evalFilterMode?.value || "").trim());
-    const filterTag = encodeURIComponent((evalFilterTag?.value || "").trim());
-    const filterLabel = encodeURIComponent((evalFilterLabel?.value || "").trim());
+    const mode = (evalFilterMode?.value || "").trim();
+    const filterTag = (evalFilterTag?.value || "").trim();
+    const filterLabel = (evalFilterLabel?.value || "").trim();
+    const historyParams = new URLSearchParams({ limit: "20" });
+    if (mode) historyParams.set("mode", mode);
+    if (filterTag) historyParams.set("tag", filterTag);
+    if (filterLabel) historyParams.set("label_contains", filterLabel);
     const historyResp = await fetch(
-      `${API_BASE}/api/eval/history?limit=20&mode=${mode}&tag=${filterTag}&label_contains=${filterLabel}`
+      `${API_BASE}/api/eval/history?${historyParams.toString()}`
     );
     if (!historyResp.ok) throw new Error("Failed to load eval history");
     const history = await historyResp.json();
@@ -2201,6 +2870,47 @@ if (collectionsSearch) {
   collectionsSearch.addEventListener("input", () => loadPromptCollections());
 }
 
+if (matrixCompute) {
+  matrixCompute.addEventListener("click", computeMatrixLab);
+}
+
+if (matrixCheckWork) {
+  matrixCheckWork.addEventListener("click", checkMatrixWork);
+}
+
+if (matrixExample) {
+  matrixExample.addEventListener("click", loadMatrixLabExample);
+}
+
+if (matrixReset) {
+  matrixReset.addEventListener("click", resetMatrixLab);
+}
+
+if (matrixSize) {
+  matrixSize.addEventListener("change", () => {
+    matrixPracticePassed = false;
+    updateMatrixLabVisibility();
+    if (matrixFeedback) {
+      matrixFeedback.textContent = `Switched to ${currentMatrixSize()}x${currentMatrixSize()} mode.`;
+      matrixFeedback.style.color = "#475569";
+    }
+    computeMatrixLab();
+  });
+}
+
+if (matrixPracticeMode) {
+  matrixPracticeMode.addEventListener("change", () => {
+    matrixPracticePassed = false;
+    if (matrixFeedback) {
+      matrixFeedback.textContent = matrixPracticeMode.checked
+        ? "Practice mode enabled. Solve first, then check."
+        : "Practice mode disabled. Answers will be shown.";
+      matrixFeedback.style.color = "#475569";
+    }
+    computeMatrixLab();
+  });
+}
+
 // =============================================================================
 // Initialize
 // =============================================================================
@@ -2210,11 +2920,14 @@ if (messages) {
   loadConversations();
 }
 
+// Expose for cross-script access (Music Lab, etc.)
+window.switchToTab = switchToTab;
+window.sendTutorQuestion = sendTutorQuestion;
+
 // Check for prompt in URL query parameter (from Math Map)
 const urlParams = new URLSearchParams(window.location.search);
 const promptFromUrl = urlParams.get("prompt");
 if (promptFromUrl) {
-  // Auto-send the prompt after a short delay to let the page load
   setTimeout(() => {
     sendTutorQuestion(promptFromUrl);
   }, 500);

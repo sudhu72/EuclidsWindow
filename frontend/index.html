@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window</title>
-    <link rel="stylesheet" href="styles.css?v=20260217-1" />
+    <link rel="icon" type="image/png" href="euclids-window-logo.png" />
+    <link rel="stylesheet" href="styles.css?v=20260327-3" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
@@ -12,17 +13,25 @@
   </head>
   <body>
     <header class="app-header">
-      <div class="brand">Euclid's Window</div>
-      <div class="subtitle">Learn math from first principles</div>
+      <div class="brand"><img src="euclids-window-logo.png" alt="Logo" class="brand-logo" />Euclid's Window</div>
+      <div class="subtitle" title="Like Euclid's Elements: start from self-evident axioms, derive everything step by step. No formula is handed to you without showing where it comes from and why it's true.">Learn math from first principles</div>
       <nav class="nav-tabs">
-        <button class="tab-btn active" data-tab="tutor">Local Tutor</button>
-        <a href="mathmap.html" class="tab-btn tab-link">Math Map</a>
-        <button class="tab-btn" data-tab="mindmap">Concept Graph</button>
-        <button class="tab-btn" data-tab="euclid">Euclid</button>
-        <button class="tab-btn" data-tab="resources">Resources</button>
-        <button class="tab-btn" data-tab="collections">Prompt Collections</button>
-        <button class="tab-btn" data-tab="settings">Settings</button>
-        <button class="tab-btn" data-tab="eval">Eval</button>
+        <button class="tab-btn active" data-tab="tutor"><span class="tab-icon">&#9998;</span> Tutor</button>
+        <a href="mathmap.html" class="tab-btn tab-link"><span class="tab-icon">&#9672;</span> Math Map</a>
+        <div class="nav-dropdown" id="labs-dropdown">
+          <button class="tab-btn nav-dropdown-toggle"><span class="tab-icon">&#9881;</span> Labs <span class="dropdown-caret">&#9662;</span></button>
+          <div class="nav-dropdown-menu">
+            <button class="nav-dropdown-item" data-tab="matrixlab"><span class="tab-icon">&#9638;</span> Matrix Lab</button>
+            <button class="nav-dropdown-item" data-tab="musiclab"><span class="tab-icon">&#9835;</span> Music Lab</button>
+            <button class="nav-dropdown-item" data-tab="fftlab"><span class="tab-icon">&#8767;</span> FFT Lab</button>
+          </div>
+        </div>
+        <button class="tab-btn" data-tab="mindmap"><span class="tab-icon">&#9702;</span> Concepts</button>
+        <button class="tab-btn" data-tab="euclid"><span class="tab-icon">&#9651;</span> Euclid</button>
+        <button class="tab-btn" data-tab="resources"><span class="tab-icon">&#9776;</span> Resources</button>
+        <button class="tab-btn" data-tab="collections"><span class="tab-icon">&#10070;</span> Prompts</button>
+        <button class="tab-btn" data-tab="settings"><span class="tab-icon">&#9881;</span> Settings</button>
+        <button class="tab-btn" data-tab="eval"><span class="tab-icon">&#9632;</span> Eval</button>
       </nav>
     </header>
 
@@ -52,9 +61,12 @@
               placeholder="Ask a math question (context-aware, like ChatGPT)"
               autocomplete="off"
             />
-            <button type="submit" id="tutor-send" class="btn-primary">Solve</button>
+            <button type="submit" id="tutor-send" class="btn-primary btn-send" title="Send (Enter)">&#10148;</button>
           </form>
-          <div class="tutor-context-hint">Context window: last 10 messages</div>
+          <div class="tutor-context-hint" id="tutor-context-hint">
+            <span id="context-status">Context: initializing…</span>
+            <button type="button" id="context-reset-btn" class="btn-sm" title="Clear context &amp; start fresh session">Reset</button>
+          </div>
           <div id="tutor-followups" class="suggestions"></div>
           <div id="tutor-solution" class="tutor-solution">
             <div class="viz-placeholder">Your step-by-step solution will appear here.</div>
@@ -108,6 +120,35 @@
               placeholder="Converted text appears here. You can edit before validation."
             ></textarea>
             <div id="scratchpad-result" class="scratchpad-result"></div>
+          </section>
+          <section class="scratchpad-panel latex-editor-panel">
+            <div class="scratchpad-header">
+              <strong>Equation Editor</strong>
+              <span>Overleaf-style LaTeX drafting with live preview.</span>
+            </div>
+            <div class="scratchpad-controls">
+              <select id="latex-mode" aria-label="LaTeX render mode">
+                <option value="inline" selected>Inline \\( ... \\)</option>
+                <option value="display">Display \\[ ... \\]</option>
+              </select>
+              <button type="button" id="latex-template-frac" class="btn-secondary">Insert Fraction</button>
+              <button type="button" id="latex-template-sqrt" class="btn-secondary">Insert Root</button>
+              <button type="button" id="latex-template-matrix" class="btn-secondary">Insert Matrix</button>
+            </div>
+            <textarea
+              id="latex-input"
+              class="scratchpad-text"
+              placeholder="Type LaTeX, e.g. \frac{a+b}{c} or \begin{bmatrix}1 & 2\\3 & 4\end{bmatrix}"
+            ></textarea>
+            <div id="latex-preview" class="latex-preview">
+              <div class="viz-placeholder">Live LaTeX preview appears here.</div>
+            </div>
+            <div class="scratchpad-controls">
+              <button type="button" id="latex-insert-tutor" class="btn-primary">Insert into Tutor Input</button>
+              <button type="button" id="latex-insert-scratchpad" class="btn-secondary">Insert into Scratchpad Text</button>
+              <button type="button" id="latex-copy" class="btn-secondary">Copy LaTeX</button>
+            </div>
+            <div id="latex-status" class="scratchpad-result"></div>
           </section>
         </aside>
       </div>
@@ -165,6 +206,111 @@
           <button id="search-resources" class="btn-primary">Search</button>
         </div>
         <div id="resource-results" class="resource-results"></div>
+      </div>
+
+      <!-- Matrix Lab Tab -->
+      <div id="tab-matrixlab" class="tab-content matrix-size-2">
+        <section class="settings-panel">
+          <div class="settings-header">
+            <h3>Matrix & Vector Practice Lab</h3>
+            <p>Input matrix/vector components, run operations, and visualize transformations in x-y coordinates.</p>
+          </div>
+          <div class="matrix-lab-grid">
+            <div class="matrix-card">
+              <div class="matrix-title">Matrix A</div>
+              <div class="matrix-input-grid">
+                <input id="matrix-a-11" type="number" step="any" value="1" />
+                <input id="matrix-a-12" type="number" step="any" value="0" />
+                <input id="matrix-a-13" class="matrix-cell-3" type="number" step="any" value="0" />
+                <input id="matrix-a-21" type="number" step="any" value="0" />
+                <input id="matrix-a-22" type="number" step="any" value="1" />
+                <input id="matrix-a-23" class="matrix-cell-3" type="number" step="any" value="0" />
+                <input id="matrix-a-31" class="matrix-cell-3" type="number" step="any" value="0" />
+                <input id="matrix-a-32" class="matrix-cell-3" type="number" step="any" value="0" />
+                <input id="matrix-a-33" class="matrix-cell-3" type="number" step="any" value="1" />
+              </div>
+            </div>
+            <div class="matrix-card">
+              <div class="matrix-title">Matrix B</div>
+              <div class="matrix-input-grid">
+                <input id="matrix-b-11" type="number" step="any" value="1" />
+                <input id="matrix-b-12" type="number" step="any" value="1" />
+                <input id="matrix-b-13" class="matrix-cell-3" type="number" step="any" value="0" />
+                <input id="matrix-b-21" type="number" step="any" value="0" />
+                <input id="matrix-b-22" type="number" step="any" value="1" />
+                <input id="matrix-b-23" class="matrix-cell-3" type="number" step="any" value="0" />
+                <input id="matrix-b-31" class="matrix-cell-3" type="number" step="any" value="0" />
+                <input id="matrix-b-32" class="matrix-cell-3" type="number" step="any" value="0" />
+                <input id="matrix-b-33" class="matrix-cell-3" type="number" step="any" value="1" />
+              </div>
+            </div>
+            <div class="matrix-card">
+              <div class="matrix-title">Vector v</div>
+              <div class="vector-input-row">
+                <input id="matrix-v-x" type="number" step="any" value="1" />
+                <input id="matrix-v-y" type="number" step="any" value="1" />
+                <input id="matrix-v-z" class="matrix-cell-3" type="number" step="any" value="1" />
+              </div>
+            </div>
+          </div>
+          <div class="resource-controls">
+            <select id="matrix-size">
+              <option value="2" selected>2×2 mode</option>
+              <option value="3">3×3 mode</option>
+            </select>
+            <select id="matrix-operation">
+              <option value="add" selected>C = A + B</option>
+              <option value="subtract">C = A - B</option>
+              <option value="multiply">C = A × B</option>
+            </select>
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#334155;">
+              <input id="matrix-practice-mode" type="checkbox" checked />
+              Practice by hand first
+            </label>
+            <button id="matrix-compute" class="btn-primary">Compute + Visualize</button>
+            <button id="matrix-check-work" class="btn-secondary">Check My Work</button>
+            <button id="matrix-example" class="btn-secondary">Load Example</button>
+            <button id="matrix-reset" class="btn-secondary">Reset</button>
+          </div>
+          <div class="matrix-inline-hint">
+            3x3 mode is shown on the x-y grid using homogeneous projection: output point = (x/z, y/z).
+          </div>
+          <div id="matrix-byhand" class="concept-details">
+            <h3>AI by Hand Coach</h3>
+            <p>Fill your predicted C matrix and transformed vector below, then click <strong>Check My Work</strong>.</p>
+            <div class="matrix-lab-grid">
+              <div class="matrix-card">
+                <div class="matrix-title">Your C prediction</div>
+                <div class="matrix-input-grid">
+                  <input id="matrix-c-11" type="number" step="any" value="0" />
+                  <input id="matrix-c-12" type="number" step="any" value="0" />
+                  <input id="matrix-c-13" class="matrix-cell-3" type="number" step="any" value="0" />
+                  <input id="matrix-c-21" type="number" step="any" value="0" />
+                  <input id="matrix-c-22" type="number" step="any" value="0" />
+                  <input id="matrix-c-23" class="matrix-cell-3" type="number" step="any" value="0" />
+                  <input id="matrix-c-31" class="matrix-cell-3" type="number" step="any" value="0" />
+                  <input id="matrix-c-32" class="matrix-cell-3" type="number" step="any" value="0" />
+                  <input id="matrix-c-33" class="matrix-cell-3" type="number" step="any" value="1" />
+                </div>
+              </div>
+              <div class="matrix-card">
+                <div class="matrix-title">Your C·v prediction</div>
+                <div class="vector-input-row">
+                  <input id="matrix-cv-x" type="number" step="any" value="0" />
+                  <input id="matrix-cv-y" type="number" step="any" value="0" />
+                  <input id="matrix-cv-z" class="matrix-cell-3" type="number" step="any" value="0" />
+                </div>
+              </div>
+            </div>
+            <div id="matrix-feedback" class="tutor-context-hint">Waiting for your attempt.</div>
+          </div>
+          <div id="matrix-results" class="concept-details">
+            <div class="viz-placeholder">Run an operation to view matrix and vector outputs.</div>
+          </div>
+          <div id="matrix-plot" class="concept-details" style="min-height: 420px;">
+            <div class="viz-placeholder">Transformation grid will appear here.</div>
+          </div>
+        </section>
       </div>
 
       <!-- Prompt Collections Tab -->
@@ -291,6 +437,456 @@
         </section>
       </div>
 
+      <!-- Music Lab Tab -->
+      <div id="tab-musiclab" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div class="tutor-header">
+            <h3>Music &amp; Mathematics Lab</h3>
+            <p>Explore the deep connections between music and mathematics through interactive games.</p>
+          </div>
+
+          <!-- Game Selector -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary music-game-btn active" data-game="dice">Mozart's Dice Game</button>
+            <button class="btn-secondary music-game-btn" data-game="harmonics">Harmonic Series</button>
+            <button class="btn-secondary music-game-btn" data-game="euclidean">Euclidean Rhythms</button>
+            <button class="btn-secondary music-game-btn" data-game="fibonacci">Fibonacci Scales</button>
+            <button class="btn-secondary music-game-btn" data-game="pythagorean">Pythagorean Tuning</button>
+          </div>
+
+          <!-- Mozart's Dice Game -->
+          <div id="game-dice" class="music-game active">
+            <div class="music-game-header">
+              <h4>Musikalisches W&uuml;rfelspiel (K. 516f)</h4>
+              <p>Mozart composed 176 musical measures. By rolling two dice for each of 16 bars, you select measures from a table to compose a unique minuet. There are <strong>11<sup>16</sup> &asymp; 4.6 &times; 10<sup>16</sup></strong> possible compositions.</p>
+            </div>
+            <div class="dice-game-area">
+              <div class="dice-controls">
+                <button id="dice-roll-all" class="btn-primary">Roll All 16 Bars</button>
+                <button id="dice-play" class="btn-secondary" disabled>Play Composition</button>
+                <button id="dice-stop" class="btn-secondary" disabled>Stop</button>
+                <span id="dice-status" style="font-size:12px;color:#78716c;"></span>
+              </div>
+              <div id="dice-bars" class="dice-bars-grid"></div>
+              <div id="dice-score" class="dice-score"></div>
+              <div class="music-math-note">
+                <strong>The Mathematics:</strong> Two dice produce sums 2–12, but not uniformly. Sum 7 has probability 6/36 = 1/6 (most likely), while 2 and 12 each have probability 1/36. Mozart weighted his most interesting measures toward the center of the table, where dice land most often.
+                <div class="music-explore-link"><a href="#" data-music-prompt="What is Mozart's Musikalisches Würfelspiel and how does combinatorics create musical compositions?">Explore in Tutor →</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Harmonic Series Explorer -->
+          <div id="game-harmonics" class="music-game">
+            <div class="music-game-header">
+              <h4>Harmonic Series Explorer</h4>
+              <p>Every musical note is actually a sum of sine waves at integer multiples of a fundamental frequency. Click harmonics to hear and visualize them.</p>
+            </div>
+            <div class="harmonics-area">
+              <div class="harmonics-controls">
+                <label>Fundamental (Hz): <input type="number" id="harm-freq" value="220" min="55" max="880" step="1" style="width:80px;" /></label>
+                <button id="harm-play-fund" class="btn-primary">Play Fundamental</button>
+                <button id="harm-play-chord" class="btn-secondary">Play First 6 Harmonics</button>
+                <button id="harm-stop" class="btn-secondary">Stop All</button>
+              </div>
+              <div id="harmonics-buttons" class="harmonics-grid"></div>
+              <div id="harmonics-viz" style="min-height:200px;"></div>
+              <div class="music-math-note">
+                <strong>The Mathematics:</strong> The nth harmonic has frequency n&times;f. The octave is 2f (ratio 2:1), the perfect fifth is 3f/2 (ratio 3:2), the major third is 5f/4 (ratio 5:4). These simple integer ratios are why certain intervals sound consonant — the waveforms align periodically.
+                <div class="music-explore-link"><a href="#" data-music-prompt="What is the harmonic series and how does it relate to music?">Explore in Tutor →</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Euclidean Rhythms -->
+          <div id="game-euclidean" class="music-game">
+            <div class="music-game-header">
+              <h4>Euclidean Rhythm Generator</h4>
+              <p>Distribute k beats as evenly as possible across n steps using Euclid's algorithm (the same one for GCD). This produces rhythms found in African, Cuban, and Middle Eastern music.</p>
+            </div>
+            <div class="euclidean-area">
+              <div class="euclidean-controls">
+                <label>Beats (k): <input type="number" id="eucl-beats" value="3" min="1" max="16" style="width:60px;" /></label>
+                <label>Steps (n): <input type="number" id="eucl-steps" value="8" min="2" max="16" style="width:60px;" /></label>
+                <label>BPM: <input type="number" id="eucl-bpm" value="120" min="40" max="300" style="width:70px;" /></label>
+                <button id="eucl-generate" class="btn-primary">Generate</button>
+                <button id="eucl-play" class="btn-secondary" disabled>Play</button>
+                <button id="eucl-stop" class="btn-secondary">Stop</button>
+              </div>
+              <div id="eucl-circle" class="eucl-circle-container"></div>
+              <div id="eucl-pattern" style="font-family:monospace;font-size:16px;letter-spacing:2px;margin:8px 0;"></div>
+              <div id="eucl-name" style="font-size:13px;color:#78716c;"></div>
+              <div class="music-math-note">
+                <strong>The Mathematics:</strong> E(k,n) distributes k onsets among n slots using Bjorklund's algorithm (equivalent to Bresenham's line algorithm and Euclid's GCD algorithm). E(3,8) = [x . . x . . x .] is the Cuban tresillo. E(5,8) is the Cuban cinquillo. E(7,12) produces a pattern found in West African bell patterns.
+                <div class="music-explore-link"><a href="#" data-music-prompt="What are Euclidean rhythms and how does modular arithmetic describe rhythmic cycles?">Explore in Tutor →</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fibonacci Scales -->
+          <div id="game-fibonacci" class="music-game">
+            <div class="music-game-header">
+              <h4>Fibonacci in Musical Scales</h4>
+              <p>The piano keyboard encodes Fibonacci numbers: 1 octave, 2 types of keys (black/white), 3 black keys in a group, 5 black keys total, 8 white keys, 13 keys total per octave.</p>
+            </div>
+            <div class="fibonacci-area">
+              <div id="fib-keyboard" class="fib-keyboard"></div>
+              <div class="fibonacci-controls">
+                <button id="fib-play-major" class="btn-primary">Play Major Scale (8 notes)</button>
+                <button id="fib-play-pentatonic" class="btn-secondary">Play Pentatonic (5 notes)</button>
+                <button id="fib-play-chromatic" class="btn-secondary">Play Chromatic (13 notes)</button>
+              </div>
+              <div id="fib-info" class="music-math-note">
+                <strong>The Mathematics:</strong> The Fibonacci sequence 1, 1, 2, 3, 5, 8, 13... appears naturally in the chromatic scale. The pentatonic scale (5 notes) and diatonic scale (8 notes within 13 chromatic steps) arise from the same pattern. The golden ratio &phi; = 1.618... governs where climax points feel most natural in a composition — typically at 61.8% of the way through.
+                <div class="music-explore-link"><a href="#" data-music-prompt="Where does the Fibonacci sequence appear in musical structure and how did Bartók use the golden ratio?">Explore in Tutor →</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pythagorean Tuning -->
+          <div id="game-pythagorean" class="music-game">
+            <div class="music-game-header">
+              <h4>Pythagorean Tuning vs Equal Temperament</h4>
+              <p>Pythagoras discovered that pleasing intervals come from simple ratios (3:2 for a fifth, 4:3 for a fourth). But stacking twelve perfect fifths doesn't return to the same note — the gap is the <em>Pythagorean comma</em>.</p>
+            </div>
+            <div class="pyth-area">
+              <div class="pyth-controls">
+                <label>Base note (Hz): <input type="number" id="pyth-base" value="261.63" min="100" max="500" step="0.01" style="width:100px;" /></label>
+                <button id="pyth-play-pure" class="btn-primary">Play Pure Fifth (3:2)</button>
+                <button id="pyth-play-equal" class="btn-secondary">Play Equal-Tempered Fifth</button>
+                <button id="pyth-play-comma" class="btn-secondary">Hear the Comma</button>
+                <button id="pyth-stop" class="btn-secondary">Stop</button>
+              </div>
+              <div id="pyth-comparison" class="pyth-comparison"></div>
+              <div class="music-math-note">
+                <strong>The Mathematics:</strong> A pure fifth is &times;3/2. Stacking 12 fifths: (3/2)<sup>12</sup> = 129.746... but 7 octaves = 2<sup>7</sup> = 128. The ratio 129.746/128 &asymp; 1.01364 is the Pythagorean comma (~23.46 cents). Equal temperament compromises: each semitone = 2<sup>1/12</sup> &asymp; 1.05946, so a tempered fifth = 2<sup>7/12</sup> &asymp; 1.4983 instead of exactly 1.5.
+                <div class="music-explore-link"><a href="#" data-music-prompt="What is Pythagorean tuning and why can't you tune a piano perfectly using pure ratios?">Explore in Tutor →</a></div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+
+      <!-- FFT Lab Tab -->
+      <div id="tab-fftlab" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div class="tutor-header">
+            <h3>Fast Fourier Transform Lab</h3>
+            <p>Decompose signals into frequencies, edit them, and reconstruct. Works for both audio and images.</p>
+          </div>
+
+          <!-- Mode switcher -->
+          <div style="display:flex;gap:8px;margin-bottom:4px;">
+            <button class="btn-primary fft-mode-btn active" data-fftmode="audio">Audio FFT (1D)</button>
+            <button class="btn-secondary fft-mode-btn" data-fftmode="image">Image FFT (2D)</button>
+          </div>
+
+          <!-- Audio pipeline -->
+          <div id="fft-audio-mode" class="fft-mode-panel">
+          <div class="fft-pipeline">
+
+            <!-- Step 1: Record -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">1</span> Record or Load Audio</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="fft-record" class="btn-primary">Record</button>
+                  <button id="fft-stop-rec" class="btn-secondary" disabled>Stop</button>
+                  <button id="fft-load-sample" class="btn-secondary">Load Sample Tone</button>
+                  <span id="fft-rec-status" class="fft-status"></span>
+                </div>
+                <div id="fft-waveform" class="fft-viz-box"></div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="record" data-level="kids">
+                    Sound is invisible wiggles in the air. When you talk, your throat vibrates and pushes air in a wavy pattern. A microphone catches these wiggles and turns them into numbers — one number for each tiny moment in time. That list of numbers is your "signal."
+                  </div>
+                  <div class="fft-math-content hidden" data-step="record" data-level="teen">
+                    A microphone samples the air pressure thousands of times per second (typically 44,100 Hz). Each sample is a number between -1 and 1. This sequence x[0], x[1], ..., x[N-1] is the <strong>discrete time-domain signal</strong>. The sampling rate must be at least 2× the highest frequency you want to capture (Nyquist theorem).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="record" data-level="college">
+                    The continuous signal x(t) is sampled at rate f<sub>s</sub> to produce x[n] = x(n/f<sub>s</sub>). By the Nyquist-Shannon theorem, if x(t) is band-limited to B Hz, then f<sub>s</sub> &ge; 2B suffices for perfect reconstruction: x(t) = &sum; x[n] &middot; sinc(f<sub>s</sub>t - n). Quantization maps each sample to a finite bit-depth (16-bit = 65,536 levels).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="record" data-level="adult">
+                    Digital audio is a sampled, quantized representation. At 44.1 kHz / 16-bit, each second produces 88.2 KB of raw PCM data. The sampling theorem guarantees lossless reconstruction for signals below f<sub>s</sub>/2 = 22.05 kHz — conveniently above human hearing (~20 kHz). In practice, an anti-aliasing filter is applied before sampling to prevent spectral folding.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: FFT -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">2</span> Decompose — Forward FFT</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="fft-analyze" class="btn-primary" disabled>Run FFT</button>
+                  <span id="fft-analyze-status" class="fft-status"></span>
+                </div>
+                <div id="fft-spectrum" class="fft-viz-box"></div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="fft" data-level="kids">
+                    Imagine your voice is a smoothie made of different fruits. The FFT is like a magic un-blender — it takes the smoothie apart and tells you exactly how much of each fruit (frequency) is inside! Low sounds are like strawberries, high sounds are like blueberries. The tall bars in the chart show which "fruits" are loudest.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="fft" data-level="teen">
+                    The FFT converts your signal from <em>time domain</em> (amplitude vs. time) to <em>frequency domain</em> (amplitude vs. frequency). Every sound is a mix of pure sine waves at different frequencies. The FFT figures out which frequencies are present and how strong each one is. The formula: X[k] = &sum; x[n] &middot; e<sup>-2&pi;i&middot;kn/N</sup>. Brute force takes N&sup2; operations; the FFT shortcut does it in N&middot;log(N).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="fft" data-level="college">
+                    <strong>DFT:</strong> X[k] = &sum;<sub>n=0</sub><sup>N-1</sup> x[n] &middot; e<sup>-j2&pi;kn/N</sup>, k = 0, ..., N-1.<br>
+                    <strong>Cooley-Tukey FFT:</strong> Split into even/odd indices: X[k] = E[k] + W<sup>k</sup><sub>N</sub> &middot; O[k], where E and O are N/2-point DFTs, W<sub>N</sub> = e<sup>-j2&pi;/N</sup>. Recursion depth = log<sub>2</sub>N, each level does N multiplies &rArr; O(N log N).<br>
+                    <strong>Proof of correctness:</strong> The N-th roots of unity {W<sub>N</sub><sup>k</sup>} form an orthogonal basis for &Copf;<sup>N</sup>. The DFT is the change-of-basis matrix. Inverse exists because the Vandermonde matrix of roots of unity is non-singular.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="fft" data-level="adult">
+                    The DFT is a linear map F: &Copf;<sup>N</sup> &rarr; &Copf;<sup>N</sup> represented by the matrix F<sub>kn</sub> = &omega;<sup>kn</sup>, &omega; = e<sup>-2&pi;i/N</sup>. Cooley-Tukey exploits the factorization F<sub>N</sub> = (I<sub>N/2</sub> &otimes; F<sub>2</sub>) &middot; T &middot; (F<sub>N/2</sub> &oplus; F<sub>N/2</sub>) &middot; P, where T contains twiddle factors and P is the bit-reversal permutation. This reduces multiply count from N&sup2; to (N/2)log<sub>2</sub>N. In signal processing pipelines, overlap-add or overlap-save methods apply FFT-based convolution for real-time filtering at O(N log N) per frame.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Edit Frequencies -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">3</span> Edit — Remove Frequency Bands</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="fft-reset-filter" class="btn-secondary" disabled>Reset All Bands</button>
+                </div>
+                <div id="fft-editor" class="fft-viz-box"></div>
+                <div id="fft-band-controls" class="fft-band-controls"></div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="edit" data-level="kids">
+                    Now you get to play DJ! Each slider controls a group of frequencies. Slide one down to zero and that sound disappears — like muting the drums but keeping the singing. You're choosing which "ingredients" stay in the smoothie!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="edit" data-level="teen">
+                    Each frequency bin X[k] has a magnitude (loudness) and phase (timing). By setting a bin's magnitude to zero, you remove that frequency from the signal. This is <strong>frequency-domain filtering</strong>. Removing low frequencies = high-pass filter (removes bass). Removing high frequencies = low-pass filter (removes hiss). This is exactly how noise cancellation works!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="edit" data-level="college">
+                    Filtering in the frequency domain is multiplication: Y[k] = H[k] &middot; X[k], where H[k] is the transfer function. By the convolution theorem, this equals circular convolution in the time domain: y[n] = (h * x)[n]. An ideal brick-wall filter (H[k]=0 for |k|&gt;k<sub>c</sub>) has a sinc impulse response, which is non-causal and infinite-length — hence real filters use windowed approximations (Hamming, Hann, Blackman).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="edit" data-level="adult">
+                    Spectral editing multiplies the DFT by a diagonal matrix H = diag(H[0], ..., H[N-1]). The convolution theorem states F{h*x} = F{h} &middot; F{x}. Zeroing bins is an ideal (but discontinuous) filter; in practice, smooth roll-off windows reduce spectral leakage and Gibbs ringing. For audio, overlap-add with Hann windows (75% overlap) provides artifact-free real-time processing. The modified spectrum maintains Hermitian symmetry for real-valued output: X[N-k] = X[k]*.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4: Inverse FFT -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">4</span> Reconstruct — Inverse FFT &amp; Play</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="fft-reconstruct" class="btn-primary" disabled>Run Inverse FFT</button>
+                  <button id="fft-play-original" class="btn-secondary" disabled>Play Original</button>
+                  <button id="fft-play-modified" class="btn-secondary" disabled>Play Modified</button>
+                  <button id="fft-stop-play" class="btn-secondary">Stop</button>
+                </div>
+                <div id="fft-reconstructed" class="fft-viz-box"></div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="ifft" data-level="kids">
+                    Now the magic un-blender runs <em>backwards</em> — it re-blends the fruits you kept into a new smoothie! The sound you hear is the rebuilt version, with the parts you removed now gone. It's like erasing certain colors from a painting and seeing what's left!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="ifft" data-level="teen">
+                    The Inverse FFT reverses the process: x[n] = (1/N) &sum; X[k] &middot; e<sup>2&pi;i&middot;kn/N</sup>. Notice it's almost the same formula as the forward FFT, just with a <strong>positive</strong> exponent and a 1/N scaling factor. The FFT and IFFT are mathematical inverses — apply both and you get back exactly where you started (if you didn't edit anything).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="ifft" data-level="college">
+                    <strong>IDFT:</strong> x[n] = (1/N) &sum;<sub>k=0</sub><sup>N-1</sup> X[k] &middot; e<sup>j2&pi;kn/N</sup>.<br>
+                    <strong>Proof that F<sup>-1</sup>F = I:</strong> (F<sup>-1</sup>F)<sub>mn</sub> = (1/N) &sum;<sub>k</sub> &omega;<sup>-mk</sup>&omega;<sup>kn</sup> = (1/N) &sum;<sub>k</sub> &omega;<sup>k(n-m)</sup>. For n=m, each term is 1, sum = N, result = 1. For n&ne;m, it's a geometric series summing to (&omega;<sup>N(n-m)</sup>-1)/(&omega;<sup>(n-m)</sup>-1) = 0, since &omega;<sup>N</sup>=1. QED.<br>
+                    The IFFT uses the same Cooley-Tukey structure with conjugate twiddle factors.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="ifft" data-level="adult">
+                    The DFT matrix F is unitary up to scaling: F<sup>*</sup>F = NI, so F<sup>-1</sup> = (1/N)F<sup>*</sup>. Implementation trick: IFFT(X) = (1/N) &middot; conj(FFT(conj(X))), so a single FFT routine handles both directions. Parseval's theorem confirms energy conservation: &sum;|x[n]|&sup2; = (1/N)&sum;|X[k]|&sup2;. After spectral editing, comparing the energy of original vs. modified signals quantifies exactly how much signal power was removed by the filter.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /fft-pipeline -->
+          </div><!-- /fft-audio-mode -->
+
+          <!-- Image FFT pipeline -->
+          <div id="fft-image-mode" class="fft-mode-panel" style="display:none;">
+          <div class="fft-pipeline">
+
+            <!-- Image Step 1: Load -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">1</span> Load Image</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="img-load-sample" class="btn-primary">Load Sample Image</button>
+                  <label class="btn-secondary" style="cursor:pointer;">Upload Image <input type="file" id="img-upload" accept="image/*" style="display:none;" /></label>
+                  <span id="img-load-status" class="fft-status"></span>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div class="fft-img-box"><div class="fft-img-label">Original</div><canvas id="img-original" width="256" height="256"></canvas></div>
+                  <div class="fft-img-box"><div class="fft-img-label">Grayscale</div><canvas id="img-gray" width="256" height="256"></canvas></div>
+                </div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="img-load" data-level="kids">
+                    A picture is made of tiny dots called pixels. Each pixel has a brightness number — 0 is black, 255 is white. The whole image is just a big grid of numbers! We convert it to gray first so we only need one number per pixel instead of three (red, green, blue).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-load" data-level="teen">
+                    A digital image is a 2D array (matrix) of pixel values. Grayscale conversion uses the luminance formula: Y = 0.299R + 0.587G + 0.114B. A 256&times;256 image has 65,536 pixel values. This matrix is the "spatial domain" — each cell says how bright that location is.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-load" data-level="college">
+                    The image f(x,y) &isin; &Ropf;<sup>M&times;N</sup> is a real-valued matrix. Grayscale conversion applies the ITU-R BT.601 luma: Y = 0.299R + 0.587G + 0.114B. For 2D DFT, we work with a square power-of-2 matrix (resize to 256&times;256). Each entry f(x,y) represents spatial-domain intensity.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-load" data-level="adult">
+                    In image processing pipelines, the input is typically converted to single-channel float32 and resized to a power-of-2 dimension for FFT efficiency. The BT.601 luma weights (0.299, 0.587, 0.114) model human eye sensitivity. For color images, FFT can be applied per-channel, but grayscale simplifies the demonstration of frequency-domain concepts.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Step 2: 2D FFT -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">2</span> 2D FFT — Decompose into Spatial Frequencies</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="img-fft" class="btn-primary" disabled>Run 2D FFT</button>
+                  <span id="img-fft-status" class="fft-status"></span>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div class="fft-img-box"><div class="fft-img-label">Magnitude Spectrum (log)</div><canvas id="img-spectrum" width="256" height="256"></canvas></div>
+                  <div class="fft-img-box"><div class="fft-img-label">Phase</div><canvas id="img-phase" width="256" height="256"></canvas></div>
+                </div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="img-fft" data-level="kids">
+                    The 2D FFT does the same magic un-blending — but for a picture instead of sound! The bright dot in the center of the spectrum means "smooth, even areas." Dots far from the center mean "sharp edges and fine details." The picture has been taken apart into its pattern ingredients!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-fft" data-level="teen">
+                    The 2D FFT breaks the image into spatial frequencies — how fast brightness changes across the image. Low frequencies (center of spectrum) = gradual gradients and overall brightness. High frequencies (edges of spectrum) = sharp edges and fine textures. The formula applies 1D FFT to each row, then each column. <strong>Magnitude</strong> tells you how strong each pattern is; <strong>phase</strong> tells you where it's positioned.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-fft" data-level="college">
+                    <strong>2D DFT:</strong> F(u,v) = &sum;<sub>x=0</sub><sup>M-1</sup> &sum;<sub>y=0</sub><sup>N-1</sup> f(x,y) &middot; e<sup>-j2&pi;(ux/M + vy/N)</sup>.<br>
+                    This is separable: apply 1D DFT along rows, then along columns. Complexity: O(MN&middot;log(MN)). The spectrum is shifted so DC (F(0,0) = &sum;f(x,y), the average brightness) is at the center. We display log(1+|F(u,v)|) because the dynamic range spans several orders of magnitude.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-fft" data-level="adult">
+                    The 2D DFT is separable, enabling row-column decomposition: apply N 1D FFTs along rows (O(MN log N)), then M 1D FFTs along columns (O(MN log M)). Total: O(MN log(MN)). The magnitude spectrum |F(u,v)| is symmetric (Hermitian for real input). The DC component F(0,0) equals the sum of all pixel values. Phase encodes spatial structure — swapping the phase of two images swaps their perceived content, proving that phase carries more perceptual information than magnitude.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Step 3: Filter -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">3</span> Edit — Frequency Domain Filtering</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <label>Filter: <select id="img-filter-type">
+                    <option value="none">None</option>
+                    <option value="lowpass">Low-Pass (blur)</option>
+                    <option value="highpass">High-Pass (edges)</option>
+                    <option value="bandpass">Band-Pass</option>
+                    <option value="bandstop">Band-Stop (notch)</option>
+                  </select></label>
+                  <label>Radius: <input type="range" id="img-filter-radius" min="1" max="128" value="30" style="width:120px;" /> <span id="img-filter-r-val">30</span></label>
+                  <label id="img-filter-r2-wrap" style="display:none;">Outer R: <input type="range" id="img-filter-radius2" min="1" max="128" value="80" style="width:100px;" /> <span id="img-filter-r2-val">80</span></label>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div class="fft-img-box"><div class="fft-img-label">Filter Mask</div><canvas id="img-mask" width="256" height="256"></canvas></div>
+                  <div class="fft-img-box"><div class="fft-img-label">Filtered Spectrum</div><canvas id="img-filtered-spectrum" width="256" height="256"></canvas></div>
+                </div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="img-filter" data-level="kids">
+                    Now you're an image DJ! <strong>Low-pass</strong> keeps only the smooth parts — the picture gets blurry like looking through foggy glass. <strong>High-pass</strong> keeps only the edges — you see the outlines like a coloring book! You're choosing which "patterns" to keep in your picture.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-filter" data-level="teen">
+                    The filter mask is a circle in the frequency domain. <strong>Low-pass</strong> (keep center) = blur, removes detail. <strong>High-pass</strong> (keep edges) = edge detection, removes smooth areas. <strong>Band-pass</strong> keeps only a ring of frequencies. This is literally how Instagram blur effects and Photoshop sharpening work under the hood — they're multiplying the spectrum by a mask!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-filter" data-level="college">
+                    Filtering: G(u,v) = H(u,v) &middot; F(u,v), where H is the transfer function. An ideal low-pass filter: H(u,v) = 1 if &radic;(u&sup2;+v&sup2;) &le; D<sub>0</sub>, else 0. This causes ringing (Gibbs phenomenon) due to the sharp cutoff. Butterworth and Gaussian filters provide smoother roll-off: H<sub>Gauss</sub>(u,v) = e<sup>-D(u,v)&sup2;/(2D<sub>0</sub>&sup2;)</sup>. The convolution theorem guarantees this equals spatial-domain convolution with the impulse response h(x,y) = F<sup>-1</sup>{H}.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-filter" data-level="adult">
+                    Frequency-domain filtering is the backbone of image processing: denoising (Wiener filter), sharpening (unsharp mask = original + &alpha;&middot;high-pass), and compression (JPEG uses DCT, a real-valued cousin of DFT). MRI reconstruction applies inverse 2D FFT to k-space data acquired by the scanner — the raw MRI signal IS the Fourier transform of the body slice. CT reconstruction uses the Fourier Slice Theorem: 1D FT of a projection at angle &theta; equals a slice through the 2D FT at that angle.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Step 4: Inverse 2D FFT -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">4</span> Reconstruct — Inverse 2D FFT</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="img-ifft" class="btn-primary" disabled>Run Inverse 2D FFT</button>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div class="fft-img-box"><div class="fft-img-label">Original</div><canvas id="img-compare-orig" width="256" height="256"></canvas></div>
+                  <div class="fft-img-box"><div class="fft-img-label">Reconstructed</div><canvas id="img-result" width="256" height="256"></canvas></div>
+                </div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="img-ifft" data-level="kids">
+                    The inverse FFT puts the picture back together from whatever patterns you kept! If you kept only the smooth parts, the picture looks blurry. If you kept only the edges, you see an outline drawing. You've just done what Photoshop does — but you understand the MATH behind it!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-ifft" data-level="teen">
+                    The 2D Inverse FFT: f(x,y) = (1/MN) &sum;&sum; F(u,v) &middot; e<sup>j2&pi;(ux/M + vy/N)</sup>. It reconstructs each pixel by adding up all the frequency components you kept. Compare original vs. reconstructed side by side — you can literally SEE which information lives in which frequencies!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-ifft" data-level="college">
+                    <strong>2D IDFT:</strong> f(x,y) = (1/MN) &sum;<sub>u=0</sub><sup>M-1</sup> &sum;<sub>v=0</sub><sup>N-1</sup> F(u,v) &middot; e<sup>j2&pi;(ux/M+vy/N)</sup>.<br>
+                    Separable: apply 1D IFFT along columns, then rows. The result is real-valued (imaginary parts are numerical noise &lt; 10<sup>-10</sup>) because the input was a real image with Hermitian spectrum. Parseval: &sum;|f(x,y)|&sup2; = (1/MN)&sum;|F(u,v)|&sup2; — energy in the filtered image equals energy of the retained spectral components.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-ifft" data-level="adult">
+                    The reconstruction demonstrates the perfect invertibility of the DFT. In practice, JPEG compression applies a block-wise DCT (8&times;8), quantizes high-frequency coefficients to zero, and inverse-transforms to get the compressed image. The quality slider literally controls how many frequency components are discarded. This lab replicates that pipeline at full-image scale, making the compression-quality tradeoff viscerally visible.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /fft-pipeline -->
+          </div><!-- /fft-image-mode -->
+
+          <div class="music-explore-link" style="margin-top:16px;">
+            <a href="#" data-music-prompt="Explain the Fast Fourier Transform, its proof, and why it's one of the most important algorithms ever invented">Explore FFT in Tutor &rarr;</a>
+          </div>
+        </section>
+      </div>
+
       <!-- Eval Tab -->
       <div id="tab-eval" class="tab-content">
         <section class="settings-panel">
@@ -370,6 +966,9 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="app.js?v=20260217-1"></script>
+    <script src="app.js?v=20260327-2"></script>
+    <script src="musiclab.js?v=20260403"></script>
+    <script src="fftlab.js?v=20260404b"></script>
+    <script src="fftlab-image.js?v=20260404"></script>
   </body>
 </html>
