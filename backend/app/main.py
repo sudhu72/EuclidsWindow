@@ -1,5 +1,6 @@
 """Euclid's Window API - Main application."""
 import asyncio
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -25,6 +26,7 @@ from .metrics import metrics
 from .middleware import MetricsMiddleware
 from .ai.service import GenerativeTutorService
 from .ai.media import DiffusionImageService, MusicGenService
+from .ai.viz_agent import VizAgent
 from .ai.checker import SymbolicChecker
 from .ai.handwriting import HandwritingService
 from .ai.web_rag import WebMathRAG
@@ -83,6 +85,10 @@ from .models import (
     ModelCheckResponse,
     SettingsTestRequest,
     SettingsTestResponse,
+    OllamaModelInfo,
+    OllamaModelsResponse,
+    OllamaPullRequest,
+    OllamaPullResponse,
     AgentInfo,
     AgentListResponse,
     EvalPromptResult,
@@ -97,6 +103,8 @@ from .models import (
     HandwritingRecognizeResponse,
     HandwritingValidateRequest,
     HandwritingValidateResponse,
+    VizAgentRequest,
+    VizAgentResponse,
 )
 from .services import (
     ConversationService,
@@ -127,6 +135,16 @@ async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     init_db()
     logger.info("Database initialized")
+    # Trigger model loading in background so it's warm for the first query
+    import threading
+    from .ai.engine import LocalLLMEngine
+    def _warm_model():
+        engine = LocalLLMEngine()
+        if engine.is_model_available() and not engine.is_model_ready():
+            logger.info(f"Warming up LLM model: {engine.model}")
+            engine.warm_up()
+            logger.info("LLM model warm-up triggered")
+    threading.Thread(target=_warm_model, daemon=True).start()
     yield
     logger.info("Shutting down...")
 
@@ -142,6 +160,7 @@ viz_service = VisualizationService()
 tutor_service = GenerativeTutorService()
 diffusion_service = DiffusionImageService()
 music_service = MusicGenService()
+viz_agent = VizAgent()
 settings_store = SettingsStore()
 handwriting_service = HandwritingService()
 symbolic_checker = SymbolicChecker()
@@ -623,6 +642,101 @@ async def ai_tutor(payload: TutorRequest) -> TutorResponse:
             visualization=visualization_payload,
         )
 
+    def _adapt_curated_text(question: str, text: str, topic: dict) -> str:
+        """Adapt curated text to reflect query-specific parameters."""
+        from app.ai.visual_planner import _extract_n_from_query
+        tid = topic.get("id", "")
+        if tid == "roots_of_unity":
+            n = _extract_n_from_query(question.lower())
+            if n >= 2:
+                import math
+                def _ordinal(k: int) -> str:
+                    if 11 <= k % 100 <= 13:
+                        return f"{k}th"
+                    return f"{k}" + {1: "st", 2: "nd", 3: "rd"}.get(k % 10, "th")
+
+                roots_lines = []
+                for k in range(n):
+                    angle = 2 * math.pi * k / n
+                    re_p = round(math.cos(angle), 4)
+                    im_p = round(math.sin(angle), 4)
+                    if abs(im_p) < 1e-9:
+                        roots_lines.append(f"\\(z_{k} = {re_p}\\)")
+                    elif abs(re_p) < 1e-9:
+                        roots_lines.append(f"\\(z_{k} = {im_p}i\\)")
+                    elif im_p > 0:
+                        roots_lines.append(f"\\(z_{k} = {re_p} + {im_p}i\\)")
+                    else:
+                        roots_lines.append(f"\\(z_{k} = {re_p} - {abs(im_p)}i\\)")
+                roots_list = ", ".join(roots_lines)
+                nth = _ordinal(n)
+                header = (
+                    f"💡 **The {n} Roots of Unity**\n\n"
+                    f"The {nth} roots of unity are the {n} complex numbers "
+                    f"that satisfy $$z^{{{n}}} = 1$$.\n\n"
+                    f"---\n\n🧭 **Geometry**\n\n"
+                    f"They lie evenly spaced on the **unit circle**, "
+                    f"separated by \\(2\\pi/{n}\\) radians (= {round(360/n, 1)}°).\n\n"
+                    f"The {n} roots are:\n{roots_list}\n\n"
+                    f"---\n\n🧮 **Formula**\n\n"
+                    f"$$z_k = e^{{2\\pi i k / {n}}},\\quad k=0,1,\\dots,{n-1}$$\n\n"
+                    f"---\n\n"
+                )
+                _section_markers = [
+                    "🎯 **Why it matters**",
+                    "⚡ **",
+                    "📌 **",
+                    "✨ **",
+                    "🛠️ **",
+                    "📐 **",
+                ]
+                tail = ""
+                for marker in _section_markers:
+                    idx = text.find(marker)
+                    if idx >= 0:
+                        tail = text[idx:]
+                        break
+                return header + tail
+        return text
+
+    def _build_graceful_fallback(question: str) -> str:
+        """Build a helpful response when neither curated content nor LLM is available."""
+        _STOP = {
+            "what", "explain", "with", "visualization", "about", "does",
+            "that", "this", "from", "have", "been", "will", "would",
+            "could", "should", "they", "them", "their", "there", "here",
+            "some", "more", "than", "into", "also", "very", "just",
+            "show", "tell", "give", "make", "like", "please", "help",
+            "know", "find", "mean", "work", "many", "much",
+        }
+        q_lower = question.lower()
+        words = re.sub(r"[^a-z0-9\s]", " ", q_lower).split()
+        meaningful = [w for w in words if len(w) > 3 and w not in _STOP]
+
+        suggestions = mathmap_service.search_topics_ranked(meaningful)[:6]
+
+        lines = [
+            f"**I don't have a curated lesson that matches \"{question.strip()}\"**, "
+            "and the local language model is currently unavailable.\n",
+        ]
+        if suggestions:
+            lines.append("Here are the **closest related topics** I can offer:\n")
+            for s in suggestions:
+                name = s.get("name", s.get("id", ""))
+                prompts = s.get("prompts", [])
+                sample = prompts[0] if prompts else ""
+                lines.append(f"• **{name}**" + (f" — _{sample}_" if sample else ""))
+            lines.append(
+                "\nYou can explore these in the **Math Map** or **Prompts** tab, "
+                "or try rephrasing your question."
+            )
+        else:
+            lines.append(
+                "Try browsing the **Math Map** or **Prompts** tabs to find a related topic, "
+                "or ensure the local AI model (Ollama) is running for open-ended questions."
+            )
+        return "\n".join(lines)
+
     # --- Context window: build smart history from vector store -----------
     raw_history = [msg.model_dump() for msg in payload.history] if payload.history else None
     session_id = payload.session_id
@@ -648,12 +762,27 @@ async def ai_tutor(payload: TutorRequest) -> TutorResponse:
         "college": "college_content", "adult": "adult_content",
     }.get((payload.learner_level or "").strip().lower())
     has_curated_level = bool(topic and _level_key and topic.get(_level_key))
-    if topic and (not followup_request or has_curated_level):
+
+    curated_hint: str | None = None
+    if topic:
+        curated_hint = topic.get("response_text", "")[:500]
+
+    # ------------------------------------------------------------------
+    # TIER 1: Curated content — instant, high-quality for FIRST question
+    # Followups skip curated so the LLM can give a genuine conversational
+    # response (step-by-step, simpler, etc.) instead of repeating the same text.
+    # ------------------------------------------------------------------
+    if topic and not followup_request:
         matched_topic_id = topic.get("id", "")
-        visualization = viz_service.build_payload(catalog.build_visualization(topic))
-        if visualization is None:
-            visualization = tutor_service.fallback_visualization(payload.question)
+        dynamic_viz = tutor_service.fallback_visualization(payload.question)
+        curated_viz = viz_service.build_payload(catalog.build_visualization(topic))
+        visualization = dynamic_viz or curated_viz
         topic_text = catalog.get_response_for_level(topic, payload.learner_level)
+        topic_text = _adapt_curated_text(payload.question, topic_text, topic)
+        if not visualization:
+            visualization = await asyncio.to_thread(
+                viz_agent.generate_viz, payload.question, topic_text, use_llm=False
+            )
         response = _compose_response(topic_text, visualization)
         if session_id:
             _tid = matched_topic_id
@@ -665,6 +794,49 @@ async def ai_tutor(payload: TutorRequest) -> TutorResponse:
             )
         return response
 
+    # ------------------------------------------------------------------
+    # TIER 2: LLM reasoning — for followups and topics without curated content
+    # For followups, provide the curated text as context so the LLM can
+    # rephrase, simplify, or expand on it rather than repeating it verbatim.
+    # ------------------------------------------------------------------
+    if followup_request and topic and curated_hint:
+        level_text = catalog.get_response_for_level(topic, payload.learner_level)
+        curated_hint = level_text[:800] if level_text else curated_hint
+
+    llm_text = await asyncio.to_thread(
+        tutor_service.answer_reasoning,
+        payload.question,
+        history,
+        curated_hint,
+        payload.learner_level,
+    )
+    if llm_text:
+        dynamic_viz = tutor_service.fallback_visualization(payload.question)
+        curated_viz = (
+            viz_service.build_payload(catalog.build_visualization(topic))
+            if topic else None
+        )
+        # VizAgent: generate a lightweight viz from the LLM's answer text
+        agent_viz = None
+        if not dynamic_viz and not curated_viz:
+            agent_viz = await asyncio.to_thread(
+                viz_agent.generate_viz, payload.question, llm_text, use_llm=False
+            )
+        visualization = dynamic_viz or curated_viz or agent_viz
+        response = _compose_response(llm_text, visualization)
+        if session_id:
+            _tid = topic.get("id", "") if topic else ""
+            asyncio.get_running_loop().run_in_executor(
+                None,
+                lambda: context_service.add_message(
+                    session_id, "assistant", response.solution, topic=_tid
+                ),
+            )
+        return response
+
+    # ------------------------------------------------------------------
+    # TIER 3: Legacy JSON-plan LLM path (multi-agent / coordinator)
+    # ------------------------------------------------------------------
     followup_prompt = payload.question
     if followup_request:
         focus = extract_learning_focus(payload.question)
@@ -676,10 +848,16 @@ async def ai_tutor(payload: TutorRequest) -> TutorResponse:
         )
     result = await asyncio.to_thread(tutor_service.answer, followup_prompt, history)
     if not result:
-        topic = catalog.match_topic(payload.question)
         if topic:
             visualization = viz_service.build_payload(catalog.build_visualization(topic))
             topic_text = catalog.get_response_for_level(topic, payload.learner_level)
+            if followup_request:
+                topic_text = (
+                    "**Note:** The local AI model is warming up, so I can't "
+                    "rephrase the explanation yet. Here's the core lesson again "
+                    "— try your follow-up question in a moment when the model is ready.\n\n---\n\n"
+                    + topic_text
+                )
             response = _compose_response(topic_text, visualization)
             if session_id:
                 _ftid = topic.get("id", "")
@@ -690,10 +868,15 @@ async def ai_tutor(payload: TutorRequest) -> TutorResponse:
                     ),
                 )
             return response
-        raise HTTPException(status_code=503, detail="Local tutor not available")
+        fallback_text = _build_graceful_fallback(payload.question)
+        return _compose_response(fallback_text, None)
     solution, visualization = result
     if visualization is None:
         visualization = tutor_service.fallback_visualization(payload.question)
+    if visualization is None:
+        visualization = await asyncio.to_thread(
+            viz_agent.generate_viz, payload.question, solution, use_llm=False
+        )
     response = _compose_response(solution, visualization)
     if session_id:
         asyncio.get_running_loop().run_in_executor(
@@ -901,6 +1084,25 @@ async def ai_visualize(payload: VisualizationOnDemandRequest) -> VisualizationOn
     )
 
 
+@app.post("/api/ai/viz-agent", response_model=VizAgentResponse)
+async def ai_viz_agent(payload: VizAgentRequest) -> VizAgentResponse:
+    """Generate a lightweight visualization from a question + answer text.
+
+    Uses heuristic extraction first, then optionally the LLM.
+    Returns a VisualizationPayload (Plotly, Mermaid, or geometric).
+    """
+    result = await asyncio.to_thread(
+        viz_agent.generate_viz,
+        payload.question,
+        payload.answer_text,
+        use_llm=payload.use_llm,
+    )
+    source = "none"
+    if result:
+        source = "heuristic"
+    return VizAgentResponse(visualization=result, source=source)
+
+
 @app.post("/api/ai/media/image", response_model=MediaImageResponse)
 async def ai_media_image(payload: MediaImageRequest) -> MediaImageResponse:
     url = await asyncio.to_thread(diffusion_service.generate, payload.prompt)
@@ -987,6 +1189,137 @@ async def test_app_settings(payload: SettingsTestRequest) -> SettingsTestRespons
         )
 
     raise HTTPException(status_code=400, detail="Unknown test target")
+
+
+RECOMMENDED_MODELS = [
+    {
+        "name": "qwen2.5:1.5b",
+        "label": "Qwen 2.5 1.5B",
+        "size_gb": 1.0,
+        "tier": "cpu-light",
+        "description": "Fast on CPU. Good general math. ~1 GB.",
+        "speed_hint": "~2-5 tok/s on CPU",
+    },
+    {
+        "name": "qwen2.5:3b",
+        "label": "Qwen 2.5 3B",
+        "size_gb": 2.0,
+        "tier": "cpu",
+        "description": "Better quality. Needs 4+ GB RAM for Ollama.",
+        "speed_hint": "~1-3 tok/s on CPU, ~15 tok/s on GPU",
+    },
+    {
+        "name": "phi4-mini",
+        "label": "Phi-4 Mini 3.8B",
+        "size_gb": 2.5,
+        "tier": "cpu",
+        "description": "Strong reasoning, MIT license. 128K context.",
+        "speed_hint": "~1-2 tok/s on CPU, ~20 tok/s on GPU",
+    },
+    {
+        "name": "phi4-mini-reasoning",
+        "label": "Phi-4 Mini Reasoning 3.8B",
+        "size_gb": 2.5,
+        "tier": "gpu",
+        "description": "Best math (94.6% Math-500). Chain-of-thought. Needs GPU.",
+        "speed_hint": "Too slow on CPU, ~15 tok/s on GPU",
+    },
+    {
+        "name": "qwen2.5-math:7b",
+        "label": "Qwen 2.5 Math 7B",
+        "size_gb": 4.7,
+        "tier": "gpu",
+        "description": "Math-specialized 7B. Excellent quality.",
+        "speed_hint": "~25 tok/s on GPU",
+    },
+    {
+        "name": "llama3.1:8b",
+        "label": "Llama 3.1 8B",
+        "size_gb": 4.9,
+        "tier": "gpu",
+        "description": "Strong general-purpose. Good for broad topics.",
+        "speed_hint": "~20 tok/s on GPU",
+    },
+    {
+        "name": "qwen2.5:14b",
+        "label": "Qwen 2.5 14B",
+        "size_gb": 9.0,
+        "tier": "gpu-large",
+        "description": "High quality across all math topics. Needs 12+ GB VRAM.",
+        "speed_hint": "~15 tok/s on large GPU",
+    },
+    {
+        "name": "deepseek-r1:14b",
+        "label": "DeepSeek R1 14B",
+        "size_gb": 9.0,
+        "tier": "gpu-large",
+        "description": "Top reasoning. Chain-of-thought. Needs 12+ GB VRAM.",
+        "speed_hint": "~12 tok/s on large GPU",
+    },
+]
+
+
+@app.get("/api/settings/models", response_model=OllamaModelsResponse)
+async def list_ollama_models() -> OllamaModelsResponse:
+    """List models available in Ollama and recommended models for download."""
+    base_url = settings.local_llm_base_url
+    available: list[OllamaModelInfo] = []
+    loaded_names: set[str] = set()
+
+    if base_url:
+        try:
+            ps_url = f"{base_url.rstrip('/')}/api/ps"
+            with urllib.request.urlopen(ps_url, timeout=3) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                loaded_names = {m.get("name", "") for m in data.get("models", [])}
+        except Exception:
+            pass
+
+        try:
+            tags_url = f"{base_url.rstrip('/')}/api/tags"
+            with urllib.request.urlopen(tags_url, timeout=3) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                for m in data.get("models", []):
+                    name = m.get("name", "")
+                    size = m.get("size", 0) / 1e9
+                    available.append(OllamaModelInfo(
+                        name=name,
+                        size_gb=round(size, 1),
+                        loaded=any(name in ln for ln in loaded_names),
+                    ))
+        except Exception:
+            pass
+
+    return OllamaModelsResponse(
+        available=available,
+        recommended=RECOMMENDED_MODELS,
+    )
+
+
+@app.post("/api/settings/models/pull", response_model=OllamaPullResponse)
+async def pull_ollama_model(payload: OllamaPullRequest) -> OllamaPullResponse:
+    """Pull (download) a model into Ollama."""
+    base_url = settings.local_llm_base_url
+    if not base_url:
+        return OllamaPullResponse(success=False, message="Ollama base URL not configured")
+
+    url = f"{base_url.rstrip('/')}/api/pull"
+    body = json.dumps({"name": payload.model, "stream": False}).encode("utf-8")
+    req = urllib.request.Request(
+        url, data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=600) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+            status = result.get("status", "")
+            return OllamaPullResponse(
+                success="success" in status.lower() or status == "",
+                message=f"Model '{payload.model}' pulled successfully",
+            )
+    except Exception as exc:
+        return OllamaPullResponse(success=False, message=str(exc)[:200])
 
 
 @app.get("/api/agents", response_model=AgentListResponse)

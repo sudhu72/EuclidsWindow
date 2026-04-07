@@ -240,12 +240,22 @@ const demoPrompts = [
 // =============================================================================
 // Utility functions
 // =============================================================================
+let _loadingSafetyTimer = null;
 const showLoading = (show) => {
   isLoading = show;
-  loadingOverlay.classList.toggle("hidden", !show);
+  if (loadingOverlay) loadingOverlay.classList.toggle("hidden", !show);
   if (input) {
     input.disabled = show;
     sendBtn.disabled = show;
+  }
+  if (_loadingSafetyTimer) clearTimeout(_loadingSafetyTimer);
+  if (show) {
+    _loadingSafetyTimer = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Loading safety timeout — resetting stale loading state.");
+        showLoading(false);
+      }
+    }, 180000);
   }
 };
 
@@ -540,6 +550,35 @@ const showVisualizationIn = (container, visualization) => {
       } catch (err) {
         plotContainer.textContent = "Visualization could not be rendered.";
         console.warn("Plotly render error:", err);
+      }
+    });
+    return;
+  }
+
+  if (visualization.viz_type === "mermaid") {
+    const mermaidContainer = document.createElement("div");
+    mermaidContainer.className = "mermaid-viz";
+    container.appendChild(mermaidContainer);
+    const code = (visualization.data && visualization.data.mermaid_code) || "";
+    if (!code) {
+      mermaidContainer.textContent = "No diagram data.";
+      return;
+    }
+    requestAnimationFrame(async () => {
+      try {
+        const id = "mermaid-" + Math.random().toString(36).slice(2, 10);
+        const { svg } = await mermaid.render(id, code);
+        mermaidContainer.innerHTML = svg;
+        const svgEl = mermaidContainer.querySelector("svg");
+        if (svgEl) {
+          svgEl.style.maxWidth = "100%";
+          svgEl.style.height = "auto";
+        }
+      } catch (err) {
+        mermaidContainer.innerHTML =
+          '<pre style="font-size:12px;color:#666;white-space:pre-wrap">' +
+          code.replace(/</g, "&lt;") + "</pre>";
+        console.warn("Mermaid render error:", err);
       }
     });
     return;
@@ -1655,6 +1694,7 @@ const tutorSend = document.getElementById("tutor-send");
 const tutorFollowups = document.getElementById("tutor-followups");
 const tutorRenderDiagram = document.getElementById("tutor-render-diagram");
 const tutorRenderAnimation = document.getElementById("tutor-render-animation");
+const tutorVizAgent = document.getElementById("tutor-viz-agent");
 const tutorGenerateImage = document.getElementById("tutor-generate-image");
 const tutorGenerateMusic = document.getElementById("tutor-generate-music");
 const tutorJobsRefresh = document.getElementById("tutor-jobs-refresh");
@@ -1826,7 +1866,12 @@ const renderTutorFollowups = (question) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = p;
-    btn.addEventListener("click", () => sendTutorQuestion(p));
+    btn.addEventListener("click", () => {
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+      btn.textContent = "Loading...";
+      sendTutorQuestion(p);
+    });
     tutorFollowups.appendChild(btn);
   });
   addMusicLabLink(tutorFollowups, base);
@@ -1844,7 +1889,12 @@ const renderTutorFollowupsFromPayload = (question, payload) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = p;
-    btn.addEventListener("click", () => sendTutorQuestion(p));
+    btn.addEventListener("click", () => {
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+      btn.textContent = "Loading...";
+      sendTutorQuestion(p);
+    });
     tutorFollowups.appendChild(btn);
   });
   addMusicLabLink(tutorFollowups, question);
@@ -1927,14 +1977,20 @@ const ensureTutorSession = async () => {
 };
 
 const sendTutorQuestion = async (question) => {
-  if (!question || isLoading) return;
+  if (!question) return;
+  if (isLoading) {
+    console.warn("Tutor is still loading — resetting stale lock.");
+    showLoading(false);
+  }
   showLoading(true);
   tutorSend.disabled = true;
   tutorInput.disabled = true;
+  if (tutorInput) tutorInput.value = question;
   lastTutorQuestion = question;
   tutorHistory.push({ role: "user", content: question });
   renderTutorSolution("Generating solution...");
   showVisualizationIn(tutorViz, null);
+  if (tutorFollowups) tutorFollowups.innerHTML = "";
 
   try {
     await ensureTutorSession();
@@ -2322,6 +2378,47 @@ if (tutorForm) {
   });
 }
 
+if (tutorVizAgent) {
+  tutorVizAgent.addEventListener("click", async () => {
+    if (!lastTutorQuestion) {
+      showError("Ask a question first.");
+      return;
+    }
+    const lastAssistant = [...tutorHistory].reverse().find(m => m.role === "assistant");
+    const answerText = lastAssistant ? lastAssistant.content : "";
+    if (!answerText) {
+      showError("No tutor answer to visualize yet.");
+      return;
+    }
+    tutorVizAgent.disabled = true;
+    tutorVizAgent.textContent = "Generating...";
+    try {
+      const resp = await fetch(`${API_BASE}/api/ai/viz-agent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: lastTutorQuestion,
+          answer_text: answerText,
+          use_llm: true
+        })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data?.detail || "VizAgent request failed");
+      if (data.visualization) {
+        showVisualizationIn(tutorViz, data.visualization);
+        showError(`Auto-visualization generated (${data.source}).`);
+      } else {
+        showError("Could not generate a visualization from this answer.");
+      }
+    } catch (err) {
+      showError(err.message || "VizAgent failed");
+    } finally {
+      tutorVizAgent.disabled = false;
+      tutorVizAgent.textContent = "Auto-Visualize (AI)";
+    }
+  });
+}
+
 if (tutorGenerateImage) {
   tutorGenerateImage.addEventListener("click", () => generateMedia("image"));
 }
@@ -2463,17 +2560,196 @@ if (contextResetBtn) {
 // =============================================================================
 // Settings Tab
 // =============================================================================
+
+const HARDWARE_PRESETS = {
+  "cpu-light": {
+    model: "qwen2.5:1.5b",
+    device: "cpu",
+    desc: "Small model (~1 GB). Best for Docker on Mac, low-RAM machines, or Raspberry Pi.",
+  },
+  "cpu": {
+    model: "phi4-mini",
+    device: "cpu",
+    desc: "3.8B model with strong reasoning. Good for 16+ GB RAM native CPU setups.",
+  },
+  "apple-silicon": {
+    model: "phi4-mini-reasoning",
+    device: "mps",
+    desc: "Chain-of-thought reasoning via Metal GPU. Fast on M1/M2/M3/M4 (~15-25 tok/s).",
+  },
+  "gpu": {
+    model: "qwen2.5-math:7b",
+    device: "cuda",
+    desc: "Math-specialized 7B. Excellent quality on 6-8 GB VRAM (~25 tok/s).",
+  },
+  "gpu-large": {
+    model: "deepseek-r1:14b",
+    device: "cuda",
+    desc: "Top-tier reasoning 14B. Needs 12+ GB VRAM (~12 tok/s).",
+  },
+};
+
+let _modelsCache = null;
+
+const loadModelsList = async () => {
+  try {
+    const resp = await fetch(`${API_BASE}/api/settings/models`);
+    if (!resp.ok) return null;
+    _modelsCache = await resp.json();
+    return _modelsCache;
+  } catch { return null; }
+};
+
+const populateModelDropdown = (modelsData, currentModel) => {
+  if (!settingsLocalLlmModel || !modelsData) return;
+  const sel = settingsLocalLlmModel;
+  sel.innerHTML = "";
+
+  const available = modelsData.available || [];
+  const recommended = modelsData.recommended || [];
+  const availableNames = new Set(available.map(m => m.name));
+
+  if (available.length) {
+    const grp = document.createElement("optgroup");
+    grp.label = "Installed in Ollama";
+    available.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m.name;
+      opt.textContent = `${m.name} (${m.size_gb} GB)${m.loaded ? " \u25CF loaded" : ""}`;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  }
+
+  const notInstalled = recommended.filter(r => !availableNames.has(r.name));
+  if (notInstalled.length) {
+    const grp = document.createElement("optgroup");
+    grp.label = "Recommended (not installed)";
+    notInstalled.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r.name;
+      opt.textContent = `${r.label || r.name} — ${r.tier} (${r.size_gb} GB)`;
+      opt.dataset.needsPull = "true";
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  }
+
+  if (currentModel) sel.value = currentModel;
+  if (!sel.value && available.length) sel.value = available[0].name;
+
+  updateModelInfo();
+};
+
+const updateModelInfo = () => {
+  const infoEl = document.getElementById("settings-model-info");
+  if (!infoEl || !settingsLocalLlmModel) return;
+  const name = settingsLocalLlmModel.value;
+  if (!_modelsCache) { infoEl.textContent = ""; return; }
+
+  const rec = (_modelsCache.recommended || []).find(r => r.name === name);
+  const avail = (_modelsCache.available || []).find(a => a.name === name);
+  const installed = !!avail;
+
+  if (rec) {
+    infoEl.innerHTML = `${rec.description}<br><em>${rec.speed_hint}</em>`
+      + (!installed ? `<br><strong style="color:#f59e0b;">Not installed — click Pull to download</strong>` : "");
+  } else if (avail) {
+    infoEl.textContent = `${avail.size_gb} GB${avail.loaded ? " (currently loaded)" : ""}`;
+  } else {
+    infoEl.textContent = "";
+  }
+
+  renderRecommendedModels();
+};
+
+const renderRecommendedModels = () => {
+  const container = document.getElementById("settings-recommended");
+  if (!container || !_modelsCache) return;
+  const recommended = _modelsCache.recommended || [];
+  const availableNames = new Set((_modelsCache.available || []).map(m => m.name));
+  const selectedPreset = settingsPreset ? settingsPreset.value : "";
+
+  const filtered = selectedPreset
+    ? recommended.filter(r => r.tier === selectedPreset || r.tier === "cpu-light")
+    : recommended;
+
+  container.innerHTML = `
+    <p style="font-weight:600;font-size:0.85rem;margin-bottom:6px;">Recommended Models:</p>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${filtered.map(r => {
+        const installed = availableNames.has(r.name);
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#1a1a2e;border-radius:6px;font-size:0.82rem;">
+          <div style="flex:1;">
+            <strong>${r.label || r.name}</strong>
+            <span style="opacity:0.5;margin-left:4px;">${r.size_gb} GB · ${r.tier}</span>
+            <br><span style="opacity:0.6;">${r.description}</span>
+          </div>
+          ${installed
+            ? `<button type="button" class="btn-secondary model-use-btn" data-model="${r.name}"
+                style="font-size:0.75rem;padding:3px 10px;white-space:nowrap;">Use</button>`
+            : `<button type="button" class="btn-primary model-pull-btn" data-model="${r.name}"
+                style="font-size:0.75rem;padding:3px 10px;white-space:nowrap;">Pull</button>`
+          }
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+
+  container.querySelectorAll(".model-use-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      settingsLocalLlmModel.value = btn.dataset.model;
+      updateModelInfo();
+    });
+  });
+
+  container.querySelectorAll(".model-pull-btn").forEach(btn => {
+    btn.addEventListener("click", () => pullModel(btn.dataset.model, btn));
+  });
+};
+
+const pullModel = async (modelName, btn) => {
+  if (!modelName) return;
+  const origText = btn.textContent;
+  btn.textContent = "Pulling...";
+  btn.disabled = true;
+  showError(`Pulling ${modelName} — this may take several minutes...`);
+  try {
+    const resp = await fetch(`${API_BASE}/api/settings/models/pull`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: modelName }),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      showError(`${modelName} pulled successfully!`);
+      await loadModelsList();
+      populateModelDropdown(_modelsCache, modelName);
+    } else {
+      showError(`Pull failed: ${data.message}`);
+    }
+  } catch (err) {
+    showError(`Pull failed: ${err.message}`);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+};
+
 const loadSettings = async () => {
   if (!settingsForm) return;
   try {
-    const response = await fetch(`${API_BASE}/api/settings`);
-    if (!response.ok) throw new Error("Failed to load settings");
-    const data = await response.json();
+    const [settingsResp, modelsData] = await Promise.all([
+      fetch(`${API_BASE}/api/settings`).then(r => r.ok ? r.json() : null),
+      loadModelsList(),
+    ]);
+    if (!settingsResp) { showError("Failed to load settings"); return; }
+    const data = settingsResp;
+
     settingsLocalAiEnabled.checked = !!data.local_ai_enabled;
     settingsMultiAgentEnabled.checked = !!data.local_multi_agent_enabled;
     settingsLocalWebRagEnabled.checked = !!data.local_web_rag_enabled;
     settingsFastModeEnabled.checked = !!data.fast_mode_enabled;
-    settingsLocalLlmModel.value = data.local_llm_model || "";
     settingsLocalMediaEnabled.checked = !!data.local_media_enabled;
     settingsLocalDiffusionModel.value = data.local_diffusion_model || "";
     settingsLocalDiffusionTimeout.value = data.local_diffusion_timeout_seconds || 60;
@@ -2481,6 +2757,8 @@ const loadSettings = async () => {
     settingsLocalMusicFast.checked = !!data.local_music_fast_mode;
     settingsLocalMusicTimeout.value = data.local_music_timeout_seconds || 180;
     settingsLocalMediaDevice.value = data.local_media_device || "cpu";
+
+    populateModelDropdown(modelsData, data.local_llm_model || "");
     updateFastModeState();
     updateMediaButtons(!!data.local_media_enabled);
     await loadAgents();
@@ -2491,12 +2769,20 @@ const loadSettings = async () => {
 
 const saveSettings = async () => {
   try {
+    const selectedModel = settingsLocalLlmModel.value.trim();
+    const needsPull = settingsLocalLlmModel.selectedOptions?.[0]?.dataset?.needsPull === "true";
+
+    if (needsPull) {
+      showError(`Model "${selectedModel}" is not installed. Click Pull first.`);
+      return;
+    }
+
     const payload = {
       local_ai_enabled: settingsLocalAiEnabled.checked,
       local_multi_agent_enabled: settingsMultiAgentEnabled.checked,
       local_web_rag_enabled: settingsLocalWebRagEnabled.checked,
       fast_mode_enabled: settingsFastModeEnabled.checked,
-      local_llm_model: settingsLocalLlmModel.value.trim(),
+      local_llm_model: selectedModel,
       local_media_enabled: settingsLocalMediaEnabled.checked,
       local_diffusion_model: settingsLocalDiffusionModel.value.trim(),
       local_diffusion_timeout_seconds: Number(settingsLocalDiffusionTimeout.value) || 60,
@@ -2512,7 +2798,7 @@ const saveSettings = async () => {
     });
     if (!response.ok) throw new Error("Failed to save settings");
     updateMediaButtons(settingsLocalMediaEnabled.checked);
-    showError("Settings saved.");
+    showError(`Settings saved. Active model: ${selectedModel}`);
   } catch (error) {
     showError("Failed to save settings");
   }
@@ -2520,25 +2806,15 @@ const saveSettings = async () => {
 
 const applyPreset = (preset) => {
   if (!preset) return;
-  if (preset === "math") {
-    settingsLocalLlmModel.value = "qwen2.5-math:7b";
-    settingsLocalDiffusionModel.value = "runwayml/stable-diffusion-v1-5";
-    settingsLocalMusicModel.value = "facebook/musicgen-small";
-    settingsLocalMediaDevice.value = "cpu";
-    return;
-  }
-  if (preset === "literature") {
-    settingsLocalLlmModel.value = "llama3.1:8b";
-    settingsLocalDiffusionModel.value = "stabilityai/sdxl-turbo";
-    settingsLocalMusicModel.value = "facebook/musicgen-small";
-    settingsLocalMediaDevice.value = "cpu";
-    return;
-  }
-  if (preset === "auto") {
-    settingsLocalLlmModel.value = "";
-    settingsLocalDiffusionModel.value = "";
-    settingsLocalMusicModel.value = "";
-  }
+  const hw = HARDWARE_PRESETS[preset];
+  if (!hw) return;
+
+  const descEl = document.getElementById("settings-preset-desc");
+  if (descEl) descEl.textContent = hw.desc;
+
+  settingsLocalLlmModel.value = hw.model;
+  settingsLocalMediaDevice.value = hw.device;
+  updateModelInfo();
 };
 
 const updateFastModeState = () => {
@@ -2825,6 +3101,22 @@ if (settingsValidate) {
 
 if (settingsTestOllama) {
   settingsTestOllama.addEventListener("click", () => testModel("ollama"));
+}
+
+const settingsRefreshModels = document.getElementById("settings-refresh-models");
+if (settingsRefreshModels) {
+  settingsRefreshModels.addEventListener("click", async () => {
+    settingsRefreshModels.disabled = true;
+    settingsRefreshModels.textContent = "Loading...";
+    await loadModelsList();
+    populateModelDropdown(_modelsCache, settingsLocalLlmModel.value);
+    settingsRefreshModels.textContent = "Refresh";
+    settingsRefreshModels.disabled = false;
+  });
+}
+
+if (settingsLocalLlmModel) {
+  settingsLocalLlmModel.addEventListener("change", updateModelInfo);
 }
 
 if (settingsTestDiffusion) {

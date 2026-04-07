@@ -8,8 +8,8 @@ services:
     environment:
       LOCAL_AI_ENABLED: "true"
       LOCAL_LLM_PROVIDER: "ollama"
-      LOCAL_LLM_MODEL: "llama3.1:8b"
-      LOCAL_LLM_TIMEOUT_SECONDS: "300"
+      LOCAL_LLM_MODEL: "qwen2.5:1.5b"
+      LOCAL_LLM_TIMEOUT_SECONDS: "120"
       LOCAL_AI_EXECUTION_TIMEOUT_SECONDS: "60"
       LOCAL_LLM_BASE_URL: "${LOCAL_LLM_BASE_URL:-http://ollama:11434}"
     volumes:

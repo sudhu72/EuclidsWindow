@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     # Local generative tutor
     local_ai_enabled: bool = True
     local_llm_provider: str = "ollama"
-    local_llm_model: str = "qwen2.5-math:7b"
+    local_llm_model: str = "qwen2.5:1.5b"
     local_llm_timeout_seconds: int = 120
     local_ai_execution_timeout_seconds: int = 60
     local_llm_base_url: Optional[str] = None

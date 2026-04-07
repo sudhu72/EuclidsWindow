@@ -71,28 +71,106 @@ class LocalLLMEngine:
 
         return result.stdout.strip()
 
-    def _run_ollama_http(self, prompt: str) -> Optional[str]:
+    def _run_ollama_http(
+        self,
+        prompt: str,
+        *,
+        timeout_override: Optional[int] = None,
+        num_predict: Optional[int] = None,
+    ) -> Optional[str]:
         url = f"{self.base_url.rstrip('/')}/api/generate"
-        payload = json.dumps(
-            {
-                "model": self.model,
-                "prompt": prompt,
-                "stream": False,
-            }
-        ).encode("utf-8")
+        body: dict = {
+            "model": self.model,
+            "prompt": prompt,
+            "stream": False,
+        }
+        if num_predict:
+            body["options"] = {"num_predict": num_predict}
+        payload = json.dumps(body).encode("utf-8")
         request = urllib.request.Request(
             url,
             data=payload,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
+        effective_timeout = timeout_override or self.timeout
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                body = json.loads(response.read().decode("utf-8"))
-                return str(body.get("response", "")).strip() or None
+            with urllib.request.urlopen(request, timeout=effective_timeout) as response:
+                raw = json.loads(response.read().decode("utf-8"))
+                return str(raw.get("response", "")).strip() or None
         except urllib.error.URLError as exc:
             logger.error(f"Ollama HTTP request failed: {exc}")
             return None
+        except TimeoutError:
+            logger.error(f"Ollama HTTP request timed out ({effective_timeout}s)")
+            return None
+
+    def generate_with_timeout(
+        self, prompt: str, timeout_seconds: int, num_predict: int = 400
+    ) -> Optional[str]:
+        """Generate with an explicit timeout, useful for LLM-first with fast fallback."""
+        if not self.is_available():
+            return None
+        self._refresh_overrides()
+        if self.provider == "ollama":
+            if self.base_url:
+                return self._run_ollama_http(
+                    prompt,
+                    timeout_override=timeout_seconds,
+                    num_predict=num_predict,
+                )
+            return self._run_ollama(prompt)
+        return None
+
+    def is_model_ready(self) -> bool:
+        """Check whether the model is loaded in memory (warm) for fast inference."""
+        if not self.base_url:
+            return self.is_available()
+        self._refresh_overrides()
+        url = f"{self.base_url.rstrip('/')}/api/ps"
+        try:
+            with urllib.request.urlopen(url, timeout=3) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                running = [m.get("name", "") for m in data.get("models", [])]
+                return any(self.model in n for n in running)
+        except Exception:
+            return False
+
+    def is_model_available(self) -> bool:
+        """Check whether the model exists on disk (may need loading)."""
+        if not self.base_url:
+            return self.is_available()
+        self._refresh_overrides()
+        url = f"{self.base_url.rstrip('/')}/api/tags"
+        try:
+            with urllib.request.urlopen(url, timeout=3) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                names = [m.get("name", "") for m in data.get("models", [])]
+                return any(self.model in n for n in names)
+        except Exception:
+            return False
+
+    def warm_up(self) -> None:
+        """Trigger model loading in Ollama so it's ready for the next request."""
+        if not self.base_url:
+            return
+        self._refresh_overrides()
+        url = f"{self.base_url.rstrip('/')}/api/generate"
+        body = json.dumps({
+            "model": self.model,
+            "prompt": "",
+            "keep_alive": "10m",
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            url, data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                resp.read()
+        except Exception:
+            pass
 
 
 def extract_json_block(text: str) -> Optional[str]:

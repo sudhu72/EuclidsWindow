@@ -15,6 +15,7 @@ from .planner import TutorPlanner
 from .coordinator import MultiAgentCoordinator
 from .visual_planner import VisualizationPlanner
 from .web_rag import WebMathRAG
+from .prompts import REASONING_SYSTEM_PROMPT, REASONING_USER_TEMPLATE
 from ..settings_store import SettingsStore
 
 
@@ -32,7 +33,93 @@ class GenerativeTutorService:
         self._diagram_jobs: dict[str, dict] = {}
         self._diagram_jobs_lock = threading.Lock()
         self._diagram_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+        self._llm_first_timeout = 180
 
+    # ------------------------------------------------------------------
+    # Primary path: LLM generates a natural tutor response
+    # ------------------------------------------------------------------
+    def answer_reasoning(
+        self,
+        question: str,
+        history: Optional[list] = None,
+        curated_hint: Optional[str] = None,
+        learner_level: Optional[str] = None,
+    ) -> Optional[str]:
+        """Generate a tutor response using the local LLM (text only).
+
+        Returns the raw markdown string, or None on failure / timeout.
+        ``curated_hint`` can supply a short summary from curated content so the
+        model can ground its answer.
+        """
+        if not self.enabled:
+            return None
+
+        cache_key = question if not learner_level else f"{question}||{learner_level}"
+        cached = self._get_cached_answer(cache_key)
+        if cached:
+            text, _ = cached
+            return text
+
+        from .engine import LocalLLMEngine
+        engine = LocalLLMEngine()
+        if not engine.is_model_ready():
+            if engine.is_model_available():
+                logger.info("LLM model available but not loaded — warming up in background")
+                import threading
+                threading.Thread(target=engine.warm_up, daemon=True).start()
+            else:
+                logger.info("LLM model not available — skipping LLM path")
+            return None
+
+        context = ""
+        if curated_hint:
+            context = (
+                f"Reference material (use as a starting point, adapt to the "
+                f"specific question):\n{curated_hint[:600]}\n\n"
+            )
+        if history:
+            lines = []
+            for msg in history[-8:]:
+                role = msg.get("role", "user")
+                content = msg.get("content", "")
+                if content:
+                    lines.append(f"{role.capitalize()}: {content[:300]}")
+            if lines:
+                context += "Conversation so far:\n" + "\n".join(lines) + "\n\n"
+
+        from .prompts import LEVEL_INSTRUCTIONS
+        level_key = (learner_level or "").strip().lower()
+        level_instruction = LEVEL_INSTRUCTIONS.get(level_key, "")
+
+        prompt = (
+            REASONING_SYSTEM_PROMPT + "\n\n"
+            + REASONING_USER_TEMPLATE.format(
+                context=context,
+                question=question,
+                level_instruction=level_instruction,
+            )
+        )
+
+        raw = engine.generate_with_timeout(prompt, self._llm_first_timeout)
+        if not raw:
+            return None
+
+        cleaned = self._clean_reasoning_output(raw)
+        if len(cleaned.strip()) < 30:
+            return None
+
+        self._store_cached_answer(cache_key, cleaned, None)
+        return cleaned
+
+    @staticmethod
+    def _clean_reasoning_output(text: str) -> str:
+        """Strip <think>…</think> blocks that reasoning models emit."""
+        cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+        return cleaned if cleaned else text
+
+    # ------------------------------------------------------------------
+    # Legacy JSON-plan path (kept for multi-agent and visualization code)
+    # ------------------------------------------------------------------
     def answer(
         self, question: str, history: Optional[list] = None
     ) -> Optional[Tuple[str, Optional[VisualizationPayload]]]:

@@ -58,7 +58,6 @@ class MathMapService:
         query_lower = query.lower()
         for cat in self._data["categories"]:
             for topic in cat["topics"]:
-                # Check topic name
                 if query_lower in topic["name"].lower():
                     results.append({
                         **topic,
@@ -67,7 +66,6 @@ class MathMapService:
                         "category_color": cat["color"],
                     })
                     continue
-                # Check prompts
                 for prompt in topic["prompts"]:
                     if query_lower in prompt.lower():
                         results.append({
@@ -78,3 +76,32 @@ class MathMapService:
                         })
                         break
         return results
+
+    def search_topics_ranked(self, words: list) -> List[Dict[str, Any]]:
+        """Search topics by multiple words, ranked by relevance.
+
+        Name matches score 3 points per word; prompt matches score 1.
+        """
+        scored: dict = {}
+        for cat in self._data["categories"]:
+            for topic in cat["topics"]:
+                tid = topic["id"]
+                if tid in scored:
+                    continue
+                name_lower = topic["name"].lower()
+                prompt_hay = " ".join(p.lower() for p in topic.get("prompts", []))
+                score = 0
+                for w in words:
+                    if w in name_lower:
+                        score += 3
+                    elif w in prompt_hay:
+                        score += 1
+                if score > 0:
+                    scored[tid] = (
+                        score,
+                        {**topic, "category_id": cat["id"],
+                         "category_name": cat["name"],
+                         "category_color": cat["color"]},
+                    )
+        ranked = sorted(scored.values(), key=lambda x: x[0], reverse=True)
+        return [entry for _, entry in ranked]

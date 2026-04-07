@@ -10,6 +10,7 @@ class VisualizationType(str, Enum):
     svg = "svg"
     plotly = "plotly"
     manim = "manim"
+    mermaid = "mermaid"
 
 
 # Auth models
@@ -116,6 +117,17 @@ class TutorHistoryMessage(BaseModel):
 TutorRequest.model_rebuild()
 
 
+class VizAgentRequest(BaseModel):
+    question: str = Field(..., min_length=1, max_length=4000)
+    answer_text: str = Field(..., min_length=1, max_length=16000)
+    use_llm: bool = Field(True, description="Use LLM for viz generation if heuristics fail")
+
+
+class VizAgentResponse(BaseModel):
+    visualization: Optional[VisualizationPayload] = None
+    source: str = Field("none", description="How the viz was generated: heuristic | llm | none")
+
+
 class MediaImageRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=2000)
 
@@ -183,6 +195,26 @@ class SettingsTestRequest(BaseModel):
 class SettingsTestResponse(BaseModel):
     success: bool
     message: Optional[str] = None
+
+
+class OllamaModelInfo(BaseModel):
+    name: str
+    size_gb: float
+    loaded: bool = False
+
+
+class OllamaModelsResponse(BaseModel):
+    available: List[OllamaModelInfo]
+    recommended: List[dict]
+
+
+class OllamaPullRequest(BaseModel):
+    model: str
+
+
+class OllamaPullResponse(BaseModel):
+    success: bool
+    message: str
 
 
 class AgentInfo(BaseModel):
