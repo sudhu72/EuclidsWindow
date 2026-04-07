@@ -39,6 +39,58 @@
     return osc;
   }
 
+  // Piano-like synthesizer: layered harmonics with percussive attack and natural decay.
+  // Each note uses 4 partials whose amplitudes and decay rates mimic a struck string.
+  function playPiano(freq, duration, delay, velocity) {
+    const ctx = getAudioCtx();
+    const t0 = ctx.currentTime + delay;
+    const vel = velocity || 0.18;
+    const partials = [
+      { ratio: 1,   amp: 1.0,  decay: duration * 1.2 },
+      { ratio: 2,   amp: 0.4,  decay: duration * 0.8 },
+      { ratio: 3,   amp: 0.15, decay: duration * 0.5 },
+      { ratio: 4,   amp: 0.06, decay: duration * 0.35 },
+    ];
+
+    const master = ctx.createGain();
+    master.gain.value = vel;
+    master.connect(ctx.destination);
+
+    for (const p of partials) {
+      const osc = ctx.createOscillator();
+      const env = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq * p.ratio;
+      // Percussive envelope: instant attack, fast initial drop, slow release
+      env.gain.setValueAtTime(p.amp, t0);
+      env.gain.setTargetAtTime(p.amp * 0.4, t0, 0.008);   // hammer strike decay
+      env.gain.setTargetAtTime(0.001, t0 + 0.02, p.decay); // string sustain decay
+      osc.connect(env).connect(master);
+      osc.start(t0);
+      osc.stop(t0 + p.decay * 4 + 0.1);
+      activeOscillators.push(osc);
+    }
+
+    // Hammer noise transient for realism
+    const noise = ctx.createBufferSource();
+    const noiseLen = Math.ceil(ctx.sampleRate * 0.02);
+    const buf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < noiseLen; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+    noise.buffer = buf;
+    const noiseEnv = ctx.createGain();
+    noiseEnv.gain.setValueAtTime(vel * 0.5, t0);
+    noiseEnv.gain.exponentialRampToValueAtTime(0.001, t0 + 0.015);
+    const noiseFilt = ctx.createBiquadFilter();
+    noiseFilt.type = "bandpass";
+    noiseFilt.frequency.value = Math.min(freq * 4, 8000);
+    noiseFilt.Q.value = 1.5;
+    noise.connect(noiseFilt).connect(noiseEnv).connect(master);
+    noise.start(t0);
+    noise.stop(t0 + 0.03);
+    activeOscillators.push(noise);
+  }
+
   function playClick(delay) {
     const ctx = getAudioCtx();
     const osc = ctx.createOscillator();
@@ -110,60 +162,62 @@
     { chord: [48,52,55],  scale: [72,76,72,67,72,76] },   // 16: C  (I) final
   ];
 
-  // Deterministically generate a musically coherent measure from its ID + bar position
+  // Convert pitch string like 'c5', 'f#4', 'g2' to MIDI number
+  function pitchToMidi(p) {
+    const base = {c:0,d:2,e:4,f:5,g:7,a:9,b:11};
+    let i = 0;
+    const letter = p[i++];
+    let semi = base[letter];
+    if (p[i] === '#') { semi += 1; i++; }
+    const octave = parseInt(p.substring(i));
+    return (octave + 1) * 12 + semi;
+  }
+
+  // Parse a voice array from MOZART_NOTES into {midi, beat, dur} objects
+  function parseVoice(events) {
+    let beat = 0;
+    const notes = [];
+    for (const ev of events) {
+      if (typeof ev[0] === 'number') {
+        beat += 8 / ev[0];
+      } else if (typeof ev[0] === 'string') {
+        const dur = 8 / ev[1];
+        notes.push({midi: pitchToMidi(ev[0]), beat, dur});
+        beat += dur;
+      } else if (Array.isArray(ev[0])) {
+        const dur = 8 / ev[1];
+        for (const p of ev[0]) notes.push({midi: pitchToMidi(p), beat, dur});
+        beat += dur;
+      }
+    }
+    return notes;
+  }
+
+  // Returns {treble, bass} from authentic Mozart data, or algorithmic fallback
   function measureToMelody(measureNum, barPos) {
+    const real = window.MOZART_NOTES && window.MOZART_NOTES[measureNum];
+    if (real) {
+      return { treble: parseVoice(real.t), bass: parseVoice(real.b) };
+    }
+    // Algorithmic fallback (only used if mozart_notes.js fails to load)
     const harm = BAR_HARMONY[barPos];
     const seed = measureNum * 17 + barPos * 7;
     const pool = harm.scale;
     const n = pool.length;
-
-    // 3/4 time: generate 3–6 notes per measure with varying rhythms
-    const patternType = seed % 5;
-    let notes = [];
-
-    if (patternType === 0) {
-      notes = [
-        { midi: pool[(seed) % n],     beat: 0, dur: 1 },
-        { midi: pool[(seed+1) % n],   beat: 1, dur: 1 },
-        { midi: pool[(seed+2) % n],   beat: 2, dur: 1 },
-      ];
-    } else if (patternType === 1) {
-      notes = [
-        { midi: pool[(seed) % n],     beat: 0, dur: 0.5 },
-        { midi: pool[(seed+3) % n],   beat: 0.5, dur: 0.5 },
-        { midi: pool[(seed+1) % n],   beat: 1, dur: 1 },
-        { midi: pool[(seed+4) % n],   beat: 2, dur: 1 },
-      ];
-    } else if (patternType === 2) {
-      notes = [
-        { midi: pool[(seed+2) % n],   beat: 0, dur: 1 },
-        { midi: pool[(seed) % n],     beat: 1, dur: 0.5 },
-        { midi: pool[(seed+1) % n],   beat: 1.5, dur: 0.5 },
-        { midi: pool[(seed+3) % n],   beat: 2, dur: 0.5 },
-        { midi: pool[(seed+4) % n],   beat: 2.5, dur: 0.5 },
-      ];
-    } else if (patternType === 3) {
-      notes = [
-        { midi: pool[(seed) % n],     beat: 0, dur: 2 },
-        { midi: pool[(seed+2) % n],   beat: 2, dur: 1 },
-      ];
+    const pt = seed % 5;
+    let notes;
+    if (pt === 0) {
+      notes = [{midi:pool[seed%n],beat:0,dur:1},{midi:pool[(seed+1)%n],beat:1,dur:1},{midi:pool[(seed+2)%n],beat:2,dur:1}];
+    } else if (pt === 1) {
+      notes = [{midi:pool[seed%n],beat:0,dur:0.5},{midi:pool[(seed+3)%n],beat:0.5,dur:0.5},{midi:pool[(seed+1)%n],beat:1,dur:1},{midi:pool[(seed+4)%n],beat:2,dur:1}];
+    } else if (pt === 2) {
+      notes = [{midi:pool[(seed+2)%n],beat:0,dur:1},{midi:pool[seed%n],beat:1,dur:0.5},{midi:pool[(seed+1)%n],beat:1.5,dur:0.5},{midi:pool[(seed+3)%n],beat:2,dur:0.5},{midi:pool[(seed+4)%n],beat:2.5,dur:0.5}];
+    } else if (pt === 3) {
+      notes = [{midi:pool[seed%n],beat:0,dur:2},{midi:pool[(seed+2)%n],beat:2,dur:1}];
     } else {
-      notes = [
-        { midi: pool[(seed+1) % n],   beat: 0, dur: 0.5 },
-        { midi: pool[(seed+2) % n],   beat: 0.5, dur: 0.5 },
-        { midi: pool[(seed+3) % n],   beat: 1, dur: 0.5 },
-        { midi: pool[(seed+4) % n],   beat: 1.5, dur: 0.5 },
-        { midi: pool[(seed) % n],     beat: 2, dur: 1 },
-      ];
+      notes = [{midi:pool[(seed+1)%n],beat:0,dur:0.5},{midi:pool[(seed+2)%n],beat:0.5,dur:0.5},{midi:pool[(seed+3)%n],beat:1,dur:0.5},{midi:pool[(seed+4)%n],beat:1.5,dur:0.5},{midi:pool[seed%n],beat:2,dur:1}];
     }
-
-    const bass = [
-      { midi: harm.chord[(seed) % harm.chord.length],   beat: 0, dur: 1 },
-      { midi: harm.chord[(seed+1) % harm.chord.length], beat: 1, dur: 1 },
-      { midi: harm.chord[(seed+2) % harm.chord.length], beat: 2, dur: 1 },
-    ];
-
-    return { treble: notes, bass };
+    return { treble: notes, bass: [{midi:harm.chord[seed%harm.chord.length],beat:0,dur:1},{midi:harm.chord[(seed+1)%harm.chord.length],beat:1,dur:1},{midi:harm.chord[(seed+2)%harm.chord.length],beat:2,dur:1}] };
   }
 
   function midiToFreq(midi) {
@@ -459,6 +513,37 @@
     }));
   }
 
+  // Pre-rolled example: a curated set of dice rolls that produces a pleasant minuet.
+  // Rolls favour sums 7-9 (the most probable), matching how a real game would likely go.
+  const EXAMPLE_ROLLS = [7, 9, 6, 8, 7, 5, 8, 7, 9, 6, 7, 8, 7, 9, 8, 7];
+
+  function loadDiceExample() {
+    diceResults = [];
+    const measures = [];
+    for (let i = 0; i < 16; i++) {
+      const roll = EXAMPLE_ROLLS[i];
+      const row = roll - 2;
+      const measure = MOZART_TABLE[row][i];
+      diceResults.push({ roll, measure });
+      measures.push(measure);
+    }
+    renderDiceBars();
+    buildMiniTable(diceResults);
+    diceScoreEl.textContent = "Example — Measures: " + measures.join(" · ");
+    dicePlay.disabled = false;
+    diceStatus.textContent = "Example loaded — press Play Minuet to listen";
+    drawStaff(staffCanvas, getStaffMeasures(-1));
+  }
+
+  const diceExampleBtn = document.getElementById("dice-example");
+  if (diceExampleBtn) {
+    diceExampleBtn.addEventListener("click", () => {
+      stopAll();
+      loadDiceExample();
+      setTimeout(() => { if (dicePlay && !dicePlay.disabled) dicePlay.click(); }, 150);
+    });
+  }
+
   if (diceRollAll) {
     renderDiceBars();
     drawDiceProbChart();
@@ -511,10 +596,10 @@
         const melody = measureToMelody(diceResults[barIdx].measure, barIdx);
 
         melody.treble.forEach((note) => {
-          playTone(midiToFreq(note.midi), note.dur * beatDur * 0.9, note.beat * beatDur, "triangle");
+          playPiano(midiToFreq(note.midi), note.dur * beatDur * 1.2, note.beat * beatDur, 0.18);
         });
         melody.bass.forEach((note) => {
-          playTone(midiToFreq(note.midi), note.dur * beatDur * 0.8, note.beat * beatDur, "sine");
+          playPiano(midiToFreq(note.midi), note.dur * beatDur * 1.5, note.beat * beatDur, 0.10);
         });
 
         barIdx++;

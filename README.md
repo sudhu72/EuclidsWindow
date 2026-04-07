@@ -2,16 +2,34 @@
 
 **Learn math from first principles** — like Euclid's *Elements*: start from self-evident axioms, derive everything step by step.
 
-Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, interactive labs, dynamic visualizations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 60+ topics spanning arithmetic through signal processing.
+Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, interactive labs, dynamic visualizations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 130+ curated topics and 104 concept-graph nodes spanning arithmetic through signal processing.
 
 ## What You Get
 
-- **Generative Tutor**
-  - Context-aware tutor with response modes (`plain`, `axiomatic`, `both`)
-  - Learner-level adaptation (`kids`, `teen`, `college`, `adult`) with rich, differentiated content per topic
+- **Generative Tutor (3-tier architecture)**
+  - **Tier 1 — Curated content** (instant): 130+ hand-written topics with 4 learner-level variants, served on first question
+  - **Tier 2 — LLM reasoning** (conversational): Follow-up questions and uncurated topics routed to a local LLM (Ollama) with level-aware prompts and curated context as grounding
+  - **Tier 3 — Multi-agent / legacy planner**: JSON-plan LLM path with visualization code generation
+  - Context-aware with response modes (`plain`, `axiomatic`, `both`)
+  - Learner-level adaptation (`kids`, `teen`, `college`, `adult`) with audience-specific LLM instructions
   - Follow-up prompts, key takeaways, quality checks, improvement hints
   - Semantic conversation history via ChromaDB vector store
   - Web RAG enrichment (toggleable) for long-tail topics
+
+- **VizAgent — AI-driven lightweight visualization**
+  - Automatically generates visualizations from any tutor answer text
+  - **Heuristic extraction** (instant, no LLM): step-by-step text → Mermaid flowchart; bold concepts → Mermaid mindmap; labeled numbers → Plotly bar chart
+  - **LLM extraction** (optional): asks the LLM to output a structured JSON VizSpec → rendered as Plotly, Mermaid, or geometric SVG
+  - 10+ deterministic Plotly visualizations: Euler's identity (unit circle), golden ratio (Fibonacci convergence), Pythagorean theorem, prime sieve, integral (area under curve), limit (sin(x)/x), Taylor series approximations, polar rose curves, Fourier transform (time vs frequency domain), derivatives (tangent line), and more
+  - Standalone API (`/api/ai/viz-agent`) and "Auto-Visualize (AI)" button in the tutor panel
+  - Mermaid.js support for flowcharts, mindmaps, timelines, and sequence diagrams
+
+- **Model switching and hardware presets**
+  - Default model: `qwen2.5:1.5b` (CPU-friendly, ~1.5B parameters)
+  - UI-based model selector with hardware presets (CPU-light, CPU, GPU, Apple Silicon)
+  - Recommended models list categorized by hardware tier
+  - Pull new models from Ollama directly from the Settings UI
+  - Smart model warm-up: checks if model is loaded in memory, triggers background loading, falls back to curated content for instant first response
 
 - **Interactive Labs** (collapsed under a single "Labs" dropdown in the nav)
   - **Matrix / Vector Lab** — 2×2 and 3×3 matrix operations, by-hand checking, coordinate-grid visualization of transformations with 3×3 homogeneous projection
@@ -21,8 +39,10 @@ Euclid's Window is a local-first math tutoring platform that combines structured
   - Each lab step includes tabbed math explanations for all four learner levels
 
 - **On-demand visuals**
-  - Diagram rendering via deterministic planner + tutor fallback
+  - Instant Plotly charts via deterministic visual planner (keyword-matched)
+  - VizAgent auto-generation from LLM answer text (Plotly, Mermaid, geometric SVG)
   - Animation rendering via Manim (background jobs with progress)
+  - Diffusion image generation (Stable Diffusion, optional GPU)
   - LaTeX equation editor with live preview, quick templates, insert/copy actions
 
 - **Math scratchpad**
@@ -44,8 +64,9 @@ Euclid's Window is a local-first math tutoring platform that combines structured
 ## Tech Stack
 
 - **Backend**: FastAPI, Pydantic v2, SQLAlchemy, SymPy, ChromaDB (vector store)
-- **Frontend**: Vanilla JS/HTML/CSS, D3.js, Plotly.js, KaTeX, Web Audio API
-- **AI/Media**: Ollama (local LLM), Manim, Diffusers, MusicGen
+- **Frontend**: Vanilla JS/HTML/CSS, D3.js, Plotly.js, Mermaid.js, KaTeX, Web Audio API
+- **AI/Media**: Ollama (local LLM — default `qwen2.5:1.5b`), Manim, Diffusers (SDXL-Turbo), MusicGen
+- **Visualization**: VizAgent (heuristic + LLM-driven), deterministic Plotly planner, Mermaid diagrams, Manim animations, SVG
 - **Algorithms**: Cooley-Tukey FFT/IFFT (1D + 2D), Bjorklund's algorithm (Euclidean rhythms)
 - **OCR**: Tesseract + Pillow + pytesseract
 - **Infra**: Docker, docker-compose
@@ -63,35 +84,37 @@ flowchart TB
       FL[fftlab.js + fftlab-image.js]
       D3[D3 Concept Graph]
       PLT[Plotly + KaTeX Renderers]
+      MER[Mermaid.js Diagrams]
       WA[Web Audio API]
       SP[Math Scratchpad Canvas]
     end
 
     subgraph BE[FastAPI Backend]
       API[app.main routes]
-      TUTOR[Tutor Service]
+      TUTOR[Tutor Service - 3-tier]
       CONTENT[Content Catalog + Topic Matcher]
       DID[Didactics + Symbolic Checker]
       RAG[Web RAG]
       CTX[Context Window - ChromaDB]
       VIZ[Visualization Service]
-      VP[Visual Planner]
+      VP[Visual Planner - 20+ Plotly templates]
+      VA[VizAgent - heuristic + LLM extraction]
       MANIM[Manim Service + Job Queue]
       OCR[Handwriting Service]
-      STORE[Settings Store]
+      STORE[Settings Store + Hardware Presets]
       RES[Resource/Euclid/MathMap Services]
     end
 
     subgraph DATA[Data + Persistence]
       SQLITE[(SQLite DB)]
       CHROMA[(ChromaDB Vector Store)]
-      JSON[(JSON Seeds: topics, resources, math_map, concepts)]
+      JSON[(JSON Seeds: 130+ topics, 104 concepts, resources)]
       STATIC[(backend/static visualizations/media)]
     end
 
     subgraph LOCALAI[Local AI Runtime]
-      OLLAMA[Ollama LLM]
-      DIFF[Diffusion Models]
+      OLLAMA[Ollama LLM - qwen2.5:1.5b default]
+      DIFF[Diffusion Models - SDXL-Turbo]
       MUSIC[MusicGen]
       TESS[Tesseract OCR]
     end
@@ -102,6 +125,7 @@ flowchart TB
     MM --> API
     UI --> D3
     UI --> PLT
+    UI --> MER
     UI --> SP
     UI --> WA
     UI --> ML
@@ -113,7 +137,9 @@ flowchart TB
     TUTOR --> RAG
     TUTOR --> CTX
     TUTOR --> VP
+    TUTOR --> VA
     VP --> VIZ
+    VA --> VIZ
     API --> MANIM
     API --> OCR
     API --> STORE
@@ -126,9 +152,46 @@ flowchart TB
     RES --> JSON
 
     TUTOR --> OLLAMA
+    VA --> OLLAMA
     API --> DIFF
     API --> MUSIC
     OCR --> TESS
+```
+
+### Tutor Flow (3-Tier Architecture)
+
+```mermaid
+flowchart LR
+    Q[User Question] --> FU{Follow-up?}
+    FU -- No --> T1[Tier 1: Curated Content]
+    FU -- Yes --> T2[Tier 2: LLM Reasoning]
+    T1 --> VP[Visual Planner]
+    T1 --> VA1[VizAgent fallback]
+    T2 -- LLM unavailable --> T3[Tier 3: Legacy Planner]
+    T2 --> VA2[VizAgent from LLM text]
+    T3 -- All fail --> FB[Graceful Fallback + Note]
+    VP --> R[Response + Visualization]
+    VA1 --> R
+    VA2 --> R
+    T3 --> R
+    FB --> R
+```
+
+### Visualization Pipeline
+
+```mermaid
+flowchart TD
+    Q[Question + Answer Text] --> P{Deterministic Planner match?}
+    P -- Yes --> PLT[Plotly Chart - instant]
+    P -- No --> C{Curated topic viz?}
+    C -- Yes --> CV[SVG / Plotly / Manim]
+    C -- No --> VA{VizAgent heuristic}
+    VA -- Steps found --> MF[Mermaid Flowchart]
+    VA -- Concepts found --> MM[Mermaid Mindmap]
+    VA -- Numbers found --> BC[Plotly Bar Chart]
+    VA -- None --> LLM{LLM VizSpec?}
+    LLM -- Yes --> SPEC[Plotly / Mermaid / Geometric]
+    LLM -- No --> NONE[No visualization]
 ```
 
 ## Repository Layout
@@ -144,10 +207,15 @@ EuclidsWindow/
 │   │   ├── content.py               # Topic catalog + keyword scoring matcher
 │   │   ├── ai/
 │   │   │   ├── service.py           # Tutor orchestration + diagram jobs
+│   │   │   ├── engine.py            # Ollama LLM wrapper (HTTP + CLI, warm-up, model status)
+│   │   │   ├── viz_agent.py         # VizAgent: heuristic + LLM viz extraction
+│   │   │   ├── visual_planner.py    # Deterministic Plotly planner (20+ templates)
+│   │   │   ├── executor.py          # Plotly/Manim code sandbox execution
+│   │   │   ├── prompts.py           # LLM prompts + level-aware instructions
 │   │   │   ├── coordinator.py       # Multi-agent coordination
 │   │   │   ├── didactics.py         # Structured explanations + learning aids
 │   │   │   ├── checker.py           # Symbolic checks
-│   │   │   ├── visual_planner.py    # Deterministic diagram planning
+│   │   │   ├── media.py             # Diffusion image + MusicGen services
 │   │   │   ├── web_rag.py           # Lightweight web enrichment
 │   │   │   └── handwriting.py       # Scratchpad OCR pipeline
 │   │   ├── services/
@@ -161,7 +229,7 @@ EuclidsWindow/
 │   │   ├── db/
 │   │   └── manim_scenes/
 │   ├── data/
-│   │   ├── demo_topics.json         # 60+ topics with 4 learner-level variants
+│   │   ├── demo_topics.json         # 130+ topics with 4 learner-level variants
 │   │   ├── math_map.json            # Categories + topic prompts for Math Map
 │   │   ├── seed_concepts.json       # Concept graph nodes + prerequisites
 │   │   ├── seed_euclid.json         # Euclid's Elements references
@@ -196,18 +264,25 @@ EuclidsWindow/
 
 ## Topic Coverage
 
-Content in `demo_topics.json` spans these Math Map categories, each with 4-level (kids/teen/college/adult) explanations:
+Content in `demo_topics.json` spans 130+ curated topics across 15 categories. The concept graph (`seed_concepts.json`) contains 104 nodes with prerequisite chains. Each topic has 4-level (kids/teen/college/adult) explanations:
 
 | Category | Example Topics |
 |---|---|
-| **Foundations** | Addition, Division, Fractions, Primes, Modular Arithmetic |
-| **Algebra** | Quadratic Equations, Logarithms, Matrices, Polynomials |
-| **Geometry** | Pythagorean Theorem, Coordinate Geometry, Conic Sections |
-| **Calculus** | Limits, Derivatives, Integrals, Taylor Series |
-| **Discrete Math** | Graph Theory, Combinatorics, Probability, Cryptography |
-| **Linear Algebra** | Vectors, Eigenvalues, Singular Value Decomposition |
-| **Music & Mathematics** | Harmonic Series, Pythagorean Tuning, Euclidean Rhythms, Mozart's Dice Game, Fibonacci Scales, Fractal Music, Group Theory in Music |
-| **Signal Processing & FFT** | FFT Algorithm, Inverse FFT, Frequency Filtering, 2D Image FFT, Fourier Image Compression, Sampling Theorem |
+| **Foundations** | Addition, Division, Fractions, Primes, Modular Arithmetic, Natural Numbers, Integers |
+| **Algebra** | Quadratic Equations, Logarithms, Matrices, Polynomials, Systems of Equations |
+| **Geometry** | Pythagorean Theorem, Coordinate Geometry, Circles, Triangles, Transformations, Polygons |
+| **Calculus** | Limits, Derivatives, Integrals, Taylor Series, Riemann Sums, Optimization |
+| **Discrete Math** | Graph Theory, Combinatorics, Probability, Cryptography, Game Theory |
+| **Linear Algebra** | Vectors, Eigenvalues, Singular Value Decomposition, Linear Transformations |
+| **Number Theory** | Primes, Fermat's Last Theorem, Rational/Real Numbers, Topology |
+| **Music & Mathematics** | Harmonic Series, Pythagorean Tuning, Euclidean Rhythms, Mozart's Dice Game, Fibonacci Scales, Fractal Music, Group Theory in Music, Wave Equation of Sound |
+| **Signal Processing & FFT** | FFT Algorithm, Inverse FFT, Frequency Filtering, 2D Image FFT, Fourier Image Compression |
+| **AI & Neural Networks** | Neural Network Math, Backpropagation, Attention, Transformers, LoRA, RAG, Loss Functions, Dimensionality Reduction |
+| **Recreational Math** | Conway's Game of Life, Surreal Numbers, Look-and-Say Sequence, Puzzles (Logic, Matchstick, River Crossing, Chess) |
+| **Math in Literature** | Alice's Logic Paradoxes, Red Queen's Race, Jabberwocky Sets, Math in Poetry |
+| **Famous Mathematicians** | Euler, Ramanujan, Emmy Noether, Fermat |
+| **Chaos & Fractals** | Chaos Theory, Fractals, Differential Equations |
+| **Mathematical Logic** | Axioms, Proofs, Set Theory, Mathematical Logic |
 
 ## Quick Start
 
@@ -248,22 +323,39 @@ Open `http://127.0.0.1:8000/`.
 
 ## Configuration
 
-Core settings come from `backend/app/config.py` (env-backed through `BaseSettings`), and can also be changed via UI Settings API.
+Core settings come from `backend/app/config.py` (env-backed through `BaseSettings`), and can also be changed via the **Settings** tab in the UI or the Settings API.
 
-Important keys:
+### LLM Model Configuration
 
-- `LOCAL_AI_ENABLED`
-- `LOCAL_LLM_PROVIDER` (`ollama` by default)
-- `LOCAL_LLM_MODEL`
-- `LOCAL_LLM_BASE_URL`
-- `LOCAL_MULTI_AGENT_ENABLED`
-- `LOCAL_WEB_RAG_ENABLED`
-- `LOCAL_MEDIA_ENABLED`
-- `LOCAL_DIFFUSION_MODEL`
-- `LOCAL_MUSIC_MODEL`
-- `LOCAL_MEDIA_DEVICE` (`cpu`/`cuda`/`mps`)
-- `DATABASE_URL`
-- `JWT_SECRET`
+| Setting | Default | Description |
+|---|---|---|
+| `LOCAL_LLM_PROVIDER` | `ollama` | LLM provider |
+| `LOCAL_LLM_MODEL` | `qwen2.5:1.5b` | Default model (CPU-friendly) |
+| `LOCAL_LLM_BASE_URL` | `http://ollama:11434` | Ollama API endpoint |
+| `LOCAL_LLM_TIMEOUT_SECONDS` | `120` | Generation timeout |
+
+**Hardware presets** (configurable in Settings UI):
+
+| Preset | Model | Device | Best For |
+|---|---|---|---|
+| CPU-light | `qwen2.5:0.5b` | cpu | Low-end machines, Raspberry Pi |
+| CPU | `qwen2.5:1.5b` | cpu | Standard laptops, Docker on Mac/Linux |
+| GPU | `llama3.1:8b` | cuda | NVIDIA GPU with 8+ GB VRAM |
+| Apple Silicon | `llama3.1:8b` | mps | M1/M2/M3 Macs |
+
+The model can be switched at runtime from the Settings tab without restarting the app. New models can be pulled from Ollama directly from the UI.
+
+### Other Important Keys
+
+- `LOCAL_AI_ENABLED` — enable/disable the AI tutor pipeline
+- `LOCAL_MULTI_AGENT_ENABLED` — enable multi-agent coordinator (Tier 3)
+- `LOCAL_WEB_RAG_ENABLED` — web enrichment for long-tail topics
+- `LOCAL_MEDIA_ENABLED` — diffusion image + music generation
+- `LOCAL_DIFFUSION_MODEL` — default `stabilityai/sdxl-turbo`
+- `LOCAL_MUSIC_MODEL` — MusicGen model ID
+- `LOCAL_MEDIA_DEVICE` — `cpu`/`cuda`/`mps`
+- `DATABASE_URL` — SQLite connection string
+- `JWT_SECRET` — auth token signing key
 
 See:
 
@@ -340,9 +432,10 @@ or set it in the UI under **Settings → Local LLM Model**.
 
 1. Ask a question in **Tutor** (e.g., "Explain modular arithmetic")
 2. Pick response mode + learner level — content adapts accordingly
-3. Use generated follow-up chips for progressive depth
-4. Render diagram/animation on demand
-5. Conversation context persists via semantic vector store
+3. First response uses rich curated content (instant); follow-up chips route to the LLM for genuine conversational responses (step-by-step, simpler, examples)
+4. Visualizations auto-generated: Plotly charts from the visual planner, Mermaid diagrams from the VizAgent, or on-demand rendering
+5. Click "Auto-Visualize (AI)" for a VizAgent-generated chart/diagram from any answer
+6. Conversation context persists via semantic vector store
 
 ### 2) Interactive Labs
 
@@ -424,10 +517,11 @@ or set it in the UI under **Settings → Local LLM Model**.
 
 ### Tutor / AI
 
-- `POST /api/ai/tutor`
-- `POST /api/ai/visualize`
-- `POST /api/ai/media/image`
-- `POST /api/ai/media/music`
+- `POST /api/ai/tutor` — 3-tier tutor (curated → LLM reasoning → legacy planner)
+- `POST /api/ai/viz-agent` — generate visualization from question + answer text
+- `POST /api/ai/visualize` — on-demand diagram/animation rendering
+- `POST /api/ai/media/image` — diffusion image generation
+- `POST /api/ai/media/music` — music generation
 - `POST /api/ai/handwriting/recognize`
 - `POST /api/ai/handwriting/validate`
 
@@ -467,12 +561,14 @@ or set it in the UI under **Settings → Local LLM Model**.
 - `GET /api/mathmap/topic/{topic_id}`
 - `GET /api/mathmap/search`
 
-### Settings and Evaluation
+### Settings, Models, and Evaluation
 
 - `GET /api/settings`
 - `PUT /api/settings`
 - `GET /api/settings/validate`
 - `POST /api/settings/test`
+- `GET /api/settings/models` — list installed + recommended Ollama models
+- `POST /api/settings/models/pull` — download a new model from Ollama
 - `GET /api/agents`
 - `GET /api/eval/report`
 - `GET /api/eval/history`
@@ -569,7 +665,10 @@ make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_NO_SHUFFLE=1 LORA_OUTPUT=ba
 - **First principles**: Every concept is built up from axioms, not handed as rote formulas
 - **Four-level content**: Kids get analogies and games; teens get real-world connections; college gets proofs and theorems; adults get industry applications and worked examples
 - **Local-first**: All core functionality works offline with a local LLM; no cloud dependency required
+- **Curated + generative hybrid**: Hand-written expert content for known topics (instant, high-quality), LLM for follow-ups and open-ended questions (conversational, adaptive)
+- **Visualization everywhere**: Every answer gets a visualization — deterministic Plotly charts for math topics, Mermaid diagrams for concepts and proofs, VizAgent auto-generation for everything else
 - **Lab-driven learning**: Interactive labs let you *do* the math, not just read about it — record audio and see its frequency spectrum, upload an image and blur it with a low-pass filter, play Mozart's dice game
+- **Hardware-aware**: Runs on anything from a Raspberry Pi (`qwen2.5:0.5b`) to an NVIDIA GPU (`llama3.1:8b`), with presets for each hardware tier
 - **Monochrome scholarly aesthetic**: Black, white, and warm grays — the content speaks for itself
 
 ## Notes

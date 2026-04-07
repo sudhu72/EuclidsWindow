@@ -489,11 +489,12 @@
           <!-- Mozart's Dice Game -->
           <div id="game-dice" class="music-game active">
             <div class="music-game-header">
-              <h4>Musikalisches W&uuml;rfelspiel &mdash; Mozart&rsquo;s Musical Dice Game</h4>
-              <p>Mozart composed 176 pre-written measures for a minuet in C major, 3/4 time. By rolling two dice for each of 16 bars, you select one measure per column from an 11&times;16 table. The result is a unique, properly harmonized minuet &mdash; one of <strong>11<sup>16</sup> &asymp; 4.6 &times; 10<sup>16</sup></strong> possible compositions.</p>
+              <h4>Mozart&rsquo;s Musical Dice Game</h4>
+              <p>Can dice compose music? Mozart proved they can. He pre-wrote 176 short musical phrases and organized them into a clever table. You roll two dice 16 times to pick one phrase per bar &mdash; and the result is always a beautiful minuet. Every roll creates a different piece, yet it always sounds like Mozart wrote it on purpose.</p>
             </div>
             <div class="dice-game-area">
               <div class="dice-controls">
+                <button id="dice-example" class="btn-secondary" title="Load a pre-rolled example to hear what a dice minuet sounds like">Hear an Example</button>
                 <button id="dice-roll-all" class="btn-primary">Roll All 16 Bars</button>
                 <button id="dice-play" class="btn-secondary" disabled>Play Minuet</button>
                 <button id="dice-stop" class="btn-secondary" disabled>Stop</button>
@@ -512,19 +513,30 @@
 
               <!-- Dice probability chart -->
               <div id="dice-prob-chart" class="dice-prob-section">
-                <div class="dice-prob-header"><strong>Dice Roll Probability &amp; the Table</strong></div>
+                <div class="dice-prob-header"><strong>Why do some rolls happen more than others?</strong></div>
                 <div class="dice-prob-flex">
                   <div id="dice-prob-viz" style="flex:1;min-height:200px;"></div>
                   <div class="dice-table-mini" id="dice-table-mini"></div>
                 </div>
                 <div class="dice-prob-explain">
-                  Two dice produce sums 2&ndash;12, but not uniformly. Sum 7 has <strong>6/36 = 16.7%</strong> probability (6 ways: 1+6, 2+5, 3+4, 4+3, 5+2, 6+1), while sums 2 and 12 each have only <strong>1/36 = 2.8%</strong>. Mozart placed his most characteristic measures in rows 6&ndash;8 (dice sums 7&ndash;9) &mdash; the rows you&rsquo;re most likely to land on.
+                  When you roll two dice, the sum of 7 is the most common &mdash; there are 6 ways to make it (1+6, 2+5, 3+4, ...), giving it a <strong>16.7% chance</strong>. Sums like 2 or 12 only have 1 way each (<strong>2.8%</strong>). This creates a triangle-shaped probability distribution. Mozart was clever: he put his best melodies in the rows you&rsquo;re most likely to roll (sums 7&ndash;9).
                 </div>
               </div>
 
               <div id="dice-score" class="dice-score"></div>
               <div class="music-math-note">
-                <strong>Why it always sounds good:</strong> Each column in the table represents a fixed harmonic function &mdash; bars 1&ndash;4 establish the key of C major, bars 5&ndash;8 move to the dominant (G major), bars 9&ndash;12 return, and bars 13&ndash;16 cadence home. Every measure in a column shares this harmonic skeleton, so ANY combination produces a coherent minuet. The melody varies, but the harmony is locked.
+                <strong>Why does it always sound good?</strong> Here&rsquo;s the secret: each of the 16 columns in the table represents a specific role in the song. Bars 1&ndash;4 set up the home key (C major), bars 5&ndash;8 move to a new key (G major), and bars 13&ndash;16 bring us back home. Every phrase in a column follows this harmonic plan, so no matter which row the dice pick, the music stays coherent. The melody changes, but the underlying structure is locked in place.
+                <div style="margin-top:10px;font-size:12px;color:#57534e;">
+                  <strong>The math behind it:</strong>
+                  With 11 choices per bar and 16 bars, there are 11<sup>16</sup> &asymp; <strong>46 quadrillion</strong> possible compositions &mdash; that&rsquo;s more than grains of sand on Earth. This is <em>combinatorics</em>: counting how many ways to combine things. The dice follow a <em>probability distribution</em> (not every outcome is equally likely). And the harmony rules are a form of <em>constrained randomness</em> &mdash; freedom within structure.
+                </div>
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain combinatorics">Combinatorics</a> &bull;
+                  <a href="#" data-music-prompt="explain probability">Probability</a> &bull;
+                  <a href="#" data-music-prompt="explain permutations and combinations">Permutations</a> &bull;
+                  <a href="#" data-music-prompt="explain modular arithmetic">Modular Arithmetic</a>
+                </div>
                 <div class="music-explore-link"><a href="#" data-music-prompt="What is Mozart's Musikalisches Würfelspiel and how does combinatorics create musical compositions?">Explore in Tutor &rarr;</a></div>
               </div>
             </div>
@@ -534,7 +546,7 @@
           <div id="game-harmonics" class="music-game">
             <div class="music-game-header">
               <h4>Harmonic Series Explorer</h4>
-              <p>Every musical note is actually a sum of sine waves at integer multiples of a fundamental frequency. Click harmonics to hear and visualize them.</p>
+              <p>Why do some notes sound beautiful together? Every musical note you hear is actually many frequencies at once. A guitar string doesn&rsquo;t just vibrate at one speed &mdash; it vibrates at 2&times;, 3&times;, 4&times; and more, all at the same time. These are called <em>harmonics</em>.</p>
             </div>
             <div class="harmonics-area">
               <div class="harmonics-controls">
@@ -546,8 +558,15 @@
               <div id="harmonics-buttons" class="harmonics-grid"></div>
               <div id="harmonics-viz" style="min-height:200px;"></div>
               <div class="music-math-note">
-                <strong>The Mathematics:</strong> The nth harmonic has frequency n&times;f. The octave is 2f (ratio 2:1), the perfect fifth is 3f/2 (ratio 3:2), the major third is 5f/4 (ratio 5:4). These simple integer ratios are why certain intervals sound consonant — the waveforms align periodically.
-                <div class="music-explore-link"><a href="#" data-music-prompt="What is the harmonic series and how does it relate to music?">Explore in Tutor →</a></div>
+                <strong>Why do some notes &ldquo;fit&rdquo; together?</strong> It comes down to simple fractions. If a note vibrates at frequency <em>f</em>, the note one octave higher vibrates at exactly 2<em>f</em> (a 2:1 ratio). A &ldquo;perfect fifth&rdquo; up is 3<em>f</em>/2 (a 3:2 ratio). A &ldquo;major third&rdquo; is 5<em>f</em>/4. The simpler the fraction, the more pleasant the combination sounds &mdash; because the sound waves line up neatly. This is why Pythagoras called music &ldquo;numbers you can hear.&rdquo;
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain the harmonic series in mathematics">Harmonic Series</a> &bull;
+                  <a href="#" data-music-prompt="explain Fourier analysis">Fourier Analysis</a> &bull;
+                  <a href="#" data-music-prompt="explain the wave equation">Wave Equation</a> &bull;
+                  <a href="#" data-music-prompt="explain ratios and proportions">Ratios</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="What is the harmonic series and how does it relate to music?">Explore in Tutor &rarr;</a></div>
               </div>
             </div>
           </div>
@@ -556,7 +575,7 @@
           <div id="game-euclidean" class="music-game">
             <div class="music-game-header">
               <h4>Euclidean Rhythm Generator</h4>
-              <p>Distribute k beats as evenly as possible across n steps using Euclid's algorithm (the same one for GCD). This produces rhythms found in African, Cuban, and Middle Eastern music.</p>
+              <p>What do ancient Greek math and African drumming have in common? Euclid&rsquo;s 2,300-year-old algorithm for finding the greatest common divisor (GCD) can also create the world&rsquo;s most popular rhythms. Just tell it how many beats to spread across how many steps, and it spaces them as evenly as possible.</p>
             </div>
             <div class="euclidean-area">
               <div class="euclidean-controls">
@@ -571,8 +590,15 @@
               <div id="eucl-pattern" style="font-family:monospace;font-size:16px;letter-spacing:2px;margin:8px 0;"></div>
               <div id="eucl-name" style="font-size:13px;color:#78716c;"></div>
               <div class="music-math-note">
-                <strong>The Mathematics:</strong> E(k,n) distributes k onsets among n slots using Bjorklund's algorithm (equivalent to Bresenham's line algorithm and Euclid's GCD algorithm). E(3,8) = [x . . x . . x .] is the Cuban tresillo. E(5,8) is the Cuban cinquillo. E(7,12) produces a pattern found in West African bell patterns.
-                <div class="music-explore-link"><a href="#" data-music-prompt="What are Euclidean rhythms and how does modular arithmetic describe rhythmic cycles?">Explore in Tutor →</a></div>
+                <strong>How does a math algorithm make music?</strong> The idea is simple: if you have 3 beats and 8 slots, spread them as evenly as you can: <code>[x . . x . . x .]</code>. That pattern is the Cuban <em>tresillo</em> &mdash; one of the most used rhythms in pop music. With 5 beats in 8 slots you get the <em>cinquillo</em>; with 7 beats in 12 you get a West African bell pattern. The algorithm that does this spacing is the same one Euclid invented to find the GCD of two numbers. Mathematicians call these &ldquo;maximally even&rdquo; distributions.
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain Euclid's algorithm and GCD">Euclid&rsquo;s Algorithm</a> &bull;
+                  <a href="#" data-music-prompt="explain modular arithmetic">Modular Arithmetic</a> &bull;
+                  <a href="#" data-music-prompt="explain number theory">Number Theory</a> &bull;
+                  <a href="#" data-music-prompt="explain least common multiple">LCM &amp; Polyrhythms</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="What are Euclidean rhythms and how does modular arithmetic describe rhythmic cycles?">Explore in Tutor &rarr;</a></div>
               </div>
             </div>
           </div>
@@ -581,7 +607,7 @@
           <div id="game-fibonacci" class="music-game">
             <div class="music-game-header">
               <h4>Fibonacci in Musical Scales</h4>
-              <p>The piano keyboard encodes Fibonacci numbers: 1 octave, 2 types of keys (black/white), 3 black keys in a group, 5 black keys total, 8 white keys, 13 keys total per octave.</p>
+              <p>Look at one octave on a piano. Count: <strong>13</strong> keys total, <strong>8</strong> white, <strong>5</strong> black (in groups of <strong>2</strong> and <strong>3</strong>). Those numbers &mdash; 1, 2, 3, 5, 8, 13 &mdash; are the Fibonacci sequence! This isn&rsquo;t a coincidence; the scales that sound best to our ears naturally follow this pattern.</p>
             </div>
             <div class="fibonacci-area">
               <div id="fib-keyboard" class="fib-keyboard"></div>
@@ -591,8 +617,15 @@
                 <button id="fib-play-chromatic" class="btn-secondary">Play Chromatic (13 notes)</button>
               </div>
               <div id="fib-info" class="music-math-note">
-                <strong>The Mathematics:</strong> The Fibonacci sequence 1, 1, 2, 3, 5, 8, 13... appears naturally in the chromatic scale. The pentatonic scale (5 notes) and diatonic scale (8 notes within 13 chromatic steps) arise from the same pattern. The golden ratio &phi; = 1.618... governs where climax points feel most natural in a composition — typically at 61.8% of the way through.
-                <div class="music-explore-link"><a href="#" data-music-prompt="Where does the Fibonacci sequence appear in musical structure and how did Bartók use the golden ratio?">Explore in Tutor →</a></div>
+                <strong>Why Fibonacci?</strong> The Fibonacci sequence is 1, 1, 2, 3, 5, 8, 13... (each number is the sum of the two before it). The pentatonic scale uses <strong>5</strong> notes, the major scale uses <strong>8</strong>, and both live within <strong>13</strong> chromatic steps. Composers like Bart&oacute;k deliberately placed musical climaxes at the <em>golden ratio</em> point (&phi; &asymp; 1.618) &mdash; about 62% of the way through a piece &mdash; because it feels naturally satisfying.
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain the Fibonacci sequence">Fibonacci Sequence</a> &bull;
+                  <a href="#" data-music-prompt="explain the golden ratio">Golden Ratio</a> &bull;
+                  <a href="#" data-music-prompt="explain sequences and series">Sequences &amp; Series</a> &bull;
+                  <a href="#" data-music-prompt="explain patterns in nature">Patterns in Nature</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="Where does the Fibonacci sequence appear in musical structure and how did Bartók use the golden ratio?">Explore in Tutor &rarr;</a></div>
               </div>
             </div>
           </div>
@@ -601,7 +634,7 @@
           <div id="game-pythagorean" class="music-game">
             <div class="music-game-header">
               <h4>Pythagorean Tuning vs Equal Temperament</h4>
-              <p>Pythagoras discovered that pleasing intervals come from simple ratios (3:2 for a fifth, 4:3 for a fourth). But stacking twelve perfect fifths doesn't return to the same note — the gap is the <em>Pythagorean comma</em>.</p>
+              <p>2,500 years ago, Pythagoras discovered that the most beautiful musical intervals are simple fractions: multiply a frequency by 3/2 and you hear a &ldquo;perfect fifth,&rdquo; by 4/3 for a &ldquo;perfect fourth.&rdquo; But this simple idea hides an impossible puzzle&hellip;</p>
             </div>
             <div class="pyth-area">
               <div class="pyth-controls">
@@ -613,8 +646,15 @@
               </div>
               <div id="pyth-comparison" class="pyth-comparison"></div>
               <div class="music-math-note">
-                <strong>The Mathematics:</strong> A pure fifth is &times;3/2. Stacking 12 fifths: (3/2)<sup>12</sup> = 129.746... but 7 octaves = 2<sup>7</sup> = 128. The ratio 129.746/128 &asymp; 1.01364 is the Pythagorean comma (~23.46 cents). Equal temperament compromises: each semitone = 2<sup>1/12</sup> &asymp; 1.05946, so a tempered fifth = 2<sup>7/12</sup> &asymp; 1.4983 instead of exactly 1.5.
-                <div class="music-explore-link"><a href="#" data-music-prompt="What is Pythagorean tuning and why can't you tune a piano perfectly using pure ratios?">Explore in Tutor →</a></div>
+                <strong>Why can&rsquo;t you tune a piano perfectly?</strong> Start on a note and go up by a perfect fifth (multiply by 3/2) twelve times. You&rsquo;d expect to land back on the same note, seven octaves higher. But (3/2)<sup>12</sup> = 129.75, while 2<sup>7</sup> = 128. They don&rsquo;t match! That tiny gap (~1.4%) is called the <em>Pythagorean comma</em>. It means perfect tuning with pure fractions is mathematically impossible for all 12 notes at once. The modern solution, <em>equal temperament</em>, slightly detunes every interval so each semitone is exactly 2<sup>1/12</sup> apart &mdash; a compromise that lets you play in any key.
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain ratios and proportions">Ratios</a> &bull;
+                  <a href="#" data-music-prompt="explain logarithms">Logarithms</a> &bull;
+                  <a href="#" data-music-prompt="explain irrational numbers">Irrational Numbers</a> &bull;
+                  <a href="#" data-music-prompt="explain exponents and powers">Exponents</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="What is Pythagorean tuning and why can't you tune a piano perfectly using pure ratios?">Explore in Tutor &rarr;</a></div>
               </div>
             </div>
           </div>
@@ -1280,7 +1320,8 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="app.js?v=20260327-2"></script>
-    <script src="musiclab.js?v=20260403"></script>
+    <script src="mozart_notes.js?v=20260402"></script>
+    <script src="musiclab.js?v=20260402"></script>
     <script src="calclab.js?v=20260404"></script>
     <script src="fftlab.js?v=20260404b"></script>
     <script src="fftlab-image.js?v=20260404"></script>
