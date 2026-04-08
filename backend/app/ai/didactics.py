@@ -177,13 +177,47 @@ def _is_curated_level_content(text: str) -> bool:
     return sum(1 for m in _CURATED_MARKERS if m in text) >= 3
 
 
-_COMPLEX_NOTATION_RE = re.compile(
+_DISPLAY_MATH_RE = re.compile(
     r"\$\$.*?\$\$"
-    r"|\\\(.*?\\\)"
     r"|\\\[.*?\\\]"
     r"|\\begin\{.*?\}.*?\\end\{.*?\}",
     re.DOTALL,
 )
+_INLINE_MATH_RE = re.compile(r"\\\((.+?)\\\)")
+
+_TRULY_COMPLEX_TOKENS = re.compile(
+    r"\\(?:int|sum|prod|frac|sqrt|lim|infty|partial|nabla|binom|begin|end|matrix|pmatrix|cases)"
+)
+
+
+def _latex_to_plain(latex: str) -> str:
+    """Best-effort conversion of simple LaTeX to readable plain text."""
+    t = latex
+    t = re.sub(r"\\(?:text|mathrm|mathbf|textbf|mathit)\{([^}]*)\}", r"\1", t)
+    t = re.sub(r"\\frac\{([^}]*)\}\{([^}]*)\}", r"(\1)/(\2)", t)
+    t = re.sub(r"\\sqrt\{([^}]*)\}", r"sqrt(\1)", t)
+    t = t.replace("\\cdot", "*").replace("\\times", "x")
+    t = t.replace("\\leq", "<=").replace("\\geq", ">=").replace("\\neq", "!=")
+    t = t.replace("\\approx", "≈").replace("\\pm", "±")
+    t = re.sub(r"\\(?:left|right|,|;|!|quad|qquad)", " ", t)
+    t = re.sub(r"\^{([^}]*)}", r"^\1", t)
+    t = re.sub(r"_{([^}]*)}", r"_\1", t)
+    t = re.sub(r"\\[a-zA-Z]+", "", t)
+    t = re.sub(r"[{}]", "", t)
+    return t.strip()
+
+
+def _simplify_inline_math(match: re.Match) -> str:
+    """Replace inline \\(...\\) with plain text or a placeholder."""
+    inner = match.group(1)
+    if _TRULY_COMPLEX_TOKENS.search(inner):
+        plain = _latex_to_plain(inner)
+        if len(plain) > 60:
+            return "(a complex formula)"
+        return plain
+    return _latex_to_plain(inner)
+
+
 _ADVANCED_TERMS = [
     ("orthogonal", "at right angles"),
     ("eigenvalue", "stretching amount"),
@@ -207,7 +241,8 @@ _ADVANCED_TERMS = [
 def _simplify_for_kids(body: str, question: str) -> str:
     """Best-effort transformation of advanced content into kid-friendly language."""
     text = body
-    text = _COMPLEX_NOTATION_RE.sub("(a math formula)", text)
+    text = _DISPLAY_MATH_RE.sub("(a formula — see the teen/college view for details)", text)
+    text = _INLINE_MATH_RE.sub(_simplify_inline_math, text)
     for advanced, simple in _ADVANCED_TERMS:
         text = re.sub(
             r"\b" + re.escape(advanced) + r"s?\b",

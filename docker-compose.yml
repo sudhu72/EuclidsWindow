@@ -12,19 +12,21 @@ services:
       LOCAL_LLM_TIMEOUT_SECONDS: "120"
       LOCAL_AI_EXECUTION_TIMEOUT_SECONDS: "60"
       LOCAL_LLM_BASE_URL: "${LOCAL_LLM_BASE_URL:-http://ollama:11434}"
+    depends_on:
+      ollama:
+        condition: service_healthy
     volumes:
       - ./backend/static:/app/backend/static
       - context-db:/app/backend/data/context_db
 
   ollama:
     image: ollama/ollama:latest
-    profiles: ["ollama"]
     ports:
       - "11434:11434"
     volumes:
       - ollama-data:/root/.ollama
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:11434/api/tags"]
+      test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
       retries: 12

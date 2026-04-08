@@ -456,7 +456,9 @@ const switchToTab = (tabId) => {
   if (target) target.classList.add("active");
 
   if (tabId === "mindmap") loadConceptsForMindmap();
-  if (tabId === "matrixlab") loadMatrixLab();
+  if (tabId === "matrixlab") {
+    // Matrix Lab is now initialized on page load
+  }
   if (tabId === "euclid") searchEuclid();
   if (tabId === "resources") searchResources();
   if (tabId === "collections") loadPromptCollections();
@@ -1221,7 +1223,21 @@ const resourceDifficulty = document.getElementById("resource-difficulty");
 const resourceSearch = document.getElementById("resource-search");
 const searchResourcesBtn = document.getElementById("search-resources");
 const resourceResults = document.getElementById("resource-results");
-const matrixSize = document.getElementById("matrix-size");
+
+// Matrix Lab - Dimension selectors
+const matrixARows = document.getElementById("matrix-a-rows");
+const matrixACols = document.getElementById("matrix-a-cols");
+const matrixBRows = document.getElementById("matrix-b-rows");
+const matrixBCols = document.getElementById("matrix-b-cols");
+const matrixAGrid = document.getElementById("matrix-a-grid");
+const matrixBGrid = document.getElementById("matrix-b-grid");
+const matrixVGrid = document.getElementById("matrix-v-grid");
+const matrixCGrid = document.getElementById("matrix-c-grid");
+const matrixCvGrid = document.getElementById("matrix-cv-grid");
+const vectorHint = document.getElementById("vector-hint");
+const matrixOperationHint = document.getElementById("matrix-operation-hint");
+
+// Matrix Lab - Controls
 const matrixOperation = document.getElementById("matrix-operation");
 const matrixPracticeMode = document.getElementById("matrix-practice-mode");
 const matrixCompute = document.getElementById("matrix-compute");
@@ -1231,6 +1247,9 @@ const matrixReset = document.getElementById("matrix-reset");
 const matrixFeedback = document.getElementById("matrix-feedback");
 const matrixResults = document.getElementById("matrix-results");
 const matrixPlot = document.getElementById("matrix-plot");
+const matrixAnimBtn = document.getElementById("matrix-anim-btn");
+const matrixAnimWhich = document.getElementById("matrix-anim-which");
+const matrixAnimOutput = document.getElementById("matrix-anim-output");
 const collectionsCategory = document.getElementById("collections-category");
 const collectionsSearch = document.getElementById("collections-search");
 const collectionsRefresh = document.getElementById("collections-refresh");
@@ -1262,42 +1281,121 @@ const matrixInput = (id, fallback = 0) => {
   return Number.isFinite(value) ? value : fallback;
 };
 
-const currentMatrixSize = () => Number(matrixSize?.value) === 3 ? 3 : 2;
+// Generate dynamic matrix input grid
+const generateMatrixGrid = (containerId, prefix, rows, cols, defaultValue = (i, j) => (i === j ? 1 : 0)) => {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  container.style.setProperty('--cols', cols);
+  container.innerHTML = '';
+  
+  for (let i = 1; i <= rows; i++) {
+    for (let j = 1; j <= cols; j++) {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.step = 'any';
+      input.id = `${prefix}-${i}${j}`;
+      input.value = defaultValue(i, j);
+      container.appendChild(input);
+    }
+  }
+};
 
-const readMatrixByPrefix = (prefix, size) => {
+// Generate dynamic vector input grid
+const generateVectorGrid = (containerId, prefix, size, defaultValue = (i) => 1) => {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  container.style.setProperty('--cols', size);
+  container.innerHTML = '';
+  
+  for (let i = 1; i <= size; i++) {
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.step = 'any';
+    input.id = `${prefix}-${i}`;
+    input.value = defaultValue(i);
+    container.appendChild(input);
+  }
+};
+
+// Get current matrix dimensions
+const getMatrixDims = () => ({
+  aRows: Number(matrixARows?.value) || 2,
+  aCols: Number(matrixACols?.value) || 2,
+  bRows: Number(matrixBRows?.value) || 2,
+  bCols: Number(matrixBCols?.value) || 2,
+});
+
+// Read matrix from dynamically generated grid
+const readMatrixDynamic = (prefix, rows, cols) => {
   const m = [];
-  for (let i = 1; i <= size; i += 1) {
+  for (let i = 1; i <= rows; i++) {
     const row = [];
-    for (let j = 1; j <= size; j += 1) {
-      const fallback = i === j ? 1 : 0;
-      row.push(matrixInput(`${prefix}-${i}${j}`, fallback));
+    for (let j = 1; j <= cols; j++) {
+      row.push(matrixInput(`${prefix}-${i}${j}`, 0));
     }
     m.push(row);
   }
   return m;
 };
 
-const readVectorByPrefix = (prefix, size, defaults = [1, 1, 1]) => {
-  const ids = [`${prefix}-x`, `${prefix}-y`, `${prefix}-z`];
-  const out = [];
-  for (let i = 0; i < size; i += 1) {
-    out.push(matrixInput(ids[i], defaults[i] ?? 0));
+// Read vector from dynamically generated grid
+const readVectorDynamic = (prefix, size) => {
+  const v = [];
+  for (let i = 1; i <= size; i++) {
+    v.push(matrixInput(`${prefix}-${i}`, 0));
   }
-  return out;
+  return v;
 };
 
-const readMatrixA = () => readMatrixByPrefix("matrix-a", currentMatrixSize());
-const readMatrixB = () => readMatrixByPrefix("matrix-b", currentMatrixSize());
-const readPredictedMatrixC = () => readMatrixByPrefix("matrix-c", currentMatrixSize());
-const readVectorV = () => readVectorByPrefix("matrix-v", currentMatrixSize(), [1, 1, 1]);
-const readPredictedCv = () => readVectorByPrefix("matrix-cv", currentMatrixSize(), [0, 0, 0]);
+const readMatrixA = () => {
+  const { aRows, aCols } = getMatrixDims();
+  return readMatrixDynamic('matrix-a', aRows, aCols);
+};
 
-const addMatricesN = (a, b) => a.map((row, i) => row.map((value, j) => value + b[i][j]));
-const subtractMatricesN = (a, b) => a.map((row, i) => row.map((value, j) => value - b[i][j]));
-const multiplyMatricesN = (a, b) => a.map((row, i) => row.map((_, j) =>
-  row.reduce((sum, __, k) => sum + a[i][k] * b[k][j], 0)
-));
-const applyMatrixToVectorN = (m, v) => m.map((row) => row.reduce((sum, value, i) => sum + value * v[i], 0));
+const readMatrixB = () => {
+  const { bRows, bCols } = getMatrixDims();
+  return readMatrixDynamic('matrix-b', bRows, bCols);
+};
+
+const readVectorV = () => {
+  const { aCols } = getMatrixDims();
+  return readVectorDynamic('matrix-v', aCols);
+};
+
+// Matrix operations supporting arbitrary dimensions
+const addMatricesN = (a, b) => {
+  if (a.length !== b.length || a[0].length !== b[0].length) {
+    throw new Error('Matrices must have same dimensions for addition');
+  }
+  return a.map((row, i) => row.map((value, j) => value + b[i][j]));
+};
+
+const subtractMatricesN = (a, b) => {
+  if (a.length !== b.length || a[0].length !== b[0].length) {
+    throw new Error('Matrices must have same dimensions for subtraction');
+  }
+  return a.map((row, i) => row.map((value, j) => value - b[i][j]));
+};
+
+const multiplyMatricesN = (a, b) => {
+  if (a[0].length !== b.length) {
+    throw new Error(`Cannot multiply ${a.length}×${a[0].length} by ${b.length}×${b[0].length}: inner dimensions must match`);
+  }
+  return a.map((row) =>
+    b[0].map((_, colIdx) =>
+      row.reduce((sum, val, k) => sum + val * b[k][colIdx], 0)
+    )
+  );
+};
+
+const applyMatrixToVectorN = (m, v) => {
+  if (m[0].length !== v.length) {
+    throw new Error(`Cannot multiply ${m.length}×${m[0].length} matrix by ${v.length}D vector`);
+  }
+  return m.map((row) => row.reduce((sum, value, i) => sum + value * v[i], 0));
+};
 
 const formatMatrixN = (m) => {
   const rows = m.map((row) =>
@@ -1438,17 +1536,117 @@ const renderMatrixLabPlot = (a, b, c, v) => {
   Plotly.newPlot(matrixPlot, traces, layout, { displayModeBar: false, responsive: true });
 };
 
+const generateMatrixAnimation = async () => {
+  if (!matrixAnimBtn || !matrixAnimOutput) return;
+  const which = matrixAnimWhich?.value || "A";
+  const { aRows, aCols, bRows, bCols } = getMatrixDims();
+
+  let matrix, rows, cols;
+  if (which === "A") {
+    matrix = readMatrixA();
+    rows = aRows;
+    cols = aCols;
+  } else if (which === "B") {
+    matrix = readMatrixB();
+    rows = bRows;
+    cols = bCols;
+  } else {
+    const a = readMatrixA();
+    const b = readMatrixB();
+    const op = matrixOperation?.value || "add";
+    try {
+      if (op === "subtract") matrix = subtractMatricesN(a, b);
+      else if (op === "multiply") matrix = multiplyMatricesN(a, b);
+      else matrix = addMatricesN(a, b);
+      rows = matrix.length;
+      cols = matrix[0].length;
+    } catch (err) {
+      matrixAnimOutput.innerHTML = `<div class="viz-placeholder">Error: ${err.message}</div>`;
+      return;
+    }
+  }
+
+  if (rows !== cols) {
+    matrixAnimOutput.innerHTML = '<div class="viz-placeholder">Animation requires square matrices. Current matrix is not square.</div>';
+    return;
+  }
+
+  if (rows !== 2) {
+    matrixAnimOutput.innerHTML = '<div class="viz-placeholder">Animation currently supports 2×2 matrices only.</div>';
+    return;
+  }
+
+  const title = `Matrix ${which} Transformation`;
+  matrixAnimBtn.disabled = true;
+  let elapsed = 0;
+  matrixAnimOutput.innerHTML = '<div class="mat-anim-progress"><div class="spinner-sm"></div><span>Rendering Manim animation... 0s</span></div>';
+  const ticker = setInterval(() => {
+    elapsed += 1;
+    const span = matrixAnimOutput.querySelector(".mat-anim-progress span");
+    if (span) span.textContent = `Rendering Manim animation... ${elapsed}s`;
+  }, 1000);
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/matrix/animate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matrix, title }),
+    });
+    clearInterval(ticker);
+    const payload = await resp.json();
+
+    if (payload.status === "completed" && payload.visualization) {
+      const viz = payload.visualization;
+      const data = viz.data || {};
+      if (data.url) {
+        const url = data.url.startsWith("http") ? data.url : `${API_BASE}${data.url}`;
+        if (data.format === "gif") {
+          matrixAnimOutput.innerHTML = `<img src="${url}" alt="${title}" />`;
+        } else {
+          matrixAnimOutput.innerHTML = `<video src="${url}" controls autoplay loop muted></video>`;
+        }
+      } else {
+        matrixAnimOutput.innerHTML = '<div class="viz-placeholder">Animation rendered but no output file was produced.</div>';
+      }
+    } else {
+      matrixAnimOutput.innerHTML = `<div class="viz-placeholder">${payload.message || "Animation render failed. Ensure Manim is installed."}</div>`;
+    }
+  } catch (err) {
+    clearInterval(ticker);
+    matrixAnimOutput.innerHTML = `<div class="viz-placeholder">Error: ${err.message}</div>`;
+  } finally {
+    matrixAnimBtn.disabled = false;
+  }
+};
+
 const computeMatrixLab = () => {
+  const { aRows, aCols, bRows, bCols } = getMatrixDims();
   const a = readMatrixA();
   const b = readMatrixB();
   const v = readVectorV();
   const op = matrixOperation?.value || "add";
-  const n = currentMatrixSize();
-  const c = op === "subtract"
-    ? subtractMatricesN(a, b)
-    : op === "multiply"
-      ? multiplyMatricesN(a, b)
-      : addMatricesN(a, b);
+  
+  let c, cRows, cCols;
+  try {
+    if (op === "subtract") {
+      c = subtractMatricesN(a, b);
+      cRows = aRows;
+      cCols = aCols;
+    } else if (op === "multiply") {
+      c = multiplyMatricesN(a, b);
+      cRows = aRows;
+      cCols = bCols;
+    } else {
+      c = addMatricesN(a, b);
+      cRows = aRows;
+      cCols = aCols;
+    }
+  } catch (err) {
+    if (matrixResults) {
+      matrixResults.innerHTML = `<div class="viz-placeholder" style="color:#dc2626;">${err.message}</div>`;
+    }
+    return;
+  }
 
   const av = applyMatrixToVectorN(a, v);
   const bv = applyMatrixToVectorN(b, v);
@@ -1456,6 +1654,10 @@ const computeMatrixLab = () => {
   const opLabel = op === "subtract" ? "A - B" : op === "multiply" ? "A × B" : "A + B";
   const practiceMode = !!matrixPracticeMode?.checked;
   const revealAnswers = !practiceMode || matrixPracticePassed;
+
+  // Generate C and C·v prediction grids if dimensions changed
+  generateMatrixGrid('matrix-c-grid', 'matrix-c', cRows, cCols, () => 0);
+  generateVectorGrid('matrix-cv-grid', 'matrix-cv', cRows, () => 0);
 
   if (matrixResults) {
     matrixResults.innerHTML = `
@@ -1467,43 +1669,70 @@ const computeMatrixLab = () => {
           : "Answers are visible."}
       </div>
       <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;">
-        <div><strong>A</strong>${formatMatrixN(a)}</div>
-        <div><strong>B</strong>${formatMatrixN(b)}</div>
-        <div><strong>C</strong>${revealAnswers ? formatMatrixN(c) : "<div style='padding:8px 0; color:#64748b;'>Hidden (solve by hand first)</div>"}</div>
+        <div><strong>A (${aRows}×${aCols})</strong>${formatMatrixN(a)}</div>
+        <div><strong>B (${bRows}×${bCols})</strong>${formatMatrixN(b)}</div>
+        <div><strong>C (${cRows}×${cCols})</strong>${revealAnswers ? formatMatrixN(c) : "<div style='padding:8px 0; color:#64748b;'>Hidden (solve by hand first)</div>"}</div>
       </div>
-      <p style="margin-top:10px;"><strong>Dimension:</strong> ${n}×${n}</p>
-      <p><strong>v</strong> = ${formatVectorN(v)}</p>
+      <p style="margin-top:10px;"><strong>v</strong> = ${formatVectorN(v)}</p>
       <p><strong>A·v</strong> = ${formatVectorN(av)} | <strong>B·v</strong> = ${formatVectorN(bv)} | <strong>C·v</strong> = ${revealAnswers ? formatVectorN(cv) : "Hidden"}</p>
       <div style="margin-top:10px;"><strong>By-hand steps</strong>${byHandStepsHtml(a, b, op, v)}</div>
     `;
   }
 
-  renderMatrixLabPlot(a, b, c, v);
+  // Only render plot if matrices are square and 2D/3D
+  const isSquare = aRows === aCols && bRows === bCols && cRows === cCols;
+  const canVisualize = isSquare && (aRows === 2 || aRows === 3);
+  
+  if (canVisualize) {
+    renderMatrixLabPlot(a, b, c, v);
+  } else {
+    if (matrixPlot) {
+      matrixPlot.innerHTML = `<div class="viz-placeholder">Geometric visualization requires square 2×2 or 3×3 matrices. Current result is ${cRows}×${cCols}.</div>`;
+    }
+  }
 };
 
 const checkMatrixWork = () => {
+  const { aRows, aCols, bRows, bCols } = getMatrixDims();
   const a = readMatrixA();
   const b = readMatrixB();
   const v = readVectorV();
   const op = matrixOperation?.value || "add";
-  const n = currentMatrixSize();
-  const c = op === "subtract"
-    ? subtractMatricesN(a, b)
-    : op === "multiply"
-      ? multiplyMatricesN(a, b)
-      : addMatricesN(a, b);
+  
+  let c, cRows, cCols;
+  try {
+    if (op === "subtract") {
+      c = subtractMatricesN(a, b);
+      cRows = aRows;
+      cCols = aCols;
+    } else if (op === "multiply") {
+      c = multiplyMatricesN(a, b);
+      cRows = aRows;
+      cCols = bCols;
+    } else {
+      c = addMatricesN(a, b);
+      cRows = aRows;
+      cCols = aCols;
+    }
+  } catch (err) {
+    if (matrixFeedback) {
+      matrixFeedback.innerHTML = `<div style="color:#dc2626;">Error: ${err.message}</div>`;
+    }
+    return;
+  }
+  
   const cv = applyMatrixToVectorN(c, v);
-  const predictedC = readPredictedMatrixC();
-  const predictedCv = readPredictedCv();
+  const predictedC = readMatrixDynamic('matrix-c', cRows, cCols);
+  const predictedCv = readVectorDynamic('matrix-cv', cRows);
 
   const cells = [];
-  for (let i = 0; i < n; i += 1) {
-    for (let j = 0; j < n; j += 1) {
+  for (let i = 0; i < cRows; i++) {
+    for (let j = 0; j < cCols; j++) {
       cells.push([`C${i + 1}${j + 1}`, predictedC[i][j], c[i][j]]);
     }
   }
-  const axes = ["x", "y", "z"];
-  for (let i = 0; i < n; i += 1) {
+  const axes = ["x", "y", "z", "w"];
+  for (let i = 0; i < cRows; i++) {
     cells.push([`C·v ${axes[i] || `c${i + 1}`}`, predictedCv[i], cv[i]]);
   }
   const wrong = cells.filter(([, got, expected]) => !approxEq(got, expected));
@@ -1525,85 +1754,83 @@ const checkMatrixWork = () => {
 };
 
 const loadMatrixLabExample = () => {
-  const set = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.value = String(value);
-  };
-  const n = currentMatrixSize();
-  if (n === 3) {
-    // Homogeneous affine example: shear then translate.
-    set("matrix-a-11", 1); set("matrix-a-12", 0.5); set("matrix-a-13", 0);
-    set("matrix-a-21", 0); set("matrix-a-22", 1); set("matrix-a-23", 0);
-    set("matrix-a-31", 0); set("matrix-a-32", 0); set("matrix-a-33", 1);
-    set("matrix-b-11", 1); set("matrix-b-12", 0); set("matrix-b-13", 2);
-    set("matrix-b-21", 0); set("matrix-b-22", 1); set("matrix-b-23", 1);
-    set("matrix-b-31", 0); set("matrix-b-32", 0); set("matrix-b-33", 1);
-    set("matrix-v-x", 1); set("matrix-v-y", 2); set("matrix-v-z", 1);
+  const { aRows, aCols } = getMatrixDims();
+  
+  if (aRows === 3 && aCols === 3) {
+    // 3x3 example: Homogeneous affine transformation
+    const setMatrix = (grid, values) => {
+      values.forEach((val, idx) => {
+        const i = Math.floor(idx / 3) + 1;
+        const j = (idx % 3) + 1;
+        const el = document.getElementById(`${grid}-${i}${j}`);
+        if (el) el.value = String(val);
+      });
+    };
+    setMatrix('matrix-a', [1, 0.5, 0, 0, 1, 0, 0, 0, 1]);
+    setMatrix('matrix-b', [1, 0, 2, 0, 1, 1, 0, 0, 1]);
+    ['matrix-v-1', 'matrix-v-2', 'matrix-v-3'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.value = String([1, 2, 1][i]);
+    });
   } else {
-    // Shear + stretch example (2x2).
-    set("matrix-a-11", 1); set("matrix-a-12", 1);
-    set("matrix-a-21", 0); set("matrix-a-22", 1);
-    set("matrix-b-11", 2); set("matrix-b-12", 0);
-    set("matrix-b-21", 0); set("matrix-b-22", 1);
-    set("matrix-v-x", 1); set("matrix-v-y", 2);
+    // 2x2 example: rotation + scaling
+    const setMatrix = (grid, values) => {
+      values.forEach((val, idx) => {
+        const i = Math.floor(idx / aCols) + 1;
+        const j = (idx % aCols) + 1;
+        const el = document.getElementById(`${grid}-${i}${j}`);
+        if (el) el.value = String(val);
+      });
+    };
+    
+    if (aRows === 2 && aCols === 2) {
+      setMatrix('matrix-a', [0, -1, 1, 0]); // 90° rotation
+      setMatrix('matrix-b', [2, 0, 0, 2]);  // 2x scale
+    } else {
+      // Generic example for any dimension
+      for (let i = 1; i <= aRows; i++) {
+        for (let j = 1; j <= aCols; j++) {
+          const el = document.getElementById(`matrix-a-${i}${j}`);
+          if (el) el.value = String(i === j ? 2 : 1);
+        }
+      }
+      const { bRows, bCols } = getMatrixDims();
+      for (let i = 1; i <= bRows; i++) {
+        for (let j = 1; j <= bCols; j++) {
+          const el = document.getElementById(`matrix-b-${i}${j}`);
+          if (el) el.value = String(i === j ? 1 : 0);
+        }
+      }
+    }
+    
+    // Set vector v
+    for (let i = 1; i <= aCols; i++) {
+      const el = document.getElementById(`matrix-v-${i}`);
+      if (el) el.value = "1";
+    }
   }
-  set("matrix-c-11", 0); set("matrix-c-12", 0); set("matrix-c-13", 0);
-  set("matrix-c-21", 0); set("matrix-c-22", 0); set("matrix-c-23", 0);
-  set("matrix-c-31", 0); set("matrix-c-32", 0); set("matrix-c-33", 1);
-  set("matrix-cv-x", 0); set("matrix-cv-y", 0); set("matrix-cv-z", 0);
-  if (matrixOperation) matrixOperation.value = "multiply";
-  matrixPracticePassed = false;
-  if (matrixFeedback) {
-    matrixFeedback.textContent = "Example loaded. Try solving by hand before reveal.";
-    matrixFeedback.style.color = "#475569";
-  }
+  
+  if (matrixPracticeMode) matrixPracticeMode.checked = false;
   computeMatrixLab();
 };
 
 const resetMatrixLab = () => {
-  const ids = [
-    "matrix-a-11", "matrix-a-12", "matrix-a-13", "matrix-a-21", "matrix-a-22", "matrix-a-23", "matrix-a-31", "matrix-a-32", "matrix-a-33",
-    "matrix-b-11", "matrix-b-12", "matrix-b-13", "matrix-b-21", "matrix-b-22", "matrix-b-23", "matrix-b-31", "matrix-b-32", "matrix-b-33",
-    "matrix-c-11", "matrix-c-12", "matrix-c-13", "matrix-c-21", "matrix-c-22", "matrix-c-23", "matrix-c-31", "matrix-c-32", "matrix-c-33",
-    "matrix-v-x", "matrix-v-y", "matrix-v-z",
-    "matrix-cv-x", "matrix-cv-y", "matrix-cv-z"
-  ];
-  ids.forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.value = id.endsWith("11") || id.endsWith("22") || id.endsWith("33") ? "1" : "0";
-  });
-  const vx = document.getElementById("matrix-v-x");
-  const vy = document.getElementById("matrix-v-y");
-  const vz = document.getElementById("matrix-v-z");
-  if (vx) vx.value = "1";
-  if (vy) vy.value = "1";
-  if (vz) vz.value = "1";
-  if (matrixSize) matrixSize.value = "2";
-  updateMatrixLabVisibility();
-  if (matrixOperation) matrixOperation.value = "add";
-  if (matrixPracticeMode) matrixPracticeMode.checked = true;
+  initMatrixLabGrids();
   matrixPracticePassed = false;
   if (matrixFeedback) {
     matrixFeedback.textContent = "Waiting for your attempt.";
-    matrixFeedback.style.color = "#64748b";
+    matrixFeedback.style.color = "";
   }
-  if (matrixResults) matrixResults.innerHTML = '<div class="viz-placeholder">Run an operation to view matrix and vector outputs.</div>';
-  if (matrixPlot) matrixPlot.innerHTML = '<div class="viz-placeholder">Transformation grid will appear here.</div>';
-};
-
-const updateMatrixLabVisibility = () => {
-  const tab = document.getElementById("tab-matrixlab");
-  if (!tab) return;
-  tab.classList.toggle("matrix-size-2", currentMatrixSize() === 2);
-};
-
-const loadMatrixLab = () => {
-  updateMatrixLabVisibility();
-  // Render once on first open if not already drawn.
-  if (matrixResults && matrixResults.querySelector(".viz-placeholder")) {
-    computeMatrixLab();
+  if (matrixResults) {
+    matrixResults.innerHTML = '<div class="viz-placeholder">Run an operation to view matrix and vector outputs.</div>';
   }
+  if (matrixPlot) {
+    matrixPlot.innerHTML = '<div class="viz-placeholder">Transformation grid will appear here.</div>';
+  }
+  if (matrixAnimOutput) {
+    matrixAnimOutput.innerHTML = '<div class="viz-placeholder">Select a matrix and click Generate to see the transformation animated.</div>';
+  }
+  if (matrixPracticeMode) matrixPracticeMode.checked = true;
 };
 
 const renderPromptCollections = (payload, query = "") => {
@@ -2078,10 +2305,11 @@ const renderOnDemandVisualization = async (style) => {
   const label = style === "animation" ? "animation" : "diagram";
   if (button) button.disabled = true;
   let elapsed = 0;
-  showVizStatus(tutorViz, `Generating ${label}... 0s`);
+  const animHint = style === "animation" ? " (Manim pipeline — may take 30-60s)" : "";
+  showVizStatus(tutorViz, `Generating ${label}${animHint}... 0s`);
   const ticker = setInterval(() => {
     elapsed += 1;
-    showVizStatus(tutorViz, `Generating ${label}... ${elapsed}s`);
+    showVizStatus(tutorViz, `Generating ${label}${animHint}... ${elapsed}s`);
   }, 1000);
   try {
     const response = await fetch(`${API_BASE}/api/ai/visualize`, {
@@ -3204,6 +3432,94 @@ if (collectionsSearch) {
   collectionsSearch.addEventListener("input", () => loadPromptCollections());
 }
 
+// Initialize Matrix Lab dynamic grids
+const initMatrixLabGrids = () => {
+  const { aRows, aCols, bRows, bCols } = getMatrixDims();
+  
+  // Generate Matrix A, B, and Vector v
+  generateMatrixGrid('matrix-a-grid', 'matrix-a', aRows, aCols, (i, j) => (i === j ? 1 : 0));
+  generateMatrixGrid('matrix-b-grid', 'matrix-b', bRows, bCols, (i, j) => (i === j ? 1 : 0));
+  generateVectorGrid('matrix-v-grid', 'matrix-v', aCols, () => 1);
+  
+  // Generate prediction grids (C and C·v) - start with default dimensions
+  const cRows = aRows;
+  const cCols = aCols;
+  generateMatrixGrid('matrix-c-grid', 'matrix-c', cRows, cCols, () => 0);
+  generateVectorGrid('matrix-cv-grid', 'matrix-cv', cRows, () => 0);
+  
+  // Update hints
+  if (vectorHint) {
+    vectorHint.textContent = `Dimension: ${aCols}D (matches Matrix A columns)`;
+  }
+  
+  updateOperationHint();
+};
+
+// Update operation hint based on current dimensions and operation
+const updateOperationHint = () => {
+  if (!matrixOperationHint) return;
+  
+  const { aRows, aCols, bRows, bCols } = getMatrixDims();
+  const op = matrixOperation?.value || "add";
+  
+  let message = '';
+  let canCompute = true;
+  
+  if (op === "add" || op === "subtract") {
+    if (aRows !== bRows || aCols !== bCols) {
+      message = `⚠️ Cannot ${op === "add" ? "add" : "subtract"}: A is ${aRows}×${aCols}, B is ${bRows}×${bCols}. Dimensions must match.`;
+      canCompute = false;
+    } else {
+      message = `✓ Result C will be ${aRows}×${aCols}`;
+    }
+  } else if (op === "multiply") {
+    if (aCols !== bRows) {
+      message = `⚠️ Cannot multiply: A columns (${aCols}) must equal B rows (${bRows}).`;
+      canCompute = false;
+    } else {
+      message = `✓ Result C will be ${aRows}×${bCols}`;
+    }
+  }
+  
+  const isSquare = aRows === aCols && aRows === bRows && bRows === bCols;
+  const canVisualize = isSquare && (aRows === 2 || aRows === 3);
+  
+  if (canCompute && !canVisualize) {
+    message += '. Geometric visualization unavailable (requires square 2×2 or 3×3).';
+  }
+  
+  matrixOperationHint.textContent = message;
+  matrixOperationHint.style.color = canCompute ? '#57534e' : '#dc2626';
+  
+  if (matrixCompute) {
+    matrixCompute.disabled = !canCompute;
+  }
+};
+
+// Add dimension change listeners
+if (matrixARows) matrixARows.addEventListener('change', () => {
+  initMatrixLabGrids();
+});
+
+if (matrixACols) matrixACols.addEventListener('change', () => {
+  initMatrixLabGrids();
+});
+
+if (matrixBRows) matrixBRows.addEventListener('change', () => {
+  initMatrixLabGrids();
+});
+
+if (matrixBCols) matrixBCols.addEventListener('change', () => {
+  initMatrixLabGrids();
+});
+
+if (matrixOperation) {
+  matrixOperation.addEventListener('change', updateOperationHint);
+}
+
+// Initialize on page load
+initMatrixLabGrids();
+
 if (matrixCompute) {
   matrixCompute.addEventListener("click", computeMatrixLab);
 }
@@ -3220,16 +3536,8 @@ if (matrixReset) {
   matrixReset.addEventListener("click", resetMatrixLab);
 }
 
-if (matrixSize) {
-  matrixSize.addEventListener("change", () => {
-    matrixPracticePassed = false;
-    updateMatrixLabVisibility();
-    if (matrixFeedback) {
-      matrixFeedback.textContent = `Switched to ${currentMatrixSize()}x${currentMatrixSize()} mode.`;
-      matrixFeedback.style.color = "#475569";
-    }
-    computeMatrixLab();
-  });
+if (matrixAnimBtn) {
+  matrixAnimBtn.addEventListener("click", generateMatrixAnimation);
 }
 
 if (matrixPracticeMode) {

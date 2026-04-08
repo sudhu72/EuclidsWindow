@@ -20,13 +20,14 @@ body {
 }
 
 .brand {
-  font-size: 36px;
+  font-family: "Cinzel Decorative", "GFS Didot", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: 34px;
   font-weight: 700;
   color: #fafaf9;
   display: flex;
   align-items: center;
   gap: 10px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
 }
 .brand-logo {
   height: 72px;
@@ -735,7 +736,101 @@ body {
 }
 
 #tab-matrixlab {
-  grid-template-columns: 1fr;
+  grid-template-columns: 3fr 2fr;
+  grid-template-rows: 1fr;
+  gap: 16px;
+  align-items: start;
+  overflow: hidden;
+}
+
+#tab-matrixlab > .mat-split-left {
+  overflow-y: auto;
+  height: 100%;
+}
+
+#tab-matrixlab > .mat-split-left > * {
+  flex-shrink: 0;
+}
+
+#tab-matrixlab > .mat-split-right {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100%;
+  overflow-y: auto;
+}
+
+#tab-matrixlab > .mat-split-right #matrix-plot {
+  min-height: 480px;
+}
+
+.mat-anim-panel {
+  margin-top: 12px;
+}
+
+.mat-anim-panel h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: #1c1917;
+}
+
+.mat-anim-desc {
+  font-size: 13px;
+  color: #57534e;
+  margin: 0 0 10px;
+}
+
+.mat-anim-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.mat-anim-controls select {
+  padding: 6px 10px;
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+}
+
+#matrix-anim-output img,
+#matrix-anim-output video {
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+#matrix-anim-output .mat-anim-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  font-size: 13px;
+  color: #57534e;
+}
+
+#matrix-anim-output .mat-anim-progress .spinner-sm {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d6d3d1;
+  border-top-color: #1c1917;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@media (max-width: 960px) {
+  #tab-matrixlab {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  #tab-matrixlab > .mat-split-right {
+    position: static;
+    height: auto;
+  }
 }
 
 .matrix-lab-grid {
@@ -758,6 +853,47 @@ body {
   color: #1c1917;
 }
 
+/* Matrix dimension controls */
+.matrix-dim-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.dim-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dim-control-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1c1917;
+}
+
+.dim-select {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.matrix-hint {
+  font-size: 12px;
+  color: #78716c;
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+/* Legacy matrix grid (kept for backwards compatibility) */
 .matrix-input-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -779,8 +915,27 @@ body {
   gap: 8px;
 }
 
-#tab-matrixlab.matrix-size-2 .matrix-cell-3 {
-  display: none;
+/* Dynamic matrix input grids */
+.matrix-input-grid-dynamic {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(var(--cols, 2), 1fr);
+}
+
+.matrix-input-grid-dynamic input,
+.vector-input-row-dynamic input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: ui-monospace, monospace;
+}
+
+.vector-input-row-dynamic {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(var(--cols, 2), 1fr);
 }
 
 .matrix-inline-hint {
@@ -1739,6 +1894,8 @@ body {
   margin-top: 10px;
 }
 .calc-controls {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -1765,13 +1922,23 @@ body {
 }
 .calc-viz-box {
   width: 100%;
-  min-height: 280px;
+  min-height: 360px;
   border: 1px solid #d6d3d1;
   border-radius: 6px;
   background: #fafaf9;
   margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+/* Calculus charts are display-only; never let Plotly layers steal clicks. */
+#tab-calclab .calc-viz-box,
+#tab-calclab .calc-viz-box * {
+  pointer-events: none !important;
 }
 .calc-readout {
+  position: relative;
+  z-index: 2;
   font-size: 13px;
   padding: 6px 10px;
   background: #f5f5f4;
@@ -1784,14 +1951,21 @@ body {
   display: flex;
   gap: 10px;
   margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
 }
 .calc-de-params {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 6px;
 }
 .calc-math-panel {
+  position: relative;
+  z-index: 2;
   border: 1px solid #e7e5e4;
   border-radius: 6px;
   padding: 10px;
@@ -1823,4 +1997,204 @@ body {
 }
 .calc-math-content.hidden {
   display: none;
+}
+
+/* ── Crypto Lab ── */
+.crypto-game { display: none; }
+.crypto-game.active { display: block; }
+.crypto-prereq {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #44403c;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 8px 0 10px;
+}
+.crypto-prereq a { color: #92400e; font-weight: 600; }
+.crypto-actor-card {
+  flex: 1;
+  min-width: 150px;
+  border: 2px solid #2563eb;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fafaf9;
+}
+.crypto-actor-name {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.crypto-actor-steps {
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* ── Logic Lab ── */
+.logic-game { display: none; }
+.logic-game.active { display: block; }
+.logic-anecdote {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #44403c;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+.logic-anecdote a { color: #166534; font-weight: 600; }
+#tab-logiclab table.tt-table {
+  border-collapse: collapse;
+  font-family: monospace;
+  font-size: 13px;
+  width: auto;
+}
+#tab-logiclab table.tt-table th,
+#tab-logiclab table.tt-table td {
+  border: 1px solid #d6d3d1;
+  padding: 4px 10px;
+  text-align: center;
+}
+#tab-logiclab table.tt-table th {
+  background: #1c1917;
+  color: #fafaf9;
+  font-weight: 600;
+}
+#tab-logiclab table.tt-table td.val-true { background: #dcfce7; color: #166534; font-weight: 700; }
+#tab-logiclab table.tt-table td.val-false { background: #fee2e2; color: #991b1b; }
+.kk-choice-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  border: 2px solid #d6d3d1;
+  border-radius: 6px;
+  background: #fafaf9;
+  cursor: pointer;
+  font-family: monospace;
+}
+.kk-choice-btn.selected { border-color: #2563eb; background: #dbeafe; }
+.kk-choice-btn:hover { border-color: #a8a29e; }
+
+/* ── Symbols Explorer ── */
+.sym-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.sym-toolbar input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+}
+.sym-cats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sym-cat-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #d6d3d1;
+  border-radius: 14px;
+  background: #fafaf9;
+  cursor: pointer;
+  transition: all .15s;
+}
+.sym-cat-btn.active { background: #1c1917; color: #fafaf9; border-color: #1c1917; }
+.sym-cat-btn:hover:not(.active) { border-color: #78716c; }
+.sym-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+}
+.sym-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s;
+  background: #fafaf9;
+}
+.sym-card:hover { border-color: #2563eb; box-shadow: 0 2px 8px rgba(37,99,235,.12); transform: translateY(-1px); }
+.sym-card.active { border-color: #2563eb; background: #eff6ff; }
+.sym-glyph {
+  font-size: 28px;
+  line-height: 1.2;
+  font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", serif;
+}
+.sym-name {
+  font-size: 10px;
+  color: #78716c;
+  margin-top: 4px;
+  text-align: center;
+  line-height: 1.3;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sym-detail {
+  margin-top: 12px;
+  border: 1px solid #d6d3d1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 16px;
+  line-height: 1.7;
+  font-size: 14px;
+}
+.sym-detail.hidden { display: none; }
+.sym-detail h4 { margin: 0 0 4px; font-size: 18px; }
+.sym-detail .sym-detail-glyph {
+  font-size: 48px;
+  font-family: "Cambria Math", "STIX Two Math", serif;
+  float: left;
+  margin-right: 16px;
+  line-height: 1;
+}
+.sym-section { margin-top: 12px; }
+.sym-section h5 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: #78716c; }
+.sym-meaning-list { list-style: none; padding: 0; margin: 0; }
+.sym-meaning-list li {
+  padding: 6px 10px;
+  border-left: 3px solid #2563eb;
+  margin-bottom: 6px;
+  background: #f8fafc;
+  border-radius: 0 4px 4px 0;
+  font-size: 13px;
+}
+.sym-meaning-list li strong { color: #1c1917; }
+.sym-topic-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.sym-topic-tag {
+  padding: 3px 10px;
+  font-size: 11px;
+  border-radius: 12px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-weight: 500;
+}
+.sym-history-box {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #44403c;
+}
+.sym-overlap-box {
+  background: #fce7f3;
+  border: 1px solid #f9a8d4;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #831843;
 }

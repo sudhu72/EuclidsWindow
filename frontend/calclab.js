@@ -72,14 +72,21 @@
     ex:   { f: (x) => Math.exp(-x * x),                 label: "e^(-x²)",         exact: null },
   };
 
-  const plotLayout = {
-    margin: { t: 10, r: 10, b: 35, l: 45 },
-    paper_bgcolor: "transparent",
-    plot_bgcolor: "transparent",
-    font: { family: "'EB Garamond', Georgia, serif", color: "#1c1917" },
-    xaxis: { gridcolor: "#d6d3d1", zerolinecolor: "#a8a29e" },
-    yaxis: { gridcolor: "#d6d3d1", zerolinecolor: "#a8a29e" },
-  };
+  const AXIS_STYLE = { gridcolor: "#d6d3d1", zerolinecolor: "#a8a29e" };
+  function buildPlotLayout(overrides = {}) {
+    const { xaxis: xaxisOverrides = {}, yaxis: yaxisOverrides = {}, ...rest } = overrides;
+    return {
+      margin: { t: 10, r: 10, b: 35, l: 45 },
+      paper_bgcolor: "transparent",
+      plot_bgcolor: "transparent",
+      font: { family: "'EB Garamond', Georgia, serif", color: "#1c1917" },
+      ...rest,
+      xaxis: { ...AXIS_STYLE, ...xaxisOverrides },
+      yaxis: { ...AXIS_STYLE, ...yaxisOverrides },
+    };
+  }
+
+  const plotConfig = { responsive: true, staticPlot: true };
 
   // =========================================================================
   //  1  SLOPE EXPLORER
@@ -140,7 +147,7 @@
         `Tangent slope f′(${a.toFixed(2)}) = <strong>${slope.toFixed(4)}</strong>`;
     }
 
-    Plotly.react(slopePlot, traces, { ...plotLayout, showlegend: true, legend: { x: 0, y: 1 } }, { responsive: true });
+    Plotly.react(slopePlot, traces, buildPlotLayout({ showlegend: true, legend: { x: 0, y: 1 } }), plotConfig);
   }
 
   slopeFnSel.addEventListener("change", drawSlope);
@@ -215,7 +222,7 @@
     riemannReadout.innerHTML =
       `Riemann sum (${method}, n=${n}) = <strong>${sum.toFixed(6)}</strong>${exactStr}`;
 
-    Plotly.react(riemannPlot, traces, { ...plotLayout, shapes, showlegend: false }, { responsive: true });
+    Plotly.react(riemannPlot, traces, buildPlotLayout({ shapes, showlegend: false }), plotConfig);
   }
 
   riemannFnSel.addEventListener("change", drawRiemann);
@@ -255,9 +262,12 @@
         const y = 50 - x;
         const maxDim = 50;
         const scaleX = x / maxDim, scaleY = y / maxDim;
+        const cx = 0.5, cy = 0.5;
+        const x0 = cx - scaleX / 2, x1 = cx + scaleX / 2;
+        const y0 = cy - scaleY / 2, y1 = cy + scaleY / 2;
         return [{
-          x: [0, scaleX, scaleX, 0, 0],
-          y: [0, 0, scaleY, scaleY, 0],
+          x: [x0, x1, x1, x0, x0],
+          y: [y0, y0, y1, y1, y0],
           fill: "toself", fillcolor: "rgba(185,28,28,0.15)",
           line: { color: "#b91c1c", width: 2 },
           mode: "lines", name: "",
@@ -311,9 +321,10 @@
         const h = 1000 / (Math.PI * r * r);
         const maxR = 15, maxH = 1000 / (Math.PI * 1);
         const nr = r / maxR * 0.4, nh = Math.min(h / maxH, 1) * 0.9;
+        const cy = 0.5;
         return [{
           x: [0.5 - nr, 0.5 + nr, 0.5 + nr, 0.5 - nr, 0.5 - nr],
-          y: [0.05, 0.05, 0.05 + nh, 0.05 + nh, 0.05],
+          y: [cy - nh / 2, cy - nh / 2, cy + nh / 2, cy + nh / 2, cy - nh / 2],
           fill: "toself", fillcolor: "rgba(185,28,28,0.15)",
           line: { color: "#b91c1c", width: 2 },
           mode: "lines", name: "",
@@ -337,22 +348,25 @@
     const currentY = prob.obj(x);
     const optY = prob.obj(prob.optimal);
 
+    const optH = optGraph.clientHeight || 340;
     Plotly.react(optGraph, [
       { x: xs, y: ys, mode: "lines", line: { color: "#1c1917", width: 2 }, name: prob.yLabel },
       { x: [x], y: [currentY], mode: "markers", marker: { color: "#b91c1c", size: 12 }, name: "current" },
       { x: [prob.optimal], y: [optY], mode: "markers", marker: { color: "#16a34a", size: 10, symbol: "star" }, name: "optimum" },
-    ], {
-      ...plotLayout, showlegend: false,
-      xaxis: { ...plotLayout.xaxis, title: prob.xLabel },
-      yaxis: { ...plotLayout.yaxis, title: prob.yLabel },
-    }, { responsive: true });
+    ], buildPlotLayout({
+      showlegend: false,
+      height: optH,
+      xaxis: { title: prob.xLabel, range: [prob.xRange[0], prob.xRange[1]], autorange: false },
+      yaxis: { title: prob.yLabel, autorange: true },
+    }), plotConfig);
 
-    // Shape preview
-    Plotly.react(optShape, prob.drawShape(x), {
-      ...plotLayout, showlegend: false,
-      xaxis: { ...plotLayout.xaxis, visible: false, range: [-0.05, 1.1] },
-      yaxis: { ...plotLayout.yaxis, visible: false, range: [-0.05, 1.1], scaleanchor: "x" },
-    }, { responsive: true });
+    const shapeH = optShape.clientHeight || 340;
+    Plotly.react(optShape, prob.drawShape(x), buildPlotLayout({
+      showlegend: false,
+      height: shapeH,
+      xaxis: { visible: false, range: [-0.05, 1.1], autorange: false },
+      yaxis: { visible: false, range: [-0.05, 1.1], autorange: false, scaleanchor: "x" },
+    }), plotConfig);
 
     optReadout.innerHTML = prob.description(x) +
       ` &nbsp;|&nbsp; f′(x) = ${prob.objDeriv(x).toFixed(3)} &nbsp;|&nbsp; Optimum at x = ${prob.optimal.toFixed(2)}`;
@@ -529,11 +543,11 @@
     const tMax = deModel.value === "sir" ? 200 : 30;
     const traces = model.run(p, tMax);
 
-    Plotly.react(dePlot, traces, {
-      ...plotLayout, showlegend: true, legend: { x: 0.7, y: 1 },
-      xaxis: { ...plotLayout.xaxis, title: "time t" },
-      yaxis: { ...plotLayout.yaxis, title: "" },
-    }, { responsive: true });
+    Plotly.react(dePlot, traces, buildPlotLayout({
+      showlegend: true, legend: { x: 0.7, y: 1 },
+      xaxis: { title: "time t" },
+      yaxis: { title: "" },
+    }), plotConfig);
 
     deReadout.innerHTML = model.info(p);
   }
@@ -616,24 +630,24 @@
         { x: fullXs, y: fullYs, mode: "lines", line: { color: "#d6d3d1", width: 1 }, name: "path" },
         { x: trailX, y: trailY, mode: "lines", line: { color: "#b91c1c", width: 2 }, name: "trail" },
         { x: ballX, y: ballY, mode: "markers", marker: { color: "#b91c1c", size: 12 }, name: "ball" },
-      ], {
-        ...plotLayout, showlegend: false,
-        xaxis: { ...plotLayout.xaxis, title: "x (m)", range: [-2, range + 5] },
-        yaxis: { ...plotLayout.yaxis, title: "y (m)", range: [-1, maxH + 5] },
-      }, { responsive: true });
+      ], buildPlotLayout({
+        showlegend: false,
+        xaxis: { title: "x (m)", range: [-2, range + 5], autorange: false },
+        yaxis: { title: "y (m)", range: [-1, maxH + 5], autorange: false },
+      }), plotConfig);
 
       // Time marker on velocity graph
       const tNow = frame * dt;
       Plotly.react(projGraphs, [
-        { x: ts, y: speeds, name: "|v|(t)", line: { color: "#2563eb", width: 1.5 } },
-        { x: ts, y: vys, name: "v_y(t)", line: { color: "#b91c1c", width: 1.5 } },
-        { x: ts, y: acs, name: "a_y(t)", line: { color: "#16a34a", width: 1.5, dash: "dot" } },
+        { x: ts, y: speeds, name: "Speed |v| (m/s)", line: { color: "#2563eb", width: 1.5 } },
+        { x: ts, y: vys, name: "Vertical velocity vᵧ (m/s)", line: { color: "#b91c1c", width: 1.5 } },
+        { x: ts, y: acs, name: "Gravity aᵧ = −g (m/s²)", line: { color: "#16a34a", width: 1.5, dash: "dot" } },
         { x: [tNow, tNow], y: [-g - 5, v0 + 5], mode: "lines", line: { color: "#a8a29e", width: 1, dash: "dash" }, showlegend: false },
-      ], {
-        ...plotLayout, showlegend: true, legend: { x: 0, y: 1 },
-        xaxis: { ...plotLayout.xaxis, title: "time (s)" },
-        yaxis: { ...plotLayout.yaxis, title: "m/s or m/s²" },
-      }, { responsive: true });
+      ], buildPlotLayout({
+        showlegend: true, legend: { x: 0, y: 1, font: { size: 10 } },
+        xaxis: { title: "time (s)" },
+        yaxis: { title: "m/s or m/s²" },
+      }), plotConfig);
 
       frame += 2;
       projAnim = requestAnimationFrame(animate);
@@ -653,5 +667,307 @@
   projAngle.addEventListener("input", () => { projAngleVal.textContent = projAngle.value; });
   projSpeed.addEventListener("input", () => { projSpeedVal.textContent = projSpeed.value; });
   projG.addEventListener("input", () => { projGVal.textContent = projG.value; });
+
+  // =========================================================================
+  //  6  ORBITAL MECHANICS — Hohmann Transfer Simulation
+  // =========================================================================
+  const orbitDest      = document.getElementById("orbit-dest");
+  const orbitBoost     = document.getElementById("orbit-boost");
+  const orbitBoostVal  = document.getElementById("orbit-boost-val");
+  const orbitLaunch    = document.getElementById("orbit-launch");
+  const orbitResetBtn  = document.getElementById("orbit-reset");
+  const orbitScene     = document.getElementById("orbit-scene");
+  const orbitGraphs    = document.getElementById("orbit-graphs");
+  const orbitReadout   = document.getElementById("orbit-readout");
+
+  let orbitAnim = null;
+
+  // Physical constants (scaled for visualization — distances in 10⁶ km, times in days)
+  const GM_SUN = 1.327e11;  // km³/s²  (Sun's gravitational parameter)
+  const AU_KM  = 1.496e8;   // km per AU
+
+  const BODIES = {
+    earth: { r_orbit: 1.0,    color: "#2563eb", radius: 0.04, label: "Earth" },
+    moon:  { r_orbit: 0.00257, color: "#a8a29e", radius: 0.015, label: "Moon",
+             parent: "earth", period_days: 27.3 },
+    mars:  { r_orbit: 1.524,  color: "#dc2626", radius: 0.035, label: "Mars" },
+  };
+
+  const MISSIONS = {
+    moon: {
+      label: "Earth → Moon",
+      r1: 6571,        // LEO radius (km) — 200 km altitude
+      r2: 384400,      // Moon distance (km)
+      mu: 3.986e5,     // GM_Earth (km³/s²)
+      scaleAU: false,
+      viewRange: 5e5,  // km — scene half-width
+    },
+    mars: {
+      label: "Earth → Mars",
+      r1: 1.0 * AU_KM,    // Earth orbit (km)
+      r2: 1.524 * AU_KM,  // Mars orbit (km)
+      mu: GM_SUN,
+      scaleAU: true,
+      viewRange: 2.5e8,
+    },
+  };
+
+  function computeHohmann(r1, r2, mu, boostFactor) {
+    const a_t = (r1 + r2) / 2;                       // transfer semi-major axis
+    const v_circ1  = Math.sqrt(mu / r1);              // circular orbit velocity at r1
+    const v_trans1 = Math.sqrt(mu * (2 / r1 - 1 / a_t));  // vis-viva at r1 on transfer
+    const v_trans2 = Math.sqrt(mu * (2 / r2 - 1 / a_t));  // vis-viva at r2 on transfer
+    const v_circ2  = Math.sqrt(mu / r2);              // circular orbit velocity at r2
+
+    const dv1 = (v_trans1 - v_circ1) * boostFactor;
+    const dv2 = v_circ2 - v_trans2;
+    const T_transfer = Math.PI * Math.sqrt(a_t * a_t * a_t / mu);  // half-period (seconds)
+
+    return { a_t, v_circ1, v_trans1, v_trans2, v_circ2, dv1, dv2, T_transfer };
+  }
+
+  function buildTransferEllipse(r1, r2, nPoints) {
+    const a = (r1 + r2) / 2;
+    const c = a - r1;  // distance from ellipse center to focus (origin)
+    const b = Math.sqrt(a * a - c * c);
+    const xs = [], ys = [];
+    for (let i = 0; i <= nPoints; i++) {
+      const theta = Math.PI * i / nPoints;  // 0 → π (half-ellipse)
+      xs.push(a * Math.cos(theta) - c);     // periapsis (r1) at θ=0, apoapsis (-r2) at θ=π
+      ys.push(b * Math.sin(theta));
+    }
+    return { xs, ys };
+  }
+
+  function circleTrace(r, color, npts, label, dash) {
+    const xs = [], ys = [];
+    for (let i = 0; i <= npts; i++) {
+      const th = (2 * Math.PI * i) / npts;
+      xs.push(r * Math.cos(th));
+      ys.push(r * Math.sin(th));
+    }
+    return {
+      x: xs, y: ys, mode: "lines",
+      line: { color, width: 1.5, dash: dash || "solid" },
+      name: label || "", hoverinfo: "skip",
+    };
+  }
+
+  function launchOrbital() {
+    if (orbitAnim) { cancelAnimationFrame(orbitAnim); orbitAnim = null; }
+
+    const dest = orbitDest.value;
+    const boostFactor = parseFloat(orbitBoost.value);
+    orbitBoostVal.textContent = boostFactor.toFixed(2);
+    const mission = MISSIONS[dest];
+    const { r1, r2, mu } = mission;
+    const h = computeHohmann(r1, r2, mu, boostFactor);
+
+    // Transfer ellipse geometry
+    const transfer = buildTransferEllipse(r1, r2 * boostFactor, 200);
+
+    // Collect time-series for graphs
+    const nFrames = 200;
+    const totalTime = h.T_transfer * boostFactor;
+    const dt = totalTime / nFrames;
+
+    const times = [], velocities = [], accels = [], radii = [];
+    const shuttleXs = [], shuttleYs = [];
+
+    for (let i = 0; i <= nFrames; i++) {
+      const t = i * dt;
+      const frac = t / totalTime;  // 0→1
+      const theta = Math.PI * frac;
+
+      // Position on the transfer ellipse (focus at origin)
+      const a = (r1 + r2 * boostFactor) / 2;
+      const c = a - r1;
+      const bAxis = Math.sqrt(Math.max(a * a - c * c, 0));
+      const px = a * Math.cos(theta) - c;  // periapsis (r1) at θ=0, apoapsis at θ=π
+      const py = bAxis * Math.sin(theta);
+      shuttleXs.push(px);
+      shuttleYs.push(py);
+
+      const rr = Math.sqrt(px * px + py * py);
+      radii.push(rr);
+
+      // Vis-viva: v² = μ(2/r − 1/a)
+      const v = Math.sqrt(Math.max(mu * (2 / rr - 1 / a), 0));
+      velocities.push(v);
+
+      // Gravitational acceleration: a = GM/r²
+      const acc = mu / (rr * rr);
+      accels.push(acc);
+
+      times.push(t);
+    }
+
+    // Normalize for display
+    const vw = mission.viewRange;
+    const tDays = times.map(t => t / 86400);
+    const vKms = velocities.map(v => v);  // km/s
+
+    // Draw static elements
+    const sceneTraces = [];
+
+    if (dest === "moon") {
+      sceneTraces.push(circleTrace(r1, "#2563eb33", 100, "LEO", "dot"));
+      sceneTraces.push(circleTrace(r2, "#a8a29e55", 100, "Moon orbit", "dash"));
+      // Earth at focus (center)
+      sceneTraces.push({
+        x: [0], y: [0], mode: "markers+text",
+        marker: { color: "#2563eb", size: 18 },
+        text: ["Earth"], textposition: "bottom center",
+        textfont: { size: 11, color: "#2563eb" },
+        name: "Earth", showlegend: false,
+      });
+      // Launch point on LEO (right side, where shuttle departs)
+      sceneTraces.push({
+        x: [r1], y: [0], mode: "markers+text",
+        marker: { color: "#16a34a", size: 8, symbol: "star" },
+        text: ["Launch"], textposition: "top right",
+        textfont: { size: 9, color: "#16a34a" },
+        name: "Launch", showlegend: false,
+      });
+      // Moon at arrival position (apoapsis = -r2 on x-axis)
+      sceneTraces.push({
+        x: [-r2], y: [0], mode: "markers+text",
+        marker: { color: "#a8a29e", size: 13 },
+        text: ["Moon"], textposition: "bottom left",
+        textfont: { size: 11, color: "#78716c" },
+        name: "Moon", showlegend: false,
+      });
+    } else {
+      // Mars (heliocentric)
+      sceneTraces.push(circleTrace(r1, "#2563eb55", 200, "Earth orbit", "dot"));
+      sceneTraces.push(circleTrace(r2, "#dc262633", 200, "Mars orbit", "dash"));
+      // Sun at focus (center)
+      sceneTraces.push({
+        x: [0], y: [0], mode: "markers+text",
+        marker: { color: "#f59e0b", size: 20 },
+        text: ["Sun"], textposition: "bottom center",
+        textfont: { size: 11, color: "#f59e0b" },
+        name: "Sun", showlegend: false,
+      });
+      // Earth at departure (periapsis = r1 on positive x-axis)
+      sceneTraces.push({
+        x: [r1], y: [0], mode: "markers+text",
+        marker: { color: "#2563eb", size: 13 },
+        text: ["Earth (launch)"], textposition: "bottom right",
+        textfont: { size: 10, color: "#2563eb" },
+        name: "Earth", showlegend: false,
+      });
+      // Mars at arrival (apoapsis = -r2 on negative x-axis)
+      sceneTraces.push({
+        x: [-r2], y: [0], mode: "markers+text",
+        marker: { color: "#dc2626", size: 13 },
+        text: ["Mars (arrival)"], textposition: "bottom left",
+        textfont: { size: 10, color: "#dc2626" },
+        name: "Mars", showlegend: false,
+      });
+    }
+
+    // Transfer orbit path (faded)
+    sceneTraces.push({
+      x: shuttleXs, y: shuttleYs, mode: "lines",
+      line: { color: "#f59e0b", width: 2, dash: "dot" },
+      name: "Transfer orbit", hoverinfo: "skip",
+    });
+
+    // Animate shuttle
+    let frame = 0;
+
+    function animate() {
+      if (frame > nFrames) {
+        const dvTotal = Math.abs(h.dv1) + Math.abs(h.dv2);
+        const tDaysTotal = totalTime / 86400;
+        orbitReadout.innerHTML =
+          `<strong>${mission.label}</strong> | ` +
+          `&Delta;v<sub>1</sub> = ${h.dv1.toFixed(2)} km/s | ` +
+          `&Delta;v<sub>2</sub> = ${h.dv2.toFixed(2)} km/s | ` +
+          `Total &Delta;v = ${dvTotal.toFixed(2)} km/s | ` +
+          `Transfer time = ${tDaysTotal.toFixed(1)} days` +
+          (Math.abs(boostFactor - 1) > 0.01
+            ? ` | Boost ${boostFactor.toFixed(2)}&times; &mdash; ` +
+              (boostFactor > 1 ? "overshoot (faster, higher orbit)" : "undershoot (won&rsquo;t reach target)")
+            : " | Optimal Hohmann transfer");
+        return;
+      }
+
+      // Shuttle marker
+      const sx = shuttleXs[frame], sy = shuttleYs[frame];
+      const rNow = radii[frame];
+      const vNow = velocities[frame];
+      const aNow = accels[frame];
+
+      // Build scene with shuttle
+      const frameTraces = [...sceneTraces,
+        // Trail (drawn first so shuttle renders on top)
+        {
+          x: shuttleXs.slice(0, frame + 1), y: shuttleYs.slice(0, frame + 1),
+          mode: "lines", line: { color: "#f59e0b", width: 2.5 },
+          name: "Shuttle path", showlegend: false,
+        },
+        // Shuttle marker — large dot with glow ring
+        {
+          x: [sx], y: [sy], mode: "markers",
+          marker: { color: "#f59e0b", size: 14, symbol: "circle",
+                    line: { color: "#92400e", width: 2 } },
+          name: "Shuttle", showlegend: false,
+        },
+      ];
+
+      const sceneH = orbitScene.clientHeight || 420;
+      Plotly.react(orbitScene, frameTraces, buildPlotLayout({
+        showlegend: false,
+        height: sceneH,
+        xaxis: { range: [-vw, vw], autorange: false, scaleanchor: "y",
+                 title: dest === "moon" ? "km" : "km (heliocentric)" },
+        yaxis: { range: [-vw, vw], autorange: false },
+      }), plotConfig);
+
+      // Velocity & acceleration graphs with time marker
+      const tNow = tDays[frame];
+      const graphH = orbitGraphs.clientHeight || 420;
+      Plotly.react(orbitGraphs, [
+        { x: tDays, y: vKms, name: "Orbital speed v = √(GM(2/r−1/a))",
+          line: { color: "#2563eb", width: 2 } },
+        { x: tDays, y: accels, name: "Gravity accel a = GM/r²", yaxis: "y2",
+          line: { color: "#dc2626", width: 1.5, dash: "dot" } },
+        { x: [tNow, tNow], y: [0, Math.max(...vKms) * 1.1], mode: "lines",
+          line: { color: "#a8a29e", width: 1, dash: "dash" }, showlegend: false },
+      ], buildPlotLayout({
+        showlegend: true, legend: { x: 0, y: 1, font: { size: 10 } },
+        height: graphH,
+        xaxis: { title: "time (days)" },
+        yaxis: { title: "velocity (km/s)", side: "left" },
+        yaxis2: { title: "accel (km/s²)", side: "right", overlaying: "y",
+                  gridcolor: "transparent" },
+      }), plotConfig);
+
+      // Live readout
+      orbitReadout.innerHTML =
+        `r = <strong>${(rNow).toFixed(0)} km</strong> | ` +
+        `v = <strong>${vNow.toFixed(2)} km/s</strong> | ` +
+        `a = GM/r&sup2; = <strong>${aNow.toExponential(3)} km/s&sup2;</strong> | ` +
+        `t = ${tDays[frame].toFixed(1)} days`;
+
+      frame += 2;
+      orbitAnim = requestAnimationFrame(animate);
+    }
+
+    animate();
+  }
+
+  orbitLaunch.addEventListener("click", launchOrbital);
+  orbitResetBtn.addEventListener("click", () => {
+    if (orbitAnim) { cancelAnimationFrame(orbitAnim); orbitAnim = null; }
+    Plotly.purge(orbitScene);
+    Plotly.purge(orbitGraphs);
+    orbitReadout.innerHTML = "";
+  });
+  orbitBoost.addEventListener("input", () => {
+    orbitBoostVal.textContent = parseFloat(orbitBoost.value).toFixed(2);
+  });
 
 })();

@@ -27,6 +27,7 @@ from .middleware import MetricsMiddleware
 from .ai.service import GenerativeTutorService
 from .ai.media import DiffusionImageService, MusicGenService
 from .ai.viz_agent import VizAgent
+from .ai.animation_pipeline import AnimationPipeline
 from .ai.checker import SymbolicChecker
 from .ai.handwriting import HandwritingService
 from .ai.web_rag import WebMathRAG
@@ -254,6 +255,21 @@ async def serve_fftlab_js():
 @app.get("/fftlab-image.js", include_in_schema=False)
 async def serve_fftlab_image_js():
     return FileResponse(FRONTEND_DIR / "fftlab-image.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
+@app.get("/cryptolab.js", include_in_schema=False)
+async def serve_cryptolab_js():
+    return FileResponse(FRONTEND_DIR / "cryptolab.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
+@app.get("/logiclab.js", include_in_schema=False)
+async def serve_logiclab_js():
+    return FileResponse(FRONTEND_DIR / "logiclab.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
+@app.get("/symbols.js", include_in_schema=False)
+async def serve_symbols_js():
+    return FileResponse(FRONTEND_DIR / "symbols.js", headers=FRONTEND_NO_CACHE_HEADERS)
 
 
 @app.get("/euclids-window-logo.png", include_in_schema=False)
@@ -1028,60 +1044,162 @@ async def ai_visualize(payload: VisualizationOnDemandRequest) -> VisualizationOn
         )
 
     # payload.style == "animation"
+    # Strategy: try pre-built scene first, then dynamic pipeline
     scene_name = _pick_animation_scene(payload.question)
-    if not scene_name:
-        return VisualizationOnDemandResponse(
-            message="No mapped animation scene for this topic yet. Try a diagram instead.",
-            visualization=None,
-            status="not_found",
-            progress=0,
+
+    # --- Path A: pre-built named scene ---
+    if scene_name:
+        if payload.async_render:
+            job = manim_service.start_render_animation(
+                scene_name=scene_name,
+                quality=payload.quality,
+                output_format=payload.output_format,
+            )
+            if job.get("status") == "completed" and job.get("url"):
+                viz = VisualizationPayload(
+                    viz_id=job["id"],
+                    viz_type=VisualizationType.manim,
+                    title=f"Animation: {scene_name}",
+                    data={"url": job["url"], "format": job.get("format") or payload.output_format},
+                )
+                return VisualizationOnDemandResponse(
+                    message="Animation already available.",
+                    visualization=viz,
+                    animation_id=job.get("id"),
+                    status="completed",
+                    progress=100,
+                )
+            return VisualizationOnDemandResponse(
+                message="Animation render started in background.",
+                visualization=None,
+                animation_id=job.get("id"),
+                status=job.get("status"),
+                progress=job.get("progress"),
+                error=job.get("error"),
+            )
+        result = manim_service.render_animation(
+            scene_name=scene_name, quality=payload.quality, output_format=payload.output_format
         )
-    if payload.async_render:
-        job = manim_service.start_render_animation(
-            scene_name=scene_name,
-            quality=payload.quality,
-            output_format=payload.output_format,
-        )
-        if job.get("status") == "completed" and job.get("url"):
+        if result.get("status") == "completed" and result.get("url"):
             viz = VisualizationPayload(
-                viz_id=job["id"],
+                viz_id=result["id"],
                 viz_type=VisualizationType.manim,
                 title=f"Animation: {scene_name}",
-                data={"url": job["url"], "format": job.get("format") or payload.output_format},
+                data={"url": result["url"], "format": result.get("format") or payload.output_format},
             )
             return VisualizationOnDemandResponse(
-                message="Animation already available.",
+                message="Animation rendered successfully.",
                 visualization=viz,
-                animation_id=job.get("id"),
-                status="completed",
-                progress=100,
             )
-        return VisualizationOnDemandResponse(
-            message="Animation render started in background.",
-            visualization=None,
-            animation_id=job.get("id"),
-            status=job.get("status"),
-            progress=job.get("progress"),
-            error=job.get("error"),
-        )
-    result = manim_service.render_animation(
-        scene_name=scene_name, quality=payload.quality, output_format=payload.output_format
+
+    # --- Path B: dynamic animation pipeline (template + LLM) ---
+    logger.info("ai_visualize: using dynamic animation pipeline for %r", payload.question)
+    pipeline_viz = await asyncio.to_thread(
+        animation_pipeline.generate,
+        payload.question,
+        "",
+        quality=payload.quality,
+        output_format=payload.output_format,
     )
-    if result.get("status") != "completed" or not result.get("url"):
+    if pipeline_viz:
         return VisualizationOnDemandResponse(
-            message=result.get("error") or "Animation rendering failed.",
-            visualization=None,
+            message=f"Animation generated via dynamic pipeline ({pipeline_viz.data.get('pipeline_source', 'unknown')}).",
+            visualization=pipeline_viz,
+            animation_id=pipeline_viz.viz_id,
+            status="completed",
+            progress=100,
         )
-    viz = VisualizationPayload(
-        viz_id=result["id"],
-        viz_type=VisualizationType.manim,
-        title=f"Animation: {scene_name}",
-        data={"url": result["url"], "format": result.get("format") or payload.output_format},
-    )
+
     return VisualizationOnDemandResponse(
-        message="Animation rendered successfully.",
-        visualization=viz,
+        message="Could not generate an animation for this topic. Try a diagram instead.",
+        visualization=None,
+        status="not_found",
+        progress=0,
     )
+
+
+@app.post("/api/ai/animate")
+async def ai_animate(payload: VisualizationOnDemandRequest):
+    """Generate a dynamic Manim animation via the template + LLM pipeline.
+
+    This always uses the AnimationPipeline (skipping pre-built scene lookup).
+    """
+    pipeline_viz = await asyncio.to_thread(
+        animation_pipeline.generate,
+        payload.question,
+        "",
+        quality=payload.quality,
+        output_format=payload.output_format,
+    )
+    if pipeline_viz:
+        return {
+            "status": "completed",
+            "message": f"Animation generated ({pipeline_viz.data.get('pipeline_source', 'unknown')})",
+            "visualization": pipeline_viz.model_dump(),
+            "animation_id": pipeline_viz.viz_id,
+        }
+    return {
+        "status": "error",
+        "message": "Animation pipeline could not generate code for this topic.",
+        "visualization": None,
+    }
+
+
+@app.get("/api/ai/animate/templates")
+async def list_animation_templates():
+    """List available template-based animation topics."""
+    from .ai.manim_templates import TOPIC_TEMPLATE_MAP
+    return {
+        "templates": [
+            {"key": k, "template": v[0]}
+            for k, v in TOPIC_TEMPLATE_MAP.items()
+        ]
+    }
+
+
+from pydantic import BaseModel as _PydanticBase
+
+
+class MatrixAnimateRequest(_PydanticBase):
+    matrix: list[list[float]]
+    title: str = "Linear Transformation"
+
+
+@app.post("/api/matrix/animate")
+async def matrix_animate(payload: MatrixAnimateRequest):
+    """Render a Manim linear-transformation animation for an arbitrary matrix."""
+    from .ai.manim_templates import fill_template
+    from .ai.executor import VisualizationExecutor
+
+    m = payload.matrix
+    n = len(m)
+    if n not in (2, 3) or any(len(row) != n for row in m):
+        raise HTTPException(status_code=422, detail="Matrix must be 2×2 or 3×3.")
+
+    rows_tex = [" & ".join(f"{v:g}" for v in row) for row in m]
+    matrix_tex = r"\begin{bmatrix} " + r" \\ ".join(rows_tex) + r" \end{bmatrix}"
+
+    int_matrix = [[int(v) if v == int(v) else v for v in row] for row in m]
+
+    code = fill_template("LINEAR_TRANSFORM", {
+        "title": payload.title,
+        "matrix": int_matrix,
+        "matrix_tex": matrix_tex,
+    })
+
+    executor = VisualizationExecutor()
+    viz = await asyncio.to_thread(executor.execute_manim, code, payload.title)
+
+    if viz:
+        return {
+            "status": "completed",
+            "visualization": viz.model_dump(),
+        }
+    return {
+        "status": "error",
+        "message": "Manim render failed. Ensure Manim is installed in the container.",
+        "visualization": None,
+    }
 
 
 @app.post("/api/ai/viz-agent", response_model=VizAgentResponse)
@@ -2102,6 +2220,7 @@ from .services import ManimService
 from .models import AnimationRenderRequest, AnimationResponse, AnimationListResponse, AnimationJobListResponse
 
 manim_service = ManimService()
+animation_pipeline = AnimationPipeline()
 
 # Mount animations static directory
 ANIMATIONS_DIR = BASE_DIR / "static" / "animations"

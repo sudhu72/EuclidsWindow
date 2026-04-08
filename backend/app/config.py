@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     local_diffusion_timeout_seconds: int = 60
 
     # Local diffusion + music generation
-    local_media_enabled: bool = True
+    local_media_enabled: bool = False
     local_diffusion_model: str = "stabilityai/sdxl-turbo"
     local_music_model: str = "facebook/musicgen-small"
     local_media_device: str = "cpu"  # cpu, cuda, or mps

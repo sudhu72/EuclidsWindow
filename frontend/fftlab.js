@@ -268,7 +268,7 @@
   function updateEditorPlot() {
     if (!fftRe) return;
     const { re, im } = getFilteredSpectrum();
-    plotSpectrum(re, im, editorDiv, "Edited Spectrum (adjust sliders above)");
+    plotSpectrum(re, im, editorDiv, "Edited Spectrum (adjust sliders below)");
   }
 
   btnResetFilter.addEventListener("click", () => {

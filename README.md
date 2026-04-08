@@ -2,7 +2,7 @@
 
 **Learn math from first principles** — like Euclid's *Elements*: start from self-evident axioms, derive everything step by step.
 
-Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, interactive labs, dynamic visualizations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 130+ curated topics and 104 concept-graph nodes spanning arithmetic through signal processing.
+Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, seven interactive labs (matrix algebra, calculus, music theory, signal processing, cryptology, formal logic, and FFT), dynamic 3Blue1Brown-style Manim animations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 130+ curated topics and 104 concept-graph nodes spanning arithmetic through orbital mechanics.
 
 ## What You Get
 
@@ -32,16 +32,29 @@ Euclid's Window is a local-first math tutoring platform that combines structured
   - Smart model warm-up: checks if model is loaded in memory, triggers background loading, falls back to curated content for instant first response
 
 - **Interactive Labs** (collapsed under a single "Labs" dropdown in the nav)
-  - **Matrix / Vector Lab** — 2×2 and 3×3 matrix operations, by-hand checking, coordinate-grid visualization of transformations with 3×3 homogeneous projection
+  - **Matrix / Vector Lab** — 2×2 and 3×3 matrix operations, by-hand practice with AI coach, coordinate-grid visualization of transformations with 3×3 homogeneous projection, two-column layout with sticky visualization panel, and **Manim animation generator** that renders 3Blue1Brown-style animations of any matrix transformation
   - **Music & Mathematics Lab** — five interactive games: Mozart's Musical Dice Game, Harmonic Series Explorer, Euclidean Rhythms (Bjorklund), Fibonacci Scales, Pythagorean Tuning
+  - **Calculus Lab** — six interactive visualizations: Slope Explorer (tangent line & derivative), Area Under a Curve (Riemann sums with left/right/midpoint/trapezoid methods), Optimization Playground (fence/box/can problems), Differential Equations Simulator (exponential/logistic/predator-prey/SIR), Projectile Lab (position/velocity/acceleration), Orbital Mechanics (Hohmann transfer orbits to Moon/Mars with real physics)
   - **FFT Lab (Audio)** — record/load audio, forward FFT (Cooley-Tukey), 10-band frequency editor, inverse FFT, playback of original vs. modified signal
   - **FFT Lab (Image)** — load/upload image, 2D FFT (row-column decomposition), magnitude spectrum + phase display, frequency-domain filtering (low-pass / high-pass / band-pass / band-stop with adjustable radius), inverse 2D FFT with side-by-side comparison
+  - **Cryptology Lab** — four games built on real math: Caesar Cipher with interactive SVG wheel (modular arithmetic), Frequency Analysis (statistics breaks codes), RSA Playground (public-key encryption with real number theory), Diffie-Hellman Key Exchange (discrete logarithms). Each game starts with a math prerequisite brief linking to relevant topics
+  - **Formal Logic Lab** — four interactive puzzles: Truth Table Builder (propositional formula evaluator), Syllogism Validator (Aristotle's engine of reason with classic and fallacy examples), Knights & Knaves puzzles (proof by contradiction), Logic Gate Circuit Builder (wire AND/OR/NOT gates to build XOR, NAND, majority vote, half adder, multiplexer). Includes historical anecdotes from mathematics and social usage
   - Each lab step includes tabbed math explanations for all four learner levels
 
-- **On-demand visuals**
+- **Mathematical Symbols Explorer**
+  - Comprehensive reference of mathematical notation — Greek letters, arithmetic operators, set theory, logical symbols, calculus operators, algebraic symbols, relations, and geometry notation
+  - History of each symbol's origin and first usage
+  - Overlapping meanings across different branches of mathematics
+  - Topic connections linking symbols to the math areas where they appear
+  - Search and filter by category with detailed expansion cards
+  - LaTeX rendering for all mathematical expressions
+
+- **On-demand visuals & dynamic animation pipeline**
   - Instant Plotly charts via deterministic visual planner (keyword-matched)
   - VizAgent auto-generation from LLM answer text (Plotly, Mermaid, geometric SVG)
-  - Animation rendering via Manim (background jobs with progress)
+  - **Dynamic Manim animation pipeline**: heuristic template matching for 14+ math topics (derivatives, integrals, linear transforms, Taylor series, Fourier, complex numbers, etc.) with LLM-driven code generation fallback for novel topics, sandboxed rendering, and iterative error recovery
+  - Matrix Lab animation generator — renders user-defined matrix transformations as Manim GIFs directly from the lab UI
+  - Animation rendering via Manim (background jobs with progress polling)
   - Diffusion image generation (Stable Diffusion, optional GPU)
   - LaTeX equation editor with live preview, quick templates, insert/copy actions
 
@@ -66,8 +79,8 @@ Euclid's Window is a local-first math tutoring platform that combines structured
 - **Backend**: FastAPI, Pydantic v2, SQLAlchemy, SymPy, ChromaDB (vector store)
 - **Frontend**: Vanilla JS/HTML/CSS, D3.js, Plotly.js, Mermaid.js, KaTeX, Web Audio API
 - **AI/Media**: Ollama (local LLM — default `qwen2.5:1.5b`), Manim, Diffusers (SDXL-Turbo), MusicGen
-- **Visualization**: VizAgent (heuristic + LLM-driven), deterministic Plotly planner, Mermaid diagrams, Manim animations, SVG
-- **Algorithms**: Cooley-Tukey FFT/IFFT (1D + 2D), Bjorklund's algorithm (Euclidean rhythms)
+- **Visualization**: VizAgent (heuristic + LLM-driven), deterministic Plotly planner, Mermaid diagrams, Manim animations (dynamic pipeline with 14+ templates), SVG
+- **Algorithms**: Cooley-Tukey FFT/IFFT (1D + 2D), Bjorklund's algorithm (Euclidean rhythms), Hohmann transfer orbits (orbital mechanics), RSA/Diffie-Hellman (number theory), propositional logic parser
 - **OCR**: Tesseract + Pillow + pytesseract
 - **Infra**: Docker, docker-compose
 
@@ -81,7 +94,11 @@ flowchart TB
       UI[index.html + app.js + styles.css]
       MM[mathmap.html + mathmap.js]
       ML[musiclab.js]
+      CL[calclab.js]
       FL[fftlab.js + fftlab-image.js]
+      CRYPTO[cryptolab.js]
+      LOGIC[logiclab.js]
+      SYM[symbols.js]
       D3[D3 Concept Graph]
       PLT[Plotly + KaTeX Renderers]
       MER[Mermaid.js Diagrams]
@@ -100,6 +117,7 @@ flowchart TB
       VP[Visual Planner - 20+ Plotly templates]
       VA[VizAgent - heuristic + LLM extraction]
       MANIM[Manim Service + Job Queue]
+      APIPE[Animation Pipeline - templates + LLM codegen]
       OCR[Handwriting Service]
       STORE[Settings Store + Hardware Presets]
       RES[Resource/Euclid/MathMap Services]
@@ -129,7 +147,11 @@ flowchart TB
     UI --> SP
     UI --> WA
     UI --> ML
+    UI --> CL
     UI --> FL
+    UI --> CRYPTO
+    UI --> LOGIC
+    UI --> SYM
 
     API --> TUTOR
     TUTOR --> CONTENT
@@ -141,6 +163,9 @@ flowchart TB
     VP --> VIZ
     VA --> VIZ
     API --> MANIM
+    API --> APIPE
+    APIPE --> MANIM
+    APIPE --> OLLAMA
     API --> OCR
     API --> STORE
     API --> RES
@@ -211,6 +236,8 @@ EuclidsWindow/
 │   │   │   ├── viz_agent.py         # VizAgent: heuristic + LLM viz extraction
 │   │   │   ├── visual_planner.py    # Deterministic Plotly planner (20+ templates)
 │   │   │   ├── executor.py          # Plotly/Manim code sandbox execution
+│   │   │   ├── animation_pipeline.py # Dynamic Manim pipeline (template + LLM + retry)
+│   │   │   ├── manim_templates.py   # 14+ reusable Manim scene templates
 │   │   │   ├── prompts.py           # LLM prompts + level-aware instructions
 │   │   │   ├── coordinator.py       # Multi-agent coordination
 │   │   │   ├── didactics.py         # Structured explanations + learning aids
@@ -243,8 +270,12 @@ EuclidsWindow/
 │   ├── app.js                       # UI behavior, tab navigation, API integration
 │   ├── styles.css                   # Monochrome scholarly theme
 │   ├── musiclab.js                  # Music & Mathematics Lab (5 games)
+│   ├── calclab.js                   # Calculus Lab (6 interactive visualizations)
 │   ├── fftlab.js                    # FFT Lab: audio mode + mode switcher
 │   ├── fftlab-image.js              # FFT Lab: image mode (2D FFT)
+│   ├── cryptolab.js                 # Cryptology Lab (4 crypto games)
+│   ├── logiclab.js                  # Formal Logic Lab (4 logic puzzles)
+│   ├── symbols.js                   # Mathematical Symbols Explorer
 │   ├── mathmap.html                 # Dedicated map page
 │   ├── mathmap.js
 │   ├── mathmap.css
@@ -256,6 +287,11 @@ EuclidsWindow/
 │   ├── start-local-tutor.sh
 │   ├── start-all.sh
 │   └── docker-entrypoint.sh
+├── start.sh                         # 🚀 One-command Docker startup
+├── restart.sh                       # Quick container restart
+├── stop.sh                          # Stop all containers
+├── docker-commands.sh               # Docker command reference
+├── DOCKER.md                        # Complete Docker documentation
 ├── Makefile                         # LoRA shortcuts
 ├── Dockerfile
 ├── docker-compose.yml
@@ -271,8 +307,10 @@ Content in `demo_topics.json` spans 130+ curated topics across 15 categories. Th
 | **Foundations** | Addition, Division, Fractions, Primes, Modular Arithmetic, Natural Numbers, Integers |
 | **Algebra** | Quadratic Equations, Logarithms, Matrices, Polynomials, Systems of Equations |
 | **Geometry** | Pythagorean Theorem, Coordinate Geometry, Circles, Triangles, Transformations, Polygons |
-| **Calculus** | Limits, Derivatives, Integrals, Taylor Series, Riemann Sums, Optimization |
+| **Calculus** | Limits, Derivatives, Integrals, Taylor Series, Riemann Sums, Optimization, Differential Equations, Projectile Motion, Orbital Mechanics (Hohmann transfers) |
 | **Discrete Math** | Graph Theory, Combinatorics, Probability, Cryptography, Game Theory |
+| **Cryptology** | Caesar Cipher (modular arithmetic), Frequency Analysis, RSA Encryption (prime factorization, Euler's totient), Diffie-Hellman Key Exchange (discrete logarithms) |
+| **Formal Logic** | Propositional Logic (truth tables), Categorical Logic (syllogisms), Proof by Contradiction (Knights & Knaves), Boolean Algebra & Circuit Design (logic gates) |
 | **Linear Algebra** | Vectors, Eigenvalues, Singular Value Decomposition, Linear Transformations |
 | **Number Theory** | Primes, Fermat's Last Theorem, Rational/Real Numbers, Topology |
 | **Music & Mathematics** | Harmonic Series, Pythagorean Tuning, Euclidean Rhythms, Mozart's Dice Game, Fibonacci Scales, Fractal Music, Group Theory in Music, Wave Equation of Sound |
@@ -286,7 +324,34 @@ Content in `demo_topics.json` spans 130+ curated topics across 15 categories. Th
 
 ## Quick Start
 
-### Option A: Docker (recommended)
+### Option A: Docker (recommended) - One-Command Setup
+
+The easiest way to get started:
+
+```bash
+./start.sh
+```
+
+This script will:
+- ✅ Check Docker is running
+- ✅ Build the containers from scratch
+- ✅ Start all services (app + Ollama)
+- ✅ Wait for everything to be ready
+- ✅ Show you the URL when ready
+
+Open `http://localhost:8000/` when the script completes.
+
+**Other helpful scripts:**
+
+```bash
+./restart.sh        # Quick restart (no rebuild)
+./stop.sh          # Stop all containers
+./docker-commands.sh   # Show all available commands
+```
+
+See [`DOCKER.md`](DOCKER.md) for complete Docker setup documentation.
+
+### Option A (Manual): Docker with docker-compose
 
 ```bash
 docker compose up -d --build
@@ -303,10 +368,13 @@ Open:
 - `http://localhost:8000/` (main app)
 - `http://localhost:8000/mathmap.html` (interactive map page)
 
-If you want the local Ollama service in compose too:
+**Useful commands:**
 
 ```bash
-docker compose --profile ollama up -d
+docker compose logs -f           # View logs
+docker compose down              # Stop containers
+docker compose ps                # Check status
+docker compose down -v           # Clean everything including volumes
 ```
 
 ### Option B: Local Python
@@ -324,6 +392,19 @@ Open `http://127.0.0.1:8000/`.
 ## Configuration
 
 Core settings come from `backend/app/config.py` (env-backed through `BaseSettings`), and can also be changed via the **Settings** tab in the UI or the Settings API.
+
+### Docker Environment Variables
+
+You can customize the Docker setup by creating a `.env` file in the project root:
+
+```bash
+# .env
+HOST_PORT=8080                    # Change port (default: 8000)
+LOCAL_LLM_MODEL=qwen2.5:7b       # Use a different model
+LOCAL_LLM_BASE_URL=http://host.docker.internal:11434  # External Ollama
+```
+
+The `./start.sh` script respects these environment variables automatically.
 
 ### LLM Model Configuration
 
@@ -440,11 +521,14 @@ or set it in the UI under **Settings → Local LLM Model**.
 ### 2) Interactive Labs
 
 1. Open the **Labs** dropdown in the navigation bar
-2. **Matrix Lab**: Enter matrices, perform operations, check by hand, visualize transformations
+2. **Matrix Lab**: Enter matrices, perform operations, check by hand with AI coach, visualize transformations on a coordinate grid, generate Manim animations of matrix transformations
 3. **Music Lab**: Play Mozart's Dice Game, explore harmonics, generate Euclidean rhythms, compare Pythagorean vs. equal-tempered tuning
-4. **FFT Lab (Audio)**: Record voice or load a sample tone → Run FFT → Edit frequency bands with sliders → Reconstruct with IFFT → Play original vs. modified
-5. **FFT Lab (Image)**: Upload an image or load a sample → Run 2D FFT → View magnitude spectrum + phase → Apply low-pass/high-pass/band-pass/band-stop filters → Reconstruct with inverse 2D FFT → Compare original vs. filtered
-6. Each step has inline math explanations for Kids, Teen, College, and Adult levels
+4. **Calculus Lab**: Explore derivatives with the Slope Explorer, approximate integrals with Riemann sums, solve optimization problems interactively, simulate differential equations (exponential/logistic/predator-prey/SIR), launch projectiles, navigate Hohmann transfer orbits to the Moon or Mars
+5. **FFT Lab (Audio)**: Record voice or load a sample tone → Run FFT → Edit frequency bands with sliders → Reconstruct with IFFT → Play original vs. modified
+6. **FFT Lab (Image)**: Upload an image or load a sample → Run 2D FFT → View magnitude spectrum + phase → Apply low-pass/high-pass/band-pass/band-stop filters → Reconstruct with inverse 2D FFT → Compare original vs. filtered
+7. **Crypto Lab**: Encrypt with the Caesar Cipher (interactive alphabet wheel), crack codes with frequency analysis, build RSA keys from primes, watch Diffie-Hellman key exchange unfold — each game starts with a math prerequisite brief
+8. **Logic Lab**: Build truth tables from propositional formulas, validate syllogisms (spot the fallacy!), solve Knights & Knaves puzzles, wire logic gate circuits to build XOR, NAND, and half adders
+9. Each step has inline math explanations for Kids, Teen, College, and Adult levels
 
 ### 3) Scratchpad answer checking
 
@@ -470,6 +554,13 @@ or set it in the UI under **Settings → Local LLM Model**.
 1. Open **Math Map** (dedicated page)
 2. Browse categories: Foundations, Algebra, Geometry, Calculus, Music & Math, Signal Processing, etc.
 3. Click any topic prompt to jump to the Tutor
+
+### 7) Mathematical Symbols reference
+
+1. Open **Symbols** in the navigation bar
+2. Browse by category (Greek Letters, Arithmetic, Set Theory, Logic, Calculus, Algebra, Relations, Geometry)
+3. Search for any symbol by name or glyph
+4. Click a symbol card to see its history, overlapping meanings, and connected math topics
 
 ## Product Flow With Screenshots
 
@@ -520,10 +611,16 @@ or set it in the UI under **Settings → Local LLM Model**.
 - `POST /api/ai/tutor` — 3-tier tutor (curated → LLM reasoning → legacy planner)
 - `POST /api/ai/viz-agent` — generate visualization from question + answer text
 - `POST /api/ai/visualize` — on-demand diagram/animation rendering
+- `POST /api/ai/animate` — dynamic Manim animation via template + LLM pipeline
+- `GET /api/ai/animate/templates` — list available template-based animation topics
 - `POST /api/ai/media/image` — diffusion image generation
 - `POST /api/ai/media/music` — music generation
 - `POST /api/ai/handwriting/recognize`
 - `POST /api/ai/handwriting/validate`
+
+### Matrix Lab Animation
+
+- `POST /api/matrix/animate` — render a Manim linear-transformation animation for a user-defined 2×2 matrix
 
 ### Jobs / Visualization / Animation
 
@@ -634,12 +731,18 @@ make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_NO_SHUFFLE=1 LORA_OUTPUT=ba
 
 ## Troubleshooting
 
+- **Docker startup issues**
+  - Use `./start.sh` for automatic health checks and diagnostics
+  - Check logs: `docker compose logs -f`
+  - Clean restart: `docker compose down -v && ./start.sh`
+
 - **UI looks stale after changes**
   - Hard refresh: `Cmd+Shift+R`
+  - Quick restart: `./restart.sh`
 
 - **Animation fails with LaTeX/MathTex errors**
   - Ensure Docker image includes TeX packages (already in `Dockerfile`)
-  - Rebuild: `docker compose up -d --build`
+  - Rebuild: `./start.sh` or `docker compose up -d --build`
 
 - **Scratchpad OCR unavailable**
   - Ensure `tesseract-ocr` is installed in image
@@ -667,9 +770,9 @@ make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_NO_SHUFFLE=1 LORA_OUTPUT=ba
 - **Local-first**: All core functionality works offline with a local LLM; no cloud dependency required
 - **Curated + generative hybrid**: Hand-written expert content for known topics (instant, high-quality), LLM for follow-ups and open-ended questions (conversational, adaptive)
 - **Visualization everywhere**: Every answer gets a visualization — deterministic Plotly charts for math topics, Mermaid diagrams for concepts and proofs, VizAgent auto-generation for everything else
-- **Lab-driven learning**: Interactive labs let you *do* the math, not just read about it — record audio and see its frequency spectrum, upload an image and blur it with a low-pass filter, play Mozart's dice game
+- **Lab-driven learning**: Interactive labs let you *do* the math, not just read about it — launch Hohmann transfer orbits, encrypt messages with RSA, solve Knights & Knaves puzzles, wire logic gates, record audio and see its frequency spectrum, upload an image and blur it with a low-pass filter, play Mozart's dice game, and generate 3Blue1Brown-style animations of matrix transformations
 - **Hardware-aware**: Runs on anything from a Raspberry Pi (`qwen2.5:0.5b`) to an NVIDIA GPU (`llama3.1:8b`), with presets for each hardware tier
-- **Monochrome scholarly aesthetic**: Black, white, and warm grays — the content speaks for itself
+- **Classical scholarly aesthetic**: Cinzel Decorative typeface for the app name evoking Greek inscription lettering, with a monochrome palette of black, white, and warm grays — the content speaks for itself
 
 ## Notes
 

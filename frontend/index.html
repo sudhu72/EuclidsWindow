@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window</title>
     <link rel="icon" type="image/png" href="euclids-window-logo.png" />
-    <link rel="stylesheet" href="styles.css?v=20260327-3" />
+    <link rel="stylesheet" href="styles.css?v=20260408-11" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
@@ -25,11 +28,14 @@
             <button class="nav-dropdown-item" data-tab="musiclab"><span class="tab-icon">&#9835;</span> Music Lab</button>
             <button class="nav-dropdown-item" data-tab="calclab"><span class="tab-icon">&#8747;</span> Calculus Lab</button>
             <button class="nav-dropdown-item" data-tab="fftlab"><span class="tab-icon">&#8767;</span> FFT Lab</button>
+            <button class="nav-dropdown-item" data-tab="cryptolab"><span class="tab-icon">&#128274;</span> Crypto Lab</button>
+            <button class="nav-dropdown-item" data-tab="logiclab"><span class="tab-icon">&#8866;</span> Logic Lab</button>
           </div>
         </div>
         <button class="tab-btn" data-tab="mindmap"><span class="tab-icon">&#9702;</span> Concepts</button>
         <button class="tab-btn" data-tab="euclid"><span class="tab-icon">&#9651;</span> Euclid</button>
         <button class="tab-btn" data-tab="resources"><span class="tab-icon">&#9776;</span> Resources</button>
+        <button class="tab-btn" data-tab="symbols"><span class="tab-icon">&#120484;</span> Symbols</button>
         <button class="tab-btn" data-tab="collections"><span class="tab-icon">&#10070;</span> Prompts</button>
         <button class="tab-btn" data-tab="settings"><span class="tab-icon">&#9881;</span> Settings</button>
         <button class="tab-btn" data-tab="eval"><span class="tab-icon">&#9632;</span> Eval</button>
@@ -76,7 +82,7 @@
             <button type="button" id="tutor-render-diagram" class="btn-secondary">
               Render Diagram Now
             </button>
-            <button type="button" id="tutor-render-animation" class="btn-secondary">
+            <button type="button" id="tutor-render-animation" class="btn-secondary" title="Generate a 3Blue1Brown-style Manim animation for this topic">
               Render Animation Now
             </button>
             <button type="button" id="tutor-viz-agent" class="btn-secondary" title="Auto-generate a chart, diagram, or geometric visualization from the tutor's answer">
@@ -224,55 +230,67 @@
       </div>
 
       <!-- Matrix Lab Tab -->
-      <div id="tab-matrixlab" class="tab-content matrix-size-2">
-        <section class="settings-panel">
+      <div id="tab-matrixlab" class="tab-content">
+        <section class="settings-panel mat-split-left">
           <div class="settings-header">
             <h3>Matrix & Vector Practice Lab</h3>
-            <p>Input matrix/vector components, run operations, and visualize transformations in x-y coordinates.</p>
+            <p>Input matrix/vector components (m×n supported), run operations, and visualize transformations.</p>
           </div>
+          
+          <!-- Dimension Controls -->
+          <div class="matrix-dim-controls">
+            <div class="dim-control-group">
+              <label for="matrix-a-rows">Matrix A dimensions:</label>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <select id="matrix-a-rows" class="dim-select">
+                  <option value="2" selected>2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+                <span>×</span>
+                <select id="matrix-a-cols" class="dim-select">
+                  <option value="2" selected>2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+              </div>
+            </div>
+            <div class="dim-control-group">
+              <label for="matrix-b-rows">Matrix B dimensions:</label>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <select id="matrix-b-rows" class="dim-select">
+                  <option value="2" selected>2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+                <span>×</span>
+                <select id="matrix-b-cols" class="dim-select">
+                  <option value="2" selected>2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Matrix Inputs -->
           <div class="matrix-lab-grid">
             <div class="matrix-card">
               <div class="matrix-title">Matrix A</div>
-              <div class="matrix-input-grid">
-                <input id="matrix-a-11" type="number" step="any" value="1" />
-                <input id="matrix-a-12" type="number" step="any" value="0" />
-                <input id="matrix-a-13" class="matrix-cell-3" type="number" step="any" value="0" />
-                <input id="matrix-a-21" type="number" step="any" value="0" />
-                <input id="matrix-a-22" type="number" step="any" value="1" />
-                <input id="matrix-a-23" class="matrix-cell-3" type="number" step="any" value="0" />
-                <input id="matrix-a-31" class="matrix-cell-3" type="number" step="any" value="0" />
-                <input id="matrix-a-32" class="matrix-cell-3" type="number" step="any" value="0" />
-                <input id="matrix-a-33" class="matrix-cell-3" type="number" step="any" value="1" />
-              </div>
+              <div id="matrix-a-grid" class="matrix-input-grid-dynamic"></div>
             </div>
             <div class="matrix-card">
               <div class="matrix-title">Matrix B</div>
-              <div class="matrix-input-grid">
-                <input id="matrix-b-11" type="number" step="any" value="1" />
-                <input id="matrix-b-12" type="number" step="any" value="1" />
-                <input id="matrix-b-13" class="matrix-cell-3" type="number" step="any" value="0" />
-                <input id="matrix-b-21" type="number" step="any" value="0" />
-                <input id="matrix-b-22" type="number" step="any" value="1" />
-                <input id="matrix-b-23" class="matrix-cell-3" type="number" step="any" value="0" />
-                <input id="matrix-b-31" class="matrix-cell-3" type="number" step="any" value="0" />
-                <input id="matrix-b-32" class="matrix-cell-3" type="number" step="any" value="0" />
-                <input id="matrix-b-33" class="matrix-cell-3" type="number" step="any" value="1" />
-              </div>
+              <div id="matrix-b-grid" class="matrix-input-grid-dynamic"></div>
             </div>
             <div class="matrix-card">
               <div class="matrix-title">Vector v</div>
-              <div class="vector-input-row">
-                <input id="matrix-v-x" type="number" step="any" value="1" />
-                <input id="matrix-v-y" type="number" step="any" value="1" />
-                <input id="matrix-v-z" class="matrix-cell-3" type="number" step="any" value="1" />
-              </div>
+              <div id="matrix-v-grid" class="vector-input-row-dynamic"></div>
+              <p class="matrix-hint" id="vector-hint">Dimension adjusts to match matrix columns</p>
             </div>
           </div>
-          <div class="resource-controls">
-            <select id="matrix-size">
-              <option value="2" selected>2×2 mode</option>
-              <option value="3">3×3 mode</option>
-            </select>
+          
+          <div class="resource-controls" style="flex-wrap:wrap;">
             <select id="matrix-operation">
               <option value="add" selected>C = A + B</option>
               <option value="subtract">C = A - B</option>
@@ -287,8 +305,8 @@
             <button id="matrix-example" class="btn-secondary">Load Example</button>
             <button id="matrix-reset" class="btn-secondary">Reset</button>
           </div>
-          <div class="matrix-inline-hint">
-            3x3 mode is shown on the x-y grid using homogeneous projection: output point = (x/z, y/z).
+          <div class="matrix-inline-hint" id="matrix-operation-hint">
+            Select an operation. Visualization available for square matrices only.
           </div>
           <div id="matrix-byhand" class="concept-details">
             <h3>AI by Hand Coach</h3>
@@ -296,25 +314,11 @@
             <div class="matrix-lab-grid">
               <div class="matrix-card">
                 <div class="matrix-title">Your C prediction</div>
-                <div class="matrix-input-grid">
-                  <input id="matrix-c-11" type="number" step="any" value="0" />
-                  <input id="matrix-c-12" type="number" step="any" value="0" />
-                  <input id="matrix-c-13" class="matrix-cell-3" type="number" step="any" value="0" />
-                  <input id="matrix-c-21" type="number" step="any" value="0" />
-                  <input id="matrix-c-22" type="number" step="any" value="0" />
-                  <input id="matrix-c-23" class="matrix-cell-3" type="number" step="any" value="0" />
-                  <input id="matrix-c-31" class="matrix-cell-3" type="number" step="any" value="0" />
-                  <input id="matrix-c-32" class="matrix-cell-3" type="number" step="any" value="0" />
-                  <input id="matrix-c-33" class="matrix-cell-3" type="number" step="any" value="1" />
-                </div>
+                <div id="matrix-c-grid" class="matrix-input-grid-dynamic"></div>
               </div>
               <div class="matrix-card">
                 <div class="matrix-title">Your C·v prediction</div>
-                <div class="vector-input-row">
-                  <input id="matrix-cv-x" type="number" step="any" value="0" />
-                  <input id="matrix-cv-y" type="number" step="any" value="0" />
-                  <input id="matrix-cv-z" class="matrix-cell-3" type="number" step="any" value="0" />
-                </div>
+                <div id="matrix-cv-grid" class="vector-input-row-dynamic"></div>
               </div>
             </div>
             <div id="matrix-feedback" class="tutor-context-hint">Waiting for your attempt.</div>
@@ -322,10 +326,27 @@
           <div id="matrix-results" class="concept-details">
             <div class="viz-placeholder">Run an operation to view matrix and vector outputs.</div>
           </div>
+        </section>
+        <div class="mat-split-right">
           <div id="matrix-plot" class="concept-details" style="min-height: 420px;">
             <div class="viz-placeholder">Transformation grid will appear here.</div>
           </div>
-        </section>
+          <div id="matrix-anim-panel" class="concept-details mat-anim-panel">
+            <h4>Transformation Animation</h4>
+            <p class="mat-anim-desc">Generate a 3Blue1Brown-style Manim animation showing how a matrix transforms the coordinate grid.</p>
+            <div class="mat-anim-controls">
+              <select id="matrix-anim-which">
+                <option value="A">Matrix A</option>
+                <option value="B">Matrix B</option>
+                <option value="C">Result C</option>
+              </select>
+              <button id="matrix-anim-btn" class="btn-primary">Generate Animation</button>
+            </div>
+            <div id="matrix-anim-output">
+              <div class="viz-placeholder">Select a matrix and click Generate to see the transformation animated.</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Prompt Collections Tab -->
@@ -677,6 +698,7 @@
             <button class="btn-secondary calc-game-btn" data-game="optimize">Optimization</button>
             <button class="btn-secondary calc-game-btn" data-game="diffeq">Differential Equations</button>
             <button class="btn-secondary calc-game-btn" data-game="projectile">Projectile Lab</button>
+            <button class="btn-secondary calc-game-btn" data-game="orbital">Orbital Mechanics</button>
           </div>
 
           <!-- 1  Slope Explorer -->
@@ -799,8 +821,8 @@
                 <button id="opt-find-max" class="btn-primary">Find Optimum</button>
               </div>
               <div class="calc-opt-display">
-                <div id="opt-shape" class="calc-viz-box" style="flex:1;min-height:220px;"></div>
-                <div id="opt-graph" class="calc-viz-box" style="flex:1;min-height:220px;"></div>
+                <div id="opt-shape" class="calc-viz-box" style="flex:1;min-height:360px;"></div>
+                <div id="opt-graph" class="calc-viz-box" style="flex:1;min-height:360px;"></div>
               </div>
               <div id="opt-readout" class="calc-readout"></div>
               <div class="calc-math-panel">
@@ -913,6 +935,55 @@
                 </div>
               </div>
               <div class="music-explore-link"><a href="#" data-calc-prompt="How does calculus describe projectile motion through derivatives and integrals?">Explore in Tutor &rarr;</a></div>
+            </div>
+          </div>
+
+          <!-- 6  Orbital Mechanics -->
+          <div id="calc-orbital" class="calc-game">
+            <div class="calc-game-header">
+              <h4>Orbital Mechanics &mdash; Calculus Powers Space Travel</h4>
+              <p>Launch a shuttle from Earth and navigate to the Moon or Mars using Hohmann transfer orbits. See how gravity, velocity, and calculus govern every manoeuvre.</p>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls">
+                <label>Destination:
+                  <select id="orbit-dest">
+                    <option value="moon">Moon</option>
+                    <option value="mars">Mars</option>
+                  </select>
+                </label>
+                <label>Thrust boost:
+                  <input type="range" id="orbit-boost" min="0.8" max="1.2" step="0.01" value="1.0" style="width:140px;" /><span id="orbit-boost-val">1.00</span>&times;
+                </label>
+                <button id="orbit-launch" class="btn-primary">Launch</button>
+                <button id="orbit-reset" class="btn-secondary">Reset</button>
+              </div>
+              <div class="calc-opt-display">
+                <div id="orbit-scene" class="calc-viz-box" style="flex:2;min-height:420px;"></div>
+                <div id="orbit-graphs" class="calc-viz-box" style="flex:1;min-height:420px;"></div>
+              </div>
+              <div id="orbit-readout" class="calc-readout"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="orbital" data-level="kids">
+                  To reach the Moon or Mars, a rocket doesn&rsquo;t fly in a straight line &mdash; it rides a curved path called an <strong>orbit</strong>. Gravity keeps pulling the shuttle toward Earth like a ball on a string. To go farther out, the shuttle speeds up at just the right moment, stretching its path into an oval (<em>ellipse</em>) that reaches the Moon or Mars. Getting the speed exactly right is what calculus figures out!
+                </div>
+                <div class="calc-math-content hidden" data-game="orbital" data-level="teen">
+                  <strong>Newton&rsquo;s Law of Gravitation:</strong> F&nbsp;=&nbsp;GMm/r&sup2; provides the acceleration a&nbsp;=&nbsp;GM/r&sup2; toward the central body. Orbital velocity at radius r is v&nbsp;=&nbsp;&radic;(GM/r). A <strong>Hohmann transfer</strong> uses two burns: (1) speed up from circular orbit to enter an ellipse that just touches the target orbit, (2) speed up again at arrival to circularise. The &Delta;v (velocity change) at each burn is computed from the vis-viva equation: v&sup2;&nbsp;=&nbsp;GM(2/r&nbsp;&minus;&nbsp;1/a), where a is the semi-major axis.
+                </div>
+                <div class="calc-math-content hidden" data-game="orbital" data-level="college">
+                  <strong>Vis-viva equation:</strong> v&sup2; = GM(2/r &minus; 1/a), derived by integrating the gravitational potential energy dU = &minus;GMm/r&sup2; dr and applying conservation of energy E = &frac12;mv&sup2; &minus; GMm/r = &minus;GMm/(2a). The Hohmann transfer minimises &Delta;v between coplanar circular orbits. Transfer time = &frac12;&radic;(4&pi;&sup2;a<sub>t</sub>&sup3;/(GM)), where a<sub>t</sub> = (r<sub>1</sub>+r<sub>2</sub>)/2. This is Kepler&rsquo;s Third Law applied to the transfer ellipse. The shuttle&rsquo;s state evolves via the two-body ODE: <strong>r</strong>&Prime; = &minus;GM<strong>r</strong>/|<strong>r</strong>|&sup3;.
+                </div>
+                <div class="calc-math-content hidden" data-game="orbital" data-level="adult">
+                  Real mission design extends the two-body problem with patched-conics (sphere of influence transitions), the restricted three-body problem (Lagrange points, halo orbits), and numerical trajectory optimisation. The &Delta;v budget is the fundamental currency: Tsiolkovsky&rsquo;s rocket equation &Delta;v = v<sub>e</sub> ln(m<sub>0</sub>/m<sub>f</sub>) links fuel mass to velocity change via the exhaust velocity v<sub>e</sub>. NASA&rsquo;s Artemis missions use a near-rectilinear halo orbit around the Moon; Mars transfers exploit launch windows when the Hohmann geometry aligns (every ~26 months). All of this is calculus: ODEs for trajectories, integrals for energy budgets, optimisation for minimal-fuel paths.
+                </div>
+              </div>
+              <div class="music-explore-link"><a href="#" data-calc-prompt="How does calculus power orbital mechanics, Hohmann transfers, and space travel to the Moon and Mars?">Explore in Tutor &rarr;</a></div>
             </div>
           </div>
 
@@ -1238,6 +1309,509 @@
         </section>
       </div>
 
+      <!-- Crypto Lab Tab -->
+      <div id="tab-cryptolab" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div class="tutor-header">
+            <h3>Cryptology Lab</h3>
+            <p>Explore the mathematics of secret codes &mdash; from ancient Caesar ciphers to modern RSA encryption. Every game is built on real math.</p>
+          </div>
+
+          <!-- Game Selector -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary crypto-game-btn active" data-game="caesar">Caesar Cipher</button>
+            <button class="btn-secondary crypto-game-btn" data-game="frequency">Frequency Analysis</button>
+            <button class="btn-secondary crypto-game-btn" data-game="rsa">RSA Playground</button>
+            <button class="btn-secondary crypto-game-btn" data-game="diffiehellman">Diffie-Hellman</button>
+          </div>
+
+          <!-- 1  Caesar Cipher Wheel -->
+          <div id="crypto-caesar" class="crypto-game active">
+            <div class="calc-game-header">
+              <h4>Caesar Cipher &mdash; Modular Arithmetic in Action</h4>
+              <p>Shift every letter in the alphabet by a fixed number. This is one of the oldest encryption methods, used by Julius Caesar himself.</p>
+            </div>
+            <div class="crypto-prereq">
+              <strong>Math you&rsquo;ll use:</strong> <em>Modular arithmetic</em> &mdash; the math of clocks and remainders.
+              Each letter is a number (A=0, B=1, &hellip;, Z=25). Encryption: E(x) = (x + k) mod 26. Decryption: D(x) = (x &minus; k) mod 26.
+              <br/><a href="#" data-calc-prompt="Explain modular arithmetic and how it applies to Caesar ciphers and cryptography">Explore Modular Arithmetic in Tutor &rarr;</a>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls">
+                <label>Shift (k): <input type="range" id="caesar-shift" min="0" max="25" step="1" value="3" style="width:180px;" /><span id="caesar-shift-val">3</span></label>
+                <label>Mode:
+                  <select id="caesar-mode">
+                    <option value="encrypt">Encrypt</option>
+                    <option value="decrypt">Decrypt</option>
+                  </select>
+                </label>
+                <button id="caesar-brute" class="btn-secondary">Brute-Force All 26 Shifts</button>
+              </div>
+              <!-- Cipher Wheel + I/O side by side -->
+              <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+                <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;">
+                  <svg id="caesar-wheel" width="340" height="340" viewBox="0 0 340 340" style="cursor:pointer;"></svg>
+                  <div id="caesar-wheel-label" style="font-size:12px;color:#78716c;margin-top:4px;text-align:center;">Click any letter on the wheel to see its mapping</div>
+                </div>
+                <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px;">
+                  <div>
+                    <label style="font-size:13px;font-weight:600;">Input:</label>
+                    <textarea id="caesar-input" rows="3" style="width:100%;font-family:monospace;font-size:14px;padding:8px;border:1px solid #d6d3d1;border-radius:6px;" placeholder="Type your message here...">ATTACK AT DAWN</textarea>
+                  </div>
+                  <div>
+                    <label style="font-size:13px;font-weight:600;">Output:</label>
+                    <textarea id="caesar-output" rows="3" style="width:100%;font-family:monospace;font-size:14px;padding:8px;border:1px solid #d6d3d1;border-radius:6px;background:#fafaf9;" readonly></textarea>
+                  </div>
+                  <div id="caesar-alphabet" style="font-family:monospace;font-size:13px;line-height:1.8;"></div>
+                </div>
+              </div>
+              <div id="caesar-brute-output" style="display:none;margin-top:10px;max-height:260px;overflow-y:auto;font-family:monospace;font-size:12px;background:#fafaf9;border:1px solid #d6d3d1;border-radius:6px;padding:8px;"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="caesar" data-level="kids">
+                  Imagine the alphabet is a circle, like a clock. A &ldquo;Caesar cipher&rdquo; slides every letter forward by the same number of steps. With a shift of 3, A becomes D, B becomes E, and Z wraps around to C! To read the secret message, just slide backward the same number. Julius Caesar used this to send secret military orders over 2,000 years ago.
+                </div>
+                <div class="calc-math-content hidden" data-game="caesar" data-level="teen">
+                  Map each letter to a number: A=0, B=1, &hellip;, Z=25. Encryption with shift k: c = (p + k) mod 26, where p is the plaintext number and c is the ciphertext number. Decryption: p = (c &minus; k) mod 26. The &ldquo;mod 26&rdquo; means we wrap around &mdash; just like 11 PM + 3 hours = 2 AM on a 12-hour clock. There are only 26 possible keys, so a brute-force attack tries all of them instantly.
+                </div>
+                <div class="calc-math-content hidden" data-game="caesar" data-level="college">
+                  The Caesar cipher is an affine cipher with a=1: E(x) = (ax + b) mod 26. It operates on &Zopf;/26&Zopf; (integers modulo 26). The cipher is trivially breakable: |key space| = 26, and frequency analysis (next game) cracks it without brute force. However, it introduces the essential concept of <strong>modular arithmetic</strong>, which underlies all of modern cryptography. The general affine cipher E(x) = (ax + b) mod 26 requires gcd(a, 26) = 1 for invertibility, connecting to the structure of (&Zopf;/n&Zopf;)*.
+                </div>
+                <div class="calc-math-content hidden" data-game="caesar" data-level="adult">
+                  In information-theoretic terms, the Caesar cipher has H(K) = log&sub2;(26) &approx; 4.7 bits of key entropy &mdash; utterly insufficient. Shannon&rsquo;s unicity distance for English (redundancy &approx; 3.2 bits/letter) is about 1.5 characters. In practice, the one-time pad (Vernam cipher) is the only provably unbreakable scheme: |K| &ge; |M| and K is truly random. Every modern stream cipher (AES-CTR, ChaCha20) approximates this ideal by using a short key to generate a pseudorandom keystream.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2  Frequency Analysis -->
+          <div id="crypto-frequency" class="crypto-game">
+            <div class="calc-game-header">
+              <h4>Frequency Analysis &mdash; Statistics Breaks Codes</h4>
+              <p>Count letter frequencies in ciphertext and compare to known English patterns. This technique cracked substitution ciphers for centuries.</p>
+            </div>
+            <div class="crypto-prereq">
+              <strong>Math you&rsquo;ll use:</strong> <em>Probability &amp; Statistics</em> &mdash; letter frequency distributions, chi-squared testing, and pattern recognition.
+              In English, E appears ~12.7%, T ~9.1%, A ~8.2%. A substitution cipher preserves these frequencies.
+              <br/><a href="#" data-calc-prompt="Explain probability distributions, frequency analysis, and how statistics is used to break ciphers">Explore Probability &amp; Statistics in Tutor &rarr;</a>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls">
+                <label>Sample:
+                  <select id="freq-sample">
+                    <option value="custom">Custom input</option>
+                    <option value="caesar">Caesar cipher (shift unknown)</option>
+                    <option value="subst">Substitution cipher</option>
+                  </select>
+                </label>
+                <button id="freq-analyze" class="btn-primary">Analyze Frequencies</button>
+                <button id="freq-suggest" class="btn-secondary">Auto-Suggest Shift</button>
+              </div>
+              <textarea id="freq-input" rows="4" style="width:100%;font-family:monospace;font-size:13px;padding:8px;border:1px solid #d6d3d1;border-radius:6px;" placeholder="Paste or type ciphertext here...">WKHUHDUHWZRWBRIWRUWRLVHVLQWKHVHD</textarea>
+              <div class="calc-opt-display">
+                <div id="freq-cipher-chart" class="calc-viz-box" style="flex:1;min-height:260px;"></div>
+                <div id="freq-english-chart" class="calc-viz-box" style="flex:1;min-height:260px;"></div>
+              </div>
+              <div id="freq-readout" class="calc-readout"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="frequency" data-level="kids">
+                  In English, some letters show up much more than others. The letter E is the champion &mdash; it appears about 1 in every 8 letters! If you have a secret message and one letter appears way more than the rest, that letter is probably E in disguise. Count the letters, find the pattern, and you can crack the code!
+                </div>
+                <div class="calc-math-content hidden" data-game="frequency" data-level="teen">
+                  Frequency analysis exploits the fact that substitution ciphers are <strong>frequency-preserving</strong>. In English, letter frequencies are approximately: E(12.7%), T(9.1%), A(8.2%), O(7.5%), I(7.0%), N(6.7%), S(6.3%), H(6.1%). If the most common ciphertext letter has frequency ~12%, it likely maps to E. The shift = (cipher_letter &minus; E) mod 26 reveals the Caesar key. For general substitution ciphers, bigram and trigram frequencies (TH, HE, IN, ER, AN) provide additional constraints.
+                </div>
+                <div class="calc-math-content hidden" data-game="frequency" data-level="college">
+                  Formally, we compute the <strong>chi-squared statistic</strong>: &chi;&sup2; = &sum;(O<sub>i</sub> &minus; E<sub>i</sub>)&sup2;/E<sub>i</sub> for each candidate shift, where O<sub>i</sub> is the observed frequency and E<sub>i</sub> is the expected English frequency. The shift minimizing &chi;&sup2; is the most likely key. For polyalphabetic ciphers (Vigen&egrave;re), the <strong>index of coincidence</strong> IC = &sum;f<sub>i</sub>(f<sub>i</sub>&minus;1) / (N(N&minus;1)) distinguishes random text (IC &approx; 0.038) from English (IC &approx; 0.067), revealing the key length.
+                </div>
+                <div class="calc-math-content hidden" data-game="frequency" data-level="adult">
+                  Modern cryptanalysis extends far beyond frequency counting. The Index of Coincidence (Friedman, 1920s) measures the &ldquo;roughness&rdquo; of a distribution. Kasiski examination finds repeated ciphertext segments to determine Vigen&egrave;re key length. In WWII, Turing&rsquo;s Bombe used known-plaintext attacks and the contradiction method (Bayesian reasoning) against Enigma. Today, side-channel attacks, differential cryptanalysis, and lattice-based attacks target the mathematical structures of AES, RSA, and post-quantum schemes.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3  RSA Playground -->
+          <div id="crypto-rsa" class="crypto-game">
+            <div class="calc-game-header">
+              <h4>RSA Playground &mdash; The Math of Public-Key Encryption</h4>
+              <p>Pick two prime numbers, compute the public and private keys, and watch RSA encrypt and decrypt a message &mdash; all with real number theory.</p>
+            </div>
+            <div class="crypto-prereq">
+              <strong>Math you&rsquo;ll use:</strong> <em>Number Theory</em> &mdash; prime numbers, Euler&rsquo;s totient function &phi;(n), modular exponentiation, and the Extended Euclidean Algorithm.
+              RSA security relies on the difficulty of factoring large numbers: easy to multiply two primes, nearly impossible to reverse.
+              <br/><a href="#" data-calc-prompt="Explain prime numbers, Euler's totient function, and modular exponentiation as used in RSA encryption">Explore Number Theory in Tutor &rarr;</a>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls" style="flex-wrap:wrap;">
+                <label>p (prime): <input type="number" id="rsa-p" value="61" min="2" max="997" style="width:70px;" /></label>
+                <label>q (prime): <input type="number" id="rsa-q" value="53" min="2" max="997" style="width:70px;" /></label>
+                <button id="rsa-compute" class="btn-primary">Compute Keys</button>
+                <label>Message m: <input type="number" id="rsa-m" value="42" min="0" max="9999" style="width:70px;" /></label>
+                <button id="rsa-encrypt" class="btn-secondary">Encrypt &amp; Decrypt</button>
+              </div>
+              <div id="rsa-keys" class="calc-readout" style="font-family:monospace;line-height:1.9;"></div>
+              <div id="rsa-steps" style="font-family:monospace;font-size:13px;background:#fafaf9;border:1px solid #d6d3d1;border-radius:6px;padding:10px;margin-top:8px;line-height:1.8;display:none;"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="rsa" data-level="kids">
+                  Imagine a magic mailbox: anyone can drop a letter in (that&rsquo;s the <strong>public key</strong>), but only you have the special key to open it (the <strong>private key</strong>). RSA works like this using big prime numbers. Multiplying two primes together is easy; figuring out which two primes were used is incredibly hard &mdash; that&rsquo;s what keeps your secrets safe!
+                </div>
+                <div class="calc-math-content hidden" data-game="rsa" data-level="teen">
+                  <strong>RSA algorithm:</strong> (1) Pick two primes p and q. (2) Compute n = p&times;q and &phi;(n) = (p&minus;1)(q&minus;1). (3) Choose e such that gcd(e, &phi;(n)) = 1 (commonly e = 65537). (4) Find d such that e&times;d &equiv; 1 (mod &phi;(n)) using the Extended Euclidean Algorithm. Public key: (n, e). Private key: d. Encrypt: c = m<sup>e</sup> mod n. Decrypt: m = c<sup>d</sup> mod n. It works because of Euler&rsquo;s theorem: m<sup>e&times;d</sup> &equiv; m<sup>1 + k&phi;(n)</sup> &equiv; m (mod n).
+                </div>
+                <div class="calc-math-content hidden" data-game="rsa" data-level="college">
+                  RSA&rsquo;s correctness follows from Euler&rsquo;s theorem: if gcd(m,n)=1, then m<sup>&phi;(n)</sup> &equiv; 1 (mod n). Since ed &equiv; 1 (mod &phi;(n)), we have ed = 1 + k&phi;(n), so m<sup>ed</sup> = m &middot; (m<sup>&phi;(n)</sup>)<sup>k</sup> &equiv; m (mod n). The Extended Euclidean Algorithm computes d = e<sup>&minus;1</sup> mod &phi;(n) in O(log&sup2; n) steps. Security rests on the <strong>RSA problem</strong>: computing m from c = m<sup>e</sup> mod n without knowing &phi;(n). This is believed to be as hard as factoring n, for which the best known algorithm (GNFS) runs in L<sub>n</sub>[1/3, (64/9)<sup>1/3</sup>].
+                </div>
+                <div class="calc-math-content hidden" data-game="rsa" data-level="adult">
+                  In practice, RSA uses 2048-4096 bit keys. Key generation requires probabilistic primality testing (Miller-Rabin). Padding schemes (OAEP) prevent chosen-ciphertext attacks. RSA is primarily used for key exchange and digital signatures, not bulk encryption (too slow). Shor&rsquo;s quantum algorithm factors n in polynomial time, threatening RSA &mdash; hence the push toward post-quantum cryptography (lattice-based schemes like CRYSTALS-Kyber, now NIST-standardized as ML-KEM). The mathematical foundation shifts from factoring to the Learning With Errors (LWE) problem on lattices.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4  Diffie-Hellman Key Exchange -->
+          <div id="crypto-diffiehellman" class="crypto-game">
+            <div class="calc-game-header">
+              <h4>Diffie-Hellman Key Exchange &mdash; Sharing Secrets in Public</h4>
+              <p>Watch Alice and Bob agree on a secret key while Eve listens to every message. The math of discrete logarithms makes it possible.</p>
+            </div>
+            <div class="crypto-prereq">
+              <strong>Math you&rsquo;ll use:</strong> <em>Group Theory &amp; Discrete Logarithms</em> &mdash; modular exponentiation in cyclic groups.
+              Given g<sup>a</sup> mod p, finding &ldquo;a&rdquo; is computationally infeasible for large p. This one-way property is the foundation.
+              <br/><a href="#" data-calc-prompt="Explain group theory, discrete logarithms, and how Diffie-Hellman key exchange works mathematically">Explore Group Theory in Tutor &rarr;</a>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls" style="flex-wrap:wrap;">
+                <label>Prime p: <input type="number" id="dh-p" value="23" min="5" max="9973" style="width:70px;" /></label>
+                <label>Generator g: <input type="number" id="dh-g" value="5" min="2" max="100" style="width:60px;" /></label>
+                <label>Alice&rsquo;s secret a: <input type="number" id="dh-a" value="6" min="1" max="9999" style="width:60px;" /></label>
+                <label>Bob&rsquo;s secret b: <input type="number" id="dh-b" value="15" min="1" max="9999" style="width:60px;" /></label>
+                <button id="dh-run" class="btn-primary">Exchange Keys</button>
+              </div>
+              <div id="dh-visual" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
+                <div id="dh-alice" class="crypto-actor-card">
+                  <div class="crypto-actor-name" style="color:#2563eb;">Alice</div>
+                  <div id="dh-alice-steps" class="crypto-actor-steps"></div>
+                </div>
+                <div id="dh-public" class="crypto-actor-card" style="border-color:#a8a29e;">
+                  <div class="crypto-actor-name" style="color:#78716c;">Public Channel (Eve can see)</div>
+                  <div id="dh-public-steps" class="crypto-actor-steps"></div>
+                </div>
+                <div id="dh-bob" class="crypto-actor-card">
+                  <div class="crypto-actor-name" style="color:#dc2626;">Bob</div>
+                  <div id="dh-bob-steps" class="crypto-actor-steps"></div>
+                </div>
+              </div>
+              <div id="dh-result" class="calc-readout" style="margin-top:8px;"></div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="diffiehellman" data-level="kids">
+                  Imagine Alice and Bob each have a secret paint color. They mix their secret with a shared public color and swap the mixtures. Now each mixes in their own secret again &mdash; and they both end up with the same combined color! But Eve, who only saw the mixtures, can&rsquo;t unmix the paints to figure it out. That&rsquo;s Diffie-Hellman &mdash; using math instead of paint.
+                </div>
+                <div class="calc-math-content hidden" data-game="diffiehellman" data-level="teen">
+                  <strong>Protocol:</strong> (1) Agree on public prime p and generator g. (2) Alice picks secret a, computes A = g<sup>a</sup> mod p, sends A. (3) Bob picks secret b, computes B = g<sup>b</sup> mod p, sends B. (4) Alice computes s = B<sup>a</sup> mod p. Bob computes s = A<sup>b</sup> mod p. Both get s = g<sup>ab</sup> mod p &mdash; the shared secret! Eve knows p, g, A, B but cannot compute g<sup>ab</sup> without solving the <strong>discrete logarithm problem</strong>.
+                </div>
+                <div class="calc-math-content hidden" data-game="diffiehellman" data-level="college">
+                  Diffie-Hellman operates in the multiplicative group (&Zopf;/p&Zopf;)* of order p&minus;1. If g is a primitive root (generator), then &langle;g&rangle; = (&Zopf;/p&Zopf;)*. The <strong>Decisional Diffie-Hellman (DDH)</strong> assumption states that (g<sup>a</sup>, g<sup>b</sup>, g<sup>ab</sup>) is computationally indistinguishable from (g<sup>a</sup>, g<sup>b</sup>, g<sup>c</sup>) for random a,b,c. The discrete log problem (DLP) in &Zopf;/p&Zopf; has sub-exponential algorithms (number field sieve), requiring p &ge; 2048 bits. Elliptic curve groups achieve equivalent security with 256-bit keys.
+                </div>
+                <div class="calc-math-content hidden" data-game="diffiehellman" data-level="adult">
+                  Modern TLS (HTTPS) uses Elliptic Curve Diffie-Hellman (ECDH) on curves like Curve25519 or P-256. The DH exchange is ephemeral (new keys each session) providing forward secrecy. Authenticated key exchange (e.g., Signal Protocol&rsquo;s X3DH) prevents man-in-the-middle attacks. Post-quantum replacements use lattice-based key encapsulation (ML-KEM / CRYSTALS-Kyber). The mathematical shift: from the DLP in cyclic groups to the Learning With Errors problem on lattice structures, where the hardness rests on worst-case lattice problems (GapSVP, SIVP).
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+
+      <!-- Logic Lab Tab -->
+      <div id="tab-logiclab" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div class="tutor-header">
+            <h3>Formal Logic Lab</h3>
+            <p>Master the art of reasoning &mdash; from Aristotle&rsquo;s syllogisms to Boolean algebra and digital circuits. Every puzzle sharpens your ability to think precisely.</p>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary logic-game-btn active" data-game="truthtable">Truth Table Builder</button>
+            <button class="btn-secondary logic-game-btn" data-game="syllogism">Syllogism Validator</button>
+            <button class="btn-secondary logic-game-btn" data-game="knights">Knights &amp; Knaves</button>
+            <button class="btn-secondary logic-game-btn" data-game="gates">Logic Gate Circuit</button>
+          </div>
+
+          <!-- 1  Truth Table Builder -->
+          <div id="logic-truthtable" class="logic-game active">
+            <div class="calc-game-header">
+              <h4>Truth Table Builder &mdash; See Logic in Black and White</h4>
+              <p>Type any propositional formula and instantly see every possible combination of truth values. The foundation of all mathematical proof.</p>
+            </div>
+            <div class="crypto-prereq">
+              <strong>Math you&rsquo;ll use:</strong> <em>Propositional Logic</em> &mdash; AND (&and;), OR (&or;), NOT (&not;), IMPLIES (&rarr;), IFF (&harr;).
+              George Boole (1854) showed that all of human reasoning could be reduced to algebra on 0s and 1s &mdash; an idea that, a century later, became the foundation of every computer chip.
+              <br/><a href="#" data-logic-prompt="Explain propositional logic, truth tables, and how Boolean algebra connects to computer science">Explore Propositional Logic in Tutor &rarr;</a>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls" style="flex-wrap:wrap;">
+                <label>Formula: <input type="text" id="tt-formula" value="(P &amp;&amp; Q) || !P" style="width:260px;font-family:monospace;font-size:14px;padding:4px 8px;" placeholder="e.g. (P && Q) || !R" /></label>
+                <button id="tt-build" class="btn-primary">Build Table</button>
+                <span style="font-size:11px;color:#78716c;">Use: &amp;&amp; (AND), || (OR), ! (NOT), -&gt; (IMPLIES), &lt;-&gt; (IFF)</span>
+              </div>
+              <div id="tt-table-wrap" style="overflow-x:auto;margin-top:8px;"></div>
+              <div id="tt-readout" class="calc-readout"></div>
+              <div class="logic-anecdote">
+                <strong>Historical note:</strong> In 1847, George Boole published <em>The Mathematical Analysis of Logic</em>, arguing that logic was a branch of mathematics, not philosophy. Augustus De Morgan independently developed similar ideas. A century later, Claude Shannon&rsquo;s 1937 master&rsquo;s thesis showed that Boolean algebra could design electrical circuits &mdash; arguably the most important master&rsquo;s thesis ever written. Today, every CPU in the world runs on billions of Boolean operations per second.
+                <br/><strong>Social usage:</strong> Lawyers use propositional logic daily: &ldquo;If the contract is signed AND the payment is received, THEN the deal is binding.&rdquo; Debate teams, doctors diagnosing patients, and even everyday arguments (&ldquo;If it&rsquo;s raining, I&rsquo;ll take an umbrella&rdquo;) are all informal propositional logic.
+              </div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="truthtable" data-level="kids">
+                  Think of AND like both hands clapping &mdash; you need <em>both</em> to make a sound. OR is like two doors &mdash; you can go through either one. NOT is like a light switch &mdash; it flips on to off and off to on. A truth table just lists every possible combination and tells you the answer for each one!
+                </div>
+                <div class="calc-math-content hidden" data-game="truthtable" data-level="teen">
+                  A <strong>proposition</strong> is a statement that is either true (1) or false (0). Connectives combine them: P &and; Q is true only when both are true; P &or; Q when at least one is; &not;P flips the value; P &rarr; Q is false only when P is true and Q is false; P &harr; Q when both match. A truth table lists all 2<sup>n</sup> combinations for n variables, making it a complete decision procedure for propositional logic.
+                </div>
+                <div class="calc-math-content hidden" data-game="truthtable" data-level="college">
+                  Propositional logic is <strong>decidable</strong>: truth tables give an O(2<sup>n</sup>) decision procedure. A formula is a <strong>tautology</strong> if true in every row, <strong>satisfiable</strong> if true in at least one, <strong>contradictory</strong> if true in none. Two formulas are <strong>logically equivalent</strong> iff they share identical truth tables. Key equivalences: De Morgan&rsquo;s laws (&not;(P &and; Q) &equiv; &not;P &or; &not;Q), material conditional (P &rarr; Q &equiv; &not;P &or; Q), contrapositive ((P &rarr; Q) &equiv; (&not;Q &rarr; &not;P)). The satisfiability problem (SAT) is NP-complete &mdash; the first problem shown to be so (Cook&ndash;Levin theorem, 1971).
+                </div>
+                <div class="calc-math-content hidden" data-game="truthtable" data-level="adult">
+                  Propositional logic is the fragment of first-order logic without quantifiers. Its completeness (every tautology is provable) was shown by Post (1921). SAT solvers using DPLL and CDCL algorithms now routinely handle millions of variables and power formal verification of hardware/software (Intel uses SAT to verify chip designs). Resolution refutation is the basis of Prolog. The compactness theorem for propositional logic has deep consequences: a set of formulas is satisfiable iff every finite subset is.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2  Syllogism Validator -->
+          <div id="logic-syllogism" class="logic-game">
+            <div class="calc-game-header">
+              <h4>Syllogism Validator &mdash; Aristotle&rsquo;s Engine of Reason</h4>
+              <p>Test classic logical arguments: are the conclusions truly forced by the premises? Aristotle invented this 2,400 years ago, and it still works.</p>
+            </div>
+            <div class="crypto-prereq">
+              <strong>Math you&rsquo;ll use:</strong> <em>Categorical Logic</em> &mdash; &ldquo;All&rdquo;, &ldquo;Some&rdquo;, &ldquo;No&rdquo;, and &ldquo;Some&hellip;not&rdquo; statements about categories.
+              Aristotle&rsquo;s <em>Prior Analytics</em> (~350 BCE) was the first formal system in history &mdash; 2,000 years before Boolean algebra.
+              <br/><a href="#" data-logic-prompt="Explain Aristotelian syllogisms, the four categorical propositions, and valid syllogistic forms">Explore Syllogistic Logic in Tutor &rarr;</a>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls" style="flex-wrap:wrap;">
+                <label>Puzzle:
+                  <select id="syl-puzzle">
+                    <option value="0">Barbara (AAA-1) &mdash; Classic</option>
+                    <option value="1">Celarent (EAE-1)</option>
+                    <option value="2">Affirming the Consequent (Fallacy!)</option>
+                    <option value="3">Denying the Antecedent (Fallacy!)</option>
+                    <option value="4">Darii (AII-1)</option>
+                    <option value="5">Socrates is mortal (applied)</option>
+                    <option value="6">Custom &mdash; enter your own</option>
+                  </select>
+                </label>
+                <button id="syl-check" class="btn-primary">Check Validity</button>
+              </div>
+              <div id="syl-premises" style="font-family:monospace;font-size:14px;background:#fafaf9;border:1px solid #d6d3d1;border-radius:6px;padding:10px;margin-top:8px;line-height:2;"></div>
+              <div id="syl-custom" style="display:none;margin-top:8px;">
+                <label style="font-size:12px;">Premise 1: <input type="text" id="syl-p1" style="width:100%;font-family:monospace;" value="All men are mortal" /></label>
+                <label style="font-size:12px;">Premise 2: <input type="text" id="syl-p2" style="width:100%;font-family:monospace;" value="Socrates is a man" /></label>
+                <label style="font-size:12px;">Conclusion: <input type="text" id="syl-c" style="width:100%;font-family:monospace;" value="Socrates is mortal" /></label>
+              </div>
+              <div id="syl-result" class="calc-readout" style="margin-top:8px;"></div>
+              <div class="logic-anecdote">
+                <strong>Historical note:</strong> Aristotle&rsquo;s syllogistic was the dominant logic system for over two millennia. Medieval scholars (Ockham, Aquinas) used it to structure theological arguments. The names &ldquo;Barbara&rdquo;, &ldquo;Celarent&rdquo;, &ldquo;Darii&rdquo; are medieval mnemonics where vowels encode the proposition types (A=All, E=No, I=Some, O=Some&hellip;not).
+                <br/><strong>Social usage:</strong> Courtroom arguments, political rhetoric, and advertising all exploit (and sometimes abuse) syllogistic reasoning. The fallacy of &ldquo;affirming the consequent&rdquo; (&ldquo;Successful people work hard; I work hard; therefore I am successful&rdquo;) is rampant in self-help culture. Recognizing these patterns is a civic superpower.
+              </div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="syllogism" data-level="kids">
+                  A syllogism is like a chain of facts: &ldquo;All dogs are animals. Rex is a dog. So Rex is an animal.&rdquo; If the two facts at the top are true, the bottom one <em>must</em> be true &mdash; that&rsquo;s what makes it <strong>valid</strong>. But watch out: &ldquo;All cats are animals. Rex is an animal. So Rex is a cat&rdquo; &mdash; that&rsquo;s a trick! The conclusion doesn&rsquo;t follow.
+                </div>
+                <div class="calc-math-content hidden" data-game="syllogism" data-level="teen">
+                  A <strong>categorical syllogism</strong> has two premises and a conclusion, each of the form: All S are P (A), No S are P (E), Some S are P (I), or Some S are not P (O). The <strong>middle term</strong> appears in both premises but not the conclusion, linking the other terms. Aristotle identified 256 possible forms, of which only 24 are valid. Validity depends on the <em>form</em> alone, not the content &mdash; you can check it mechanically.
+                </div>
+                <div class="calc-math-content hidden" data-game="syllogism" data-level="college">
+                  Syllogistic logic is a fragment of monadic first-order logic. Venn diagrams provide a decision procedure: shade regions for universal premises, place marks for existential ones, then check if the conclusion&rsquo;s diagram is forced. The 24 valid moods (15 unconditionally + 9 with existential import) were completely classified by the medieval logicians. Modern predicate logic (Frege, 1879) superseded syllogistic by adding relations, functions, and quantifier nesting.
+                </div>
+                <div class="calc-math-content hidden" data-game="syllogism" data-level="adult">
+                  Aristotle&rsquo;s <em>Prior Analytics</em> is arguably the first axiomatic system: he derives all valid forms from a small set of &ldquo;perfect&rdquo; syllogisms using conversion, reduction, and <em>ecthesis</em>. Leibniz dreamed of a <em>calculus ratiocinator</em> that would mechanize all reasoning; Boole, Frege, and G&ouml;del eventually fulfilled parts of that vision. G&ouml;del&rsquo;s completeness theorem (1929) shows first-order logic is the natural boundary: every logically valid sentence is provable. His incompleteness theorems (1931) then showed that any sufficiently powerful formal system (e.g., Peano arithmetic) contains true but unprovable statements.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3  Knights & Knaves -->
+          <div id="logic-knights" class="logic-game">
+            <div class="calc-game-header">
+              <h4>Knights &amp; Knaves &mdash; Puzzles of Truth and Deception</h4>
+              <p>On a mysterious island, <strong>Knights</strong> always tell the truth and <strong>Knaves</strong> always lie. Given their statements, can you figure out who is who?</p>
+            </div>
+            <div class="crypto-prereq">
+              <strong>Math you&rsquo;ll use:</strong> <em>Propositional Logic &amp; Proof by Contradiction</em> &mdash; assume something, derive consequences, check for contradictions.
+              These puzzles were popularized by Raymond Smullyan in <em>What Is the Name of This Book?</em> (1978) and connect directly to G&ouml;del&rsquo;s self-reference techniques.
+              <br/><a href="#" data-logic-prompt="Explain Knights and Knaves logic puzzles, proof by contradiction, and how self-reference connects to Gödel's theorems">Explore Proof by Contradiction in Tutor &rarr;</a>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls" style="flex-wrap:wrap;">
+                <label>Puzzle:
+                  <select id="kk-puzzle">
+                    <option value="0">Puzzle 1 &mdash; Two islanders</option>
+                    <option value="1">Puzzle 2 &mdash; Who is the knight?</option>
+                    <option value="2">Puzzle 3 &mdash; Three islanders</option>
+                    <option value="3">Puzzle 4 &mdash; The fork in the road</option>
+                    <option value="4">Puzzle 5 &mdash; Self-reference</option>
+                  </select>
+                </label>
+                <button id="kk-hint" class="btn-secondary">Hint</button>
+                <button id="kk-reveal" class="btn-primary">Check My Answer</button>
+              </div>
+              <div id="kk-scenario" style="font-size:14px;line-height:1.75;background:#fafaf9;border:1px solid #d6d3d1;border-radius:6px;padding:12px;margin-top:8px;"></div>
+              <div id="kk-choices" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;"></div>
+              <div id="kk-hint-box" style="display:none;font-size:13px;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:8px;margin-top:8px;"></div>
+              <div id="kk-result" class="calc-readout" style="margin-top:8px;"></div>
+              <div class="logic-anecdote">
+                <strong>Historical note:</strong> Raymond Smullyan, a mathematician, magician, and Taoist philosopher, created hundreds of these puzzles. They are isomorphic to propositional satisfiability problems. The &ldquo;fork in the road&rdquo; puzzle has a brilliant one-question solution that exploits nested truth/lie evaluation &mdash; it appeared in the 1986 film <em>Labyrinth</em>.
+                <br/><strong>Social usage:</strong> Job interviewers at Google and other tech companies used Knights &amp; Knaves-style puzzles to test logical reasoning. Diplomatic negotiations sometimes resemble these puzzles: parties may be truthful or deceptive, and you must reason about their incentives. The underlying skill &mdash; reasoning about what someone <em>would say</em> given their nature &mdash; is the heart of game theory.
+              </div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="knights" data-level="kids">
+                  Imagine an island where some people ALWAYS tell the truth (Knights) and others ALWAYS lie (Knaves). If a Knight says &ldquo;I am a Knight,&rdquo; that&rsquo;s true. But if a Knave says &ldquo;I am a Knight,&rdquo; that&rsquo;s a lie &mdash; because Knaves lie about everything! So <em>both</em> types would say &ldquo;I am a Knight.&rdquo; The trick is to find questions where Knights and Knaves give <em>different</em> answers.
+                </div>
+                <div class="calc-math-content hidden" data-game="knights" data-level="teen">
+                  To solve these, assign variables: let K<sub>A</sub> = &ldquo;A is a Knight&rdquo; (true/false). If A says statement S, then K<sub>A</sub> &harr; S must be true (Knights say true things, Knaves say false things). This gives you Boolean equations to solve. <strong>Proof by contradiction</strong>: assume A is a Knight; if that leads to a contradiction, A must be a Knave (and vice versa). Systematic case analysis solves every puzzle.
+                </div>
+                <div class="calc-math-content hidden" data-game="knights" data-level="college">
+                  Knights &amp; Knaves puzzles are satisfiability problems in disguise. Each statement by person A asserting S generates the constraint K<sub>A</sub> &harr; S. The puzzle is satisfiable iff there exists a consistent truth assignment. The &ldquo;fork&rdquo; puzzle&rsquo;s solution uses a <strong>double negation</strong> trick: asking &ldquo;If I asked you whether the left road leads to freedom, would you say yes?&rdquo; forces both Knights and Knaves to point to the correct road. This is related to the &ldquo;oracle&rdquo; concept in computability theory.
+                </div>
+                <div class="calc-math-content hidden" data-game="knights" data-level="adult">
+                  Smullyan used Knights &amp; Knaves as pedagogical tools for G&ouml;del&rsquo;s incompleteness theorems. In <em>Forever Undecided</em> (1987), he constructs an island where a reasoner cannot determine their own type &mdash; a direct analogue of G&ouml;del sentences. The connection to the Liar Paradox (&ldquo;This sentence is false&rdquo;) is precise: a Knave saying &ldquo;I am a Knave&rdquo; creates a paradox in classical logic. Paraconsistent logics and Kripke&rsquo;s fixed-point theory of truth address such self-referential puzzles formally.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4  Logic Gate Circuit -->
+          <div id="logic-gates" class="logic-game">
+            <div class="calc-game-header">
+              <h4>Logic Gate Circuit &mdash; Build a Digital Brain</h4>
+              <p>Wire AND, OR, and NOT gates to produce the target output. This is exactly how computers think &mdash; every calculation is logic gates all the way down.</p>
+            </div>
+            <div class="crypto-prereq">
+              <strong>Math you&rsquo;ll use:</strong> <em>Boolean Algebra &amp; Circuit Design</em> &mdash; the bridge between abstract logic and physical hardware.
+              Claude Shannon&rsquo;s 1937 thesis showed that any Boolean function can be built with switches &mdash; launching the digital age.
+              <br/><a href="#" data-logic-prompt="Explain Boolean algebra, logic gates AND OR NOT XOR, and how Claude Shannon connected them to circuit design">Explore Boolean Algebra in Tutor &rarr;</a>
+            </div>
+            <div class="calc-game-body">
+              <div class="calc-controls" style="flex-wrap:wrap;">
+                <label>Challenge:
+                  <select id="gate-puzzle">
+                    <option value="0">XOR from AND, OR, NOT</option>
+                    <option value="1">NAND is universal</option>
+                    <option value="2">Majority vote (2 of 3)</option>
+                    <option value="3">Half adder (Sum + Carry)</option>
+                    <option value="4">Multiplexer (selector)</option>
+                  </select>
+                </label>
+                <button id="gate-check" class="btn-primary">Test Circuit</button>
+                <button id="gate-hint" class="btn-secondary">Hint</button>
+              </div>
+              <div id="gate-desc" style="font-size:13px;line-height:1.7;background:#fafaf9;border:1px solid #d6d3d1;border-radius:6px;padding:10px;margin-top:8px;"></div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+                <div style="flex:1;min-width:220px;">
+                  <label style="font-size:12px;font-weight:600;">Your formula (use A, B, C):</label>
+                  <input type="text" id="gate-formula" style="width:100%;font-family:monospace;font-size:14px;padding:6px 8px;border:1px solid #d6d3d1;border-radius:6px;" placeholder="e.g. (A && !B) || (!A && B)" />
+                </div>
+              </div>
+              <div id="gate-truth-table" style="overflow-x:auto;margin-top:8px;"></div>
+              <div id="gate-result" class="calc-readout" style="margin-top:8px;"></div>
+              <div class="logic-anecdote">
+                <strong>Historical note:</strong> Shannon&rsquo;s thesis supervisor, Vannevar Bush, had built an analog computer (the Differential Analyzer). Shannon realized that Boole&rsquo;s 70-year-old algebra was the perfect language for designing the <em>digital</em> successor. In WWII, Tommy Flowers built Colossus &mdash; the first programmable digital computer &mdash; using 1,500 vacuum tubes as logic gates to break Nazi codes. Today a single Apple M4 chip has ~28 billion transistors, each acting as a tiny logic gate.
+                <br/><strong>Social usage:</strong> Logic gates are behind every Google search, every bank transaction, every text message. When you set a spreadsheet formula like =AND(A1&gt;5, B1&lt;10), you are building a logic gate. Understanding gates demystifies &ldquo;how computers work&rdquo; from magic to math.
+              </div>
+              <div class="calc-math-panel">
+                <div class="calc-math-tabs">
+                  <button class="calc-math-tab active" data-level="kids">Kids</button>
+                  <button class="calc-math-tab" data-level="teen">Teen</button>
+                  <button class="calc-math-tab" data-level="college">College</button>
+                  <button class="calc-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="calc-math-content" data-game="gates" data-level="kids">
+                  Logic gates are tiny switches inside a computer. An AND gate only turns on when <em>both</em> inputs are on. An OR gate turns on when <em>either</em> input is on. A NOT gate flips on to off and off to on. By combining millions of these simple switches, computers can add numbers, show videos, and play games!
+                </div>
+                <div class="calc-math-content hidden" data-game="gates" data-level="teen">
+                  Every Boolean function f(x<sub>1</sub>, &hellip;, x<sub>n</sub>) can be expressed using just AND, OR, NOT (or even just NAND alone!). <strong>XOR</strong> (exclusive or): true when inputs differ. A <strong>half adder</strong> adds two bits: Sum = A XOR B, Carry = A AND B. Chain these into <strong>full adders</strong> and you get integer addition &mdash; which is all a CPU&rsquo;s ALU fundamentally does.
+                </div>
+                <div class="calc-math-content hidden" data-game="gates" data-level="college">
+                  Boolean algebra forms a <strong>complemented distributive lattice</strong>. Shannon&rsquo;s expansion theorem: f = x&middot;f<sub>x=1</sub> + x&prime;&middot;f<sub>x=0</sub> (the basis of BDD construction). <strong>Functional completeness</strong>: {NAND} and {NOR} are each universal &mdash; any Boolean function can be built from one gate type alone. The <strong>Quine&ndash;McCluskey algorithm</strong> finds minimal sum-of-products forms. Circuit complexity theory asks: what is the minimum number of gates needed for a given function?
+                </div>
+                <div class="calc-math-content hidden" data-game="gates" data-level="adult">
+                  Circuit complexity is a central topic in theoretical CS. P/poly captures non-uniform polynomial-size circuits; if NP &notin; P/poly, then P &ne; NP. The <strong>natural proofs barrier</strong> (Razborov&ndash;Rudich, 1997) shows that standard techniques cannot prove super-polynomial circuit lower bounds for NP functions if one-way functions exist. In practice, synthesis tools (ABC, Yosys) use AIG (And-Inverter Graph) representations and SAT-based optimization to design circuits with billions of gates.
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+
+      <!-- Symbols Tab -->
+      <div id="tab-symbols" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div class="tutor-header">
+            <h3>Mathematical Symbols &mdash; History, Meanings &amp; Connections</h3>
+            <p>Every symbol has a story. Explore the origins, overlapping meanings, and mathematical topics behind the notation we use today.</p>
+          </div>
+          <div class="sym-toolbar">
+            <input type="text" id="sym-search" placeholder="Search by symbol, name, or topic&hellip;" />
+            <div class="sym-cats">
+              <button class="sym-cat-btn active" data-cat="all">All</button>
+              <button class="sym-cat-btn" data-cat="arithmetic">Arithmetic</button>
+              <button class="sym-cat-btn" data-cat="greek">Greek Letters</button>
+              <button class="sym-cat-btn" data-cat="sets">Sets</button>
+              <button class="sym-cat-btn" data-cat="logic">Logic</button>
+              <button class="sym-cat-btn" data-cat="calculus">Calculus</button>
+              <button class="sym-cat-btn" data-cat="algebra">Algebra</button>
+              <button class="sym-cat-btn" data-cat="relations">Relations</button>
+              <button class="sym-cat-btn" data-cat="geometry">Geometry</button>
+            </div>
+          </div>
+          <div id="sym-grid" class="sym-grid"></div>
+          <div id="sym-detail" class="sym-detail hidden"></div>
+        </section>
+      </div>
+
       <!-- Eval Tab -->
       <div id="tab-eval" class="tab-content">
         <section class="settings-panel">
@@ -1319,11 +1893,14 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="app.js?v=20260327-2"></script>
+    <script src="app.js?v=20260408-5"></script>
     <script src="mozart_notes.js?v=20260402"></script>
     <script src="musiclab.js?v=20260402"></script>
-    <script src="calclab.js?v=20260404"></script>
+    <script src="calclab.js?v=20260408-7"></script>
     <script src="fftlab.js?v=20260404b"></script>
     <script src="fftlab-image.js?v=20260404"></script>
+    <script src="cryptolab.js?v=20260408-2"></script>
+    <script src="logiclab.js?v=20260408"></script>
+    <script src="symbols.js?v=20260408"></script>
   </body>
 </html>

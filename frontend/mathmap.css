@@ -192,7 +192,7 @@ body {
 
 .topic-chip:hover {
   background: #1c1917;
-  color: #fafaf9;
+  color: #fafaf9 !important;
   border-color: #1c1917;
 }
 
