@@ -1442,10 +1442,20 @@ body {
 .sheet-sig {
   font-family: ui-monospace, monospace;
 }
-#dice-staff-canvas {
+#dice-staff-notation {
+  position: relative;
+  max-width: 920px;
+}
+#dice-staff-notation svg {
   display: block;
   width: 100%;
-  max-width: 920px;
+  height: auto;
+}
+.staff-playing-highlight {
+  position: absolute;
+  background: rgba(28, 25, 23, 0.06);
+  border-radius: 3px;
+  pointer-events: none;
 }
 
 .dice-prob-section {

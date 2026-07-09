@@ -177,22 +177,17 @@ class VizAgent:
         if not engine.is_model_ready():
             return None
 
-        prompt = VIZ_AGENT_PROMPT + text[:1500]
-        raw = engine.generate_with_timeout(prompt, timeout, num_predict=300)
-        if not raw:
-            return None
-
-        from .engine import extract_json_block
-        json_str = extract_json_block(raw)
-        if not json_str:
-            return None
-
-        try:
-            spec = json.loads(json_str)
-            if spec.get("viz_type") in ("chart", "diagram", "geometric"):
-                return spec
-        except (json.JSONDecodeError, TypeError):
-            pass
+        spec = engine.chat_json(
+            [
+                {"role": "system", "content": VIZ_AGENT_PROMPT},
+                {"role": "user", "content": text[:1500]},
+            ],
+            task="fast",
+            timeout_seconds=timeout,
+            num_predict=300,
+        )
+        if spec and spec.get("viz_type") in ("chart", "diagram", "geometric"):
+            return spec
         return None
 
     # ------------------------------------------------------------------

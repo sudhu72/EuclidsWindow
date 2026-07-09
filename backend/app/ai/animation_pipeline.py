@@ -10,6 +10,7 @@ Inspired by the Hermes Agent manim-video skill:
 https://github.com/NousResearch/hermes-agent/tree/main/skills/creative/manim-video
 """
 
+import ast
 import re
 import textwrap
 from typing import Optional, Tuple
@@ -42,6 +43,10 @@ _TOPIC_KEYWORDS: list[Tuple[list[str], str]] = [
 ]
 
 MAX_RETRIES = 2
+
+# Modules LLM-generated scenes may import; anything else is rejected
+# before we pay for a Manim render.
+ALLOWED_IMPORT_ROOTS = {"manim", "numpy", "math", "random"}
 
 
 CODEGEN_SYSTEM_PROMPT = textwrap.dedent("""\
@@ -185,14 +190,20 @@ class AnimationPipeline:
     # ------------------------------------------------------------------
 
     def _llm_generate(self, topic: str, context: str) -> Optional[str]:
-        """Ask the local LLM to write a full Manim scene."""
-        prompt = (
-            CODEGEN_SYSTEM_PROMPT
-            + "\n\n"
-            + CODEGEN_PROMPT_TEMPLATE.format(topic=topic, context=context[:800])
+        """Ask the local LLM (codegen model) to write a full Manim scene."""
+        raw = self._llm.chat(
+            [
+                {"role": "system", "content": CODEGEN_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": CODEGEN_PROMPT_TEMPLATE.format(topic=topic, context=context[:800]),
+                },
+            ],
+            task="codegen",
+            timeout_seconds=90,
+            num_predict=2000,
+            temperature=0.3,
         )
-
-        raw = self._llm.generate_with_timeout(prompt, timeout_seconds=90, num_predict=2000)
         if not raw:
             logger.warning("AnimationPipeline: LLM returned no output")
             return None
@@ -206,11 +217,19 @@ class AnimationPipeline:
         return None
 
     def _llm_fix(self, code: str, error: str) -> Optional[str]:
-        """Ask the LLM to fix broken Manim code."""
-        prompt = FIX_PROMPT_TEMPLATE.format(
-            code=code[:2000], error=error[:500]
+        """Ask the LLM (codegen model) to fix broken Manim code."""
+        raw = self._llm.chat(
+            [
+                {
+                    "role": "user",
+                    "content": FIX_PROMPT_TEMPLATE.format(code=code[:2000], error=error[-500:]),
+                }
+            ],
+            task="codegen",
+            timeout_seconds=60,
+            num_predict=2000,
+            temperature=0.2,
         )
-        raw = self._llm.generate_with_timeout(prompt, timeout_seconds=60, num_predict=2000)
         if not raw:
             return None
         fixed = self._extract_python(raw)
@@ -231,15 +250,22 @@ class AnimationPipeline:
         """Render Manim code; on failure, try LLM fix up to MAX_RETRIES times."""
         for attempt in range(1 + MAX_RETRIES):
             logger.info(f"AnimationPipeline: render attempt {attempt + 1} (source={source})")
-            payload = self._executor.execute_manim(code, title=topic)
+
+            # Fail fast on invalid/unsafe code before paying for a render
+            validation_error = self._validate_code(code)
+            if validation_error:
+                logger.warning(f"AnimationPipeline: validation failed: {validation_error}")
+                payload, error = None, validation_error
+            else:
+                payload, error = self._executor.execute_manim_detailed(code, title=topic)
             if payload is not None:
                 payload.data["pipeline_source"] = source
                 payload.data["attempt"] = attempt + 1
                 return payload
 
-            # On failure, try LLM fix if available
+            # On failure, feed the real render error back to the LLM
             if attempt < MAX_RETRIES and self._llm.is_available():
-                error_msg = f"Manim render failed on attempt {attempt + 1}"
+                error_msg = error or f"Manim render failed on attempt {attempt + 1}"
                 fixed = self._llm_fix(code, error_msg)
                 if fixed:
                     code = fixed
@@ -253,6 +279,37 @@ class AnimationPipeline:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _validate_code(code: str) -> Optional[str]:
+        """Static checks on generated code. Returns an error message or None.
+
+        Catches syntax errors, disallowed imports (os, subprocess, …), and a
+        missing GeneratedScene.construct before the expensive Manim render.
+        """
+        if not code or not code.strip():
+            return "Empty code"
+        try:
+            tree = ast.parse(code)
+        except SyntaxError as exc:
+            return f"SyntaxError: {exc.msg} (line {exc.lineno})"
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    root = alias.name.split(".")[0]
+                    if root not in ALLOWED_IMPORT_ROOTS:
+                        return f"Forbidden import: {alias.name}. Only manim and numpy are allowed."
+            elif isinstance(node, ast.ImportFrom):
+                root = (node.module or "").split(".")[0]
+                if root not in ALLOWED_IMPORT_ROOTS:
+                    return f"Forbidden import: from {node.module}. Only manim and numpy are allowed."
+
+        if "GeneratedScene" not in code:
+            return "Missing class GeneratedScene(Scene)"
+        if "def construct" not in code:
+            return "GeneratedScene has no construct() method"
+        return None
 
     @staticmethod
     def _extract_python(text: str) -> Optional[str]:

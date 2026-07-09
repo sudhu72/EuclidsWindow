@@ -50,8 +50,8 @@ def test_didactics_builds_learning_aids():
 
 def test_didactics_learner_level_adaptation():
     text = adapt_plain_for_learner_level("Matrix multiplication combines transformations.", "kids", "matrix multiplication")
-    assert "Kid-friendly mode" in text
-    assert "tiny step" in text
+    assert "🎪" in text
+    assert "simple words" in text
 
 
 def test_extract_learning_focus_de_nests_followup_prompt():

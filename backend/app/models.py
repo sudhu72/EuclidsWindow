@@ -147,9 +147,63 @@ class MediaMusicResponse(BaseModel):
     model: Optional[str] = None
 
 
+class MusicComposeRequest(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=1000)
+    bars: int = Field(8, ge=2, le=16)
+
+
+class MusicComposeResponse(BaseModel):
+    title: str
+    tempo: int
+    time: str
+    key: str
+    explanation: str = ""
+    measures: list
+    model: Optional[str] = None
+
+
+class LessonOutlineRequest(BaseModel):
+    topic: str = Field(..., min_length=1, max_length=500)
+    level: str = Field("teen", pattern="^(kids|teen|college|adult)$")
+
+
+class LessonSection(BaseModel):
+    title: str
+    type: str
+    summary: str = ""
+
+
+class LessonOutlineResponse(BaseModel):
+    title: str
+    topic: str
+    level: str
+    sections: List[LessonSection]
+
+
+class LessonSceneRequest(BaseModel):
+    topic: str = Field(..., min_length=1, max_length=500)
+    level: str = Field("teen", pattern="^(kids|teen|college|adult)$")
+    section_title: str = Field(..., min_length=1, max_length=300)
+    section_type: str = Field("explain", pattern="^(explain|example|quiz)$")
+    summary: str = Field("", max_length=500)
+
+
+class LessonSceneResponse(BaseModel):
+    type: str
+    narration: Optional[str] = None
+    classmate_question: Optional[str] = None
+    classmate_answer: Optional[str] = None
+    question: Optional[str] = None
+    choices: Optional[List[str]] = None
+    correct_index: Optional[int] = None
+    explanation: Optional[str] = None
+
+
 class AppSettingsResponse(BaseModel):
     local_ai_enabled: bool
     local_llm_model: str
+    local_codegen_model: Optional[str] = None
+    local_fast_model: Optional[str] = None
     local_media_enabled: bool
     local_diffusion_model: str
     local_music_model: str
@@ -165,6 +219,8 @@ class AppSettingsResponse(BaseModel):
 class AppSettingsUpdate(BaseModel):
     local_ai_enabled: Optional[bool] = None
     local_llm_model: Optional[str] = None
+    local_codegen_model: Optional[str] = None
+    local_fast_model: Optional[str] = None
     local_media_enabled: Optional[bool] = None
     local_diffusion_model: Optional[str] = None
     local_music_model: Optional[str] = None

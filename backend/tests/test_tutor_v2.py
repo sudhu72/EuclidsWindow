@@ -54,7 +54,8 @@ def test_tutor_learner_level_kids(client):
     assert response.status_code == 200
     payload = response.json()
     assert payload["learner_level"] == "kids"
-    assert "Kid-friendly mode" in (payload.get("plain_explanation") or "")
+    # Kids-level content leads with the playful 🎪 marker and simple wording
+    assert "🎪" in (payload.get("plain_explanation") or "")
 
 
 def test_tutor_response_mode_axiomatic(client):
@@ -71,10 +72,11 @@ def test_tutor_response_mode_axiomatic(client):
 def test_tutor_followup_uses_dynamic_flow(client, monkeypatch):
     from app import main
 
-    def _mock_answer(question, history=None):
-        return ("Follow-up dynamic explanation with a new worked example.", None)
+    def _mock_answer_reasoning(question, history=None, curated_hint=None, learner_level=None):
+        return "Follow-up dynamic explanation with a new worked example."
 
-    monkeypatch.setattr(main.tutor_service, "answer", _mock_answer)
+    # Follow-ups route through Tier 2 (answer_reasoning), not Tier 3 answer()
+    monkeypatch.setattr(main.tutor_service, "answer_reasoning", _mock_answer_reasoning)
     response = client.post(
         "/api/ai/tutor",
         json={

@@ -1,11 +1,46 @@
-"""Middleware for metrics collection."""
+"""Middleware for metrics collection and rate limiting."""
 import time
-from typing import Callable
+from collections import defaultdict, deque
+from typing import Callable, Deque, Dict, Tuple
 
 from fastapi import Request, Response
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .metrics import metrics
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    """Sliding-window rate limit for expensive AI generation endpoints.
+
+    LLM/diffusion/Manim requests hold CPU or GPU for seconds to minutes, so
+    a single client hammering them can wedge the whole app.
+    """
+
+    LIMITED_PREFIX = "/api/ai/"
+    MAX_REQUESTS = 30
+    WINDOW_SECONDS = 60.0
+
+    def __init__(self, app) -> None:
+        super().__init__(app)
+        self._hits: Dict[Tuple[str, str], Deque[float]] = defaultdict(deque)
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        if request.method == "POST" and request.url.path.startswith(self.LIMITED_PREFIX):
+            client_ip = request.client.host if request.client else "unknown"
+            key = (client_ip, self.LIMITED_PREFIX)
+            now = time.monotonic()
+            hits = self._hits[key]
+            while hits and now - hits[0] > self.WINDOW_SECONDS:
+                hits.popleft()
+            if len(hits) >= self.MAX_REQUESTS:
+                return JSONResponse(
+                    status_code=429,
+                    content={"detail": "Too many generation requests; slow down."},
+                    headers={"Retry-After": str(int(self.WINDOW_SECONDS))},
+                )
+            hits.append(now)
+        return await call_next(request)
 
 
 class MetricsMiddleware(BaseHTTPMiddleware):

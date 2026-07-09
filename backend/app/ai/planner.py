@@ -30,8 +30,21 @@ class TutorPlanner:
             if lines:
                 history_block = "Conversation context:\n" + "\n".join(lines) + "\n\n"
 
-        prompt = f"{SYSTEM_PROMPT}\n\n{history_block}{USER_PROMPT_TEMPLATE.format(question=question)}"
-        raw = self.engine.generate(prompt)
+        raw = self.engine.chat(
+            [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": f"{history_block}{USER_PROMPT_TEMPLATE.format(question=question)}",
+                },
+            ],
+            json_format=True,
+            temperature=0.2,
+        )
+        if raw is None:
+            raw = self.engine.generate(
+                f"{SYSTEM_PROMPT}\n\n{history_block}{USER_PROMPT_TEMPLATE.format(question=question)}"
+            )
         json_text = extract_json_block(raw) if raw else None
         if not json_text:
             if raw:

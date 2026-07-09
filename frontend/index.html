@@ -6,13 +6,8 @@
     <title>Euclid's Window</title>
     <link rel="icon" type="image/png" href="euclids-window-logo.png" />
     <link rel="stylesheet" href="styles.css?v=20260408-11" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
-    />
+    <link href="vendor/fonts/cinzel-decorative.css" rel="stylesheet" />
+    <link rel="stylesheet" href="vendor/katex/katex.min.css" />
   </head>
   <body>
     <header class="app-header">
@@ -20,6 +15,7 @@
       <div class="subtitle" title="Like Euclid's Elements: start from self-evident axioms, derive everything step by step. No formula is handed to you without showing where it comes from and why it's true.">Learn math from first principles</div>
       <nav class="nav-tabs">
         <button class="tab-btn active" data-tab="tutor"><span class="tab-icon">&#9998;</span> Tutor</button>
+        <button class="tab-btn" data-tab="lesson"><span class="tab-icon">&#128218;</span> Lessons</button>
         <a href="mathmap.html" class="tab-btn tab-link"><span class="tab-icon">&#9672;</span> Math Map</a>
         <div class="nav-dropdown" id="labs-dropdown">
           <button class="tab-btn nav-dropdown-toggle"><span class="tab-icon">&#9881;</span> Labs <span class="dropdown-caret">&#9662;</span></button>
@@ -161,6 +157,37 @@
             <div id="latex-status" class="scratchpad-result"></div>
           </section>
         </aside>
+      </div>
+
+      <!-- Lessons Tab (OpenMAIC-style outline -> scene pipeline) -->
+      <div id="tab-lesson" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;max-width:960px;margin:0 auto;">
+          <div class="tutor-header">
+            <h3>AI Lessons</h3>
+            <p>The local AI designs a structured lesson from first principles &mdash; explanation, worked example, and a quiz &mdash; and walks you through it scene by scene, joined by an AI classmate who asks the questions you might be wondering about.</p>
+          </div>
+          <div class="dice-controls" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
+            <input id="lesson-topic" type="text" placeholder="e.g. why negative times negative is positive" style="flex:1;min-width:260px;padding:6px 10px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;" />
+            <select id="lesson-level" style="padding:6px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;">
+              <option value="kids">Kids</option>
+              <option value="teen" selected>Teen</option>
+              <option value="college">College</option>
+              <option value="adult">Adult</option>
+            </select>
+            <button id="lesson-start" class="btn-primary">Build Lesson</button>
+            <button id="lesson-export" class="btn-secondary" disabled>Export HTML</button>
+            <span id="lesson-status" style="font-size:12px;color:#78716c;align-self:center;"></span>
+          </div>
+          <div id="lesson-body" style="display:none;">
+            <h4 id="lesson-title" style="margin:8px 0;"></h4>
+            <div id="lesson-progress" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
+            <div id="lesson-scene" class="dice-sheet-music" style="min-height:180px;"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button id="lesson-prev" class="btn-secondary" disabled>&larr; Previous</button>
+              <button id="lesson-next" class="btn-primary" disabled>Next &rarr;</button>
+            </div>
+          </div>
+        </section>
       </div>
 
       <!-- Mind Map Tab -->
@@ -505,6 +532,38 @@
             <button class="btn-secondary music-game-btn" data-game="euclidean">Euclidean Rhythms</button>
             <button class="btn-secondary music-game-btn" data-game="fibonacci">Fibonacci Scales</button>
             <button class="btn-secondary music-game-btn" data-game="pythagorean">Pythagorean Tuning</button>
+            <button class="btn-secondary music-game-btn" data-game="composer">AI Composer</button>
+          </div>
+
+          <!-- AI Composer (local LLM writes a symbolic score) -->
+          <div id="game-composer" class="music-game">
+            <div class="music-game-header">
+              <h4>AI Composer</h4>
+              <p>Describe a musical idea &mdash; a mood, a mathematical pattern, a style &mdash; and the local AI writes an actual score, note by note. Unlike audio generators, you can <em>see</em> every note it chose, hear it played, and study the mathematics of the rhythm and harmony.</p>
+            </div>
+            <div class="dice-game-area">
+              <div class="dice-controls" style="flex-wrap:wrap;">
+                <input id="composer-prompt" type="text" placeholder="e.g. a gentle waltz built on the Fibonacci sequence" style="flex:1;min-width:260px;padding:6px 10px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;" />
+                <select id="composer-bars" style="padding:6px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;">
+                  <option value="4">4 bars</option>
+                  <option value="8" selected>8 bars</option>
+                  <option value="12">12 bars</option>
+                  <option value="16">16 bars</option>
+                </select>
+                <button id="composer-generate" class="btn-primary">Compose</button>
+                <button id="composer-play" class="btn-secondary" disabled>Play</button>
+                <button id="composer-stop" class="btn-secondary" disabled>Stop</button>
+                <span id="composer-status" style="font-size:12px;color:#78716c;"></span>
+              </div>
+              <div id="composer-sheet" class="dice-sheet-music" style="display:none;">
+                <div class="sheet-header">
+                  <span class="sheet-title" id="composer-title"></span>
+                  <span class="sheet-sig" id="composer-sig"></span>
+                </div>
+                <div id="composer-staff-notation"></div>
+                <div id="composer-explanation" style="font-size:12px;color:#57534e;font-style:italic;padding:4px 2px;"></div>
+              </div>
+            </div>
           </div>
 
           <!-- Mozart's Dice Game -->
@@ -527,9 +586,9 @@
               <div id="dice-sheet-music" class="dice-sheet-music">
                 <div class="sheet-header">
                   <span class="sheet-title">Minuet in C &mdash; composed by dice</span>
-                  <span class="sheet-sig">3/4 time &bull; C major</span>
+                  <span class="sheet-sig">3/8 time &bull; C major</span>
                 </div>
-                <canvas id="dice-staff-canvas" width="920" height="310"></canvas>
+                <div id="dice-staff-notation"></div>
               </div>
 
               <!-- Dice probability chart -->
@@ -1887,20 +1946,23 @@
 
     <div id="error-toast" class="error-toast hidden"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.30.0/plotly.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="vendor/plotly.min.js"></script>
+    <script src="vendor/mermaid.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });</script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="vendor/katex/katex.min.js"></script>
+    <script src="vendor/katex/auto-render.min.js"></script>
+    <script src="vendor/d3.min.js"></script>
+    <script src="vendor/vexflow.js"></script>
     <script src="app.js?v=20260408-5"></script>
+    <script src="music_core.js?v=20260708"></script>
     <script src="mozart_notes.js?v=20260402"></script>
-    <script src="musiclab.js?v=20260402"></script>
+    <script src="musiclab.js?v=20260708"></script>
     <script src="calclab.js?v=20260408-7"></script>
     <script src="fftlab.js?v=20260404b"></script>
     <script src="fftlab-image.js?v=20260404"></script>
     <script src="cryptolab.js?v=20260408-2"></script>
     <script src="logiclab.js?v=20260408"></script>
     <script src="symbols.js?v=20260408"></script>
+    <script src="lesson.js?v=20260708"></script>
   </body>
 </html>

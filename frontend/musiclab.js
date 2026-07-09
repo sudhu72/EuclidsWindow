@@ -162,36 +162,8 @@
     { chord: [48,52,55],  scale: [72,76,72,67,72,76] },   // 16: C  (I) final
   ];
 
-  // Convert pitch string like 'c5', 'f#4', 'g2' to MIDI number
-  function pitchToMidi(p) {
-    const base = {c:0,d:2,e:4,f:5,g:7,a:9,b:11};
-    let i = 0;
-    const letter = p[i++];
-    let semi = base[letter];
-    if (p[i] === '#') { semi += 1; i++; }
-    const octave = parseInt(p.substring(i));
-    return (octave + 1) * 12 + semi;
-  }
-
-  // Parse a voice array from MOZART_NOTES into {midi, beat, dur} objects
-  function parseVoice(events) {
-    let beat = 0;
-    const notes = [];
-    for (const ev of events) {
-      if (typeof ev[0] === 'number') {
-        beat += 8 / ev[0];
-      } else if (typeof ev[0] === 'string') {
-        const dur = 8 / ev[1];
-        notes.push({midi: pitchToMidi(ev[0]), beat, dur});
-        beat += dur;
-      } else if (Array.isArray(ev[0])) {
-        const dur = 8 / ev[1];
-        for (const p of ev[0]) notes.push({midi: pitchToMidi(p), beat, dur});
-        beat += dur;
-      }
-    }
-    return notes;
-  }
+  // Pure music helpers shared with the node test suite (music_core.js)
+  const { pitchToMidi, parseVoice } = window.MusicCore;
 
   // Returns {treble, bass} from authentic Mozart data, or algorithmic fallback
   function measureToMelody(measureNum, barPos) {
@@ -220,9 +192,7 @@
     return { treble: notes, bass: [{midi:harm.chord[seed%harm.chord.length],beat:0,dur:1},{midi:harm.chord[(seed+1)%harm.chord.length],beat:1,dur:1},{midi:harm.chord[(seed+2)%harm.chord.length],beat:2,dur:1}] };
   }
 
-  function midiToFreq(midi) {
-    return 440 * Math.pow(2, (midi - 69) / 12);
-  }
+  const midiToFreq = window.MusicCore.midiToFreq;
 
   const MIDI_NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
   function midiToName(midi) {
@@ -233,198 +203,149 @@
     return Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1;
   }
 
-  // ---------- Staff Notation Renderer (Canvas) ----------
-  function drawStaff(canvas, measures) {
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const W = canvas.width, H = canvas.height;
-    ctx.clearRect(0, 0, W, H);
+  // ---------- Staff Notation Renderer (VexFlow) ----------
+  // Engraves the dice-game minuet as real 3/8 notation: correct time signature,
+  // accidentals, beams/flags, rests, and shared chord stems.
+  const midiToPitch = window.MusicCore.midiToPitch;
 
-    const staffTop = 30;
-    const lineGap = 8;
-    const staffH = lineGap * 4;
-    const trebleTop = staffTop;
-    const bassTop = staffTop + staffH + 40;
-    const barW = (W - 50) / 8;
-    const leftMargin = 42;
+  // Raw {t, b} event arrays for a measure \u2014 authentic Mozart data when
+  // available, otherwise synthesized from the algorithmic fallback melody.
+  function measureToEvents(measureNum, barPos) {
+    const real = window.MOZART_NOTES && window.MOZART_NOTES[measureNum];
+    if (real) return real;
+    const melody = measureToMelody(measureNum, barPos);
+    const durCode = (d) => (d >= 2 ? 4 : d >= 1 ? 8 : 16);
+    const toEvents = (notes) => notes.map((n) => [midiToPitch(n.midi), durCode(n.dur)]);
+    return { t: toEvents(melody.treble), b: toEvents(melody.bass) };
+  }
 
-    function drawFiveLines(yTop, startX, endX) {
-      ctx.strokeStyle = "#a8a29e";
-      ctx.lineWidth = 0.8;
-      for (let i = 0; i < 5; i++) {
-        const y = yTop + i * lineGap;
-        ctx.beginPath();
-        ctx.moveTo(startX, y);
-        ctx.lineTo(endX, y);
-        ctx.stroke();
-      }
+  function drawStaff(container, measures, opts = {}) {
+    if (!container) return;
+    if (typeof Vex === "undefined") {
+      container.textContent = "Sheet music unavailable (VexFlow failed to load).";
+      return;
     }
+    const VF = Vex.Flow;
+    const time = opts.time || "3/8";
+    const [tNum, tDen] = time.split("/").map(Number);
+    const perRow = opts.perRow || 8;
+    const rows = [];
+    for (let i = 0; i < measures.length; i += perRow) rows.push(measures.slice(i, i + perRow));
+    const W = 920;
+    const ROW_H = 205;
+    const H = ROW_H * rows.length + 10;
+    const DUR_NAME = { 2: "h", 4: "q", 8: "8", 16: "16" };
 
-    function drawClef(yTop, isTreble) {
-      ctx.font = "bold 12px 'EB Garamond', Georgia, serif";
-      ctx.fillStyle = "#1c1917";
-      ctx.textAlign = "left";
-      if (isTreble) {
-        ctx.font = "28px serif";
-        ctx.fillText("\uD834\uDD1E", 4, yTop + staffH - 2);
-      } else {
-        ctx.font = "22px serif";
-        ctx.fillText("\uD834\uDD22", 4, yTop + lineGap * 2 + 4);
-      }
-    }
+    container.innerHTML = "";
+    const renderer = new VF.Renderer(container, VF.Renderer.Backends.SVG);
+    renderer.resize(W, H);
+    const ctx = renderer.getContext();
 
-    function drawTimeSig(yTop) {
-      ctx.font = "bold 14px 'EB Garamond', Georgia, serif";
-      ctx.fillStyle = "#1c1917";
-      ctx.textAlign = "center";
-      ctx.fillText("3", 32, yTop + lineGap * 1.5 + 1);
-      ctx.fillText("4", 32, yTop + lineGap * 3.5 + 1);
-    }
-
-    // midiToStaffY: maps MIDI note to Y position on staff
-    // Treble: middle line = B4 (71), bottom line = E4 (64), top line = F5 (77)
-    // Bass: middle line = D3 (50), bottom line = G2 (43), top line = A3 (57)
-    function midiToStaffY(midi, staffYTop, isTreble) {
-      const notePositions = {
-        0: 0, 2: 1, 4: 2, 5: 3, 7: 4, 9: 5, 11: 6,
-        1: 0.5, 3: 1.5, 6: 3.5, 8: 4.5, 10: 5.5
-      };
-      const pc = midi % 12;
-      const octave = Math.floor(midi / 12) - 1;
-      const posInOctave = notePositions[pc];
-      const absPos = octave * 7 + posInOctave;
-
-      let refPos, refY;
-      if (isTreble) {
-        refPos = 4 * 7 + 2;
-        refY = staffYTop + staffH;
-      } else {
-        refPos = 2 * 7 + 4;
-        refY = staffYTop + staffH;
-      }
-      const y = refY - (absPos - refPos) * (lineGap / 2);
-      return y;
-    }
-
-    function drawNoteHead(x, y, filled) {
-      ctx.fillStyle = "#1c1917";
-      ctx.strokeStyle = "#1c1917";
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.ellipse(x, y, 4.5, 3.2, -0.3, 0, Math.PI * 2);
-      if (filled) ctx.fill(); else ctx.stroke();
-    }
-
-    function drawStem(x, y, up) {
-      ctx.strokeStyle = "#1c1917";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      if (up) {
-        ctx.moveTo(x + 4, y);
-        ctx.lineTo(x + 4, y - 24);
-      } else {
-        ctx.moveTo(x - 4, y);
-        ctx.lineTo(x - 4, y + 24);
-      }
-      ctx.stroke();
-    }
-
-    function drawLedgerLines(x, y, staffYTop, staffYBottom) {
-      ctx.strokeStyle = "#a8a29e";
-      ctx.lineWidth = 0.8;
-      if (y > staffYBottom + 2) {
-        for (let ly = staffYBottom + lineGap; ly <= y + 1; ly += lineGap) {
-          ctx.beginPath();
-          ctx.moveTo(x - 6, ly);
-          ctx.lineTo(x + 6, ly);
-          ctx.stroke();
+    function eventsToVexNotes(events, clef) {
+      const restKey = clef === "treble" ? "b/4" : "d/3";
+      return events.map((ev) => {
+        if (ev.length === 1 && typeof ev[0] === "number") {
+          return new VF.StaveNote({ clef, keys: [restKey], duration: DUR_NAME[ev[0]] + "r" });
         }
-      }
-      if (y < staffYTop - 2) {
-        for (let ly = staffYTop - lineGap; ly >= y - 1; ly -= lineGap) {
-          ctx.beginPath();
-          ctx.moveTo(x - 6, ly);
-          ctx.lineTo(x + 6, ly);
-          ctx.stroke();
-        }
-      }
-    }
-
-    function renderRow(rowMeasures, rowIdx) {
-      const yOffset = rowIdx * (staffH * 2 + 70);
-      const tTop = trebleTop + yOffset;
-      const bTop = bassTop + yOffset;
-      const endX = leftMargin + barW * rowMeasures.length;
-
-      drawFiveLines(tTop, 0, endX);
-      drawFiveLines(bTop, 0, endX);
-
-      if (rowIdx === 0) {
-        drawClef(tTop, true);
-        drawClef(bTop, false);
-        drawTimeSig(tTop);
-        drawTimeSig(bTop);
-      } else {
-        drawClef(tTop, true);
-        drawClef(bTop, false);
-      }
-
-      rowMeasures.forEach((m, i) => {
-        const barX = leftMargin + i * barW;
-
-        // Bar number
-        ctx.font = "9px 'EB Garamond', Georgia, serif";
-        ctx.fillStyle = "#a8a29e";
-        ctx.textAlign = "center";
-        ctx.fillText(String(m.barNum), barX + barW / 2, tTop - 5);
-
-        // Highlight playing bar
-        if (m.playing) {
-          ctx.fillStyle = "rgba(28,25,23,0.06)";
-          ctx.fillRect(barX, tTop - 2, barW, bTop + staffH - tTop + 4);
-        }
-
-        // Treble notes
-        m.melody.treble.forEach((note) => {
-          const nx = barX + 10 + (note.beat / 3) * (barW - 20);
-          const ny = midiToStaffY(note.midi, tTop, true);
-          const filled = note.dur <= 1;
-          drawLedgerLines(nx, ny, tTop, tTop + staffH);
-          drawNoteHead(nx, ny, filled);
-          const up = ny > tTop + staffH / 2;
-          drawStem(nx, ny, up);
+        const pitches = Array.isArray(ev[0]) ? ev[0] : [ev[0]];
+        const keys = pitches.map((p) => {
+          const m = p.match(/^([a-g]#?)(\d)$/);
+          return m[1] + "/" + m[2];
         });
-
-        // Bass notes
-        m.melody.bass.forEach((note) => {
-          const nx = barX + 10 + (note.beat / 3) * (barW - 20);
-          const ny = midiToStaffY(note.midi, bTop, false);
-          const filled = note.dur <= 1;
-          drawLedgerLines(nx, ny, bTop, bTop + staffH);
-          drawNoteHead(nx, ny, filled);
-          const up = ny > bTop + staffH / 2;
-          drawStem(nx, ny, up);
-        });
-
-        // Barline
-        ctx.strokeStyle = "#78716c";
-        ctx.lineWidth = (i === rowMeasures.length - 1) ? 2 : 0.8;
-        const bx = barX + barW;
-        ctx.beginPath();
-        ctx.moveTo(bx, tTop);
-        ctx.lineTo(bx, tTop + staffH);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(bx, bTop);
-        ctx.lineTo(bx, bTop + staffH);
-        ctx.stroke();
+        return new VF.StaveNote({ clef, keys, duration: DUR_NAME[ev[1]], auto_stem: true });
       });
     }
 
-    const row1 = measures.slice(0, 8);
-    const row2 = measures.slice(8, 16);
-    renderRow(row1, 0);
-    renderRow(row2, 1);
+    function renderRow(rowMeasures, rowIdx, isLastRow) {
+      const rowY = 5 + rowIdx * ROW_H;
+      const firstW = perRow > 4 ? 140 : 250;
+      const otherW = (W - 12 - firstW) / Math.max(1, perRow - 1);
+      let x = 6;
+
+      rowMeasures.forEach((m, i) => {
+        const w = i === 0 ? firstW : otherW;
+        const treble = new VF.Stave(x, rowY, w);
+        const bass = new VF.Stave(x, rowY + 82, w);
+        if (i === 0) {
+          treble.addClef("treble");
+          bass.addClef("bass");
+          if (rowIdx === 0) {
+            treble.addTimeSignature(time);
+            bass.addTimeSignature(time);
+          }
+        }
+        const isLast = i === rowMeasures.length - 1;
+        const endType = isLast && isLastRow ? VF.Barline.type.END : VF.Barline.type.SINGLE;
+        treble.setEndBarType(endType);
+        bass.setEndBarType(endType);
+        treble.setContext(ctx).draw();
+        bass.setContext(ctx).draw();
+
+        if (i === 0) {
+          new VF.StaveConnector(treble, bass).setType("brace").setContext(ctx).draw();
+          new VF.StaveConnector(treble, bass).setType("singleLeft").setContext(ctx).draw();
+        }
+
+        // Bar position number above the treble stave
+        ctx.save();
+        ctx.setFont("Georgia", 9);
+        ctx.setFillStyle("#a8a29e");
+        ctx.fillText(String(m.barNum), x + w / 2 - 3, rowY + 22);
+        ctx.restore();
+
+        const tNotes = eventsToVexNotes(m.events.t, "treble");
+        const bNotes = eventsToVexNotes(m.events.b, "bass");
+        const tVoice = new VF.Voice({ num_beats: tNum, beat_value: tDen }).setStrict(false).addTickables(tNotes);
+        const bVoice = new VF.Voice({ num_beats: tNum, beat_value: tDen }).setStrict(false).addTickables(bNotes);
+
+        // Key of C: sharps in the data get explicit accidentals
+        VF.Accidental.applyAccidentals([tVoice], "C");
+        VF.Accidental.applyAccidentals([bVoice], "C");
+
+        // Beam eighths/sixteenths per beat group (/8 times beam the whole
+        // measure, /4 times beam per quarter beat)
+        const beamGroups = [tDen === 8 ? new VF.Fraction(3, 8) : new VF.Fraction(1, 4)];
+        const tBeams = VF.Beam.generateBeams(tNotes, { groups: beamGroups });
+        const bBeams = VF.Beam.generateBeams(bNotes, { groups: beamGroups });
+
+        const noteStartX = Math.max(treble.getNoteStartX(), bass.getNoteStartX());
+        treble.setNoteStartX(noteStartX);
+        bass.setNoteStartX(noteStartX);
+        const availW = x + w - noteStartX - 12;
+        new VF.Formatter().joinVoices([tVoice]).joinVoices([bVoice]).format([tVoice, bVoice], availW);
+
+        tVoice.draw(ctx, treble);
+        bVoice.draw(ctx, bass);
+        tBeams.forEach((b) => b.setContext(ctx).draw());
+        bBeams.forEach((b) => b.setContext(ctx).draw());
+
+        // Playing-bar highlight as a %-positioned overlay so it tracks
+        // the responsive SVG scaling
+        if (m.playing) {
+          const hl = document.createElement("div");
+          hl.className = "staff-playing-highlight";
+          const top = rowY + 24;
+          const height = 82 + 82 - 24 + 6;
+          hl.style.left = (x / W) * 100 + "%";
+          hl.style.width = (w / W) * 100 + "%";
+          hl.style.top = (top / H) * 100 + "%";
+          hl.style.height = (height / H) * 100 + "%";
+          container.appendChild(hl);
+        }
+
+        x += w;
+      });
+    }
+
+    rows.forEach((row, idx) => renderRow(row, idx, idx === rows.length - 1));
+
+    // Let the SVG scale responsively inside the container
+    const svg = container.querySelector("svg");
+    if (svg) {
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.removeAttribute("width");
+      svg.removeAttribute("height");
+    }
   }
 
   // ---------- Dice Probability Chart ----------
@@ -484,7 +405,7 @@
   const diceBarsEl = document.getElementById("dice-bars");
   const diceScoreEl = document.getElementById("dice-score");
   const diceStatus = document.getElementById("dice-status");
-  const staffCanvas = document.getElementById("dice-staff-canvas");
+  const staffCanvas = document.getElementById("dice-staff-notation");
   let diceResults = [];
   let dicePlayingInterval = null;
 
@@ -508,7 +429,7 @@
     return diceResults.map((d, i) => ({
       barNum: i + 1,
       measure: d.measure,
-      melody: measureToMelody(d.measure, i),
+      events: measureToEvents(d.measure, i),
       playing: i === playingIdx,
     }));
   }
@@ -618,6 +539,125 @@
       diceStatus.textContent = "Stopped.";
       document.querySelectorAll(".dice-bar").forEach((b) => b.classList.remove("playing"));
       if (diceResults.length) drawStaff(staffCanvas, getStaffMeasures(-1));
+    });
+  }
+
+  // =========================================================================
+  // 1b. AI Composer — the local LLM writes a symbolic score (JSON note
+  // events), engraved with VexFlow and played on the Web Audio piano.
+  // =========================================================================
+  const composerGen = document.getElementById("composer-generate");
+  if (composerGen) {
+    const promptEl = document.getElementById("composer-prompt");
+    const barsEl = document.getElementById("composer-bars");
+    const playBtn = document.getElementById("composer-play");
+    const stopBtn = document.getElementById("composer-stop");
+    const statusEl = document.getElementById("composer-status");
+    const sheetEl = document.getElementById("composer-sheet");
+    const titleEl = document.getElementById("composer-title");
+    const sigEl = document.getElementById("composer-sig");
+    const staffEl = document.getElementById("composer-staff-notation");
+    const explainEl = document.getElementById("composer-explanation");
+
+    let score = null;
+    let playTimer = null;
+
+    function composerStaffMeasures(playingIdx) {
+      return score.measures.map((m, i) => ({
+        barNum: i + 1,
+        events: m,
+        playing: i === playingIdx,
+      }));
+    }
+
+    function renderScore(playingIdx) {
+      drawStaff(staffEl, composerStaffMeasures(playingIdx), {
+        time: score.time,
+        perRow: 4,
+      });
+    }
+
+    composerGen.addEventListener("click", async () => {
+      const prompt = (promptEl.value || "").trim();
+      if (!prompt) {
+        statusEl.textContent = "Describe the piece first.";
+        return;
+      }
+      composerGen.disabled = true;
+      playBtn.disabled = true;
+      statusEl.textContent = "Composing with the local LLM… (this can take a minute)";
+      try {
+        const resp = await fetch("/api/ai/music/compose", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, bars: parseInt(barsEl.value, 10) }),
+        });
+        if (!resp.ok) {
+          const detail = (await resp.json().catch(() => ({}))).detail;
+          throw new Error(detail || `HTTP ${resp.status}`);
+        }
+        score = await resp.json();
+        titleEl.textContent = score.title;
+        sigEl.textContent = `${score.time} time • ${score.key} • ♩=${score.tempo}` +
+          (score.model ? ` • ${score.model}` : "");
+        explainEl.textContent = score.explanation || "";
+        sheetEl.style.display = "";
+        renderScore(-1);
+        playBtn.disabled = false;
+        statusEl.textContent = `${score.measures.length} bars composed — press Play`;
+      } catch (err) {
+        statusEl.textContent = "Composition failed: " + err.message;
+      } finally {
+        composerGen.disabled = false;
+      }
+    });
+
+    playBtn.addEventListener("click", () => {
+      if (!score) return;
+      stopAll();
+      if (playTimer) clearInterval(playTimer);
+      playBtn.disabled = true;
+      stopBtn.disabled = false;
+      const eighthSec = 30 / score.tempo;
+      const [tNum, tDen] = score.time.split("/").map(Number);
+      const eighthsPerBar = (tNum * 8) / tDen;
+      const barSec = eighthsPerBar * eighthSec;
+      let barIdx = 0;
+
+      function playBar() {
+        if (barIdx >= score.measures.length) {
+          clearInterval(playTimer);
+          playTimer = null;
+          playBtn.disabled = false;
+          stopBtn.disabled = true;
+          statusEl.textContent = "Finished!";
+          renderScore(-1);
+          return;
+        }
+        statusEl.textContent = `Playing bar ${barIdx + 1}/${score.measures.length}`;
+        renderScore(barIdx);
+        const m = score.measures[barIdx];
+        parseVoice(m.t).forEach((n) => {
+          playPiano(midiToFreq(n.midi), n.dur * eighthSec * 1.2, n.beat * eighthSec, 0.18);
+        });
+        parseVoice(m.b).forEach((n) => {
+          playPiano(midiToFreq(n.midi), n.dur * eighthSec * 1.5, n.beat * eighthSec, 0.10);
+        });
+        barIdx++;
+      }
+
+      playBar();
+      playTimer = setInterval(playBar, barSec * 1000);
+    });
+
+    stopBtn.addEventListener("click", () => {
+      stopAll();
+      if (playTimer) clearInterval(playTimer);
+      playTimer = null;
+      playBtn.disabled = !score;
+      stopBtn.disabled = true;
+      statusEl.textContent = "Stopped.";
+      if (score) renderScore(-1);
     });
   }
 

@@ -81,7 +81,8 @@ class VisualizationPlanner:
                 parameters={},
                 code=self._euler_identity_plotly_code(),
             )
-        if any(tok in q for tok in ("golden ratio", "fibonacci", "phi")):
+        # \b guards: "phi" alone would substring-match "graphically" etc.
+        if re.search(r"\b(golden ratio|fibonacci|phi)\b", q):
             return VisualizationPlan(
                 type=VisualizationType.plotly,
                 goal="Golden Ratio spiral and Fibonacci sequence",

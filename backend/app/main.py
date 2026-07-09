@@ -20,12 +20,15 @@ from sqlalchemy.orm import Session
 from .config import get_settings
 from .content import TopicCatalog
 from .db import Concept, EvalRun, Resource, User, get_db, init_db
-from .llm import generate_llm_response
 from .logging_config import logger
 from .metrics import metrics
-from .middleware import MetricsMiddleware
+from .middleware import MetricsMiddleware, RateLimitMiddleware
 from .ai.service import GenerativeTutorService
-from .ai.media import DiffusionImageService, MusicGenService
+from .routers.ai_media import (
+    router as ai_media_router,
+    diffusion_service,
+    music_service,
+)
 from .ai.viz_agent import VizAgent
 from .ai.animation_pipeline import AnimationPipeline
 from .ai.checker import SymbolicChecker
@@ -76,10 +79,6 @@ from .models import (
     UserUpdateRequest,
     VisualizationPayload,
     VisualizationType,
-    MediaImageRequest,
-    MediaImageResponse,
-    MediaMusicRequest,
-    MediaMusicResponse,
     AppSettingsResponse,
     AppSettingsUpdate,
     SettingsValidationResponse,
@@ -146,8 +145,51 @@ async def lifespan(app: FastAPI):
             engine.warm_up()
             logger.info("LLM model warm-up triggered")
     threading.Thread(target=_warm_model, daemon=True).start()
+
+    if settings.jwt_secret == "change-this-secret-in-production" and not settings.debug:
+        logger.warning(
+            "SECURITY: jwt_secret is the built-in default. "
+            "Set JWT_SECRET before exposing this server beyond localhost."
+        )
+
+    _cleanup_generated_media()
     yield
     logger.info("Shutting down...")
+
+
+def _cleanup_generated_media(ttl_days: int = 14) -> None:
+    """Purge generated media/animations older than ttl_days (unbounded otherwise).
+
+    Git-tracked files (committed demo assets) are spared; outside a git
+    checkout (e.g. Docker) everything in these runtime dirs is fair game."""
+    import subprocess
+    import time as _time
+
+    tracked: set = set()
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "static/media", "static/animations"],
+            cwd=BASE_DIR, capture_output=True, text=True, timeout=5,
+        )
+        if out.returncode == 0:
+            tracked = {(BASE_DIR / p).resolve() for p in out.stdout.splitlines() if p}
+    except Exception:
+        pass
+
+    cutoff = _time.time() - ttl_days * 86400
+    removed = 0
+    for directory in (BASE_DIR / "static" / "media", BASE_DIR / "static" / "animations"):
+        if not directory.exists():
+            continue
+        for f in directory.iterdir():
+            try:
+                if f.is_file() and f.stat().st_mtime < cutoff and f.resolve() not in tracked:
+                    f.unlink()
+                    removed += 1
+            except OSError:
+                continue
+    if removed:
+        logger.info(f"Media cleanup: removed {removed} generated file(s) older than {ttl_days}d")
 
 
 app = FastAPI(
@@ -159,8 +201,6 @@ app = FastAPI(
 catalog = TopicCatalog()
 viz_service = VisualizationService()
 tutor_service = GenerativeTutorService()
-diffusion_service = DiffusionImageService()
-music_service = MusicGenService()
 viz_agent = VizAgent()
 settings_store = SettingsStore()
 handwriting_service = HandwritingService()
@@ -169,6 +209,8 @@ web_rag = WebMathRAG()
 context_service = ContextWindowService(persist_dir=str(BASE_DIR / "data" / "context_db"))
 
 app.add_middleware(MetricsMiddleware)
+app.add_middleware(RateLimitMiddleware)
+app.include_router(ai_media_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -181,6 +223,8 @@ if STATIC_VIZ_DIR.exists():
     app.mount("/visualizations", StaticFiles(directory=STATIC_VIZ_DIR), name="visualizations")
 if STATIC_MEDIA_DIR.exists():
     app.mount("/media", StaticFiles(directory=STATIC_MEDIA_DIR), name="media")
+if (FRONTEND_DIR / "vendor").exists():
+    app.mount("/vendor", StaticFiles(directory=FRONTEND_DIR / "vendor"), name="vendor")
 
 
 # =============================================================================
@@ -235,6 +279,21 @@ async def serve_mathmap_js():
 async def serve_mathmap_css():
     """Serve mathmap.css."""
     return FileResponse(FRONTEND_DIR / "mathmap.css")
+
+
+@app.get("/lesson.js", include_in_schema=False)
+async def serve_lesson_js():
+    return FileResponse(FRONTEND_DIR / "lesson.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
+@app.get("/mozart_notes.js", include_in_schema=False)
+async def serve_mozart_notes_js():
+    return FileResponse(FRONTEND_DIR / "mozart_notes.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
+@app.get("/music_core.js", include_in_schema=False)
+async def serve_music_core_js():
+    return FileResponse(FRONTEND_DIR / "music_core.js", headers=FRONTEND_NO_CACHE_HEADERS)
 
 
 @app.get("/musiclab.js", include_in_schema=False)
@@ -574,16 +633,6 @@ async def chat_message(
                 response_text=solution,
                 related_concepts=[],
                 visualization=visualization,
-            )
-        llm_response = await asyncio.to_thread(generate_llm_response, payload.message)
-        if llm_response:
-            service.add_message(conversation_id, role="assistant", content=llm_response)
-            logger.info(f"LLM response for conversation {conversation_id}")
-            return ChatMessageResponse(
-                conversation_id=conversation_id,
-                response_text=llm_response,
-                related_concepts=[],
-                visualization=None,
             )
         fallback_text = f"I don't have a specific lesson on \"{payload.message[:50]}\" yet, but I'm constantly learning! Try topics like:\n\n• Pythagorean theorem\n• Quadratic equations\n• Prime numbers\n• Fractions & rational numbers\n• Slope & linear equations\n• Exponents & logarithms\n\nOr explore the **Math Map** for 60+ topics!"
         service.add_message(conversation_id, role="assistant", content=fallback_text)
@@ -1219,24 +1268,6 @@ async def ai_viz_agent(payload: VizAgentRequest) -> VizAgentResponse:
     if result:
         source = "heuristic"
     return VizAgentResponse(visualization=result, source=source)
-
-
-@app.post("/api/ai/media/image", response_model=MediaImageResponse)
-async def ai_media_image(payload: MediaImageRequest) -> MediaImageResponse:
-    url = await asyncio.to_thread(diffusion_service.generate, payload.prompt)
-    if not url:
-        raise HTTPException(status_code=503, detail="Image generation not available")
-    return MediaImageResponse(url=url, model=diffusion_service.model_id)
-
-
-@app.post("/api/ai/media/music", response_model=MediaMusicResponse)
-async def ai_media_music(payload: MediaMusicRequest) -> MediaMusicResponse:
-    url = await asyncio.to_thread(
-        music_service.generate, payload.prompt, payload.duration_seconds
-    )
-    if not url:
-        raise HTTPException(status_code=503, detail="Music generation not available")
-    return MediaMusicResponse(url=url, model=music_service.model_id)
 
 
 @app.get("/api/settings", response_model=AppSettingsResponse)

@@ -23,11 +23,6 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite:///./euclids_window.db"
 
-    # LLM
-    openai_api_key: Optional[str] = None
-    openai_base_url: str = "https://api.openai.com/v1/chat/completions"
-    openai_model: str = "gpt-4o-mini"
-
     # Local generative tutor
     local_ai_enabled: bool = True
     local_llm_provider: str = "ollama"
@@ -35,6 +30,9 @@ class Settings(BaseSettings):
     local_llm_timeout_seconds: int = 120
     local_ai_execution_timeout_seconds: int = 60
     local_llm_base_url: Optional[str] = None
+    # Per-task model routing (None = fall back to local_llm_model)
+    local_codegen_model: Optional[str] = None
+    local_fast_model: Optional[str] = None
     local_multi_agent_enabled: bool = True
     local_web_rag_enabled: bool = True
     fast_mode_enabled: bool = False

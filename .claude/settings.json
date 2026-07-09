@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:*)",
+      "Bash(curl -sf http://localhost:*)",
+      "Bash(curl -sI http://localhost:*)",
+      "Bash(docker compose logs *)",
+      "Bash(ollama list)"
+    ]
+  }
+}

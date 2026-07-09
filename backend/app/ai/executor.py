@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 from uuid import uuid4
 
 from ..config import get_settings
@@ -16,9 +16,11 @@ from ..models import VisualizationPayload, VisualizationType
 BASE_DIR = Path(__file__).resolve().parents[2]
 STATIC_VIZ_DIR = BASE_DIR / "static" / "visualizations"
 ANIMATIONS_DIR = BASE_DIR / "static" / "animations"
+MEDIA_DIR = BASE_DIR / "static" / "media"
 
 STATIC_VIZ_DIR.mkdir(parents=True, exist_ok=True)
 ANIMATIONS_DIR.mkdir(parents=True, exist_ok=True)
+MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class VisualizationExecutor:
@@ -70,8 +72,19 @@ with open(r\"{output_file}\", 'w', encoding='utf-8') as handle:
                 output_file.unlink()
 
     def execute_manim(self, code: str, title: str) -> Optional[VisualizationPayload]:
+        payload, _ = self.execute_manim_detailed(code, title)
+        return payload
+
+    def execute_manim_detailed(
+        self, code: str, title: str
+    ) -> Tuple[Optional[VisualizationPayload], Optional[str]]:
+        """Render a Manim scene, returning (payload, error).
+
+        The error string carries the actual render failure (stderr tail) so
+        callers like the animation pipeline can feed it back to the LLM.
+        """
         if not code:
-            return None
+            return None, "No code provided"
 
         animation_id = f"manim-{uuid4().hex[:12]}"
         output_format = "gif"
@@ -104,28 +117,67 @@ with open(r\"{output_file}\", 'w', encoding='utf-8') as handle:
                 )
             except subprocess.TimeoutExpired:
                 logger.error("Manim execution timed out")
-                return None
+                return None, f"Manim render timed out after {self.timeout}s"
 
             if result.returncode != 0:
-                logger.error(f"Manim execution failed: {result.stderr[:400]}")
-                return None
+                # The Python traceback sits at the end of stderr; keep the tail.
+                error = (result.stderr or result.stdout or "").strip()[-1500:]
+                logger.error(f"Manim execution failed: {error[:400]}")
+                return None, error or "Manim exited with a non-zero status"
 
             output_file = self._find_output_file(tmpdir, animation_id, output_format)
             if not output_file:
                 logger.error("Manim output not found")
-                return None
+                return None, "Manim ran but produced no output file"
 
             shutil.copy(output_file, destination)
 
-        return VisualizationPayload(
-            viz_id=animation_id,
-            viz_type=VisualizationType.manim,
-            title=title,
-            data={
-                "url": f"/animations/{animation_id}.{output_format}",
-                "format": output_format,
-            },
+        return (
+            VisualizationPayload(
+                viz_id=animation_id,
+                viz_type=VisualizationType.manim,
+                title=title,
+                data={
+                    "url": f"/animations/{animation_id}.{output_format}",
+                    "format": output_format,
+                },
+            ),
+            None,
         )
+
+    def execute_matplotlib(self, code: str) -> Optional[str]:
+        """Run LLM-generated matplotlib code sandboxed; returns a /media URL.
+
+        The code must produce a figure (either a `fig` variable or the
+        current pyplot figure). Rendering runs headless via the Agg backend.
+        """
+        if not code:
+            return None
+
+        image_id = f"diagram-{uuid4().hex[:12]}"
+        output_path = MEDIA_DIR / f"{image_id}.png"
+
+        script = f"""
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+
+{code}
+
+if 'fig' not in locals():
+    fig = plt.gcf()
+fig.savefig(r\"{output_path}\", dpi=150, bbox_inches='tight')
+"""
+        try:
+            self._run_script(script)
+        except Exception as exc:
+            logger.error(f"Matplotlib execution failed: {exc}")
+            return None
+        if not output_path.exists():
+            logger.error("Matplotlib produced no output file")
+            return None
+        return f"/media/{output_path.name}"
 
     def _run_script(self, code: str) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
