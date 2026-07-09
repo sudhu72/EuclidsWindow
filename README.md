@@ -2,12 +2,12 @@
 
 **Learn math from first principles** — like Euclid's *Elements*: start from self-evident axioms, derive everything step by step.
 
-Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, seven interactive labs (matrix algebra, calculus, music theory, signal processing, cryptology, formal logic, and FFT), dynamic 3Blue1Brown-style Manim animations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 130+ curated topics and 104 concept-graph nodes spanning arithmetic through orbital mechanics.
+Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, seven interactive labs (matrix algebra, calculus, music theory, signal processing, cryptology, formal logic, and FFT), dynamic 3Blue1Brown-style Manim animations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 140+ curated topics and 104 concept-graph nodes spanning arithmetic through orbital mechanics.
 
 ## What You Get
 
 - **Generative Tutor (3-tier architecture)**
-  - **Tier 1 — Curated content** (instant): 130+ hand-written topics with 4 learner-level variants, served on first question
+  - **Tier 1 — Curated content** (instant): 140+ hand-written topics with 4 learner-level variants, served on first question
   - **Tier 2 — LLM reasoning** (conversational): Follow-up questions and uncurated topics routed to a local LLM (Ollama) with level-aware prompts and curated context as grounding
   - **Tier 3 — Multi-agent / legacy planner**: JSON-plan LLM path with visualization code generation
   - Context-aware with response modes (`plain`, `axiomatic`, `both`)
@@ -15,6 +15,11 @@ Euclid's Window is a local-first math tutoring platform that combines structured
   - Follow-up prompts, key takeaways, quality checks, improvement hints
   - Semantic conversation history via ChromaDB vector store
   - Web RAG enrichment (toggleable) for long-tail topics
+
+- **AI Lessons (outline → scene pipeline)**
+  - The local LLM designs a structured lesson (explanation → worked example → quiz) and walks you through it scene by scene
+  - AI classmate persona asks the question a confused learner would ask, with a revealable answer
+  - Interactive quiz scenes with feedback; export any lesson as a standalone HTML file
 
 - **VizAgent — AI-driven lightweight visualization**
   - Automatically generates visualizations from any tutor answer text
@@ -33,7 +38,7 @@ Euclid's Window is a local-first math tutoring platform that combines structured
 
 - **Interactive Labs** (collapsed under a single "Labs" dropdown in the nav)
   - **Matrix / Vector Lab** — 2×2 and 3×3 matrix operations, by-hand practice with AI coach, coordinate-grid visualization of transformations with 3×3 homogeneous projection, two-column layout with sticky visualization panel, and **Manim animation generator** that renders 3Blue1Brown-style animations of any matrix transformation
-  - **Music & Mathematics Lab** — five interactive games: Mozart's Musical Dice Game, Harmonic Series Explorer, Euclidean Rhythms (Bjorklund), Fibonacci Scales, Pythagorean Tuning
+  - **Music & Mathematics Lab** — six interactive games: Mozart's Musical Dice Game (with real VexFlow-engraved 3/8 notation), Harmonic Series Explorer, Euclidean Rhythms (Bjorklund), Fibonacci Scales, Pythagorean Tuning, and **AI Composer** (the local LLM writes a symbolic score you can see, hear, and study)
   - **Calculus Lab** — six interactive visualizations: Slope Explorer (tangent line & derivative), Area Under a Curve (Riemann sums with left/right/midpoint/trapezoid methods), Optimization Playground (fence/box/can problems), Differential Equations Simulator (exponential/logistic/predator-prey/SIR), Projectile Lab (position/velocity/acceleration), Orbital Mechanics (Hohmann transfer orbits to Moon/Mars with real physics)
   - **FFT Lab (Audio)** — record/load audio, forward FFT (Cooley-Tukey), 10-band frequency editor, inverse FFT, playback of original vs. modified signal
   - **FFT Lab (Image)** — load/upload image, 2D FFT (row-column decomposition), magnitude spectrum + phase display, frequency-domain filtering (low-pass / high-pass / band-pass / band-stop with adjustable radius), inverse 2D FFT with side-by-side comparison
@@ -126,7 +131,7 @@ flowchart TB
     subgraph DATA[Data + Persistence]
       SQLITE[(SQLite DB)]
       CHROMA[(ChromaDB Vector Store)]
-      JSON[(JSON Seeds: 130+ topics, 104 concepts, resources)]
+      JSON[(JSON Seeds: 140+ topics, 104 concepts, resources)]
       STATIC[(backend/static visualizations/media)]
     end
 
@@ -256,7 +261,7 @@ EuclidsWindow/
 │   │   ├── db/
 │   │   └── manim_scenes/
 │   ├── data/
-│   │   ├── demo_topics.json         # 130+ topics with 4 learner-level variants
+│   │   ├── demo_topics.json         # 140+ topics with 4 learner-level variants
 │   │   ├── math_map.json            # Categories + topic prompts for Math Map
 │   │   ├── seed_concepts.json       # Concept graph nodes + prerequisites
 │   │   ├── seed_euclid.json         # Euclid's Elements references
@@ -300,7 +305,7 @@ EuclidsWindow/
 
 ## Topic Coverage
 
-Content in `demo_topics.json` spans 130+ curated topics across 15 categories. The concept graph (`seed_concepts.json`) contains 104 nodes with prerequisite chains. Each topic has 4-level (kids/teen/college/adult) explanations:
+Content in `demo_topics.json` spans 140+ curated topics across 15 categories. The concept graph (`seed_concepts.json`) contains 104 nodes with prerequisite chains. Each topic has 4-level (kids/teen/college/adult) explanations:
 
 | Category | Example Topics |
 |---|---|
@@ -339,7 +344,7 @@ This script will:
 - ✅ Wait for everything to be ready
 - ✅ Show you the URL when ready
 
-Open `http://localhost:8000/` when the script completes.
+Open `http://localhost:8010/` when the script completes.
 
 **Other helpful scripts:**
 
@@ -365,8 +370,8 @@ docker compose exec euclids-window python scripts/seed_db.py
 
 Open:
 
-- `http://localhost:8000/` (main app)
-- `http://localhost:8000/mathmap.html` (interactive map page)
+- `http://localhost:8010/` (main app)
+- `http://localhost:8010/mathmap.html` (interactive map page)
 
 **Useful commands:**
 
@@ -399,7 +404,8 @@ You can customize the Docker setup by creating a `.env` file in the project root
 
 ```bash
 # .env
-HOST_PORT=8080                    # Change port (default: 8000)
+HOST_PORT=8080                    # Change port (default: 8010)
+OLLAMA_HOST_PORT=11436            # Host port for bundled Ollama (default: 11435)
 LOCAL_LLM_MODEL=qwen2.5:7b       # Use a different model
 LOCAL_LLM_BASE_URL=http://host.docker.internal:11434  # External Ollama
 ```

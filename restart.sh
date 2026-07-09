@@ -9,4 +9,4 @@ docker compose restart euclids-window
 
 echo ""
 echo "✅ App restarted!"
-echo "→ Open: http://localhost:${HOST_PORT:-8000}"
+echo "→ Open: http://localhost:${HOST_PORT:-8010}"

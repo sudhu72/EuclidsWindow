@@ -3,9 +3,10 @@ import json
 import re
 import shutil
 import subprocess
+import time
 import urllib.error
 import urllib.request
-from typing import Optional
+from typing import Dict, List, Optional
 
 from ..config import get_settings
 from ..settings_store import SettingsStore
@@ -29,6 +30,17 @@ class LocalLLMEngine:
         if model:
             self.model = model
 
+    def _model_for_task(self, task: Optional[str]) -> str:
+        """Resolve the model for a task: codegen/fast route to dedicated
+        models when configured, everything else uses the default."""
+        overrides = self._store.get_effective_settings()
+        default = overrides.get("local_llm_model") or self.model
+        if task == "codegen":
+            return overrides.get("local_codegen_model") or default
+        if task == "fast":
+            return overrides.get("local_fast_model") or default
+        return default
+
     def is_available(self) -> bool:
         if self.provider == "ollama":
             if self.base_url:
@@ -48,8 +60,8 @@ class LocalLLMEngine:
             return self._run_ollama(prompt)
         return None
 
-    def _run_ollama(self, prompt: str) -> Optional[str]:
-        cmd = ["ollama", "run", self.model]
+    def _run_ollama(self, prompt: str, model: Optional[str] = None) -> Optional[str]:
+        cmd = ["ollama", "run", model or self.model]
         try:
             result = subprocess.run(
                 cmd,
@@ -121,6 +133,129 @@ class LocalLLMEngine:
                 )
             return self._run_ollama(prompt)
         return None
+
+    def chat(
+        self,
+        messages: List[Dict[str, str]],
+        *,
+        task: Optional[str] = None,
+        timeout_seconds: Optional[int] = None,
+        num_predict: Optional[int] = None,
+        json_format: bool = False,
+        temperature: Optional[float] = None,
+        num_ctx: Optional[int] = None,
+        seed: Optional[int] = None,
+        retries: int = 1,
+    ) -> Optional[str]:
+        """Chat completion via Ollama /api/chat with per-task model routing.
+
+        `messages` is a list of {"role": "system"|"user"|"assistant", "content": str}.
+        `json_format=True` asks Ollama to constrain output to valid JSON.
+        `task` selects the model: "codegen", "fast", or None for the default.
+        """
+        if not self.is_available():
+            return None
+        model = self._model_for_task(task)
+
+        if self.provider != "ollama":
+            return None
+        if not self.base_url:
+            # CLI fallback: flatten roles into a single prompt
+            prompt = "\n\n".join(m.get("content", "") for m in messages)
+            return self._run_ollama(prompt, model=model)
+
+        body: dict = {
+            "model": model,
+            "messages": messages,
+            "stream": False,
+            "keep_alive": "10m",
+        }
+        options: dict = {}
+        if num_predict:
+            options["num_predict"] = num_predict
+        if temperature is not None:
+            options["temperature"] = temperature
+        if num_ctx:
+            options["num_ctx"] = num_ctx
+        if seed is not None:
+            options["seed"] = seed
+        if options:
+            body["options"] = options
+        if json_format:
+            body["format"] = "json"
+
+        url = f"{self.base_url.rstrip('/')}/api/chat"
+        payload = json.dumps(body).encode("utf-8")
+        effective_timeout = timeout_seconds or self.timeout
+
+        for attempt in range(1 + max(0, retries)):
+            request = urllib.request.Request(
+                url,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=effective_timeout) as response:
+                    raw = json.loads(response.read().decode("utf-8"))
+                    content = str(raw.get("message", {}).get("content", "")).strip()
+                    return content or None
+            except TimeoutError:
+                logger.error(f"Ollama chat timed out ({effective_timeout}s)")
+                return None
+            except urllib.error.HTTPError as exc:
+                # Ollama returns 404 when the model isn't pulled; fall back to
+                # the default model instead of failing the whole request.
+                default_model = self._model_for_task(None)
+                if exc.code == 404 and body["model"] != default_model:
+                    logger.warning(
+                        f"Ollama model '{body['model']}' not found; "
+                        f"falling back to '{default_model}'"
+                    )
+                    body["model"] = default_model
+                    payload = json.dumps(body).encode("utf-8")
+                    continue
+                logger.error(f"Ollama chat request failed (attempt {attempt + 1}): {exc}")
+                if attempt < retries:
+                    time.sleep(0.5)
+                    continue
+                return None
+            except urllib.error.URLError as exc:
+                logger.error(f"Ollama chat request failed (attempt {attempt + 1}): {exc}")
+                if attempt < retries:
+                    time.sleep(0.5)
+                    continue
+                return None
+        return None
+
+    def chat_json(
+        self,
+        messages: List[Dict[str, str]],
+        *,
+        task: Optional[str] = None,
+        timeout_seconds: Optional[int] = None,
+        num_predict: Optional[int] = None,
+        temperature: float = 0.2,
+    ) -> Optional[dict]:
+        """Chat completion constrained to JSON, parsed into a dict (or None)."""
+        raw = self.chat(
+            messages,
+            task=task,
+            timeout_seconds=timeout_seconds,
+            num_predict=num_predict,
+            json_format=True,
+            temperature=temperature,
+        )
+        if not raw:
+            return None
+        block = extract_json_block(raw)
+        if not block:
+            return None
+        try:
+            parsed = json.loads(block)
+        except json.JSONDecodeError:
+            return None
+        return parsed if isinstance(parsed, dict) else None
 
     def is_model_ready(self) -> bool:
         """Check whether the model is loaded in memory (warm) for fast inference."""

@@ -9,7 +9,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Configuration
-PORT="${HOST_PORT:-8000}"
+PORT="${HOST_PORT:-8010}"
 PROJECT_NAME="Euclid's Window"
 
 echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"

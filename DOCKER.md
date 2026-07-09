@@ -12,7 +12,7 @@ That's it! The script will:
 - Build the Docker containers
 - Start all services (app + Ollama)
 - Wait for everything to be ready
-- Open the app at http://localhost:8000
+- Open the app at http://localhost:8010
 
 ## Available Scripts
 
@@ -51,7 +51,8 @@ docker compose down -v
 
 The app uses these environment variables (configured in `docker-compose.yml`):
 
-- `HOST_PORT` - Port to expose (default: 8000)
+- `HOST_PORT` - Port to expose (default: 8010)
+- `OLLAMA_HOST_PORT` - Host port for the bundled Ollama (default: 11435)
 - `LOCAL_LLM_MODEL` - Ollama model to use (default: qwen2.5:1.5b)
 - `LOCAL_LLM_BASE_URL` - Ollama URL (default: http://ollama:11434)
 
@@ -65,7 +66,7 @@ LOCAL_LLM_MODEL=qwen2.5:7b
 ## Troubleshooting
 
 ### Port already in use
-Change the port in `.env` file or stop other services using port 8000.
+Change the port in `.env` file or stop other services using port 8010.
 
 ### Docker not running
 Start Docker Desktop before running `./start.sh`.
