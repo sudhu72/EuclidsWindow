@@ -13,6 +13,7 @@ Duration codes: 2=half, 4=quarter, 8=eighth, 16=sixteenth.
 The score is validated (and lightly repaired) with music-theory rules, then
 played by the frontend's Web Audio piano and engraved with VexFlow.
 """
+import json
 import re
 import textwrap
 from typing import Any, Dict, List, Optional, Tuple
@@ -62,10 +63,62 @@ class SymbolicMusicComposer:
     def is_available(self) -> bool:
         return self._engine.is_available()
 
+    # Small local models degrade badly on long JSON outputs, so long pieces
+    # are composed a few measures at a time, each chunk continuing the last.
+    CHUNK_BARS = 4
+
     def compose(self, prompt: str, bars: int = 8) -> Optional[Dict[str, Any]]:
-        """Compose a validated score, retrying once with error feedback."""
+        """Compose a validated score in chunks, retrying with error feedback."""
         bars = max(2, min(16, bars))
-        user_msg = f"Compose {bars} measures: {prompt[:400]}"
+        meta: Optional[Dict[str, Any]] = None
+        measures: List[Dict[str, Any]] = []
+
+        for _ in range(bars):  # safety bound; normally bars/CHUNK_BARS rounds
+            remaining = bars - len(measures)
+            if remaining <= 0:
+                break
+            chunk = self._compose_chunk(
+                prompt,
+                n=min(self.CHUNK_BARS, remaining),
+                meta=meta,
+                prev_measure=measures[-1] if measures else None,
+                start=len(measures) + 1,
+                total=bars,
+            )
+            if not chunk or not chunk["measures"]:
+                break
+            if meta is None:
+                meta = {k: chunk[k] for k in ("title", "tempo", "time", "key", "explanation")}
+            measures.extend(chunk["measures"])
+
+        if len(measures) < max(2, bars // 2) or meta is None:
+            logger.warning(f"Composer gave up with {len(measures)}/{bars} valid measures")
+            return None
+        score = dict(meta, measures=measures[:bars])
+        score["model"] = self._engine._model_for_task("codegen")
+        return score
+
+    def _compose_chunk(
+        self,
+        prompt: str,
+        *,
+        n: int,
+        meta: Optional[Dict[str, Any]],
+        prev_measure: Optional[Dict[str, Any]],
+        start: int,
+        total: int,
+    ) -> Optional[Dict[str, Any]]:
+        """Compose and validate one chunk of `n` measures, retrying once."""
+        if meta is None:
+            user_msg = f"Compose measures 1-{n} of a {total}-measure piece: {prompt[:400]}"
+        else:
+            user_msg = (
+                f"Continue the piece '{meta['title']}' ({meta['key']}, {meta['time']}, "
+                f"tempo {meta['tempo']}): {prompt[:400]}\n"
+                f"The previous measure was: {json.dumps(prev_measure)}\n"
+                f"Compose measures {start}-{start + n - 1} of {total}, keeping the same "
+                f"key, time signature, and tempo."
+            )
         messages = [
             {"role": "system", "content": COMPOSER_SYSTEM_PROMPT},
             {"role": "user", "content": user_msg},
@@ -76,16 +129,17 @@ class SymbolicMusicComposer:
                 messages,
                 task="codegen",  # structured JSON scores: coder models do this best
                 timeout_seconds=120,
-                num_predict=2500,
+                num_predict=600 + 350 * n,
+                num_ctx=4096,  # Ollama's 2048 default truncates longer scores
                 temperature=0.7 if attempt == 0 else 0.4,
             )
             if not raw:
-                return None
-            score, errors = self._validate(raw, bars)
+                logger.warning(f"Composer chunk {start}-{start + n - 1}: no JSON (attempt {attempt + 1})")
+                continue
+            score, errors = self._validate(raw, n, forced_time=meta["time"] if meta else None)
             if score:
-                score["model"] = self._engine._model_for_task("codegen")
                 return score
-            logger.warning(f"Composer attempt {attempt + 1} invalid: {errors[:3]}")
+            logger.warning(f"Composer chunk attempt {attempt + 1} invalid: {errors[:3]}")
             messages = messages[:2] + [
                 {"role": "assistant", "content": str(raw)[:1500]},
                 {
@@ -101,10 +155,12 @@ class SymbolicMusicComposer:
     # Validation / repair
     # ------------------------------------------------------------------
 
-    def _validate(self, raw: Dict[str, Any], bars: int) -> Tuple[Optional[Dict[str, Any]], List[str]]:
+    def _validate(
+        self, raw: Dict[str, Any], bars: int, forced_time: Optional[str] = None
+    ) -> Tuple[Optional[Dict[str, Any]], List[str]]:
         errors: List[str] = []
 
-        time = str(raw.get("time", "3/4"))
+        time = forced_time or str(raw.get("time", "3/4"))
         if time not in VALID_TIMES:
             errors.append(f"unsupported time signature {time}")
             time = "3/4"
@@ -129,14 +185,17 @@ class SymbolicMusicComposer:
                 events, verrs = self._clean_voice(m.get(voice), eighths_per_measure)
                 errors.extend(f"measure {idx} {voice}: {e}" for e in verrs)
                 voices[voice] = events
-            if voices["t"] or voices["b"]:
+            # A measure must contain at least one actual note; rest-padding of
+            # empty voices otherwise turns degenerate LLM output into silence.
+            if any(len(ev) == 2 for ev in voices["t"] + voices["b"]):
                 measures_out.append(voices)
+            else:
+                errors.append(f"measure {idx} has no notes")
 
         if not measures_out:
             return None, errors or ["no valid measures"]
-        # Tolerate minor issues as long as most measures survived cleaning
-        if len(measures_out) < max(2, bars // 2):
-            return None, errors or ["too few valid measures"]
+        # A partial chunk is fine: compose() keeps requesting measures until
+        # the piece is full and enforces the overall minimum itself.
 
         return (
             {
@@ -188,6 +247,9 @@ class SymbolicMusicComposer:
         # Rest: [duration]
         if len(ev) == 1 and isinstance(ev[0], (int, float)) and int(ev[0]) in VALID_DURS:
             return [int(ev[0])]
+        # Over-nested event, e.g. [["c4", 8]] — unwrap one level
+        if len(ev) == 1 and isinstance(ev[0], list):
+            return SymbolicMusicComposer._parse_event(ev[0])
         if len(ev) != 2:
             return None
         pitches, dur = ev

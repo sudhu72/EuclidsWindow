@@ -236,6 +236,7 @@ class LocalLLMEngine:
         timeout_seconds: Optional[int] = None,
         num_predict: Optional[int] = None,
         temperature: float = 0.2,
+        num_ctx: Optional[int] = None,
     ) -> Optional[dict]:
         """Chat completion constrained to JSON, parsed into a dict (or None)."""
         raw = self.chat(
@@ -245,15 +246,18 @@ class LocalLLMEngine:
             num_predict=num_predict,
             json_format=True,
             temperature=temperature,
+            num_ctx=num_ctx,
         )
         if not raw:
             return None
         block = extract_json_block(raw)
         if not block:
+            logger.warning(f"chat_json: no JSON object in LLM output: {raw[:200]!r}")
             return None
         try:
             parsed = json.loads(block)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as exc:
+            logger.warning(f"chat_json: invalid JSON from LLM ({exc}): {block[:200]!r}")
             return None
         return parsed if isinstance(parsed, dict) else None
 
