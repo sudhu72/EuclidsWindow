@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     local_codegen_model: Optional[str] = None
     local_fast_model: Optional[str] = None
     local_polya_model: Optional[str] = None  # Socratic problem-solving coach
+    # Olympiad-difficulty coaching needs stronger math judging; falls back
+    # to local_polya_model, then local_llm_model.
+    local_polya_olympiad_model: Optional[str] = None
     local_multi_agent_enabled: bool = True
     local_web_rag_enabled: bool = True
     fast_mode_enabled: bool = False

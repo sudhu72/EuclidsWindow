@@ -113,6 +113,7 @@ class PolyaService:
             START_SYSTEM_PROMPT,
             f"{self._context(level, difficulty)}The problem:\n{problem[:800]}",
             num_predict=700,
+            difficulty=difficulty,
         )
         if not raw or not raw.get("questions"):
             return None
@@ -149,7 +150,7 @@ class PolyaService:
             )
             + f"The student's current response:\n{user_input[:1200]}"
         )
-        raw = self._chat(COACH_PROMPTS[phase], user_msg, num_predict=700)
+        raw = self._chat(COACH_PROMPTS[phase], user_msg, num_predict=700, difficulty=difficulty)
         if not raw or not str(raw.get("feedback") or "").strip():
             return None
         suggestions = raw.get("suggestions")
@@ -172,18 +173,24 @@ class PolyaService:
             parts.append(hint + "\n\n")
         return "".join(parts)
 
-    def _chat(self, system: str, user: str, num_predict: int) -> Optional[Dict[str, Any]]:
+    def _chat(
+        self, system: str, user: str, num_predict: int, difficulty: str = "basic"
+    ) -> Optional[Dict[str, Any]]:
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ]
+        # Olympiad sessions route to a stronger (often thinking-mode) model,
+        # which needs a bigger token budget and timeout for its reasoning.
+        olympiad = difficulty == "olympiad"
+        task = "polya_olympiad" if olympiad else "polya"
         for attempt in range(2):
             raw = self._engine.chat_json(
                 messages,
-                task="polya",  # routes to local_polya_model when configured
-                timeout_seconds=120,
-                num_predict=num_predict,
-                num_ctx=4096,
+                task=task,
+                timeout_seconds=240 if olympiad else 120,
+                num_predict=3000 if olympiad else num_predict,
+                num_ctx=8192 if olympiad else 4096,
                 temperature=0.4 if attempt == 0 else 0.6,
             )
             if raw:
