@@ -39,6 +39,8 @@ class LocalLLMEngine:
             return overrides.get("local_codegen_model") or default
         if task == "fast":
             return overrides.get("local_fast_model") or default
+        if task == "polya":
+            return overrides.get("local_polya_model") or default
         return default
 
     def is_available(self) -> bool:

@@ -1024,7 +1024,7 @@
     if (typeof switchToTab === "function") {
       switchToTab("tutor");
     } else {
-      const btn = document.querySelector('[data-tab="tutor"]');
+      const btn = document.querySelector('[data-tab="lesson"]');
       if (btn) btn.click();
     }
     setTimeout(() => {

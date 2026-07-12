@@ -29,6 +29,7 @@ from .routers.ai_media import (
     diffusion_service,
     music_service,
 )
+from .routers.polya import router as polya_router
 from .ai.viz_agent import VizAgent
 from .ai.animation_pipeline import AnimationPipeline
 from .ai.checker import SymbolicChecker
@@ -211,6 +212,7 @@ context_service = ContextWindowService(persist_dir=str(BASE_DIR / "data" / "cont
 app.add_middleware(MetricsMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.include_router(ai_media_router)
+app.include_router(polya_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -286,6 +288,11 @@ async def serve_lesson_js():
     return FileResponse(FRONTEND_DIR / "lesson.js", headers=FRONTEND_NO_CACHE_HEADERS)
 
 
+@app.get("/polya.js", include_in_schema=False)
+async def serve_polya_js():
+    return FileResponse(FRONTEND_DIR / "polya.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
 @app.get("/mozart_notes.js", include_in_schema=False)
 async def serve_mozart_notes_js():
     return FileResponse(FRONTEND_DIR / "mozart_notes.js", headers=FRONTEND_NO_CACHE_HEADERS)
@@ -331,9 +338,20 @@ async def serve_symbols_js():
     return FileResponse(FRONTEND_DIR / "symbols.js", headers=FRONTEND_NO_CACHE_HEADERS)
 
 
-@app.get("/euclids-window-logo.png", include_in_schema=False)
+@app.get("/euclids-window-logo.svg", include_in_schema=False)
 async def serve_logo():
-    return FileResponse(FRONTEND_DIR / "euclids-window-logo.png")
+    return FileResponse(FRONTEND_DIR / "euclids-window-logo.svg", media_type="image/svg+xml")
+
+
+@app.get("/favicon.svg", include_in_schema=False)
+async def serve_favicon():
+    return FileResponse(FRONTEND_DIR / "favicon.svg", media_type="image/svg+xml")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def serve_favicon_ico():
+    # Browsers that probe /favicon.ico get the SVG; modern ones accept it.
+    return FileResponse(FRONTEND_DIR / "favicon.svg", media_type="image/svg+xml")
 
 
 # =============================================================================
@@ -1237,16 +1255,19 @@ async def matrix_animate(payload: MatrixAnimateRequest):
     })
 
     executor = VisualizationExecutor()
-    viz = await asyncio.to_thread(executor.execute_manim, code, payload.title)
+    viz, error = await asyncio.to_thread(
+        executor.execute_manim_detailed, code, payload.title
+    )
 
     if viz:
         return {
             "status": "completed",
             "visualization": viz.model_dump(),
         }
+    detail = error.strip().splitlines()[-1][:300] if error and error.strip() else ""
     return {
         "status": "error",
-        "message": "Manim render failed. Ensure Manim is installed in the container.",
+        "message": "Manim render failed" + (f": {detail}" if detail else "."),
         "visualization": None,
     }
 

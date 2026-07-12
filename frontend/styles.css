@@ -30,10 +30,9 @@ body {
   letter-spacing: 0.06em;
 }
 .brand-logo {
-  height: 72px;
+  height: 56px;
   width: auto;
   vertical-align: middle;
-  filter: invert(1) brightness(2);
 }
 
 .subtitle {
@@ -426,9 +425,49 @@ body {
 }
 
 /* Local Tutor tab */
-#tab-tutor {
+#tab-lesson {
   grid-template-columns: 2fr 1fr;
   gap: 16px;
+}
+
+#tab-polya {
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.polya-phase-chip.done {
+  opacity: 0.65;
+}
+.polya-coach-msg {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  margin-bottom: 8px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.polya-coach-msg.student {
+  background: #e7e5e4;
+  border-color: #d6d3d1;
+}
+.polya-coach-msg.hint {
+  background: #fefce8;
+  border-color: #fde68a;
+}
+.polya-compass-phase {
+  margin-bottom: 12px;
+}
+.polya-compass-phase h5 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+.polya-compass-phase ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #57534e;
+  line-height: 1.5;
 }
 
 .tutor-panel {
@@ -503,6 +542,32 @@ body {
   padding: 16px;
   overflow-y: auto;
   border: 1px solid #e7e5e4;
+}
+
+/* Collapsible from-first-principles derivation inside answers */
+.axiomatic-view {
+  margin: 12px 0;
+  border: 1px solid #d6d3d1;
+  border-left: 3px solid #a8a29e;
+  border-radius: 6px;
+  background: #f5f5f4;
+}
+.axiomatic-view > summary {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #44403c;
+  user-select: none;
+}
+.axiomatic-view > summary:hover {
+  color: #1c1917;
+}
+.axiomatic-view[open] > summary {
+  border-bottom: 1px solid #e7e5e4;
+}
+.axiomatic-view .axiomatic-body {
+  padding: 10px 14px;
 }
 
 .tutor-media {
@@ -1182,7 +1247,10 @@ body {
     display: none;
   }
 
-  #tab-tutor {
+  #tab-lesson {
+    grid-template-columns: 1fr;
+  }
+  #tab-polya {
     grid-template-columns: 1fr;
   }
   .tutor-viz-panel {

@@ -63,6 +63,18 @@ Explanation to visualize:
 """
 
 
+def _mermaid_label(text: str) -> str:
+    """Make free text safe as a Mermaid node label.
+
+    Brackets, parens, braces, quotes, and backticks are structural in
+    Mermaid's grammar (even inside quoted labels for some versions), and
+    `#` starts an entity code — one stray character fails the whole parse.
+    """
+    safe = re.sub(r'[\[\]{}()<>"`#;|]', "", text)
+    safe = re.sub(r"\s+", " ", safe).strip()
+    return safe[:50].strip()
+
+
 class VizAgent:
     """Generates a visualization spec from tutor output via LLM or heuristics."""
 
@@ -116,7 +128,7 @@ class VizAgent:
         if len(steps) >= 3:
             nodes = []
             for i, step in enumerate(steps[:8]):
-                safe = step[:50].replace('"', "'").replace("\n", " ")
+                safe = _mermaid_label(step)
                 node_id = chr(65 + i)
                 nodes.append(f'{node_id}["{safe}"]')
             arrows = " --> ".join(chr(65 + i) for i in range(len(nodes)))
@@ -131,7 +143,8 @@ class VizAgent:
             }
 
         # Detect concept relationships → Mermaid mindmap
-        concepts = self._extract_bold_terms(text)
+        concepts = [_mermaid_label(c) for c in self._extract_bold_terms(text)]
+        concepts = [c for c in concepts if c]
         if len(concepts) >= 4:
             center = concepts[0]
             branches = concepts[1:7]

@@ -301,6 +301,26 @@ const tryParseJson = (text) => {
   }
 };
 
+// The rigorous derivation is shown progressively: plain answer first, the
+// from-first-principles part inside a <details> — open for college/adult,
+// collapsed for kids/teen.
+const upgradeAxiomaticSections = (html) => {
+  if (!html || !html.includes("[[AXIOMATIC-START]]")) return html;
+  const level = tutorLearnerLevel?.value || "teen";
+  const open = level === "college" || level === "adult" ? " open" : "";
+  return html
+    .replace(
+      /<div class="md-line">\[\[AXIOMATIC-START\]\]<\/div>/g,
+      `<details class="axiomatic-view"${open}>` +
+        '<summary>📐 From first principles — see why it\'s true</summary>' +
+        '<div class="axiomatic-body">'
+    )
+    .replace(/<div class="md-line">\[\[AXIOMATIC-END\]\]<\/div>/g, "</div></details>")
+    // Fallback: strip any markers that didn't land on their own line
+    .split("[[AXIOMATIC-START]]").join("")
+    .split("[[AXIOMATIC-END]]").join("");
+};
+
 const normalizeTutorPayload = (payload) => {
   if (!payload || typeof payload !== "object") return payload;
   const parsed = tryParseJson(payload.solution);
@@ -317,13 +337,16 @@ const formatTutorOutput = (payload) => {
   const lines = [];
 
   if (normalized.plain_explanation) {
-    lines.push("🗣️ **Plain English**");
+    lines.push("💡 **In plain words**");
     lines.push(normalized.plain_explanation);
   }
 
   if (normalized.axiomatic_explanation) {
-    lines.push("📐 **Axiomatic View**");
+    // Markers survive markdown parsing and are upgraded to a collapsible
+    // <details> by upgradeAxiomaticSections().
+    lines.push("[[AXIOMATIC-START]]");
     lines.push(normalized.axiomatic_explanation);
+    lines.push("[[AXIOMATIC-END]]");
   }
 
   const solution = normalized.solution;
@@ -439,6 +462,7 @@ if (labsDropdown) {
 }
 
 const switchToTab = (tabId) => {
+  if (tabId === "tutor") tabId = "lesson"; // Tutor merged into the Learn tab
   tabBtns.forEach(b => b.classList.remove("active"));
   tabContents.forEach(c => c.classList.remove("active"));
   labsItems.forEach(i => i.classList.remove("active"));
@@ -477,7 +501,7 @@ const addMessage = (text, role, loading = false) => {
   // Parse markdown for assistant messages, plain text for user
   if (role === "assistant" && !loading) {
     try {
-      message.innerHTML = parseMarkdown(text);
+      message.innerHTML = upgradeAxiomaticSections(parseMarkdown(text));
     } catch (error) {
       console.warn("Markdown render failed:", error);
       message.textContent = text;
@@ -1913,8 +1937,7 @@ const loadPromptCollections = async () => {
 // =============================================================================
 const tutorForm = document.getElementById("tutor-form");
 const tutorInput = document.getElementById("tutor-input");
-const tutorResponseMode = document.getElementById("tutor-response-mode");
-const tutorLearnerLevel = document.getElementById("tutor-learner-level");
+const tutorLearnerLevel = document.getElementById("lesson-level");
 const tutorSolution = document.getElementById("tutor-solution");
 const tutorViz = document.getElementById("tutor-viz");
 const tutorSend = document.getElementById("tutor-send");
@@ -1949,6 +1972,8 @@ const latexCopy = document.getElementById("latex-copy");
 let lastTutorQuestion = "";
 let tutorHistory = [];
 let tutorSessionId = localStorage.getItem("ew_tutor_session_id") || "";
+// Set by lesson.js while a lesson is active: {topic, sceneIndex, sceneTitle} | null
+let tutorLessonContext = null;
 let scratchpadMode = "pen";
 let scratchpadDrawing = false;
 let scratchpadCtx = null;
@@ -2162,9 +2187,9 @@ const renderTutorSolution = (payloadOrText) => {
   }
 
   try {
-    tutorSolution.innerHTML = parseMarkdown(
+    tutorSolution.innerHTML = upgradeAxiomaticSections(parseMarkdown(
       replaceGreekNamesOutsideMath(normalizeLatexDelimiters(renderedText))
-    );
+    ));
   } catch (error) {
     tutorSolution.textContent = renderedText;
   }
@@ -2213,7 +2238,18 @@ const sendTutorQuestion = async (question) => {
   tutorSend.disabled = true;
   tutorInput.disabled = true;
   if (tutorInput) tutorInput.value = question;
-  lastTutorQuestion = question;
+  // When asked from inside a lesson, scope the question to the current
+  // scene for the API (and for on-demand visuals via lastTutorQuestion),
+  // but keep the raw question in history/UI so the short preamble isn't
+  // re-sent with every history turn.
+  const apiQuestion = tutorLessonContext
+    ? `In the lesson "${tutorLessonContext.topic}"` +
+      (tutorLessonContext.sceneTitle
+        ? `, scene ${(tutorLessonContext.sceneIndex ?? 0) + 1} "${tutorLessonContext.sceneTitle}"`
+        : "") +
+      `: ${question}`
+    : question;
+  lastTutorQuestion = apiQuestion;
   tutorHistory.push({ role: "user", content: question });
   renderTutorSolution("Generating solution...");
   showVisualizationIn(tutorViz, null);
@@ -2233,10 +2269,10 @@ const sendTutorQuestion = async (question) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        question,
+        question: apiQuestion,
         history: compactHistory,
         session_id: tutorSessionId || undefined,
-        response_mode: tutorResponseMode?.value || "both",
+        response_mode: "both",
         learner_level: tutorLearnerLevel?.value || "teen"
       }),
       signal: controller.signal
@@ -2258,6 +2294,13 @@ const sendTutorQuestion = async (question) => {
     renderTutorSolution(payload);
     showVisualizationIn(tutorViz, payload.visualization);
     tutorHistory.push({ role: "assistant", content: payload.solution || "" });
+    // Server-suggested follow-ups embed the question it received; swap the
+    // lesson-context-prefixed form back for the raw question the user typed.
+    if (apiQuestion !== question && Array.isArray(payload?.next_questions)) {
+      payload.next_questions = payload.next_questions.map((p) =>
+        String(p).split(apiQuestion).join(question)
+      );
+    }
     renderTutorFollowupsFromPayload(question, payload);
     updateContextStatus();
   } catch (error) {
@@ -2762,7 +2805,7 @@ const updateContextStatus = async () => {
   }
 };
 
-const resetTutorSession = async () => {
+const resetTutorSession = async (quiet) => {
   if (tutorSessionId) {
     try {
       await fetch(`${API_BASE}/api/context/session/${tutorSessionId}`, { method: "DELETE" });
@@ -2773,7 +2816,9 @@ const resetTutorSession = async () => {
   localStorage.removeItem("ew_tutor_session_id");
   await ensureTutorSession();
   updateContextStatus();
-  renderTutorSolution("Session cleared. Ask a new question to start fresh.");
+  if (quiet !== true) {
+    renderTutorSolution("Session cleared. Ask a new question to start fresh.");
+  }
 };
 
 if (contextResetBtn) {
@@ -3562,9 +3607,19 @@ if (messages) {
   loadConversations();
 }
 
-// Expose for cross-script access (Music Lab, etc.)
+// Expose for cross-script access (Music Lab, lesson.js, etc.)
 window.switchToTab = switchToTab;
 window.sendTutorQuestion = sendTutorQuestion;
+window.normalizeLatexDelimiters = normalizeLatexDelimiters;
+
+// Bridge for lesson.js: the Learn tab hosts the tutor chat, and lessons
+// scope its questions/sessions to the active lesson scene.
+window.EWTutor = {
+  ask: (q) => sendTutorQuestion(q),
+  setLessonContext: (ctx) => { tutorLessonContext = ctx || null; },
+  startNewSession: () => resetTutorSession(true),
+  getHistory: () => tutorHistory,
+};
 
 // Check for prompt in URL query parameter (from Math Map)
 const urlParams = new URLSearchParams(window.location.search);

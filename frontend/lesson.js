@@ -20,6 +20,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let outline = null;
   let scenes = [];      // cached scene payloads by section index
   let current = 0;
+  let historyStart = 0; // tutor history length when this lesson was built
+
+  const askBtn = document.getElementById("lesson-ask");
+  const askSceneBtn = document.getElementById("lesson-ask-scene");
+  const tutorInput = document.getElementById("tutor-input");
+  const tutorSolution = document.getElementById("tutor-solution");
 
   const TYPE_ICONS = { explain: "💡", example: "✏️", quiz: "❓" };
 
@@ -59,11 +65,85 @@ document.addEventListener("DOMContentLoaded", () => {
             { left: "$$", right: "$$", display: true },
             { left: "\\(", right: "\\)", display: false },
             { left: "\\[", right: "\\]", display: true },
+            { left: "\\begin{equation}", right: "\\end{equation}", display: true },
+            { left: "\\begin{align}", right: "\\end{align}", display: true },
           ],
           throwOnError: false,
+          strict: "ignore",
         });
       } catch (e) { /* KaTeX optional */ }
     }
+  }
+
+  // LLM narration often re-states the section title as its own first line
+  // (sometimes with a trailing LaTeX "\\") — drop it, the UI already shows
+  // the title as a heading.
+  function stripTitleEcho(text, title) {
+    if (!title) return text;
+    const clean = (s) =>
+      String(s)
+        .replace(/\\text(?:bf|it)\{([^}]*)\}/g, "$1")
+        .toLowerCase()
+        .replace(/[#*\\`{}]/g, "")
+        .replace(/[\s:.\-]+$/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    const lines = String(text).split(/\n/);
+    let i = 0;
+    while (i < lines.length && !lines[i].trim()) i++;
+    if (i < lines.length) {
+      const a = clean(lines[i]);
+      const b = clean(title);
+      // Only heading-sized lines count as echoes; never strip a one-line
+      // narration that merely opens with the title.
+      const headingSized = a.length <= Math.max(b.length * 2, b.length + 30);
+      if (a && b && headingSized && (a === b || a.startsWith(b) || b.startsWith(a)) &&
+          a.length >= Math.min(b.length * 0.6, 12)) {
+        lines.splice(0, i + 1);
+        return lines.join("\n");
+      }
+      // Inline echo: "**Title:** rest of paragraph…" — drop just the prefix
+      const escRe = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const prefixRe = new RegExp(
+        "^\\s*(?:\\\\textbf\\{|\\*\\*)\\s*" + escRe + "\\s*(?:\\}|\\*\\*)\\s*[:.\\-\\u2013\\u2014]*\\s*", "i");
+      if (prefixRe.test(lines[i])) {
+        lines[i] = lines[i].replace(prefixRe, "");
+        return lines.join("\n");
+      }
+    }
+    return text;
+  }
+
+  // Full narration → HTML: normalize LaTeX delimiters (shared helper from
+  // app.js), turn equation-style environments into display math, and pull
+  // display blocks out as placeholders so mdLite's per-line <p> wrapping
+  // can't split them.
+  function mdBlock(text, title) {
+    let t = stripTitleEcho(String(text), title);
+    if (typeof window.normalizeLatexDelimiters === "function") {
+      t = window.normalizeLatexDelimiters(t);
+    }
+    // normalizeLatexDelimiters emits doubled delimiters (\\( … \\)) when it
+    // converts $-math; collapse them so KaTeX's \( \) / \[ \] can match.
+    t = t.replace(/\\\\([()[\]])/g, "\\$1");
+    t = t.replace(
+      /\\begin\{(equation|align|gather|displaymath)\*?\}([\s\S]*?)\\end\{\1\*?\}/g,
+      (m, env, body) => "\n\\[" + body.trim() + "\\]\n"
+    );
+    const mathBlocks = [];
+    t = t.replace(/\\\[([\s\S]*?)\\\]/g, (m, body) => {
+      mathBlocks.push("\\[" + body.trim() + "\\]");
+      return "\n%%MATH" + (mathBlocks.length - 1) + "%%\n";
+    });
+    let html = mdLite(t);
+    mathBlocks.forEach((mb, i) => {
+      const token = "%%MATH" + i + "%%";
+      const block = '<div class="math-display" style="margin:10px 0;overflow-x:auto;">' + esc(mb) + "</div>";
+      html = html.includes("<p>" + token + "</p>")
+        ? html.replace("<p>" + token + "</p>", block)
+        : html.replace(token, esc(mb));
+    });
+    return html;
   }
 
   function renderProgress() {
@@ -82,10 +162,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!q) return "";
     return `
       <div style="margin-top:14px;padding:10px 12px;background:#f5f5f4;border-left:3px solid #a8a29e;border-radius:4px;">
-        <div style="font-size:13px;"><strong>🧑‍🎓 Maya asks:</strong> ${mdLite(q)}</div>
+        <div style="font-size:13px;"><strong>🧑‍🎓 Maya asks:</strong> ${mdBlock(q)}</div>
         <details style="margin-top:6px;font-size:13px;">
           <summary style="cursor:pointer;color:#57534e;">See the answer</summary>
-          <div style="margin-top:6px;">${mdLite(a)}</div>
+          <div style="margin-top:6px;">${mdBlock(a)}</div>
         </details>
       </div>`;
   }
@@ -106,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       html += `</div><div id="quiz-feedback" style="margin-top:8px;font-size:13px;"></div>`;
     } else {
-      html += mdLite(scene.narration);
+      html += mdBlock(scene.narration, section.title);
       html += classmateBlock(scene.classmate_question, scene.classmate_answer);
     }
     html += "</div>";
@@ -152,6 +232,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function showScene(idx) {
     current = idx;
+    window.EWTutor?.setLessonContext({
+      topic: outline.topic,
+      sceneIndex: idx,
+      sceneTitle: outline.sections[idx].title,
+    });
     renderProgress();
     prevBtn.disabled = idx === 0;
     nextBtn.disabled = idx >= outline.sections.length - 1;
@@ -194,6 +279,9 @@ document.addEventListener("DOMContentLoaded", () => {
       titleEl.textContent = outline.title;
       bodyEl.style.display = "";
       statusEl.textContent = "";
+      // Scope the tutor's context store to this lesson
+      await window.EWTutor?.startNewSession?.();
+      historyStart = (window.EWTutor?.getHistory?.() || []).length;
       await showScene(0);
     } catch (err) {
       statusEl.textContent = "Lesson failed: " + err.message;
@@ -204,6 +292,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   prevBtn.addEventListener("click", () => current > 0 && showScene(current - 1));
   nextBtn.addEventListener("click", () => current < outline.sections.length - 1 && showScene(current + 1));
+
+  // "Just Ask" — free-form tutor question straight from the topic box,
+  // no lesson required (and not scoped to any lesson).
+  if (askBtn) {
+    askBtn.addEventListener("click", () => {
+      const q = (topicEl.value || "").trim();
+      if (!q) { statusEl.textContent = "Type a question first."; return; }
+      window.EWTutor?.setLessonContext(null);
+      window.EWTutor?.ask(q);
+      tutorSolution?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  // "Ask about this scene" — focus the tutor input; app.js adds the
+  // lesson/scene context to whatever gets asked.
+  if (askSceneBtn) {
+    askSceneBtn.addEventListener("click", () => {
+      if (!tutorInput) return;
+      if (!tutorInput.value.trim() && outline) {
+        tutorInput.value = `Can you explain "${outline.sections[current].title}" in more depth?`;
+      }
+      tutorInput.focus();
+      tutorInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
 
   // ---------------------------------------------------------------
   // Export the assembled lesson as a standalone HTML file
@@ -223,7 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         content += `</ol><p><em>${esc(scene.explanation)}</em></p>`;
       } else {
-        content += mdLite(scene.narration);
+        content += mdBlock(scene.narration, s.title);
         if (scene.classmate_question) {
           content += `<blockquote><strong>🧑‍🎓 Maya asks:</strong> ${esc(scene.classmate_question)}<br/>
             <strong>Answer:</strong> ${esc(scene.classmate_answer)}</blockquote>`;
@@ -231,8 +344,26 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       content += "</section>";
     });
+    // Include tutor Q&A asked while this lesson was open
+    const history = (window.EWTutor?.getHistory?.() || []).slice(historyStart);
+    if (history.length) {
+      content += `<section><h2>💬 Questions asked during this lesson</h2>`;
+      for (let i = 0; i < history.length; i++) {
+        const m = history[i];
+        if (m.role === "user") {
+          content += `<p><strong>Q:</strong> ${esc(m.content)}</p>`;
+        } else {
+          content += `<blockquote>${mdBlock(m.content)}</blockquote>`;
+        }
+      }
+      content += "</section>";
+    }
     const doc = `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>${esc(outline.title)}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"><\/script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\\\(',right:'\\\\)',display:false},{left:'\\\\[',right:'\\\\]',display:true},{left:'$$',right:'$$',display:true}],throwOnError:false});"><\/script>
 <style>
 body{font-family:Georgia,serif;max-width:760px;margin:40px auto;padding:0 20px;color:#1c1917;line-height:1.6;}
 h1{border-bottom:2px solid #1c1917;padding-bottom:8px;}

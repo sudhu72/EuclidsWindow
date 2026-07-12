@@ -138,7 +138,6 @@ class GeneratedScene(LinearTransformationScene):
         # Title at top - fixed position, always on top
         title = Text({title!r}, font_size=36, color=PRIMARY, weight=BOLD, font=MONO)
         title.to_edge(UP, buff=0.3)
-        title.fix_in_frame()
         self.add_foreground_mobject(title)
         self.play(Write(title), run_time=1.0)
         self.wait(0.5)
@@ -147,7 +146,6 @@ class GeneratedScene(LinearTransformationScene):
         matrix = {matrix!r}
         label = MathTex({matrix_tex!r}, font_size=32, color=ACCENT)
         label.to_corner(UR).shift(DOWN * 1.2 + LEFT * 0.2)
-        label.fix_in_frame()
         self.add_foreground_mobject(label)
         self.play(Write(label), run_time=1.0)
         self.wait(0.5)

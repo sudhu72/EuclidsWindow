@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window</title>
-    <link rel="icon" type="image/png" href="euclids-window-logo.png" />
-    <link rel="stylesheet" href="styles.css?v=20260408-11" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1" />
+    <link rel="stylesheet" href="styles.css?v=20260711-3" />
     <link href="vendor/fonts/cinzel-decorative.css" rel="stylesheet" />
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
   </head>
   <body>
     <header class="app-header">
-      <div class="brand"><img src="euclids-window-logo.png" alt="Logo" class="brand-logo" />Euclid's Window</div>
+      <div class="brand"><img src="euclids-window-logo.svg" alt="Logo" class="brand-logo" />Euclid's Window</div>
       <div class="subtitle" title="Like Euclid's Elements: start from self-evident axioms, derive everything step by step. No formula is handed to you without showing where it comes from and why it's true.">Learn math from first principles</div>
       <nav class="nav-tabs">
-        <button class="tab-btn active" data-tab="tutor"><span class="tab-icon">&#9998;</span> Tutor</button>
-        <button class="tab-btn" data-tab="lesson"><span class="tab-icon">&#128218;</span> Lessons</button>
+        <button class="tab-btn active" data-tab="lesson"><span class="tab-icon">&#128218;</span> Learn</button>
+        <button class="tab-btn" data-tab="polya"><span class="tab-icon">&#8982;</span> Solve</button>
         <a href="mathmap.html" class="tab-btn tab-link"><span class="tab-icon">&#9672;</span> Math Map</a>
         <div class="nav-dropdown" id="labs-dropdown">
           <button class="tab-btn nav-dropdown-toggle"><span class="tab-icon">&#9881;</span> Labs <span class="dropdown-caret">&#9662;</span></button>
@@ -39,29 +39,41 @@
     </header>
 
     <main class="app-layout">
-      <!-- Local Tutor Tab -->
-      <div id="tab-tutor" class="tab-content active">
+      <!-- Learn Tab: structured lessons + the tutor chat, visuals & scratchpad -->
+      <div id="tab-lesson" class="tab-content active">
         <section class="tutor-panel">
           <div class="tutor-header">
-            <h3>Local Generative Tutor</h3>
-            <p>Runs fully offline with a local model and generates visuals on demand.</p>
+            <h3>Learn</h3>
+            <p>Build a structured lesson from first principles &mdash; explanation, worked example, quiz, and an AI classmate &mdash; or just ask a question. Everything runs fully offline with a local model, with visuals on demand.</p>
           </div>
-          <form id="tutor-form" class="tutor-form">
-            <select id="tutor-response-mode" title="Tutor explanation mode">
-              <option value="both" selected>Plain + Axiomatic</option>
-              <option value="plain">Plain English</option>
-              <option value="axiomatic">Axiomatic</option>
-            </select>
-            <select id="tutor-learner-level" title="Learner level">
+          <div class="dice-controls" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
+            <input id="lesson-topic" type="text" placeholder="Topic or question, e.g. why negative times negative is positive" style="flex:1;min-width:260px;padding:6px 10px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;" />
+            <select id="lesson-level" title="Learner level" style="padding:6px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;">
               <option value="kids">Kids</option>
               <option value="teen" selected>Teen</option>
               <option value="college">College</option>
               <option value="adult">Adult</option>
             </select>
+            <button id="lesson-start" class="btn-primary">Build Lesson</button>
+            <button id="lesson-ask" class="btn-secondary" title="Ask directly without building a lesson">Just Ask</button>
+            <button id="lesson-export" class="btn-secondary" disabled>Export HTML</button>
+            <span id="lesson-status" style="font-size:12px;color:#78716c;align-self:center;"></span>
+          </div>
+          <div id="lesson-body" style="display:none;">
+            <h4 id="lesson-title" style="margin:8px 0;"></h4>
+            <div id="lesson-progress" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
+            <div id="lesson-scene" class="dice-sheet-music" style="min-height:180px;"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button id="lesson-prev" class="btn-secondary" disabled>&larr; Previous</button>
+              <button id="lesson-next" class="btn-primary" disabled>Next &rarr;</button>
+              <button id="lesson-ask-scene" class="btn-secondary" title="Ask the tutor about this scene">Ask about this scene</button>
+            </div>
+          </div>
+          <form id="tutor-form" class="tutor-form" style="margin-top:14px;">
             <input
               id="tutor-input"
               type="text"
-              placeholder="Ask a math question (context-aware, like ChatGPT)"
+              placeholder="Ask a question (context-aware; scoped to the lesson when one is open)"
               autocomplete="off"
             />
             <button type="submit" id="tutor-send" class="btn-primary btn-send" title="Send (Enter)">&#10148;</button>
@@ -91,103 +103,124 @@
               Generate Music (Harmonics)
             </button>
           </div>
-          <div id="tutor-animation-jobs" class="settings-agents" style="margin-top: 12px;">
-            <div class="settings-subheader" style="display:flex; justify-content:space-between; align-items:center;">
-              <span>Render Jobs</span>
-              <button type="button" id="tutor-jobs-refresh" class="btn-secondary">Refresh</button>
+          <details style="margin-top:12px;">
+            <summary style="cursor:pointer;font-size:13px;color:#57534e;">Render Jobs</summary>
+            <div id="tutor-animation-jobs" class="settings-agents" style="margin-top: 8px;">
+              <div class="settings-subheader" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Render Jobs</span>
+                <button type="button" id="tutor-jobs-refresh" class="btn-secondary">Refresh</button>
+              </div>
+              <div id="tutor-jobs-list" class="agents-list">
+                <div class="viz-placeholder">No render jobs yet.</div>
+              </div>
             </div>
-            <div id="tutor-jobs-list" class="agents-list">
-              <div class="viz-placeholder">No render jobs yet.</div>
+          </details>
+        </section>
+        <aside class="tutor-viz-panel">
+          <div class="viz-header">Visualization</div>
+          <div id="tutor-viz" class="viz-content">
+            <div class="viz-placeholder">No visualization yet.</div>
+          </div>
+          <details open style="margin-top: 12px;">
+            <summary style="cursor:pointer;font-size:13px;color:#57534e;">Math Scratchpad</summary>
+            <section class="scratchpad-panel" style="margin-top: 8px;">
+              <div class="scratchpad-header">
+                <strong>Math Scratchpad</strong>
+                <span>Write with mouse/trackpad, convert to text, validate answer.</span>
+              </div>
+              <canvas id="scratchpad-canvas" width="720" height="280" aria-label="Math scratchpad canvas"></canvas>
+              <div class="scratchpad-controls">
+                <button type="button" id="scratchpad-pen" class="btn-secondary">Pen</button>
+                <button type="button" id="scratchpad-eraser" class="btn-secondary">Eraser</button>
+                <button type="button" id="scratchpad-undo" class="btn-secondary">Undo</button>
+                <button type="button" id="scratchpad-clear" class="btn-secondary">Clear</button>
+                <button type="button" id="scratchpad-convert" class="btn-primary">Convert to Text</button>
+                <button type="button" id="scratchpad-validate" class="btn-primary">Validate Answer</button>
+              </div>
+              <textarea
+                id="scratchpad-text"
+                class="scratchpad-text"
+                placeholder="Converted text appears here. You can edit before validation."
+              ></textarea>
+              <div id="scratchpad-result" class="scratchpad-result"></div>
+            </section>
+          </details>
+          <details style="margin-top: 12px;">
+            <summary style="cursor:pointer;font-size:13px;color:#57534e;">Equation Editor</summary>
+            <section class="scratchpad-panel latex-editor-panel" style="margin-top: 8px;">
+              <div class="scratchpad-header">
+                <strong>Equation Editor</strong>
+                <span>Overleaf-style LaTeX drafting with live preview.</span>
+              </div>
+              <div class="scratchpad-controls">
+                <select id="latex-mode" aria-label="LaTeX render mode">
+                  <option value="inline" selected>Inline \\( ... \\)</option>
+                  <option value="display">Display \\[ ... \\]</option>
+                </select>
+                <button type="button" id="latex-template-frac" class="btn-secondary">Insert Fraction</button>
+                <button type="button" id="latex-template-sqrt" class="btn-secondary">Insert Root</button>
+                <button type="button" id="latex-template-matrix" class="btn-secondary">Insert Matrix</button>
+              </div>
+              <textarea
+                id="latex-input"
+                class="scratchpad-text"
+                placeholder="Type LaTeX, e.g. \frac{a+b}{c} or \begin{bmatrix}1 & 2\\3 & 4\end{bmatrix}"
+              ></textarea>
+              <div id="latex-preview" class="latex-preview">
+                <div class="viz-placeholder">Live LaTeX preview appears here.</div>
+              </div>
+              <div class="scratchpad-controls">
+                <button type="button" id="latex-insert-tutor" class="btn-primary">Insert into Question Input</button>
+                <button type="button" id="latex-insert-scratchpad" class="btn-secondary">Insert into Scratchpad Text</button>
+                <button type="button" id="latex-copy" class="btn-secondary">Copy LaTeX</button>
+              </div>
+              <div id="latex-status" class="scratchpad-result"></div>
+            </section>
+          </details>
+        </aside>
+      </div>
+
+      <!-- Solve Tab: Pólya's "How to Solve It" interactive coach -->
+      <div id="tab-polya" class="tab-content">
+        <section class="tutor-panel">
+          <div class="tutor-header">
+            <h3>Problem-Solving Coach</h3>
+            <p>Work through any problem &mdash; homework to olympiad &mdash; with George P&oacute;lya's four-phase method from <em>How to Solve It</em>. The coach won't hand you the answer: it asks the questions a great teacher would, and checks your thinking at every phase.</p>
+          </div>
+          <div class="dice-controls" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
+            <textarea id="polya-problem" rows="2" placeholder="Paste or type your problem, e.g. 'Prove that the sum of the first n odd numbers is n².'" style="flex:1;min-width:280px;padding:6px 10px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+            <select id="polya-difficulty" title="Problem difficulty" style="padding:6px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;align-self:flex-start;">
+              <option value="basic" selected>Basic</option>
+              <option value="advanced">Advanced</option>
+              <option value="olympiad">Olympiad</option>
+            </select>
+            <button id="polya-start" class="btn-primary" style="align-self:flex-start;">Start Coaching</button>
+            <span id="polya-status" style="font-size:12px;color:#78716c;align-self:center;"></span>
+          </div>
+          <div id="polya-session" style="display:none;">
+            <div id="polya-stepper" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px;"></div>
+            <div id="polya-coach" class="tutor-solution" style="max-height:420px;min-height:120px;"></div>
+            <div id="polya-suggestions" class="suggestions" style="margin-top:8px;"></div>
+            <textarea id="polya-workspace" rows="4" placeholder="Write your thinking here — answers to the coach's questions, your plan, or your worked steps." style="width:100%;margin-top:10px;padding:8px 10px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+              <button id="polya-check" class="btn-primary">Check My Thinking</button>
+              <button id="polya-hint" class="btn-secondary">I'm Stuck — Hint</button>
+              <button id="polya-next" class="btn-secondary" disabled>Next Phase &rarr;</button>
             </div>
           </div>
         </section>
         <aside class="tutor-viz-panel">
-          <div class="viz-header">Tutor Visualization</div>
-          <div id="tutor-viz" class="viz-content">
-            <div class="viz-placeholder">No visualization yet.</div>
+          <div class="viz-header">P&oacute;lya's Compass</div>
+          <div id="polya-compass" class="viz-content" style="min-height:0;">
+            <div class="viz-placeholder">Start a session to see the guiding questions for each phase.</div>
           </div>
-          <section class="scratchpad-panel" style="margin-top: 12px;">
-            <div class="scratchpad-header">
-              <strong>Math Scratchpad</strong>
-              <span>Write with mouse/trackpad, convert to text, validate answer.</span>
+          <details open style="margin-top:12px;">
+            <summary style="cursor:pointer;font-size:13px;color:#57534e;">My Notebook</summary>
+            <div id="polya-notebook" style="padding:10px 4px;font-size:12px;color:#44403c;">
+              <div class="viz-placeholder">Your notes from each phase collect here.</div>
             </div>
-            <canvas id="scratchpad-canvas" width="720" height="280" aria-label="Math scratchpad canvas"></canvas>
-            <div class="scratchpad-controls">
-              <button type="button" id="scratchpad-pen" class="btn-secondary">Pen</button>
-              <button type="button" id="scratchpad-eraser" class="btn-secondary">Eraser</button>
-              <button type="button" id="scratchpad-undo" class="btn-secondary">Undo</button>
-              <button type="button" id="scratchpad-clear" class="btn-secondary">Clear</button>
-              <button type="button" id="scratchpad-convert" class="btn-primary">Convert to Text</button>
-              <button type="button" id="scratchpad-validate" class="btn-primary">Validate Answer</button>
-            </div>
-            <textarea
-              id="scratchpad-text"
-              class="scratchpad-text"
-              placeholder="Converted text appears here. You can edit before validation."
-            ></textarea>
-            <div id="scratchpad-result" class="scratchpad-result"></div>
-          </section>
-          <section class="scratchpad-panel latex-editor-panel">
-            <div class="scratchpad-header">
-              <strong>Equation Editor</strong>
-              <span>Overleaf-style LaTeX drafting with live preview.</span>
-            </div>
-            <div class="scratchpad-controls">
-              <select id="latex-mode" aria-label="LaTeX render mode">
-                <option value="inline" selected>Inline \\( ... \\)</option>
-                <option value="display">Display \\[ ... \\]</option>
-              </select>
-              <button type="button" id="latex-template-frac" class="btn-secondary">Insert Fraction</button>
-              <button type="button" id="latex-template-sqrt" class="btn-secondary">Insert Root</button>
-              <button type="button" id="latex-template-matrix" class="btn-secondary">Insert Matrix</button>
-            </div>
-            <textarea
-              id="latex-input"
-              class="scratchpad-text"
-              placeholder="Type LaTeX, e.g. \frac{a+b}{c} or \begin{bmatrix}1 & 2\\3 & 4\end{bmatrix}"
-            ></textarea>
-            <div id="latex-preview" class="latex-preview">
-              <div class="viz-placeholder">Live LaTeX preview appears here.</div>
-            </div>
-            <div class="scratchpad-controls">
-              <button type="button" id="latex-insert-tutor" class="btn-primary">Insert into Tutor Input</button>
-              <button type="button" id="latex-insert-scratchpad" class="btn-secondary">Insert into Scratchpad Text</button>
-              <button type="button" id="latex-copy" class="btn-secondary">Copy LaTeX</button>
-            </div>
-            <div id="latex-status" class="scratchpad-result"></div>
-          </section>
+          </details>
         </aside>
-      </div>
-
-      <!-- Lessons Tab (OpenMAIC-style outline -> scene pipeline) -->
-      <div id="tab-lesson" class="tab-content">
-        <section class="tutor-panel" style="overflow-y:auto;max-width:960px;margin:0 auto;">
-          <div class="tutor-header">
-            <h3>AI Lessons</h3>
-            <p>The local AI designs a structured lesson from first principles &mdash; explanation, worked example, and a quiz &mdash; and walks you through it scene by scene, joined by an AI classmate who asks the questions you might be wondering about.</p>
-          </div>
-          <div class="dice-controls" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
-            <input id="lesson-topic" type="text" placeholder="e.g. why negative times negative is positive" style="flex:1;min-width:260px;padding:6px 10px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;" />
-            <select id="lesson-level" style="padding:6px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;">
-              <option value="kids">Kids</option>
-              <option value="teen" selected>Teen</option>
-              <option value="college">College</option>
-              <option value="adult">Adult</option>
-            </select>
-            <button id="lesson-start" class="btn-primary">Build Lesson</button>
-            <button id="lesson-export" class="btn-secondary" disabled>Export HTML</button>
-            <span id="lesson-status" style="font-size:12px;color:#78716c;align-self:center;"></span>
-          </div>
-          <div id="lesson-body" style="display:none;">
-            <h4 id="lesson-title" style="margin:8px 0;"></h4>
-            <div id="lesson-progress" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
-            <div id="lesson-scene" class="dice-sheet-music" style="min-height:180px;"></div>
-            <div style="display:flex;gap:8px;margin-top:10px;">
-              <button id="lesson-prev" class="btn-secondary" disabled>&larr; Previous</button>
-              <button id="lesson-next" class="btn-primary" disabled>Next &rarr;</button>
-            </div>
-          </div>
-        </section>
       </div>
 
       <!-- Mind Map Tab -->
@@ -1948,12 +1981,12 @@
 
     <script src="vendor/plotly.min.js"></script>
     <script src="vendor/mermaid.min.js"></script>
-    <script>mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });</script>
+    <script>mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose', suppressErrorRendering: true });</script>
     <script src="vendor/katex/katex.min.js"></script>
     <script src="vendor/katex/auto-render.min.js"></script>
     <script src="vendor/d3.min.js"></script>
     <script src="vendor/vexflow.js"></script>
-    <script src="app.js?v=20260408-5"></script>
+    <script src="app.js?v=20260711-3"></script>
     <script src="music_core.js?v=20260708"></script>
     <script src="mozart_notes.js?v=20260402"></script>
     <script src="musiclab.js?v=20260708"></script>
@@ -1963,6 +1996,7 @@
     <script src="cryptolab.js?v=20260408-2"></script>
     <script src="logiclab.js?v=20260408"></script>
     <script src="symbols.js?v=20260408"></script>
-    <script src="lesson.js?v=20260708"></script>
+    <script src="lesson.js?v=20260711-4"></script>
+    <script src="polya.js?v=20260711-1"></script>
   </body>
 </html>

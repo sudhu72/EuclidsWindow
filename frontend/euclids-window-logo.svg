@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Euclid's Window logo">
+  <!-- Classical arched window framing Euclid's Elements I.1: two circles
+       whose intersection constructs an equilateral triangle. -->
+  <g fill="none" stroke="#e7e5e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Window: arch + jambs + sill -->
+    <path d="M 20 86 V 42 A 28 28 0 0 1 76 42 V 86" />
+    <line x1="14" y1="86" x2="82" y2="86" />
+    <!-- Spring line -->
+    <line x1="20" y1="42" x2="76" y2="42" stroke-width="1.6" opacity="0.55" />
+    <!-- Construction circles (Elements I.1) -->
+    <circle cx="38" cy="62" r="15" stroke-width="1.6" opacity="0.55" />
+    <circle cx="58" cy="62" r="15" stroke-width="1.6" opacity="0.55" />
+  </g>
+  <!-- The constructed equilateral triangle, in gold -->
+  <path d="M 38 62 L 58 62 L 48 44.68 Z" fill="none" stroke="#d4af37" stroke-width="3" stroke-linejoin="round" />
+  <!-- Keystone dot -->
+  <circle cx="48" cy="20" r="2.4" fill="#d4af37" />
+</svg>

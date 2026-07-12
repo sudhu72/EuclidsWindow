@@ -9,6 +9,7 @@ services:
       LOCAL_AI_ENABLED: "true"
       LOCAL_LLM_PROVIDER: "ollama"
       LOCAL_LLM_MODEL: "qwen2.5:1.5b"
+      LOCAL_POLYA_MODEL: "${LOCAL_POLYA_MODEL:-qwen3:4b-instruct}"
       LOCAL_LLM_TIMEOUT_SECONDS: "120"
       LOCAL_AI_EXECUTION_TIMEOUT_SECONDS: "60"
       LOCAL_LLM_BASE_URL: "${LOCAL_LLM_BASE_URL:-http://ollama:11434}"

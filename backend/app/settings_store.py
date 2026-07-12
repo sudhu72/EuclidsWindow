@@ -34,6 +34,7 @@ class SettingsStore:
             "local_llm_model": overrides.get("local_llm_model", base.local_llm_model),
             "local_codegen_model": overrides.get("local_codegen_model", base.local_codegen_model),
             "local_fast_model": overrides.get("local_fast_model", base.local_fast_model),
+            "local_polya_model": overrides.get("local_polya_model", base.local_polya_model),
             "local_media_enabled": overrides.get("local_media_enabled", base.local_media_enabled),
             "local_diffusion_model": overrides.get("local_diffusion_model", base.local_diffusion_model),
             "local_music_model": overrides.get("local_music_model", base.local_music_model),

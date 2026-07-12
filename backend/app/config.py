@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     # Per-task model routing (None = fall back to local_llm_model)
     local_codegen_model: Optional[str] = None
     local_fast_model: Optional[str] = None
+    local_polya_model: Optional[str] = None  # Socratic problem-solving coach
     local_multi_agent_enabled: bool = True
     local_web_rag_enabled: bool = True
     fast_mode_enabled: bool = False

@@ -11,6 +11,7 @@ each outline section into a typed scene on demand:
 The frontend walks scenes with prev/next playback and can export the
 assembled lesson as a standalone HTML file.
 """
+import re
 import textwrap
 from typing import Any, Dict, List, Optional
 
@@ -48,7 +49,50 @@ EXPLAIN_SYSTEM_PROMPT = textwrap.dedent("""\
       "classmate_question": "the question a curious but confused classmate would ask about this",
       "classmate_answer": "a friendly 2-3 sentence answer to that question"
     }
+
+    Rules for narration:
+    - Do NOT repeat the section title; start directly with the explanation.
+    - Inline math: \\\\(...\\\\). Display math: $$...$$ on its own line.
+    - Never use \\\\begin{equation} or other LaTeX environments.
     """)
+
+
+def _strip_title_echo(narration: str, title: str) -> str:
+    """Drop a leading line that just re-states the section title.
+
+    Small models often open the narration with the title (sometimes with a
+    trailing LaTeX "\\\\") even though the UI renders the title separately.
+    """
+    def _clean(s: str) -> str:
+        s = re.sub(r"\\text(?:bf|it)\{([^}]*)\}", r"\1", s)
+        for ch in "#*\\{}`":
+            s = s.replace(ch, "")
+        return " ".join(s.lower().split()).strip(" :.-")
+
+    lines = narration.split("\n")
+    i = 0
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    if i < len(lines):
+        a, b = _clean(lines[i]), _clean(title)
+        # Only treat heading-sized lines as echoes — a one-line narration
+        # that merely opens with the title must not be stripped away.
+        heading_sized = len(a) <= max(len(b) * 2, len(b) + 30)
+        if (
+            a and b and heading_sized
+            and (a == b or a.startswith(b) or b.startswith(a))
+            and len(a) >= min(len(b) * 0.6, 12)
+        ):
+            return "\n".join(lines[i + 1:]).lstrip("\n")
+        # Inline echo: "**Title:** rest of paragraph…" — drop just the prefix
+        prefix = re.compile(
+            r"^\s*(?:\\textbf\{|\*\*)\s*" + re.escape(title) + r"\s*(?:\}|\*\*)\s*[:.\-–—]*\s*",
+            re.IGNORECASE,
+        )
+        if prefix.match(lines[i]):
+            lines[i] = prefix.sub("", lines[i], count=1)
+            return "\n".join(lines[i:])
+    return narration
 
 QUIZ_SYSTEM_PROMPT = textwrap.dedent("""\
     You write a quiz scene for a math lesson. Respond with JSON only:
@@ -142,26 +186,43 @@ class LessonService:
     ) -> Optional[Dict[str, Any]]:
         level_instruction = LEVEL_INSTRUCTIONS.get(level, "")
         style = "Include a fully worked example with concrete numbers." if stype == "example" else ""
-        raw = self._engine.chat_json(
-            [
-                {"role": "system", "content": EXPLAIN_SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        f"{level_instruction}Lesson topic: {topic[:200]}\n"
-                        f"Section: {title}\n{summary}\n{style}"
-                    ),
-                },
-            ],
-            timeout_seconds=90,
-            num_predict=1200,
-            temperature=0.4,
-        )
-        if not raw or not raw.get("narration"):
+        messages = [
+            {"role": "system", "content": EXPLAIN_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"{level_instruction}Lesson topic: {topic[:200]}\n"
+                    f"Section: {title}\n{summary}\n{style}"
+                ),
+            },
+        ]
+        raw = None
+        narration = None
+        # Small models occasionally truncate the JSON mid-narration or emit a
+        # heading-only narration; retry once at lower temperature.
+        for attempt in range(3):
+            raw = self._engine.chat_json(
+                messages,
+                timeout_seconds=90,
+                num_predict=1800,
+                num_ctx=4096,
+                temperature=0.4 if attempt == 0 else 0.6,
+            )
+            if not raw or not raw.get("narration"):
+                continue
+            candidate = _strip_title_echo(str(raw["narration"]), title)
+            if len(candidate.strip()) >= 80:
+                narration = candidate
+                break
+            logger.warning(
+                f"LessonService: degenerate narration ({len(candidate.strip())} chars) "
+                f"for '{title}', attempt {attempt + 1}"
+            )
+        if narration is None:
             return None
         return {
             "type": stype,
-            "narration": str(raw["narration"]),
+            "narration": narration,
             "classmate_question": str(raw.get("classmate_question") or ""),
             "classmate_answer": str(raw.get("classmate_answer") or ""),
         }
@@ -170,21 +231,27 @@ class LessonService:
         self, topic: str, level: str, title: str, summary: str
     ) -> Optional[Dict[str, Any]]:
         level_instruction = LEVEL_INSTRUCTIONS.get(level, "")
-        raw = self._engine.chat_json(
-            [
-                {"role": "system", "content": QUIZ_SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        f"{level_instruction}Lesson topic: {topic[:200]}\n"
-                        f"Quiz section: {title}\n{summary}"
-                    ),
-                },
-            ],
-            timeout_seconds=60,
-            num_predict=600,
-            temperature=0.3,
-        )
+        messages = [
+            {"role": "system", "content": QUIZ_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"{level_instruction}Lesson topic: {topic[:200]}\n"
+                    f"Quiz section: {title}\n{summary}"
+                ),
+            },
+        ]
+        raw = None
+        for attempt in range(2):
+            raw = self._engine.chat_json(
+                messages,
+                timeout_seconds=60,
+                num_predict=800,
+                num_ctx=4096,
+                temperature=0.3 if attempt == 0 else 0.15,
+            )
+            if raw:
+                break
         if not raw:
             return None
         choices = raw.get("choices")
