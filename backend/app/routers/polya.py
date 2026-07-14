@@ -40,6 +40,11 @@ class PolyaCoachResponse(BaseModel):
     hint: str
     ready: bool
     suggestions: List[str]
+    # Solver-verifier layer: verified = an independent review endorsed the
+    # math (or a revision fixed it); revised = the reply was corrected after
+    # the reviewer challenged it.
+    verified: bool = False
+    revised: bool = False
 
 
 @router.post("/api/ai/polya/start", response_model=PolyaStartResponse)

@@ -200,6 +200,10 @@ class LessonSceneResponse(BaseModel):
 
 
 class AppSettingsResponse(BaseModel):
+    llm_provider: str = "ollama"
+    cloud_llm_model: Optional[str] = None
+    # API keys are write-only; the response only reports which are saved.
+    cloud_keys_set: Dict[str, bool] = {}
     local_ai_enabled: bool
     local_llm_model: str
     local_codegen_model: Optional[str] = None
@@ -217,6 +221,12 @@ class AppSettingsResponse(BaseModel):
 
 
 class AppSettingsUpdate(BaseModel):
+    llm_provider: Optional[str] = None
+    cloud_llm_model: Optional[str] = None
+    anthropic_api_key: Optional[str] = None
+    openai_api_key: Optional[str] = None
+    xai_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
     local_ai_enabled: Optional[bool] = None
     local_llm_model: Optional[str] = None
     local_codegen_model: Optional[str] = None

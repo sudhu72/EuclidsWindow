@@ -62,7 +62,11 @@ COACH_PROMPTS = {
           "suggestions": ["1-3 Polya heuristics worth trying, each a short phrase tailored to this problem"]
         }
 
-        Never reveal the solution. Evaluate the PLAN, not the answer.
+        Never reveal the solution. Evaluate the PLAN, not the answer. Even
+        when the student asserts a WRONG conclusion, do not present the
+        correct argument or its conclusion yourself — say why their reasoning
+        does not hold and redirect with a question (e.g. "parity is not
+        preserved here, but is there a quantity that IS preserved?").
         """),
     "execute": textwrap.dedent("""\
         You are a math coach in phase 3 of Polya's method: CARRY OUT THE PLAN.
@@ -104,6 +108,7 @@ DIFFICULTY_HINTS = {
 class PolyaService:
     def __init__(self) -> None:
         self._engine = LocalLLMEngine()
+        self._last_messages: list = []  # solver messages, kept for reconciliation
 
     def is_available(self) -> bool:
         return self._engine.is_available()
@@ -150,9 +155,19 @@ class PolyaService:
             )
             + f"The student's current response:\n{user_input[:1200]}"
         )
-        raw = self._chat(COACH_PROMPTS[phase], user_msg, num_predict=700, difficulty=difficulty)
+        raw = self._chat(
+            COACH_PROMPTS[phase], user_msg, num_predict=700, difficulty=difficulty
+        )
         if not raw or not str(raw.get("feedback") or "").strip():
             return None
+
+        # Solver–verifier layer: an independent reviewer (fresh context)
+        # attacks the mathematical claims; SymPy arbitrates equations; one
+        # reconciliation round runs only on disagreement.
+        raw, verified, revised = self._verify_and_reconcile(
+            problem, user_input, raw, difficulty
+        )
+
         suggestions = raw.get("suggestions")
         if not isinstance(suggestions, list):
             suggestions = []
@@ -161,7 +176,64 @@ class PolyaService:
             "hint": str(raw.get("hint") or ""),
             "ready": bool(raw.get("ready", False)),
             "suggestions": [str(s) for s in suggestions if str(s).strip()][:4],
+            "verified": verified,
+            "revised": revised,
         }
+
+    def _verify_and_reconcile(
+        self,
+        problem: str,
+        user_input: str,
+        solver_output: Dict[str, Any],
+        difficulty: str,
+    ):
+        """Run the verifier; on challenge, one reconciliation round.
+
+        Returns (output, verified, revised). If reconciliation fails, the
+        challenged hint is dropped rather than shown — a missing hint beats
+        a wrong one.
+        """
+        from .verifier import VerifierService
+
+        text = str(solver_output.get("feedback") or "") + str(solver_output.get("hint") or "")
+        if len(text) < 60:  # nothing substantive to verify
+            return solver_output, False, False
+
+        olympiad = difficulty == "olympiad"
+        task = "polya_olympiad" if olympiad else "polya"
+        timeout = 240 if olympiad else 120
+        verifier = VerifierService(self._engine)
+        try:
+            verdict, issues, sympy_results = verifier.review(
+                problem, user_input, solver_output, task=task, timeout_seconds=timeout
+            )
+        except Exception as exc:
+            logger.warning(f"Polya verifier failed ({exc}); returning unverified output")
+            return solver_output, False, False
+
+        if verdict == "endorse":
+            return solver_output, True, False
+        if verdict != "challenge":  # reviewer unavailable — pass through unverified
+            return solver_output, False, False
+
+        logger.info(f"Polya verifier challenged coach output: {issues[:2]}")
+        solver_messages = self._last_messages or []
+        revised = verifier.reconcile(
+            solver_messages,
+            solver_output,
+            issues,
+            sympy_results,
+            task=task,
+            timeout_seconds=timeout,
+            num_predict=3000 if olympiad else 700,
+            num_ctx=8192 if olympiad else 4096,
+        )
+        if revised and str(revised.get("feedback") or "").strip():
+            return revised, True, True
+        # Reconciliation failed: keep the feedback but withhold the hint.
+        solver_output = dict(solver_output)
+        solver_output["hint"] = ""
+        return solver_output, False, False
 
     # ------------------------------------------------------------------
 
@@ -184,6 +256,17 @@ class PolyaService:
         # which needs a bigger token budget and timeout for its reasoning.
         olympiad = difficulty == "olympiad"
         task = "polya_olympiad" if olympiad else "polya"
+
+        # Standing-orders skill (verification / no-fabrication) plus any
+        # matching excerpts from the user's reference library.
+        from .library import get_library
+        from .skills import skill_prelude
+
+        messages[0]["content"] = system + "\n\n" + skill_prelude(compact=not olympiad)
+        library_context = get_library().context_for(user[:400], k=2, max_chars=1200)
+        if library_context:
+            messages[1]["content"] = library_context + "\n\n" + user
+        self._last_messages = messages
         for attempt in range(2):
             raw = self._engine.chat_json(
                 messages,

@@ -435,6 +435,17 @@ body {
   gap: 16px;
 }
 
+/* The merged Learn and Solve columns hold far more than one viewport of
+   content (lesson player + chat + tools); scroll them independently. */
+#tab-lesson .tutor-panel,
+#tab-polya .tutor-panel {
+  overflow-y: auto;
+}
+#tab-lesson .tutor-solution {
+  flex: 0 0 auto;
+  max-height: 480px;
+}
+
 .polya-phase-chip.done {
   opacity: 0.65;
 }

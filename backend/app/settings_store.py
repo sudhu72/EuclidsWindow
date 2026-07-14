@@ -30,6 +30,12 @@ class SettingsStore:
         base = get_settings()
         overrides = self.read()
         settings = {
+            "llm_provider": overrides.get("llm_provider", base.llm_provider),
+            "cloud_llm_model": overrides.get("cloud_llm_model", base.cloud_llm_model),
+            "anthropic_api_key": overrides.get("anthropic_api_key", base.anthropic_api_key),
+            "openai_api_key": overrides.get("openai_api_key", base.openai_api_key),
+            "xai_api_key": overrides.get("xai_api_key", base.xai_api_key),
+            "gemini_api_key": overrides.get("gemini_api_key", base.gemini_api_key),
             "local_ai_enabled": overrides.get("local_ai_enabled", base.local_ai_enabled),
             "local_llm_model": overrides.get("local_llm_model", base.local_llm_model),
             "local_codegen_model": overrides.get("local_codegen_model", base.local_codegen_model),

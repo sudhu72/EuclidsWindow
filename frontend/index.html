@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1" />
-    <link rel="stylesheet" href="styles.css?v=20260711-3" />
+    <link rel="stylesheet" href="styles.css?v=20260714-1" />
     <link href="vendor/fonts/cinzel-decorative.css" rel="stylesheet" />
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
   </head>
@@ -444,6 +444,55 @@
             </div>
           </div>
           <form id="settings-form" class="settings-form">
+            <fieldset style="border:1px solid #333;border-radius:8px;padding:14px;margin-bottom:12px;">
+              <legend style="font-weight:600;padding:0 6px;">Model Provider</legend>
+              <label>
+                Provider
+                <select id="settings-llm-provider" style="width:100%;margin-bottom:8px;">
+                  <option value="ollama" selected>Local Ollama (free, private, offline)</option>
+                  <option value="anthropic">Anthropic Claude (paid API)</option>
+                  <option value="openai">OpenAI (paid API)</option>
+                  <option value="xai">xAI Grok (paid API)</option>
+                  <option value="gemini">Google Gemini (paid API)</option>
+                </select>
+              </label>
+              <div id="settings-cloud-config" style="display:none;">
+                <label>
+                  Model
+                  <input id="settings-cloud-model" type="text" placeholder="" style="width:100%;margin-bottom:8px;" />
+                </label>
+                <label>
+                  API Key
+                  <input id="settings-cloud-key" type="password" autocomplete="off" placeholder="Paste your API key" style="width:100%;margin-bottom:8px;" />
+                </label>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                  <button type="button" class="btn-secondary" id="settings-test-provider">Test Connection</button>
+                  <span id="settings-provider-status" style="font-size:0.8rem;opacity:0.8;"></span>
+                </div>
+                <p style="font-size:0.75rem;opacity:0.6;margin:8px 0 0;">
+                  Cloud providers send your questions to the provider's servers and bill your
+                  account per token. The key is stored on this app's server and never shown
+                  again after saving — leave the field blank to keep the saved key. If a
+                  cloud call fails, the app falls back to local Ollama automatically.
+                </p>
+              </div>
+            </fieldset>
+            <fieldset style="border:1px solid #333;border-radius:8px;padding:14px;margin-bottom:12px;">
+              <legend style="font-weight:600;padding:0 6px;">Reference Library (RAG)</legend>
+              <p style="font-size:0.8rem;opacity:0.7;margin:0 0 8px;">
+                Upload math books and notes (.pdf, .txt, .md). The tutor, lessons, and
+                problem-solving coach ground their answers in matching excerpts and cite
+                the source — reducing made-up facts.
+              </p>
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+                <input type="file" id="library-file" accept=".pdf,.txt,.md,.markdown" style="font-size:0.8rem;" />
+                <button type="button" class="btn-secondary" id="library-upload">Upload &amp; Index</button>
+                <span id="library-status" style="font-size:0.8rem;opacity:0.8;"></span>
+              </div>
+              <div id="library-docs" style="font-size:0.85rem;">
+                <div class="viz-placeholder">No books uploaded yet.</div>
+              </div>
+            </fieldset>
             <fieldset style="border:1px solid #333;border-radius:8px;padding:14px;margin-bottom:12px;">
               <legend style="font-weight:600;padding:0 6px;">Hardware Profile</legend>
               <select id="settings-preset" style="width:100%;margin-bottom:8px;">
@@ -1986,7 +2035,7 @@
     <script src="vendor/katex/auto-render.min.js"></script>
     <script src="vendor/d3.min.js"></script>
     <script src="vendor/vexflow.js"></script>
-    <script src="app.js?v=20260711-3"></script>
+    <script src="app.js?v=20260714-3"></script>
     <script src="music_core.js?v=20260708"></script>
     <script src="mozart_notes.js?v=20260402"></script>
     <script src="musiclab.js?v=20260708"></script>
@@ -1997,6 +2046,6 @@
     <script src="logiclab.js?v=20260408"></script>
     <script src="symbols.js?v=20260408"></script>
     <script src="lesson.js?v=20260711-4"></script>
-    <script src="polya.js?v=20260711-1"></script>
+    <script src="polya.js?v=20260715-1"></script>
   </body>
 </html>

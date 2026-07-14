@@ -23,6 +23,16 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite:///./euclids_window.db"
 
+    # Model provider routing: "ollama" (local, default) or a paid cloud
+    # provider — "anthropic", "openai", "xai", "gemini". Cloud providers
+    # need an API key (set here via env, or in the Settings tab).
+    llm_provider: str = "ollama"
+    cloud_llm_model: Optional[str] = None  # empty = provider default
+    anthropic_api_key: Optional[str] = None
+    openai_api_key: Optional[str] = None
+    xai_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
+
     # Local generative tutor
     local_ai_enabled: bool = True
     local_llm_provider: str = "ollama"

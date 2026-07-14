@@ -248,7 +248,13 @@ document.addEventListener("DOMContentLoaded", () => {
         level: document.getElementById("lesson-level")?.value || "teen",
         stuck: !!stuck,
       });
-      addCoachMsg(md(data.feedback));
+      let badge = "";
+      if (data.revised) {
+        badge = '<div style="font-size:11px;color:#78716c;margin-top:6px;">🔁 revised after independent review</div>';
+      } else if (data.verified) {
+        badge = '<div style="font-size:11px;color:#78716c;margin-top:6px;">✓ math checked by an independent reviewer</div>';
+      }
+      addCoachMsg(md(data.feedback) + badge);
       if (data.hint) addCoachMsg(`<strong>Hint:</strong> ${md(data.hint)}`, "hint");
       renderSuggestions(data.suggestions);
       if (data.ready) {

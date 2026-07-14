@@ -138,11 +138,58 @@ const normalizeLatexDelimiters = (text) => {
     .replace(/\\σ/g, "\\sigma")
     .replace(/\\μ/g, "\\mu")
     .replace(/\\ω/g, "\\omega");
-  // Convert $$...$$ to \[...\]
-  normalized = normalized.replace(/\$\$([\s\S]+?)\$\$/g, "\\\\[$1\\\\]");
-  // Convert $...$ to \(...\)
-  normalized = normalized.replace(/\$([^$]+?)\$/g, "\\\\($1\\\\)");
+  // Convert $$...$$ to \[...\] and $...$ to \(...\)
+  normalized = normalized.replace(/\$\$([\s\S]+?)\$\$/g, "\\[$1\\]");
+  normalized = normalized.replace(/\$([^$\n]+?)\$/g, "\\($1\\)");
+  // Collapse doubled delimiters so KaTeX's \( \) / \[ \] can match
+  normalized = normalized.replace(/\\\\([()[\]])/g, "\\$1");
+  // Repair math segments (LLMs drop closing braces) and wrap bare LaTeX
+  // commands that appear outside any math delimiters.
+  normalized = normalized
+    .split(/(\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\])/)
+    .map((part, i) => (i % 2 === 1 ? repairMathSegment(part) : wrapBareMathCommands(part)))
+    .join("");
   return normalized;
+};
+
+// Close unbalanced "{" groups inside a \(...\) / \[...\] segment. The missing
+// "}" is inserted before the next space-padded operator after the unclosed
+// brace — turning e.g. "e^{i\pi + 1 = 0" into the intended "e^{i\pi} + 1 = 0"
+// — or at the end of the segment when no operator follows.
+const repairMathSegment = (segment) => {
+  const openDelim = segment.slice(0, 2);
+  const closeDelim = segment.slice(-2);
+  let body = segment.slice(2, -2);
+  const unclosed = [];
+  for (let i = 0; i < body.length; i++) {
+    if (body[i] === "{" && body[i - 1] !== "\\") unclosed.push(i);
+    else if (body[i] === "}" && body[i - 1] !== "\\") unclosed.pop();
+  }
+  if (!unclosed.length) return segment;
+  for (const pos of unclosed.reverse()) {
+    const rest = body.slice(pos);
+    const operator = rest.match(/\s(?:[+\-=<>]|\\pm|\\le|\\ge|\\cdot|\\times)\s/);
+    const insertAt = operator ? pos + operator.index : body.length;
+    body = body.slice(0, insertAt) + "}" + body.slice(insertAt);
+  }
+  return openDelim + body + closeDelim;
+};
+
+// LLMs sometimes emit LaTeX commands bare in prose ("... equals \frac{1}{2}
+// of the total"). Wrap the well-formed ones in inline math so KaTeX picks
+// them up; convert lone greek-letter commands the same way.
+const wrapBareMathCommands = (part) => {
+  return part
+    // \text{...} outside math IS text — unwrap it rather than math-wrap it
+    .replace(/\\text\{([^{}]*)\}/g, "$1")
+    .replace(
+      /\\(?:d?frac|tfrac|binom)\{[^{}]*\}\{[^{}]*\}|\\sqrt(?:\[[^\]]*\])?\{[^{}]*\}/g,
+      (m) => `\\(${m}\\)`
+    )
+    .replace(
+      /\\(?:pi|theta|alpha|beta|gamma|delta|lambda|mu|sigma|omega|phi|infty)\b(?!\s*[{^_])/g,
+      (m) => `\\(${m}\\)`
+    );
 };
 
 const degradeMathMarkup = (html) => {
@@ -180,6 +227,39 @@ const errorToast = document.getElementById("error-toast");
 const chatUseTutorToggle = document.getElementById("chat-use-tutor");
 const settingsForm = document.getElementById("settings-form");
 const settingsPreset = document.getElementById("settings-preset");
+const settingsLlmProvider = document.getElementById("settings-llm-provider");
+const settingsCloudConfig = document.getElementById("settings-cloud-config");
+const settingsCloudModel = document.getElementById("settings-cloud-model");
+const settingsCloudKey = document.getElementById("settings-cloud-key");
+const settingsTestProvider = document.getElementById("settings-test-provider");
+const settingsProviderStatus = document.getElementById("settings-provider-status");
+
+const CLOUD_PROVIDER_DEFAULTS = {
+  anthropic: "claude-opus-4-8",
+  openai: "gpt-5-mini",
+  xai: "grok-4",
+  gemini: "gemini-2.5-flash",
+};
+let cloudKeysSet = {};
+
+const refreshProviderUI = () => {
+  if (!settingsLlmProvider) return;
+  const provider = settingsLlmProvider.value;
+  const isCloud = provider !== "ollama";
+  if (settingsCloudConfig) settingsCloudConfig.style.display = isCloud ? "" : "none";
+  if (!isCloud) return;
+  if (settingsCloudModel) {
+    settingsCloudModel.placeholder = `default: ${CLOUD_PROVIDER_DEFAULTS[provider] || ""}`;
+  }
+  if (settingsCloudKey) {
+    settingsCloudKey.value = "";
+    settingsCloudKey.placeholder = cloudKeysSet[provider]
+      ? "✓ key saved — paste a new one to replace it"
+      : "Paste your API key";
+  }
+  if (settingsProviderStatus) settingsProviderStatus.textContent = "";
+};
+
 const settingsLocalAiEnabled = document.getElementById("settings-local-ai-enabled");
 const settingsMultiAgentEnabled = document.getElementById("settings-multi-agent-enabled");
 const settingsLocalWebRagEnabled = document.getElementById("settings-local-web-rag-enabled");
@@ -2242,13 +2322,14 @@ const sendTutorQuestion = async (question) => {
   // scene for the API (and for on-demand visuals via lastTutorQuestion),
   // but keep the raw question in history/UI so the short preamble isn't
   // re-sent with every history turn.
-  const apiQuestion = tutorLessonContext
+  const contextPrefix = tutorLessonContext
     ? `In the lesson "${tutorLessonContext.topic}"` +
       (tutorLessonContext.sceneTitle
         ? `, scene ${(tutorLessonContext.sceneIndex ?? 0) + 1} "${tutorLessonContext.sceneTitle}"`
         : "") +
-      `: ${question}`
-    : question;
+      `: `
+    : "";
+  const apiQuestion = contextPrefix + question;
   lastTutorQuestion = apiQuestion;
   tutorHistory.push({ role: "user", content: question });
   renderTutorSolution("Generating solution...");
@@ -2294,11 +2375,12 @@ const sendTutorQuestion = async (question) => {
     renderTutorSolution(payload);
     showVisualizationIn(tutorViz, payload.visualization);
     tutorHistory.push({ role: "assistant", content: payload.solution || "" });
-    // Server-suggested follow-ups embed the question it received; swap the
-    // lesson-context-prefixed form back for the raw question the user typed.
-    if (apiQuestion !== question && Array.isArray(payload?.next_questions)) {
+    // Server-suggested follow-ups embed the question the server received —
+    // sometimes lightly rephrased, so strip the context prefix itself rather
+    // than relying on an exact match of the whole prefixed question.
+    if (contextPrefix && Array.isArray(payload?.next_questions)) {
       payload.next_questions = payload.next_questions.map((p) =>
-        String(p).split(apiQuestion).join(question)
+        String(p).split(apiQuestion).join(question).split(contextPrefix).join("")
       );
     }
     renderTutorFollowupsFromPayload(question, payload);
@@ -3019,6 +3101,11 @@ const loadSettings = async () => {
     if (!settingsResp) { showError("Failed to load settings"); return; }
     const data = settingsResp;
 
+    cloudKeysSet = data.cloud_keys_set || {};
+    if (settingsLlmProvider) settingsLlmProvider.value = data.llm_provider || "ollama";
+    if (settingsCloudModel) settingsCloudModel.value = data.cloud_llm_model || "";
+    refreshProviderUI();
+
     settingsLocalAiEnabled.checked = !!data.local_ai_enabled;
     settingsMultiAgentEnabled.checked = !!data.local_multi_agent_enabled;
     settingsLocalWebRagEnabled.checked = !!data.local_web_rag_enabled;
@@ -3034,6 +3121,7 @@ const loadSettings = async () => {
     populateModelDropdown(modelsData, data.local_llm_model || "");
     updateFastModeState();
     updateMediaButtons(!!data.local_media_enabled);
+    loadLibraryDocs();
     await loadAgents();
   } catch (error) {
     showError("Failed to load settings");
@@ -3051,6 +3139,8 @@ const saveSettings = async () => {
     }
 
     const payload = {
+      llm_provider: settingsLlmProvider?.value || "ollama",
+      cloud_llm_model: settingsCloudModel?.value.trim() || "",
       local_ai_enabled: settingsLocalAiEnabled.checked,
       local_multi_agent_enabled: settingsMultiAgentEnabled.checked,
       local_web_rag_enabled: settingsLocalWebRagEnabled.checked,
@@ -3064,12 +3154,22 @@ const saveSettings = async () => {
       local_music_timeout_seconds: Number(settingsLocalMusicTimeout.value) || 180,
       local_media_device: settingsLocalMediaDevice.value
     };
+    // Only send an API key when the user typed one — blank keeps the saved key.
+    const cloudKey = settingsCloudKey?.value.trim();
+    if (payload.llm_provider !== "ollama" && cloudKey) {
+      payload[`${payload.llm_provider}_api_key`] = cloudKey;
+    }
     const response = await fetch(`${API_BASE}/api/settings`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
     if (!response.ok) throw new Error("Failed to save settings");
+    const saved = await response.json().catch(() => null);
+    if (saved?.cloud_keys_set) {
+      cloudKeysSet = saved.cloud_keys_set;
+      refreshProviderUI();
+    }
     updateMediaButtons(settingsLocalMediaEnabled.checked);
     showError(`Settings saved. Active model: ${selectedModel}`);
   } catch (error) {
@@ -3372,6 +3472,86 @@ if (settingsValidate) {
   settingsValidate.addEventListener("click", () => validateSettings());
 }
 
+// --- Reference Library (RAG) -----------------------------------------------
+const libraryFile = document.getElementById("library-file");
+const libraryUpload = document.getElementById("library-upload");
+const libraryStatus = document.getElementById("library-status");
+const libraryDocs = document.getElementById("library-docs");
+
+const loadLibraryDocs = async () => {
+  if (!libraryDocs) return;
+  try {
+    const docs = await fetch(`${API_BASE}/api/library/docs`).then((r) => r.json());
+    if (!Array.isArray(docs) || !docs.length) {
+      libraryDocs.innerHTML = '<div class="viz-placeholder">No books uploaded yet.</div>';
+      return;
+    }
+    libraryDocs.innerHTML = "";
+    docs.forEach((d) => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(128,128,128,0.2);";
+      const label = document.createElement("span");
+      label.textContent = `📖 ${d.source} — ${d.chunks} chunks`;
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn-sm";
+      del.textContent = "Remove";
+      del.addEventListener("click", async () => {
+        del.disabled = true;
+        await fetch(`${API_BASE}/api/library/docs/${encodeURIComponent(d.source)}`, { method: "DELETE" });
+        loadLibraryDocs();
+      });
+      row.appendChild(label);
+      row.appendChild(del);
+      libraryDocs.appendChild(row);
+    });
+  } catch { /* library optional */ }
+};
+
+if (libraryUpload) {
+  libraryUpload.addEventListener("click", async () => {
+    const file = libraryFile?.files?.[0];
+    if (!file) { if (libraryStatus) libraryStatus.textContent = "Choose a file first."; return; }
+    libraryUpload.disabled = true;
+    if (libraryStatus) libraryStatus.textContent = `Indexing ${file.name}…`;
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const resp = await fetch(`${API_BASE}/api/library/upload`, { method: "POST", body: form });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.detail || "Upload failed");
+      if (libraryStatus) libraryStatus.textContent = `✅ Indexed ${data.source}: ${data.chunks} chunks.`;
+      if (libraryFile) libraryFile.value = "";
+      loadLibraryDocs();
+    } catch (err) {
+      if (libraryStatus) libraryStatus.textContent = "❌ " + err.message;
+    } finally {
+      libraryUpload.disabled = false;
+    }
+  });
+}
+
+if (settingsLlmProvider) {
+  settingsLlmProvider.addEventListener("change", refreshProviderUI);
+}
+if (settingsTestProvider) {
+  settingsTestProvider.addEventListener("click", async () => {
+    settingsTestProvider.disabled = true;
+    if (settingsProviderStatus) settingsProviderStatus.textContent = "Saving settings and testing…";
+    try {
+      await saveSettings();
+      const resp = await fetch(`${API_BASE}/api/settings/test-llm`, { method: "POST" });
+      const data = await resp.json();
+      if (settingsProviderStatus) {
+        settingsProviderStatus.textContent = (data.available ? "✅ " : "❌ ") + (data.message || "");
+      }
+    } catch (err) {
+      if (settingsProviderStatus) settingsProviderStatus.textContent = "❌ Test failed: " + err.message;
+    } finally {
+      settingsTestProvider.disabled = false;
+    }
+  });
+}
 if (settingsTestOllama) {
   settingsTestOllama.addEventListener("click", () => testModel("ollama"));
 }

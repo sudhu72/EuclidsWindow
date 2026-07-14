@@ -30,6 +30,7 @@ from .routers.ai_media import (
     music_service,
 )
 from .routers.polya import router as polya_router
+from .routers.library import router as library_router
 from .ai.viz_agent import VizAgent
 from .ai.animation_pipeline import AnimationPipeline
 from .ai.checker import SymbolicChecker
@@ -213,6 +214,7 @@ app.add_middleware(MetricsMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.include_router(ai_media_router)
 app.include_router(polya_router)
+app.include_router(library_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -850,12 +852,23 @@ async def ai_tutor(payload: TutorRequest) -> TutorResponse:
     if topic:
         curated_hint = topic.get("response_text", "")[:500]
 
+    # When the user's uploaded library clearly covers the question, prefer
+    # the LLM + RAG path over the curated keyword matcher (which can misfire
+    # on loosely related questions).
+    from .ai.library import get_library
+
+    library_override = await asyncio.to_thread(
+        get_library().has_strong_match, payload.question
+    )
+    if library_override and topic:
+        logger.info("Tutor: library match overrides curated topic '%s'", topic.get("id", ""))
+
     # ------------------------------------------------------------------
     # TIER 1: Curated content — instant, high-quality for FIRST question
     # Followups skip curated so the LLM can give a genuine conversational
     # response (step-by-step, simpler, etc.) instead of repeating the same text.
     # ------------------------------------------------------------------
-    if topic and not followup_request:
+    if topic and not followup_request and not library_override:
         matched_topic_id = topic.get("id", "")
         dynamic_viz = tutor_service.fallback_visualization(payload.question)
         curated_viz = viz_service.build_payload(catalog.build_visualization(topic))
@@ -1291,15 +1304,50 @@ async def ai_viz_agent(payload: VizAgentRequest) -> VizAgentResponse:
     return VizAgentResponse(visualization=result, source=source)
 
 
+def _settings_response() -> AppSettingsResponse:
+    from .ai.providers import CLOUD_PROVIDERS
+
+    effective = settings_store.get_effective_settings()
+    effective["cloud_keys_set"] = {
+        provider: bool(effective.get(meta["key_setting"]))
+        for provider, meta in CLOUD_PROVIDERS.items()
+    }
+    # Never send raw API keys to the frontend.
+    for meta in CLOUD_PROVIDERS.values():
+        effective.pop(meta["key_setting"], None)
+    return AppSettingsResponse(**effective)
+
+
 @app.get("/api/settings", response_model=AppSettingsResponse)
 async def get_app_settings() -> AppSettingsResponse:
-    return AppSettingsResponse(**settings_store.get_effective_settings())
+    return _settings_response()
 
 
 @app.put("/api/settings", response_model=AppSettingsResponse)
 async def update_app_settings(payload: AppSettingsUpdate) -> AppSettingsResponse:
     settings_store.update(payload.model_dump(exclude_unset=True))
-    return AppSettingsResponse(**settings_store.get_effective_settings())
+    return _settings_response()
+
+
+@app.post("/api/settings/test-llm", response_model=ModelCheckResponse)
+async def test_llm_provider() -> ModelCheckResponse:
+    """Verify the currently selected model provider actually responds."""
+    from .ai.engine import LocalLLMEngine
+    from .ai.providers import CLOUD_PROVIDERS, resolve_cloud_model, test_cloud_provider
+
+    effective = settings_store.get_effective_settings()
+    provider = (effective.get("llm_provider") or "ollama").strip().lower()
+    if provider == "ollama" or provider not in CLOUD_PROVIDERS:
+        engine = LocalLLMEngine()
+        ok = engine.is_model_available()
+        return ModelCheckResponse(
+            available=ok,
+            message="Local Ollama model is available." if ok else "Local Ollama model not found.",
+        )
+    model = resolve_cloud_model(provider, effective.get("cloud_llm_model"))
+    api_key = effective.get(CLOUD_PROVIDERS[provider]["key_setting"]) or ""
+    ok, message = await asyncio.to_thread(test_cloud_provider, provider, model, api_key)
+    return ModelCheckResponse(available=ok, message=message)
 
 
 @app.get("/api/settings/validate", response_model=SettingsValidationResponse)

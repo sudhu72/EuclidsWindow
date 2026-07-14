@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 from ..config import get_settings
 from ..settings_store import SettingsStore
 from ..logging_config import logger
+from .providers import CLOUD_PROVIDERS, cloud_chat, resolve_cloud_model
 
 
 class LocalLLMEngine:
@@ -49,7 +50,24 @@ class LocalLLMEngine:
             )
         return default
 
+    def _cloud_route(self):
+        """Resolve the active cloud provider, or None to use local Ollama."""
+        overrides = self._store.get_effective_settings()
+        provider = (overrides.get("llm_provider") or "ollama").strip().lower()
+        if provider == "ollama" or provider not in CLOUD_PROVIDERS:
+            return None
+        api_key = overrides.get(CLOUD_PROVIDERS[provider]["key_setting"])
+        if not api_key:
+            logger.warning(
+                f"Cloud provider '{provider}' selected but no API key is set; using local Ollama"
+            )
+            return None
+        model = resolve_cloud_model(provider, overrides.get("cloud_llm_model"))
+        return provider, model, api_key
+
     def is_available(self) -> bool:
+        if self._cloud_route() is not None:
+            return True
         if self.provider == "ollama":
             if self.base_url:
                 return True
@@ -60,6 +78,17 @@ class LocalLLMEngine:
         if not self.is_available():
             logger.warning("Local LLM provider not available")
             return None
+        cloud = self._cloud_route()
+        if cloud is not None:
+            provider, cloud_model, api_key = cloud
+            result = cloud_chat(
+                provider, cloud_model, api_key,
+                [{"role": "user", "content": prompt}],
+                max_tokens=1024, timeout_seconds=self.timeout,
+            )
+            if result:
+                return result
+            logger.warning(f"Cloud provider '{provider}' failed; falling back to local Ollama")
         self._refresh_overrides()
 
         if self.provider == "ollama":
@@ -131,6 +160,20 @@ class LocalLLMEngine:
         """Generate with an explicit timeout, useful for LLM-first with fast fallback."""
         if not self.is_available():
             return None
+        cloud = self._cloud_route()
+        if cloud is not None:
+            provider, cloud_model, api_key = cloud
+            result = cloud_chat(
+                provider,
+                cloud_model,
+                api_key,
+                [{"role": "user", "content": prompt}],
+                max_tokens=num_predict,
+                timeout_seconds=timeout_seconds,
+            )
+            if result:
+                return result
+            logger.warning(f"Cloud provider '{provider}' failed; falling back to local Ollama")
         self._refresh_overrides()
         if self.provider == "ollama":
             if self.base_url:
@@ -163,6 +206,26 @@ class LocalLLMEngine:
         """
         if not self.is_available():
             return None
+
+        # Cloud provider routing (Settings → Model Provider); falls back to
+        # the local model when the cloud call fails so the app keeps working.
+        cloud = self._cloud_route()
+        if cloud is not None:
+            provider, cloud_model, api_key = cloud
+            result = cloud_chat(
+                provider,
+                cloud_model,
+                api_key,
+                messages,
+                json_mode=json_format,
+                temperature=temperature,
+                max_tokens=num_predict or 2048,
+                timeout_seconds=timeout_seconds or self.timeout,
+            )
+            if result:
+                return result
+            logger.warning(f"Cloud provider '{provider}' failed; falling back to local Ollama")
+
         model = self._model_for_task(task)
 
         if self.provider != "ollama":
@@ -258,6 +321,12 @@ class LocalLLMEngine:
         )
         if not raw:
             return None
+        # LLMs write LaTeX inside JSON strings with single backslashes:
+        # json.loads turns \t/\f/\b into control chars (silently corrupting
+        # \theta -> "<tab>heta", \frac -> "<ff>rac") and rejects invalid
+        # escapes like \p outright. Double every backslash that isn't a
+        # deliberate JSON escape before parsing.
+        raw = repair_json_escapes(raw)
         block = extract_json_block(raw)
         if not block:
             logger.warning(f"chat_json: no JSON object in LLM output: {raw[:200]!r}")
@@ -318,6 +387,34 @@ class LocalLLMEngine:
                 resp.read()
         except Exception:
             pass
+
+
+def repair_json_escapes(text: str) -> str:
+    """Escape backslashes that would corrupt or break JSON parsing.
+
+    Keeps deliberate JSON escapes (\\\\, \\", \\/, \\n, \\uXXXX) and doubles
+    everything else — so LaTeX like \\theta, \\frac, \\tau, \\text, \\pi
+    survives json.loads as literal text instead of becoming control
+    characters or raising on invalid escapes.
+    """
+    out = []
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch == "\\" and i + 1 < n:
+            nxt = text[i + 1]
+            if nxt in '\\/"nu':
+                out.append(ch)
+                out.append(nxt)
+            else:
+                out.append("\\\\")
+                out.append(nxt)
+            i += 2
+        else:
+            out.append(ch)
+            i += 1
+    return "".join(out)
 
 
 def extract_json_block(text: str) -> Optional[str]:

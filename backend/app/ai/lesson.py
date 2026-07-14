@@ -186,12 +186,17 @@ class LessonService:
     ) -> Optional[Dict[str, Any]]:
         level_instruction = LEVEL_INSTRUCTIONS.get(level, "")
         style = "Include a fully worked example with concrete numbers." if stype == "example" else ""
+        from .library import get_library
+        from .skills import COMPACT_SKILL
+
+        library_context = get_library().context_for(f"{topic} {title}", k=2, max_chars=1200)
         messages = [
-            {"role": "system", "content": EXPLAIN_SYSTEM_PROMPT},
+            {"role": "system", "content": EXPLAIN_SYSTEM_PROMPT + "\n" + COMPACT_SKILL},
             {
                 "role": "user",
                 "content": (
-                    f"{level_instruction}Lesson topic: {topic[:200]}\n"
+                    (library_context + "\n\n" if library_context else "")
+                    + f"{level_instruction}Lesson topic: {topic[:200]}\n"
                     f"Section: {title}\n{summary}\n{style}"
                 ),
             },

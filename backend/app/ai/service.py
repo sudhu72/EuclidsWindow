@@ -91,8 +91,17 @@ class GenerativeTutorService:
         level_key = (learner_level or "").strip().lower()
         level_instruction = LEVEL_INSTRUCTIONS.get(level_key, "")
 
+        # Ground the answer in the user's uploaded reference library (RAG)
+        # and apply the standing-orders verification skill.
+        from .library import get_library
+        from .skills import COMPACT_SKILL
+
+        library_context = get_library().context_for(question, k=3, max_chars=1500)
+        if library_context:
+            context = library_context + "\n\n" + context
+
         prompt = (
-            REASONING_SYSTEM_PROMPT + "\n\n"
+            REASONING_SYSTEM_PROMPT + "\n\n" + COMPACT_SKILL + "\n\n"
             + REASONING_USER_TEMPLATE.format(
                 context=context,
                 question=question,
