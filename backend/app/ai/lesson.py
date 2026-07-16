@@ -52,8 +52,9 @@ EXPLAIN_SYSTEM_PROMPT = textwrap.dedent("""\
 
     Rules for narration:
     - Do NOT repeat the section title; start directly with the explanation.
-    - Inline math: \\\\(...\\\\). Display math: $$...$$ on its own line.
-    - Never use \\\\begin{equation} or other LaTeX environments.
+    - Inline math: \\\\(...\\\\). Display math: $$...$$ on its own lines.
+    - Never use \\\\begin{equation} or other LaTeX environments, and never
+      wrap prose sentences in \\\\text{...} — plain text is just text.
     """)
 
 
@@ -209,8 +210,8 @@ class LessonService:
             raw = self._engine.chat_json(
                 messages,
                 timeout_seconds=90,
-                num_predict=1800,
-                num_ctx=4096,
+                num_predict=2400,
+                num_ctx=8192,  # library excerpts + skill text need headroom
                 temperature=0.4 if attempt == 0 else 0.6,
             )
             if not raw or not raw.get("narration"):

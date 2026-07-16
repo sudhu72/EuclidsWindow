@@ -1654,10 +1654,10 @@ def _compute_eval_report(
         if live:
             source = "live"
             timeout_s = per_prompt_timeout_ms / 1000.0
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
             try:
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(tutor_service.answer, prompt, None)
-                    answer = future.result(timeout=timeout_s)
+                future = executor.submit(tutor_service.answer, prompt, None)
+                answer = future.result(timeout=timeout_s)
                 if answer:
                     solution_text, visualization = answer
                     has_viz = visualization is not None
@@ -1676,6 +1676,11 @@ def _compute_eval_report(
                 error_count += 1
                 error = str(exc)[:200]
                 source = "fallback"
+            finally:
+                # Never block on a slow LLM call: a timed-out prompt's thread
+                # is abandoned (it dies when the call returns) instead of
+                # being joined, so the per-prompt timeout is a real bound.
+                executor.shutdown(wait=False, cancel_futures=True)
 
         if source != "live":
             topic = catalog.match_topic(prompt)

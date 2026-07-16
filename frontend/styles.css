@@ -1350,6 +1350,20 @@ body {
   font-size: 0.85em;
 }
 
+/* Rendered markdown headings (### / #### from the model). Global so they
+   style in both the chat bubble and the #tutor-solution panel. */
+.md-heading {
+  font-weight: 700;
+  color: #1c1917;
+  line-height: 1.3;
+  margin: 16px 0 6px;
+}
+.md-heading.md-h1 { font-size: 1.25rem; }
+.md-heading.md-h2 { font-size: 1.12rem; }
+.md-heading.md-h3 { font-size: 1.02rem; }
+.md-heading.md-h4 { font-size: 0.96rem; color: #44403c; }
+.md-heading:first-child { margin-top: 4px; }
+
 .message.assistant .md-table {
   width: 100%;
   border-collapse: collapse;

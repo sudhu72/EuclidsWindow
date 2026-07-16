@@ -54,6 +54,18 @@ const parseMarkdown = (text) => {
       continue;
     }
     
+    // ATX headings — small models emit ###/#### liberally. Render them as
+    // styled headings led by a level icon instead of leaking raw hashes.
+    const heading = line.match(/^(#{1,6})\s+(.*\S)\s*#*$/);
+    if (heading) {
+      const level = Math.min(heading[1].length, 4);
+      const icon = { 1: "📘", 2: "📖", 3: "🔹", 4: "▫️" }[level];
+      result.push(
+        `<div class="md-heading md-h${level}">${icon} ${formatInline(heading[2])}</div>`
+      );
+      continue;
+    }
+
     // Blockquote
     if (line.startsWith('> ')) {
       result.push(`<blockquote class="md-quote">${formatInline(line.slice(2))}</blockquote>`);
@@ -143,6 +155,10 @@ const normalizeLatexDelimiters = (text) => {
   normalized = normalized.replace(/\$([^$\n]+?)\$/g, "\\($1\\)");
   // Collapse doubled delimiters so KaTeX's \( \) / \[ \] can match
   normalized = normalized.replace(/\\\\([()[\]])/g, "\\$1");
+  // Unwrap prose-level \text{...} wrappers first — LLMs sometimes wrap whole
+  // paragraphs (with math inside) in \text{}, which the per-slice regex in
+  // wrapBareMathCommands can't reach because the braces span math segments.
+  normalized = unwrapProseTextCommands(normalized);
   // Repair math segments (LLMs drop closing braces) and wrap bare LaTeX
   // commands that appear outside any math delimiters.
   normalized = normalized
@@ -150,6 +166,54 @@ const normalizeLatexDelimiters = (text) => {
     .map((part, i) => (i % 2 === 1 ? repairMathSegment(part) : wrapBareMathCommands(part)))
     .join("");
   return normalized;
+};
+
+// Remove \text{...} wrappers that sit OUTSIDE math delimiters, keeping the
+// wrapped content — even when the braces span embedded \(...\) / \[...\]
+// segments (e.g. "\text{presented as \(e^{i\theta}\), but ... }"). \text{}
+// inside math is valid KaTeX and is left alone.
+const unwrapProseTextCommands = (input) => {
+  if (!input || !input.includes("\\text{")) return input;
+  let out = "";
+  let i = 0;
+  let mathCloser = null;      // "\\)" or "\\]" while inside a math segment
+  let depth = 0;              // brace depth in prose
+  const textDepths = [];      // depths at which an unwrapped \text{ opened
+  while (i < input.length) {
+    const two = input.slice(i, i + 2);
+    if (mathCloser) {
+      out += input[i];
+      if (two === mathCloser) { out += input[i + 1]; i += 2; mathCloser = null; continue; }
+      i += 1;
+      continue;
+    }
+    if (two === "\\(" || two === "\\[") {
+      mathCloser = two === "\\(" ? "\\)" : "\\]";
+      out += two;
+      i += 2;
+      continue;
+    }
+    if (input.startsWith("\\text{", i)) {
+      textDepths.push(depth);
+      depth += 1;
+      i += 6;                 // swallow the wrapper, keep the content
+      continue;
+    }
+    const ch = input[i];
+    if (ch === "{" && input[i - 1] !== "\\") {
+      depth += 1;
+    } else if (ch === "}" && input[i - 1] !== "\\") {
+      depth -= 1;
+      if (textDepths.length && textDepths[textDepths.length - 1] === depth) {
+        textDepths.pop();     // swallow the matching close brace
+        i += 1;
+        continue;
+      }
+    }
+    out += ch;
+    i += 1;
+  }
+  return out;
 };
 
 // Close unbalanced "{" groups inside a \(...\) / \[...\] segment. The missing
@@ -1209,10 +1273,11 @@ const showConceptDetails = async (concept) => {
           </div>
         `;
         promptsArea.querySelectorAll(".concept-prompt-btn").forEach(btn => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             const prompt = decodeURIComponent(btn.dataset.prompt);
             switchToTab("tutor");
             if (tutorInput) { tutorInput.value = prompt; }
+            await sendTutorQuestion(prompt);
           });
         });
       } else {
@@ -1227,9 +1292,11 @@ const showConceptDetails = async (concept) => {
 
   const exploreBtn = document.getElementById("concept-explore-tutor");
   if (exploreBtn) {
-    exploreBtn.addEventListener("click", () => {
+    exploreBtn.addEventListener("click", async () => {
+      const prompt = `Explain ${concept.name}`;
       switchToTab("tutor");
-      if (tutorInput) { tutorInput.value = `Explain ${concept.name}`; }
+      if (tutorInput) { tutorInput.value = prompt; }
+      await sendTutorQuestion(prompt);
     });
   }
   const openBtn = document.getElementById("concept-open-learning-path");

@@ -48,6 +48,7 @@
       if (window.switchToTab) window.switchToTab("tutor");
       const inp = document.getElementById("tutor-input");
       if (inp) { inp.value = prompt; inp.dispatchEvent(new Event("input")); }
+      if (window.sendTutorQuestion) window.sendTutorQuestion(prompt);
     });
   });
 

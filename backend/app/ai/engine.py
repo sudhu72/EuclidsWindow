@@ -329,11 +329,21 @@ class LocalLLMEngine:
         raw = repair_json_escapes(raw)
         block = extract_json_block(raw)
         if not block:
+            # Truncated output (num_predict cap mid-string) has no complete
+            # {...} for the extractor — salvage by auto-closing.
+            salvaged = salvage_truncated_json(raw)
+            if salvaged is not None:
+                logger.info("chat_json: salvaged truncated JSON output")
+                return salvaged
             logger.warning(f"chat_json: no JSON object in LLM output: {raw[:200]!r}")
             return None
         try:
             parsed = json.loads(block)
         except json.JSONDecodeError as exc:
+            salvaged = salvage_truncated_json(block)
+            if salvaged is not None:
+                logger.info("chat_json: salvaged truncated JSON output")
+                return salvaged
             logger.warning(f"chat_json: invalid JSON from LLM ({exc}): {block[:200]!r}")
             return None
         return parsed if isinstance(parsed, dict) else None
@@ -415,6 +425,68 @@ def repair_json_escapes(text: str) -> str:
             out.append(ch)
             i += 1
     return "".join(out)
+
+
+def salvage_truncated_json(text: str) -> Optional[dict]:
+    """Recover a dict from JSON cut off mid-generation.
+
+    Finds the first '{', walks it tracking string/escape state and open
+    containers, trims a dangling partial token, closes any open string and
+    containers, and parses. Returns None if nothing parseable remains.
+    """
+    start = text.find("{")
+    if start == -1:
+        return None
+    body = text[start:]
+    stack = []
+    in_string = False
+    escape = False
+    last_good = 0  # end of the last structurally complete position
+    for i, ch in enumerate(body):
+        if escape:
+            escape = False
+            continue
+        if ch == "\\":
+            escape = True
+            continue
+        if in_string:
+            if ch == '"':
+                in_string = False
+                last_good = i + 1
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]":
+            if stack and stack[-1] == ch:
+                stack.pop()
+            last_good = i + 1
+        elif ch in ",:":
+            pass
+        else:
+            last_good = i + 1
+    if not stack and not in_string:
+        return None  # structurally complete; failure was something else
+    closers = "".join(reversed(stack))
+    candidates = []
+    if in_string:
+        # Truncated mid-string: keep the partial text (works when it's a
+        # value; fails harmlessly when it's a dangling key).
+        candidates.append(body + '"' + closers)
+    # Trim back to the last structurally complete point (drops a dangling
+    # partial key/token and any trailing comma or colon).
+    trimmed = body[:last_good].rstrip().rstrip(",:").rstrip()
+    if trimmed:
+        candidates.append(trimmed + closers)
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict) and parsed:
+            return parsed
+    return None
 
 
 def extract_json_block(text: str) -> Optional[str]:

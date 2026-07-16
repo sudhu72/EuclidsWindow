@@ -39,9 +39,15 @@ document.addEventListener("DOMContentLoaded", () => {
     let html = "", inList = false;
     for (const line of lines) {
       const t = line.trim();
+      const heading = t.match(/^(#{1,6})\s+(.*\S)\s*#*$/);
       if (/^[-*] /.test(t)) {
         if (!inList) { html += "<ul>"; inList = true; }
         html += "<li>" + t.slice(2) + "</li>";
+      } else if (heading) {
+        if (inList) { html += "</ul>"; inList = false; }
+        const level = Math.min(heading[1].length, 4);
+        const icon = { 1: "📘", 2: "📖", 3: "🔹", 4: "▫️" }[level];
+        html += `<div class="md-heading md-h${level}">${icon} ${heading[2]}</div>`;
       } else {
         if (inList) { html += "</ul>"; inList = false; }
         if (t) html += "<p>" + t + "</p>";

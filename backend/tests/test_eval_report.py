@@ -85,7 +85,16 @@ def test_eval_history_and_export(client):
     assert "prompt,duration_ms" in export_csv.text
 
 
-def test_eval_history_filters_and_compare(client):
+def test_eval_history_filters_and_compare(client, monkeypatch):
+    # Live mode must never hit a real local LLM in tests — stub it like
+    # test_eval_report_live_mode does.
+    monkeypatch.setattr(
+        main_module.tutor_service,
+        "answer",
+        lambda question, history=None: ("stubbed live answer with x^2", None),
+    )
+    monkeypatch.setattr(main_module.tutor_service, "fallback_visualization", lambda question: None)
+
     # Create two runs with different metadata.
     r1 = client.get("/api/eval/report?persist=true&run_label=run-a&run_tags=baseline,catalog")
     assert r1.status_code == 200

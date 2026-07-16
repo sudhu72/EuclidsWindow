@@ -167,9 +167,24 @@ class LibraryService:
         distance = hits[0].get("distance")
         return distance is not None and distance < max_distance
 
-    def context_for(self, query: str, k: int = 3, max_chars: int = 1800) -> str:
-        """Formatted grounding block for prompt injection, or '' if no library."""
-        hits = self.search(query, k=k)
+    def context_for(
+        self, query: str, k: int = 3, max_chars: int = 1800, max_distance: float = 0.55
+    ) -> str:
+        """Formatted grounding block for prompt injection, or '' if no library.
+
+        Only excerpts within ``max_distance`` are injected. Without this gate a
+        book with no bearing on the topic still gets its nearest chunks spliced
+        into the prompt and steers the answer off course — e.g. a discrete-math
+        book pulls "Euler's Formula for planar graphs" (v-e+f=2) into a lesson
+        on "Euler's Identity" (e^{iπ}+1=0). Measured on that book, genuinely
+        on-topic excerpts land at cosine distance 0.24-0.45 while the off-topic
+        Euler's-Identity query lands at 0.62-0.75, so a 0.55 gate sits in the
+        empty gap and drops the false matches with margin on both sides.
+        """
+        hits = [
+            h for h in self.search(query, k=k)
+            if h.get("distance") is None or h["distance"] < max_distance
+        ]
         if not hits:
             return ""
         parts = []
