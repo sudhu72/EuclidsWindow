@@ -784,6 +784,9 @@
     { num: 1, den: 2, label: "1/2", interval: "octave", consonance: "perfectly consonant" },
     { num: 1, den: 3, label: "1/3", interval: "octave + fifth", consonance: "consonant" },
     { num: 1, den: 4, label: "1/4", interval: "two octaves", consonance: "perfectly consonant" },
+    // Complex fractions → the waves rarely realign → the pair beats and clashes.
+    { num: 15, den: 16, label: "15/16", interval: "minor second (semitone)", consonance: "harsh, beating", dissonant: true },
+    { num: 32, den: 45, label: "32/45", interval: "tritone", consonance: "very dissonant", dissonant: true },
   ];
   let guitarSelected = GUITAR_FRACTIONS[3]; // default to the octave (1/2)
   let guitarAnim = null;                     // requestAnimationFrame handle
@@ -835,7 +838,10 @@
         &nbsp;·&nbsp; <strong>Frequency:</strong> ${f.toFixed(1)} Hz (${multStr} the open string)</div>
         <div><strong>Interval:</strong> ${guitarSelected.interval}
         &nbsp;·&nbsp; <strong>Frequency ratio (new : open):</strong> ${guitarSelected.den}:${guitarSelected.num}
-        &nbsp;·&nbsp; <strong>Sounds:</strong> ${guitarSelected.consonance}</div>`;
+        &nbsp;·&nbsp; <strong>Sounds:</strong> <span style="color:${guitarSelected.dissonant ? "#b91c1c" : "#15803d"};font-weight:600;">${guitarSelected.consonance}</span></div>
+        <div style="margin-top:4px;color:#57534e;">${guitarSelected.dissonant
+          ? "Complex fraction → the waves almost never realign, so the blue sum wave looks jagged and you hear <em>beating</em>."
+          : "Simple fraction → the waves realign every few cycles, so the blue sum wave repeats cleanly and sounds pleasant."}</div>`;
     }
     drawGuitarWave(guitarSelected);
   }
@@ -930,8 +936,8 @@
     guitarFractionButtons.innerHTML = "";
     GUITAR_FRACTIONS.forEach((sel) => {
       const btn = document.createElement("button");
-      btn.className = "harmonic-btn" + (sel === guitarSelected ? " active" : "");
-      btn.textContent = `${sel.label}${sel.label === "Open" ? "" : ""} · ${sel.interval}`;
+      btn.className = "harmonic-btn" + (sel.dissonant ? " dissonant" : "") + (sel === guitarSelected ? " active" : "");
+      btn.textContent = `${sel.label} · ${sel.interval}`;
       btn.addEventListener("click", () => {
         guitarSelected = sel;
         guitarFractionButtons.querySelectorAll(".harmonic-btn").forEach((b) => b.classList.remove("active"));

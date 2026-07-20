@@ -1637,6 +1637,18 @@ body {
 }
 
 /* Guitar & Strings */
+.harmonic-btn.dissonant {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.harmonic-btn.dissonant:hover,
+.harmonic-btn.dissonant.active {
+  background: #b91c1c;
+  color: #fef2f2;
+  border-color: #b91c1c;
+}
+
 .guitar-fraction-row {
   display: flex;
   gap: 6px;
