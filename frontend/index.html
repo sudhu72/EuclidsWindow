@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1" />
-    <link rel="stylesheet" href="styles.css?v=20260716-1" />
+    <link rel="stylesheet" href="styles.css?v=20260719-1" />
     <link href="vendor/fonts/cinzel-decorative.css" rel="stylesheet" />
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
   </head>
@@ -611,6 +611,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn-primary music-game-btn active" data-game="dice">Mozart's Dice Game</button>
             <button class="btn-secondary music-game-btn" data-game="harmonics">Harmonic Series</button>
+            <button class="btn-secondary music-game-btn" data-game="guitar">Guitar &amp; Strings</button>
             <button class="btn-secondary music-game-btn" data-game="euclidean">Euclidean Rhythms</button>
             <button class="btn-secondary music-game-btn" data-game="fibonacci">Fibonacci Scales</button>
             <button class="btn-secondary music-game-btn" data-game="pythagorean">Pythagorean Tuning</button>
@@ -729,6 +730,60 @@
                   <a href="#" data-music-prompt="explain ratios and proportions">Ratios</a>
                 </div>
                 <div class="music-explore-link"><a href="#" data-music-prompt="What is the harmonic series and how does it relate to music?">Explore in Tutor &rarr;</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Guitar & Strings — length becomes pitch -->
+          <div id="game-guitar" class="music-game">
+            <div class="music-game-header">
+              <h4>Guitar &amp; Strings &mdash; length becomes pitch</h4>
+              <p>Pluck a string. Now shorten it &mdash; press a fret &mdash; and pluck again: a shorter string sounds <em>higher</em>. Halve the length and you jump exactly one <strong>octave</strong>, and the two notes sound beautiful together. This is where the fractions come from.</p>
+            </div>
+            <div class="harmonics-area">
+              <div id="guitar-string-viz"></div>
+
+              <div class="guitar-fraction-row" id="guitar-fraction-buttons"></div>
+
+              <div id="guitar-readout" class="guitar-readout"></div>
+
+              <div id="guitar-wave-viz" style="min-height:240px;margin-top:10px;"></div>
+
+              <div class="harmonics-controls" style="margin-top:10px;">
+                <button id="guitar-pluck" class="btn-primary">Pluck this note</button>
+                <button id="guitar-pluck-both" class="btn-secondary">Pluck open + this together</button>
+                <button id="guitar-stop" class="btn-secondary">Stop</button>
+              </div>
+
+              <div class="harmonics-controls" style="margin-top:8px;">
+                <label style="display:flex;align-items:center;gap:8px;">
+                  Pluck strength (amplitude):
+                  <input type="range" id="guitar-amp" min="0.05" max="0.5" step="0.01" value="0.28" style="width:160px;" />
+                  <span id="guitar-amp-label" style="font-size:12px;color:#78716c;">medium</span>
+                </label>
+                <span style="font-size:12px;color:#78716c;">Louder, not higher &mdash; amplitude is volume, length is pitch.</span>
+              </div>
+
+              <div class="music-math-note">
+                <strong>Where the fractions come from.</strong> On a string of fixed tension, frequency is inversely proportional to length: <em>f</em> &prop; 1/<em>L</em>. So if the open string sounds at frequency <em>f</em>, a string of length <em>L</em>&thinsp;/&thinsp;2 sounds at <strong>2<em>f</em></strong> &mdash; one octave up, a clean <strong>2:1</strong> ratio. The reason a half-length string sounds <em>pleasant</em> with the open string is that its wave completes exactly two cycles for every one of the open string, so the peaks line up over and over.
+                <div style="margin-top:8px;font-size:13px;line-height:1.9;">
+                  <table style="border-collapse:collapse;font-size:13px;">
+                    <tr><th style="text-align:left;padding:2px 14px 2px 0;">Length</th><th style="text-align:left;padding:2px 14px 2px 0;">Frequency</th><th style="text-align:left;padding:2px 14px 2px 0;">Ratio</th><th style="text-align:left;padding:2px 0;">Interval</th></tr>
+                    <tr><td style="padding:2px 14px 2px 0;">1&thinsp;/&thinsp;1 (open)</td><td>1&times; <em>f</em></td><td>1:1</td><td>unison</td></tr>
+                    <tr><td style="padding:2px 14px 2px 0;">3&thinsp;/&thinsp;4</td><td>4/3&times; <em>f</em></td><td>4:3</td><td>perfect fourth</td></tr>
+                    <tr><td style="padding:2px 14px 2px 0;">2&thinsp;/&thinsp;3</td><td>3/2&times; <em>f</em></td><td>3:2</td><td>perfect fifth</td></tr>
+                    <tr><td style="padding:2px 14px 2px 0;">1&thinsp;/&thinsp;2</td><td>2&times; <em>f</em></td><td>2:1</td><td>octave</td></tr>
+                  </table>
+                </div>
+                <div style="margin-top:8px;">The simpler the fraction, the more the waves line up, and the more consonant it sounds &mdash; exactly what Pythagoras discovered with a plucked string ~2500 years ago.</div>
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain ratios and proportions">Ratios</a> &bull;
+                  <a href="#" data-music-prompt="explain inverse proportion and reciprocals">Inverse Proportion</a> &bull;
+                  <a href="#" data-music-prompt="explain the harmonic series in mathematics">Harmonic Series</a> &bull;
+                  <a href="#" data-music-prompt="explain frequency wavelength and the wave equation">Waves</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="On a guitar string, why does halving the length raise the pitch by exactly one octave, and how do string-length fractions like 2:3 and 3:4 produce consonant musical intervals?">Explore in Tutor &rarr;</a></div>
               </div>
             </div>
           </div>
@@ -2035,10 +2090,10 @@
     <script src="vendor/katex/auto-render.min.js"></script>
     <script src="vendor/d3.min.js"></script>
     <script src="vendor/vexflow.js"></script>
-    <script src="app.js?v=20260716-1"></script>
+    <script src="app.js?v=20260717-1"></script>
     <script src="music_core.js?v=20260708"></script>
     <script src="mozart_notes.js?v=20260402"></script>
-    <script src="musiclab.js?v=20260708"></script>
+    <script src="musiclab.js?v=20260719-3"></script>
     <script src="calclab.js?v=20260408-7"></script>
     <script src="fftlab.js?v=20260404b"></script>
     <script src="fftlab-image.js?v=20260404"></script>

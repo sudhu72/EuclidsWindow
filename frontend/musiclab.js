@@ -39,6 +39,31 @@
     return osc;
   }
 
+  // Plucked-string timbre: a few decaying harmonics with a fast attack, so a
+  // "pluck" sounds guitar-like rather than a pure sine. `amp` is peak gain
+  // (loudness), independent of pitch.
+  function pluckString(freq, duration, delay, amp) {
+    const ctx = getAudioCtx();
+    const t0 = ctx.currentTime + (delay || 0);
+    const peak = amp == null ? 0.28 : amp;
+    // Relative strength of the first few harmonics of a plucked string.
+    const partials = [1, 0.5, 0.28, 0.16, 0.09];
+    partials.forEach((rel, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq * (i + 1);
+      const g = peak * rel;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(g, t0 + 0.006);       // sharp pluck
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration); // natural decay
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + duration + 0.05);
+      activeOscillators.push(osc);
+    });
+  }
+
   // Piano-like synthesizer: layered harmonics with percussive attack and natural decay.
   // Each note uses 4 partials whose amplitudes and decay rates mimic a struck string.
   function playPiano(freq, duration, delay, velocity) {
@@ -738,6 +763,214 @@
     });
 
     harmStopBtn.addEventListener("click", stopAll);
+  }
+
+  // =========================================================================
+  // 2b. Guitar & Strings — string length becomes pitch
+  // =========================================================================
+  const guitarViz = document.getElementById("guitar-string-viz");
+  const guitarFractionButtons = document.getElementById("guitar-fraction-buttons");
+  const guitarReadout = document.getElementById("guitar-readout");
+  const guitarAmp = document.getElementById("guitar-amp");
+  const guitarAmpLabel = document.getElementById("guitar-amp-label");
+
+  // Open string = low E (~82.4 Hz); frequency is inversely proportional to
+  // the sounding length, so a fraction 1/2 doubles the pitch (an octave).
+  const GUITAR_OPEN_HZ = 82.41;
+  const GUITAR_FRACTIONS = [
+    { num: 1, den: 1, label: "Open", interval: "unison", consonance: "same note" },
+    { num: 3, den: 4, label: "3/4", interval: "perfect fourth", consonance: "very consonant" },
+    { num: 2, den: 3, label: "2/3", interval: "perfect fifth", consonance: "very consonant" },
+    { num: 1, den: 2, label: "1/2", interval: "octave", consonance: "perfectly consonant" },
+    { num: 1, den: 3, label: "1/3", interval: "octave + fifth", consonance: "consonant" },
+    { num: 1, den: 4, label: "1/4", interval: "two octaves", consonance: "perfectly consonant" },
+  ];
+  let guitarSelected = GUITAR_FRACTIONS[3]; // default to the octave (1/2)
+  let guitarAnim = null;                     // requestAnimationFrame handle
+
+  function guitarFraction(sel) { return sel.num / sel.den; }
+  function guitarFreq(sel) { return GUITAR_OPEN_HZ / guitarFraction(sel); }
+
+  function drawGuitarString() {
+    if (!guitarViz) return;
+    const W = 640, H = 120, padL = 46, padR = 24;
+    const span = W - padL - padR;
+    const frac = guitarFraction(guitarSelected);
+    // Sounding length runs from the fret (finger) to the bridge (right end).
+    const soundX = padL + span * (1 - frac); // fret position from the left (nut)
+    const cy = H / 2;
+    // Standing-wave arch across the sounding portion (fundamental = one hump).
+    const pts = [];
+    const segStart = soundX, segEnd = W - padR, segLen = segEnd - segStart;
+    for (let i = 0; i <= 60; i++) {
+      const x = segStart + (segLen * i) / 60;
+      const y = cy - Math.sin((Math.PI * i) / 60) * 26;
+      pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+    const f = guitarFreq(guitarSelected);
+    guitarViz.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:640px;">
+        <!-- nut & bridge -->
+        <line x1="${padL}" y1="20" x2="${padL}" y2="${H - 20}" stroke="#78716c" stroke-width="4"/>
+        <line x1="${W - padR}" y1="20" x2="${W - padR}" y2="${H - 20}" stroke="#78716c" stroke-width="4"/>
+        <!-- muted (pressed-off) portion, from nut to fret -->
+        <line x1="${padL}" y1="${cy}" x2="${soundX}" y2="${cy}" stroke="#d6d3d1" stroke-width="2" stroke-dasharray="4 4"/>
+        <!-- sounding portion -->
+        <line x1="${soundX}" y1="${cy}" x2="${W - padR}" y2="${cy}" stroke="#1c1917" stroke-width="2"/>
+        <polyline points="${pts.join(" ")}" fill="none" stroke="#c2410c" stroke-width="2"/>
+        <!-- finger / fret marker -->
+        ${frac < 1 ? `<circle cx="${soundX}" cy="${cy}" r="6" fill="#c2410c"/>
+        <text x="${soundX}" y="${cy + 30}" text-anchor="middle" font-size="11" fill="#78716c">finger</text>` : ""}
+        <text x="${padL}" y="16" text-anchor="middle" font-size="11" fill="#78716c">nut</text>
+        <text x="${W - padR}" y="16" text-anchor="middle" font-size="11" fill="#78716c">bridge</text>
+        <text x="${(soundX + W - padR) / 2}" y="${cy + 46}" text-anchor="middle" font-size="12" fill="#1c1917">
+          sounding length = ${guitarSelected.label === "Open" ? "1/1" : guitarSelected.label} of the open string
+        </text>
+      </svg>`;
+    if (guitarReadout) {
+      const mult = (1 / frac);
+      const multStr = Number.isInteger(mult) ? `${mult}×` : `${mult.toFixed(2)}×`;
+      guitarReadout.innerHTML = `
+        <div><strong>String length:</strong> ${guitarSelected.label === "Open" ? "1/1 (open)" : guitarSelected.label} of open
+        &nbsp;·&nbsp; <strong>Frequency:</strong> ${f.toFixed(1)} Hz (${multStr} the open string)</div>
+        <div><strong>Interval:</strong> ${guitarSelected.interval}
+        &nbsp;·&nbsp; <strong>Frequency ratio (new : open):</strong> ${guitarSelected.den}:${guitarSelected.num}
+        &nbsp;·&nbsp; <strong>Sounds:</strong> ${guitarSelected.consonance}</div>`;
+    }
+    drawGuitarWave(guitarSelected);
+  }
+
+  // Colored sine waves for the two notes played together, plus their sum. For
+  // consonant intervals the combined wave repeats over a short window (the
+  // peaks realign), which is exactly why the pair sounds pleasant.
+  function drawGuitarWave(sel) {
+    const viz = document.getElementById("guitar-wave-viz");
+    if (!viz || typeof Plotly === "undefined") return;
+    const fOpen = GUITAR_OPEN_HZ;
+    const fNew = guitarFreq(sel);
+    const periods = 3;                 // show 3 cycles of the open string
+    const duration = periods / fOpen;  // seconds
+    const N = 700;
+    const x = [], yOpen = [], yNew = [], ySum = [];
+    for (let i = 0; i <= N; i++) {
+      const t = (i / N) * duration;
+      const a = Math.sin(2 * Math.PI * fOpen * t);
+      const b = Math.sin(2 * Math.PI * fNew * t);
+      x.push(t * 1000);
+      yOpen.push(a);
+      yNew.push(b);
+      ySum.push(a + b);
+    }
+    Plotly.newPlot(viz, [
+      { x, y: yOpen, name: `Open string (${fOpen.toFixed(1)} Hz)`, line: { color: "#1c1917", width: 2 } },
+      { x, y: yNew, name: `${sel.label === "Open" ? "1/1" : sel.label} string (${fNew.toFixed(1)} Hz)`, line: { color: "#c2410c", width: 2 } },
+      { x, y: ySum, name: "Both together (sum)", line: { color: "#2563eb", width: 2.5 } },
+    ], {
+      margin: { t: 26, b: 40, l: 40, r: 16 },
+      xaxis: { title: "Time (ms)" },
+      yaxis: { title: "Amplitude", range: [-2.3, 2.3], zeroline: true },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "rgba(0,0,0,0)",
+      font: { family: "Inter, sans-serif", size: 11, color: "#44403c" },
+      showlegend: true,
+      legend: { x: 0, y: 1.18, orientation: "h" },
+    }, { responsive: true, displayModeBar: false });
+  }
+
+  // Animate the waves scrolling with a plucked-string decay, so you SEE the two
+  // frequencies move and their peaks realign while the note fades. Runs for the
+  // pluck duration, then settles back to the static reference waveform.
+  function animateGuitarWave(sel, seconds) {
+    const viz = document.getElementById("guitar-wave-viz");
+    if (!viz || typeof Plotly === "undefined") return;
+    if (guitarAnim) cancelAnimationFrame(guitarAnim);
+    drawGuitarWave(sel); // ensure the 3 traces exist before restyling
+
+    const fOpen = GUITAR_OPEN_HZ;
+    const fNew = guitarFreq(sel);
+    const periods = 3;
+    const windowDur = periods / fOpen;      // seconds shown on the x-axis
+    const N = 700;
+    const totalMs = (seconds || 2.4) * 1000;
+    const tau = (seconds || 2.4) / 2.2;     // decay time constant (s)
+    const scroll = 0.03;                    // wave-seconds advanced per real second
+    const start = performance.now();
+
+    function frame(now) {
+      const elapsed = (now - start) / 1000; // real seconds since pluck
+      if (elapsed >= totalMs / 1000) {
+        guitarAnim = null;
+        drawGuitarWave(sel);                 // rest on the clean reference
+        return;
+      }
+      const env = Math.exp(-elapsed / tau);
+      const offset = elapsed * scroll;       // scrolls the window through time
+      const yOpen = [], yNew = [], ySum = [];
+      for (let i = 0; i <= N; i++) {
+        const t = (i / N) * windowDur + offset;
+        const a = env * Math.sin(2 * Math.PI * fOpen * t);
+        const b = env * Math.sin(2 * Math.PI * fNew * t);
+        yOpen.push(a);
+        yNew.push(b);
+        ySum.push(a + b);
+      }
+      Plotly.restyle(viz, { y: [yOpen, yNew, ySum] }, [0, 1, 2]);
+      guitarAnim = requestAnimationFrame(frame);
+    }
+    guitarAnim = requestAnimationFrame(frame);
+  }
+
+  function stopGuitarWave() {
+    if (guitarAnim) { cancelAnimationFrame(guitarAnim); guitarAnim = null; }
+    drawGuitarWave(guitarSelected);
+  }
+
+  function buildGuitarButtons() {
+    if (!guitarFractionButtons) return;
+    guitarFractionButtons.innerHTML = "";
+    GUITAR_FRACTIONS.forEach((sel) => {
+      const btn = document.createElement("button");
+      btn.className = "harmonic-btn" + (sel === guitarSelected ? " active" : "");
+      btn.textContent = `${sel.label}${sel.label === "Open" ? "" : ""} · ${sel.interval}`;
+      btn.addEventListener("click", () => {
+        guitarSelected = sel;
+        guitarFractionButtons.querySelectorAll(".harmonic-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        drawGuitarString();
+        pluckString(guitarFreq(sel), 2.2, 0, parseFloat(guitarAmp?.value) || 0.28);
+        animateGuitarWave(sel, 2.2);
+      });
+      guitarFractionButtons.appendChild(btn);
+    });
+  }
+
+  if (guitarViz) {
+    buildGuitarButtons();
+    drawGuitarString();
+
+    if (guitarAmp) {
+      guitarAmp.addEventListener("input", () => {
+        const v = parseFloat(guitarAmp.value);
+        if (guitarAmpLabel) guitarAmpLabel.textContent = v < 0.18 ? "soft" : v < 0.35 ? "medium" : "hard";
+      });
+    }
+
+    const guitarPluck = document.getElementById("guitar-pluck");
+    const guitarPluckBoth = document.getElementById("guitar-pluck-both");
+    const guitarStop = document.getElementById("guitar-stop");
+    if (guitarPluck) guitarPluck.addEventListener("click", () => {
+      stopAll();
+      pluckString(guitarFreq(guitarSelected), 2.4, 0, parseFloat(guitarAmp?.value) || 0.28);
+      animateGuitarWave(guitarSelected, 2.4);
+    });
+    if (guitarPluckBoth) guitarPluckBoth.addEventListener("click", () => {
+      stopAll();
+      const amp = parseFloat(guitarAmp?.value) || 0.28;
+      pluckString(GUITAR_OPEN_HZ, 2.6, 0, amp);            // open string
+      pluckString(guitarFreq(guitarSelected), 2.6, 0.35, amp); // then the shortened string
+      animateGuitarWave(guitarSelected, 2.6);
+    });
+    if (guitarStop) guitarStop.addEventListener("click", () => { stopAll(); stopGuitarWave(); });
   }
 
   // =========================================================================

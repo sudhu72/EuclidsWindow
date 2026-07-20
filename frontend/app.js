@@ -3101,11 +3101,11 @@ const renderRecommendedModels = () => {
     <div style="display:flex;flex-direction:column;gap:6px;">
       ${filtered.map(r => {
         const installed = availableNames.has(r.name);
-        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#1a1a2e;border-radius:6px;font-size:0.82rem;">
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#faf9f7;border:1px solid #e7e5e4;color:#1c1917;border-radius:6px;font-size:0.82rem;">
           <div style="flex:1;">
             <strong>${r.label || r.name}</strong>
-            <span style="opacity:0.5;margin-left:4px;">${r.size_gb} GB · ${r.tier}</span>
-            <br><span style="opacity:0.6;">${r.description}</span>
+            <span style="opacity:0.55;margin-left:4px;">${r.size_gb} GB · ${r.tier}</span>
+            <br><span style="opacity:0.65;">${r.description}</span>
           </div>
           ${installed
             ? `<button type="button" class="btn-secondary model-use-btn" data-model="${r.name}"

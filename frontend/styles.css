@@ -1636,6 +1636,28 @@ body {
   border-color: #1c1917;
 }
 
+/* Guitar & Strings */
+.guitar-fraction-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.guitar-readout {
+  background: #fafaf9;
+  border: 1px solid #e7e5e4;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #1c1917;
+}
+
+#guitar-string-viz {
+  margin: 6px 0 4px;
+}
+
 /* Euclidean Rhythms */
 .euclidean-controls {
   display: flex;

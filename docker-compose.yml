@@ -25,6 +25,11 @@ services:
     image: ollama/ollama:latest
     ports:
       - "${OLLAMA_HOST_PORT:-11435}:11434"
+    environment:
+      # Authenticates the daemon for Ollama Cloud (:cloud) models. Leave unset
+      # to run fully local/offline. Put the real key in .env (gitignored), never
+      # here. Get one at https://ollama.com/settings/keys
+      OLLAMA_API_KEY: "${OLLAMA_API_KEY:-}"
     volumes:
       - ollama-data:/root/.ollama
     healthcheck:
