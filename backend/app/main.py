@@ -31,6 +31,7 @@ from .routers.ai_media import (
 )
 from .routers.polya import router as polya_router
 from .routers.library import router as library_router
+from .routers.graph import router as graph_router
 from .ai.viz_agent import VizAgent
 from .ai.animation_pipeline import AnimationPipeline
 from .ai.checker import SymbolicChecker
@@ -215,6 +216,7 @@ app.add_middleware(RateLimitMiddleware)
 app.include_router(ai_media_router)
 app.include_router(polya_router)
 app.include_router(library_router)
+app.include_router(graph_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

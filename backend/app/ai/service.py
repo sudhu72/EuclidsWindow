@@ -91,14 +91,19 @@ class GenerativeTutorService:
         level_key = (learner_level or "").strip().lower()
         level_instruction = LEVEL_INSTRUCTIONS.get(level_key, "")
 
-        # Ground the answer in the user's uploaded reference library (RAG)
-        # and apply the standing-orders verification skill.
+        # Ground the answer in the concept graph (relationships, for
+        # disambiguation) and the user's uploaded reference library (RAG text),
+        # then apply the standing-orders verification skill.
+        from .concept_graph import get_concept_graph
         from .library import get_library
         from .skills import COMPACT_SKILL
 
         library_context = get_library().context_for(question, k=3, max_chars=1500)
         if library_context:
             context = library_context + "\n\n" + context
+        graph_context = get_concept_graph().context_for(question)
+        if graph_context:
+            context = graph_context + "\n\n" + context
 
         prompt = (
             REASONING_SYSTEM_PROMPT + "\n\n" + COMPACT_SKILL + "\n\n"
