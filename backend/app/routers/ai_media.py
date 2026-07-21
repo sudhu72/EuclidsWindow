@@ -3,11 +3,14 @@ import asyncio
 
 from fastapi import APIRouter, HTTPException
 
+from ..ai.discovery import DiscoveryService
 from ..ai.image_router import SmartImageService
 from ..ai.lesson import LessonService
 from ..ai.media import DiffusionImageService, MusicGenService
 from ..ai.music_composer import SymbolicMusicComposer
 from ..models import (
+    DiscoverRequest,
+    DiscoverResponse,
     LessonBuildResponse,
     LessonOutlineRequest,
     LessonOutlineResponse,
@@ -28,6 +31,7 @@ smart_image_service = SmartImageService(diffusion_service)
 music_service = MusicGenService()
 music_composer = SymbolicMusicComposer()
 lesson_service = LessonService()
+discovery_service = DiscoveryService()
 
 
 @router.post("/api/ai/media/image", response_model=MediaImageResponse)
@@ -74,6 +78,17 @@ async def ai_lesson_outline(payload: LessonOutlineRequest) -> LessonOutlineRespo
     if not outline:
         raise HTTPException(status_code=502, detail="Could not generate a lesson outline")
     return LessonOutlineResponse(**outline)
+
+
+@router.post("/api/ai/discover", response_model=DiscoverResponse)
+async def ai_discover(payload: DiscoverRequest) -> DiscoverResponse:
+    """Feynman discovery path for any topic (know → by-hand → derive → connect)."""
+    if not discovery_service.is_available():
+        raise HTTPException(status_code=503, detail="Local LLM not available")
+    result = await asyncio.to_thread(discovery_service.discover, payload.topic, payload.level)
+    if not result:
+        raise HTTPException(status_code=502, detail="Could not build a discovery path")
+    return DiscoverResponse(**result)
 
 
 @router.post("/api/ai/lesson/build", response_model=LessonBuildResponse)

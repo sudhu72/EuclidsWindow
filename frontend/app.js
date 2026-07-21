@@ -3858,6 +3858,7 @@ if (messages) {
 window.switchToTab = switchToTab;
 window.sendTutorQuestion = sendTutorQuestion;
 window.normalizeLatexDelimiters = normalizeLatexDelimiters;
+window.parseMarkdown = parseMarkdown;
 
 // Bridge for lesson.js: the Learn tab hosts the tutor chat, and lessons
 // scope its questions/sessions to the active lesson scene.

@@ -299,6 +299,12 @@ async def serve_aibyhand_js():
     return FileResponse(FRONTEND_DIR / "aibyhand.js", headers=FRONTEND_NO_CACHE_HEADERS)
 
 
+@app.get("/discovery.js", include_in_schema=False)
+async def serve_discovery_js():
+    """Serve discovery.js (Feynman discovery engine)."""
+    return FileResponse(FRONTEND_DIR / "discovery.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
 @app.get("/lesson.js", include_in_schema=False)
 async def serve_lesson_js():
     return FileResponse(FRONTEND_DIR / "lesson.js", headers=FRONTEND_NO_CACHE_HEADERS)

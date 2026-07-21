@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1" />
-    <link rel="stylesheet" href="styles.css?v=20260721-1" />
+    <link rel="stylesheet" href="styles.css?v=20260721-2" />
     <link href="vendor/fonts/cinzel-decorative.css" rel="stylesheet" />
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
   </head>
@@ -15,6 +15,7 @@
       <div class="subtitle" title="Like Euclid's Elements: start from self-evident axioms, derive everything step by step. No formula is handed to you without showing where it comes from and why it's true.">Learn math from first principles</div>
       <nav class="nav-tabs">
         <button class="tab-btn active" data-tab="lesson"><span class="tab-icon">&#128218;</span> Learn</button>
+        <button class="tab-btn" data-tab="discover"><span class="tab-icon">&#128161;</span> Discover</button>
         <button class="tab-btn" data-tab="polya"><span class="tab-icon">&#8982;</span> Solve</button>
         <a href="mathmap.html" class="tab-btn tab-link"><span class="tab-icon">&#9672;</span> Math Map</a>
         <div class="nav-dropdown" id="labs-dropdown">
@@ -56,6 +57,7 @@
               <option value="adult">Adult</option>
             </select>
             <button id="lesson-start" class="btn-primary">Build Lesson</button>
+            <button id="lesson-discover" class="btn-secondary" title="Discover this topic from first principles, Feynman-style">💡 Discover</button>
             <button id="lesson-ask" class="btn-secondary" title="Ask directly without building a lesson">Just Ask</button>
             <button id="lesson-export" class="btn-secondary" disabled>Export HTML</button>
             <span id="lesson-status" style="font-size:12px;color:#78716c;align-self:center;"></span>
@@ -1986,6 +1988,28 @@
         </section>
       </div>
 
+      <!-- Discover Tab (Feynman "discover it yourself" for any topic) -->
+      <div id="tab-discover" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div class="tutor-header">
+            <h3>Discover &mdash; invent it yourself</h3>
+            <p>Type any topic and rebuild it the Feynman way: from what you already know, to a tiny example worked by hand, to deriving the rule yourself &mdash; with connections up and down the map of mathematics.</p>
+          </div>
+          <div class="harmonics-controls" style="margin:12px 0;">
+            <input type="text" id="discover-topic" placeholder="e.g. why a matrix determinant measures area" style="flex:1;min-width:260px;padding:8px 12px;border:1px solid #d6d3d1;border-radius:6px;font-size:14px;" />
+            <select id="discover-level" style="padding:8px;border:1px solid #d6d3d1;border-radius:6px;">
+              <option value="kids">Kids</option>
+              <option value="teen" selected>Teen</option>
+              <option value="college">College</option>
+              <option value="adult">Adult</option>
+            </select>
+            <button id="discover-go" class="btn-primary">Discover</button>
+            <span id="discover-status" style="font-size:12px;color:#78716c;"></span>
+          </div>
+          <div id="discover-root"><!-- rendered by discovery.js --></div>
+        </section>
+      </div>
+
       <!-- AI by Hand Tab -->
       <div id="tab-aibyhand" class="tab-content">
         <section class="tutor-panel" style="overflow-y:auto;">
@@ -2101,18 +2125,19 @@
     <script src="vendor/katex/auto-render.min.js"></script>
     <script src="vendor/d3.min.js"></script>
     <script src="vendor/vexflow.js"></script>
-    <script src="app.js?v=20260717-1"></script>
+    <script src="app.js?v=20260721-2"></script>
     <script src="music_core.js?v=20260708"></script>
     <script src="mozart_notes.js?v=20260402"></script>
     <script src="musiclab.js?v=20260720-1"></script>
     <script src="aibyhand.js?v=20260721-1"></script>
+    <script src="discovery.js?v=20260721-1"></script>
     <script src="calclab.js?v=20260408-7"></script>
     <script src="fftlab.js?v=20260404b"></script>
     <script src="fftlab-image.js?v=20260404"></script>
     <script src="cryptolab.js?v=20260716-1"></script>
     <script src="logiclab.js?v=20260408"></script>
     <script src="symbols.js?v=20260408"></script>
-    <script src="lesson.js?v=20260721-1"></script>
+    <script src="lesson.js?v=20260721-2"></script>
     <script src="polya.js?v=20260715-1"></script>
   </body>
 </html>

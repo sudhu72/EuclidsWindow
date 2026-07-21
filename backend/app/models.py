@@ -199,6 +199,23 @@ class LessonSceneResponse(BaseModel):
     explanation: Optional[str] = None
 
 
+class DiscoverRequest(BaseModel):
+    topic: str = Field(..., min_length=1, max_length=500)
+    level: str = Field("teen", pattern="^(kids|teen|college|adult)$")
+
+
+class DiscoverResponse(BaseModel):
+    topic: str
+    know: str
+    question: str
+    byhand: str
+    discover: str
+    explain: str
+    prerequisites: List[str]
+    unlocks: List[str]
+    related: List[str]
+
+
 class LessonBuildResponse(LessonOutlineResponse):
     # Scenes align 1:1 with ``sections``; a null entry is a scene that failed
     # generation and can be retried via the per-scene endpoint.

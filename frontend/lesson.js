@@ -23,6 +23,15 @@ document.addEventListener("DOMContentLoaded", () => {
   let historyStart = 0; // tutor history length when this lesson was built
 
   const askBtn = document.getElementById("lesson-ask");
+  const discoverBtn = document.getElementById("lesson-discover");
+  if (discoverBtn) {
+    // Feynman "discover it yourself" for the current topic (opens Discover tab).
+    discoverBtn.addEventListener("click", () => {
+      const t = (topicEl.value || "").trim();
+      if (!t) { statusEl.textContent = "Enter a topic first."; return; }
+      if (window.EWDiscover) window.EWDiscover.run(t, levelEl.value);
+    });
+  }
   const askSceneBtn = document.getElementById("lesson-ask-scene");
   const tutorInput = document.getElementById("tutor-input");
   const tutorSolution = document.getElementById("tutor-solution");
