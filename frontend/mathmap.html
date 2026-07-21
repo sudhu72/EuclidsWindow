@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Map of Mathematics - Euclid's Window</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1" />
-    <link rel="stylesheet" href="mathmap.css?v=20260408-1" />
+    <link rel="stylesheet" href="mathmap.css?v=20260721-1" />
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
   </head>
   <body>
@@ -18,6 +18,19 @@
     <div class="search-bar">
       <input type="text" id="search-input" placeholder="Search topics..." />
       <div id="search-results" class="search-results hidden"></div>
+    </div>
+
+    <div class="view-toggle">
+      <button id="view-categories" class="toggle-btn active">&#9707; Categories</button>
+      <button id="view-graph" class="toggle-btn">&#9672; Concept Graph</button>
+    </div>
+
+    <div id="graph-view" class="graph-view hidden">
+      <div class="graph-toolbar">
+        <input type="text" id="graph-search" placeholder="Highlight a concept…" />
+        <span class="graph-hint">Drag to move &middot; scroll to zoom &middot; hover to see links &middot; click a node to open its lesson</span>
+      </div>
+      <svg id="concept-graph-svg" class="concept-graph-svg"></svg>
     </div>
 
     <main class="map-container" id="map-container">
@@ -56,6 +69,8 @@
 
     <script src="vendor/katex/katex.min.js"></script>
     <script src="vendor/katex/auto-render.min.js"></script>
+    <script src="vendor/d3.min.js"></script>
     <script src="mathmap.js"></script>
+    <script src="graphmap.js?v=20260721-1"></script>
   </body>
 </html>

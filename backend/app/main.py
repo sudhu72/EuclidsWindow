@@ -287,6 +287,12 @@ async def serve_mathmap_css():
     return FileResponse(FRONTEND_DIR / "mathmap.css")
 
 
+@app.get("/graphmap.js", include_in_schema=False)
+async def serve_graphmap_js():
+    """Serve graphmap.js (concept-graph explorer)."""
+    return FileResponse(FRONTEND_DIR / "graphmap.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
 @app.get("/lesson.js", include_in_schema=False)
 async def serve_lesson_js():
     return FileResponse(FRONTEND_DIR / "lesson.js", headers=FRONTEND_NO_CACHE_HEADERS)

@@ -629,3 +629,63 @@ body {
     flex-direction: column;
   }
 }
+
+/* ── Concept graph explorer ─────────────────────────────────────────── */
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+.toggle-btn {
+  padding: 8px 18px;
+  border: 1px solid #44403c;
+  background: #292524;
+  color: #e7e5e4;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.toggle-btn:hover { background: #44403c; }
+.toggle-btn.active {
+  background: #fafaf9;
+  color: #1c1917;
+  border-color: #fafaf9;
+  font-weight: 600;
+}
+
+.graph-view.hidden,
+#map-container.hidden { display: none; }
+
+.graph-view {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px 24px;
+}
+.graph-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+#graph-search {
+  padding: 8px 14px;
+  border: 1px solid #44403c;
+  background: #292524;
+  color: #fafaf9;
+  border-radius: 8px;
+  font-size: 14px;
+  min-width: 220px;
+}
+#graph-search::placeholder { color: #a8a29e; }
+.graph-hint { color: #a8a29e; font-size: 12px; }
+.concept-graph-svg {
+  width: 100%;
+  height: 640px;
+  background: #fafaf9;
+  border: 1px solid #292524;
+  border-radius: 12px;
+  display: block;
+}
