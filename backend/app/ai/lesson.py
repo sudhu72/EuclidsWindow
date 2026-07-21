@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 
 from ..logging_config import logger
 from .engine import LocalLLMEngine
+from .graph import parallel_map
 from .prompts import LEVEL_INSTRUCTIONS
 
 SCENE_TYPES = ("explain", "example", "quiz")
@@ -181,6 +182,33 @@ class LessonService:
         if section_type == "quiz":
             return self._quiz_scene(topic, level, section_title, summary)
         return self._explain_scene(topic, level, section_title, section_type, summary)
+
+    def build(self, topic: str, level: str = "teen") -> Optional[Dict[str, Any]]:
+        """Outline a lesson, then generate every scene in parallel.
+
+        The scenes depend only on the outline (topic, level, section), never on
+        each other, so this is a clean fan-out: ``outline -> [scene ‖ ...]``.
+        Generating them concurrently instead of one-per-click means the learner
+        never waits at each Next. A scene that fails comes back as ``None`` so
+        the frontend can retry just that one via the per-scene endpoint.
+        """
+        outline = self.outline(topic, level)
+        if not outline:
+            return None
+        sections = outline["sections"]
+
+        def make_scene(section: Dict[str, str]) -> Optional[Dict[str, Any]]:
+            return self.scene(
+                outline["topic"], outline["level"],
+                section["title"], section["type"], section.get("summary", ""),
+            )
+
+        scenes = parallel_map(make_scene, sections, max_workers=4)
+        logger.info(
+            f"LessonService.build: '{outline['title']}' — "
+            f"{sum(s is not None for s in scenes)}/{len(sections)} scenes generated"
+        )
+        return {**outline, "scenes": scenes}
 
     def _explain_scene(
         self, topic: str, level: str, title: str, stype: str, summary: str

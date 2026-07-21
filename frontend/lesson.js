@@ -158,7 +158,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const chip = document.createElement("button");
       chip.className = i === current ? "btn-primary" : "btn-secondary";
       chip.style.cssText = "font-size:11px;padding:4px 10px;";
-      chip.textContent = `${TYPE_ICONS[s.type] || ""} ${i + 1}. ${s.title}`;
+      // A small dot marks scenes already generated (background prefetch done).
+      const ready = i === current || scenes[i] ? "" : ' <span style="opacity:0.45;">○</span>';
+      chip.innerHTML = `${TYPE_ICONS[s.type] || ""} ${i + 1}. ${esc(s.title)}${ready}`;
       chip.addEventListener("click", () => showScene(i));
       progressEl.appendChild(chip);
     });
@@ -214,26 +216,60 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  async function fetchScene(idx) {
-    if (scenes[idx]) return scenes[idx];
+  // In-flight promise per scene so a background prefetch and a user click on the
+  // same scene share one request instead of firing two.
+  const scenePromises = [];
+
+  function fetchScene(idx) {
+    if (scenes[idx]) return Promise.resolve(scenes[idx]);
+    if (scenePromises[idx]) return scenePromises[idx];
     const s = outline.sections[idx];
-    const resp = await fetch("/api/ai/lesson/scene", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        topic: outline.topic,
-        level: outline.level,
-        section_title: s.title,
-        section_type: s.type,
-        summary: s.summary || "",
-      }),
+    const p = (async () => {
+      const resp = await fetch("/api/ai/lesson/scene", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: outline.topic,
+          level: outline.level,
+          section_title: s.title,
+          section_type: s.type,
+          summary: s.summary || "",
+        }),
+      });
+      if (!resp.ok) {
+        const detail = (await resp.json().catch(() => ({}))).detail;
+        throw new Error(detail || `HTTP ${resp.status}`);
+      }
+      scenes[idx] = await resp.json();
+      return scenes[idx];
+    })();
+    // Drop the cached promise on failure so a retry re-requests.
+    p.catch(() => { scenePromises[idx] = undefined; });
+    scenePromises[idx] = p;
+    return p;
+  }
+
+  // Graph fan-out, streamed (no barrier): once scene 0 is showing, generate the
+  // remaining independent scenes in the background so Next is instant. On a
+  // single local GPU these queue; on a cloud provider they truly parallelize.
+  function prefetchRemaining() {
+    if (!outline) return;
+    const pending = outline.sections
+      .map((_, i) => i)
+      .filter((i) => i !== 0 && !scenes[i]);
+    if (!pending.length) return;
+    let done = 0;
+    statusEl.textContent = `Preparing ${pending.length} more scene${pending.length > 1 ? "s" : ""} in the background…`;
+    pending.forEach((i) => {
+      fetchScene(i)
+        .then(() => { if (current === i) renderScene(i); }) // arrived while viewing
+        .catch(() => {})
+        .finally(() => {
+          done += 1;
+          renderProgress(); // reflect readiness in the progress chips
+          if (done === pending.length) statusEl.textContent = "";
+        });
     });
-    if (!resp.ok) {
-      const detail = (await resp.json().catch(() => ({}))).detail;
-      throw new Error(detail || `HTTP ${resp.status}`);
-    }
-    scenes[idx] = await resp.json();
-    return scenes[idx];
   }
 
   async function showScene(idx) {
@@ -270,7 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
     startBtn.disabled = true;
     statusEl.textContent = "Designing the lesson outline…";
     bodyEl.style.display = "none";
-    outline = null; scenes = []; current = 0;
+    outline = null; scenes = []; scenePromises.length = 0; current = 0;
     try {
       const resp = await fetch("/api/ai/lesson/outline", {
         method: "POST",
@@ -289,6 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
       await window.EWTutor?.startNewSession?.();
       historyStart = (window.EWTutor?.getHistory?.() || []).length;
       await showScene(0);
+      prefetchRemaining(); // background fan-out; Next becomes instant
     } catch (err) {
       statusEl.textContent = "Lesson failed: " + err.message;
     } finally {

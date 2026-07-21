@@ -199,6 +199,12 @@ class LessonSceneResponse(BaseModel):
     explanation: Optional[str] = None
 
 
+class LessonBuildResponse(LessonOutlineResponse):
+    # Scenes align 1:1 with ``sections``; a null entry is a scene that failed
+    # generation and can be retried via the per-scene endpoint.
+    scenes: List[Optional[LessonSceneResponse]]
+
+
 class AppSettingsResponse(BaseModel):
     llm_provider: str = "ollama"
     cloud_llm_model: Optional[str] = None

@@ -8,6 +8,7 @@ from ..ai.lesson import LessonService
 from ..ai.media import DiffusionImageService, MusicGenService
 from ..ai.music_composer import SymbolicMusicComposer
 from ..models import (
+    LessonBuildResponse,
     LessonOutlineRequest,
     LessonOutlineResponse,
     LessonSceneRequest,
@@ -73,6 +74,21 @@ async def ai_lesson_outline(payload: LessonOutlineRequest) -> LessonOutlineRespo
     if not outline:
         raise HTTPException(status_code=502, detail="Could not generate a lesson outline")
     return LessonOutlineResponse(**outline)
+
+
+@router.post("/api/ai/lesson/build", response_model=LessonBuildResponse)
+async def ai_lesson_build(payload: LessonOutlineRequest) -> LessonBuildResponse:
+    """Outline + all scenes in one call, scenes generated in parallel.
+
+    Graph orchestration: ``outline -> [scene ‖ scene ‖ ...] -> assemble``. The
+    learner gets the whole lesson at once instead of waiting per Next-click.
+    """
+    if not lesson_service.is_available():
+        raise HTTPException(status_code=503, detail="Local LLM not available")
+    lesson = await asyncio.to_thread(lesson_service.build, payload.topic, payload.level)
+    if not lesson:
+        raise HTTPException(status_code=502, detail="Could not generate a lesson outline")
+    return LessonBuildResponse(**lesson)
 
 
 @router.post("/api/ai/lesson/scene", response_model=LessonSceneResponse)
