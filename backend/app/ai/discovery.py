@@ -74,9 +74,10 @@ class DiscoveryService:
         for attempt in range(2):
             raw = self._engine.chat_json(
                 messages,
-                timeout_seconds=90,
-                num_predict=1600,
-                num_ctx=4096,
+                task="discover",  # routes to the stronger local_discover_model (qwen3:8b)
+                timeout_seconds=180,  # qwen3:8b is a slower "thinking" model
+                num_predict=2000,
+                num_ctx=8192,
                 temperature=0.4 if attempt == 0 else 0.6,
             )
             if raw and raw.get("byhand") and raw.get("discover"):

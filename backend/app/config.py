@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     # Olympiad-difficulty coaching needs stronger math judging; falls back
     # to local_polya_model, then local_llm_model.
     local_polya_olympiad_model: Optional[str] = None
+    # Feynman discovery paths benefit from a stronger reasoner than the tiny
+    # default; falls back to local_llm_model when unset.
+    local_discover_model: Optional[str] = None
     local_multi_agent_enabled: bool = True
     local_web_rag_enabled: bool = True
     fast_mode_enabled: bool = False

@@ -41,6 +41,9 @@ class SettingsStore:
             "local_codegen_model": overrides.get("local_codegen_model", base.local_codegen_model),
             "local_fast_model": overrides.get("local_fast_model", base.local_fast_model),
             "local_polya_model": overrides.get("local_polya_model", base.local_polya_model),
+            "local_discover_model": overrides.get(
+                "local_discover_model", base.local_discover_model
+            ),
             "local_polya_olympiad_model": overrides.get(
                 "local_polya_olympiad_model", base.local_polya_olympiad_model
             ),

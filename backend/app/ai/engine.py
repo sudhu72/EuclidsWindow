@@ -42,6 +42,8 @@ class LocalLLMEngine:
             return overrides.get("local_fast_model") or default
         if task == "polya":
             return overrides.get("local_polya_model") or default
+        if task == "discover":
+            return overrides.get("local_discover_model") or default
         if task == "polya_olympiad":
             return (
                 overrides.get("local_polya_olympiad_model")
