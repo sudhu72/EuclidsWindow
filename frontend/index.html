@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1" />
-    <link rel="stylesheet" href="styles.css?v=20260720-1" />
+    <link rel="stylesheet" href="styles.css?v=20260721-1" />
     <link href="vendor/fonts/cinzel-decorative.css" rel="stylesheet" />
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
   </head>
@@ -26,6 +26,7 @@
             <button class="nav-dropdown-item" data-tab="fftlab"><span class="tab-icon">&#8767;</span> FFT Lab</button>
             <button class="nav-dropdown-item" data-tab="cryptolab"><span class="tab-icon">&#128274;</span> Crypto Lab</button>
             <button class="nav-dropdown-item" data-tab="logiclab"><span class="tab-icon">&#8866;</span> Logic Lab</button>
+            <button class="nav-dropdown-item" data-tab="aibyhand"><span class="tab-icon">&#9636;</span> AI by Hand</button>
           </div>
         </div>
         <button class="tab-btn" data-tab="mindmap"><span class="tab-icon">&#9702;</span> Concepts</button>
@@ -1985,6 +1986,13 @@
         </section>
       </div>
 
+      <!-- AI by Hand Tab -->
+      <div id="tab-aibyhand" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div id="aibyhand-root"><!-- rendered by aibyhand.js --></div>
+        </section>
+      </div>
+
       <!-- Symbols Tab -->
       <div id="tab-symbols" class="tab-content">
         <section class="tutor-panel" style="overflow-y:auto;">
@@ -2097,6 +2105,7 @@
     <script src="music_core.js?v=20260708"></script>
     <script src="mozart_notes.js?v=20260402"></script>
     <script src="musiclab.js?v=20260720-1"></script>
+    <script src="aibyhand.js?v=20260721-1"></script>
     <script src="calclab.js?v=20260408-7"></script>
     <script src="fftlab.js?v=20260404b"></script>
     <script src="fftlab-image.js?v=20260404"></script>

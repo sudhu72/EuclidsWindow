@@ -293,6 +293,12 @@ async def serve_graphmap_js():
     return FileResponse(FRONTEND_DIR / "graphmap.js", headers=FRONTEND_NO_CACHE_HEADERS)
 
 
+@app.get("/aibyhand.js", include_in_schema=False)
+async def serve_aibyhand_js():
+    """Serve aibyhand.js (AI-by-Hand discovery lab)."""
+    return FileResponse(FRONTEND_DIR / "aibyhand.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
 @app.get("/lesson.js", include_in_schema=False)
 async def serve_lesson_js():
     return FileResponse(FRONTEND_DIR / "lesson.js", headers=FRONTEND_NO_CACHE_HEADERS)
