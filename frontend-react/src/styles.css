@@ -134,3 +134,19 @@ body {
 .ask-row { display: flex; gap: 8px; }
 .ask-row input { flex: 1; padding: 10px 12px; border: 1px solid #d6d3d1; border-radius: 8px; font-size: 14px; }
 .ask-answer { margin-top: 12px; max-width: 100%; }
+
+/* Discover stages */
+.dsub { color: var(--muted); font-style: italic; margin: -4px 0 14px; }
+.dstage { border-left: 3px solid #d6d3d1; padding: 4px 0 4px 14px; margin: 14px 0; }
+.dstage-h { font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.dstage-b { color: #292524; line-height: 1.7; }
+.dconnect { border-left-color: var(--accent); }
+.dchips > div { margin: 4px 0; }
+.dchip {
+  display: inline-block; padding: 3px 10px; margin: 2px 3px; border-radius: 999px;
+  font-size: 0.82rem; border: 1px solid var(--line); background: #fafaf9;
+  color: #44403c; cursor: pointer;
+}
+.dchip:hover { border-color: var(--ink); color: var(--ink); }
+.dchip.pre { border-color: #bfdbfe; background: #eff6ff; color: #1e40af; }
+.dchip.post { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
