@@ -301,6 +301,61 @@ class LocalLLMEngine:
                 return None
         return None
 
+    def chat_stream(
+        self,
+        messages: List[Dict[str, str]],
+        *,
+        task: Optional[str] = None,
+        num_predict: Optional[int] = None,
+        num_ctx: Optional[int] = None,
+        temperature: Optional[float] = None,
+        timeout_seconds: Optional[int] = None,
+    ):
+        """Yield answer text chunks as Ollama generates them (real-time chat).
+
+        Ollama-only — streaming cloud providers is out of scope here, so a cloud
+        route or CLI fallback yields nothing and the caller can fall back to the
+        non-streaming ``chat``. Errors end the stream quietly.
+        """
+        if not self.is_available() or self.provider != "ollama" or not self.base_url:
+            return
+        model = self._model_for_task(task)
+        body: dict = {"model": model, "messages": messages, "stream": True, "keep_alive": "10m"}
+        options: dict = {}
+        if num_predict:
+            options["num_predict"] = num_predict
+        if num_ctx:
+            options["num_ctx"] = num_ctx
+        if temperature is not None:
+            options["temperature"] = temperature
+        if options:
+            body["options"] = options
+        url = f"{self.base_url.rstrip('/')}/api/chat"
+        request = urllib.request.Request(
+            url,
+            data=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=timeout_seconds or self.timeout) as response:
+                for line in response:  # Ollama streams newline-delimited JSON
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        obj = json.loads(line)
+                    except ValueError:
+                        continue
+                    chunk = obj.get("message", {}).get("content", "")
+                    if chunk:
+                        yield chunk
+                    if obj.get("done"):
+                        break
+        except Exception as exc:  # noqa: BLE001 - end the stream on any error
+            logger.error(f"Ollama chat_stream failed: {exc}")
+            return
+
     def chat_json(
         self,
         messages: List[Dict[str, str]],

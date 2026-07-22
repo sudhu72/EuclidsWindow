@@ -25,3 +25,4 @@ anthropic>=0.85
 openai>=2.0
 pypdf>=4.0
 python-multipart>=0.0.9
+httpx==0.28.1

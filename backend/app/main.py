@@ -32,6 +32,8 @@ from .routers.ai_media import (
 from .routers.polya import router as polya_router
 from .routers.library import router as library_router
 from .routers.graph import router as graph_router
+from .routers.chat import router as chat_router
+from .routers.voice import router as voice_router
 from .ai.viz_agent import VizAgent
 from .ai.animation_pipeline import AnimationPipeline
 from .ai.checker import SymbolicChecker
@@ -217,6 +219,8 @@ app.include_router(ai_media_router)
 app.include_router(polya_router)
 app.include_router(library_router)
 app.include_router(graph_router)
+app.include_router(chat_router)
+app.include_router(voice_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -231,6 +235,12 @@ if STATIC_MEDIA_DIR.exists():
     app.mount("/media", StaticFiles(directory=STATIC_MEDIA_DIR), name="media")
 if (FRONTEND_DIR / "vendor").exists():
     app.mount("/vendor", StaticFiles(directory=FRONTEND_DIR / "vendor"), name="vendor")
+
+# React/Vite frontend (chat + voice), built to frontend-react/dist and served at
+# /app alongside the classic vanilla SPA at /. Present only when built.
+FRONTEND_REACT_DIST = BASE_DIR.parent / "frontend-react" / "dist"
+if FRONTEND_REACT_DIST.is_dir():
+    app.mount("/app", StaticFiles(directory=FRONTEND_REACT_DIST, html=True), name="react-app")
 
 
 # =============================================================================

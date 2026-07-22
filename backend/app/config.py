@@ -63,6 +63,13 @@ class Settings(BaseSettings):
     local_music_model: str = "facebook/musicgen-small"
     local_media_device: str = "cpu"  # cpu, cuda, or mps
 
+    # Voice (Voicebox sidecar; https://github.com/jamiepine/voicebox).
+    # Best-effort: when unreachable the React UI falls back to the browser's
+    # built-in Web Speech API, so voice works with or without Voicebox running.
+    voicebox_url: str = "http://127.0.0.1:17493"
+    voicebox_client_id: str = "euclids-window"
+    voice_enabled: bool = True
+
     # Paths
     static_viz_dir: str = "static/visualizations"
 

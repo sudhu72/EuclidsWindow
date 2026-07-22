@@ -12,6 +12,8 @@ services:
       LOCAL_POLYA_MODEL: "${LOCAL_POLYA_MODEL:-qwen3:4b-instruct}"
       LOCAL_POLYA_OLYMPIAD_MODEL: "${LOCAL_POLYA_OLYMPIAD_MODEL:-qwen3:8b}"
       LOCAL_DISCOVER_MODEL: "${LOCAL_DISCOVER_MODEL:-qwen3:8b}"
+      # Voicebox voice sidecar runs on the HOST; reach it via host.docker.internal.
+      VOICEBOX_URL: "${VOICEBOX_URL:-http://host.docker.internal:17493}"
       LOCAL_LLM_TIMEOUT_SECONDS: "120"
       LOCAL_AI_EXECUTION_TIMEOUT_SECONDS: "60"
       LOCAL_LLM_BASE_URL: "${LOCAL_LLM_BASE_URL:-http://ollama:11434}"

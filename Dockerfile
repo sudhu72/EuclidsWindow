@@ -1,3 +1,12 @@
+# --- Stage 1: build the React/Vite frontend (chat + voice) ---
+FROM node:20-slim AS react-build
+WORKDIR /build
+COPY frontend-react/package.json frontend-react/package-lock.json* ./
+RUN npm install
+COPY frontend-react/ ./
+RUN npm run build
+
+# --- Stage 2: the app image ---
 FROM python:3.10-slim
 
 WORKDIR /app
@@ -30,6 +39,7 @@ RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 
 COPY backend /app/backend
 COPY frontend /app/frontend
+COPY --from=react-build /build/dist /app/frontend-react/dist
 COPY scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
 
 RUN mkdir -p /app/backend/data/context_db
