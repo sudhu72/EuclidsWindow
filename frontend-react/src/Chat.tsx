@@ -1,25 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
 import { streamChat, type ChatMsg } from "./api";
 import { voice, type VoiceStatus } from "./voice";
-
-// Models emit \(...\) and \[...\], but CommonMark escapes \( and \[ to literal
-// punctuation before remark-math (which wants $...$/$$...$$) can see them.
-// Normalize the delimiters to dollar form so KaTeX actually renders.
-function normalizeMath(src: string): string {
-  return src
-    .replace(/\\\[([\s\S]*?)\\\]/g, (_m, inner) => `\n\n$$${inner.trim()}$$\n\n`)
-    .replace(/\\\(([\s\S]*?)\\\)/g, (_m, inner) => `$${inner.trim()}$`);
-}
+import Markdown from "./Markdown";
 
 function Bubble({ role, content }: ChatMsg) {
   return (
     <div className={`bubble ${role}`}>
-      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-        {content ? normalizeMath(content) : "…"}
-      </ReactMarkdown>
+      <Markdown>{content || "…"}</Markdown>
     </div>
   );
 }
