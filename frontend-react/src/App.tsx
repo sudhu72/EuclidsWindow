@@ -2,13 +2,17 @@ import { useState } from "react";
 import Chat from "./Chat";
 import Lesson from "./Lesson";
 import Discover from "./Discover";
+import Solve from "./Solve";
+import Library from "./Library";
 
-type Tab = "learn" | "discover" | "chat";
+type Tab = "learn" | "discover" | "solve" | "chat" | "library";
 
 const TABS: [Tab, string][] = [
   ["learn", "📖 Learn"],
   ["discover", "💡 Discover"],
+  ["solve", "⊹ Solve"],
   ["chat", "💬 Chat"],
+  ["library", "📚 Library"],
 ];
 
 export default function App() {
@@ -30,7 +34,17 @@ export default function App() {
         </nav>
       </header>
       <main className="main">
-        {tab === "chat" ? <Chat /> : tab === "discover" ? <Discover /> : <Lesson />}
+        {tab === "chat" ? (
+          <Chat />
+        ) : tab === "discover" ? (
+          <Discover />
+        ) : tab === "solve" ? (
+          <Solve />
+        ) : tab === "library" ? (
+          <Library />
+        ) : (
+          <Lesson />
+        )}
       </main>
     </div>
   );

@@ -23,7 +23,9 @@ from .prompts import LEVEL_INSTRUCTIONS
 SCENE_TYPES = ("explain", "example", "quiz")
 
 OUTLINE_SYSTEM_PROMPT = textwrap.dedent("""\
-    You design short math lessons. Produce a lesson outline as JSON only:
+    You design short math lessons using the Feynman method: lead the learner to
+    re-discover the idea from what they already know, concrete examples before
+    formulas. Produce a lesson outline as JSON only:
 
     {
       "title": "...",
@@ -34,24 +36,38 @@ OUTLINE_SYSTEM_PROMPT = textwrap.dedent("""\
     }
 
     Rules:
-    - 4 to 6 sections.
-    - Start with an "explain" section on the core idea.
-    - Include at least one "example" (worked example) section.
-    - End with exactly one "quiz" section.
-    - Build from first principles: each section should depend only on the
-      sections before it.
+    - 4 to 5 sections. Each covers ONE idea. Prefer fewer, clearer sections.
+    - Section 1 ("explain"): the intuition and the concrete question this topic
+      answers — motivate it before any formula.
+    - Then build up: each section depends only on the ones before it.
+    - Include at least one "example" (a worked example with real numbers).
+    - End with exactly one "quiz" section (active recall).
+    - Section titles should be a plain question or idea, not jargon.
     """)
 
 EXPLAIN_SYSTEM_PROMPT = textwrap.dedent("""\
-    You write one scene of a math lesson. Respond with JSON only:
+    You write one scene of a math lesson using the Feynman technique: explain it
+    as if to a curious 12-year-old, in plain language, one idea at a time,
+    starting from something concrete. Respond with JSON only:
 
     {
-      "narration": "markdown explanation of this section (150-300 words, use LaTeX \\\\(...\\\\) for math)",
-      "classmate_question": "the question a curious but confused classmate would ask about this",
+      "narration": "markdown explanation (120-220 words, use LaTeX \\\\(...\\\\) for math)",
+      "classmate_question": "the question a curious but confused classmate would ask",
       "classmate_answer": "a friendly 2-3 sentence answer to that question"
     }
 
-    Rules for narration:
+    How to explain well:
+    - Start concrete: a small example, picture, or everyday analogy BEFORE any
+      formula. Then generalize to the rule.
+    - Short sentences. Define each symbol the first time it appears.
+    - One idea per scene — do not cram. Being brief is good.
+
+    Accuracy (critical):
+    - State only mathematics you are sure is correct. Do NOT invent history,
+      dates, biographies, or anecdotes. If the topic is named after a person,
+      teach the MATH, not a backstory you're unsure of.
+
+    Formatting:
     - Do NOT repeat the section title; start directly with the explanation.
     - Inline math: \\\\(...\\\\). Display math: $$...$$ on its own lines.
     - Never use \\\\begin{equation} or other LaTeX environments, and never

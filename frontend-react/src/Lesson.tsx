@@ -6,6 +6,19 @@ import Markdown from "./Markdown";
 const TYPE_ICON: Record<string, string> = { explain: "📖", example: "🧮", quiz: "❓" };
 const LEVELS = ["kids", "teen", "college", "adult"];
 
+// A curated ladder of self-learning concepts — good "aha" topics that make
+// strong Feynman lessons, from everyday intuition to deeper ideas.
+const STARTERS = [
+  "Why is a negative times a negative positive?",
+  "What is the Pythagorean theorem, really?",
+  "Why is the area of a circle πr²?",
+  "What does a derivative actually measure?",
+  "Why do we need imaginary numbers?",
+  "What makes prime numbers special?",
+  "Why does e^(iπ) + 1 = 0?",
+  "How does modular arithmetic power cryptography?",
+];
+
 function Quiz({ scene }: { scene: LessonScene }) {
   const [picked, setPicked] = useState<number | null>(null);
   const correct = scene.correct_index ?? 0;
@@ -102,8 +115,8 @@ export default function Lesson() {
   const [idx, setIdx] = useState(0);
   const [building, setBuilding] = useState(false);
 
-  async function build() {
-    const t = topic.trim();
+  async function build(topicArg?: string) {
+    const t = (topicArg ?? topic).trim();
     if (!t || building) return;
     setBuilding(true);
     setLesson(null);
@@ -164,9 +177,25 @@ export default function Lesson() {
       </div>
 
       {!lesson && !building && (
-        <div className="empty">
-          Build a structured lesson from first principles — explanation, worked example, and a
-          quiz — with math typeset live. Ask follow-up questions on any scene.
+        <div className="starters">
+          <div className="empty" style={{ margin: "8px auto 14px" }}>
+            Learn any idea the Feynman way — a concrete example, one idea at a time, then a quiz —
+            with math typeset live. Ask a follow-up on any scene. Or start with one of these:
+          </div>
+          <div className="starter-chips">
+            {STARTERS.map((s) => (
+              <button
+                key={s}
+                className="chip"
+                onClick={() => {
+                  setTopic(s);
+                  void build(s);
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

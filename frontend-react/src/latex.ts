@@ -91,10 +91,16 @@ function wrapBareMathCommands(part: string): string {
 }
 
 /** Full normalize → returns text with $...$ / $$...$$ delimiters for remark-math. */
+const CURRENCY = "\uE000"; // sentinel to shield currency $ from math delimiters
+
 export function normalizeForKatex(text: string): string {
   if (!text) return "";
   let n = text;
   for (const [uni, cmd] of Object.entries(GREEK_UNICODE)) n = n.split(uni).join(cmd);
+  // A "$" right before a digit is almost always currency ($1.00), not a math
+  // delimiter — shield it so the $...$ rule below can't pair two prices and
+  // turn the prose between them into math. Restored as a literal "\$" at the end.
+  n = n.replace(/\$(?=\d)/g, CURRENCY);
   // Normalize any $-delimited math into \(...\)/\[...\] so the repair pipeline
   // (which works on \(...\) segments) can see all of it.
   n = n.replace(/\$\$([\s\S]+?)\$\$/g, "\\[$1\\]");
@@ -109,5 +115,7 @@ export function normalizeForKatex(text: string): string {
   n = n
     .replace(/\\\[([\s\S]*?)\\\]/g, (_m, inner) => `\n\n$$${inner.trim()}$$\n\n`)
     .replace(/\\\(([\s\S]*?)\\\)/g, (_m, inner) => `$${inner.trim()}$`);
+  // Restore shielded currency markers as escaped literal dollars.
+  n = n.split(CURRENCY).join("\\$");
   return n;
 }
