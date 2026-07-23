@@ -22,6 +22,7 @@ from .executor import VisualizationExecutor
 from .manim_templates import (
     SCENE_PREAMBLE,
     TOPIC_TEMPLATE_MAP,
+    build_generic_scene,
     fill_template,
 )
 
@@ -133,22 +134,27 @@ class AnimationPipeline:
         """
         logger.info(f"AnimationPipeline.generate: topic={topic!r}")
 
-        # Phase 1: try heuristic template
+        # Phase 1: a curated template for this topic — fast and always correct.
         code = self._heuristic_code(topic, context)
-        source = "template"
+        if code is not None:
+            payload = self._render_with_retry(code, topic, "template")
+            if payload is not None:
+                return payload
 
-        # Phase 2: if no template, use LLM
-        if code is None and self._llm.is_available():
-            code = self._llm_generate(topic, context)
-            source = "llm"
+        # Phase 2: LLM codegen for novel topics (creative but unreliable on
+        # small local models). Try it, but never depend on it.
+        if self._llm.is_available():
+            llm_code = self._llm_generate(topic, context)
+            if llm_code is not None:
+                payload = self._render_with_retry(llm_code, topic, "llm")
+                if payload is not None:
+                    return payload
 
-        if code is None:
-            logger.warning("AnimationPipeline: no code generated")
-            return None
-
-        # Phase 3: render (with retry)
-        payload = self._render_with_retry(code, topic, source)
-        return payload
+        # Phase 3: guaranteed generic fallback — a hand-written scene that always
+        # renders, so the learner gets a clean visual instead of a broken one.
+        logger.info("AnimationPipeline: using guaranteed generic fallback")
+        generic = build_generic_scene(topic, context)
+        return self._render_with_retry(generic, topic, "generic")
 
     # ------------------------------------------------------------------
     # Phase 1: heuristic template selection

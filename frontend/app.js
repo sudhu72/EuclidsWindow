@@ -529,40 +529,11 @@ const formatTutorOutput = (payload) => {
     lines.push(steps.join("\n"));
   }
 
-  if (Array.isArray(normalized.checks) && normalized.checks.length > 0) {
-    lines.push("✅ **Checks**");
-    const checks = normalized.checks.map((check) => {
-      const name = check?.name || "check";
-      const status = check?.status === "pass" ? "pass" : "warn";
-      const details = check?.details || "";
-      const icon = status === "pass" ? "🟢" : "🟡";
-      return `${icon} **${name}**: ${details}`;
-    });
-    lines.push(checks.join("\n"));
-  }
-
-  if (Array.isArray(normalized.improvement_hints) && normalized.improvement_hints.length > 0) {
-    lines.push("🛠️ **Coach Hints**");
-    const hints = normalized.improvement_hints.map((hint) => `• ${hint}`);
-    lines.push(hints.join("\n"));
-  }
-
-  if (normalized.self_correction) {
-    lines.push("🔁 **Self-Correction Pass**");
-    lines.push(normalized.self_correction);
-  }
-
-  if (Array.isArray(normalized.key_takeaways) && normalized.key_takeaways.length > 0) {
-    lines.push("📌 **Key Takeaways**");
-    lines.push(normalized.key_takeaways.map((t) => `• ${t}`).join("\n"));
-  }
-
-  if (normalized.needs_visualization || normalized.visualization) {
-    const viz = normalized.visualization || {};
-    lines.push("🎨 **Visualization**");
-    if (viz.type) lines.push(`• **Type**: ${viz.type}`);
-    if (viz.goal) lines.push(`• **Goal**: ${viz.goal}`);
-  }
+  // NOTE: the solver-verifier / didactics metadata (checks, improvement_hints,
+  // self_correction, key_takeaways, visualization goal) is intentionally NOT
+  // shown to the learner — it's internal scaffolding that cluttered the answer
+  // and added no learning value. It still runs server-side to keep answers
+  // honest; we just don't render the plumbing.
 
   return replaceGreekNamesOutsideMath(normalizeLatexDelimiters(lines.join("\n\n")));
 };
@@ -2440,7 +2411,15 @@ const sendTutorQuestion = async (question) => {
     }
 
     renderTutorSolution(payload);
-    showVisualizationIn(tutorViz, payload.visualization);
+    // Don't auto-show the low-value auto concept-map (mermaid) for plain
+    // conceptual answers — it read as clutter. Rich visuals (rendered diagrams,
+    // plots, animations) still show, and the "Render Diagram / Auto-Visualize"
+    // buttons let the learner opt into a diagram on demand.
+    const answerViz = payload.visualization;
+    showVisualizationIn(
+      tutorViz,
+      answerViz && answerViz.viz_type !== "mermaid" ? answerViz : null
+    );
     tutorHistory.push({ role: "assistant", content: payload.solution || "" });
     // Server-suggested follow-ups embed the question the server received —
     // sometimes lightly rephrased, so strip the context prefix itself rather

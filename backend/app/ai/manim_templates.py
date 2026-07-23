@@ -716,3 +716,86 @@ def fill_template(template_name: str, params: dict) -> str:
         return template.format(**params)
     except KeyError:
         return template
+
+
+# ---------------------------------------------------------------------------
+# Guaranteed-render generic fallback
+# ---------------------------------------------------------------------------
+import re as _re
+
+# Only these characters are allowed through to MathTex — a conservative set that
+# LaTeX/KaTeX-style math uses. Anything else means we skip the equation rather
+# than risk a LaTeX compile failure that would sink the whole render.
+_SAFE_EQ = _re.compile(r"^[A-Za-z0-9\s+\-*/=^_(){}\[\].,|<>!:;\\'~]+$")
+
+
+def _clean_text(s: str, limit: int = 60) -> str:
+    """ASCII-safe, single-line text for a Manim Text() (avoids font gaps)."""
+    s = _re.sub(r"\s+", " ", (s or "")).strip()
+    s = "".join(ch for ch in s if 32 <= ord(ch) < 127)
+    s = s.replace('"', "'").replace("\\", "")
+    return s[:limit].strip()
+
+
+def _extract_equation(context: str) -> str:
+    """Pull the first plausible, render-safe equation out of the context."""
+    if not context:
+        return ""
+    patterns = [
+        r"\$\$(.+?)\$\$", r"\\\[(.+?)\\\]", r"\\\((.+?)\\\)", r"\$([^$\n]+?)\$",
+    ]
+    for pat in patterns:
+        m = _re.search(pat, context, _re.DOTALL)
+        if m:
+            eq = m.group(1).strip()
+            if 1 <= len(eq) <= 60 and _SAFE_EQ.match(eq) and eq.count("{") == eq.count("}"):
+                return eq
+    return ""
+
+
+def build_generic_scene(topic: str, context: str = "") -> str:
+    """A hand-written, always-valid Manim scene for any topic.
+
+    Used when no specific template matches and LLM codegen fails, so the learner
+    always gets a clean, correct animation (title + key equation if we can find
+    a safe one + a tasteful motif) instead of a broken render or nothing.
+    """
+    title = _clean_text(topic, 48) or "Mathematics"
+    # First sentence of the context makes a good subtitle.
+    subtitle = _clean_text(_re.split(r"(?<=[.!?])\s", context or "")[0], 64)
+    eq = _extract_equation(context)
+
+    if eq:
+        equation_block = (
+            '        try:\n'
+            f'            eq = MathTex(r"{eq}", font_size=44, color=ACCENT)\n'
+            '            eq.next_to(line, DOWN, buff=0.6)\n'
+            '            self.play(Write(eq), run_time=1.5)\n'
+            '            self.wait(1.0)\n'
+            '        except Exception:\n'
+            '            pass\n'
+        )
+    else:
+        equation_block = "        pass\n"
+
+    body = (
+        f'        sub = Text({subtitle!r}, font_size=24, color=DIM, font=MONO)\n'
+        if subtitle
+        else '        sub = Text("A visual introduction", font_size=24, color=DIM, font=MONO)\n'
+    )
+    body += (
+        '        sub.next_to(title, DOWN, buff=0.5)\n'
+        '        self.play(FadeIn(sub, shift=UP * 0.2), run_time=1.0)\n'
+        '        self.wait(0.6)\n'
+        '        line = Line(LEFT * 2.5, RIGHT * 2.5, color=PRIMARY, stroke_width=3)\n'
+        '        line.next_to(sub, DOWN, buff=0.5)\n'
+        '        self.play(Create(line), run_time=0.9)\n'
+        '        dot = Dot(color=ACCENT).move_to(line.get_start())\n'
+        '        self.play(MoveAlongPath(dot, line), run_time=1.2)\n'
+        + equation_block
+    )
+    # Replace the *indented* placeholder token so the body's own 8-space
+    # indentation lands correctly (avoids a double-indent on the first line).
+    return CONCEPT_EXPLAINER.replace("{title!r}", repr(title)).replace(
+        "        {body_code}", body.rstrip("\n")
+    )
