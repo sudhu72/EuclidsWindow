@@ -2445,3 +2445,8 @@ body {
 .abh-chip:hover { border-color: #1c1917; color: #1c1917; }
 .abh-chip.pre { border-color: #bfdbfe; background: #eff6ff; color: #1e40af; }
 .abh-chip.post { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
+
+/* Embed mode (?embed=1): show only the tab content, for iframing a lab in the
+   React Labs menu while labs are migrated. */
+.embed-mode .app-header { display: none !important; }
+.embed-mode .app-layout { height: 100vh; padding-top: 10px; }

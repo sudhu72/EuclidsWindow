@@ -4,14 +4,16 @@ import Lesson from "./Lesson";
 import Discover from "./Discover";
 import Solve from "./Solve";
 import Library from "./Library";
+import Labs from "./Labs";
 
-type Tab = "learn" | "discover" | "solve" | "chat" | "library";
+type Tab = "learn" | "discover" | "solve" | "chat" | "labs" | "library";
 
 const TABS: [Tab, string][] = [
   ["learn", "📖 Learn"],
   ["discover", "💡 Discover"],
   ["solve", "⊹ Solve"],
   ["chat", "💬 Chat"],
+  ["labs", "🧪 Labs"],
   ["library", "📚 Library"],
 ];
 
@@ -40,6 +42,8 @@ export default function App() {
           <Discover />
         ) : tab === "solve" ? (
           <Solve />
+        ) : tab === "labs" ? (
+          <Labs />
         ) : tab === "library" ? (
           <Library />
         ) : (

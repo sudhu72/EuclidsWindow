@@ -3856,3 +3856,14 @@ if (promptFromUrl) {
     sendTutorQuestion(promptFromUrl);
   }, 500);
 }
+
+// Deep-link / embed support so the React app can open a specific classic lab in
+// an iframe: ?tab=<id> opens that tab; ?embed=1 hides the app chrome so only the
+// lab shows. Used by the React Labs menu while labs are migrated one by one.
+const tabFromUrl = urlParams.get("tab");
+if (tabFromUrl) {
+  setTimeout(() => switchToTab(tabFromUrl), 0);
+}
+if (urlParams.get("embed") === "1") {
+  document.documentElement.classList.add("embed-mode");
+}
