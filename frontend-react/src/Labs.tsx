@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AiByHand from "./AiByHand";
 
 // The classic interactive labs (Web Audio synthesis, Plotly, canvas) are large;
 // rather than a risky one-shot rewrite, the React Labs menu opens each one in
@@ -19,6 +20,20 @@ export default function Labs() {
 
   if (active) {
     const lab = LABS.find((l) => l.id === active)!;
+    // AI by Hand is a native React port; the interactive labs are embedded.
+    if (active === "aibyhand") {
+      return (
+        <div className="labs-frame-wrap">
+          <div className="labs-frame-bar">
+            <button className="btn" onClick={() => setActive(null)}>← All labs</button>
+            <span className="labs-frame-title">{lab.icon} {lab.label}</span>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            <AiByHand />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="labs-frame-wrap">
         <div className="labs-frame-bar">
