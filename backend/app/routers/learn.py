@@ -15,6 +15,10 @@ class SourceRequest(BaseModel):
     label: str = ""
 
 
+class GitHubTokenRequest(BaseModel):
+    token: str = Field("", max_length=400)  # write-only; status returns only a boolean
+
+
 @router.get("/api/learn/status")
 async def learn_status() -> Dict[str, Any]:
     return get_learner().status()
@@ -38,3 +42,8 @@ async def learn_add_source(req: SourceRequest) -> Dict[str, Any]:
 @router.post("/api/learn/sources/remove")
 async def learn_remove_source(req: SourceRequest) -> Dict[str, Any]:
     return get_learner().remove_source(req.value)
+
+
+@router.post("/api/learn/github-token")
+async def learn_set_github_token(req: GitHubTokenRequest) -> Dict[str, Any]:
+    return get_learner().set_github_token(req.token)

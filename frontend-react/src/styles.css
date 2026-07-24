@@ -329,3 +329,7 @@ body {
 .al-add { margin: 10px 0; }
 .al-sources { list-style: none; padding: 0; margin: 8px 0 0; }
 .al-sources li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; background: #fff; font-size: 13px; }
+
+.al-gh { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.al-gh summary { cursor: pointer; font-size: 13px; color: #57534e; }
+.al-ok { color: #15803d; }

@@ -49,6 +49,7 @@ class MathLearner:
         self._state = self._load()
         self._thread: Optional[threading.Thread] = None
         self._running = False
+        self._draining = False  # finishing the queued items, no new discovery
         self._current = ""
         self._visited: set[str] = set(self._state.get("visited", []))
         self._frontier: Deque[Item] = deque()
@@ -77,6 +78,7 @@ class MathLearner:
     def status(self) -> Dict[str, Any]:
         return {
             "running": self._running,
+            "draining": self._draining,
             "current": self._current,
             "queued": len(self._frontier),
             "visited": len(self._visited),
@@ -84,12 +86,20 @@ class MathLearner:
             "stats": self._state["stats"],
             "started_at": self._state.get("started_at"),
             "last_activity": self._state.get("last_activity"),
+            "github_auth": bool(self._state.get("github_token")),  # never return the token
         }
+
+    def set_github_token(self, token: str) -> Dict[str, Any]:
+        """Store a GitHub token to raise the API rate limit for repo traversal."""
+        self._state["github_token"] = (token or "").strip()
+        self._save()
+        return self.status()
 
     def start(self) -> Dict[str, Any]:
         if self._running:
             return self.status()
         self._running = True
+        self._draining = False
         self._state["started_at"] = datetime.now().isoformat(timespec="seconds")
         self._thread = threading.Thread(target=self._worker, daemon=True)
         self._thread.start()
@@ -97,10 +107,17 @@ class MathLearner:
         return self.status()
 
     def stop(self) -> Dict[str, Any]:
-        self._running = False
-        self._current = ""
+        """First Stop drains the queue (finish what's found, discover nothing
+        new); a second Stop while draining hard-aborts immediately."""
+        if self._running and not self._draining:
+            self._draining = True
+            logger.info("MathLearner: draining queue (no new discovery)")
+        else:
+            self._running = False
+            self._draining = False
+            self._current = ""
+            logger.info("MathLearner: hard stop")
         self._save()
-        logger.info("MathLearner: stop requested")
         return self.status()
 
     def add_source(self, value: str, label: str = "") -> Dict[str, Any]:
@@ -129,6 +146,8 @@ class MathLearner:
         n_since_save = 0
         while self._running:
             if not self._frontier:
+                if self._draining:
+                    break  # queue drained — graceful stop complete
                 self._current = "idle — waiting for new content"
                 self._save()
                 waited = 0
@@ -170,18 +189,23 @@ class MathLearner:
                 logger.info(f"MathLearner: skipped {url}: {exc}")
 
             # Enqueue discovered links (crawl the source's site for more books).
-            for child in links:
-                if child in self._visited:
-                    continue
-                if same_domain and urlparse(child).netloc != root_host:
-                    continue
-                if _ASSET_RE.search(child) and not child.lower().split("?")[0].endswith(".pdf"):
-                    continue
-                self._frontier.append((child, same_domain, root_host))
+            # While draining we finish what's queued but discover nothing new.
+            if not self._draining:
+                for child in links:
+                    if child in self._visited:
+                        continue
+                    if same_domain and urlparse(child).netloc != root_host:
+                        continue
+                    if _ASSET_RE.search(child) and not child.lower().split("?")[0].endswith(".pdf"):
+                        continue
+                    self._frontier.append((child, same_domain, root_host))
 
             if n_since_save >= SAVE_EVERY:
                 self._save()
                 n_since_save = 0
+        self._running = False
+        self._draining = False
+        self._current = ""
         self._save()
 
     # --- seeding -----------------------------------------------------
@@ -192,7 +216,7 @@ class MathLearner:
     def _seed_one(self, source: Dict[str, Any]) -> None:
         if source["type"] == "github":
             try:
-                for u in _github_book_urls(source["value"]):
+                for u in _github_book_urls(source["value"], token=self._state.get("github_token")):
                     if u not in self._visited:
                         self._frontier.append((u, False, urlparse(u).netloc))
             except Exception as exc:  # noqa: BLE001
@@ -204,12 +228,12 @@ class MathLearner:
                 self._frontier.append((u, True, urlparse(u).netloc))
 
 
-def _github_book_urls(url: str, max_repos: int = 3, max_files: int = 6) -> List[str]:
+def _github_book_urls(url: str, max_repos: int = 3, max_files: int = 6, token: Optional[str] = None) -> List[str]:
     """Traverse GitHub to find math-book files (PDF/markdown) as raw URLs.
 
     Handles github.com/<owner>/<repo>, /topics/<topic>, /<org>, or a bare term.
-    Unauthenticated GitHub API is rate-limited (60/hr); set GITHUB_TOKEN to raise
-    it. Best-effort — returns whatever it can find.
+    Unauthenticated GitHub API is rate-limited (60/hr); pass a token (or set
+    GITHUB_TOKEN) to raise it. Best-effort — returns whatever it can find.
     """
     import os
 
@@ -217,7 +241,7 @@ def _github_book_urls(url: str, max_repos: int = 3, max_files: int = 6) -> List[
 
     parts = [p for p in urlparse(url).path.strip("/").split("/") if p]
     headers = {"User-Agent": _UA, "Accept": "application/vnd.github+json"}
-    token = os.environ.get("GITHUB_TOKEN")
+    token = (token or os.environ.get("GITHUB_TOKEN") or "").strip()
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
