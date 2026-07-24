@@ -79,6 +79,9 @@ function repairMathSegment(segment: string): string {
 // Wrap bare LaTeX commands that appear outside any math delimiters.
 function wrapBareMathCommands(part: string): string {
   return part
+    // Prose text commands the model emits -> markdown (bold/italic/plain).
+    .replace(/\\textbf\{([^{}]*)\}/g, "**$1**")
+    .replace(/\\textit\{([^{}]*)\}/g, "*$1*")
     .replace(/\\text\{([^{}]*)\}/g, "$1")
     .replace(
       /\\(?:d?frac|tfrac|binom)\{[^{}]*\}\{[^{}]*\}|\\sqrt(?:\[[^\]]*\])?\{[^{}]*\}/g,

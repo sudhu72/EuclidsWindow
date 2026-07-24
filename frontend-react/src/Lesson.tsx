@@ -2,6 +2,7 @@ import { useState } from "react";
 import { buildLesson, fetchScene, type LessonBuild, type LessonScene } from "./lessonApi";
 import { streamChat } from "./api";
 import Markdown from "./Markdown";
+import Animation from "./Animation";
 
 const TYPE_ICON: Record<string, string> = { explain: "📖", example: "🧮", quiz: "❓" };
 const LEVELS = ["kids", "teen", "college", "adult"];
@@ -229,6 +230,7 @@ export default function Lesson() {
               <>
                 <Markdown>{scene.narration || ""}</Markdown>
                 <Classmate q={scene.classmate_question} a={scene.classmate_answer} />
+                <Animation topic={`${lesson.topic} — ${section?.title || ""}`} />
               </>
             )}
           </div>

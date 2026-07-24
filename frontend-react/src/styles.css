@@ -181,3 +181,14 @@ body {
 .lib-hit { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
 .lib-hit-meta { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
 .lib-hit-text { font-size: 13px; line-height: 1.5; color: #292524; }
+
+/* On-demand animation */
+.anim { margin-top: 16px; }
+.anim-btn { font-size: 0.9rem; }
+.anim-err { margin-top: 8px; color: #b91c1c; font-size: 13px; }
+.anim-media { margin-top: 12px; }
+.anim-media img, .anim-media video {
+  width: 100%; max-width: 640px; border-radius: 10px; border: 1px solid var(--line);
+  background: #1c1c1c; display: block;
+}
+.anim-media .link { margin-top: 6px; }
