@@ -1,7 +1,7 @@
 // LaTeX normalization ported from the vanilla app (app.js). Small local models
 // emit messy math: prose wrapped in \text{...}, bare \sqrt/\frac/greek outside
-// any math delimiters, unclosed braces. This repairs those, then hands off to
-// remark-math by converting the resulting \(...\)/\[...\] to $...$/$$...$$.
+// any math delimiters, unclosed braces, and even LaTeX environments. This
+// repairs those, then hands off to remark-math ($...$ / $$...$$).
 
 const GREEK_UNICODE: Record<string, string> = {
   "\\λ": "\\lambda", "\\α": "\\alpha", "\\β": "\\beta", "\\γ": "\\gamma",
@@ -93,21 +93,65 @@ function wrapBareMathCommands(part: string): string {
     );
 }
 
-/** Full normalize → returns text with $...$ / $$...$$ delimiters for remark-math. */
-const CURRENCY = "\uE000"; // sentinel to shield currency $ from math delimiters
+// Small models emit LaTeX environments despite instructions. Convert the ones
+// KaTeX/remark-math can't handle: tabular -> a markdown table; equation/align/
+// gather -> display math.
+function convertEnvironments(text: string): string {
+  let n = text;
+  n = n.replace(
+    /\\begin\{tabular\}(?:\{[^}]*\})?([\s\S]*?)\\end\{tabular\}/g,
+    (whole, body: string) => {
+      const cleaned = body.replace(/\\hline/g, " ");
+      const rows = cleaned
+        .split(/\\{1,}\s*n?/) // \\  \  \\n  \n  row separators (model output is messy)
+        .map((r) => r.trim())
+        .filter((r) => r.includes("&"));
+      const grid = rows.map((r) => r.split("&").map((c) => c.trim()));
+      if (grid.length < 2) return whole; // give up rather than mangle
+      const cols = Math.max(...grid.map((g) => g.length));
+      const pad = (g: string[]) => g.concat(Array(Math.max(0, cols - g.length)).fill(""));
+      const lines = [
+        "| " + pad(grid[0]).join(" | ") + " |",
+        "| " + Array(cols).fill("---").join(" | ") + " |",
+        ...grid.slice(1).map((g) => "| " + pad(g).join(" | ") + " |"),
+      ];
+      return "\n\n" + lines.join("\n") + "\n\n";
+    }
+  );
+  n = n.replace(
+    /\\begin\{(equation|align|gather|displaymath)\*?\}([\s\S]*?)\\end\{\1\*?\}/g,
+    (_m, env: string, bodyRaw: string) => {
+      let body = bodyRaw.trim();
+      if (env === "align") body = `\\begin{aligned}${body}\\end{aligned}`;
+      return `\n\n$$${body}$$\n\n`;
+    }
+  );
+  return n;
+}
 
+// Does a $...$ span look like math (vs currency/prose)? Lets "$25 - x = 19$"
+// render while "$1.00" between two prices stays literal text.
+function isMathLike(inner: string): boolean {
+  const s = inner.trim();
+  if (/^[\d.,\s]+$/.test(s)) return false; // pure number -> currency
+  if (/[\\=^_<>]/.test(s)) return true; // latex command / relational
+  if (/\d\s*[-+*/]\s*[\d(]/.test(s)) return true; // arithmetic like 25 - (0.1)
+  if (/^[a-zA-Z]('|\^.+)?(\([^)]*\))?$/.test(s)) return true; // x, f(x), x^2
+  return false;
+}
+
+/** Full normalize → returns text with $...$ / $$...$$ delimiters for remark-math. */
 export function normalizeForKatex(text: string): string {
   if (!text) return "";
   let n = text;
   for (const [uni, cmd] of Object.entries(GREEK_UNICODE)) n = n.split(uni).join(cmd);
-  // A "$" right before a digit is almost always currency ($1.00), not a math
-  // delimiter — shield it so the $...$ rule below can't pair two prices and
-  // turn the prose between them into math. Restored as a literal "\$" at the end.
-  n = n.replace(/\$(?=\d)/g, CURRENCY);
-  // Normalize any $-delimited math into \(...\)/\[...\] so the repair pipeline
-  // (which works on \(...\) segments) can see all of it.
+  n = convertEnvironments(n);
   n = n.replace(/\$\$([\s\S]+?)\$\$/g, "\\[$1\\]");
-  n = n.replace(/\$([^$\n]+?)\$/g, "\\($1\\)");
+  // Only treat $...$ as math when the content looks mathematical.
+  n = n.replace(/\$([^$\n]+?)\$/g, (m, inner: string) => (isMathLike(inner) ? `\\(${inner}\\)` : m));
+  // Any remaining $ is currency or an unmatched delimiter -> literal, so
+  // remark-math can't pair two prices into a math span.
+  n = n.replace(/\$/g, () => "\\$");
   n = n.replace(/\\\\([()[\]])/g, "\\$1");
   n = unwrapProseTextCommands(n);
   n = n
@@ -118,7 +162,5 @@ export function normalizeForKatex(text: string): string {
   n = n
     .replace(/\\\[([\s\S]*?)\\\]/g, (_m, inner) => `\n\n$$${inner.trim()}$$\n\n`)
     .replace(/\\\(([\s\S]*?)\\\)/g, (_m, inner) => `$${inner.trim()}$`);
-  // Restore shielded currency markers as escaped literal dollars.
-  n = n.split(CURRENCY).join("\\$");
   return n;
 }
