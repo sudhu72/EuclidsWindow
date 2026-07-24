@@ -26,6 +26,41 @@ CHUNK_CHARS = 1200
 CHUNK_OVERLAP = 200
 COLLECTION = "library"
 
+_UA = "EuclidsWindow-Library/1.0 (+local math tutor)"
+# Link extensions to skip when crawling (binary assets), except PDFs which we
+# do want to ingest.
+_ASSET_RE = re.compile(
+    r"\.(png|jpe?g|gif|svg|webp|ico|css|js|zip|gz|tar|mp4|mp3|wav|woff2?|ttf|xml|json)(?:$|\?)",
+    re.IGNORECASE,
+)
+
+
+def _html_text_and_links(html: str, base_url: str):
+    """Extract readable text + absolute outbound links from raw HTML.
+
+    Regex-based to avoid a BeautifulSoup dependency — good enough for RAG text.
+    """
+    from urllib.parse import urljoin
+
+    # Drop non-content blocks before stripping tags.
+    cleaned = re.sub(r"<(script|style|noscript|head)[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
+    links: List[str] = []
+    for m in re.finditer(r'href\s*=\s*["\']([^"\'#>]+)', html, re.I):
+        href = m.group(1).strip()
+        if href.startswith(("mailto:", "javascript:", "tel:", "data:")):
+            continue
+        links.append(urljoin(base_url, href))
+    text = re.sub(r"<[^>]+>", " ", cleaned)  # strip remaining tags
+    text = re.sub(r"&(nbsp|amp|lt|gt|quot|#39|#\d+);", " ", text)  # crude entity strip
+    text = re.sub(r"\s+", " ", text).strip()
+    # De-dupe links preserving order.
+    seen, uniq = set(), []
+    for link in links:
+        if link not in seen:
+            seen.add(link)
+            uniq.append(link)
+    return text, uniq
+
 
 class LibraryService:
     def __init__(self, persist_dir: str) -> None:
@@ -85,6 +120,43 @@ class LibraryService:
             return [(i + 1, page.extract_text() or "") for i, page in enumerate(reader.pages)]
         # txt / md / anything text-like
         return [(1, data.decode("utf-8", errors="replace"))]
+
+    def ingest_text(self, source: str, text: str, page: int = 1) -> Dict[str, Any]:
+        """Chunk + embed already-extracted text (e.g. from a web page)."""
+        if not self.is_available():
+            raise RuntimeError("Library store is unavailable")
+        if len(text) < 50:
+            raise ValueError("No extractable text found")
+        self.delete_doc(source)  # re-ingest replaces
+        chunks = self._chunks(text)
+        ids = [f"{source}::{n}" for n in range(len(chunks))]
+        metas = [{"source": source, "page": page, "chunk": n} for n in range(len(chunks))]
+        for i in range(0, len(ids), 64):
+            self._collection.add(ids=ids[i:i + 64], documents=chunks[i:i + 64], metadatas=metas[i:i + 64])
+        logger.info(f"Library: indexed '{source}' — {len(chunks)} chunks, {len(text)} chars")
+        return {"source": source, "chunks": len(chunks), "characters": len(text)}
+
+    def fetch_url(self, url: str, timeout: float = 25.0):
+        """Fetch a URL → ("pdf", bytes, []) or ("html", text, outbound_links)."""
+        import httpx
+
+        with httpx.Client(timeout=timeout, follow_redirects=True, headers={"User-Agent": _UA}) as client:
+            resp = client.get(url)
+            resp.raise_for_status()
+            ctype = resp.headers.get("content-type", "").lower()
+            path = url.lower().split("?")[0]
+            if "pdf" in ctype or path.endswith(".pdf"):
+                return "pdf", resp.content, []
+            text, links = _html_text_and_links(resp.text, str(resp.url))
+            return "html", text, links
+
+    def ingest_url(self, url: str) -> Dict[str, Any]:
+        """Fetch a single URL (PDF or web page) and index it into the library."""
+        kind, payload, _ = self.fetch_url(url)
+        if kind == "pdf":
+            name = Path(url.split("?")[0]).name or "document.pdf"
+            return self.ingest(name, payload)
+        return self.ingest_text(url, payload)
 
     @staticmethod
     def _chunks(text: str) -> List[str]:

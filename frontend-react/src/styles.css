@@ -304,3 +304,16 @@ body {
 .abh-explore { margin: 16px 0 8px; }
 .abh-explore-link { color: #c2410c; font-weight: 600; text-decoration: none; }
 .abh-explore-link:hover { text-decoration: underline; }
+
+/* Library web ingestion */
+.crawl-box { margin: 10px 0 6px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: #fafaf9; }
+.crawl-box summary { cursor: pointer; color: #57534e; font-size: 14px; }
+.crawl-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px; }
+.crawl-form input[type="text"], .crawl-form > input:first-child {
+  flex: 1; min-width: 220px; padding: 8px 12px; border: 1px solid #d6d3d1; border-radius: 8px; font-size: 14px;
+}
+.crawl-form label { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #57534e; }
+.crawl-form label input[type="number"] { width: 56px; padding: 6px 8px; border: 1px solid #d6d3d1; border-radius: 6px; }
+.crawl-check { gap: 6px !important; }
+.crawl-status { margin-top: 10px; font-size: 13px; color: #44403c; }
+.crawl-cur { color: var(--muted); }
