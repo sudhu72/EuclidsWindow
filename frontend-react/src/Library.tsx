@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import AutoLearn from "./AutoLearn";
 
 type Doc = { source: string; chunks: number };
 type Hit = { text: string; source: string; page: number; distance: number };
@@ -152,7 +153,9 @@ export default function Library() {
           Discover, and the tutor ground their answers in this material and cite the source.
         </p>
 
-        <h4>Add from the web</h4>
+        <AutoLearn onChange={load} />
+
+        <h4 style={{ marginTop: 18 }}>Add one from the web</h4>
         <form className="ask-row" onSubmit={(e) => { e.preventDefault(); void ingestUrl(); }}>
           <input
             value={url}

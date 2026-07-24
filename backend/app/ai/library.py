@@ -50,6 +50,9 @@ def _html_text_and_links(html: str, base_url: str):
         if href.startswith(("mailto:", "javascript:", "tel:", "data:")):
             continue
         links.append(urljoin(base_url, href))
+    # Markdown links [text](url) — matters for README/awesome-list sources.
+    for m in re.finditer(r"\]\((https?://[^)\s]+)\)", html):
+        links.append(m.group(1))
     text = re.sub(r"<[^>]+>", " ", cleaned)  # strip remaining tags
     text = re.sub(r"&(nbsp|amp|lt|gt|quot|#39|#\d+);", " ", text)  # crude entity strip
     text = re.sub(r"\s+", " ", text).strip()

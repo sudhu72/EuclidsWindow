@@ -56,4 +56,7 @@ ENV LOCAL_AI_ENABLED=true
 EXPOSE 8000
 
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Single worker: the app holds stateful in-process singletons (the continuous
+# learner/crawler, model registry) that must not be duplicated across workers.
+# Concurrency is fine — request handlers are async and LLM calls run in threads.
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

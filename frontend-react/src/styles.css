@@ -317,3 +317,15 @@ body {
 .crawl-check { gap: 6px !important; }
 .crawl-status { margin-top: 10px; font-size: 13px; color: #44403c; }
 .crawl-cur { color: var(--muted); }
+
+/* Auto-learn (continuous crawler) */
+.autolearn { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; background: #fafaf9; margin-bottom: 14px; }
+.al-head { display: flex; align-items: center; justify-content: space-between; }
+.al-head h4 { margin: 0; }
+.al-stop { background: #b91c1c !important; }
+.al-status { margin: 8px 0; font-size: 13px; color: #44403c; }
+.al-status.on { color: #15803d; }
+.al-cur { color: var(--muted); font-size: 12px; margin-top: 4px; word-break: break-all; }
+.al-add { margin: 10px 0; }
+.al-sources { list-style: none; padding: 0; margin: 8px 0 0; }
+.al-sources li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; background: #fff; font-size: 13px; }
