@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Simpson's Paradox — the trend that flips</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+
+  .toggle-row{display:flex;justify-content:center;gap:10px;margin-bottom:20px;}
+  .toggle-row button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:9px 18px;border-radius:6px;cursor:pointer;}
+  .toggle-row button.active{border-color:var(--amber);color:var(--amber);}
+
+  .bars-wrap{min-height:260px;}
+  .group-block{margin-bottom:22px;}
+  .group-title{font-family:'Kalam',cursive;font-size:15px;text-align:center;margin-bottom:10px;color:var(--chalk-dim);}
+  .bar-row{display:flex;justify-content:center;gap:50px;align-items:flex-end;height:140px;}
+  .bar-col{display:flex;flex-direction:column;align-items:center;gap:6px;width:100px;}
+  .bar-track{height:110px;display:flex;align-items:flex-end;}
+  .bar{width:56px;border-radius:5px 5px 0 0;transition:height .6s ease, background .4s ease;}
+  .bar.a{background:var(--amber);}
+  .bar.b{background:var(--green);}
+  .bar-value{font-family:'Kalam',cursive;font-size:15px;}
+  .bar-label{font-size:11px;color:var(--chalk-dim);}
+
+  .winner-line{text-align:center;font-size:14px;margin-top:8px;min-height:20px;}
+  .winner-line .win{font-family:'Kalam',cursive;color:var(--amber);}
+  .winner-line .win.b-wins{color:var(--green);}
+
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Simpson's Paradox — the trend that flips</h1>
+  <p class="sub">Identical data. Toggle the view and watch which treatment "wins" reverse completely.</p>
+
+  <div class="panel">
+    <div class="toggle-row">
+      <button id="btnCombined" class="active">Combined view</button>
+      <button id="btnGrouped">Split by severity</button>
+    </div>
+
+    <div class="bars-wrap" id="barsWrap"></div>
+
+    <div class="winner-line" id="winnerLine"></div>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">How can this possibly be true? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>The raw numbers, in full:</strong> Mild cases — Treatment A: 9/10 recover (90%), Treatment B: 80/100 recover (80%). Severe cases — Treatment A: 30/100 recover (30%), Treatment B: 2/10 recover (20%). Treatment A wins by 10 points in <em>both</em> subgroups.</p>
+      <p><strong>The hidden mechanism: an uneven split, not random chance.</strong> Treatment A was given to 100 severe patients but only 10 mild ones — mostly the hard cases, where success rates are low for everyone. Treatment B was given to 100 mild patients but only 10 severe ones — mostly the easy cases, where success rates are high for everyone. Combine the groups, and you're not really comparing "Treatment A vs Treatment B" anymore — you're comparing "mostly hard cases" against "mostly easy cases," with the treatment labels riding along almost as a coincidence.</p>
+      <p><strong>The only way to catch this:</strong> look at the grouped view before trusting the combined one — exactly what the toggle above lets you do, and exactly what a single "overall success rate" table would never show you on its own.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const data = {
+  mild: {a: {success:9, total:10}, b: {success:80, total:100}},
+  severe: {a: {success:30, total:100}, b: {success:2, total:10}},
+};
+
+function rate(g){ return g.success/g.total; }
+
+function combinedRate(letter){
+  const m = data.mild[letter], s = data.severe[letter];
+  return (m.success+s.success)/(m.total+s.total);
+}
+
+function renderBarGroup(container, title, aRate, bRate, aLabel, bLabel){
+  const block = document.createElement('div');
+  block.className = 'group-block';
+  const t = document.createElement('div'); t.className='group-title'; t.textContent = title;
+  block.appendChild(t);
+  const row = document.createElement('div'); row.className='bar-row';
+
+  [['a',aRate,aLabel],['b',bRate,bLabel]].forEach(([cls,rateVal,label]) => {
+    const col = document.createElement('div'); col.className='bar-col';
+    const track = document.createElement('div'); track.className='bar-track';
+    const bar = document.createElement('div'); bar.className='bar '+cls;
+    bar.style.height = Math.max(4, rateVal*100) + 'px';
+    track.appendChild(bar);
+    col.appendChild(track);
+    const val = document.createElement('div'); val.className='bar-value'; val.textContent=(rateVal*100).toFixed(1)+'%';
+    col.appendChild(val);
+    const lab = document.createElement('div'); lab.className='bar-label'; lab.textContent=label;
+    col.appendChild(lab);
+    row.appendChild(col);
+  });
+
+  block.appendChild(row);
+  container.appendChild(block);
+}
+
+function renderCombined(){
+  const wrap = document.getElementById('barsWrap');
+  wrap.innerHTML = '';
+  const aRate = combinedRate('a'), bRate = combinedRate('b');
+  renderBarGroup(wrap, 'All patients combined', aRate, bRate,
+    'Treatment A (39/110)', 'Treatment B (82/110)');
+
+  const winner = document.getElementById('winnerLine');
+  winner.innerHTML = bRate > aRate
+    ? `Treatment <span class="win b-wins">B looks better</span> overall (${(bRate*100).toFixed(1)}% vs ${(aRate*100).toFixed(1)}%)`
+    : `Treatment <span class="win">A looks better</span> overall`;
+}
+
+function renderGrouped(){
+  const wrap = document.getElementById('barsWrap');
+  wrap.innerHTML = '';
+  renderBarGroup(wrap, 'Mild cases', rate(data.mild.a), rate(data.mild.b),
+    'Treatment A (9/10)', 'Treatment B (80/100)');
+  renderBarGroup(wrap, 'Severe cases', rate(data.severe.a), rate(data.severe.b),
+    'Treatment A (30/100)', 'Treatment B (2/10)');
+
+  const winner = document.getElementById('winnerLine');
+  winner.innerHTML = `Treatment <span class="win">A wins in BOTH subgroups</span> — by 10 points each time`;
+}
+
+document.getElementById('btnCombined').addEventListener('click', () => {
+  document.getElementById('btnCombined').classList.add('active');
+  document.getElementById('btnGrouped').classList.remove('active');
+  renderCombined();
+});
+document.getElementById('btnGrouped').addEventListener('click', () => {
+  document.getElementById('btnGrouped').classList.add('active');
+  document.getElementById('btnCombined').classList.remove('active');
+  renderGrouped();
+});
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'How can this possibly be true? ' + (open?'▴':'▾');
+});
+
+renderCombined();
+</script>
+</body>
+</html>

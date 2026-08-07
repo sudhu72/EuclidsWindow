@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Five Lenses — Normalization, Explored</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0;
+    --card:#FFFFFF;
+    --ink:#1B2430;
+    --ink-soft:#5B6572;
+    --line:#D9E0DE;
+    --accent:#463A73;
+    --accent-soft:#EFEBFA;
+    --c0:#6B7280; /* slate   - index 0 */
+    --c1:#0F8B8D; /* teal    - index 1 */
+    --c2:#D9A62E; /* amber   - index 2 */
+    --c3:#5B4B95; /* indigo  - index 3 */
+    --c4:#D9636B; /* coral   - index 4 */
+    --radius:14px;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink);
+    font-family:"Inter", system-ui, sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+
+  header{ margin-bottom:36px; }
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:10px; font-weight:600;
+  }
+  h1{
+    font-family:"Fraunces", serif;
+    font-weight:600;
+    font-size:clamp(28px, 5vw, 42px);
+    margin:0 0 12px;
+    letter-spacing:-0.01em;
+  }
+  header p{ color:var(--ink-soft); max-width:640px; font-size:15.5px; margin:0; }
+
+  section{ margin-bottom:44px; }
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px 26px;
+    box-shadow: 0 1px 2px rgba(20,20,30,0.03);
+  }
+  h2{
+    font-family:"Fraunces", serif;
+    font-size:22px; font-weight:600; margin:0 0 6px;
+  }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+
+  /* --- Problem widget --- */
+  .duel{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:640px){ .duel{ grid-template-columns:1fr; } }
+  .who{ border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .who h3{ margin:0 0 10px; font-size:15px; font-weight:600; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); width:70px; flex-shrink:0; }
+  input[type=range]{ flex:1; accent-color: var(--accent); }
+  .readout{
+    font-family:"IBM Plex Mono", monospace; font-size:13px;
+    background:var(--accent-soft); border-radius:6px; padding:2px 7px;
+    min-width:52px; text-align:right;
+  }
+  .barzone{ height:14px; background:#F0EEE9; border-radius:7px; overflow:hidden; margin-top:10px; }
+  .barfill{ height:100%; border-radius:7px; transition:width .25s ease; }
+  .verdict{
+    margin-top:18px; padding:12px 14px; border-radius:10px;
+    background:var(--accent-soft); font-size:14px; text-align:center;
+    font-weight:500;
+  }
+  .verdict b{ color:var(--accent); }
+
+  /* --- Recipe banner --- */
+  .recipe{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    flex-wrap:wrap;
+    font-family:"IBM Plex Mono", monospace; font-size:15px;
+    padding:6px 0;
+  }
+  .recipe .box{
+    border:1.5px dashed var(--line); border-radius:8px; padding:6px 12px;
+    background:#FAFAF8;
+  }
+  .recipe .op{ color:var(--ink-soft); font-size:18px; }
+
+  /* --- Lenses --- */
+  .sliders{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:24px; }
+  .slider-item{ flex:1; min-width:120px; }
+  .slider-item .tag{
+    font-family:"IBM Plex Mono", monospace; font-size:11.5px;
+    display:flex; justify-content:space-between; margin-bottom:6px;
+    color:var(--ink-soft);
+  }
+  .swatch{ width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:6px; }
+
+  .presetbar{ display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
+  button.preset{
+    font-family:"Inter", sans-serif; font-size:12.5px; font-weight:500;
+    border:1px solid var(--line); background:#fff; color:var(--ink);
+    border-radius:20px; padding:7px 14px; cursor:pointer;
+    transition: background .15s, border-color .15s;
+  }
+  button.preset:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.preset:focus-visible, input:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;
+  }
+  @media (max-width:820px){ .grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px){ .grid{ grid-template-columns:1fr; } }
+
+  .lens{
+    border:1px solid var(--line); border-radius:12px; padding:16px;
+    background:#FCFCFB; display:flex; flex-direction:column;
+  }
+  .lens h4{ margin:0 0 2px; font-size:14.5px; font-weight:600; }
+  .lens .formula{
+    font-family:"IBM Plex Mono", monospace; font-size:11.5px; color:var(--accent);
+    margin-bottom:10px;
+  }
+  .chart{
+    height:110px; display:flex; align-items:flex-end; gap:6px;
+    border-bottom:1px solid var(--line); margin-bottom:8px; position:relative;
+  }
+  .chart.bipolar{ align-items:center; }
+  .chart-col{ flex:1; height:100%; display:flex; flex-direction:column; justify-content:flex-end; }
+  .chart.bipolar .chart-col{ justify-content:center; position:relative; height:100%; }
+  .bar{
+    width:100%; border-radius:3px 3px 0 0;
+    transition: height .25s ease, transform .25s ease;
+  }
+  .chart.bipolar .bar{ border-radius:3px; position:absolute; left:0; right:0; }
+  .lens .caption{ font-size:12px; color:var(--ink-soft); margin-top:auto; }
+  .zero-line{ position:absolute; left:0; right:0; top:50%; height:1px; background:var(--line); }
+
+  footer{
+    font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line);
+    padding-top:20px; margin-top:10px;
+  }
+  footer b{ color:var(--ink); }
+  @media (prefers-reduced-motion: reduce){
+    .barfill, .bar{ transition:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Normalization</div>
+    <h1>Five Lenses</h1>
+    <p>Same underlying numbers, five different ways to make them fairly comparable. Drag anything — every lens updates together, so you can watch one raw value get reshaped five different ways at once.</p>
+  </header>
+
+  <!-- THE PROBLEM -->
+  <section>
+    <div class="card">
+      <h2>The problem</h2>
+      <p class="sub">Two students, two exams graded on different scales. Who actually did better?</p>
+      <div class="duel">
+        <div class="who">
+          <h3>Alice — exam out of 50</h3>
+          <div class="row">
+            <label>Score</label>
+            <input type="range" id="aliceScore" min="0" max="50" value="42" step="1">
+            <span class="readout" id="aliceScoreOut">42</span>
+          </div>
+          <div class="row">
+            <label>Out of</label>
+            <input type="range" id="aliceMax" min="10" max="200" value="50" step="1">
+            <span class="readout" id="aliceMaxOut">50</span>
+          </div>
+          <div class="barzone"><div class="barfill" id="aliceBar" style="background:var(--c1)"></div></div>
+        </div>
+        <div class="who">
+          <h3>Bob — exam out of 100</h3>
+          <div class="row">
+            <label>Score</label>
+            <input type="range" id="bobScore" min="0" max="100" value="78" step="1">
+            <span class="readout" id="bobScoreOut">78</span>
+          </div>
+          <div class="row">
+            <label>Out of</label>
+            <input type="range" id="bobMax" min="10" max="200" value="100" step="1">
+            <span class="readout" id="bobMaxOut">100</span>
+          </div>
+          <div class="barzone"><div class="barfill" id="bobBar" style="background:var(--c4)"></div></div>
+        </div>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+  </section>
+
+  <!-- THE RECIPE -->
+  <section>
+    <div class="recipe">
+      <span class="box">normalized value</span>
+      <span class="op">=</span>
+      <span class="box">(raw value − reference point)</span>
+      <span class="op">÷</span>
+      <span class="box">scale reference</span>
+    </div>
+  </section>
+
+  <!-- THE FIVE LENSES -->
+  <section>
+    <div class="card">
+      <h2>The five lenses</h2>
+      <p class="sub">Every technique below is that one recipe, with a different reference point and scale plugged in. Drag any value and watch all five panels move together — same colored bar, same position, in every chart.</p>
+
+      <div class="presetbar">
+        <button class="preset" id="presetSkew">Load: one big outlier</button>
+        <button class="preset" id="presetFlat">Load: nearly equal values</button>
+        <button class="preset" id="presetReset">Reset</button>
+      </div>
+
+      <div class="sliders" id="sliders"></div>
+
+      <div class="grid" id="lensGrid"></div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>Where this connects:</b> unit vectors (Part 1) are "divide by the vector's own length" — the same recipe with the vector's norm as the scale reference. Probabilities summing to 1 (Part 3) are "fraction of total." Softmax is exactly what turns a network's raw output scores into the probability distribution that cross-entropy (Part 6) needs as input. Combinatorics is not the same toolkit — it counts arrangements; normalization is the separate step of turning any raw values (counts or otherwise) into comparable form. The one place they meet: dividing a combinatorial count by a total count is precisely how counting becomes probability.</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const COLORS = ["var(--c0)","var(--c1)","var(--c2)","var(--c3)","var(--c4)"];
+  let data = [3, 7, 2, 9, 5];
+
+  // ---------- math ----------
+  function minmax(arr){
+    const mn = Math.min(...arr), mx = Math.max(...arr);
+    return arr.map(v => mx === mn ? 0.5 : (v - mn) / (mx - mn));
+  }
+  function fractionOfTotal(arr){
+    const sum = arr.reduce((a,b)=>a+b, 0);
+    return arr.map(v => sum === 0 ? 0 : v / sum);
+  }
+  function zscore(arr){
+    const n = arr.length;
+    const mean = arr.reduce((a,b)=>a+b,0) / n;
+    const variance = arr.reduce((a,b)=>a + (b-mean)**2, 0) / n;
+    const std = Math.sqrt(variance);
+    return arr.map(v => std === 0 ? 0 : (v - mean) / std);
+  }
+  function softmax(arr){
+    const exps = arr.map(v => Math.exp(v));
+    const sum = exps.reduce((a,b)=>a+b, 0);
+    return exps.map(e => e / sum);
+  }
+  function unitVector(arr){
+    const norm = Math.sqrt(arr.reduce((a,b)=>a + b*b, 0));
+    return arr.map(v => norm === 0 ? 0 : v / norm);
+  }
+
+  const LENSES = [
+    { key:"raw", title:"Raw values", formula:"x", bipolar:false,
+      caption:"No normalization yet — these are on whatever scale they started on." },
+    { key:"minmax", title:"Min-Max", formula:"(x − min) / (max − min)", bipolar:false,
+      caption:"Where each value sits, as a fraction of the full range it could take." },
+    { key:"fraction", title:"Fraction-of-Total", formula:"x / Σx", bipolar:false,
+      caption:"Each value's share of the whole — always sums to 1, like a probability." },
+    { key:"zscore", title:"Z-score", formula:"(x − mean) / std", bipolar:true,
+      caption:"How many typical-sized steps above or below average — can go negative." },
+    { key:"unit", title:"Unit vector", formula:"x / ‖x‖", bipolar:true,
+      caption:"Divide by the vector's own length — strips out size, keeps direction." },
+    { key:"softmax", title:"Softmax", formula:"eˣ / Σeˣ", bipolar:false,
+      caption:"Turns any raw scores into a valid probability distribution over choices." },
+  ];
+
+  function compute(key, arr){
+    switch(key){
+      case "raw": return arr.slice();
+      case "minmax": return minmax(arr);
+      case "fraction": return fractionOfTotal(arr);
+      case "zscore": return zscore(arr);
+      case "unit": return unitVector(arr);
+      case "softmax": return softmax(arr);
+    }
+  }
+
+  // ---------- build sliders ----------
+  const slidersEl = document.getElementById("sliders");
+  data.forEach((v,i) => {
+    const item = document.createElement("div");
+    item.className = "slider-item";
+    item.innerHTML = `
+      <div class="tag">
+        <span><span class="swatch" style="background:${COLORS[i]}"></span>Value ${i+1}</span>
+        <span id="val-${i}">${v}</span>
+      </div>
+      <input type="range" min="0" max="20" step="0.5" value="${v}" id="slider-${i}">
+    `;
+    slidersEl.appendChild(item);
+    item.querySelector("input").addEventListener("input", (e)=>{
+      data[i] = parseFloat(e.target.value);
+      document.getElementById(`val-${i}`).textContent = data[i];
+      render();
+    });
+  });
+
+  // ---------- build lens panels ----------
+  const gridEl = document.getElementById("lensGrid");
+  LENSES.forEach(lens => {
+    const panel = document.createElement("div");
+    panel.className = "lens";
+    panel.innerHTML = `
+      <h4>${lens.title}</h4>
+      <div class="formula">${lens.formula}</div>
+      <div class="chart ${lens.bipolar ? "bipolar" : ""}" id="chart-${lens.key}">
+        ${lens.bipolar ? '<div class="zero-line"></div>' : ""}
+      </div>
+      <div class="caption">${lens.caption}</div>
+    `;
+    gridEl.appendChild(panel);
+  });
+
+  function render(){
+    LENSES.forEach(lens => {
+      const values = compute(lens.key, data);
+      const chart = document.getElementById(`chart-${lens.key}`);
+      // clear existing bars but keep zero-line if present
+      chart.querySelectorAll(".chart-col").forEach(el => el.remove());
+
+      if (!lens.bipolar){
+        const maxAbs = Math.max(...values.map(Math.abs), 0.0001);
+        values.forEach((v,i) => {
+          const col = document.createElement("div");
+          col.className = "chart-col";
+          const pct = Math.max(2, (v / maxAbs) * 100);
+          col.innerHTML = `<div class="bar" style="height:${pct}%; background:${COLORS[i]}"></div>`;
+          chart.appendChild(col);
+        });
+      } else {
+        const maxAbs = Math.max(...values.map(Math.abs), 0.0001);
+        values.forEach((v,i) => {
+          const col = document.createElement("div");
+          col.className = "chart-col";
+          const pct = Math.min(48, Math.abs(v)/maxAbs * 48);
+          const style = v >= 0
+            ? `height:${pct}%; bottom:50%; background:${COLORS[i]}`
+            : `height:${pct}%; top:50%; background:${COLORS[i]}`;
+          col.innerHTML = `<div class="bar" style="${style}"></div>`;
+          chart.appendChild(col);
+        });
+      }
+    });
+  }
+
+  // ---------- problem widget ----------
+  const aliceScore = document.getElementById("aliceScore");
+  const aliceMax = document.getElementById("aliceMax");
+  const bobScore = document.getElementById("bobScore");
+  const bobMax = document.getElementById("bobMax");
+
+  function renderDuel(){
+    const a = parseFloat(aliceScore.value), am = parseFloat(aliceMax.value);
+    const b = parseFloat(bobScore.value), bm = parseFloat(bobMax.value);
+    document.getElementById("aliceScoreOut").textContent = a;
+    document.getElementById("aliceMaxOut").textContent = am;
+    document.getElementById("bobScoreOut").textContent = b;
+    document.getElementById("bobMaxOut").textContent = bm;
+
+    const an = am > 0 ? a/am : 0, bn = bm > 0 ? b/bm : 0;
+    document.getElementById("aliceBar").style.width = (an*100).toFixed(1) + "%";
+    document.getElementById("bobBar").style.width = (bn*100).toFixed(1) + "%";
+
+    const v = document.getElementById("verdict");
+    const ap = (an*100).toFixed(1), bp = (bn*100).toFixed(1);
+    if (Math.abs(an-bn) < 0.001){
+      v.innerHTML = `Raw scores: <b>${a}/${am}</b> vs <b>${b}/${bm}</b>. Normalized: both <b>${ap}%</b> — a genuine tie, once the different scales are accounted for.`;
+    } else {
+      const winner = an > bn ? "Alice" : "Bob";
+      v.innerHTML = `Raw scores: <b>${a}/${am}</b> vs <b>${b}/${bm}</b>. Normalized: <b>${ap}%</b> vs <b>${bp}%</b> — <b>${winner}</b> actually did relatively better, once both are measured against their own exam's full range.`;
+    }
+  }
+  [aliceScore, aliceMax, bobScore, bobMax].forEach(el => el.addEventListener("input", renderDuel));
+
+  // ---------- presets ----------
+  function setData(newData){
+    data = newData.slice();
+    data.forEach((v,i) => {
+      document.getElementById(`slider-${i}`).value = v;
+      document.getElementById(`val-${i}`).textContent = v;
+    });
+    render();
+  }
+  document.getElementById("presetSkew").addEventListener("click", () => setData([1,1.5,2,1,14]));
+  document.getElementById("presetFlat").addEventListener("click", () => setData([5,5.5,4.5,5,5.2]));
+  document.getElementById("presetReset").addEventListener("click", () => setData([3,7,2,9,5]));
+
+  render();
+  renderDuel();
+})();
+</script>
+</body>
+</html>

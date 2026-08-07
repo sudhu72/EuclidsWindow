@@ -305,6 +305,12 @@ async def serve_graphmap_js():
     return FileResponse(FRONTEND_DIR / "graphmap.js", headers=FRONTEND_NO_CACHE_HEADERS)
 
 
+@app.get("/cogito.js", include_in_schema=False)
+async def serve_cogito_js():
+    """Serve cogito.js (Cogito visualization gallery lab)."""
+    return FileResponse(FRONTEND_DIR / "cogito.js", headers=FRONTEND_NO_CACHE_HEADERS)
+
+
 @app.get("/aibyhand.js", include_in_schema=False)
 async def serve_aibyhand_js():
     """Serve aibyhand.js (AI-by-Hand discovery lab)."""

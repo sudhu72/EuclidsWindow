@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KV-cache, GQA, and Multi-Head Latent Attention</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 22px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  .diagram{min-height:380px;}
+  .scene{display:none;} .scene.visible{display:block;}
+  .scene-caption{text-align:center;font-size:13px;color:var(--chalk-dim);margin-bottom:16px;}
+
+  /* token row scene */
+  .token-row{display:flex;justify-content:center;gap:10px;margin:14px 0 20px;flex-wrap:wrap;}
+  .tok{width:52px;height:52px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--chalk-dim);transition:all .5s ease;background:var(--bg-panel);}
+  .tok.fresh{border-color:var(--coral);color:var(--coral);box-shadow:0 0 12px rgba(255,130,102,.5);}
+  .tok.cached{border-color:var(--green);color:var(--green);opacity:.75;}
+  .tok.reprocessed{border-color:var(--amber);color:var(--amber);box-shadow:0 0 10px rgba(255,206,84,.4);}
+  .cost-row{display:flex;justify-content:center;gap:28px;margin-top:10px;}
+  .cost-col{text-align:center;}
+  .cost-track{height:120px;display:flex;align-items:flex-end;justify-content:center;}
+  .cost-bar{width:34px;border-radius:4px 4px 0 0;transition:height .5s ease;}
+  .cost-bar.naive{background:var(--coral);}
+  .cost-bar.cached{background:var(--green);}
+  .cost-label{font-size:11px;color:var(--chalk-dim);margin-top:6px;}
+
+  /* memory formula scene */
+  .formula-row{display:flex;justify-content:center;align-items:center;gap:8px;margin:16px 0 20px;flex-wrap:wrap;}
+  .fbox{border:1px solid var(--border);border-radius:6px;padding:10px 14px;text-align:center;font-size:12px;transition:all .4s ease;}
+  .fbox .val{font-family:'Kalam',cursive;font-size:16px;color:var(--amber);}
+  .fbox .lbl{color:var(--chalk-dim);margin-top:4px;}
+  .ftimes{color:var(--chalk-dim);font-size:16px;}
+  .mem-bar-row{display:flex;justify-content:center;gap:50px;margin-top:14px;}
+  .mem-col{text-align:center;}
+  .mem-track{height:160px;display:flex;align-items:flex-end;justify-content:center;}
+  .mem-bar{width:56px;border-radius:5px 5px 0 0;transition:height .6s ease,background .4s ease;}
+  .mem-label{font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+  .mem-num{font-size:12px;color:var(--chalk);margin-top:2px;}
+
+  /* head-sharing scene */
+  .head-row{display:flex;justify-content:center;align-items:flex-start;gap:24px;margin:16px 0;flex-wrap:wrap;}
+  .head-group{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .head-chip{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--bg);font-weight:700;transition:all .5s ease;}
+  .kv-chip{width:46px;height:46px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--bg);font-weight:700;border:2px dashed rgba(244,241,232,.3);transition:all .5s ease;}
+  .connector{width:2px;background:var(--chalk-dim);opacity:.4;}
+  .latent-box{width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,var(--amber),var(--coral));display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--bg);font-weight:700;margin:0 auto;}
+  .merge-row{display:flex;justify-content:center;align-items:center;gap:14px;margin:20px 0;flex-wrap:wrap;}
+  .merge-box{border:1px solid var(--border);border-radius:6px;padding:12px 16px;font-size:12px;text-align:center;min-width:130px;}
+  .patch-strip{width:20px;height:46px;border-radius:4px;background:var(--blue);margin-left:4px;display:inline-block;vertical-align:middle;}
+
+  .notebook{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;max-height:260px;overflow-y:auto;}
+  .notebook .entry{padding:8px 0;border-bottom:1px dashed var(--border);opacity:.45;}
+  .notebook .entry.current{opacity:1;color:var(--chalk);}
+  .notebook .step-num{color:var(--chalk-dim);margin-right:8px;}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  button:disabled{opacity:.35;cursor:default;}
+  .step-indicator{color:var(--chalk-dim);font-size:13px;margin-left:auto;}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>KV-cache, GQA, and Multi-Head Latent Attention</h1>
+  <p class="sub">Why caching turns cubic into quadratic, how GQA and MLA shrink the memory formula, and the RoPE wrinkle that keeps it honest.</p>
+
+  <div class="panel diagram">
+
+    <div class="scene" id="scene-tokens">
+      <div class="scene-caption" id="tokensCaption"></div>
+      <div class="token-row" id="tokenRow"></div>
+      <div class="cost-row" id="costRow"></div>
+    </div>
+
+    <div class="scene" id="scene-memory">
+      <div class="scene-caption" id="memCaption"></div>
+      <div class="formula-row" id="formulaRow"></div>
+      <div class="mem-bar-row" id="memBarRow"></div>
+    </div>
+
+    <div class="scene" id="scene-heads">
+      <div class="scene-caption" id="headsCaption"></div>
+      <div class="head-row" id="headRow"></div>
+    </div>
+
+    <div class="scene" id="scene-merge">
+      <div class="scene-caption" id="mergeCaption"></div>
+      <div class="merge-row" id="mergeRow"></div>
+    </div>
+
+  </div>
+
+  <div class="panel"><div class="notebook" id="notebook"></div></div>
+
+  <div class="controls panel">
+    <button id="btnPrev">◂ Prev</button>
+    <button id="btnPlay">▶ Play</button>
+    <button id="btnNext">Next ▸</button>
+    <button id="btnReset">Reset</button>
+    <span class="step-indicator" id="stepIndicator"></span>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Teach-back: the whole story in 3 sentences ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>1.</strong> Caching stops you re-doing work you already did, so it turns a cubic total generation cost into a quadratic one — the same "don't recompute what you already know" instinct as backpropagation's efficiency trick.</p>
+      <p><strong>2.</strong> GQA shrinks the cache by sharing Keys and Values across several query heads instead of giving every head its own private copy.</p>
+      <p><strong>3.</strong> MLA goes further by squeezing Keys and Values through a small shared bottleneck in the first place — so cheaply that the surrounding weight matrices can be algebraically merged, and the full-size Key and Value never need to be reconstructed at all, at the cost of a small patch to keep positional rotation (RoPE) working.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const colors = ['#ffce54','#ff8266','#8fd19e','#7fb3d5'];
+
+function renderTokens(mode, n){
+  const row = document.getElementById('tokenRow');
+  row.innerHTML = '';
+  for(let i=1;i<=n;i++){
+    const t = document.createElement('div');
+    t.className = 'tok';
+    if(mode === 'naive'){ t.classList.add(i===n ? 'reprocessed' : 'reprocessed'); }
+    else if(mode === 'cached'){ t.classList.add(i===n ? 'fresh' : 'cached'); }
+    t.textContent = 'tok ' + i;
+    row.appendChild(t);
+  }
+  const cost = document.getElementById('costRow');
+  cost.innerHTML = '';
+  const naiveCosts = [1,8,27,64,125,216];
+  const cachedCosts = [1,4,9,16,25,36];
+  const maxH = 110;
+  const maxVal = 216;
+  for(let i=0;i<n;i++){
+    const col = document.createElement('div'); col.className='cost-col';
+    const track = document.createElement('div'); track.className='cost-track';
+    const bar = document.createElement('div');
+    bar.className = 'cost-bar ' + (mode==='naive'?'naive':'cached');
+    const val = mode==='naive' ? naiveCosts[i] : cachedCosts[i];
+    bar.style.height = Math.max(6,(val/maxVal)*maxH) + 'px';
+    track.appendChild(bar);
+    col.appendChild(track);
+    const label = document.createElement('div'); label.className='cost-label'; label.textContent = 'step '+(i+1)+': '+val;
+    col.appendChild(label);
+    cost.appendChild(col);
+  }
+}
+
+function renderMemory(stage){
+  const fr = document.getElementById('formulaRow');
+  fr.innerHTML = '';
+  const factors = stage==='mla'
+    ? [['2','×2 (K&V)'],['N_L','layers'],['N_heads','heads (irrelevant now)'],['N_tok','tokens'],['d_L','SMALL latent dim']]
+    : stage==='gqa'
+    ? [['2','×2 (K&V)'],['N_L','layers'],['N_kv_groups','shared KV groups'],['N_tok','tokens'],['d_head','head dim']]
+    : [['2','×2 (K&V)'],['N_L','layers'],['N_heads','heads'],['N_tok','tokens'],['d_head','head dim']];
+  factors.forEach((f,i) => {
+    const box = document.createElement('div'); box.className='fbox';
+    box.innerHTML = '<div class="val">'+f[0]+'</div><div class="lbl">'+f[1]+'</div>';
+    fr.appendChild(box);
+    if(i<factors.length-1){ const t=document.createElement('div'); t.className='ftimes'; t.textContent='×'; fr.appendChild(t); }
+  });
+
+  const barRow = document.getElementById('memBarRow');
+  barRow.innerHTML = '';
+  const configs = [
+    {name:'Dense MHA', val:100, color:'var(--coral)'},
+    {name:'GQA (4→2 groups)', val:50, color:'var(--amber)'},
+    {name:'MLA (latent)', val:12, color:'var(--green)'}
+  ];
+  const activeIdx = stage==='mla' ? 2 : stage==='gqa' ? 1 : 0;
+  configs.forEach((c,i) => {
+    const col = document.createElement('div'); col.className='mem-col';
+    const track = document.createElement('div'); track.className='mem-track';
+    const bar = document.createElement('div'); bar.className='mem-bar';
+    bar.style.background = c.color;
+    bar.style.height = (i<=activeIdx ? c.val : 100) * 1.4 + 'px';
+    bar.style.opacity = i<=activeIdx ? 1 : .25;
+    track.appendChild(bar);
+    col.appendChild(track);
+    const label = document.createElement('div'); label.className='mem-label'; label.textContent=c.name;
+    col.appendChild(label);
+    const num = document.createElement('div'); num.className='mem-num'; num.textContent = i<=activeIdx ? ('relative size: '+c.val) : '';
+    col.appendChild(num);
+    barRow.appendChild(col);
+  });
+}
+
+function renderHeads(stage){
+  const row = document.getElementById('headRow');
+  row.innerHTML = '';
+  if(stage === 'separate'){
+    colors.forEach((c,i) => {
+      const g = document.createElement('div'); g.className='head-group';
+      const q = document.createElement('div'); q.className='head-chip'; q.style.background=c; q.textContent='Q'+(i+1);
+      const kv = document.createElement('div'); kv.className='kv-chip'; kv.style.background=c; kv.style.opacity=.6; kv.textContent='KV'+(i+1);
+      g.appendChild(q); g.appendChild(kv);
+      row.appendChild(g);
+    });
+  } else if(stage === 'grouped'){
+    const groupColors = ['#ffce54','#8fd19e'];
+    for(let gi=0; gi<2; gi++){
+      const g = document.createElement('div'); g.className='head-group';
+      const qWrap = document.createElement('div'); qWrap.style.display='flex'; qWrap.style.gap='4px';
+      for(let k=0;k<2;k++){
+        const q = document.createElement('div'); q.className='head-chip'; q.style.background=colors[gi*2+k]; q.textContent='Q'+(gi*2+k+1);
+        qWrap.appendChild(q);
+      }
+      g.appendChild(qWrap);
+      const kv = document.createElement('div'); kv.className='kv-chip'; kv.style.background=groupColors[gi]; kv.textContent='shared KV';
+      g.appendChild(kv);
+      row.appendChild(g);
+    }
+  }
+}
+
+function renderMerge(stage){
+  const row = document.getElementById('mergeRow');
+  row.innerHTML = '';
+  if(stage === 'bottleneck'){
+    colors.forEach((c,i) => {
+      const box = document.createElement('div'); box.className='merge-box';
+      box.style.borderColor = c;
+      box.textContent = 'K'+(i+1)+', V'+(i+1);
+      row.appendChild(box);
+    });
+    const arrow = document.createElement('div'); arrow.style.fontSize='20px'; arrow.style.color='var(--chalk-dim)'; arrow.textContent='⟹';
+    row.appendChild(arrow);
+    const latent = document.createElement('div'); latent.className='latent-box'; latent.textContent='shared latent L';
+    row.appendChild(latent);
+  } else if(stage === 'algebra'){
+    const box1 = document.createElement('div'); box1.className='merge-box'; box1.textContent='W^LQQ (latent→query)';
+    const arrow = document.createElement('div'); arrow.style.fontSize='20px'; arrow.style.color='var(--chalk-dim)'; arrow.textContent='×';
+    const box2 = document.createElement('div'); box2.className='merge-box'; box2.textContent='W^LK (latent→key)';
+    const arrow2 = document.createElement('div'); arrow2.style.fontSize='20px'; arrow2.style.color='var(--chalk-dim)'; arrow2.textContent='⟹';
+    const box3 = document.createElement('div'); box3.className='merge-box'; box3.style.borderColor='var(--amber)'; box3.textContent='one combined matrix — K never rebuilt';
+    [box1,arrow,box2,arrow2,box3].forEach(el => row.appendChild(el));
+  } else if(stage === 'rope'){
+    const box1 = document.createElement('div'); box1.className='merge-box'; box1.textContent='latent Q / K (compressed)';
+    const patch = document.createElement('div'); patch.innerHTML = '<span class="patch-strip"></span>';
+    const label = document.createElement('div'); label.className='merge-box'; label.style.borderColor='var(--blue)'; label.textContent='+ small non-latent slice for RoPE rotation';
+    [box1,patch,label].forEach(el => row.appendChild(el));
+  }
+}
+
+const steps = [
+  { scene:'tokens', mode:'naive', n:1,
+    text:'Setup — generating tokens one at a time, no caching. Watch the cost as the conversation grows.' },
+  { scene:'tokens', mode:'naive', n:3,
+    text:'Without caching, every new token means REPROCESSING every token so far from scratch (amber = reprocessed). Cost per step grows, and the total across all steps grows CUBICALLY — O(N³d).' },
+  { scene:'tokens', mode:'naive', n:6,
+    text:'By 6 tokens the naive cost (1, 8, 27, 64, 125, 216) is already exploding. This is exactly the cubic blowup that makes recomputing everything impractical for long conversations.' },
+  { scene:'tokens', mode:'cached', n:6,
+    text:'With caching: a token\'s Key and Value never change once computed, so store them (green = cached). Each new step only computes ONE fresh token (coral) against the already-cached rest. Cost per step is linear, total across all steps is QUADRATIC — O(N²d), same numbers as backprop\'s "don\'t recompute what you know" trick.' },
+  { scene:'memory', stage:'dense',
+    text:'The memory bill for caching: 2 (K and V) × layers × heads × tokens × head-dimension. Every factor except head-dimension grows with the model or the conversation — that\'s why long-context inference is memory-hungry.' },
+  { scene:'heads', stage:'separate',
+    text:'Grouped-Query Attention (GQA) — normally every query head (colored circles) owns its own private Key/Value head (dashed squares). That\'s the "N_heads" factor in the memory formula.' },
+  { scene:'heads', stage:'grouped',
+    text:'GQA groups several query heads to share ONE Key/Value head instead. 4 heads sharing 2 KV groups replaces "N_heads" with a smaller "N_kv_groups" in the cache formula — each query head still asks its own question, but checks the answer against a shared Key/Value pool.' },
+  { scene:'memory', stage:'gqa',
+    text:'The memory bar shrinks proportionally — fewer distinct KV pairs to cache, same total tokens and layers.' },
+  { scene:'merge', stage:'bottleneck',
+    text:'Multi-Head Latent Attention (MLA) asks a different question: shrink the SIZE of what\'s cached, not just the count. Route every head\'s K and V through one small shared latent bottleneck L — only L needs to be cached per token, not a full K/V per head.' },
+  { scene:'merge', stage:'algebra',
+    text:'The elegant part: attention only ever uses K inside Q·K^T. Since Q also comes from a latent projection, the latent-to-query and latent-to-key weight matrices can be multiplied together ONCE, ahead of time. The score comes straight from two small latent vectors — full-size K is never reconstructed at all.' },
+  { scene:'memory', stage:'mla',
+    text:'The memory bar shrinks dramatically further — cache size now depends only on the small latent dimension d_L, completely independent of how many attention heads the model has.' },
+  { scene:'merge', stage:'rope',
+    text:'The honest wrinkle: RoPE rotates Key/Query vectors by a position-dependent angle AFTER K is built — but the merge above collapsed away the point where that rotation used to apply. The practical fix: append a small extra non-latent slice to carry the rotation, riding alongside the compressed latent part. A patch, not a clean resolution — but it keeps most of the memory win.' }
+];
+
+let current = 0, playing = false, timer = null;
+
+function render(){
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('visible'));
+  const step = steps[current];
+  document.getElementById('scene-' + step.scene).classList.add('visible');
+
+  if(step.scene === 'tokens'){
+    document.getElementById('tokensCaption').textContent =
+      step.mode === 'naive' ? 'No caching — every step reprocesses everything' : 'With KV-cache — only the newest token is fresh';
+    renderTokens(step.mode, step.n);
+  }
+  if(step.scene === 'memory'){
+    document.getElementById('memCaption').textContent =
+      step.stage === 'dense' ? 'Cache memory formula: 2 × layers × heads × tokens × head-dim' :
+      step.stage === 'gqa' ? 'GQA: heads → shared KV groups (smaller factor)' :
+      'MLA: heads factor disappears — only the small latent dimension matters';
+    renderMemory(step.stage);
+  }
+  if(step.scene === 'heads'){
+    document.getElementById('headsCaption').textContent =
+      step.stage === 'separate' ? 'Standard: every query head has its own private Key/Value head' :
+      'Grouped: several query heads now share one Key/Value head';
+    renderHeads(step.stage);
+  }
+  if(step.scene === 'merge'){
+    document.getElementById('mergeCaption').textContent =
+      step.stage === 'bottleneck' ? 'All heads\' K and V routed through one small shared latent vector' :
+      step.stage === 'algebra' ? 'Latent-to-query and latent-to-key weights merge into one matrix' :
+      'RoPE needs a small non-latent patch to keep working after the merge';
+    renderMerge(step.stage);
+  }
+
+  const nb = document.getElementById('notebook');
+  nb.innerHTML = '';
+  steps.forEach((s,i) => {
+    if(i > current) return;
+    const div = document.createElement('div');
+    div.className = 'entry' + (i===current ? ' current' : '');
+    div.innerHTML = '<span class="step-num">' + (i+1) + '.</span>' + s.text;
+    nb.appendChild(div);
+  });
+  nb.scrollTop = nb.scrollHeight;
+
+  document.getElementById('stepIndicator').textContent = 'Step ' + (current+1) + ' of ' + steps.length;
+  document.getElementById('btnPrev').disabled = current === 0;
+  document.getElementById('btnNext').disabled = current === steps.length - 1;
+}
+
+function next(){ if(current < steps.length-1){ current++; render(); } else stopPlay(); }
+function prev(){ if(current > 0){ current--; render(); } }
+function reset(){ current = 0; stopPlay(); render(); }
+function startPlay(){ playing=true; document.getElementById('btnPlay').textContent='⏸ Pause'; timer=setInterval(next,3400); }
+function stopPlay(){ playing=false; document.getElementById('btnPlay').textContent='▶ Play'; clearInterval(timer); }
+
+document.getElementById('btnNext').addEventListener('click', () => { stopPlay(); next(); });
+document.getElementById('btnPrev').addEventListener('click', () => { stopPlay(); prev(); });
+document.getElementById('btnReset').addEventListener('click', reset);
+document.getElementById('btnPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Teach-back: the whole story in 3 sentences ' + (open?'▴':'▾');
+});
+
+render();
+</script>
+</body>
+</html>

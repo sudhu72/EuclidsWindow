@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The chain rule, as a gear train — full network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1120px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  svg{width:100%;height:auto;display:block;}
+
+  .legend-row{display:flex;justify-content:center;gap:24px;margin-bottom:14px;font-size:12px;color:var(--chalk-dim);flex-wrap:wrap;}
+  .legend-row span{display:flex;align-items:center;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+
+  .link-line{stroke:var(--chalk-dim);stroke-width:1.3px;stroke-dasharray:4 4;opacity:.4;fill:none;}
+  .gear-name{font-family:'Kalam',cursive;font-size:14px;fill:var(--chalk);text-anchor:middle;}
+  .gear-sub{font-family:'JetBrains Mono',monospace;font-size:11px;fill:var(--chalk-dim);text-anchor:middle;}
+  .indicator-dot{fill:var(--coral);}
+  .badge-circle{fill:var(--bg-panel);stroke:var(--chalk-dim);stroke-width:1.5px;}
+  .badge-circle.variable{stroke:var(--amber);}
+  .badge-text{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;text-anchor:middle;fill:var(--chalk);}
+  .badge-text.variable{fill:var(--amber);}
+  .pulse{animation:pulse .4s ease;}
+  @keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.18);}100%{transform:scale(1);}}
+
+  .readout-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0 4px;}
+  .readout{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 6px;}
+  .readout .lbl{font-size:11px;color:var(--chalk-dim);}
+  .readout .num{font-family:'Kalam',cursive;font-size:17px;margin-top:2px;}
+
+  .slider-wrap{max-width:560px;margin:18px auto 4px;text-align:center;}
+  .slider-wrap input[type=range]{width:100%;accent-color:var(--amber);}
+  .slider-caption{font-size:12px;color:var(--chalk-dim);margin-top:6px;}
+
+  .notebook{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;max-height:240px;overflow-y:auto;}
+  .notebook .entry{padding:8px 0;border-bottom:1px dashed var(--border);opacity:.45;}
+  .notebook .entry.current{opacity:1;color:var(--chalk);}
+  .notebook .step-num{color:var(--chalk-dim);margin-right:8px;}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  .step-indicator{color:var(--chalk-dim);font-size:13px;margin-left:auto;}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The chain rule, as a gear train — all the way to layer 1</h1>
+  <p class="sub">Blame flowing backward through the whole 3-layer network: fan-out at the output, fan-in at layer A. Drag "output" and watch every gear respond.</p>
+
+  <div class="panel">
+    <div class="legend-row">
+      <span><i class="dot" style="background:var(--chalk-dim)"></i>fixed ratio (a weight, or ReLU's slope)</span>
+      <span><i class="dot" style="background:var(--amber)"></i>variable ratio (changes with position)</span>
+      <span><i class="dot" style="background:var(--coral)"></i>indicator tooth (watch it spin)</span>
+    </div>
+
+    <svg viewBox="0 0 1080 400" id="gearSvg"></svg>
+
+    <div class="readout-grid" id="readoutGrid"></div>
+
+    <div class="slider-wrap">
+      <input type="range" id="outputSlider" min="-0.3" max="1.3" step="0.001" value="0.076">
+      <div class="slider-caption">drag to change "output" hypothetically — A1, A2, B1, B2's forward values stay fixed (they only depend on x1, x2 and upstream weights); their BLAME values ripple backward live.</div>
+    </div>
+  </div>
+
+  <div class="panel"><div class="notebook" id="notebook"></div></div>
+
+  <div class="controls panel">
+    <button id="btnPlay">▶ Play the full derivation</button>
+    <button id="btnResetSlider">Reset to 0.076</button>
+    <span class="step-indicator" id="stepIndicator"></span>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Where's the fan-out and fan-in in this gear train? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Fan-out, at the output:</strong> blame_output doesn't just drive one gear backward — it drives BOTH B1 and B2, through two different ratios (w_C1 = 0.6 and w_C2 = -0.4). Watch both connections leaving the "output" gear light up together — one blame number, two separate downstream jobs.</p>
+      <p><strong>Fan-in, at layer A:</strong> A1 doesn't just receive blame from one place — B1 and B2 BOTH feed into A1 (and both feed into A2 too), so A1's blame is the SUM of two separate contributions: <code>blame_A1 = blame_B1×w_B1[0] + blame_B2×w_B2[0]</code>. The gear for A1 still just shows one final rotation — because addition already happened before the gear ever turns — but the readout panel below shows both halves of that sum explicitly.</p>
+      <p><strong>Why do A1, A2, B1, B2's gears spin at all, if their forward values are fixed?</strong> Because their gear rotation here represents their BLAME value, not their forward value — the thing that's actually flowing backward and changing as you move the slider. Only the output/e/loss gears (right side) represent forward-pass values turning; once you're purely in backward-only territory, the gears represent blame.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const svgns = 'http://www.w3.org/2000/svg';
+const Y_TARGET = 1.0;
+
+// fixed forward-pass values from the tutorial's worked example (x1=1, x2=2)
+const A1_RAW = 0.5, A2_RAW = 0.6, B1_RAW = 0.18, B2_RAW = 0.13;
+const wB1 = [0.5,-0.2], wB2 = [0.1,0.3];
+const wC = [0.6,-0.4];
+
+function gearPath(cx, cy, rOuter, rInner, teeth){
+  let d = '';
+  const steps = teeth * 2;
+  for(let i=0;i<=steps;i++){
+    const angle = (i/steps) * 2*Math.PI;
+    const r = (i % 2 === 0) ? rOuter : rInner;
+    const x = cx + r*Math.cos(angle);
+    const y = cy + r*Math.sin(angle);
+    d += (i===0 ? 'M':'L') + x.toFixed(2) + ',' + y.toFixed(2) + ' ';
+  }
+  return d + 'Z';
+}
+
+const svg = document.getElementById('gearSvg');
+function el(tag, attrs){
+  const e = document.createElementNS(svgns, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+const gears = {
+  A1: {cx:90,  cy:105, r:44, color:'#ffce54', name:'A1'},
+  A2: {cx:90,  cy:295, r:44, color:'#ff8266', name:'A2'},
+  B1: {cx:330, cy:105, r:44, color:'#8fd19e', name:'B1'},
+  B2: {cx:330, cy:295, r:44, color:'#7fb3d5', name:'B2'},
+  C1: {cx:570, cy:200, r:48, color:'#f4f1e8', name:'output'},
+  E:  {cx:780, cy:200, r:48, color:'#f4f1e8', name:'e = y−output'},
+  L:  {cx:990, cy:200, r:48, color:'#8fd19e', name:'loss = e²'}
+};
+
+const links = [
+  {a:'A1', b:'B1', bx:210, by:95},
+  {a:'A2', b:'B2', bx:210, by:305},
+  {a:'A1', b:'B2', bx:180, by:150},
+  {a:'A2', b:'B1', bx:180, by:250},
+  {a:'B1', b:'C1', bx:450, by:145},
+  {a:'B2', b:'C1', bx:450, by:255},
+  {a:'C1', b:'E',  bx:675, by:200, fixed:true},
+  {a:'E',  b:'L',  bx:885, by:200, variable:true}
+];
+
+links.forEach(link => {
+  const g1 = gears[link.a], g2 = gears[link.b];
+  svg.appendChild(el('line', {class:'link-line', x1:g1.cx, y1:g1.cy, x2:g2.cx, y2:g2.cy}));
+});
+
+Object.keys(gears).forEach(key => {
+  const g = gears[key];
+  const group = el('g', {id:'gear_'+key, transform:`rotate(0,${g.cx},${g.cy})`});
+  const path = el('path', {d: gearPath(g.cx,g.cy,g.r,g.r*0.8,12), fill:g.color, opacity:'0.85'});
+  const hub = el('circle', {cx:g.cx, cy:g.cy, r:g.r*0.42, fill:'var(--bg-panel)', stroke:'var(--border)'});
+  group.appendChild(path); group.appendChild(hub);
+  svg.appendChild(group);
+  const dotAngleRad = -Math.PI/2;
+  const dotR = g.r*0.65;
+  const dot = el('circle', {id:'dot_'+key, class:'indicator-dot', r:4,
+    cx:(g.cx+dotR*Math.cos(dotAngleRad)).toFixed(1), cy:(g.cy+dotR*Math.sin(dotAngleRad)).toFixed(1),
+    transform:`rotate(0,${g.cx},${g.cy})`});
+  svg.appendChild(dot);
+  const nameEl = el('text', {class:'gear-name', x:g.cx, y:g.cy+g.r+20});
+  nameEl.textContent = g.name;
+  svg.appendChild(nameEl);
+  const sub = el('text', {class:'gear-sub', id:'sub_'+key, x:g.cx, y:g.cy+g.r+36});
+  svg.appendChild(sub);
+});
+
+links.forEach((link,i) => {
+  const isVar = !!link.variable;
+  const circ = el('circle', {class:'badge-circle'+(isVar?' variable':''), id:'badgeC_'+i, cx:link.bx, cy:link.by, r: isVar?22:18});
+  svg.appendChild(circ);
+  const txt = el('text', {class:'badge-text'+(isVar?' variable':''), id:'badgeT_'+i, x:link.bx, y:link.by+4});
+  svg.appendChild(txt);
+});
+
+function setRot(key, angleDeg){
+  const g = gears[key];
+  document.getElementById('gear_'+key).setAttribute('transform', `rotate(${angleDeg},${g.cx},${g.cy})`);
+  document.getElementById('dot_'+key).setAttribute('transform', `rotate(${angleDeg},${g.cx},${g.cy})`);
+}
+
+let prevRatios = {};
+
+function update(outputVal, pulse){
+  const e = Y_TARGET - outputVal;
+  const loss = e*e;
+  const blameOut = -2*e;
+  const reluB1 = B1_RAW > 0 ? 1 : 0;
+  const reluB2 = B2_RAW > 0 ? 1 : 0;
+  const blameB1 = blameOut * wC[0] * reluB1;
+  const blameB2 = blameOut * wC[1] * reluB2;
+  const reluA1 = A1_RAW > 0 ? 1 : 0;
+  const reluA2 = A2_RAW > 0 ? 1 : 0;
+  const blameA1 = (blameB1*wB1[0] + blameB2*wB2[0]) * reluA1;
+  const blameA2 = (blameB1*wB1[1] + blameB2*wB2[1]) * reluA2;
+  const ratio2 = 2*e;
+
+  const SCALE = 220;
+  setRot('C1', outputVal * SCALE);
+  setRot('E', e * SCALE);
+  setRot('L', loss * SCALE);
+  setRot('B1', blameB1 * SCALE);
+  setRot('B2', blameB2 * SCALE);
+  setRot('A1', blameA1 * SCALE);
+  setRot('A2', blameA2 * SCALE);
+
+  document.getElementById('sub_C1').textContent = outputVal.toFixed(3);
+  document.getElementById('sub_E').textContent = e.toFixed(3);
+  document.getElementById('sub_L').textContent = loss.toFixed(3);
+  document.getElementById('sub_B1').textContent = 'blame ' + blameB1.toFixed(3);
+  document.getElementById('sub_B2').textContent = 'blame ' + blameB2.toFixed(3);
+  document.getElementById('sub_A1').textContent = 'blame ' + blameA1.toFixed(3);
+  document.getElementById('sub_A2').textContent = 'blame ' + blameA2.toFixed(3);
+
+  const ratioVals = [wB1[0], wB2[1], wB2[0], wB1[1], wC[0], wC[1], -1, ratio2];
+  links.forEach((link,i) => {
+    const val = ratioVals[i];
+    document.getElementById('badgeT_'+i).textContent = (link.variable ? val.toFixed(2) : val.toString());
+    if(link.variable && pulse && prevRatios[i] !== undefined && Math.abs(prevRatios[i]-val) > 0.01){
+      const c = document.getElementById('badgeC_'+i);
+      c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse');
+    }
+    prevRatios[i] = val;
+  });
+
+  const grid = document.getElementById('readoutGrid');
+  grid.innerHTML = '';
+  const rows = [
+    ['output', outputVal.toFixed(3), 'var(--blue)'],
+    ['e', e.toFixed(3), 'var(--chalk)'],
+    ['loss', loss.toFixed(3), 'var(--green)'],
+    ['blame_output', blameOut.toFixed(3), 'var(--coral)'],
+    ['blame_B1', blameB1.toFixed(3), 'var(--green)'],
+    ['blame_B2', blameB2.toFixed(3), 'var(--blue)'],
+    ['blame_A1 = B1×0.5+B2×0.1', blameA1.toFixed(3), 'var(--amber)'],
+    ['blame_A2 = B1×-0.2+B2×0.3', blameA2.toFixed(3), 'var(--amber)']
+  ];
+  rows.forEach(r => {
+    const d = document.createElement('div'); d.className = 'readout';
+    d.innerHTML = `<div class="lbl">${r[0]}</div><div class="num" style="color:${r[2]}">${r[1]}</div>`;
+    grid.appendChild(d);
+  });
+}
+
+const slider = document.getElementById('outputSlider');
+slider.addEventListener('input', () => update(parseFloat(slider.value), true));
+update(parseFloat(slider.value), false);
+
+document.getElementById('btnResetSlider').addEventListener('click', () => {
+  slider.value = 0.076;
+  update(0.076, true);
+});
+
+const scriptSteps = [
+  'Setup — network guessed output = 0.076, target y = 1.0. Forward values A1=0.5, A2=0.6, B1=0.18, B2=0.13 are FIXED constants (they only depend on x1, x2, and upstream weights).',
+  'Blame at the output: e = 1.0 − 0.076 = 0.924, loss = e² = 0.854. ∂loss/∂output = (-1) × 2e = -1.848. That single number is everything downstream needs.',
+  'Fan-OUT at the output: blame_output drives TWO gears at once — B1 gets blame_output × w_C1(0.6) = -1.109, B2 gets blame_output × w_C2(-0.4) = 0.739. One number, two separate jobs.',
+  'Layer B\'s own gradients use these blames × their inputs (A1, A2) for ∂loss/∂w_B — not shown as gears here, since those gradients update weights and travel nowhere else.',
+  'Fan-IN at layer A: A1 receives blame from BOTH B1 and B2 — blame_A1 = blame_B1×0.5 + blame_B2×0.1 = -0.480. A2 similarly sums blame_B1×(-0.2) + blame_B2×0.3 = 0.444. Two incoming paths, added together, before the A1/A2 gears ever turn.',
+  'That\'s the full backward pass — layer C to layer B to layer A (layer 1) — built entirely from two moves, repeated: multiply by the local ratio at each link, and sum when more than one path arrives at the same gear.'
+];
+let scriptIndex = 0;
+let scriptTimer = null;
+
+function renderNotebook(upTo){
+  const nb = document.getElementById('notebook');
+  nb.innerHTML = '';
+  scriptSteps.forEach((s,i) => {
+    if(i > upTo) return;
+    const div = document.createElement('div');
+    div.className = 'entry' + (i===upTo ? ' current' : '');
+    div.innerHTML = '<span class="step-num">'+(i+1)+'.</span>'+s;
+    nb.appendChild(div);
+  });
+  nb.scrollTop = nb.scrollHeight;
+  document.getElementById('stepIndicator').textContent = 'Step ' + (upTo+1) + ' of ' + scriptSteps.length;
+}
+renderNotebook(0);
+
+document.getElementById('btnPlay').addEventListener('click', () => {
+  clearInterval(scriptTimer);
+  scriptIndex = 0;
+  slider.value = 0.076;
+  update(0.076, false);
+  renderNotebook(0);
+  scriptTimer = setInterval(() => {
+    scriptIndex++;
+    if(scriptIndex >= scriptSteps.length){ clearInterval(scriptTimer); return; }
+    renderNotebook(scriptIndex);
+  }, 2800);
+});
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Where\'s the fan-out and fan-in in this gear train? ' + (open?'▴':'▾');
+});
+</script>
+</body>
+</html>

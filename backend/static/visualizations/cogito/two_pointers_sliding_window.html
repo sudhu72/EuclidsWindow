@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Two Pointers &amp; Sliding Window</title>
+<style>
+  :root{
+    --bg:#12141a; --panel:#1a1d26; --line:#2a2e3a;
+    --text:#e9e8f0; --muted:#8b8fa3;
+    --teal:#5eead4; --amber:#f5b942; --violet:#a78bfa; --rose:#f2708a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:ui-monospace,SFMono-Regular,"Cascadia Code","JetBrains Mono",Menlo,monospace;
+    padding:24px 18px 60px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:20px;color:var(--teal);margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .tab{
+    padding:8px 16px;border:1px solid var(--line);border-radius:8px;
+    cursor:pointer;font-size:13px;color:var(--muted);background:transparent;
+  }
+  .tab.active{border-color:var(--teal);color:var(--teal);background:rgba(94,234,212,0.06);}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;}
+  .row-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+  .bars{display:flex;align-items:flex-end;gap:6px;height:180px;margin:20px 0 8px;position:relative;}
+  .bar{
+    flex:1; background:#2e3342; border-radius:3px 3px 0 0; position:relative;
+    display:flex; align-items:flex-end; justify-content:center;
+    transition:background .2s, transform .2s;
+  }
+  .bar.left-ptr{background:var(--teal);}
+  .bar.right-ptr{background:var(--amber);}
+  .bar.best{outline:2px solid var(--violet);}
+  .bar span.val{position:absolute; bottom:-20px; font-size:10px; color:var(--muted);}
+  .bar span.tag{position:absolute; top:-22px; font-size:10px; font-weight:bold;}
+  .bar.left-ptr span.tag{color:var(--teal);}
+  .bar.right-ptr span.tag{color:var(--amber);}
+
+  .chars{display:flex; gap:4px; margin:20px 0 30px; flex-wrap:wrap;}
+  .ch{
+    width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--line); border-radius:6px; font-size:14px; position:relative;
+    background:#1e212c;
+  }
+  .ch.in-window{background:rgba(94,234,212,0.12); border-color:var(--teal);}
+  .ch.dup{border-color:var(--rose); background:rgba(242,112,138,0.12);}
+  .ch span.tag{position:absolute; top:-20px; font-size:9px; font-weight:bold; white-space:nowrap;}
+
+  .controls{display:flex; gap:10px; align-items:center; margin-top:20px;}
+  button.ctl{
+    background:transparent; border:1px solid var(--line); color:var(--text);
+    padding:8px 14px; border-radius:8px; cursor:pointer; font-family:inherit; font-size:13px;
+  }
+  button.ctl:hover{border-color:var(--teal);}
+  button.ctl:disabled{opacity:.4; cursor:default;}
+  .status{
+    font-size:13px; color:var(--text); background:#1e212c; border:1px solid var(--line);
+    border-radius:8px; padding:12px 16px; margin-top:16px; line-height:1.6; min-height:44px;
+  }
+  .metric{color:var(--amber); font-weight:bold;}
+  .stepnum{color:var(--muted); font-size:11px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>&gt; two_pointers_sliding_window</h1>
+  <div class="sub">Container With Most Water (two pointers) and Longest Substring Without Repeating Characters (sliding window) — step through both.</div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-water" onclick="switchDemo('water')">Container With Most Water</div>
+    <div class="tab" id="tab-window" onclick="switchDemo('window')">Longest Substring w/o Repeat</div>
+  </div>
+
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+// ---------- Container With Most Water ----------
+const heights = [1, 8, 6, 2, 5, 4, 8, 3, 7];
+let waterSteps = [];
+(function build(){
+  let left = 0, right = heights.length - 1, best = 0, bestPair = [0, heights.length-1];
+  waterSteps.push({left, right, best, bestPair: [...bestPair], note: `Start: left=0, right=${right}.`});
+  while(left < right){
+    const width = right - left;
+    const area = width * Math.min(heights[left], heights[right]);
+    if(area > best){ best = area; bestPair = [left, right]; }
+    const noteArea = `Area = width(${width}) × min(${heights[left]},${heights[right]}) = ${area}.`;
+    if(heights[left] < heights[right]){
+      waterSteps.push({left, right, best, bestPair:[...bestPair], note: `${noteArea} Left wall shorter → move left inward.`});
+      left++;
+    } else {
+      waterSteps.push({left, right, best, bestPair:[...bestPair], note: `${noteArea} Right wall shorter (or equal) → move right inward.`});
+      right--;
+    }
+  }
+  waterSteps.push({left, right, best, bestPair:[...bestPair], note: `Pointers met. Best area found: ${best}.`, done:true});
+})();
+let waterIdx = 0;
+
+function renderWater(){
+  const s = waterSteps[waterIdx];
+  const maxH = Math.max(...heights);
+  let bars = heights.map((h,i) => {
+    let cls = 'bar';
+    if(i === s.left) cls += ' left-ptr';
+    if(i === s.right) cls += ' right-ptr';
+    if(s.bestPair.includes(i) && (i===s.left || i===s.right || s.done)) cls += '';
+    const heightPct = (h / maxH) * 100;
+    let tag = '';
+    if(i === s.left) tag = '<span class="tag" style="left:0">L</span>';
+    if(i === s.right) tag = (tag?tag:'') + '<span class="tag" style="right:0">R</span>';
+    return `<div class="${cls}" style="height:${heightPct}%;">${tag}<span class="val">${h}</span></div>`;
+  }).join('');
+
+  document.getElementById('panel').innerHTML = `
+    <div class="row-label">heights array</div>
+    <div class="bars">${bars}</div>
+    <div class="status">
+      <span class="stepnum">step ${waterIdx+1} / ${waterSteps.length}</span><br/>
+      ${s.note} Best so far: <span class="metric">${s.best}</span>
+    </div>
+    <div class="controls">
+      <button class="ctl" onclick="waterStep(-1)" ${waterIdx===0?'disabled':''}>← prev</button>
+      <button class="ctl" onclick="waterStep(1)" ${waterIdx===waterSteps.length-1?'disabled':''}>next →</button>
+      <button class="ctl" onclick="waterReset()">↺ reset</button>
+    </div>
+  `;
+}
+function waterStep(d){ waterIdx = Math.max(0, Math.min(waterSteps.length-1, waterIdx+d)); renderWater(); }
+function waterReset(){ waterIdx = 0; renderWater(); }
+
+// ---------- Longest Substring Without Repeating Characters ----------
+const str = "abcabcbbd";
+let windowSteps = [];
+(function build(){
+  let left = 0, longest = 0, bestRange = [0,-1];
+  const seen = new Set();
+  for(let right = 0; right < str.length; right++){
+    const c = str[right];
+    let removedNote = '';
+    while(seen.has(c)){
+      seen.delete(str[left]);
+      removedNote += `removed '${str[left]}' `;
+      left++;
+    }
+    seen.add(c);
+    const len = right - left + 1;
+    if(len > longest){ longest = len; bestRange = [left, right]; }
+    windowSteps.push({
+      left, right, longest, bestRange:[...bestRange],
+      note: `${removedNote ? removedNote + '(duplicate found), then ' : ''}added '${c}'. Window "${str.slice(left,right+1)}" length ${len}.`
+    });
+  }
+  windowSteps.push({left: windowSteps[windowSteps.length-1].left, right: str.length-1, longest, bestRange, note:`Done. Longest window: "${str.slice(bestRange[0],bestRange[1]+1)}" (length ${longest}).`, done:true});
+})();
+let windowIdx = 0;
+
+function renderWindow(){
+  const s = windowSteps[windowIdx];
+  let chars = str.split('').map((c,i) => {
+    let cls = 'ch';
+    if(i >= s.left && i <= s.right) cls += ' in-window';
+    let tag = '';
+    if(i === s.left) tag += '<span class="tag" style="left:0;color:#5eead4">L</span>';
+    if(i === s.right) tag += '<span class="tag" style="right:0;color:#f5b942">R</span>';
+    return `<div class="${cls}">${tag}${c}</div>`;
+  }).join('');
+
+  document.getElementById('panel').innerHTML = `
+    <div class="row-label">string</div>
+    <div class="chars">${chars}</div>
+    <div class="status">
+      <span class="stepnum">step ${windowIdx+1} / ${windowSteps.length}</span><br/>
+      ${s.note} Longest so far: <span class="metric">${s.longest}</span>
+    </div>
+    <div class="controls">
+      <button class="ctl" onclick="windowStep(-1)" ${windowIdx===0?'disabled':''}>← prev</button>
+      <button class="ctl" onclick="windowStep(1)" ${windowIdx===windowSteps.length-1?'disabled':''}>next →</button>
+      <button class="ctl" onclick="windowReset()">↺ reset</button>
+    </div>
+  `;
+}
+function windowStep(d){ windowIdx = Math.max(0, Math.min(windowSteps.length-1, windowIdx+d)); renderWindow(); }
+function windowReset(){ windowIdx = 0; renderWindow(); }
+
+function switchDemo(which){
+  document.getElementById('tab-water').classList.toggle('active', which==='water');
+  document.getElementById('tab-window').classList.toggle('active', which==='window');
+  if(which==='water') renderWater(); else renderWindow();
+}
+
+renderWater();
+</script>
+</body>
+</html>

@@ -541,7 +541,7 @@ const formatTutorOutput = (payload) => {
 // =============================================================================
 // Tab Navigation
 // =============================================================================
-const LAB_TABS = new Set(["matrixlab", "musiclab", "calclab", "fftlab"]);
+const LAB_TABS = new Set(["matrixlab", "musiclab", "calclab", "fftlab", "cryptolab", "logiclab", "aibyhand", "cogito"]);
 const labsDropdown = document.getElementById("labs-dropdown");
 const labsToggle = labsDropdown ? labsDropdown.querySelector(".nav-dropdown-toggle") : null;
 const labsItems = document.querySelectorAll(".nav-dropdown-item");

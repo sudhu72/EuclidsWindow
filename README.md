@@ -44,6 +44,7 @@ Euclid's Window is a local-first math tutoring platform that combines structured
   - **FFT Lab (Image)** — load/upload image, 2D FFT (row-column decomposition), magnitude spectrum + phase display, frequency-domain filtering (low-pass / high-pass / band-pass / band-stop with adjustable radius), inverse 2D FFT with side-by-side comparison
   - **Cryptology Lab** — four games built on real math: Caesar Cipher with interactive SVG wheel (modular arithmetic), Frequency Analysis (statistics breaks codes), RSA Playground (public-key encryption with real number theory), Diffie-Hellman Key Exchange (discrete logarithms). Each game starts with a math prerequisite brief linking to relevant topics
   - **Formal Logic Lab** — four interactive puzzles: Truth Table Builder (propositional formula evaluator), Syllogism Validator (Aristotle's engine of reason with classic and fallacy examples), Knights & Knaves puzzles (proof by contradiction), Logic Gate Circuit Builder (wire AND/OR/NOT gates to build XOR, NAND, majority vote, half adder, multiplexer). Includes historical anecdotes from mathematics and social usage
+  - **Cogito Gallery** — a browsable collection of 26 self-contained interactive visualizations adapted from the Feynman-method "cogito" tutorials, across three tracks: **Mathematics** (Euler's identity, math notation, normalization, number theory, transforms, structure), **ML & Deep Learning** (forward/backward pass, chain rule, attention matrix math, KV-cache/GQA/MLA, cross-entropy, L2 regularization, precision/recall, Simpson's paradox), and **Algorithms** (binary search, two pointers/sliding window, monotonic stack & heap, BFS/DFS, DP grid, pattern decision tree). Each card opens the animation in an in-app viewer or sends its concept to the tutor via an "Explore in Tutor" deep-link
   - Each lab step includes tabbed math explanations for all four learner levels
 
 - **Mathematical Symbols Explorer**
@@ -280,6 +281,7 @@ EuclidsWindow/
 │   ├── fftlab-image.js              # FFT Lab: image mode (2D FFT)
 │   ├── cryptolab.js                 # Cryptology Lab (4 crypto games)
 │   ├── logiclab.js                  # Formal Logic Lab (4 logic puzzles)
+│   ├── cogito.js                    # Cogito Gallery (26 interactive visualizations)
 │   ├── symbols.js                   # Mathematical Symbols Explorer
 │   ├── mathmap.html                 # Dedicated map page
 │   ├── mathmap.js
@@ -291,6 +293,7 @@ EuclidsWindow/
 ├── scripts/
 │   ├── start-local-tutor.sh
 │   ├── start-all.sh
+│   ├── seed_cogito_library.py       # Ingest the cogito Feynman tutorials into the RAG library
 │   └── docker-entrypoint.sh
 ├── start.sh                         # 🚀 One-command Docker startup
 ├── restart.sh                       # Quick container restart
@@ -534,7 +537,8 @@ or set it in the UI under **Settings → Local LLM Model**.
 6. **FFT Lab (Image)**: Upload an image or load a sample → Run 2D FFT → View magnitude spectrum + phase → Apply low-pass/high-pass/band-pass/band-stop filters → Reconstruct with inverse 2D FFT → Compare original vs. filtered
 7. **Crypto Lab**: Encrypt with the Caesar Cipher (interactive alphabet wheel), crack codes with frequency analysis, build RSA keys from primes, watch Diffie-Hellman key exchange unfold — each game starts with a math prerequisite brief
 8. **Logic Lab**: Build truth tables from propositional formulas, validate syllogisms (spot the fallacy!), solve Knights & Knaves puzzles, wire logic gate circuits to build XOR, NAND, and half adders
-9. Each step has inline math explanations for Kids, Teen, College, and Adult levels
+9. **Cogito Gallery**: Browse 26 interactive visualizations across Math, ML, and Algorithms → click **Open ▸** to play with one in-app, or **Explore in Tutor** to learn its concept in words
+10. Each step has inline math explanations for Kids, Teen, College, and Adult levels
 
 ### 3) Scratchpad answer checking
 

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Monotonic Stack &amp; Heap</title>
+<style>
+  :root{
+    --bg:#12141a; --panel:#1a1d26; --line:#2a2e3a;
+    --text:#e9e8f0; --muted:#8b8fa3;
+    --teal:#5eead4; --amber:#f5b942; --violet:#a78bfa; --rose:#f2708a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:ui-monospace,SFMono-Regular,"Cascadia Code","JetBrains Mono",Menlo,monospace;
+    padding:24px 18px 60px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:20px;color:var(--teal);margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .tab{padding:8px 16px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);background:transparent;}
+  .tab.active{border-color:var(--teal);color:var(--teal);background:rgba(94,234,212,0.06);}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;}
+  .row-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+
+  .daybars{display:flex; align-items:flex-end; gap:8px; height:160px; margin:20px 0 8px;}
+  .day{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; position:relative;}
+  .day .bar{width:100%; border-radius:3px 3px 0 0; background:#2e3342; transition:background .2s;}
+  .day.stacked .bar{background:var(--amber);}
+  .day.current .bar{background:var(--teal);}
+  .day .val{font-size:11px; color:var(--muted); margin-top:4px;}
+  .day .ans{position:absolute; top:-20px; font-size:10px; color:var(--violet); font-weight:bold;}
+
+  .stack-row{display:flex; gap:6px; margin:16px 0; flex-wrap:wrap;}
+  .schip{padding:6px 10px; border-radius:6px; font-size:12px; border:1px solid var(--amber); color:var(--amber); background:#1e212c;}
+
+  svg{width:100%; height:220px; display:block; margin:16px 0;}
+  .heap-node{stroke-width:2; transition:fill .2s;}
+  .heap-label{font-size:13px; font-weight:bold; text-anchor:middle; dominant-baseline:central; fill:#0d0e12;}
+  .heap-edge{stroke:#3a3f52; stroke-width:2;}
+
+  .status{
+    font-size:13px; color:var(--text); background:#1e212c; border:1px solid var(--line);
+    border-radius:8px; padding:12px 16px; margin-top:8px; line-height:1.6; min-height:44px;
+  }
+  .metric{color:var(--amber); font-weight:bold;}
+  .stepnum{color:var(--muted); font-size:11px;}
+  .controls{display:flex; gap:10px; align-items:center; margin-top:20px;}
+  button.ctl{
+    background:transparent; border:1px solid var(--line); color:var(--text);
+    padding:8px 14px; border-radius:8px; cursor:pointer; font-family:inherit; font-size:13px;
+  }
+  button.ctl:hover{border-color:var(--teal);}
+  button.ctl:disabled{opacity:.4; cursor:default;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>&gt; monotonic_stack_and_heap</h1>
+  <div class="sub">Daily Temperatures (monotonic decreasing stack) and a min-heap's bubble-up during pushes.</div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-stack" onclick="switchDemo('stack')">Monotonic Stack: Daily Temperatures</div>
+    <div class="tab" id="tab-heap" onclick="switchDemo('heap')">Heap: Push &amp; Bubble Up</div>
+  </div>
+
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+// ---------- Monotonic Stack: Daily Temperatures ----------
+const temps = [73, 74, 75, 71, 69, 72, 76, 73];
+let stackSteps = [];
+(function build(){
+  const answer = new Array(temps.length).fill(0);
+  const stack = [];
+  for(let i=0;i<temps.length;i++){
+    let poppedNotes = [];
+    while(stack.length && temps[stack[stack.length-1]] < temps[i]){
+      const prev = stack.pop();
+      answer[prev] = i - prev;
+      poppedNotes.push(`day ${prev} (${temps[prev]}°) resolved: waits ${i-prev} day(s)`);
+    }
+    stack.push(i);
+    stackSteps.push({
+      i, stack: [...stack], answer: [...answer],
+      note: poppedNotes.length
+        ? `Day ${i} (${temps[i]}°) is warmer than stack top(s) → ${poppedNotes.join('; ')}. Push day ${i}.`
+        : `Day ${i} (${temps[i]}°) does not beat the stack top → just push day ${i}, still waiting.`
+    });
+  }
+})();
+let stackIdx = 0;
+
+function renderStack(){
+  const s = stackSteps[stackIdx];
+  const maxT = Math.max(...temps);
+  let bars = temps.map((t,i) => {
+    let cls = 'day';
+    if(i === s.i) cls += ' current';
+    else if(s.stack.includes(i)) cls += ' stacked';
+    const h = (t / maxT) * 100;
+    const ansTag = s.answer[i] > 0 ? `<span class="ans">+${s.answer[i]}d</span>` : '';
+    return `<div class="${cls}">${ansTag}<div class="bar" style="height:${h}%"></div><div class="val">${t}°</div></div>`;
+  }).join('');
+
+  document.getElementById('panel').innerHTML = `
+    <div class="row-label">temperatures (amber = currently on stack, teal = day being processed)</div>
+    <div class="daybars">${bars}</div>
+    <div class="row-label" style="margin-top:20px;">stack contents (day indices)</div>
+    <div class="stack-row">${s.stack.map(d => `<div class="schip">day ${d} (${temps[d]}°)</div>`).join('') || '<div class="schip">empty</div>'}</div>
+    <div class="status">
+      <span class="stepnum">step ${stackIdx+1} / ${stackSteps.length}</span><br/>
+      ${s.note}
+    </div>
+    <div class="controls">
+      <button class="ctl" onclick="stackStep(-1)" ${stackIdx===0?'disabled':''}>← prev</button>
+      <button class="ctl" onclick="stackStep(1)" ${stackIdx===stackSteps.length-1?'disabled':''}>next →</button>
+      <button class="ctl" onclick="stackReset()">↺ reset</button>
+    </div>
+  `;
+}
+function stackStep(d){ stackIdx = Math.max(0, Math.min(stackSteps.length-1, stackIdx+d)); renderStack(); }
+function stackReset(){ stackIdx = 0; renderStack(); }
+
+// ---------- Heap Push & Bubble Up ----------
+const pushSequence = [5, 3, 8, 1, 9, 2];
+let heapSteps = [];
+(function build(){
+  const arr = [];
+  heapSteps.push({ arr: [...arr], swap: null, note: `Empty min-heap. About to push: ${pushSequence.join(', ')}.` });
+  for(const num of pushSequence){
+    arr.push(num);
+    heapSteps.push({ arr: [...arr], swap: null, note: `Push ${num} at the next open slot (index ${arr.length-1}).` });
+    let i = arr.length - 1;
+    while(i > 0){
+      const parent = Math.floor((i-1)/2);
+      if(arr[i] < arr[parent]){
+        [arr[i], arr[parent]] = [arr[parent], arr[i]];
+        heapSteps.push({ arr: [...arr], swap: [i, parent], note: `${arr[parent]} < parent → violates min-heap order, swap index ${i} and ${parent}.` });
+        i = parent;
+      } else {
+        break;
+      }
+    }
+  }
+  heapSteps.push({ arr: [...arr], swap: null, note: `Done. Min-heap property holds: every parent ≤ its children. Root (min) = ${arr[0]}.` });
+})();
+let heapIdx = 0;
+
+function heapPositions(n){
+  const positions = [];
+  const width = 460, levelHeight = 55, topPad = 30;
+  for(let i=0;i<n;i++){
+    const level = Math.floor(Math.log2(i+1));
+    const levelStart = Math.pow(2, level) - 1;
+    const posInLevel = i - levelStart;
+    const countInLevel = Math.pow(2, level);
+    const slotWidth = width / (countInLevel + 1);
+    const x = slotWidth * (posInLevel + 1);
+    const y = topPad + level * levelHeight;
+    positions.push([x, y]);
+  }
+  return positions;
+}
+
+function renderHeap(){
+  const s = heapSteps[heapIdx];
+  const arr = s.arr;
+  const positions = heapPositions(arr.length);
+
+  let html = '';
+  for(let i=0;i<arr.length;i++){
+    const parent = Math.floor((i-1)/2);
+    if(i > 0){
+      const [x1,y1] = positions[parent], [x2,y2] = positions[i];
+      html += `<line class="heap-edge" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    }
+  }
+  for(let i=0;i<arr.length;i++){
+    const [x,y] = positions[i];
+    let fill = '#2e3342', stroke='#3a3f52';
+    if(s.swap && s.swap.includes(i)){ fill = 'var(--rose)'; stroke = 'var(--rose)'; fill = '#f2708a'; stroke = '#f2708a'; }
+    else if(i === 0) { fill = 'var(--teal)'; fill = '#5eead4'; stroke = '#5eead4'; }
+    html += `<circle class="heap-node" cx="${x}" cy="${y}" r="18" fill="${fill}" stroke="${stroke}"/>`;
+    html += `<text class="heap-label" x="${x}" y="${y+1}">${arr[i]}</text>`;
+  }
+
+  document.getElementById('panel').innerHTML = `
+    <div class="row-label">min-heap as array: [${arr.join(', ')}]</div>
+    <svg viewBox="0 0 460 220">${html}</svg>
+    <div class="status">
+      <span class="stepnum">step ${heapIdx+1} / ${heapSteps.length}</span><br/>
+      ${s.note}
+    </div>
+    <div class="controls">
+      <button class="ctl" onclick="heapStep(-1)" ${heapIdx===0?'disabled':''}>← prev</button>
+      <button class="ctl" onclick="heapStep(1)" ${heapIdx===heapSteps.length-1?'disabled':''}>next →</button>
+      <button class="ctl" onclick="heapReset()">↺ reset</button>
+    </div>
+  `;
+}
+function heapStep(d){ heapIdx = Math.max(0, Math.min(heapSteps.length-1, heapIdx+d)); renderHeap(); }
+function heapReset(){ heapIdx = 0; renderHeap(); }
+
+function switchDemo(which){
+  document.getElementById('tab-stack').classList.toggle('active', which==='stack');
+  document.getElementById('tab-heap').classList.toggle('active', which==='heap');
+  if(which==='stack') renderStack(); else renderHeap();
+}
+
+renderStack();
+</script>
+</body>
+</html>

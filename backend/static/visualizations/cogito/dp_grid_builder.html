@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DP Grid Builder</title>
+<style>
+  :root{
+    --bg:#12141a; --panel:#1a1d26; --line:#2a2e3a;
+    --text:#e9e8f0; --muted:#8b8fa3;
+    --teal:#5eead4; --amber:#f5b942; --violet:#a78bfa; --rose:#f2708a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:ui-monospace,SFMono-Regular,"Cascadia Code","JetBrains Mono",Menlo,monospace;
+    padding:24px 18px 60px;
+  }
+  .wrap{max-width:820px;margin:0 auto;}
+  h1{font-size:20px;color:var(--teal);margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px; overflow-x:auto;}
+  .row-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;}
+  table{border-collapse:collapse;}
+  td, th{
+    width:38px; height:38px; text-align:center; border:1px solid var(--line);
+    font-size:13px; position:relative;
+  }
+  th{color:var(--muted); font-weight:normal; background:#181b24;}
+  td.filled{background:#1e212c;}
+  td.current{background:var(--violet); color:#0d0e12; font-weight:bold;}
+  td.dep{outline:2px solid var(--amber); outline-offset:-2px;}
+  td.match{background:var(--teal); color:#0d0e12; font-weight:bold;}
+  .legend{display:flex; gap:16px; margin-top:14px; font-size:11px; color:var(--muted); flex-wrap:wrap;}
+  .legend .sw{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle;}
+  .status{
+    font-size:13px; color:var(--text); background:#1e212c; border:1px solid var(--line);
+    border-radius:8px; padding:12px 16px; margin-top:16px; line-height:1.6; min-height:44px;
+  }
+  .metric{color:var(--amber); font-weight:bold;}
+  .stepnum{color:var(--muted); font-size:11px;}
+  .controls{display:flex; gap:10px; align-items:center; margin-top:20px;}
+  button.ctl{
+    background:transparent; border:1px solid var(--line); color:var(--text);
+    padding:8px 14px; border-radius:8px; cursor:pointer; font-family:inherit; font-size:13px;
+  }
+  button.ctl:hover{border-color:var(--teal);}
+  button.ctl:disabled{opacity:.4; cursor:default;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>&gt; dp_grid_builder</h1>
+  <div class="sub">Longest Common Subsequence — text1 = "abcde", text2 = "ace". Watch each cell fill from cells it already depends on.</div>
+
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+const text1 = "abcde";
+const text2 = "ace";
+const m = text1.length, n = text2.length;
+
+let dp = [];
+for(let i=0;i<=m;i++){ dp.push(new Array(n+1).fill(0)); }
+
+let steps = [];
+// initial state
+steps.push({ i:-1, j:-1, grid: dp.map(r=>[...r]), note: `Row 0 and column 0 start at 0 — an empty string shares nothing with anything.` });
+
+for(let i=1;i<=m;i++){
+  for(let j=1;j<=n;j++){
+    let note, match=false;
+    if(text1[i-1] === text2[j-1]){
+      dp[i][j] = dp[i-1][j-1] + 1;
+      match = true;
+      note = `'${text1[i-1]}' == '${text2[j-1]}' → dp[${i}][${j}] = dp[${i-1}][${j-1}] + 1 = ${dp[i][j]} (diagonal + 1).`;
+    } else {
+      dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+      note = `'${text1[i-1]}' ≠ '${text2[j-1]}' → dp[${i}][${j}] = max(dp[${i-1}][${j}], dp[${i}][${j-1}]) = ${dp[i][j]}.`;
+    }
+    steps.push({ i, j, match, grid: dp.map(r=>[...r]), note });
+  }
+}
+
+let idx = 0;
+
+function render(){
+  const s = steps[idx];
+  let html = '<table><tr><th></th><th></th>';
+  for(let j=0;j<n;j++) html += `<th>${text2[j]}</th>`;
+  html += '</tr>';
+
+  for(let i=0;i<=m;i++){
+    html += `<tr><th>${i===0?'':text1[i-1]}</th>`;
+    for(let j=0;j<=n;j++){
+      let cls = 'td';
+      const filled = (i < s.i) || (i === s.i && j <= s.j) || (s.i === -1 && false);
+      if(s.grid[i][j] !== undefined && (i <= (s.i===-1?0:s.i))){
+        // handled below more precisely
+      }
+      let value = '';
+      const isPast = (i < s.i) || (i === s.i && j <= s.j) || i === 0 || j === 0;
+      if(isPast || s.i === -1){
+        value = s.grid[i][j];
+        cls += ' filled';
+      }
+      if(i === s.i && j === s.j){
+        cls += s.match ? ' match' : ' current';
+      }
+      if(s.i >=0 && i === s.i && j === s.j){
+        // mark dependency cells
+      }
+      html += `<td class="${cls}" id="cell-${i}-${j}">${value}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+
+  // mark dependency cells with outline via post-processing
+  document.getElementById('panel').innerHTML = `
+    <div class="row-label">dp table (dp[i][j] = LCS length of text1[:i] and text2[:j])</div>
+    ${html}
+    <div class="legend">
+      <span><span class="sw" style="background:var(--violet)"></span>current cell (no match)</span>
+      <span><span class="sw" style="background:var(--teal)"></span>current cell (match → diagonal+1)</span>
+      <span><span class="sw" style="background:#1e212c;border:1px solid var(--amber)"></span>dependency used</span>
+    </div>
+    <div class="status">
+      <span class="stepnum">step ${idx+1} / ${steps.length}</span><br/>
+      ${s.note}
+    </div>
+    <div class="controls">
+      <button class="ctl" onclick="step(-1)" ${idx===0?'disabled':''}>← prev</button>
+      <button class="ctl" onclick="step(1)" ${idx===steps.length-1?'disabled':''}>next →</button>
+      <button class="ctl" onclick="reset()">↺ reset</button>
+    </div>
+  `;
+
+  if(s.i >= 0){
+    const deps = s.match
+      ? [[s.i-1, s.j-1]]
+      : [[s.i-1, s.j], [s.i, s.j-1]];
+    for(const [di,dj] of deps){
+      const el = document.getElementById(`cell-${di}-${dj}`);
+      if(el) el.classList.add('dep');
+    }
+  }
+}
+
+function step(d){ idx = Math.max(0, Math.min(steps.length-1, idx+d)); render(); }
+function reset(){ idx = 0; render(); }
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>From waveform to spectrogram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  svg{width:100%;height:auto;display:block;}
+
+  .toggle-row{display:flex;justify-content:center;gap:10px;margin-bottom:16px;}
+  .toggle-row button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer;}
+  .toggle-row button.active{border-color:var(--amber);color:var(--amber);}
+
+  .wave-path{stroke:var(--chalk);stroke-width:1.5px;fill:none;opacity:.85;}
+  .window-rect{fill:rgba(255,206,84,.18);stroke:var(--amber);stroke-width:1.5px;}
+  .axis-label{font-size:11px;fill:var(--chalk-dim);}
+
+  .spec-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin:6px 0 4px;}
+
+  .notebook{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;max-height:200px;overflow-y:auto;}
+  .notebook .entry{padding:8px 0;border-bottom:1px dashed var(--border);opacity:.45;}
+  .notebook .entry.current{opacity:1;color:var(--chalk);}
+  .notebook .step-num{color:var(--chalk-dim);margin-right:8px;}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  button:disabled{opacity:.35;cursor:default;}
+  .step-indicator{color:var(--chalk-dim);font-size:13px;margin-left:auto;}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>From waveform to spectrogram</h1>
+  <p class="sub">Watch a small time-window slide across the wave while a spectrogram builds up beside it, column by column.</p>
+
+  <div class="panel">
+    <div class="toggle-row">
+      <button id="btnTone" class="active">Steady tone</button>
+      <button id="btnChirp">Rising chirp</button>
+    </div>
+
+    <svg viewBox="0 0 900 200" id="waveSvg">
+      <line class="axis-label" x1="40" y1="100" x2="880" y2="100" stroke="var(--chalk-dim)" stroke-width="1"/>
+      <path class="wave-path" id="wavePath" d=""/>
+      <rect class="window-rect" id="windowRect" x="40" y="20" width="60" height="160"/>
+      <text class="axis-label" x="860" y="190" text-anchor="end">time →</text>
+    </svg>
+
+    <div class="spec-caption">spectrogram building up (time → across, frequency ↑, brightness = strength)</div>
+    <svg viewBox="0 0 900 200" id="specSvg">
+      <text class="axis-label" x="20" y="20" transform="rotate(-90 20 20)" text-anchor="end">freq →</text>
+    </svg>
+  </div>
+
+  <div class="panel"><div class="notebook" id="notebook"></div></div>
+
+  <div class="controls panel">
+    <button id="btnPrev">◂ Prev</button>
+    <button id="btnPlay">▶ Play</button>
+    <button id="btnNext">Next ▸</button>
+    <button id="btnReset">Reset</button>
+    <span class="step-indicator" id="stepIndicator"></span>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why does the chirp look diagonal? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>A steady tone</strong> has the same pitch the whole way through, so every time-window's Fourier Transform reports strength concentrated at the same single frequency — column after column lights up at the same height, producing one flat horizontal band the whole way across.</p>
+      <p><strong>A rising chirp's pitch increases continuously</strong>, so each successive time-window is centered on a slightly higher frequency than the one before it. Plot each window's peak frequency as you move left to right, and the bright spot climbs steadily upward — a straight diagonal line is exactly what "pitch rising at a constant rate over time" looks like once frequency is placed on its own axis.</p>
+      <p>Nothing about the Fourier Transform "knows" about chirps or tones specifically — it only ever answers "how much of each frequency is present in this one window." The shape you see is just that same honest answer, asked and plotted many times in a row.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const SR = 400;
+const DUR = 2.0;
+const N = Math.floor(SR*DUR);
+
+function toneSignal(){
+  const sig = [];
+  for(let n=0;n<N;n++) sig.push(Math.sin(2*Math.PI*20*n/SR));
+  return sig;
+}
+function chirpSignal(){
+  const sig = [];
+  const f0=8, f1=32; // sweeps 8Hz -> 32Hz over duration
+  for(let n=0;n<N;n++){
+    const t = n/SR;
+    // Correct chirp: integrate frequency into phase, don't plug instantaneous
+    // frequency directly into sin(2*pi*f(t)*t) -- that makes the true frequency
+    // race ahead of the intended linear sweep.
+    const phase = 2*Math.PI*(f0*t + (f1-f0)/(2*DUR)*t*t);
+    sig.push(Math.sin(phase));
+  }
+  return sig;
+}
+
+let signal = toneSignal();
+let mode = 'tone';
+
+const winLen = 60; // samples per window
+const hop = 20;
+const numWindows = Math.floor((N-winLen)/hop)+1;
+const freqBins = [4,8,12,16,20,24,28,32,36,40]; // Hz bins to evaluate
+
+function dftMag(x, freqHz, sr){
+  const Nx = x.length;
+  let re=0, im=0;
+  for(let n=0;n<Nx;n++){
+    const angle = -2*Math.PI*freqHz*n/sr;
+    re += x[n]*Math.cos(angle);
+    im += x[n]*Math.sin(angle);
+  }
+  return Math.sqrt(re*re+im*im)/Nx;
+}
+
+function buildWavePath(sig){
+  const x0=40, x1=880, y0=100, amp=70;
+  let d='';
+  for(let i=0;i<sig.length;i++){
+    const x = x0 + (i/sig.length)*(x1-x0);
+    const y = y0 - sig[i]*amp;
+    d += (i===0?'M':'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  }
+  return d;
+}
+
+document.getElementById('wavePath').setAttribute('d', buildWavePath(signal));
+
+const specSvg = document.getElementById('specSvg');
+function clearSpec(){
+  while(specSvg.children.length > 1) specSvg.removeChild(specSvg.lastChild);
+}
+
+function colX(idx){ return 40 + idx*((880-40)/numWindows); }
+function colWidth(){ return (880-40)/numWindows; }
+function rowY(freqIdx){ return 180 - freqIdx*(160/freqBins.length); }
+function rowHeight(){ return 160/freqBins.length; }
+
+let current = 0, playing = false, timer = null;
+
+function render(){
+  const startSample = current*hop;
+  const winX = 40 + (startSample/signal.length)*(880-40);
+  const winW = (winLen/signal.length)*(880-40);
+  document.getElementById('windowRect').setAttribute('x', winX);
+  document.getElementById('windowRect').setAttribute('width', winW);
+
+  clearSpec();
+  for(let c=0;c<=current;c++){
+    const s = c*hop;
+    const chunk = signal.slice(s, s+winLen);
+    freqBins.forEach((f, fi) => {
+      const mag = dftMag(chunk, f, SR);
+      const norm = Math.min(1, mag/0.5);
+      const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x', colX(c));
+      rect.setAttribute('y', rowY(fi) - rowHeight());
+      rect.setAttribute('width', Math.max(1,colWidth()-1));
+      rect.setAttribute('height', rowHeight()-1);
+      const brightness = Math.round(20 + norm*80);
+      rect.setAttribute('fill', `rgb(${brightness*2.5},${brightness*2.2},${brightness*1.5})`);
+      specSvg.appendChild(rect);
+    });
+  }
+
+  document.getElementById('stepIndicator').textContent = 'Window ' + (current+1) + ' of ' + numWindows;
+  document.getElementById('btnPrev').disabled = current === 0;
+  document.getElementById('btnNext').disabled = current === numWindows-1;
+
+  renderNotebook();
+}
+
+function renderNotebook(){
+  const nb = document.getElementById('notebook');
+  nb.innerHTML = '';
+  const maxShow = 6;
+  const startIdx = Math.max(0, current-maxShow+1);
+  for(let c=startIdx;c<=current;c++){
+    const div = document.createElement('div');
+    div.className = 'entry' + (c===current?' current':'');
+    div.innerHTML = '<span class="step-num">'+(c+1)+'.</span>window '+(c+1)+' analyzed — Fourier Transform run on this ~150ms slice, added as one column to the spectrogram.';
+    nb.appendChild(div);
+  }
+  nb.scrollTop = nb.scrollHeight;
+}
+
+function next(){ if(current < numWindows-1){ current++; render(); } else stopPlay(); }
+function prev(){ if(current > 0){ current--; render(); } }
+function reset(){ current = 0; stopPlay(); render(); }
+function startPlay(){ playing=true; document.getElementById('btnPlay').textContent='⏸ Pause'; timer=setInterval(next,220); }
+function stopPlay(){ playing=false; document.getElementById('btnPlay').textContent='▶ Play'; clearInterval(timer); }
+
+document.getElementById('btnNext').addEventListener('click', () => { stopPlay(); next(); });
+document.getElementById('btnPrev').addEventListener('click', () => { stopPlay(); prev(); });
+document.getElementById('btnReset').addEventListener('click', reset);
+document.getElementById('btnPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
+
+document.getElementById('btnTone').addEventListener('click', () => {
+  mode='tone'; signal = toneSignal();
+  document.getElementById('wavePath').setAttribute('d', buildWavePath(signal));
+  document.getElementById('btnTone').classList.add('active');
+  document.getElementById('btnChirp').classList.remove('active');
+  reset();
+});
+document.getElementById('btnChirp').addEventListener('click', () => {
+  mode='chirp'; signal = chirpSignal();
+  document.getElementById('wavePath').setAttribute('d', buildWavePath(signal));
+  document.getElementById('btnChirp').classList.add('active');
+  document.getElementById('btnTone').classList.remove('active');
+  reset();
+});
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why does the chirp look diagonal? ' + (open?'▴':'▾');
+});
+
+render();
+</script>
+</body>
+</html>

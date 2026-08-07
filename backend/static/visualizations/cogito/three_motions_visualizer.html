@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Three Motions — Transform, Zoom, Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:660px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); width:70px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  input[type=number]{ width:60px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; font-family:"IBM Plex Mono",monospace; }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  .matrixgrid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:140px; margin-bottom:14px; }
+  .presetbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:8px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; }
+  .statrow{ display:flex; gap:10px; flex-wrap:wrap; margin:12px 0; }
+  svg{ width:100%; max-width:420px; height:320px; display:block; margin:0 auto; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Parts 1, 2, 8</div>
+    <h1>Three Motions</h1>
+    <p>A matrix warping the plane, a curve flattening as you zoom, and an equation's arrows guiding a path over time — three ideas that are much easier to trust once you can watch them happen.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="linalg">Linear Transformations</button>
+    <button class="tab" data-tab="calc">Tangent Line &amp; Riemann Sum</button>
+    <button class="tab" data-tab="ode">Direction Fields</button>
+  </div>
+
+  <!-- ============ LINEAR ALGEBRA ============ -->
+  <div class="panel active" id="panel-linalg">
+    <div class="card">
+      <h2>The Matrix as a Machine</h2>
+      <p class="sub">Set a 2×2 matrix. Watch the grid warp, and see whether any real invariant directions (eigenvectors) survive the transformation.</p>
+      <div class="presetbar">
+        <button class="op" data-preset="stretch">Stretch x by 3</button>
+        <button class="op" data-preset="rotate">Rotate 90°</button>
+        <button class="op" data-preset="shear">Shear</button>
+        <button class="op" data-preset="reflect">Reflect (x-axis)</button>
+        <button class="op" data-preset="identity">Identity</button>
+      </div>
+      <div class="matrixgrid">
+        <input type="number" id="mA" value="3" step="0.5"><input type="number" id="mB" value="0" step="0.5">
+        <input type="number" id="mC" value="0" step="0.5"><input type="number" id="mD" value="1" step="0.5">
+      </div>
+      <svg id="linalgSvg" viewBox="-160 -160 320 320"></svg>
+      <div class="statrow">
+        <div class="stat" id="eigStat">eigenvalues: —</div>
+      </div>
+      <p class="caption">Grey = original grid and basis vectors. Purple = after the matrix acts. Dashed gold lines, if shown, are eigenvector directions — the only lines that map onto themselves.</p>
+    </div>
+  </div>
+
+  <!-- ============ CALCULUS ============ -->
+  <div class="panel" id="panel-calc">
+    <div class="card">
+      <h2>Tangent Line: Derivative as Local Zoom</h2>
+      <p class="sub">Drag the point along the curve. Toggle zoom to watch the curve flatten into its own tangent line.</p>
+      <div class="row"><label>Position</label><input type="range" id="xPos" min="1" max="19" step="0.2" value="10"><span class="readout" id="xPosOut">10.0</span></div>
+      <button class="op" id="btnZoom">Zoom in</button>
+      <svg id="calcSvg" viewBox="0 0 400 260"></svg>
+      <div class="statrow">
+        <div class="stat" id="slopeStat">slope f'(x) ≈ —</div>
+      </div>
+
+      <h2 style="margin-top:28px;">Riemann Sum: Integral as Accumulated Area</h2>
+      <p class="sub">More, thinner rectangles converge to the exact area under the curve.</p>
+      <div class="row"><label>Rectangles</label><input type="range" id="nRect" min="2" max="60" step="1" value="8"><span class="readout" id="nRectOut">8</span></div>
+      <svg id="riemannSvg" viewBox="0 0 400 220"></svg>
+      <div class="statrow">
+        <div class="stat" id="leftSumStat">left sum: —</div>
+        <div class="stat" id="rightSumStat">right sum: —</div>
+        <div class="stat" id="exactStat">exact integral ≈ 38.827</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DIFFERENTIAL EQUATIONS ============ -->
+  <div class="panel" id="panel-ode">
+    <div class="card">
+      <h2>Direction Fields: dx/dt = k·x</h2>
+      <p class="sub">Adjust k, then click anywhere on the field to drop a starting point and watch Euler's method trace a path by following the local arrows, one small step at a time.</p>
+      <div class="row"><label>k</label><input type="range" id="kSlider" min="-0.6" max="0.6" step="0.05" value="0.3"><span class="readout" id="kOut">0.30</span></div>
+      <button class="op" id="btnClearPath">Clear path</button>
+      <svg id="odeSvg" viewBox="0 0 400 300"></svg>
+      <p class="caption">Solid purple = Euler's method, following the arrows step by step. Dashed gold = the exact solution x(t) = x₀·e^(k(t−t₀)), for comparison.</p>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Where this connects:</b> the eigenvector directions here are the same "stretch, don't rotate" idea from Part 1.2 — try the shear preset and notice only one direction survives. The tangent line is Part 2's "local straight-line approximation," and the Riemann sum is literally the construction behind the Fundamental Theorem of Calculus. The direction field traces exactly the "leaf on a river of arrows" picture from Part 8 — Euler's method is that picture, made computational, one tiny step at a time.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("panel-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ================= LINEAR ALGEBRA =================
+  const mA=document.getElementById("mA"), mB=document.getElementById("mB"),
+        mC=document.getElementById("mC"), mD=document.getElementById("mD");
+  const linSvg = document.getElementById("linalgSvg");
+  const SCALE = 35;
+
+  function eigen(a,b,c,d){
+    const T=a+d, D=a*d-b*c;
+    const disc = T*T-4*D;
+    if(disc < -1e-9) return null;
+    const sq = Math.sqrt(Math.max(disc,0));
+    const l1=(T+sq)/2, l2=(T-sq)/2;
+    function vec(l){
+      let v;
+      if(Math.abs(b) > 1e-9) v=[b, l-a];
+      else if(Math.abs(c) > 1e-9) v=[l-d, c];
+      else v = Math.abs(a-l) < 1e-6 ? [1,0] : [0,1];
+      const n = Math.hypot(v[0],v[1]);
+      return n>0 ? [v[0]/n, v[1]/n] : v;
+    }
+    return {l1,l2, v1:vec(l1), v2:vec(l2)};
+  }
+
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function renderLinAlg(){
+    const a=parseFloat(mA.value)||0, b=parseFloat(mB.value)||0,
+          c=parseFloat(mC.value)||0, d=parseFloat(mD.value)||0;
+    linSvg.innerHTML = "";
+    linSvg.appendChild(el("line",{x1:-160,y1:0,x2:160,y2:0,stroke:"var(--line)",["stroke-width"]:1}));
+    linSvg.appendChild(el("line",{x1:0,y1:-160,x2:0,y2:160,stroke:"var(--line)",["stroke-width"]:1}));
+
+    // original grid (grey) -3..3
+    for(let i=-3;i<=3;i++){
+      linSvg.appendChild(el("line",{x1:i*SCALE,y1:-3*SCALE,x2:i*SCALE,y2:3*SCALE,stroke:"#C9CDCB",["stroke-width"]:1}));
+      linSvg.appendChild(el("line",{x1:-3*SCALE,y1:i*SCALE,x2:3*SCALE,y2:i*SCALE,stroke:"#C9CDCB",["stroke-width"]:1}));
+    }
+    // transformed grid (purple), mapping (x,y) -> (a*x+b*y, c*x+d*y); svg y is flipped
+    function T(x,y){ return [ (a*x+b*y)*SCALE, -(c*x+d*y)*SCALE ]; }
+    for(let i=-3;i<=3;i++){
+      let p1=T(i,-3), p2=T(i,3);
+      linSvg.appendChild(el("line",{x1:p1[0],y1:p1[1],x2:p2[0],y2:p2[1],stroke:"var(--accent)",["stroke-width"]:1.3, opacity:0.55}));
+      p1=T(-3,i); p2=T(3,i);
+      linSvg.appendChild(el("line",{x1:p1[0],y1:p1[1],x2:p2[0],y2:p2[1],stroke:"var(--accent)",["stroke-width"]:1.3, opacity:0.55}));
+    }
+    // basis vectors before/after
+    function arrow(x2,y2,color){
+      linSvg.appendChild(el("line",{x1:0,y1:0,x2,y2,stroke:color,["stroke-width"]:3}));
+      linSvg.appendChild(el("circle",{cx:x2,cy:y2,r:4,fill:color}));
+    }
+    arrow(SCALE,0,"#9AA0A6");        // i-hat before
+    arrow(0,-SCALE,"#9AA0A6");       // j-hat before
+    const ihat = T(1,0), jhat = T(0,1);
+    arrow(ihat[0],ihat[1],"var(--accent)");
+    arrow(jhat[0],jhat[1],"var(--c1)");
+
+    const eig = eigen(a,b,c,d);
+    if(eig){
+      [eig.v1, eig.v2].forEach((v,idx) => {
+        const len = 200;
+        linSvg.appendChild(el("line",{
+          x1:-v[0]*len, y1:v[1]*len, x2:v[0]*len, y2:-v[1]*len,
+          stroke:"var(--c2)", ["stroke-width"]:1.6, ["stroke-dasharray"]:"6 4"
+        }));
+      });
+      const l1 = eig.l1.toFixed(2), l2 = eig.l2.toFixed(2);
+      document.getElementById("eigStat").textContent = `eigenvalues: λ₁=${l1}, λ₂=${l2} — real, shown as dashed lines`;
+    } else {
+      document.getElementById("eigStat").textContent = `eigenvalues: complex — no real invariant direction (this is what pure rotation looks like)`;
+    }
+  }
+  [mA,mB,mC,mD].forEach(inp => inp.addEventListener("input", renderLinAlg));
+  document.querySelectorAll("[data-preset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const presets = {
+        stretch:[3,0,0,1], rotate:[0,-1,1,0], shear:[1,1,0,1],
+        reflect:[1,0,0,-1], identity:[1,0,0,1]
+      };
+      const [a,b,c,d] = presets[btn.dataset.preset];
+      mA.value=a; mB.value=b; mC.value=c; mD.value=d;
+      renderLinAlg();
+    });
+  });
+  renderLinAlg();
+
+  // ================= CALCULUS: TANGENT LINE =================
+  const f = x => 0.02*x*x;
+  const fprime = x => { const h=0.001; return (f(x+h)-f(x-h))/(2*h); };
+  const calcSvg = document.getElementById("calcSvg");
+  const xPos = document.getElementById("xPos");
+  let zoomed = false;
+
+  function mapCalc(x,y, view){
+    const [x0,x1,y0,y1] = view;
+    return [ (x-x0)/(x1-x0)*400, 260 - (y-y0)/(y1-y0)*260 ];
+  }
+
+  function renderCalc(){
+    const x = parseFloat(xPos.value);
+    document.getElementById("xPosOut").textContent = x.toFixed(1);
+    const slope = fprime(x);
+    document.getElementById("slopeStat").textContent = `slope f'(${x.toFixed(1)}) ≈ ${slope.toFixed(3)}`;
+
+    let view = zoomed ? [x-1.5, x+1.5, f(x)-0.3, f(x)+0.3] : [0,20,0,8];
+    calcSvg.innerHTML = "";
+    // curve
+    let d = "";
+    const steps = 100;
+    for(let i=0;i<=steps;i++){
+      const cx = view[0] + (view[1]-view[0])*i/steps;
+      const [px,py] = mapCalc(cx, f(cx), view);
+      d += (i===0?"M":"L") + px + "," + py + " ";
+    }
+    calcSvg.appendChild(el("path",{d, fill:"none", stroke:"var(--accent)", ["stroke-width"]:2.2}));
+    // tangent line across the view
+    const [p0x,p0y] = mapCalc(view[0], f(x)+slope*(view[0]-x), view);
+    const [p1x,p1y] = mapCalc(view[1], f(x)+slope*(view[1]-x), view);
+    calcSvg.appendChild(el("line",{x1:p0x,y1:p0y,x2:p1x,y2:p1y, stroke:"var(--c2)", ["stroke-width"]:1.8, ["stroke-dasharray"]:"5 4"}));
+    // point
+    const [px,py] = mapCalc(x, f(x), view);
+    calcSvg.appendChild(el("circle",{cx:px,cy:py,r:5,fill:"var(--c1)"}));
+  }
+  xPos.addEventListener("input", renderCalc);
+  document.getElementById("btnZoom").addEventListener("click", (e) => {
+    zoomed = !zoomed;
+    e.target.classList.toggle("active", zoomed);
+    e.target.textContent = zoomed ? "Zoom out" : "Zoom in";
+    renderCalc();
+  });
+  renderCalc();
+
+  // ================= CALCULUS: RIEMANN SUM =================
+  const riemannSvg = document.getElementById("riemannSvg");
+  const nRect = document.getElementById("nRect");
+  const A=2, B=18;
+  const exact = (0.02/3)*(B**3 - A**3);
+
+  function renderRiemann(){
+    const n = parseInt(nRect.value);
+    document.getElementById("nRectOut").textContent = n;
+    riemannSvg.innerHTML = "";
+    const view = [0,20,0,8];
+    const dx = (B-A)/n;
+    let leftSum=0, rightSum=0;
+    for(let i=0;i<n;i++){
+      const xl = A+i*dx, xr = A+(i+1)*dx;
+      leftSum += f(xl)*dx; rightSum += f(xr)*dx;
+      const h = f(xl); // left rectangle height for visual
+      const [rx1,ry1] = mapCalc(xl, 0, view);
+      const [rx2,ry2] = mapCalc(xr, h, view);
+      riemannSvg.appendChild(el("rect",{
+        x:Math.min(rx1,rx2), y:Math.min(ry1,ry2),
+        width:Math.abs(rx2-rx1), height:Math.abs(ry2-ry1),
+        fill:"var(--accent-soft)", stroke:"var(--accent)", ["stroke-width"]:1
+      }));
+    }
+    // curve on top
+    let d = "";
+    for(let i=0;i<=100;i++){
+      const cx = i/100*20;
+      const [px,py] = mapCalc(cx, f(cx), view);
+      d += (i===0?"M":"L") + px + "," + py + " ";
+    }
+    riemannSvg.appendChild(el("path",{d, fill:"none", stroke:"var(--c1)", ["stroke-width"]:2}));
+    document.getElementById("leftSumStat").textContent = `left sum: ${leftSum.toFixed(3)}`;
+    document.getElementById("rightSumStat").textContent = `right sum: ${rightSum.toFixed(3)}`;
+    document.getElementById("exactStat").textContent = `exact integral ≈ ${exact.toFixed(3)}`;
+  }
+  nRect.addEventListener("input", renderRiemann);
+  renderRiemann();
+
+  // ================= DIFFERENTIAL EQUATIONS =================
+  const odeSvg = document.getElementById("odeSvg");
+  const kSlider = document.getElementById("kSlider");
+  let pathPoints = null, startPoint = null;
+
+  function mapOde(t,x){ return [ t/10*400, 150 - x*25 ]; }
+  function invMapOde(px,py){ return [ px/400*10, (150-py)/25 ]; }
+
+  function renderOde(){
+    const k = parseFloat(kSlider.value);
+    document.getElementById("kOut").textContent = k.toFixed(2);
+    odeSvg.innerHTML = "";
+    odeSvg.appendChild(el("line",{x1:0,y1:150,x2:400,y2:150,stroke:"var(--line)",["stroke-width"]:1}));
+
+    // direction field arrows
+    for(let ti=0; ti<=9; ti++){
+      for(let xi=-4; xi<=4; xi++){
+        const t = ti*1.0 + 0.5, x = xi;
+        const slope = k*x;
+        const len = 14;
+        const norm = Math.sqrt(1+slope*slope);
+        const dtx = len/norm, dxv = len*slope/norm;
+        const [px,py] = mapOde(t,x);
+        odeSvg.appendChild(el("line",{
+          x1:px-dtx/2, y1:py+dxv/2, x2:px+dtx/2, y2:py-dxv/2,
+          stroke:"#9AA0A6", ["stroke-width"]:1.4
+        }));
+      }
+    }
+
+    if(startPoint){
+      const [t0,x0] = startPoint;
+      // Euler path
+      const steps=60, dt=(10-t0)/steps;
+      let d="", t=t0, x=x0;
+      let [px,py]=mapOde(t,x); d=`M${px},${py} `;
+      for(let i=0;i<steps;i++){
+        x = x + k*x*dt; t += dt;
+        [px,py]=mapOde(t,x); d+=`L${px},${py} `;
+      }
+      odeSvg.appendChild(el("path",{d, fill:"none", stroke:"var(--accent)", ["stroke-width"]:2.5}));
+      // exact path
+      let de=""; t=t0;
+      for(let i=0;i<=steps;i++){
+        const xt = x0*Math.exp(k*(t-t0));
+        const [ex,ey]=mapOde(t,xt);
+        de += (i===0?"M":"L")+ex+","+ey+" ";
+        t += dt;
+      }
+      odeSvg.appendChild(el("path",{d:de, fill:"none", stroke:"var(--c2)", ["stroke-width"]:1.8, ["stroke-dasharray"]:"5 4"}));
+      const [sx,sy] = mapOde(t0,x0);
+      odeSvg.appendChild(el("circle",{cx:sx,cy:sy,r:5,fill:"var(--c1)"}));
+    }
+  }
+  kSlider.addEventListener("input", renderOde);
+  odeSvg.addEventListener("click", (e) => {
+    const rect = odeSvg.getBoundingClientRect();
+    const px = (e.clientX-rect.left)/rect.width*400;
+    const py = (e.clientY-rect.top)/rect.height*300;
+    startPoint = invMapOde(px, Math.min(py,300));
+    renderOde();
+  });
+  document.getElementById("btnClearPath").addEventListener("click", () => { startPoint=null; renderOde(); });
+  renderOde();
+
+})();
+</script>
+</body>
+</html>

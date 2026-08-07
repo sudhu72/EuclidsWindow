@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pattern Decision Tree</title>
+<style>
+  :root{
+    --bg:#12141a; --panel:#1a1d26; --line:#2a2e3a;
+    --text:#e9e8f0; --muted:#8b8fa3;
+    --teal:#5eead4; --amber:#f5b942; --violet:#a78bfa; --rose:#f2708a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:ui-monospace,SFMono-Regular,"Cascadia Code","JetBrains Mono",Menlo,monospace;
+    padding:28px 20px 60px; min-height:100vh;
+  }
+  .wrap{max-width:820px;margin:0 auto;}
+  h1{
+    font-size:20px; letter-spacing:0.5px; margin:0 0 4px;
+    color:var(--teal); font-weight:700;
+  }
+  .sub{color:var(--muted); font-size:13px; margin-bottom:28px;}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:22px 24px; margin-bottom:16px;
+  }
+  .q-label{color:var(--amber); font-size:11px; letter-spacing:1.5px; margin-bottom:10px; text-transform:uppercase;}
+  .q-text{font-size:16px; line-height:1.5; margin-bottom:18px;}
+  .opts{display:flex; flex-wrap:wrap; gap:10px;}
+  button.opt{
+    background:transparent; border:1px solid var(--line); color:var(--text);
+    padding:10px 16px; border-radius:8px; font-family:inherit; font-size:13px;
+    cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  button.opt:hover{border-color:var(--teal); background:rgba(94,234,212,0.06);}
+  .trail{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:20px;}
+  .crumb{
+    font-size:11px; color:var(--muted); border:1px solid var(--line);
+    padding:4px 10px; border-radius:6px;
+  }
+  .crumb b{color:var(--violet);}
+  .result{
+    border:1px solid var(--teal); background:rgba(94,234,212,0.05);
+  }
+  .result h2{color:var(--teal); font-size:22px; margin:0 0 6px;}
+  .result .signal{color:var(--muted); font-size:13px; margin-bottom:14px;}
+  .result .module{
+    display:inline-block; font-size:12px; color:var(--amber);
+    border:1px solid var(--amber); padding:4px 10px; border-radius:6px; margin-bottom:14px;
+  }
+  .result p{font-size:14px; line-height:1.6; color:var(--text);}
+  .restart{
+    margin-top:10px; background:none; border:none; color:var(--rose);
+    font-family:inherit; font-size:12px; cursor:pointer; text-decoration:underline;
+    padding:0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>&gt; pattern_decision_tree</h1>
+  <div class="sub">Answer a few questions about the problem in front of you. No memorization — just structure.</div>
+
+  <div class="trail" id="trail"></div>
+  <div class="card" id="stage"></div>
+</div>
+
+<script>
+const tree = {
+  start: {
+    q: "What's the main shape of the input?",
+    options: [
+      { label: "A flat array or string", next: "array" },
+      { label: "A linked list", next: "linked" },
+      { label: "A tree or graph", next: "treegraph" },
+      { label: "I need to try many combinations / all possibilities", next: "combi" },
+      { label: "I'm optimizing (min/max/count ways)", next: "optim" },
+    ]
+  },
+  array: {
+    q: "Is the array sorted, or can you sort it without breaking the problem?",
+    options: [
+      { label: "Yes, sorted (or can be)", next: "array_sorted" },
+      { label: "No — order matters as given", next: "array_unsorted" },
+    ]
+  },
+  array_sorted: {
+    q: "Are you searching for a pair/triplet, or searching for one specific value / feasibility threshold?",
+    options: [
+      { label: "A pair or triplet matching a condition", result: "two_pointers" },
+      { label: "One specific value, or the smallest/largest value satisfying a condition", result: "binary_search" },
+    ]
+  },
+  array_unsorted: {
+    q: "Are you looking at a contiguous window (substring/subarray), or comparing many separated pairs/ranges?",
+    options: [
+      { label: "A contiguous window with some longest/shortest/max property", result: "sliding_window" },
+      { label: "Overlapping ranges/intervals need merging or scheduling", result: "merge_intervals" },
+      { label: "A next-greater/smaller relationship between elements", result: "monotonic_stack" },
+      { label: "Numbers strictly between 1 and n, find missing/duplicate", result: "cyclic_sort" },
+    ]
+  },
+  linked: {
+    q: "Detecting structure (cycle/middle), or rearranging the list itself?",
+    options: [
+      { label: "Detect a cycle or find the middle", result: "fast_slow" },
+      { label: "Reverse, reorder, or merge lists", result: "in_place_reversal" },
+    ]
+  },
+  treegraph: {
+    q: "Do you need the shortest path / level information, or do you need to explore every path / validate structure deeply?",
+    options: [
+      { label: "Shortest path / level-by-level", result: "bfs" },
+      { label: "Explore all paths / validate recursively", result: "dfs" },
+      { label: "There's a dependency order between nodes ('must happen before')", result: "topo_sort" },
+      { label: "I need to know which nodes are in the same connected group", result: "union_find" },
+    ]
+  },
+  combi: {
+    q: "Do you need every subset/permutation, or just the top/median/merged result across several sorted things?",
+    options: [
+      { label: "Every subset, permutation, or valid combination", result: "backtracking" },
+      { label: "Top-K, running median, or merging K sorted structures", result: "heaps" },
+    ]
+  },
+  optim: {
+    q: "Does the answer depend on overlapping smaller versions of the same problem?",
+    options: [
+      { label: "Yes — smaller subproblems repeat", result: "dp" },
+      { label: "Not sure — the state is 'have I built this exact prefix/word before?'", result: "trie" },
+      { label: "The condition is monotonic (works, then keeps working as a value increases)", result: "binary_search_answer" },
+    ]
+  }
+};
+
+const results = {
+  two_pointers: { name: "Two Pointers", signal: '"sorted array," "pair/triplet summing to..."', module: "Module 4", desc: "Two indices moving toward each other (or apart), each move eliminating a batch of impossible answers using the sort order." },
+  binary_search: { name: "Modified Binary Search", signal: '"find target," "rotated array," "find peak"', module: "Module 8", desc: "Halve the search space every step using a monotonic condition — not always a plain sorted array." },
+  sliding_window: { name: "Sliding Window", signal: '"longest/shortest substring/subarray with property X"', module: "Module 4", desc: "Grow a window, shrink it when a rule breaks, track the best size seen — each element enters and leaves the window once." },
+  merge_intervals: { name: "Merge Intervals", signal: '"meetings," "overlapping ranges," "free time"', module: "Module 7", desc: "Sort by start time, then walk through once, merging or scheduling against overlaps." },
+  monotonic_stack: { name: "Monotonic Stack", signal: '"next greater/smaller element," "daily temperatures"', module: "Module 11", desc: "A stack that only ever grows in one direction — anything it pops can never be a useful answer again." },
+  cyclic_sort: { name: "Cyclic Sort", signal: '"numbers 1 to n," "find missing/duplicate"', module: "Module 3 overview", desc: "Each value belongs at a specific index (value-1) — swap things into place in one linear pass." },
+  fast_slow: { name: "Fast & Slow Pointers", signal: '"cycle," "middle of the list"', module: "Module 5", desc: "Two pointers moving at different speeds through a structure with no random access." },
+  in_place_reversal: { name: "In-place Reversal", signal: '"reverse a linked list," "reorder," "merge k lists"', module: "Module 5 / 7", desc: "Rewire .next pointers directly, or merge multiple lists via a heap of current heads." },
+  bfs: { name: "BFS", signal: '"level order," "shortest path in unweighted graph"', module: "Module 6", desc: "Explore ripple by ripple using a queue — the first time you reach a node is via the shortest path." },
+  dfs: { name: "DFS", signal: '"all paths," "max depth," "validate recursively"', module: "Module 6", desc: "Commit to one direction fully via recursion/stack, backtrack only at dead ends." },
+  topo_sort: { name: "Topological Sort", signal: '"prerequisite," "course schedule," "build order"', module: "Module 6", desc: "Repeatedly remove nodes with no remaining dependencies — if you can remove everything, there's no cycle." },
+  union_find: { name: "Union-Find", signal: '"connected components," "islands," "friend circles"', module: "Module 6", desc: "Track group membership via parent pointers, with path compression keeping it near O(1) per op." },
+  backtracking: { name: "Backtracking (Subsets/Permutations)", signal: '"all subsets/permutations," "N-Queens," "word search"', module: "Module 9", desc: "A decision tree of choices — recurse into a choice, undo it, try the next." },
+  heaps: { name: "Heaps (Top-K / Two Heaps / K-way Merge)", signal: '"kth largest," "median of a stream," "merge k lists"', module: "Module 7", desc: "Maintain only 'what's smallest/largest right now' — never fully sort what you don't need sorted." },
+  dp: { name: "Dynamic Programming", signal: '"min/max cost," "count the number of ways"', module: "Module 10", desc: "Define the subproblem precisely, then build the recurrence from smaller already-solved answers." },
+  trie: { name: "Trie", signal: '"autocomplete," "prefix," "word dictionary"', module: "Module 11", desc: "A tree where root-to-node paths spell out strings — shared prefixes share paths." },
+  binary_search_answer: { name: "Binary Search on the Answer", signal: '"minimize the maximum," "smallest X such that..."', module: "Module 8", desc: "Search the space of possible answers, not the input array, using a monotonic feasibility check." },
+};
+
+let path = [];
+
+function render(nodeKey){
+  const stage = document.getElementById('stage');
+  const trail = document.getElementById('trail');
+
+  trail.innerHTML = path.map(p => `<span class="crumb">${p.q} → <b>${p.chosen}</b></span>`).join('');
+
+  if(results[nodeKey]){
+    const r = results[nodeKey];
+    stage.className = 'card result';
+    stage.innerHTML = `
+      <div class="module">${r.module}</div>
+      <h2>${r.name}</h2>
+      <div class="signal">Signal: ${r.signal}</div>
+      <p>${r.desc}</p>
+      <button class="restart" onclick="restart()">↺ start over with a different problem</button>
+    `;
+    return;
+  }
+
+  const node = tree[nodeKey];
+  stage.className = 'card';
+  stage.innerHTML = `
+    <div class="q-label">question ${path.length + 1}</div>
+    <div class="q-text">${node.q}</div>
+    <div class="opts">
+      ${node.options.map((o,i) => `<button class="opt" onclick="choose('${nodeKey}', ${i})">${o.label}</button>`).join('')}
+    </div>
+  `;
+}
+
+function choose(nodeKey, i){
+  const node = tree[nodeKey];
+  const opt = node.options[i];
+  path.push({ q: node.q.length > 40 ? node.q.slice(0,40)+'…' : node.q, chosen: opt.label.length > 30 ? opt.label.slice(0,30)+'…' : opt.label });
+  render(opt.next || opt.result);
+}
+
+function restart(){
+  path = [];
+  render('start');
+}
+
+render('start');
+</script>
+</body>
+</html>

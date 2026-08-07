@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Convolution — a filter sliding across an image</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  .grids-row{display:flex;justify-content:center;gap:60px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px;}
+  .grid-block{text-align:center;}
+  .grid-title{font-family:'Kalam',cursive;font-size:15px;margin-bottom:10px;}
+  table.grid{border-collapse:collapse;}
+  table.grid td{width:46px;height:46px;text-align:center;border:1px solid var(--border);font-size:13px;color:var(--chalk-dim);position:relative;transition:all .3s ease;}
+  table.grid.image td{color:var(--chalk);}
+  table.grid td.in-window{background:rgba(255,206,84,.18);border-color:var(--amber);}
+  table.grid td.filled{color:var(--chalk);background:rgba(143,209,158,.15);border-color:var(--green);}
+  table.kernel td{width:40px;height:40px;font-size:13px;background:rgba(255,130,102,.08);border-color:var(--coral);color:var(--coral);}
+
+  .filter-toggle{display:flex;justify-content:center;gap:10px;margin-bottom:16px;}
+  .filter-toggle button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer;}
+  .filter-toggle button.active{border-color:var(--amber);color:var(--amber);}
+
+  .calc-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin:14px 0 4px;min-height:20px;}
+  .calc-line .hi{color:var(--chalk);font-family:'Kalam',cursive;font-size:15px;}
+
+  .notebook{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;max-height:200px;overflow-y:auto;}
+  .notebook .entry{padding:8px 0;border-bottom:1px dashed var(--border);opacity:.45;}
+  .notebook .entry.current{opacity:1;color:var(--chalk);}
+  .notebook .step-num{color:var(--chalk-dim);margin-right:8px;}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  button:disabled{opacity:.35;cursor:default;}
+  .step-indicator{color:var(--chalk-dim);font-size:13px;margin-left:auto;}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Convolution — a filter sliding across an image</h1>
+  <p class="sub">Same 5×6 image, two different 3×3 filters. Step through every window position and watch the feature map fill in live.</p>
+
+  <div class="panel">
+    <div class="filter-toggle">
+      <button id="btnEdge" class="active">Edge detector</button>
+      <button id="btnBlur">Blur (average)</button>
+    </div>
+
+    <div class="grids-row">
+      <div class="grid-block">
+        <div class="grid-title">input image</div>
+        <table class="grid image" id="imageGrid"></table>
+      </div>
+      <div class="grid-block">
+        <div class="grid-title">filter (kernel)</div>
+        <table class="grid kernel" id="kernelGrid"></table>
+      </div>
+      <div class="grid-block">
+        <div class="grid-title">feature map (output)</div>
+        <table class="grid" id="outputGrid"></table>
+      </div>
+    </div>
+
+    <div class="calc-line" id="calcLine"></div>
+  </div>
+
+  <div class="panel"><div class="notebook" id="notebook"></div></div>
+
+  <div class="controls panel">
+    <button id="btnPrev">◂ Prev</button>
+    <button id="btnPlay">▶ Play</button>
+    <button id="btnNext">Next ▸</button>
+    <button id="btnReset">Reset</button>
+    <span class="step-indicator" id="stepIndicator"></span>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why does the edge filter spike, but the blur filter ramp? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>The edge filter</strong> (<code>-1, 0, 1</code> per row) only ever compares a window's right column to its left column. Inside a flat region, both columns match, so the difference — and the output — is exactly 0. Only when the window straddles the true boundary does the left column see the dim side and the right column see the bright side at once, producing a large spike. Move one more step past the boundary, and both columns are back on the bright side — the difference collapses to 0 again.</p>
+      <p><strong>The blur filter</strong> (every weight <code>1/9</code>) computes a plain average of the 9 pixels underneath it — no comparison at all. As the window slides from the dim region toward the bright region, the average rises smoothly, one small step at a time, because a growing fraction of the window is covered by bright pixels at each position. Same image, same sliding mechanism — the filter's own weights are the only thing that decided "highlight the boundary" versus "smooth everything into a gradient."</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const image = [
+  [2,2,2,8,8,8],
+  [2,2,2,8,8,8],
+  [2,2,2,8,8,8],
+  [2,2,2,8,8,8],
+  [2,2,2,8,8,8]
+];
+const filters = {
+  edge: {k:[[-1,0,1],[-1,0,1],[-1,0,1]], label:'edge detector'},
+  blur: {k:[[1/9,1/9,1/9],[1/9,1/9,1/9],[1/9,1/9,1/9]], label:'blur (average)'}
+};
+let currentFilter = 'edge';
+
+const IH = image.length, IW = image[0].length, K = 3;
+const OH = IH-K+1, OW = IW-K+1;
+
+function buildImageGrid(){
+  const t = document.getElementById('imageGrid');
+  t.innerHTML = '';
+  for(let i=0;i<IH;i++){
+    const tr = document.createElement('tr');
+    for(let j=0;j<IW;j++){
+      const td = document.createElement('td');
+      td.id = 'img_' + i + '_' + j;
+      td.textContent = image[i][j];
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+}
+function buildKernelGrid(){
+  const t = document.getElementById('kernelGrid');
+  t.innerHTML = '';
+  const k = filters[currentFilter].k;
+  for(let i=0;i<K;i++){
+    const tr = document.createElement('tr');
+    for(let j=0;j<K;j++){
+      const td = document.createElement('td');
+      const v = k[i][j];
+      td.textContent = (Math.abs(v-1/9)<1e-6) ? '1/9' : v.toString();
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+}
+function buildOutputGrid(){
+  const t = document.getElementById('outputGrid');
+  t.innerHTML = '';
+  for(let i=0;i<OH;i++){
+    const tr = document.createElement('tr');
+    for(let j=0;j<OW;j++){
+      const td = document.createElement('td');
+      td.id = 'out_' + i + '_' + j;
+      td.textContent = '';
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+}
+
+buildImageGrid(); buildKernelGrid(); buildOutputGrid();
+
+const positions = [];
+for(let i=0;i<OH;i++) for(let j=0;j<OW;j++) positions.push([i,j]);
+
+let current = 0, playing = false, timer = null;
+
+function clearHighlights(){
+  for(let i=0;i<IH;i++) for(let j=0;j<IW;j++){
+    document.getElementById('img_'+i+'_'+j).classList.remove('in-window');
+  }
+}
+
+function computeAt(i,j){
+  const k = filters[currentFilter].k;
+  let s = 0;
+  for(let ki=0;ki<K;ki++) for(let kj=0;kj<K;kj++) s += image[i+ki][j+kj]*k[ki][kj];
+  return Math.round(s*1000)/1000;
+}
+
+function render(){
+  clearHighlights();
+  const [i,j] = positions[current];
+  for(let ki=0;ki<K;ki++) for(let kj=0;kj<K;kj++){
+    document.getElementById('img_'+(i+ki)+'_'+(j+kj)).classList.add('in-window');
+  }
+  // fill all output cells up to and including current
+  for(let idx=0;idx<OH*OW;idx++){
+    const [oi,oj] = positions[idx];
+    const cell = document.getElementById('out_'+oi+'_'+oj);
+    if(idx <= current){
+      cell.textContent = computeAt(oi,oj);
+      cell.classList.add('filled');
+    } else {
+      cell.textContent = '';
+      cell.classList.remove('filled');
+    }
+  }
+  const val = computeAt(i,j);
+  document.getElementById('calcLine').innerHTML =
+    `window at row ${i}, col ${j} → weighted sum = <span class="hi">${val}</span>`;
+
+  document.getElementById('stepIndicator').textContent = 'Position ' + (current+1) + ' of ' + positions.length;
+  document.getElementById('btnPrev').disabled = current === 0;
+  document.getElementById('btnNext').disabled = current === positions.length-1;
+
+  renderNotebook();
+}
+
+function renderNotebook(){
+  const nb = document.getElementById('notebook');
+  nb.innerHTML = '';
+  for(let idx=0;idx<=current;idx++){
+    const [i,j] = positions[idx];
+    const val = computeAt(i,j);
+    const div = document.createElement('div');
+    div.className = 'entry' + (idx===current?' current':'');
+    div.innerHTML = '<span class="step-num">'+(idx+1)+'.</span>window ('+i+','+j+') with the '+filters[currentFilter].label+' → output '+val;
+    nb.appendChild(div);
+  }
+  nb.scrollTop = nb.scrollHeight;
+}
+
+function next(){ if(current < positions.length-1){ current++; render(); } else stopPlay(); }
+function prev(){ if(current > 0){ current--; render(); } }
+function reset(){ current = 0; stopPlay(); render(); }
+function startPlay(){ playing=true; document.getElementById('btnPlay').textContent='⏸ Pause'; timer=setInterval(next,1100); }
+function stopPlay(){ playing=false; document.getElementById('btnPlay').textContent='▶ Play'; clearInterval(timer); }
+
+document.getElementById('btnNext').addEventListener('click', () => { stopPlay(); next(); });
+document.getElementById('btnPrev').addEventListener('click', () => { stopPlay(); prev(); });
+document.getElementById('btnReset').addEventListener('click', reset);
+document.getElementById('btnPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
+
+document.getElementById('btnEdge').addEventListener('click', () => {
+  currentFilter = 'edge';
+  document.getElementById('btnEdge').classList.add('active');
+  document.getElementById('btnBlur').classList.remove('active');
+  buildKernelGrid(); reset();
+});
+document.getElementById('btnBlur').addEventListener('click', () => {
+  currentFilter = 'blur';
+  document.getElementById('btnBlur').classList.add('active');
+  document.getElementById('btnEdge').classList.remove('active');
+  buildKernelGrid(); reset();
+});
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why does the edge filter spike, but the blur filter ramp? ' + (open?'▴':'▾');
+});
+
+render();
+</script>
+</body>
+</html>

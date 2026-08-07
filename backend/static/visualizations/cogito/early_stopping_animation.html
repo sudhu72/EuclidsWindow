@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>When do you stop training? — early stopping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  svg{width:100%;height:auto;display:block;}
+
+  .legend-row{display:flex;justify-content:center;gap:24px;margin-bottom:10px;font-size:12px;color:var(--chalk-dim);flex-wrap:wrap;}
+  .legend-row span{display:flex;align-items:center;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+
+  .axis{stroke:var(--chalk-dim);stroke-width:1px;}
+  .axis-label{font-size:12px;fill:var(--chalk-dim);}
+  .curve-train{stroke:var(--amber);stroke-width:2.5px;fill:none;}
+  .curve-val{stroke:var(--coral);stroke-width:2.5px;fill:none;}
+  .best-line{stroke:var(--green);stroke-width:1.5px;stroke-dasharray:5 4;opacity:.8;}
+  .best-label{font-size:11px;fill:var(--green);text-anchor:middle;}
+  .cursor-line{stroke:var(--chalk);stroke-width:1px;stroke-dasharray:3 3;opacity:.6;}
+  .cursor-dot{stroke:var(--bg);stroke-width:2px;}
+
+  .readout-row{display:flex;justify-content:center;gap:30px;margin:14px 0 4px;flex-wrap:wrap;}
+  .readout{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 18px;min-width:140px;}
+  .readout .lbl{font-size:11px;color:var(--chalk-dim);}
+  .readout .num{font-family:'Kalam',cursive;font-size:19px;margin-top:2px;}
+  .readout.train .num{color:var(--amber);}
+  .readout.val .num{color:var(--coral);}
+
+  .slider-wrap{max-width:560px;margin:18px auto 4px;text-align:center;}
+  .slider-wrap input[type=range]{width:100%;accent-color:var(--chalk);}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:14px;min-height:38px;}
+  .story-line.warn{color:var(--coral);}
+  .story-line.good{color:var(--green);}
+
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>When do you actually stop training?</h1>
+  <p class="sub">Training loss keeps falling forever. Validation loss doesn't. Drag the epoch slider and find the moment they disagree.</p>
+
+  <div class="panel">
+    <div class="legend-row">
+      <span><i class="dot" style="background:var(--amber)"></i>training loss</span>
+      <span><i class="dot" style="background:var(--coral)"></i>validation loss</span>
+      <span><i class="dot" style="background:var(--green)"></i>best stopping point</span>
+    </div>
+
+    <svg viewBox="0 0 900 420" id="chartSvg">
+      <line class="axis" x1="80" y1="380" x2="860" y2="380"/>
+      <line class="axis" x1="80" y1="380" x2="80" y2="40"/>
+      <text class="axis-label" x="860" y="402" text-anchor="end">epoch →</text>
+      <text class="axis-label" x="40" y="50" transform="rotate(-90 40 50)" text-anchor="end">loss →</text>
+      <path class="curve-train" id="trainPath" d=""/>
+      <path class="curve-val" id="valPath" d=""/>
+      <line class="best-line" id="bestLine" x1="0" y1="40" x2="0" y2="380"/>
+      <text class="best-label" id="bestLabel" x="0" y="30"></text>
+      <line class="cursor-line" id="cursorLine" x1="0" y1="40" x2="0" y2="380"/>
+      <circle class="cursor-dot" id="cursorTrainDot" r="6" fill="var(--amber)"/>
+      <circle class="cursor-dot" id="cursorValDot" r="6" fill="var(--coral)"/>
+    </svg>
+
+    <div class="readout-row">
+      <div class="readout train"><div class="lbl">training loss at this epoch</div><div class="num" id="roTrain"></div></div>
+      <div class="readout val"><div class="lbl">validation loss at this epoch</div><div class="num" id="roVal"></div></div>
+    </div>
+
+    <div class="slider-wrap">
+      <input type="range" id="epochSlider" min="0" max="100" step="1" value="10">
+      <div style="text-align:center;font-family:'Kalam',cursive;font-size:16px;margin-top:8px;">epoch <span id="epochVal">10</span></div>
+    </div>
+
+    <div class="story-line" id="storyLine"></div>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why not just train forever? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Why does training loss keep falling while validation loss eventually rises?</strong> Training loss measures fit to data the model is actively memorizing against. Given enough epochs, a flexible enough model can start fitting the training set's specific noise and quirks — not the general pattern anymore, just that exact data (Part 1.5's overfitting). Validation loss, measured on data the model never trains on, has no reason to keep improving once the model starts memorizing noise instead of learning signal — that's the moment the two curves visibly diverge.</p>
+      <p><strong>So the real stopping rule:</strong> keep training only as long as validation loss keeps improving; stop once it starts consistently getting worse. The best moment to have stopped is exactly the validation curve's minimum — every epoch after that is the model getting quietly worse at generalizing, even while it keeps looking better and better on the data it's actively studying.</p>
+      <p><strong>In practice, "patience" is added</strong> — wait a handful of epochs after validation loss stops improving before actually stopping, since a single bad epoch could just be noise rather than the real turning point. Other real stopping rules besides early stopping: a fixed epoch budget decided in advance, a convergence threshold (stop once the loss barely changes step to step — Part 1.3's hillside has gone essentially flat), or simply running out of compute budget.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function trainLoss(e){ return 0.05 + 0.9*Math.exp(-e/15); }
+function valLoss(e){ return 0.12 + 0.85*Math.exp(-e/18) + 0.00022*e*e; }
+
+const plotX0=80, plotX1=860, plotY0=380, plotY1=40;
+const eMax=100, lossMax=2.4;
+
+function toScreen(e, loss){
+  const x = plotX0 + (e/eMax)*(plotX1-plotX0);
+  const y = plotY0 - (Math.min(loss,lossMax)/lossMax)*(plotY0-plotY1);
+  return [x,y];
+}
+
+function buildPath(fn){
+  let d='';
+  for(let i=0;i<=200;i++){
+    const e = (eMax*i)/200;
+    const [x,y] = toScreen(e, fn(e));
+    d += (i===0?'M':'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  }
+  return d;
+}
+document.getElementById('trainPath').setAttribute('d', buildPath(trainLoss));
+document.getElementById('valPath').setAttribute('d', buildPath(valLoss));
+
+// find validation minimum
+let bestE=0, bestV=999;
+for(let e=0;e<=eMax;e+=0.5){
+  const v = valLoss(e);
+  if(v<bestV){bestV=v;bestE=e;}
+}
+const [bx,] = toScreen(bestE, 0);
+document.getElementById('bestLine').setAttribute('x1', bx);
+document.getElementById('bestLine').setAttribute('x2', bx);
+document.getElementById('bestLabel').setAttribute('x', bx);
+document.getElementById('bestLabel').textContent = 'best: epoch ' + Math.round(bestE);
+
+function update(epoch){
+  document.getElementById('epochVal').textContent = epoch;
+  const t = trainLoss(epoch), v = valLoss(epoch);
+  const [xt,yt] = toScreen(epoch, t);
+  const [xv,yv] = toScreen(epoch, v);
+  document.getElementById('cursorLine').setAttribute('x1', xt);
+  document.getElementById('cursorLine').setAttribute('x2', xt);
+  document.getElementById('cursorTrainDot').setAttribute('cx', xt);
+  document.getElementById('cursorTrainDot').setAttribute('cy', yt);
+  document.getElementById('cursorValDot').setAttribute('cx', xv);
+  document.getElementById('cursorValDot').setAttribute('cy', yv);
+
+  document.getElementById('roTrain').textContent = t.toFixed(3);
+  document.getElementById('roVal').textContent = v.toFixed(3);
+
+  const story = document.getElementById('storyLine');
+  if(epoch < bestE - 3){
+    story.className = 'story-line';
+    story.textContent = 'Both curves still improving — keep training, there is real signal left to learn.';
+  } else if(epoch <= bestE + 3){
+    story.className = 'story-line good';
+    story.textContent = 'Right around the validation minimum (epoch ' + Math.round(bestE) + ') — this is the honest best moment to stop.';
+  } else {
+    story.className = 'story-line warn';
+    story.textContent = 'Training loss keeps dropping, but validation loss is climbing — the model is now memorizing training noise instead of learning anything generalizable. Every epoch past the minimum makes real-world performance quietly worse.';
+  }
+}
+
+const slider = document.getElementById('epochSlider');
+slider.addEventListener('input', () => update(parseFloat(slider.value)));
+update(parseFloat(slider.value));
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why not just train forever? ' + (open?'▴':'▾');
+});
+</script>
+</body>
+</html>

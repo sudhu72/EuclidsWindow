@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The accuracy trap under class imbalance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+
+  .model-row{display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin-bottom:8px;}
+  .model-block{border:1px solid var(--border);border-radius:10px;padding:16px 22px;min-width:280px;}
+  .model-title{font-family:'Kalam',cursive;font-size:16px;text-align:center;margin-bottom:12px;}
+  .model-title.naive{color:var(--coral);}
+  .model-title.real{color:var(--green);}
+  .metric-line{display:flex;justify-content:space-between;font-size:13px;margin:8px 0;padding:0 4px;}
+  .metric-line .val{font-family:'Kalam',cursive;font-size:16px;}
+
+  .slider-wrap{max-width:520px;margin:18px auto 6px;text-align:center;}
+  .slider-wrap input[type=range]{width:100%;accent-color:var(--amber);}
+  .slider-caption{font-size:12px;color:var(--chalk-dim);margin-top:6px;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--coral);margin-top:16px;min-height:36px;}
+
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The accuracy trap under class imbalance</h1>
+  <p class="sub">Drag the fraud rate down toward realistic levels and watch a model that does nothing look better and better.</p>
+
+  <div class="panel">
+    <div class="model-row">
+      <div class="model-block">
+        <div class="model-title naive">"Does nothing" model<br><span style="font-size:11px;color:var(--chalk-dim);">always predicts "not fraud"</span></div>
+        <div class="metric-line"><span>accuracy</span><span class="val" id="naiveAcc" style="color:var(--coral)"></span></div>
+        <div class="metric-line"><span>precision</span><span class="val" id="naivePrec" style="color:var(--coral)"></span></div>
+        <div class="metric-line"><span>recall</span><span class="val" id="naiveRec" style="color:var(--coral)"></span></div>
+      </div>
+      <div class="model-block">
+        <div class="model-title real">A real, imperfect model<br><span style="font-size:11px;color:var(--chalk-dim);">catches most fraud, some false alarms</span></div>
+        <div class="metric-line"><span>accuracy</span><span class="val" id="realAcc" style="color:var(--green)"></span></div>
+        <div class="metric-line"><span>precision</span><span class="val" id="realPrec" style="color:var(--green)"></span></div>
+        <div class="metric-line"><span>recall</span><span class="val" id="realRec" style="color:var(--green)"></span></div>
+      </div>
+    </div>
+
+    <div class="slider-wrap">
+      <input type="range" id="rateSlider" min="1" max="30" step="1" value="15">
+    </div>
+    <div class="slider-caption">fraud rate: <span id="rateVal"></span>% of all transactions</div>
+
+    <div class="story-line" id="storyLine"></div>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why does the "does nothing" model's accuracy climb? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Accuracy only counts how often you're right, not what you were right about.</strong> A model that always says "not fraud" is automatically correct on every single non-fraud transaction — so the rarer fraud actually is, the more of the dataset that model gets right by doing nothing at all.</p>
+      <p><strong>Precision and recall don't have this blind spot.</strong> The "does nothing" model's <code>recall</code> is always exactly <code>0%</code> — it never finds a single fraud case, no matter how rare fraud is — and that number stays honestly damning at every fraud rate on the slider, precisely because recall only asks about the class that actually matters here.</p>
+      <p><strong>The real Kaggle credit card fraud dataset sits at roughly the far-left end of this slider</strong> — under 1% fraud — which is exactly the range where accuracy is at its most dangerously reassuring, and exactly why Part 2 of the tutorial insists on precision, recall, and PR-AUC instead.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// "Real model" behavior, held fixed: catches 85% of fraud (recall), with a modest false-positive rate on the non-fraud class
+const REAL_RECALL = 0.85;
+const REAL_FPR = 0.03; // false positive rate on the non-fraud class
+
+function computeMetrics(fraudRatePct){
+  const fraudRate = fraudRatePct/100;
+  const total = 10000;
+  const fraud = Math.round(total*fraudRate);
+  const notFraud = total - fraud;
+
+  // naive: always predicts "not fraud"
+  const naiveTP = 0, naiveFP = 0, naiveFN = fraud, naiveTN = notFraud;
+  const naiveAcc = (naiveTP+naiveTN)/total;
+  const naivePrec = (naiveTP+naiveFP)===0 ? 0 : naiveTP/(naiveTP+naiveFP);
+  const naiveRec = (naiveTP+naiveFN)===0 ? 0 : naiveTP/(naiveTP+naiveFN);
+
+  // real model
+  const realTP = Math.round(fraud*REAL_RECALL);
+  const realFN = fraud - realTP;
+  const realFP = Math.round(notFraud*REAL_FPR);
+  const realTN = notFraud - realFP;
+  const realAcc = (realTP+realTN)/total;
+  const realPrec = (realTP+realFP)===0 ? 0 : realTP/(realTP+realFP);
+  const realRec = (realTP+realFN)===0 ? 0 : realTP/(realTP+realFN);
+
+  return {naiveAcc, naivePrec, naiveRec, realAcc, realPrec, realRec};
+}
+
+function pct(v){ return (v*100).toFixed(1)+'%'; }
+
+function render(fraudRatePct){
+  document.getElementById('rateVal').textContent = fraudRatePct;
+  const m = computeMetrics(fraudRatePct);
+
+  document.getElementById('naiveAcc').textContent = pct(m.naiveAcc);
+  document.getElementById('naivePrec').textContent = pct(m.naivePrec);
+  document.getElementById('naiveRec').textContent = pct(m.naiveRec);
+
+  document.getElementById('realAcc').textContent = pct(m.realAcc);
+  document.getElementById('realPrec').textContent = pct(m.realPrec);
+  document.getElementById('realRec').textContent = pct(m.realRec);
+
+  const story = document.getElementById('storyLine');
+  if(fraudRatePct <= 5){
+    story.textContent = `At ${fraudRatePct}% fraud, the "does nothing" model boasts ${pct(m.naiveAcc)} accuracy while catching literally zero fraud cases — accuracy alone would tell you this is a great model.`;
+  } else {
+    story.textContent = `At ${fraudRatePct}% fraud, the gap is smaller, but the "does nothing" model's 0% recall never improves — accuracy's blind spot doesn't go away, it just becomes less extreme.`;
+  }
+}
+
+const slider = document.getElementById('rateSlider');
+slider.addEventListener('input', () => render(parseInt(slider.value)));
+render(parseInt(slider.value));
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why does the "does nothing" model\'s accuracy climb? ' + (open?'▴':'▾');
+});
+</script>
+</body>
+</html>

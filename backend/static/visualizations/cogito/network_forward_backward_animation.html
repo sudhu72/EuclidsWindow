@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Forward &amp; backward pass — 3-layer walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c;
+    --bg-panel:#1b2b23;
+    --chalk:#f4f1e8;
+    --chalk-dim:#7f8f83;
+    --amber:#ffce54;
+    --coral:#ff8266;
+    --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;
+    padding:32px 24px 60px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{
+    font-family:'Kalam',cursive;
+    font-weight:700;
+    font-size:28px;
+    margin:0 0 4px;
+    color:var(--chalk);
+  }
+  .sub{
+    color:var(--chalk-dim);
+    font-size:13px;
+    margin:0 0 24px;
+  }
+  .legend{
+    display:flex;
+    gap:24px;
+    align-items:center;
+    margin-bottom:20px;
+    font-size:12px;
+    color:var(--chalk-dim);
+  }
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  .dot.amber{background:var(--amber);}
+  .dot.coral{background:var(--coral);}
+  .dot.chalk{background:var(--chalk);}
+  .panel{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:20px 24px;
+    margin-bottom:20px;
+  }
+  svg{width:100%;height:auto;display:block;}
+  .node-title{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;fill:var(--chalk);paint-order:stroke fill;}
+  .node-label{font-family:'Kalam',cursive;font-size:13px;fill:var(--chalk-dim);}
+  .val-text{font-size:12px;fill:var(--amber);stroke:var(--bg);stroke-width:3px;paint-order:stroke fill;opacity:0;transition:opacity .5s ease;}
+  .blame-text{font-size:12px;fill:var(--coral);stroke:var(--bg);stroke-width:3px;paint-order:stroke fill;opacity:0;transition:opacity .5s ease;}
+  .weight-text{font-size:11px;fill:var(--chalk);stroke:var(--bg);stroke-width:3px;paint-order:stroke fill;opacity:0;transition:opacity .4s ease;}
+  .edge{stroke:var(--chalk-dim);stroke-width:1.5px;fill:none;opacity:.25;transition:opacity .4s ease, stroke .4s ease;}
+  .edge.active-fwd{stroke:var(--amber);opacity:1;stroke-width:3px;stroke-dasharray:6 5;animation:flow 1s linear infinite;}
+  .edge.done-fwd{stroke:var(--amber);opacity:.55;stroke-width:2px;}
+  .edge.active-bwd{stroke:var(--coral);opacity:1;stroke-width:3px;stroke-dasharray:6 5;animation:flowrev 1s linear infinite;}
+  .edge.done-bwd{stroke:var(--coral);opacity:.55;stroke-width:2px;}
+  @keyframes flow{to{stroke-dashoffset:-22;}}
+  @keyframes flowrev{to{stroke-dashoffset:22;}}
+  .node-circle{stroke-width:1.5px;fill:var(--bg-panel);stroke:var(--chalk-dim);opacity:.5;transition:opacity .4s ease, stroke .4s ease, filter .4s ease;}
+  .node-circle.active-fwd{stroke:var(--amber);opacity:1;filter:drop-shadow(0 0 8px rgba(255,206,84,.7));}
+  .node-circle.done-fwd{stroke:var(--amber);opacity:.85;}
+  .node-circle.active-bwd{stroke:var(--coral);opacity:1;filter:drop-shadow(0 0 8px rgba(255,130,102,.7));}
+  .node-circle.done-bwd{stroke:var(--coral);opacity:.85;}
+  .node-circle.active-setup, .node-circle.active-update{stroke:var(--chalk);opacity:1;filter:drop-shadow(0 0 8px rgba(244,241,232,.6));}
+  .node-circle.done-setup, .node-circle.done-update{stroke:var(--chalk);opacity:.75;}
+  @media (prefers-reduced-motion: reduce){
+    .edge.active-fwd, .edge.active-bwd{animation:none;}
+  }
+  .notebook{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    line-height:1.7;
+    max-height:260px;
+    overflow-y:auto;
+  }
+  .notebook .entry{
+    padding:8px 0;
+    border-bottom:1px dashed var(--border);
+    opacity:.45;
+  }
+  .notebook .entry.current{
+    opacity:1;
+    color:var(--chalk);
+  }
+  .notebook .entry.current.fwd{color:var(--amber);}
+  .notebook .entry.current.bwd{color:var(--coral);}
+  .notebook .step-num{color:var(--chalk-dim);margin-right:8px;}
+  .controls{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  button{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    padding:8px 16px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  button:hover{border-color:var(--chalk-dim);}
+  button:disabled{opacity:.35;cursor:default;}
+  .step-indicator{color:var(--chalk-dim);font-size:13px;margin-left:auto;}
+  .phase-tag{
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:4px;
+    margin-left:8px;
+  }
+  .phase-tag.fwd{background:rgba(255,206,84,.15);color:var(--amber);}
+  .phase-tag.bwd{background:rgba(255,130,102,.15);color:var(--coral);}
+  .phase-tag.setup, .phase-tag.update{background:rgba(244,241,232,.12);color:var(--chalk);}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;}
+  .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{
+    background:rgba(244,241,232,.08);
+    color:var(--amber);
+    padding:1px 5px;
+    border-radius:4px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>How w and b get decided — a 3-layer walkthrough</h1>
+  <p class="sub">Input [1, 2] → target 1.0. Step through the forward pass, then watch blame flow backward.</p>
+
+  <div class="legend">
+    <span><i class="dot amber"></i>forward pass</span>
+    <span><i class="dot coral"></i>backward pass (blame)</span>
+    <span><i class="dot chalk"></i>setup / update</span>
+  </div>
+
+  <div class="panel">
+    <svg viewBox="0 0 920 500" id="svg">
+      <line class="edge" id="e_x1a1" x1="90" y1="160" x2="300" y2="120"/>
+      <line class="edge" id="e_x2a1" x1="90" y1="340" x2="300" y2="120"/>
+      <line class="edge" id="e_x1a2" x1="90" y1="160" x2="300" y2="380"/>
+      <line class="edge" id="e_x2a2" x1="90" y1="340" x2="300" y2="380"/>
+      <line class="edge" id="e_a1b1" x1="300" y1="120" x2="530" y2="120"/>
+      <line class="edge" id="e_a2b1" x1="300" y1="380" x2="530" y2="120"/>
+      <line class="edge" id="e_a1b2" x1="300" y1="120" x2="530" y2="380"/>
+      <line class="edge" id="e_a2b2" x1="300" y1="380" x2="530" y2="380"/>
+      <line class="edge" id="e_b1c1" x1="530" y1="120" x2="770" y2="250"/>
+      <line class="edge" id="e_b2c1" x1="530" y1="380" x2="770" y2="250"/>
+
+      <text class="weight-text" id="w_x1a1" x="170" y="128">w=0.1</text>
+      <text class="weight-text" id="w_x2a1" x="170" y="245">w=0.2</text>
+      <text class="weight-text" id="w_x1a2" x="170" y="255">w=-0.3</text>
+      <text class="weight-text" id="w_x2a2" x="170" y="368">w=0.4</text>
+      <text class="weight-text" id="w_a1b1" x="390" y="108">w=0.5</text>
+      <text class="weight-text" id="w_a2b1" x="390" y="245">w=-0.2</text>
+      <text class="weight-text" id="w_a1b2" x="390" y="255">w=0.1</text>
+      <text class="weight-text" id="w_a2b2" x="390" y="392">w=0.3</text>
+      <text class="weight-text" id="w_b1c1" x="630" y="172">w=0.6</text>
+      <text class="weight-text" id="w_b2c1" x="630" y="322">w=-0.4</text>
+
+      <g id="n_x1">
+        <text class="node-label" x="30" y="164">x1 = 1</text>
+        <circle class="node-circle" cx="90" cy="160" r="20"/>
+      </g>
+      <g id="n_x2">
+        <text class="node-label" x="30" y="344">x2 = 2</text>
+        <circle class="node-circle" cx="90" cy="340" r="20"/>
+      </g>
+
+      <g id="n_a1">
+        <circle class="node-circle" cx="300" cy="120" r="30"/>
+        <text class="node-title" x="300" y="120" text-anchor="middle" dominant-baseline="central">A1</text>
+        <text class="val-text" id="val_a1" x="300" y="168" text-anchor="middle">0.1·1+0.2·2=0.5 → 0.5</text>
+        <text class="blame-text" id="blame_a1" x="300" y="186" text-anchor="middle">blame -0.480</text>
+      </g>
+      <g id="n_a2">
+        <circle class="node-circle" cx="300" cy="380" r="30"/>
+        <text class="node-title" x="300" y="380" text-anchor="middle" dominant-baseline="central">A2</text>
+        <text class="val-text" id="val_a2" x="300" y="428" text-anchor="middle">-0.3·1+0.4·2+0.1=0.6 → 0.6</text>
+        <text class="blame-text" id="blame_a2" x="300" y="446" text-anchor="middle">blame 0.444</text>
+      </g>
+
+      <g id="n_b1">
+        <circle class="node-circle" cx="530" cy="120" r="30"/>
+        <text class="node-title" x="530" y="120" text-anchor="middle" dominant-baseline="central">B1</text>
+        <text class="val-text" id="val_b1" x="530" y="168" text-anchor="middle">0.5·0.5-0.2·0.6+0.05=0.18</text>
+        <text class="blame-text" id="blame_b1" x="530" y="186" text-anchor="middle">blame -1.109</text>
+      </g>
+      <g id="n_b2">
+        <circle class="node-circle" cx="530" cy="380" r="30"/>
+        <text class="node-title" x="530" y="380" text-anchor="middle" dominant-baseline="central">B2</text>
+        <text class="val-text" id="val_b2" x="530" y="428" text-anchor="middle">0.1·0.5+0.3·0.6-0.1=0.13</text>
+        <text class="blame-text" id="blame_b2" x="530" y="446" text-anchor="middle">blame 0.739</text>
+      </g>
+
+      <g id="n_c1">
+        <circle class="node-circle" cx="770" cy="250" r="34"/>
+        <text class="node-title" x="770" y="250" text-anchor="middle" dominant-baseline="central">C1</text>
+        <text class="val-text" id="val_c1" x="770" y="302" text-anchor="middle">output=0.076, target=1.0, loss=0.854</text>
+        <text class="blame-text" id="blame_c1" x="770" y="320" text-anchor="middle">blame -1.848</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <div class="notebook" id="notebook"></div>
+  </div>
+
+  <div class="controls panel">
+    <button id="btnPrev">◂ Prev</button>
+    <button id="btnPlay">▶ Play</button>
+    <button id="btnNext">Next ▸</button>
+    <button id="btnReset">Reset</button>
+    <span class="step-indicator" id="stepIndicator"></span>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why isn't x in step 7, and where does the -2's sign come from? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Where's the x in step 7 (blame at the output)?</strong> It hasn't arrived yet. <code>∂loss/∂output = -2×(y-output)</code> only asks "how does the loss react to the output value" — answerable using just <code>y</code> and <code>output</code>. The loss formula, <code>loss = (y-output)²</code>, doesn't contain <code>w</code> or <code>x</code> anywhere. Proof: <code>-1.848</code> above was computed using only <code>1.0</code> and <code>0.076</code> — <code>x</code> was never consulted and couldn't have changed the answer.</p>
+      <p><strong>So where does x come from?</strong> A completely separate formula: <code>output = w·x + b</code>, differentiated with respect to <code>w</code>. That's the only formula that mentions <code>x</code> at all, and it only gets used one step later — that's why <code>0.18</code> and <code>0.13</code> (B1 and B2's outputs, playing the same role <code>x</code> played) only show up in step 7's log entry, not step 6's.</p>
+      <p><strong>Then where does the negative sign in -2 come from, if not from w·x+b?</strong> From the loss formula's own definition, not from the output formula. Let <code>e = y - output</code>, so <code>loss = e²</code>. Then <code>∂loss/∂output = 2e × ∂e/∂output = 2e × (-1)</code>. That <code>-1</code> is <code>∂(y-output)/∂output</code> — it's <code>-1</code> purely because <code>output</code> is <em>subtracted</em> inside <code>y-output</code>. Meanwhile <code>∂output/∂w = x</code> on its own, with no minus sign anywhere — addition and multiplication don't manufacture negative signs. A specific weight (like <code>w_C2 = -0.4</code>) can happen to have a negative value, but that's a fact about that number, not something the derivative rule inserted.</p>
+      <p>Two separate formulas, two separate questions, each answered using only the symbols that formula actually contains. The chain rule just multiplies the two finished answers together at the end — it never blends their internals.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq2">Why is blame multiplied by w, but the weight's gradient multiplied by the input? ▾</button>
+    <div class="faq-content" id="faqContent2">
+      <p>Look at how any neuron's raw value is computed: <code>C1_raw = w_C1 × B1_output + w_C2 × B2_output + b_C</code>. That's just two multiplications added together. For a simple product <code>w × x</code>, calculus gives two symmetric facts for free: <code>∂(w×x)/∂w = x</code> and <code>∂(w×x)/∂x = w</code> — in a product, each variable's sensitivity is always <em>the other</em> variable.</p>
+      <p><strong>Asking "how does C1 react to w_C1?"</strong> gives back <code>B1_output = 0.18</code> — used for <code>∂loss/∂w_C1</code>, which updates the weight and never travels anywhere else.</p>
+      <p><strong>Asking "how does C1 react to B1_output?"</strong> gives back <code>w_C1 = 0.6</code> — used as the blame handed to B1, which continues the backward pass and has nothing to do with updating anything at this layer.</p>
+      <p>Same formula, same multiplication, two different questions about its two different factors — and because it's a product, each answer is simply whatever the other factor happens to be. That's the entire reason gradients use the input and blame uses the weight: they're reading the two halves of the same product rule.</p>
+      <p><strong>A real-world version you already know by instinct:</strong> running a lemonade stand. <code>revenue = price × cups sold</code>. Charge $2 a cup, sell 50 cups, revenue is $100. Raise the price by $1, keeping sales at 50: revenue goes up by 50 × $1 = $50 — sensitivity to <em>price</em> is exactly the number of cups sold, the other factor. Sell one more cup instead, keeping the price at $2: revenue goes up by exactly $2 — sensitivity to <em>cups sold</em> is exactly the price, the other factor again. <code>output = w × x</code> has the same shape: <code>w</code> is the price, <code>x</code> is the units sold. Nudging the weight is like raising the price — the payoff scales with however much is flowing through (<code>x</code>). Nudging the input is like selling more units — the payoff scales with whatever the "price" (<code>w</code>) currently is.</p>
+      <p><strong>Is blame also a derivative — with respect to x?</strong> Yes: <code>blame = ∂loss/∂x</code>, exactly parallel to a weight's gradient being <code>∂loss/∂w</code>. B1's blame (<code>-1.109</code>) <em>is</em> <code>∂loss/∂(B1_output)</code>, since <code>B1_output</code> is playing the role of <code>x</code> in C1's formula. This is exactly why blame keeps flowing backward: <code>B1_output</code> is itself the output of an earlier calculation, so <code>∂loss/∂(B1_output)</code> becomes B1's own blame — used both to compute <code>∂loss/∂w_B1</code> and to produce a fresh <code>∂loss/∂x</code> (this time with respect to A1's output) to hand one layer further back. Every "blame" number in the network is the same quantity, <code>∂loss/∂x</code>, recomputed at each layer.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const btn = document.getElementById('btnFaq');
+  const open = c.classList.toggle('open');
+  btn.textContent = open
+    ? "Why isn't x in step 7, and where does the -2's sign come from? ▴"
+    : "Why isn't x in step 7, and where does the -2's sign come from? ▾";
+});
+document.getElementById('btnFaq2').addEventListener('click', () => {
+  const c = document.getElementById('faqContent2');
+  const btn = document.getElementById('btnFaq2');
+  const open = c.classList.toggle('open');
+  btn.textContent = open
+    ? "Why is blame multiplied by w, but the weight's gradient multiplied by the input? ▴"
+    : "Why is blame multiplied by w, but the weight's gradient multiplied by the input? ▾";
+});
+</script>
+
+<script>
+const steps = [
+  { phase:'setup', edges:[], nodes:[],
+    text:'Random start. Every weight and bias below began as a small random guess — nothing has been computed yet. Layer A: A1 w=[0.1,0.2] b=0. A2 w=[-0.3,0.4] b=0.1. Layer B: B1 w=[0.5,-0.2] b=0.05. B2 w=[0.1,0.3] b=-0.1. Layer C: C1 w=[0.6,-0.4] b=0.02.' },
+  { phase:'fwd', edges:['e_x1a1','e_x2a1'], nodes:['n_a1'], weights:['w_x1a1','w_x2a1'],
+    text:'Forward — A1_raw = 0.1×1 + 0.2×2 + 0 = 0.5 → ReLU(0.5) = 0.5' },
+  { phase:'fwd', edges:['e_x1a2','e_x2a2'], nodes:['n_a2'], weights:['w_x1a2','w_x2a2'],
+    text:'Forward — A2_raw = -0.3×1 + 0.4×2 + 0.1 = 0.6 → ReLU(0.6) = 0.6' },
+  { phase:'fwd', edges:['e_a1b1','e_a2b1'], nodes:['n_b1'], weights:['w_a1b1','w_a2b1'],
+    text:'Forward — B1_raw = 0.5×0.5 + (-0.2)×0.6 + 0.05 = 0.18 → ReLU(0.18) = 0.18' },
+  { phase:'fwd', edges:['e_a1b2','e_a2b2'], nodes:['n_b2'], weights:['w_a1b2','w_a2b2'],
+    text:'Forward — B2_raw = 0.1×0.5 + 0.3×0.6 + (-0.1) = 0.13 → ReLU(0.13) = 0.13' },
+  { phase:'fwd', edges:['e_b1c1','e_b2c1'], nodes:['n_c1'], weights:['w_b1c1','w_b2c1'],
+    text:'Forward — output = 0.6×0.18 + (-0.4)×0.13 + 0.02 = 0.076. Target = 1.0, loss = (1.0-0.076)² ≈ 0.854. (Whatever this number turns out to be — big or tiny — the next step is identical. Backprop is not a response to a "bad" loss; it runs after every forward pass, unconditionally.)' },
+  { phase:'bwd', edges:[], nodes:['n_c1'],
+    text:'Backward — blame at the output. Let e = y-output = 1.0-0.076 = 0.924. loss = e², so ∂loss/∂output = ∂loss/∂e × ∂e/∂output = 2e × (-1) = -2×0.924 = -1.848. That -1 comes from output being SUBTRACTED inside (y-output) — a fact about the loss formula alone, nothing to do with w or x yet. This one number is everything the rest of the network needs.' },
+  { phase:'bwd', edges:['e_b1c1','e_b2c1'], nodes:['n_b1','n_b2'],
+    text:'Backward — the local inputs enter for the FIRST time here (B1 and B2\'s outputs play the exact role x played in a single-layer model — a fact from a totally separate formula than the one that produced -1.848): ∂loss/∂w_C1 = 0.18×(-1.848) ≈ -0.333, ∂loss/∂w_C2 = 0.13×(-1.848) ≈ -0.240, ∂loss/∂b_C = -1.848 (a bias\'s local fact is always just 1, no sign attached). Blame passed back: B1 gets -1.848×0.6 = -1.109, B2 gets -1.848×(-0.4) = 0.739' },
+  { phase:'bwd', edges:[], nodes:['n_b1','n_b2'],
+    text:'Backward — for B1: multiply its blame (-1.109) by each of its own inputs, A1=0.5 and A2=0.6: ∂loss/∂w_B1 = [0.5×-1.109, 0.6×-1.109] = [-0.554,-0.665]. ∂loss/∂b_B1 = -1.109 (bias\'s local fact is always 1). For B2: multiply its blame (0.739) by the same two inputs: ∂loss/∂w_B2 = [0.5×0.739, 0.6×0.739] = [0.370,0.443]. ∂loss/∂b_B2 = 0.739' },
+  { phase:'bwd', edges:['e_a1b1','e_a2b1','e_a1b2','e_a2b2'], nodes:['n_a1','n_a2'],
+    text:'Backward — A1 gets blame from both B1 and B2: (-1.109×0.5)+(0.739×0.1) ≈ -0.480. A2 gets: (-1.109×-0.2)+(0.739×0.3) ≈ 0.444. Two paths, summed — this is the fan-in from section 2.2.' },
+  { phase:'bwd', edges:[], nodes:['n_a1','n_a2'],
+    text:'Backward — for A1: multiply its blame (-0.480) by each of its own inputs, x1=1 and x2=2: ∂loss/∂w_A1 = [1×-0.480, 2×-0.480] = [-0.480,-0.961]. ∂loss/∂b_A1 = -0.480. For A2: multiply its blame (0.444) by the same two inputs: ∂loss/∂w_A2 = [1×0.444, 2×0.444] = [0.444,0.887]. ∂loss/∂b_A2 = 0.444' },
+  { phase:'update', edges:[], nodes:[],
+    text:'Update — w = w - learning_rate × gradient, with learning_rate = 0.1. The "before" numbers are each weight/bias\'s ORIGINAL random starting value from step 1 — nothing computed them, that\'s just where they began: w_C1 started at 0.6, so it becomes 0.6 - 0.1×(-0.333) = 0.633. b_C started at 0.02 (see step 1), so it becomes 0.02 - 0.1×(-1.848) = 0.205. Every other number updates the same way, each starting from its own original random value.' },
+  { phase:'update', edges:[], nodes:['n_x1','n_x2','n_a1','n_a2','n_b1','n_b2','n_c1'],
+    text:'This whole forward-then-backward-then-update cycle is one step, run unconditionally every time — never a response to how large the loss happens to be. Repeat it many times across the training data, and this is literally how w and b get decided — never chosen, only nudged. When to stop repeating is a separate, real decision — see the tutorial\'s Part 1.5.2 and early_stopping_animation.html.' }
+];
+
+let current = 0;
+let playing = false;
+let timer = null;
+
+function touchedBy(id, phase, upTo, key){
+  return steps.some((s,i) => i <= upTo && s.phase === phase && (s[key]||[]).includes(id));
+}
+
+function anyTouch(id, upTo, key){
+  let last = null;
+  steps.forEach((s,i) => {
+    if(i <= upTo && (s[key]||[]).includes(id)){
+      last = { phase: s.phase, active: i === upTo };
+    }
+  });
+  return last;
+}
+
+function render(){
+  document.querySelectorAll('.edge').forEach(el => {
+    el.className = 'edge';
+    const t = anyTouch(el.id, current, 'edges');
+    if(t){ el.classList.add((t.active ? 'active-' : 'done-') + t.phase); }
+  });
+  document.querySelectorAll('.node-circle').forEach(el => {
+    const gid = el.closest('g').id;
+    el.className = 'node-circle';
+    const t = anyTouch(gid, current, 'nodes');
+    if(t){ el.classList.add((t.active ? 'active-' : 'done-') + t.phase); }
+  });
+  document.querySelectorAll('.weight-text').forEach(el => {
+    let visible = false;
+    steps.forEach((s,i) => { if(i <= current && (s.weights||[]).includes(el.id)) visible = true; });
+    el.style.opacity = visible ? 1 : 0;
+  });
+  ['a1','a2','b1','b2','c1'].forEach(id => {
+    const val = document.getElementById('val_' + id);
+    const blame = document.getElementById('blame_' + id);
+    val.style.opacity = touchedBy('n_' + id, 'fwd', current, 'nodes') ? 1 : 0;
+    blame.style.opacity = touchedBy('n_' + id, 'bwd', current, 'nodes') ? 1 : 0;
+  });
+
+  const nb = document.getElementById('notebook');
+  nb.innerHTML = '';
+  steps.forEach((s, i) => {
+    if(i > current) return;
+    const div = document.createElement('div');
+    div.className = 'entry' + (i === current ? ' current ' + s.phase : '');
+    div.innerHTML = '<span class="step-num">' + (i+1) + '.</span>' + s.text +
+      '<span class="phase-tag ' + s.phase + '">' + s.phase + '</span>';
+    nb.appendChild(div);
+  });
+  nb.scrollTop = nb.scrollHeight;
+
+  document.getElementById('stepIndicator').textContent = 'Step ' + (current+1) + ' of ' + steps.length;
+  document.getElementById('btnPrev').disabled = current === 0;
+  document.getElementById('btnNext').disabled = current === steps.length - 1;
+}
+
+function next(){
+  if(current < steps.length - 1){ current++; render(); }
+  else stopPlay();
+}
+function prev(){ if(current > 0){ current--; render(); } }
+function reset(){ current = 0; stopPlay(); render(); }
+
+function startPlay(){
+  playing = true;
+  document.getElementById('btnPlay').textContent = '⏸ Pause';
+  timer = setInterval(next, 2600);
+}
+function stopPlay(){
+  playing = false;
+  document.getElementById('btnPlay').textContent = '▶ Play';
+  clearInterval(timer);
+}
+
+document.getElementById('btnNext').addEventListener('click', () => { stopPlay(); next(); });
+document.getElementById('btnPrev').addEventListener('click', () => { stopPlay(); prev(); });
+document.getElementById('btnReset').addEventListener('click', reset);
+document.getElementById('btnPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
+
+render();
+</script>
+</body>
+</html>

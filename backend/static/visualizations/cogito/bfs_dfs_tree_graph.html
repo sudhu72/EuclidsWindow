@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BFS vs DFS</title>
+<style>
+  :root{
+    --bg:#12141a; --panel:#1a1d26; --line:#2a2e3a;
+    --text:#e9e8f0; --muted:#8b8fa3;
+    --teal:#5eead4; --amber:#f5b942; --violet:#a78bfa; --rose:#f2708a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:ui-monospace,SFMono-Regular,"Cascadia Code","JetBrains Mono",Menlo,monospace;
+    padding:24px 18px 60px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  h1{font-size:20px;color:var(--teal);margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px;}
+  .cols{display:flex; gap:16px; flex-wrap:wrap;}
+  .col{flex:1; min-width:320px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px;}
+  .col h2{font-size:14px; margin:0 0 4px; letter-spacing:1px;}
+  .col.bfs h2{color:var(--teal);}
+  .col.dfs h2{color:var(--amber);}
+  .col .desc{color:var(--muted); font-size:11px; margin-bottom:10px;}
+  svg{width:100%; height:auto; display:block;}
+  .edge{stroke:#3a3f52; stroke-width:2;}
+  .node-circle{stroke-width:2; transition:fill .2s, stroke .2s;}
+  .node-label{font-size:13px; font-weight:bold; text-anchor:middle; dominant-baseline:central; fill:#0d0e12;}
+  .struct-label{font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin:14px 0 6px;}
+  .struct{display:flex; gap:6px; min-height:32px; flex-wrap:wrap;}
+  .chip{
+    padding:6px 10px; border-radius:6px; font-size:12px; border:1px solid var(--line);
+    background:#1e212c;
+  }
+  .col.bfs .chip{border-color:var(--teal); color:var(--teal);}
+  .col.dfs .chip{border-color:var(--amber); color:var(--amber);}
+  .order{color:var(--text); font-size:12px; margin-top:8px; line-height:1.6;}
+  .order b{color:var(--violet);}
+  .controls{display:flex; gap:10px; align-items:center; margin-top:20px; justify-content:center;}
+  button.ctl{
+    background:transparent; border:1px solid var(--line); color:var(--text);
+    padding:9px 18px; border-radius:8px; cursor:pointer; font-family:inherit; font-size:13px;
+  }
+  button.ctl:hover{border-color:var(--teal);}
+  button.ctl:disabled{opacity:.4; cursor:default;}
+  .stepnum{text-align:center; color:var(--muted); font-size:12px; margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>&gt; bfs_dfs_tree_graph</h1>
+  <div class="sub">Same graph, same starting node (A). Step forward and watch a queue spread level-by-level, and a call stack plunge depth-first.</div>
+
+  <div class="cols">
+    <div class="col bfs">
+      <h2>BFS — Breadth First</h2>
+      <div class="desc">Queue (FIFO): explores all neighbors of the current level before going deeper.</div>
+      <svg id="svg-bfs" viewBox="0 0 460 360"></svg>
+      <div class="struct-label">queue</div>
+      <div class="struct" id="struct-bfs"></div>
+      <div class="order" id="order-bfs"></div>
+    </div>
+    <div class="col dfs">
+      <h2>DFS — Depth First</h2>
+      <div class="desc">Call stack (LIFO): commits fully to one path before backtracking.</div>
+      <svg id="svg-dfs" viewBox="0 0 460 360"></svg>
+      <div class="struct-label">call stack (root → current)</div>
+      <div class="struct" id="struct-dfs"></div>
+      <div class="order" id="order-dfs"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctl" onclick="step(-1)" id="btn-prev">← prev</button>
+    <button class="ctl" onclick="step(1)" id="btn-next">next →</button>
+    <button class="ctl" onclick="reset()">↺ reset</button>
+  </div>
+  <div class="stepnum" id="stepnum"></div>
+</div>
+
+<script>
+const positions = {
+  A: [230, 30],  B: [110, 120], C: [350, 120],
+  D: [50, 220],  E: [170, 220], F: [310, 220], G: [410, 220],
+  H: [240, 310]
+};
+const adj = {
+  A: ['B','C'], B: ['A','D','E'], C: ['A','F','G'],
+  D: ['B'], E: ['B','H'], F: ['C','H'], G: ['C'], H: ['E','F']
+};
+const edges = [['A','B'],['A','C'],['B','D'],['B','E'],['C','F'],['C','G'],['E','H'],['F','H']];
+
+function simulateBFS(start){
+  const visited = new Set([start]);
+  const queue = [start];
+  const steps = [];
+  while(queue.length){
+    const node = queue.shift();
+    const added = [];
+    for(const n of adj[node]){
+      if(!visited.has(n)){ visited.add(n); queue.push(n); added.push(n); }
+    }
+    steps.push({ current: node, visited: [...visited], frontier: [...queue], added });
+  }
+  return steps;
+}
+
+function simulateDFS(start){
+  const visited = new Set();
+  const steps = [];
+  const callStack = [];
+  function dfs(node){
+    visited.add(node);
+    callStack.push(node);
+    steps.push({ current: node, visited: [...visited], frontier: [...callStack] });
+    for(const n of adj[node]){
+      if(!visited.has(n)) dfs(n);
+    }
+    callStack.pop();
+  }
+  dfs(start);
+  return steps;
+}
+
+const bfsSteps = simulateBFS('A');
+const dfsSteps = simulateDFS('A');
+let idx = -1; // -1 = initial state, nothing visited
+const maxIdx = Math.max(bfsSteps.length, dfsSteps.length) - 1;
+
+function drawGraph(svgId, stepsArr, currentIdx, accent){
+  const svg = document.getElementById(svgId);
+  const visitedSet = currentIdx >= 0 ? new Set(stepsArr[currentIdx].visited) : new Set();
+  const current = currentIdx >= 0 ? stepsArr[currentIdx].current : null;
+
+  let html = '';
+  for(const [a,b] of edges){
+    const [x1,y1] = positions[a], [x2,y2] = positions[b];
+    html += `<line class="edge" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  }
+  for(const node in positions){
+    const [x,y] = positions[node];
+    let fill = '#2e3342', stroke = '#3a3f52';
+    if(visitedSet.has(node)){ fill = accent; stroke = accent; }
+    if(node === current){ stroke = '#fff'; }
+    html += `<circle class="node-circle" cx="${x}" cy="${y}" r="22" fill="${fill}" stroke="${stroke}"/>`;
+    html += `<text class="node-label" x="${x}" y="${y+1}" fill="${visitedSet.has(node) ? '#0d0e12' : '#e9e8f0'}">${node}</text>`;
+  }
+  svg.innerHTML = html;
+}
+
+function renderSide(prefix, stepsArr, accent){
+  const svgId = 'svg-' + prefix;
+  const structId = 'struct-' + prefix;
+  const orderId = 'order-' + prefix;
+  const currentIdx = Math.min(idx, stepsArr.length - 1);
+  drawGraph(svgId, stepsArr, currentIdx, accent);
+
+  const structEl = document.getElementById(structId);
+  if(currentIdx < 0){
+    structEl.innerHTML = `<div class="chip">empty</div>`;
+  } else {
+    const frontier = stepsArr[currentIdx].frontier;
+    structEl.innerHTML = frontier.length
+      ? frontier.map(n => `<div class="chip">${n}</div>`).join('')
+      : `<div class="chip">empty</div>`;
+  }
+
+  const orderEl = document.getElementById(orderId);
+  if(currentIdx < 0){
+    orderEl.innerHTML = 'Visit order: —';
+  } else {
+    const visitedOrder = stepsArr.slice(0, currentIdx + 1).map(s => s.current);
+    orderEl.innerHTML = 'Visit order: ' + visitedOrder.map((n,i) => i === visitedOrder.length-1 ? `<b>${n}</b>` : n).join(' → ');
+  }
+}
+
+function render(){
+  renderSide('bfs', bfsSteps, '#5eead4');
+  renderSide('dfs', dfsSteps, '#f5b942');
+  document.getElementById('stepnum').textContent = idx < 0 ? 'step 0 / ' + (maxIdx+1) + ' (not started)' : `step ${idx+1} / ${maxIdx+1}`;
+  document.getElementById('btn-prev').disabled = idx <= -1;
+  document.getElementById('btn-next').disabled = idx >= maxIdx;
+}
+
+function step(d){
+  idx = Math.max(-1, Math.min(maxIdx, idx + d));
+  render();
+}
+function reset(){ idx = -1; render(); }
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>L2 regularization — why squared?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:28px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 24px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  .diagram{min-height:340px;}
+  .scene{display:none;} .scene.visible{display:block;}
+
+  .barchart{display:flex;gap:26px;justify-content:center;align-items:flex-end;height:230px;margin:10px 0 12px;}
+  .bar-col{display:flex;flex-direction:column;align-items:center;gap:6px;width:80px;}
+  .bar-track{height:200px;display:flex;align-items:flex-end;}
+  .bar{width:46px;border-radius:5px 5px 0 0;background:var(--amber);transition:height .6s ease;}
+  .bar.spread{background:var(--green);}
+  .bar-value{font-size:12px;color:var(--chalk);}
+  .bar-sq{font-size:11px;color:var(--coral);}
+  .bar-label{font-size:11px;color:var(--chalk-dim);}
+  .chart-caption{text-align:center;font-size:13px;color:var(--chalk-dim);margin-bottom:8px;}
+  .total-readout{text-align:center;font-family:'Kalam',cursive;font-size:19px;color:var(--chalk);margin-top:6px;}
+  .total-readout .val{color:var(--coral);}
+
+  .lambda-controls{max-width:520px;margin:8px auto 20px;text-align:center;}
+  .lambda-controls input[type=range]{width:100%;accent-color:var(--amber);}
+  .lambda-readout{font-family:'Kalam',cursive;font-size:18px;margin:8px 0 20px;}
+  .lambda-pair{display:flex;gap:40px;justify-content:center;}
+  .lambda-pair .col{text-align:center;}
+  .lambda-pair .num{font-size:15px;margin-top:6px;}
+  .lambda-pair .num.concentrated{color:var(--amber);}
+  .lambda-pair .num.spread{color:var(--green);}
+
+  .notebook{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;max-height:260px;overflow-y:auto;}
+  .notebook .entry{padding:8px 0;border-bottom:1px dashed var(--border);opacity:.45;}
+  .notebook .entry.current{opacity:1;color:var(--chalk);}
+  .notebook .step-num{color:var(--chalk-dim);margin-right:8px;}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  button:disabled{opacity:.35;cursor:default;}
+  .step-indicator{color:var(--chalk-dim);font-size:13px;margin-left:auto;}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>L2 regularization — why squared?</h1>
+  <p class="sub">total_loss = original_loss + λ × Σw². Watch why squaring specifically punishes concentrating weight into one knob.</p>
+
+  <div class="panel diagram">
+    <div class="scene" id="scene-grocery">
+      <div class="chart-caption" id="groceryCaption"></div>
+      <div class="barchart">
+        <div class="bar-col">
+          <div class="bar-track"><div class="bar" id="armBar1"></div></div>
+          <div class="bar-value" id="armVal1"></div>
+          <div class="bar-sq" id="armSq1"></div>
+          <div class="bar-label">left arm</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar-track"><div class="bar" id="armBar2"></div></div>
+          <div class="bar-value" id="armVal2"></div>
+          <div class="bar-sq" id="armSq2"></div>
+          <div class="bar-label">right arm</div>
+        </div>
+      </div>
+      <div class="total-readout">total "pain" = <span class="val" id="groceryTotal"></span></div>
+    </div>
+
+    <div class="scene" id="scene-weights">
+      <div class="chart-caption" id="weightsCaption"></div>
+      <div class="barchart" id="weightsBars"></div>
+      <div class="total-readout">Σw² = <span class="val" id="weightsTotal"></span></div>
+    </div>
+
+    <div class="scene" id="scene-lambda">
+      <div class="chart-caption">Drag λ and watch the penalty gap between the two weight configurations from before.</div>
+      <div class="lambda-controls">
+        <input type="range" id="lambdaSlider" min="0" max="2" step="0.05" value="0.5">
+        <div class="lambda-readout">λ = <span id="lambdaVal">0.50</span></div>
+      </div>
+      <div class="lambda-pair">
+        <div class="col">
+          <div class="bar-track" style="height:180px;display:flex;align-items:flex-end;justify-content:center;">
+            <div class="bar" id="lambdaBarConc" style="width:60px;"></div>
+          </div>
+          <div class="num concentrated">concentrated: λ×2.60 = <span id="lambdaNumConc"></span></div>
+        </div>
+        <div class="col">
+          <div class="bar-track" style="height:180px;display:flex;align-items:flex-end;justify-content:center;">
+            <div class="bar spread" id="lambdaBarSpread" style="width:60px;"></div>
+          </div>
+          <div class="num spread">spread: λ×0.80 = <span id="lambdaNumSpread"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel"><div class="notebook" id="notebook"></div></div>
+
+  <div class="controls panel">
+    <button id="btnPrev">◂ Prev</button>
+    <button id="btnPlay">▶ Play</button>
+    <button id="btnNext">Next ▸</button>
+    <button id="btnReset">Reset</button>
+    <span class="step-indicator" id="stepIndicator"></span>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why squared, specifically? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Why squared, and not just penalizing size directly?</strong> Try it in your own body: carry a 20kg bag split 10kg in each hand, versus all 20kg in one hand. The second one hurts far more than "twice as much" — strain scales roughly with load <em>squared</em>, not load. Check the arithmetic: <code>10² + 10² = 200</code>, but <code>20² + 0² = 400</code> — identical total weight, yet concentrating it into one arm doubles the "pain."</p>
+      <p>That's exactly what squaring does to a network's weights. For a fixed amount of total "reliance" the model needs to place somewhere, <strong>concentrating it into one giant weight costs far more than spreading the same total thinly across many small weights</strong> — even though the sum is identical. A model leaning almost entirely on one weight is carrying the groceries in one arm: it works, but it's fragile. Spreading the same predictive power across many small weights is carrying two lighter bags: same capability, far less strain, no single point of failure.</p>
+      <p><strong>What does λ actually do?</strong> It's the exchange rate between "fitting the data well" and "staying spread out." <code>λ = 0</code> is no regularization at all — back to the overfitting risk from Part 1.5. A huge λ forces every weight toward 0, starving the model into underfitting. Try dragging the slider in the diagram above and watch the gap between the two configurations grow as λ increases — the penalty for concentrating gets steeper and steeper.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function renderTwoBar(prefix, v1, v2, maxScale){
+  const px1 = Math.max(4, (Math.abs(v1)/maxScale)*190);
+  const px2 = Math.max(4, (Math.abs(v2)/maxScale)*190);
+  document.getElementById(prefix+'1').style.height = px1+'px';
+  document.getElementById(prefix+'2') && (document.getElementById(prefix+'2').style.height = px2+'px');
+}
+
+function renderGrocery(kg1, kg2, label){
+  document.getElementById('groceryCaption').textContent = label;
+  document.getElementById('armBar1').style.height = Math.max(4,(kg1/20)*190)+'px';
+  document.getElementById('armBar2').style.height = Math.max(4,(kg2/20)*190)+'px';
+  document.getElementById('armVal1').textContent = kg1+' kg';
+  document.getElementById('armVal2').textContent = kg2+' kg';
+  document.getElementById('armSq1').textContent = kg1+'² = '+(kg1*kg1);
+  document.getElementById('armSq2').textContent = kg2+'² = '+(kg2*kg2);
+  document.getElementById('groceryTotal').textContent = (kg1*kg1)+' + '+(kg2*kg2)+' = '+(kg1*kg1+kg2*kg2);
+}
+
+function renderWeights(values, label){
+  document.getElementById('weightsCaption').textContent = label;
+  const container = document.getElementById('weightsBars');
+  container.innerHTML = '';
+  const maxAbs = 1.6;
+  let sumSq = 0;
+  values.forEach((v,i) => {
+    sumSq += v*v;
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    const track = document.createElement('div');
+    track.className = 'bar-track';
+    const bar = document.createElement('div');
+    bar.className = 'bar' + (Math.abs(v) < 1.0 ? ' spread' : '');
+    bar.style.height = Math.max(4,(Math.abs(v)/maxAbs)*190)+'px';
+    track.appendChild(bar);
+    const val = document.createElement('div');
+    val.className = 'bar-value'; val.textContent = 'w'+(i+1)+'='+v;
+    const sq = document.createElement('div');
+    sq.className = 'bar-sq'; sq.textContent = v+'² = '+(v*v).toFixed(2);
+    col.appendChild(track); col.appendChild(val); col.appendChild(sq);
+    container.appendChild(col);
+  });
+  document.getElementById('weightsTotal').textContent = sumSq.toFixed(2);
+}
+
+const sumSqConcentrated = 2.60;
+const sumSqSpread = 0.80;
+function renderLambda(lambda){
+  document.getElementById('lambdaVal').textContent = lambda.toFixed(2);
+  const conc = lambda*sumSqConcentrated;
+  const spread = lambda*sumSqSpread;
+  document.getElementById('lambdaNumConc').textContent = conc.toFixed(3);
+  document.getElementById('lambdaNumSpread').textContent = spread.toFixed(3);
+  const maxScale = 2*sumSqConcentrated;
+  document.getElementById('lambdaBarConc').style.height = Math.max(4,(conc/maxScale)*170)+'px';
+  document.getElementById('lambdaBarSpread').style.height = Math.max(4,(spread/maxScale)*170)+'px';
+}
+document.getElementById('lambdaSlider').addEventListener('input', (e) => renderLambda(parseFloat(e.target.value)));
+
+const steps = [
+  { scene:'grocery', grocery:[0,0], caption:'Setup — total_loss = original_loss + λ × Σw². Before looking at weights, feel this in your own body first.',
+    text:'Setup — the L2 penalty adds λ × (sum of every weight, squared) onto the loss. Before touching weights, here\'s the intuition in a form you already know: carrying groceries.' },
+  { scene:'grocery', grocery:[20,0], caption:'All 20kg in one arm — concentrated.',
+    text:'Carry all 20kg in one arm. Pain = 20² + 0² = 400. All the strain lands on a single point.' },
+  { scene:'grocery', grocery:[10,10], caption:'10kg in each arm — spread, same total weight.',
+    text:'Same 20kg total, split 10kg + 10kg. Pain = 10² + 10² = 200 — HALF the pain, for carrying the exact same total weight. Concentrating cost more than spreading.' },
+  { scene:'weights', weights:[1.6,0.1,0.1,0.1,0.1], caption:'A network leaning almost entirely on ONE weight (concentrated).',
+    text:'Now with real network weights: [1.6, 0.1, 0.1, 0.1, 0.1] — one weight dominates. Σw² = 1.6² + 0.1²×4 = 2.60.' },
+  { scene:'weights', weights:[0.4,0.4,0.4,0.4,0.4], caption:'The SAME total magnitude, spread evenly across 5 weights.',
+    text:'Same total magnitude (sum = 2.0 either way), spread evenly: [0.4, 0.4, 0.4, 0.4, 0.4]. Σw² = 0.4²×5 = 0.80 — less than a third of the concentrated version\'s penalty, for the same total "reliance."' },
+  { scene:'lambda', lambda:0.5,
+    text:'Drag the λ slider in the diagram above. At λ=0.5: concentrated pays 0.5×2.60=1.30, spread pays 0.5×0.80=0.40. The model is nudged toward whichever configuration keeps total_loss lower — and that\'s the spread one, every time the sums match.' },
+  { scene:'lambda', lambda:1.5,
+    text:'Push λ higher (try 1.5 or 2). The gap between concentrated and spread widens even further — the higher λ is, the more strongly the model gets pushed to distribute its reliance across many small weights instead of leaning on one.' },
+  { scene:'lambda', lambda:0.0,
+    text:'Drag λ back to 0: no regularization at all — both configurations cost nothing extra, and the model has no incentive to spread out (back to the overfitting risk from Part 1.5). λ is the dial that trades "fit the data" against "stay spread out and generalize."' }
+];
+
+let current = 0, playing = false, timer = null;
+
+function render(){
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('visible'));
+  const step = steps[current];
+  document.getElementById('scene-' + step.scene).classList.add('visible');
+
+  if(step.scene === 'grocery'){
+    renderGrocery(step.grocery[0], step.grocery[1], step.caption);
+  }
+  if(step.scene === 'weights'){
+    renderWeights(step.weights, step.caption);
+  }
+  if(step.scene === 'lambda'){
+    document.getElementById('lambdaSlider').value = step.lambda;
+    renderLambda(step.lambda);
+  }
+
+  const nb = document.getElementById('notebook');
+  nb.innerHTML = '';
+  steps.forEach((s,i) => {
+    if(i > current) return;
+    const div = document.createElement('div');
+    div.className = 'entry' + (i===current ? ' current' : '');
+    div.innerHTML = '<span class="step-num">' + (i+1) + '.</span>' + s.text;
+    nb.appendChild(div);
+  });
+  nb.scrollTop = nb.scrollHeight;
+
+  document.getElementById('stepIndicator').textContent = 'Step ' + (current+1) + ' of ' + steps.length;
+  document.getElementById('btnPrev').disabled = current === 0;
+  document.getElementById('btnNext').disabled = current === steps.length - 1;
+}
+
+function next(){ if(current < steps.length-1){ current++; render(); } else stopPlay(); }
+function prev(){ if(current > 0){ current--; render(); } }
+function reset(){ current = 0; stopPlay(); render(); }
+function startPlay(){ playing=true; document.getElementById('btnPlay').textContent='⏸ Pause'; timer=setInterval(next,3200); }
+function stopPlay(){ playing=false; document.getElementById('btnPlay').textContent='▶ Play'; clearInterval(timer); }
+
+document.getElementById('btnNext').addEventListener('click', () => { stopPlay(); next(); });
+document.getElementById('btnPrev').addEventListener('click', () => { stopPlay(); prev(); });
+document.getElementById('btnReset').addEventListener('click', reset);
+document.getElementById('btnPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why squared, specifically? ' + (open?'▴':'▾');
+});
+
+render();
+</script>
+</body>
+</html>

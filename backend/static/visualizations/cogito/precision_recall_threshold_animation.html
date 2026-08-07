@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Precision, recall, and the threshold tradeoff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+
+  .legend-row{display:flex;justify-content:center;gap:22px;margin-bottom:16px;font-size:12px;color:var(--chalk-dim);flex-wrap:wrap;}
+  .legend-row span{display:flex;align-items:center;gap:6px;}
+  .swatch{width:14px;height:14px;border-radius:3px;display:inline-block;}
+
+  .email-row{display:flex;justify-content:center;gap:10px;margin:10px 0 22px;flex-wrap:wrap;}
+  .email{width:74px;padding:10px 6px 8px;border-radius:8px;text-align:center;border:2px solid var(--border);transition:all .3s ease;}
+  .email .p{font-family:'Kalam',cursive;font-size:15px;}
+  .email .lab{font-size:10px;color:var(--chalk-dim);margin-top:2px;}
+  .email.truth-spam{border-color:var(--blue);}
+  .email.truth-ham{border-color:var(--chalk-dim);}
+  .email.pred-spam.truth-spam{background:rgba(143,209,158,.18);}
+  .email.pred-spam.truth-ham{background:rgba(255,130,102,.22);}
+  .email.pred-ham.truth-spam{background:rgba(255,130,102,.22);}
+  .email.pred-ham.truth-ham{background:rgba(127,143,131,.12);}
+  .email .tag{font-size:9px;margin-top:4px;font-weight:700;letter-spacing:.02em;}
+
+  .slider-wrap{max-width:520px;margin:6px auto 4px;text-align:center;}
+  .slider-wrap input[type=range]{width:100%;accent-color:var(--amber);}
+  .slider-caption{font-size:12px;color:var(--chalk-dim);margin-top:6px;}
+  .threshold-readout{text-align:center;font-family:'Kalam',cursive;font-size:20px;margin:10px 0 18px;}
+
+  table.conf{border-collapse:collapse;margin:0 auto 6px;}
+  table.conf th, table.conf td{border:1px solid var(--border);padding:10px 18px;text-align:center;font-size:13px;}
+  table.conf th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  table.conf td{font-family:'Kalam',cursive;font-size:18px;}
+  .conf-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-bottom:14px;}
+
+  .metric-row{display:flex;justify-content:center;gap:30px;margin:16px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:12px 18px;min-width:110px;}
+  .metric .lbl{font-size:11px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:22px;margin-top:4px;}
+  .metric.precision .num{color:var(--amber);}
+  .metric.recall .num{color:var(--blue);}
+  .metric.f1 .num{color:var(--green);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:16px;min-height:20px;}
+
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Precision, recall, and the threshold tradeoff</h1>
+  <p class="sub">10 emails, one spam classifier, one dial. Drag the threshold and watch every metric respond live.</p>
+
+  <div class="panel">
+    <div class="legend-row">
+      <span><i class="swatch" style="border:2px solid var(--blue)"></i>truly spam</span>
+      <span><i class="swatch" style="border:2px solid var(--chalk-dim)"></i>truly not spam</span>
+      <span><i class="swatch" style="background:rgba(143,209,158,.4)"></i>correct</span>
+      <span><i class="swatch" style="background:rgba(255,130,102,.4)"></i>wrong</span>
+    </div>
+
+    <div class="email-row" id="emailRow"></div>
+
+    <div class="slider-wrap">
+      <input type="range" id="thresholdSlider" min="0" max="1" step="0.01" value="0.5">
+    </div>
+    <div class="threshold-readout">threshold = <span id="thresholdVal">0.50</span> — flag as spam if predicted probability ≥ threshold</div>
+
+    <div class="conf-caption">confusion matrix</div>
+    <table class="conf" id="confTable">
+      <tr><th></th><th>actually spam</th><th>actually not spam</th></tr>
+      <tr><th>predicted spam</th><td id="cellTP" style="color:var(--green)"></td><td id="cellFP" style="color:var(--coral)"></td></tr>
+      <tr><th>predicted not spam</th><td id="cellFN" style="color:var(--coral)"></td><td id="cellTN" style="color:var(--green)"></td></tr>
+    </table>
+
+    <div class="metric-row">
+      <div class="metric precision"><div class="lbl">precision</div><div class="num" id="mPrecision"></div></div>
+      <div class="metric recall"><div class="lbl">recall</div><div class="num" id="mRecall"></div></div>
+      <div class="metric f1"><div class="lbl">F1</div><div class="num" id="mF1"></div></div>
+    </div>
+
+    <div class="story-line" id="storyLine"></div>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why harmonic mean for F1, not a plain average? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Why can't accuracy alone be trusted?</strong> If only 4 of these 10 emails are truly spam, a classifier that flags NOTHING as spam still gets 60% "accuracy" for free — technically correct most of the time, completely useless at its actual job. Precision and recall specifically separate "how much can I trust a positive flag" from "how much of the real thing did I catch," so a lazy classifier can't hide behind an imbalanced dataset.</p>
+      <p><strong>Why does F1 use the harmonic mean instead of a plain average?</strong> A plain average lets one great number hide one terrible number — precision 1.0 and recall 0.1 would average to a deceptively decent-looking 0.55. The harmonic mean <code>2·P·R/(P+R)</code> is pulled down hard by whichever of the two is smaller, so a classifier can't get a good F1 score by being excellent at one and neglecting the other entirely.</p>
+      <p><strong>Is there a single "correct" threshold?</strong> No — it depends entirely on which mistake costs more in your actual situation. A spam filter that occasionally lets one spam email through (low threshold, lower precision) is usually more tolerable than one that buries real emails in a spam folder (high threshold, lower recall). Fraud detection, medical screening, and content moderation each answer this tradeoff differently, on purpose.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const emails = [
+  {id:1, truth:1, p:0.92},
+  {id:2, truth:1, p:0.81},
+  {id:3, truth:1, p:0.55},
+  {id:4, truth:0, p:0.62},
+  {id:5, truth:0, p:0.45},
+  {id:6, truth:0, p:0.30},
+  {id:7, truth:0, p:0.18},
+  {id:8, truth:0, p:0.10},
+  {id:9, truth:0, p:0.05},
+  {id:10, truth:1, p:0.35}
+];
+
+const row = document.getElementById('emailRow');
+emails.forEach(e => {
+  const div = document.createElement('div');
+  div.id = 'email_' + e.id;
+  div.innerHTML = `<div class="p">${e.p.toFixed(2)}</div><div class="lab">email ${e.id}</div><div class="tag" id="tag_${e.id}"></div>`;
+  row.appendChild(div);
+});
+
+function update(threshold){
+  document.getElementById('thresholdVal').textContent = threshold.toFixed(2);
+  let tp=0,fp=0,tn=0,fn=0;
+  emails.forEach(e => {
+    const pred = e.p >= threshold ? 1 : 0;
+    const el = document.getElementById('email_' + e.id);
+    el.className = (e.truth === 1 ? 'email truth-spam ' : 'email truth-ham ') + (pred === 1 ? 'pred-spam' : 'pred-ham');
+    let tag = '';
+    if(pred===1 && e.truth===1){ tp++; tag='TP'; }
+    else if(pred===1 && e.truth===0){ fp++; tag='FP'; }
+    else if(pred===0 && e.truth===0){ tn++; tag='TN'; }
+    else { fn++; tag='FN'; }
+    document.getElementById('tag_' + e.id).textContent = tag;
+  });
+
+  document.getElementById('cellTP').textContent = tp;
+  document.getElementById('cellFP').textContent = fp;
+  document.getElementById('cellFN').textContent = fn;
+  document.getElementById('cellTN').textContent = tn;
+
+  const precision = (tp+fp)===0 ? 1 : tp/(tp+fp);
+  const recall = (tp+fn)===0 ? 1 : tp/(tp+fn);
+  const f1 = (precision+recall)===0 ? 0 : 2*precision*recall/(precision+recall);
+
+  document.getElementById('mPrecision').textContent = precision.toFixed(2);
+  document.getElementById('mRecall').textContent = recall.toFixed(2);
+  document.getElementById('mF1').textContent = f1.toFixed(2);
+
+  let story = '';
+  if(threshold >= 0.8){
+    story = `Very cautious: only flags emails it's extremely sure about. Precision is high (few false alarms), but recall suffers — ${fn} real spam email(s) slipped through untouched.`;
+  } else if(threshold <= 0.25){
+    story = `Very trigger-happy: catches almost every real spam email (recall ${recall.toFixed(2)}), at the cost of ${fp} innocent email(s) wrongly flagged.`;
+  } else {
+    story = `A middle-ground threshold — trading a bit of each mistake for a more balanced outcome (F1 = ${f1.toFixed(2)}).`;
+  }
+  document.getElementById('storyLine').textContent = story;
+}
+
+const slider = document.getElementById('thresholdSlider');
+slider.addEventListener('input', () => update(parseFloat(slider.value)));
+update(parseFloat(slider.value));
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why harmonic mean for F1, not a plain average? ' + (open?'▴':'▾');
+});
+</script>
+</body>
+</html>

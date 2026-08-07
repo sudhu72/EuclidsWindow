@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Second Language — Math Notation, Interactively</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95; --bad:#B03A3A;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:660px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+
+  /* ---- Quantifier ---- */
+  .modebar{ display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .bars{ display:flex; align-items:flex-end; gap:14px; height:220px; margin:20px 0 8px; padding:0 6px; }
+  .barcol{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; cursor:pointer; }
+  .bar{ width:100%; max-width:52px; border-radius:8px 8px 4px 4px; background:var(--c0); transition:background .2s, transform .15s; position:relative; }
+  .barcol:hover .bar{ transform:scaleY(1.03); }
+  .bar.witness{ background:var(--c1); }
+  .bar.tested{ background:var(--accent); }
+  .bar.fail{ background:var(--bad); }
+  .barlabel{ font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-soft); margin-top:6px; }
+  .quantresult{ font-family:"IBM Plex Mono", monospace; font-size:14px; background:var(--accent-soft); border-radius:10px; padding:14px; margin-top:10px; min-height:24px; }
+
+  /* ---- Flashcards ---- */
+  .cardgrid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:10px; }
+  .flashcard{
+    border:1px solid var(--line); border-radius:12px; padding:16px 10px; text-align:center;
+    background:#FCFCFB; cursor:pointer; transition:background .15s, transform .1s; min-height:90px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  }
+  .flashcard:hover{ transform:translateY(-2px); }
+  .flashcard.flipped{ background:var(--accent-soft); border-color:var(--accent); }
+  .flashcard .sym{ font-family:"IBM Plex Mono", monospace; font-size:26px; color:var(--accent); }
+  .flashcard .meaning{ font-size:11.5px; color:var(--ink-soft); display:none; }
+  .flashcard.flipped .sym{ display:none; }
+  .flashcard.flipped .meaning{ display:block; }
+  .flashcard .name{ font-size:11px; font-weight:600; }
+
+  /* ---- Proof revealer ---- */
+  .proofline{
+    font-family:"IBM Plex Mono", monospace; font-size:14.5px; padding:10px 14px;
+    border-radius:8px; background:#F5F4F0; margin-bottom:8px; cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .proofline .just{ font-family:"Inter", sans-serif; font-size:12.5px; color:var(--accent); font-weight:600; display:none; }
+  .proofline.revealed .just{ display:inline; }
+  .proofline.revealed{ background:var(--accent-soft); }
+
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to "The Language of Mathematics"</div>
+    <h1>Second Language, Practiced</h1>
+    <p>Quantifier order changes meaning, symbols become vocabulary through repetition, and a proof's justifications stop being invisible the moment you click for them.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="quant">Quantifier Order</button>
+    <button class="tab" data-tab="cards">Symbol Flashcards</button>
+    <button class="tab" data-tab="proof">Proof Justifications</button>
+  </div>
+
+  <!-- ============ QUANTIFIER ORDER ============ -->
+  <div class="panel active" id="panel-quant">
+    <div class="card">
+      <h2>∀∃ vs. ∃∀ — Click a Bar to Test It</h2>
+      <p class="sub">Six people, six heights. Pick a statement, then click a bar to test it as the witness.</p>
+      <div class="modebar">
+        <button class="op active" data-mode="A">∀x ∃y: taller(y,x)</button>
+        <button class="op" data-mode="B">∃y ∀x: taller(y,x)</button>
+      </div>
+      <div class="bars" id="barsContainer"></div>
+      <div class="quantresult" id="quantResult">Click any bar above to test it.</div>
+    </div>
+  </div>
+
+  <!-- ============ FLASHCARDS ============ -->
+  <div class="panel" id="panel-cards">
+    <div class="card">
+      <h2>Symbol Flashcards</h2>
+      <p class="sub">Click a card to reveal its meaning. Click again to flip back.</p>
+      <button class="op" id="btnShuffle" style="margin-bottom:14px;">Shuffle</button>
+      <div class="cardgrid" id="cardGrid"></div>
+    </div>
+  </div>
+
+  <!-- ============ PROOF JUSTIFICATIONS ============ -->
+  <div class="panel" id="panel-proof">
+    <div class="card">
+      <h2>Every Inverse Is Unique — Click Each Line</h2>
+      <p class="sub">Click any line to reveal exactly which axiom licenses that step. This is what an axiomatic proof actually looks like, made visible.</p>
+      <div id="proofLines"></div>
+      <button class="op" id="btnRevealAll" style="margin-top:10px;">Reveal all</button>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Where this connects:</b> the quantifier tab is Part 2.3 of the tutorial made tangible — try switching modes and notice mode B never succeeds, for any bar, because nothing is taller than itself. The proof tab is Part 4's Theorem 2, annotated the way every axiomatic proof should be before you consider it finished.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("panel-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ================= QUANTIFIER ORDER =================
+  const heights = [150,162,158,170,145,180];
+  let mode = "A";
+  const barsEl = document.getElementById("barsContainer");
+
+  function renderBars(){
+    barsEl.innerHTML = "";
+    const maxH = Math.max(...heights);
+    heights.forEach((h,i) => {
+      const col = document.createElement("div");
+      col.className = "barcol";
+      const pct = (h/maxH*100).toFixed(1);
+      col.innerHTML = `<div class="bar" style="height:${pct}%" data-idx="${i}"></div><div class="barlabel">${h}cm</div>`;
+      col.addEventListener("click", () => testBar(i));
+      barsEl.appendChild(col);
+    });
+  }
+
+  function clearHighlights(){
+    document.querySelectorAll(".bar").forEach(b => b.classList.remove("witness","tested","fail"));
+  }
+
+  function testBar(i){
+    clearHighlights();
+    const bars = document.querySelectorAll(".bar");
+    const result = document.getElementById("quantResult");
+    bars[i].classList.add("tested");
+
+    if(mode === "A"){
+      // forall x exists y: test x=i, look for a witness y with height > height[i]
+      let witnessIdx = -1;
+      for(let j=0;j<heights.length;j++){
+        if(j!==i && heights[j] > heights[i]){ witnessIdx = j; break; }
+      }
+      if(witnessIdx >= 0){
+        bars[witnessIdx].classList.add("witness");
+        result.innerHTML = `Testing x = person ${i} (${heights[i]}cm). A witness y exists: person ${witnessIdx} (${heights[witnessIdx]}cm) is taller. <b>∃y holds for this x.</b>`;
+      } else {
+        bars[i].classList.add("fail");
+        result.innerHTML = `Testing x = person ${i} (${heights[i]}cm). No witness exists — this is the tallest person. <b>∃y fails here, so ∀x∃y is FALSE for this whole finite population.</b>`;
+      }
+    } else {
+      // exists y forall x: test y=i, check if height[i] > every height[j] including itself
+      const worksForAll = heights.every((hx) => heights[i] > hx);
+      if(worksForAll){
+        result.innerHTML = `Testing y = person ${i}. Taller than every x, including itself?? <b>Impossible — this never happens.</b>`;
+      } else {
+        bars[i].classList.add("fail");
+        const failIdx = heights.findIndex((hx,j) => heights[i] <= hx);
+        if(failIdx===i){
+          result.innerHTML = `Testing y = person ${i} (${heights[i]}cm) as the universal witness. It must be taller than <i>itself</i> too — impossible by definition. <b>∀x fails, so ∃y∀x is FALSE, always, for this predicate.</b>`;
+        } else {
+          result.innerHTML = `Testing y = person ${i} (${heights[i]}cm) as the universal witness. Fails at x = person ${failIdx} (${heights[failIdx]}cm), who isn't shorter. <b>∀x fails, so ∃y∀x is FALSE for this choice of y.</b>`;
+        }
+      }
+    }
+  }
+
+  document.querySelectorAll("[data-mode]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-mode]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      mode = btn.dataset.mode;
+      clearHighlights();
+      document.getElementById("quantResult").textContent = "Click any bar above to test it.";
+    });
+  });
+  renderBars();
+
+  // ================= FLASHCARDS =================
+  const SYMBOLS = [
+    {sym:"∈", name:"element of", meaning:"x is a member of set A"},
+    {sym:"⊆", name:"subset of", meaning:"every element of A is in B"},
+    {sym:"∪", name:"union", meaning:"everything in either set"},
+    {sym:"∩", name:"intersection", meaning:"everything in both sets"},
+    {sym:"∅", name:"empty set", meaning:"the set with no elements"},
+    {sym:"¬", name:"not", meaning:"flips true to false"},
+    {sym:"∧", name:"and", meaning:"true only if both sides are"},
+    {sym:"∨", name:"or", meaning:"true if at least one side is"},
+    {sym:"→", name:"implies", meaning:"false only if left true, right false"},
+    {sym:"↔", name:"iff", meaning:"both sides always match"},
+    {sym:"∀", name:"for all", meaning:"holds for every object"},
+    {sym:"∃", name:"there exists", meaning:"holds for at least one object"},
+    {sym:"∃!", name:"exists exactly one", meaning:"holds for one, and only one"},
+    {sym:"f⁻¹", name:"f inverse", meaning:"the function that undoes f"},
+    {sym:"∘", name:"composed with", meaning:"do the right function first"},
+    {sym:"Σ", name:"sum of", meaning:"add up a sequence of terms"},
+    {sym:"∏", name:"product of", meaning:"multiply a sequence of terms"},
+    {sym:"∎", name:"end of proof", meaning:"like a period ending a sentence"},
+  ];
+  const cardGrid = document.getElementById("cardGrid");
+  function renderCards(list){
+    cardGrid.innerHTML = "";
+    list.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "flashcard";
+      card.innerHTML = `<div class="sym">${item.sym}</div><div class="meaning">${item.meaning}</div><div class="name">${item.name}</div>`;
+      card.addEventListener("click", () => card.classList.toggle("flipped"));
+      cardGrid.appendChild(card);
+    });
+  }
+  document.getElementById("btnShuffle").addEventListener("click", () => {
+    const shuffled = [...SYMBOLS].sort(() => Math.random()-0.5);
+    renderCards(shuffled);
+  });
+  renderCards(SYMBOLS);
+
+  // ================= PROOF JUSTIFICATIONS =================
+  const PROOF = [
+    {line:"b = b · e", just:"Identity axiom: for any x, x·e = x"},
+    {line:"= b · (a · c)", just:"Substitution: c is an inverse of a, so a·c = e"},
+    {line:"= (b · a) · c", just:"Associativity axiom: regroup the parentheses"},
+    {line:"= e · c", just:"b is an inverse of a, so b·a = e"},
+    {line:"= c", just:"Identity axiom: for any x, e·x = x"},
+  ];
+  const proofEl = document.getElementById("proofLines");
+  function renderProof(){
+    proofEl.innerHTML = "";
+    PROOF.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "proofline";
+      div.innerHTML = `<span>${p.line}</span><span class="just">${p.just}</span>`;
+      div.addEventListener("click", () => div.classList.toggle("revealed"));
+      proofEl.appendChild(div);
+    });
+  }
+  document.getElementById("btnRevealAll").addEventListener("click", () => {
+    document.querySelectorAll(".proofline").forEach(d => d.classList.add("revealed"));
+  });
+  renderProof();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Titanic — survival rate by group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+
+  .toggle-row{display:flex;justify-content:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+  .toggle-row button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:9px 18px;border-radius:6px;cursor:pointer;}
+  .toggle-row button.active{border-color:var(--amber);color:var(--amber);}
+
+  .bar-row{display:flex;justify-content:center;gap:40px;align-items:flex-end;height:220px;min-height:220px;flex-wrap:wrap;}
+  .bar-col{display:flex;flex-direction:column;align-items:center;gap:8px;width:110px;}
+  .bar-track{height:180px;display:flex;align-items:flex-end;}
+  .bar{width:60px;border-radius:6px 6px 0 0;background:var(--amber);transition:height .6s ease;}
+  .bar-value{font-family:'Kalam',cursive;font-size:16px;}
+  .bar-label{font-size:11px;color:var(--chalk-dim);text-align:center;}
+  .bar-n{font-size:10px;color:var(--chalk-dim);}
+
+  .insight-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:16px;min-height:20px;}
+  .insight-line .hi{color:var(--chalk);font-family:'Kalam',cursive;}
+
+  button.faqbtn{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button.faqbtn:hover{border-color:var(--chalk-dim);}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Titanic — survival rate by group</h1>
+  <p class="sub">Toggle the grouping variable and watch which pattern the data actually reveals.</p>
+
+  <div class="panel">
+    <div class="toggle-row">
+      <button id="btnSex" class="active">By sex</button>
+      <button id="btnClass">By class</button>
+      <button id="btnAge">By age group</button>
+    </div>
+
+    <div class="bar-row" id="barRow"></div>
+
+    <div class="insight-line" id="insightLine"></div>
+  </div>
+
+  <div class="panel">
+    <button class="faqbtn" id="btnFaq">Why does this matter for feature engineering? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Every gap you see here is a candidate feature.</strong> A ~52-point gap between sexes, a ~46-point gap between first and third class, and children clearly outperforming adults are exactly the signals a logistic regression or random forest (Part 1 of the tutorial) will end up leaning on most heavily — discovering them here, visually, before training anything, is what makes the model's later feature-importance output feel like confirmation rather than a surprise.</p>
+      <p><strong>This is also why a single overall survival rate would have hidden all three stories.</strong> One combined number (~45% survived overall in this dataset) is the average of several very different sub-stories layered on top of each other — exactly the reasoning the EDA tutorial's Simpson's Paradox section warns never to skip.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Synthetic Titanic-style survival rates, matching the exact numbers verified in the tutorial notebook
+const groups = {
+  sex: {
+    title: 'Survival rate by sex',
+    bars: [
+      {label:'male', value:0.276, n:261},
+      {label:'female', value:0.791, n:139},
+    ],
+    insight: 'Women survived at nearly 3x the rate of men — the single strongest signal in this dataset.'
+  },
+  cls: {
+    title: 'Survival rate by class',
+    bars: [
+      {label:'1st class', value:0.750, n:100},
+      {label:'2nd class', value:0.538, n:78},
+      {label:'3rd class', value:0.293, n:222},
+    ],
+    insight: 'First class survived at more than double the rate of third class — wealth and location on the ship both mattered.'
+  },
+  age: {
+    title: 'Survival rate by age group',
+    bars: [
+      {label:'child (<16)', value:0.638, n:58},
+      {label:'adult (16+)', value:0.424, n:342},
+    ],
+    insight: 'Children survived meaningfully more often than adults — part of the real "women and children first" evacuation pattern.'
+  }
+};
+
+function render(key){
+  const g = groups[key];
+  const row = document.getElementById('barRow');
+  row.innerHTML = '';
+  g.bars.forEach(b => {
+    const col = document.createElement('div'); col.className='bar-col';
+    const track = document.createElement('div'); track.className='bar-track';
+    const bar = document.createElement('div'); bar.className='bar';
+    bar.style.height = Math.max(4, b.value*180) + 'px';
+    track.appendChild(bar);
+    col.appendChild(track);
+    const val = document.createElement('div'); val.className='bar-value'; val.textContent = (b.value*100).toFixed(1)+'%';
+    col.appendChild(val);
+    const lab = document.createElement('div'); lab.className='bar-label'; lab.textContent = b.label;
+    col.appendChild(lab);
+    const n = document.createElement('div'); n.className='bar-n'; n.textContent = 'n='+b.n;
+    col.appendChild(n);
+    row.appendChild(col);
+  });
+  document.getElementById('insightLine').innerHTML = g.insight;
+}
+
+document.getElementById('btnSex').addEventListener('click', () => {
+  document.querySelectorAll('.toggle-row button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btnSex').classList.add('active');
+  render('sex');
+});
+document.getElementById('btnClass').addEventListener('click', () => {
+  document.querySelectorAll('.toggle-row button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btnClass').classList.add('active');
+  render('cls');
+});
+document.getElementById('btnAge').addEventListener('click', () => {
+  document.querySelectorAll('.toggle-row button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btnAge').classList.add('active');
+  render('age');
+});
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why does this matter for feature engineering? ' + (open?'▴':'▾');
+});
+
+render('sex');
+</script>
+</body>
+</html>

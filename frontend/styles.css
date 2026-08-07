@@ -2373,6 +2373,31 @@ body {
 .abh-card-one { font-size: 0.85rem; color: #44403c; }
 .abh-card-pre { font-size: 0.72rem; color: #a8a29e; margin-top: 2px; }
 
+/* ── Cogito Gallery ── */
+.cogito-blurb { color: #57534e; font-size: 0.85rem; margin: 0 0 10px; max-width: 720px; }
+.cogito-card { gap: 6px; }
+.cogito-card-actions { display: flex; gap: 6px; margin-top: 8px; }
+.cogito-card-actions button { font-size: 0.75rem; padding: 4px 10px; }
+.cogito-viewer { margin-top: 8px; }
+.cogito-viewer.hidden { display: none; }
+.cogito-viewer-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.cogito-viewer-title { font-weight: 700; color: #1c1917; flex: 1; }
+.cogito-viewer-bar a.btn-secondary { font-size: 0.78rem; padding: 4px 10px; text-decoration: none; }
+.cogito-frame {
+  width: 100%;
+  height: 78vh;
+  min-height: 520px;
+  border: 1px solid #e7e5e4;
+  border-radius: 12px;
+  background: #fff;
+}
+
 .abh-back {
   background: none;
   border: none;

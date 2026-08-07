@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Attention's matrix math — kernel, scaling, multi-head</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 22px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  .diagram{min-height:380px;}
+  .scene{display:none;} .scene.visible{display:block;}
+
+  /* recipe scene */
+  .recipe-row{display:flex;justify-content:center;gap:18px;margin-bottom:24px;flex-wrap:wrap;}
+  .recipe-box{border:1px solid var(--border);border-radius:8px;padding:14px 18px;min-width:150px;text-align:center;opacity:.4;transition:all .4s ease;}
+  .recipe-box.active{opacity:1;border-color:var(--amber);box-shadow:0 0 14px rgba(255,206,84,.35);}
+  .recipe-box .name{font-family:'Kalam',cursive;font-size:15px;color:var(--chalk);}
+  .recipe-box .formula{font-size:11px;color:var(--coral);margin-top:6px;}
+  .arrow{align-self:center;color:var(--chalk-dim);font-size:18px;}
+
+  table.heat{border-collapse:collapse;margin:0 auto 8px;}
+  table.heat th, table.heat td{border:1px solid var(--border);padding:8px 12px;text-align:center;font-size:12px;min-width:56px;}
+  table.heat th{color:var(--chalk-dim);font-family:'Kalam',cursive;}
+  table.heat td{color:var(--chalk-dim);transition:all .4s ease;}
+  table.heat td.filled{color:var(--chalk);background:rgba(255,206,84,.08);}
+  table.heat td.norm{color:var(--green);background:rgba(143,209,158,.1);}
+  .heat-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-bottom:14px;}
+
+  /* variance scene */
+  .var-chart{display:flex;gap:36px;justify-content:center;align-items:flex-end;height:220px;margin:10px 0 14px;}
+  .var-col{display:flex;flex-direction:column;align-items:center;gap:6px;width:64px;}
+  .var-track{height:190px;display:flex;align-items:flex-end;}
+  .var-bar{width:40px;border-radius:5px 5px 0 0;background:var(--coral);transition:height .6s ease, background .4s ease;}
+  .var-bar.scaled{background:var(--green);}
+  .var-label{font-size:11px;color:var(--chalk-dim);}
+  .var-caption{text-align:center;font-size:13px;color:var(--chalk-dim);margin-bottom:6px;}
+
+  /* multihead scene */
+  .mh-row{display:flex;justify-content:center;align-items:center;gap:6px;margin:20px 0;flex-wrap:wrap;}
+  .mh-strip{width:44px;height:70px;border-radius:5px;opacity:.9;transition:all .6s ease;}
+  .mh-strip.merged{width:200px;}
+  .mh-label{font-size:11px;color:var(--chalk-dim);text-align:center;margin-top:6px;}
+  .mh-arrow{font-size:20px;color:var(--chalk-dim);margin:0 10px;}
+  .mh-box{border:1px solid var(--border);border-radius:6px;padding:10px 16px;font-size:12px;color:var(--chalk);}
+
+  .scene-caption{text-align:center;font-size:13px;color:var(--chalk-dim);margin-bottom:16px;}
+
+  .notebook{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;max-height:260px;overflow-y:auto;}
+  .notebook .entry{padding:8px 0;border-bottom:1px dashed var(--border);opacity:.45;}
+  .notebook .entry.current{opacity:1;color:var(--chalk);}
+  .notebook .step-num{color:var(--chalk-dim);margin-right:8px;}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  button:disabled{opacity:.35;cursor:default;}
+  .step-indicator{color:var(--chalk-dim);font-size:13px;margin-left:auto;}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Attention's matrix math</h1>
+  <p class="sub">The general kernel-then-normalize-then-blend recipe, why softmax is one choice among many, the √d scaling derivation, and multi-head bookkeeping.</p>
+
+  <div class="panel diagram">
+
+    <div class="scene" id="scene-recipe">
+      <div class="scene-caption" id="recipeCaption"></div>
+      <div class="recipe-row">
+        <div class="recipe-box" id="boxKernel"><div class="name">1. Kernel κ</div><div class="formula">A[i,j] = κ(Q[i],K[j])</div></div>
+        <div class="arrow">→</div>
+        <div class="recipe-box" id="boxNorm"><div class="name">2. Normalize</div><div class="formula">Z⁻¹A (rows sum to 1)</div></div>
+        <div class="arrow">→</div>
+        <div class="recipe-box" id="boxBlend"><div class="name">3. Blend</div><div class="formula">Y = Z⁻¹AV</div></div>
+      </div>
+      <div class="heat-caption" id="heatCaption"></div>
+      <table class="heat" id="heatTable"></table>
+    </div>
+
+    <div class="scene" id="scene-variance">
+      <div class="var-caption" id="varCaption"></div>
+      <div class="var-chart" id="varChart"></div>
+    </div>
+
+    <div class="scene" id="scene-multihead">
+      <div class="scene-caption" id="mhCaption"></div>
+      <div class="mh-row" id="mhRow"></div>
+    </div>
+
+  </div>
+
+  <div class="panel"><div class="notebook" id="notebook"></div></div>
+
+  <div class="controls panel">
+    <button id="btnPrev">◂ Prev</button>
+    <button id="btnPlay">▶ Play</button>
+    <button id="btnNext">Next ▸</button>
+    <button id="btnReset">Reset</button>
+    <span class="step-indicator" id="stepIndicator"></span>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why is softmax attention just "one choice"? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>The two-step recipe underneath attention:</strong> (1) score every query against every key with some similarity function κ — a "kernel" — and (2) turn each query's row of scores into a valid probability distribution so a weighted blend of Values makes sense as an average. <code>Y = Z⁻¹AV</code>, where <code>Z</code> is a diagonal matrix holding each row's total score.</p>
+      <p><strong>Softmax attention is the special case</strong> where κ(v,w) = exp(⟨v,w⟩/√d). Plug that specific kernel into the two-step recipe, and "divide each exponentiated score by its row's total" — Z⁻¹A — is exactly the softmax function. Nothing about the recipe *requires* this particular kernel; it's simply the best-understood, most common choice.</p>
+      <p><strong>Why √d specifically?</strong> If a query and key vector's entries are roughly random with mean 0 and variance 1, their dot product sums d independent terms, each with variance 1 — so the dot product's own variance is d. Dividing by √d brings that back down to 1, regardless of how large the embedding dimension gets. Without this, wider models would have systematically larger, less comparable raw scores purely from having more dimensions to add up — nothing to do with tokens actually being more related.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const heatRawByStep = {
+  1: [[2.1,0.3,0.5],[0.4,3.2,1.1],[0.2,1.4,2.8]],
+};
+const heatNormByStep = {
+  2: [[0.724,0.103,0.172],[0.085,0.681,0.234],[0.045,0.318,0.636]]
+};
+const tokens = ["The","cat","sat"];
+
+function renderHeat(mode){
+  const table = document.getElementById('heatTable');
+  table.innerHTML = '';
+  const header = document.createElement('tr');
+  header.appendChild(document.createElement('th'));
+  tokens.forEach(t => { const th = document.createElement('th'); th.textContent = t; header.appendChild(th); });
+  table.appendChild(header);
+  tokens.forEach((rowTok, i) => {
+    const tr = document.createElement('tr');
+    const th = document.createElement('th'); th.textContent = rowTok; tr.appendChild(th);
+    for(let j=0;j<3;j++){
+      const td = document.createElement('td');
+      if(mode === 'raw'){ td.textContent = heatRawByStep[1][i][j].toFixed(1); td.classList.add('filled'); }
+      else if(mode === 'norm'){ td.textContent = heatNormByStep[2][i][j].toFixed(3); td.classList.add('norm'); }
+      else { td.textContent = '?'; }
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  });
+}
+
+function renderVar(scaled){
+  const dims = [4,16,64,256];
+  const chart = document.getElementById('varChart');
+  chart.innerHTML = '';
+  const maxH = 190;
+  dims.forEach(d => {
+    const col = document.createElement('div'); col.className = 'var-col';
+    const track = document.createElement('div'); track.className = 'var-track';
+    const bar = document.createElement('div'); bar.className = 'var-bar' + (scaled ? ' scaled' : '');
+    const value = scaled ? 1 : d;
+    const heightPx = scaled ? 20 : Math.min(maxH, (d/256)*maxH);
+    bar.style.height = heightPx + 'px';
+    track.appendChild(bar);
+    const label = document.createElement('div'); label.className = 'var-label';
+    label.textContent = 'd=' + d + '  Var=' + value;
+    col.appendChild(track); col.appendChild(label);
+    chart.appendChild(col);
+  });
+}
+
+function renderMultihead(stage){
+  const row = document.getElementById('mhRow');
+  row.innerHTML = '';
+  const colors = ['#ffce54','#ff8266','#8fd19e','#7fb3d5'];
+  if(stage === 'separate' || stage === 'merge'){
+    colors.forEach((c,i) => {
+      const wrap = document.createElement('div');
+      const strip = document.createElement('div'); strip.className = 'mh-strip';
+      strip.style.background = c;
+      wrap.appendChild(strip);
+      const label = document.createElement('div'); label.className='mh-label'; label.textContent = 'W^Q_'+(i+1);
+      wrap.appendChild(label);
+      row.appendChild(wrap);
+      if(i<3){ const arrow=document.createElement('div'); arrow.className='mh-arrow'; arrow.textContent = stage==='merge' ? '→' : ''; row.appendChild(arrow); }
+    });
+    if(stage === 'merge'){
+      const arrow2 = document.createElement('div'); arrow2.className='mh-arrow'; arrow2.textContent='⟹'; row.appendChild(arrow2);
+      const wrap = document.createElement('div');
+      const strip = document.createElement('div'); strip.className='mh-strip merged';
+      strip.style.background = 'linear-gradient(90deg,#ffce54,#ff8266,#8fd19e,#7fb3d5)';
+      wrap.appendChild(strip);
+      const label = document.createElement('div'); label.className='mh-label'; label.textContent='W^Q  (one wide matrix)';
+      wrap.appendChild(label);
+      row.appendChild(wrap);
+    }
+  } else if(stage === 'output'){
+    colors.forEach((c,i) => {
+      const wrap = document.createElement('div');
+      const strip = document.createElement('div'); strip.className = 'mh-strip'; strip.style.background = c;
+      wrap.appendChild(strip);
+      const label = document.createElement('div'); label.className='mh-label'; label.textContent='Y_'+(i+1);
+      wrap.appendChild(label);
+      row.appendChild(wrap);
+    });
+    const arrow = document.createElement('div'); arrow.className='mh-arrow'; arrow.textContent='→';
+    row.appendChild(arrow);
+    const box = document.createElement('div'); box.className='mh-box'; box.textContent='W^O (learned mix)';
+    row.appendChild(box);
+    const arrow2 = document.createElement('div'); arrow2.className='mh-arrow'; arrow2.textContent='→';
+    row.appendChild(arrow2);
+    const outWrap = document.createElement('div');
+    const outStrip = document.createElement('div'); outStrip.className='mh-strip'; outStrip.style.background='var(--chalk)';
+    outWrap.appendChild(outStrip);
+    const outLabel = document.createElement('div'); outLabel.className='mh-label'; outLabel.textContent='Y (final)';
+    outWrap.appendChild(outLabel);
+    row.appendChild(outWrap);
+  }
+}
+
+const steps = [
+  { scene:'recipe', box:null, heat:'none',
+    recipeCaption:'Setup — three tokens, self-attention. Watch the general recipe: score, normalize, blend.', heatCaption:'',
+    text:'Setup — self-attention over "The cat sat." Every query compares against every key; the general recipe has three stages.' },
+  { scene:'recipe', box:'boxKernel', heat:'raw',
+    recipeCaption:'Stage 1 — score every query against every key with a kernel κ.', heatCaption:'Raw similarity scores A[i,j] = κ(Q[i],K[j])',
+    text:'Stage 1 — compute a raw similarity score for every query/key pair. Any similarity function κ could go here; this is the generic step.' },
+  { scene:'recipe', box:'boxNorm', heat:'norm',
+    recipeCaption:'Stage 2 — normalize each row so it sums to 1 (divide by Z, the row-sum).', heatCaption:'Normalized weights: each row now sums to 1',
+    text:'Stage 2 — divide each row by its own total (that\'s the diagonal matrix Z). Now every row is a valid probability distribution over the keys.' },
+  { scene:'recipe', box:'boxBlend', heat:'norm',
+    recipeCaption:'Stage 3 — use those probabilities to blend the Value vectors.', heatCaption:'These normalized weights now mix the Value vectors into Y = Z⁻¹AV',
+    text:'Stage 3 — blend. Multiply the normalized weights into V, producing each query\'s output as a weighted average of Value vectors.' },
+  { scene:'recipe', box:'boxKernel', heat:'norm',
+    recipeCaption:'Softmax attention = this exact recipe, with one specific kernel: κ(v,w) = exp(⟨v,w⟩/√d).', heatCaption:'',
+    text:'Reveal — softmax attention isn\'t a separate mechanism. It\'s this exact 3-stage recipe with the kernel fixed to exp(⟨v,w⟩/√d). Z⁻¹A with that kernel IS softmax.' },
+  { scene:'variance', scaled:false,
+    text:'Why √d? If Q and K\'s entries are roughly random (mean 0, variance 1), their dot product sums d independent terms — so its variance grows to d. Wider models get systematically bigger raw scores, purely from dimension, not real relevance.' },
+  { scene:'variance', scaled:true,
+    text:'Divide by √d, and variance drops back to 1 regardless of d. That\'s the entire derivation behind the one line "keeps scores in a sane range" — now it\'s an actual, checkable fact instead of an assertion.' },
+  { scene:'multihead', mh:'separate',
+    text:'Multi-head bookkeeping — each head has its own query weight matrix. Running heads "in parallel" doesn\'t mean a loop on real hardware.' },
+  { scene:'multihead', mh:'merge',
+    text:'Glue every head\'s weight matrix side by side into ONE wide matrix. A single matrix multiply now computes every head\'s queries at once — same total arithmetic, one wide operation instead of several narrow ones.' },
+  { scene:'multihead', mh:'output',
+    text:'On the way out: concatenate every head\'s output side by side, then pass through a LEARNED output projection W^O. Concatenation alone just places outputs next to each other — W^O is what actually blends different heads\' specializations into one coherent representation.' }
+];
+
+let current = 0, playing = false, timer = null;
+
+function render(){
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('visible'));
+  const step = steps[current];
+  document.getElementById('scene-' + step.scene).classList.add('visible');
+
+  if(step.scene === 'recipe'){
+    document.getElementById('recipeCaption').textContent = step.recipeCaption;
+    document.getElementById('heatCaption').textContent = step.heatCaption;
+    ['boxKernel','boxNorm','boxBlend'].forEach(id => document.getElementById(id).classList.toggle('active', id===step.box));
+    renderHeat(step.heat === 'raw' ? 'raw' : (step.heat === 'norm' ? 'norm' : 'none'));
+  }
+  if(step.scene === 'variance'){
+    document.getElementById('varCaption').textContent = step.scaled
+      ? 'AFTER scaling by √d — variance pulled back to 1 for every dimension'
+      : 'BEFORE scaling — dot-product variance grows with embedding dimension d';
+    renderVar(step.scaled);
+  }
+  if(step.scene === 'multihead'){
+    document.getElementById('mhCaption').textContent =
+      step.mh === 'separate' ? 'Each head starts with its own private weight matrix' :
+      step.mh === 'merge' ? 'Glued side by side into one wide matrix multiply' :
+      'Concatenate outputs, then mix through a learned W^O';
+    renderMultihead(step.mh);
+  }
+
+  const nb = document.getElementById('notebook');
+  nb.innerHTML = '';
+  steps.forEach((s,i) => {
+    if(i > current) return;
+    const div = document.createElement('div');
+    div.className = 'entry' + (i===current ? ' current' : '');
+    div.innerHTML = '<span class="step-num">' + (i+1) + '.</span>' + s.text;
+    nb.appendChild(div);
+  });
+  nb.scrollTop = nb.scrollHeight;
+
+  document.getElementById('stepIndicator').textContent = 'Step ' + (current+1) + ' of ' + steps.length;
+  document.getElementById('btnPrev').disabled = current === 0;
+  document.getElementById('btnNext').disabled = current === steps.length - 1;
+}
+
+function next(){ if(current < steps.length-1){ current++; render(); } else stopPlay(); }
+function prev(){ if(current > 0){ current--; render(); } }
+function reset(){ current = 0; stopPlay(); render(); }
+function startPlay(){ playing=true; document.getElementById('btnPlay').textContent='⏸ Pause'; timer=setInterval(next,3200); }
+function stopPlay(){ playing=false; document.getElementById('btnPlay').textContent='▶ Play'; clearInterval(timer); }
+
+document.getElementById('btnNext').addEventListener('click', () => { stopPlay(); next(); });
+document.getElementById('btnPrev').addEventListener('click', () => { stopPlay(); prev(); });
+document.getElementById('btnReset').addEventListener('click', reset);
+document.getElementById('btnPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why is softmax attention just "one choice"? ' + (open?'▴':'▾');
+});
+
+render();
+</script>
+</body>
+</html>

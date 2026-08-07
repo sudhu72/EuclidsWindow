@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Binary Search Visualizer</title>
+<style>
+  :root{
+    --bg:#12141a; --panel:#1a1d26; --line:#2a2e3a;
+    --text:#e9e8f0; --muted:#8b8fa3;
+    --teal:#5eead4; --amber:#f5b942; --violet:#a78bfa; --rose:#f2708a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:ui-monospace,SFMono-Regular,"Cascadia Code","JetBrains Mono",Menlo,monospace;
+    padding:24px 18px 60px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:20px;color:var(--teal);margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .tab{padding:8px 16px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);background:transparent;}
+  .tab.active{border-color:var(--teal);color:var(--teal);background:rgba(94,234,212,0.06);}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;}
+  .row-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+
+  .cells{display:flex; gap:4px; margin:16px 0 30px; flex-wrap:wrap;}
+  .cell{
+    width:44px; height:44px; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--line); border-radius:6px; font-size:13px; position:relative;
+    background:#1e212c;
+  }
+  .cell.in-range{background:rgba(94,234,212,0.06);}
+  .cell.out-range{opacity:.28;}
+  .cell.mid{background:var(--violet); color:#0d0e12; font-weight:bold; border-color:var(--violet);}
+  .cell.found{background:var(--teal); color:#0d0e12; font-weight:bold; border-color:var(--teal);}
+  .cell span.tag{position:absolute; top:-20px; font-size:9px; font-weight:bold; white-space:nowrap;}
+
+  .status{
+    font-size:13px; color:var(--text); background:#1e212c; border:1px solid var(--line);
+    border-radius:8px; padding:12px 16px; margin-top:8px; line-height:1.6; min-height:44px;
+  }
+  .metric{color:var(--amber); font-weight:bold;}
+  .stepnum{color:var(--muted); font-size:11px;}
+  .controls{display:flex; gap:10px; align-items:center; margin-top:20px;}
+  button.ctl{
+    background:transparent; border:1px solid var(--line); color:var(--text);
+    padding:8px 14px; border-radius:8px; cursor:pointer; font-family:inherit; font-size:13px;
+  }
+  button.ctl:hover{border-color:var(--teal);}
+  button.ctl:disabled{opacity:.4; cursor:default;}
+  .rangebar{position:relative; height:10px; background:#1e212c; border-radius:5px; margin:20px 0 4px;}
+  .rangebar .fill{position:absolute; top:0; bottom:0; background:rgba(94,234,212,0.35); border-radius:5px;}
+  .rangebar .mid-mark{position:absolute; top:-4px; width:2px; height:18px; background:var(--violet);}
+  .scale{display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>&gt; binary_search_visualizer</h1>
+  <div class="sub">Classic binary search on a sorted array, and binary search on the answer space (Koko Eating Bananas).</div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-classic" onclick="switchDemo('classic')">Classic: Search in Array</div>
+    <div class="tab" id="tab-answer" onclick="switchDemo('answer')">On the Answer: Koko Eating Bananas</div>
+  </div>
+
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+// ---------- Classic Binary Search ----------
+const arr = [2, 5, 8, 12, 16, 23, 38, 45, 56, 72, 91];
+const target = 23;
+let classicSteps = [];
+(function build(){
+  let left = 0, right = arr.length - 1;
+  classicSteps.push({left, right, mid:null, note:`Search for target ${target} in a sorted array of ${arr.length} elements.`});
+  while(left <= right){
+    const mid = Math.floor((left+right)/2);
+    if(arr[mid] === target){
+      classicSteps.push({left, right, mid, found:true, note:`arr[${mid}] = ${arr[mid]} — found the target!`});
+      break;
+    } else if(arr[mid] < target){
+      classicSteps.push({left, right, mid, note:`arr[${mid}] = ${arr[mid]} < ${target} → search right half.`});
+      left = mid + 1;
+    } else {
+      classicSteps.push({left, right, mid, note:`arr[${mid}] = ${arr[mid]} > ${target} → search left half.`});
+      right = mid - 1;
+    }
+  }
+})();
+let classicIdx = 0;
+
+function renderClassic(){
+  const s = classicSteps[classicIdx];
+  let cells = arr.map((v,i) => {
+    let cls = 'cell';
+    if(i < s.left || i > s.right) cls += ' out-range'; else cls += ' in-range';
+    if(s.found && i === s.mid) cls += ' found';
+    else if(i === s.mid) cls += ' mid';
+    let tag = i === s.mid ? '<span class="tag" style="color:#a78bfa">mid</span>' : '';
+    return `<div class="${cls}">${tag}${v}</div>`;
+  }).join('');
+
+  document.getElementById('panel').innerHTML = `
+    <div class="row-label">sorted array — target = ${target}</div>
+    <div class="cells">${cells}</div>
+    <div class="status">
+      <span class="stepnum">step ${classicIdx+1} / ${classicSteps.length}</span><br/>
+      ${s.note} <span class="metric">range: [${s.left}, ${s.right}]</span>
+    </div>
+    <div class="controls">
+      <button class="ctl" onclick="classicStep(-1)" ${classicIdx===0?'disabled':''}>← prev</button>
+      <button class="ctl" onclick="classicStep(1)" ${classicIdx===classicSteps.length-1?'disabled':''}>next →</button>
+      <button class="ctl" onclick="classicReset()">↺ reset</button>
+    </div>
+  `;
+}
+function classicStep(d){ classicIdx = Math.max(0, Math.min(classicSteps.length-1, classicIdx+d)); renderClassic(); }
+function classicReset(){ classicIdx = 0; renderClassic(); }
+
+// ---------- Binary Search on the Answer: Koko Eating Bananas ----------
+const piles = [30, 11, 23, 4, 20];
+const h = 6;
+function hoursNeeded(speed){
+  return piles.reduce((sum, p) => sum + Math.ceil(p/speed), 0);
+}
+let answerSteps = [];
+(function build(){
+  let left = 1, right = Math.max(...piles);
+  answerSteps.push({left, right, mid:null, note:`Searching eating speeds 1 to ${right}. Must finish within h=${h} hours.`});
+  while(left < right){
+    const mid = Math.floor((left+right)/2);
+    const hours = hoursNeeded(mid);
+    if(hours <= h){
+      answerSteps.push({left, right, mid, hours, works:true, note:`speed ${mid} needs ${hours}h ≤ ${h}h → works! Try smaller speed.`});
+      right = mid;
+    } else {
+      answerSteps.push({left, right, mid, hours, works:false, note:`speed ${mid} needs ${hours}h > ${h}h → too slow. Need bigger speed.`});
+      left = mid + 1;
+    }
+  }
+  answerSteps.push({left, right, mid:left, hours:hoursNeeded(left), done:true, note:`Converged. Minimum working speed = ${left} bananas/hour.`});
+})();
+let answerIdx = 0;
+
+function renderAnswer(){
+  const s = answerSteps[answerIdx];
+  const maxSpeed = Math.max(...piles);
+  const pct = v => ((v-1)/(maxSpeed-1))*100;
+  const fillLeft = pct(s.left);
+  const fillRight = pct(s.right);
+  const midPct = s.mid !== null ? pct(s.mid) : null;
+
+  document.getElementById('panel').innerHTML = `
+    <div class="row-label">piles = [${piles.join(', ')}]  •  h = ${h} hours  •  candidate speed range</div>
+    <div class="rangebar">
+      <div class="fill" style="left:${fillLeft}%; right:${100-fillRight}%;"></div>
+      ${midPct !== null ? `<div class="mid-mark" style="left:${midPct}%;"></div>` : ''}
+    </div>
+    <div class="scale"><span>1</span><span>${maxSpeed}</span></div>
+    <div class="status">
+      <span class="stepnum">step ${answerIdx+1} / ${answerSteps.length}</span><br/>
+      ${s.note}
+      ${s.hours !== undefined ? `<br/><span class="metric">hours needed at this speed: ${s.hours}</span>` : ''}
+    </div>
+    <div class="controls">
+      <button class="ctl" onclick="answerStepFn(-1)" ${answerIdx===0?'disabled':''}>← prev</button>
+      <button class="ctl" onclick="answerStepFn(1)" ${answerIdx===answerSteps.length-1?'disabled':''}>next →</button>
+      <button class="ctl" onclick="answerReset()">↺ reset</button>
+    </div>
+  `;
+}
+function answerStepFn(d){ answerIdx = Math.max(0, Math.min(answerSteps.length-1, answerIdx+d)); renderAnswer(); }
+function answerReset(){ answerIdx = 0; renderAnswer(); }
+
+function switchDemo(which){
+  document.getElementById('tab-classic').classList.toggle('active', which==='classic');
+  document.getElementById('tab-answer').classList.toggle('active', which==='answer');
+  if(which==='classic') renderClassic(); else renderAnswer();
+}
+
+renderClassic();
+</script>
+</body>
+</html>

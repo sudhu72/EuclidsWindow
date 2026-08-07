@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cross-entropy — why -log(p)?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c;
+    --bg-panel:#1b2b23;
+    --chalk:#f4f1e8;
+    --chalk-dim:#7f8f83;
+    --amber:#ffce54;
+    --coral:#ff8266;
+    --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:28px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 24px;}
+  .legend{display:flex;gap:24px;align-items:center;margin-bottom:20px;font-size:12px;color:var(--chalk-dim);flex-wrap:wrap;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  .dot.amber{background:var(--amber);} .dot.coral{background:var(--coral);} .dot.chalk{background:var(--chalk);}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  .diagram{position:relative;min-height:420px;}
+  svg{width:100%;height:auto;display:block;}
+  .scene{display:none;}
+  .scene.visible{display:block;}
+
+  /* curve scene */
+  .axis{stroke:var(--chalk-dim);stroke-width:1px;}
+  .curve-path{stroke:var(--chalk);stroke-width:2.5px;fill:none;opacity:.7;}
+  .axis-label{font-size:12px;fill:var(--chalk-dim);}
+  .marker{opacity:0;transition:opacity .5s ease;}
+  .marker.shown{opacity:1;}
+  .marker circle{stroke-width:2px;}
+  .marker.p51 circle{fill:var(--amber);stroke:var(--amber);}
+  .marker.p99 circle{fill:#8fd19e;stroke:#8fd19e;}
+  .marker.p02 circle{fill:var(--coral);stroke:var(--coral);}
+  .marker text{font-size:12px;stroke:var(--bg);stroke-width:3px;paint-order:stroke fill;fill:var(--chalk);}
+  .marker.p51 text{fill:var(--amber);}
+  .marker.p99 text{fill:#8fd19e;}
+  .marker.p02 text{fill:var(--coral);}
+
+  /* boxes scene */
+  .boxgrid{display:grid;gap:6px;justify-content:center;margin:10px auto 18px;max-width:520px;}
+  .box{aspect-ratio:1;border-radius:4px;background:rgba(244,241,232,.08);border:1px solid var(--border);}
+  .box.true-box{background:var(--amber);border-color:var(--amber);box-shadow:0 0 10px rgba(255,206,84,.6);}
+  .box-caption{text-align:center;font-size:13px;color:var(--chalk-dim);margin-bottom:14px;}
+  .tally-row{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;min-height:36px;}
+  .tally-mark{width:4px;height:26px;background:var(--coral);border-radius:2px;opacity:0;transform:translateY(6px);animation:tallyIn .35s ease forwards;}
+  @keyframes tallyIn{to{opacity:1;transform:translateY(0);}}
+  .tally-total{font-family:'Kalam',cursive;font-size:18px;color:var(--chalk);margin-left:12px;opacity:0;animation:tallyIn .4s ease forwards;}
+
+  /* morse scene */
+  .morse-row{display:flex;align-items:center;gap:20px;margin:18px 0;padding:14px 18px;border:1px dashed var(--border);border-radius:8px;}
+  .morse-letter{font-family:'Kalam',cursive;font-size:32px;width:50px;text-align:center;}
+  .morse-code{display:flex;gap:8px;align-items:center;}
+  .morse-dot{width:10px;height:10px;border-radius:50%;background:var(--chalk);}
+  .morse-dash{width:34px;height:10px;border-radius:5px;background:var(--coral);}
+  .morse-desc{color:var(--chalk-dim);font-size:13px;}
+
+  .notebook{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;max-height:260px;overflow-y:auto;}
+  .notebook .entry{padding:8px 0;border-bottom:1px dashed var(--border);opacity:.45;}
+  .notebook .entry.current{opacity:1;color:var(--chalk);}
+  .notebook .step-num{color:var(--chalk-dim);margin-right:8px;}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  button:disabled{opacity:.35;cursor:default;}
+  .step-indicator{color:var(--chalk-dim);font-size:13px;margin-left:auto;}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cross-entropy — why -log(p)?</h1>
+  <p class="sub">Three scenarios of "how surprised should you be," then the Twenty Questions game that reveals why log specifically.</p>
+
+  <div class="legend">
+    <span><i class="dot amber"></i>barely confident (51%)</span>
+    <span><i class="dot chalk" style="background:#8fd19e"></i>confident &amp; right (99%)</span>
+    <span><i class="dot coral"></i>confident &amp; wrong (2%)</span>
+  </div>
+
+  <div class="panel diagram">
+    <div class="scene" id="scene-curve">
+      <svg viewBox="0 0 920 440">
+        <line class="axis" x1="80" y1="400" x2="880" y2="400"/>
+        <line class="axis" x1="80" y1="400" x2="80" y2="40"/>
+        <text class="axis-label" x="860" y="420" text-anchor="end">p (probability given to the truth) →</text>
+        <text class="axis-label" x="40" y="50" transform="rotate(-90 40 50)" text-anchor="end">loss = -ln(p) →</text>
+        <path class="curve-path" id="curvePath" d=""/>
+        <g class="marker p51" id="marker51"><circle r="7"/><text dy="-14" text-anchor="middle">p=0.51 → loss 0.673</text></g>
+        <g class="marker p99" id="marker99"><circle r="7"/><text dy="-14" text-anchor="middle">p=0.99 → loss 0.010</text></g>
+        <g class="marker p02" id="marker02"><circle r="7"/><text dy="-14" text-anchor="middle">p=0.02 → loss 3.912</text></g>
+      </svg>
+    </div>
+
+    <div class="scene" id="scene-boxes">
+      <div class="box-caption" id="boxCaption"></div>
+      <div class="boxgrid" id="boxGrid"></div>
+      <div class="tally-row" id="tallyRow"></div>
+    </div>
+
+    <div class="scene" id="scene-morse">
+      <div class="morse-row">
+        <div class="morse-letter">E</div>
+        <div class="morse-code"><div class="morse-dot"></div></div>
+        <div class="morse-desc">the most common letter in English — the cheapest possible code, one dot</div>
+      </div>
+      <div class="morse-row">
+        <div class="morse-letter">Q</div>
+        <div class="morse-code">
+          <div class="morse-dash"></div><div class="morse-dash"></div><div class="morse-dot"></div><div class="morse-dash"></div>
+        </div>
+        <div class="morse-desc">a rare letter — an expensive, four-symbol code</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel"><div class="notebook" id="notebook"></div></div>
+
+  <div class="controls panel">
+    <button id="btnPrev">◂ Prev</button>
+    <button id="btnPlay">▶ Play</button>
+    <button id="btnNext">Next ▸</button>
+    <button id="btnReset">Reset</button>
+    <span class="step-indicator" id="stepIndicator"></span>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why log specifically — and who figured this out? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Why -log(p) and not some other harsh-punishing curve?</strong> Play Twenty Questions: narrowing down a hidden object with yes/no questions, always splitting what's left roughly in half. Finding 1 of 8 equally likely objects takes <code>log₂(8) = 3</code> questions; 1 of 1000 takes about <code>log₂(1000) ≈ 10</code>. The number of yes/no questions needed to pin something down is exactly <code>-log₂(its probability)</code> — rare things take more questions, common things take fewer.</p>
+      <p>Cross-entropy is scoring exactly that: if the model gave the true outcome probability <code>p</code>, then <code>-log(p)</code> is "how many questions it would have taken to arrive at that outcome, given how the model was betting." Confidently right needs almost no questions — tiny penalty. Confidently wrong means the truth was buried among many unlikely alternatives — a huge number of questions, a huge penalty.</p>
+      <p><strong>This already existed in the real world, in Morse code.</strong> Samuel Morse gave the shortest code — one dot — to "E," the most common letter, and long codes to rare letters like "Q." Cheap codes for likely things, expensive codes for unlikely things, to keep the average message short. Claude Shannon formalized this in 1948, proving <code>-log(p)</code> is the mathematically optimal code length for something with probability <code>p</code> — cross-entropy loss borrows that exact insight to score a model's predictions.</p>
+      <p><em>Note on units:</em> the curve above uses natural log (matching the loss formula machine learning frameworks actually compute), while the box-counting uses log base 2 (matching "number of yes/no questions," a whole number of bits). Same story, different-sized rulers — like measuring one distance in miles versus kilometers.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- build the -ln(p) curve path ----
+const plotX0=80, plotX1=880, plotY0=400, plotY1=40;
+const pMin=0.02, pMax=1.0, lossMax=4.2;
+function toScreen(p, loss){
+  const x = plotX0 + (p-pMin)/(pMax-pMin) * (plotX1-plotX0);
+  const y = plotY0 - (Math.min(loss,lossMax)/lossMax) * (plotY0-plotY1);
+  return [x,y];
+}
+let d = '';
+for(let i=0;i<=200;i++){
+  const p = pMin + (pMax-pMin)*i/200;
+  const loss = -Math.log(p);
+  const [x,y] = toScreen(p, loss);
+  d += (i===0? 'M':'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+}
+document.getElementById('curvePath').setAttribute('d', d);
+
+function placeMarker(id, p, loss){
+  const [x,y] = toScreen(p, loss);
+  const el = document.getElementById(id);
+  el.setAttribute('transform', `translate(${x},${y})`);
+}
+placeMarker('marker51', 0.51, -Math.log(0.51));
+placeMarker('marker99', 0.99, -Math.log(0.99));
+placeMarker('marker02', 0.02, -Math.log(0.02));
+
+// ---- boxes renderer ----
+function renderBoxes(n, trueIndex){
+  const grid = document.getElementById('boxGrid');
+  grid.innerHTML = '';
+  const cols = Math.ceil(Math.sqrt(n));
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  for(let i=0;i<n;i++){
+    const b = document.createElement('div');
+    b.className = 'box' + (i===trueIndex ? ' true-box' : '');
+    grid.appendChild(b);
+  }
+  document.getElementById('boxCaption').textContent =
+    `1 of ${n} equally likely outcomes (the gold box is the truth) — probability = 1/${n}`;
+  const tally = document.getElementById('tallyRow');
+  tally.innerHTML = '';
+  const count = Math.round(Math.log2(n));
+  for(let i=0;i<count;i++){
+    const t = document.createElement('div');
+    t.className = 'tally-mark';
+    t.style.animationDelay = (i*0.15) + 's';
+    tally.appendChild(t);
+  }
+  const total = document.createElement('div');
+  total.className = 'tally-total';
+  total.style.animationDelay = (count*0.15+0.1) + 's';
+  total.textContent = `= ${count} yes/no questions = -log₂(1/${n})`;
+  tally.appendChild(total);
+}
+
+// ---- steps ----
+const steps = [
+  { scene:'curve', markers:[],
+    text:'Setup — a spam classifier outputs a probability p that an email is spam. The true label here is "spam" (y=1). Cross-entropy loss for this case collapses to -log(p). Let\'s see three scenarios.' },
+  { scene:'curve', markers:['marker51'],
+    text:'Scenario A — barely confident: p=0.51. loss = -ln(0.51) ≈ 0.673. A middling penalty for a middling guess.' },
+  { scene:'curve', markers:['marker51','marker99'],
+    text:'Scenario B — confident and right: p=0.99. loss = -ln(0.99) ≈ 0.010. Almost no penalty at all.' },
+  { scene:'curve', markers:['marker51','marker99','marker02'],
+    text:'Scenario C — confident and WRONG: p=0.02 (the model was 98% sure this was NOT spam, but it was). loss = -ln(0.02) ≈ 3.912. Roughly 400× the penalty of scenario B, for being confidently wrong instead of confidently right.' },
+  { scene:'boxes', boxes:{n:8, trueIndex:3},
+    text:'Twenty Questions, round 1 — 8 equally likely outcomes, each with probability 1/8. Splitting the remaining possibilities in half each time, it takes log₂(8) = 3 yes/no questions to land on the true one.' },
+  { scene:'boxes', boxes:{n:64, trueIndex:19},
+    text:'Twenty Questions, round 2 — 64 equally likely outcomes, each with probability 1/64. Now it takes log₂(64) = 6 questions. Twice as many outcomes to search through more than doubles the questions needed — rarer truths cost more to pin down, exactly like scenario C above.' },
+  { scene:'morse', morse:true,
+    text:'This principle already existed in Morse code, decades before information theory had a name. "E" (common) gets the cheapest code — one dot. "Q" (rare) gets an expensive four-symbol code. Cheap codes for likely things, expensive codes for unlikely things.' },
+  { scene:'curve', markers:['marker51','marker99','marker02'],
+    text:'Put together: cross-entropy loss is exactly "how many yes/no questions (or Morse-code symbols) it cost to arrive at the truth, given what the model believed." Confident and right is cheap. Confident and wrong is ruinously expensive. That is the entire reason the formula uses -log(p).' }
+];
+
+let current = 0;
+let playing = false;
+let timer = null;
+
+function render(){
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('visible'));
+  const step = steps[current];
+  document.getElementById('scene-' + step.scene).classList.add('visible');
+
+  if(step.scene === 'curve'){
+    ['marker51','marker99','marker02'].forEach(id => {
+      document.getElementById(id).classList.toggle('shown', (step.markers||[]).includes(id));
+    });
+  }
+  if(step.scene === 'boxes' && step.boxes){
+    renderBoxes(step.boxes.n, step.boxes.trueIndex);
+  }
+
+  const nb = document.getElementById('notebook');
+  nb.innerHTML = '';
+  steps.forEach((s,i) => {
+    if(i > current) return;
+    const div = document.createElement('div');
+    div.className = 'entry' + (i===current ? ' current' : '');
+    div.innerHTML = '<span class="step-num">' + (i+1) + '.</span>' + s.text;
+    nb.appendChild(div);
+  });
+  nb.scrollTop = nb.scrollHeight;
+
+  document.getElementById('stepIndicator').textContent = 'Step ' + (current+1) + ' of ' + steps.length;
+  document.getElementById('btnPrev').disabled = current === 0;
+  document.getElementById('btnNext').disabled = current === steps.length - 1;
+}
+
+function next(){ if(current < steps.length-1){ current++; render(); } else stopPlay(); }
+function prev(){ if(current > 0){ current--; render(); } }
+function reset(){ current = 0; stopPlay(); render(); }
+function startPlay(){ playing=true; document.getElementById('btnPlay').textContent='⏸ Pause'; timer=setInterval(next,3000); }
+function stopPlay(){ playing=false; document.getElementById('btnPlay').textContent='▶ Play'; clearInterval(timer); }
+
+document.getElementById('btnNext').addEventListener('click', () => { stopPlay(); next(); });
+document.getElementById('btnPrev').addEventListener('click', () => { stopPlay(); prev(); });
+document.getElementById('btnReset').addEventListener('click', reset);
+document.getElementById('btnPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why log specifically — and who figured this out? ' + (open?'▴':'▾');
+});
+
+render();
+</script>
+</body>
+</html>

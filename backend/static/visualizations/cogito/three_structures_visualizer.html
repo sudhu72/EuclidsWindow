@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Three Structures — Counting, Symmetry, Shape</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0;
+    --card:#FFFFFF;
+    --ink:#1B2430;
+    --ink-soft:#5B6572;
+    --line:#D9E0DE;
+    --accent:#463A73;
+    --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink);
+    font-family:"Inter", system-ui, sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{
+    font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600;
+  }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:660px; font-size:15.5px; margin:0; }
+
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{
+    font-family:"Inter", sans-serif; font-size:14px; font-weight:600;
+    border:1px solid var(--line); background:#fff; color:var(--ink-soft);
+    border-radius:20px; padding:9px 18px; cursor:pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03);
+  }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+
+  /* ---- Pascal ---- */
+  #pascalTriangle{ display:flex; flex-direction:column; align-items:center; gap:6px; margin:20px 0; }
+  .prow{ display:flex; gap:6px; }
+  .pcell{
+    width:42px; height:42px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-family:"IBM Plex Mono", monospace; font-size:13px; background:#F5F4F0; border:1px solid var(--line);
+    cursor:pointer; transition:background .15s, transform .1s;
+  }
+  .pcell:hover{ transform:scale(1.08); }
+  .pcell.selected{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .pcell.parent{ background:var(--accent-soft); border-color:var(--accent); }
+  .pascal-readout{
+    font-family:"IBM Plex Mono", monospace; font-size:14px; text-align:center;
+    background:var(--accent-soft); border-radius:10px; padding:14px; margin-top:12px;
+  }
+  .nrcalc{ display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin:18px 0; }
+  .nrcalc label{ font-size:13px; color:var(--ink-soft); margin-right:6px; }
+  .nrcalc input{ width:60px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; font-family:"IBM Plex Mono",monospace; }
+  .nrresult{ font-family:"IBM Plex Mono", monospace; font-size:14px; background:#F5F4F0; border-radius:8px; padding:10px 14px; }
+
+  /* ---- Group ---- */
+  .groupwrap{ display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+  .squarebox{ width:220px; height:220px; position:relative; flex-shrink:0; }
+  .squarebox svg{ width:100%; height:100%; }
+  .vlabel{ font-family:"IBM Plex Mono", monospace; font-size:15px; font-weight:600; }
+  .controls{ display:flex; gap:10px; margin:16px 0; flex-wrap:wrap; }
+  button.op{
+    font-family:"Inter", sans-serif; font-size:13.5px; font-weight:600;
+    border:1px solid var(--line); background:#fff; color:var(--ink);
+    border-radius:10px; padding:9px 16px; cursor:pointer; transition:background .15s;
+  }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.reset{ color:#B03A3A; }
+  .history{
+    font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft);
+    min-height:20px; margin-top:8px;
+  }
+  .compare{
+    margin-top:18px; padding:14px; border-radius:10px; background:var(--accent-soft); font-size:13.5px;
+  }
+  .clockbox{ flex:1; min-width:220px; }
+  .clock{ width:180px; height:180px; margin:0 auto 10px; }
+
+  /* ---- Topology ---- */
+  .shapebtns{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .eulerstats{ display:flex; gap:14px; flex-wrap:wrap; margin:14px 0; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 16px; text-align:center; min-width:80px; }
+  .stat .n{ font-family:"IBM Plex Mono", monospace; font-size:22px; font-weight:600; }
+  .stat .l{ font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; }
+  .blobwrap{ margin-top:24px; }
+  #blobSvg{ width:100%; max-width:420px; height:260px; touch-action:none; }
+  .blobpoint{ cursor:grab; }
+  .holebtn{ margin-top:10px; }
+
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer b{ color:var(--ink); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Parts 11–13</div>
+    <h1>Three Structures</h1>
+    <p>Counting without listing, symmetry's internal rulebook, and shape without measurement — three ideas that feel abstract until you can actually poke at them. Click, drag, and compose below.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="combinatorics">Combinatorics</button>
+    <button class="tab" data-tab="group">Group Theory</button>
+    <button class="tab" data-tab="topology">Topology</button>
+  </div>
+
+  <!-- ============ COMBINATORICS ============ -->
+  <div class="panel active" id="panel-combinatorics">
+    <div class="card">
+      <h2>Pascal's Triangle</h2>
+      <p class="sub">Every cell is <span class="formula">C(n, r)</span> — click one to see it built from the two cells above it.</p>
+      <div id="pascalTriangle"></div>
+      <div class="pascal-readout" id="pascalReadout">Click any cell above.</div>
+
+      <h2 style="margin-top:32px;">Permutations vs. Combinations</h2>
+      <p class="sub">Same n and r, two different questions: does order matter?</p>
+      <div class="nrcalc">
+        <span><label>n</label><input type="number" id="nInput" value="5" min="1" max="12"></span>
+        <span><label>r</label><input type="number" id="rInput" value="3" min="0" max="12"></span>
+      </div>
+      <div class="nrresult" id="nrResult"></div>
+      <p class="caption">Combinations = Permutations ÷ r! — dividing out exactly how many times each unordered group got counted.</p>
+    </div>
+  </div>
+
+  <!-- ============ GROUP THEORY ============ -->
+  <div class="panel" id="panel-group">
+    <div class="card">
+      <h2>Symmetries of a Square</h2>
+      <p class="sub">Apply rotations and reflections. Watch the vertex labels move — and try the same two moves in reverse order.</p>
+      <div class="groupwrap">
+        <div class="squarebox">
+          <svg viewBox="0 0 220 220">
+            <rect id="squareRect" x="40" y="40" width="140" height="140" fill="none" stroke="var(--accent)" stroke-width="3" />
+            <g id="labelGroup"></g>
+          </svg>
+        </div>
+        <div style="flex:1; min-width:220px;">
+          <div class="controls">
+            <button class="op" id="btnRotate">↻ Rotate 90°</button>
+            <button class="op" id="btnReflect">⇋ Reflect (horizontal)</button>
+            <button class="op reset" id="btnReset">Reset</button>
+          </div>
+          <div class="history" id="history">Sequence: (none yet)</div>
+          <div class="compare" id="compareBox">
+            Try: Rotate → Reflect, note the result, Reset, then Reflect → Rotate. Compare.
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:32px;">The Clock, Compared</h2>
+      <p class="sub">4-hour clock arithmetic is isomorphic to the four rotations above — same structure, different costume.</p>
+      <div class="groupwrap">
+        <div class="clockbox">
+          <svg class="clock" viewBox="0 0 180 180">
+            <circle cx="90" cy="90" r="80" fill="none" stroke="var(--line)" stroke-width="2"/>
+            <g id="clockLabels"></g>
+            <line id="clockHand" x1="90" y1="90" x2="90" y2="20" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="90" cy="90" r="5" fill="var(--accent)"/>
+          </svg>
+          <div class="controls" style="justify-content:center;">
+            <button class="op" id="btnClockAdd">+1 hour</button>
+            <button class="op reset" id="btnClockReset">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TOPOLOGY ============ -->
+  <div class="panel" id="panel-topology">
+    <div class="card">
+      <h2>Euler Characteristic Explorer</h2>
+      <p class="sub"><span class="formula">χ = V − E + F</span> — count vertices, edges, faces. Every sphere-like shape gives the same number.</p>
+      <div class="shapebtns">
+        <button class="op" data-shape="cube">Cube</button>
+        <button class="op" data-shape="tetrahedron">Tetrahedron</button>
+        <button class="op" data-shape="octahedron">Octahedron</button>
+        <button class="op" data-shape="torus">Torus (4×4 grid)</button>
+      </div>
+      <div class="eulerstats">
+        <div class="stat"><div class="n" id="statV">-</div><div class="l">Vertices</div></div>
+        <div class="stat"><div class="n" id="statE">-</div><div class="l">Edges</div></div>
+        <div class="stat"><div class="n" id="statF">-</div><div class="l">Faces</div></div>
+        <div class="stat"><div class="n" id="statChi">-</div><div class="l">χ = V−E+F</div></div>
+      </div>
+      <p class="caption" id="eulerCaption">Pick a shape above.</p>
+
+      <h2 style="margin-top:32px;">Stretch It, Don't Tear It</h2>
+      <p class="sub">Drag any point on the blob. It can twist into all sorts of geometric shapes — genus never changes, because dragging never tears or glues. Poke a hole to see genus actually change.</p>
+      <div class="blobwrap">
+        <svg id="blobSvg" viewBox="0 0 400 260"></svg>
+        <button class="op holebtn" id="btnPoke">Poke a hole (tear the surface)</button>
+        <button class="op holebtn" id="btnPatch" style="display:none;">Patch it (glue the surface)</button>
+        <p class="caption" id="genusCaption">Genus: 0 — a simple blob, no holes.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Where this connects:</b> combinations correct for overcounting the same way Jaccard similarity's union does (0.3). The non-abelian square example above is literally the Rubik's Cube's structure, miniaturized. Euler characteristic is a combinatorial count (Part 11) that happens to detect genuine topological information — dragging the blob changes its geometry constantly but never its genus, exactly as stretching a coffee mug into a donut shape never changes its one hole.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  // ================= TABS =================
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("panel-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ================= COMBINATORICS =================
+  function factorial(n){ let r=1; for(let i=2;i<=n;i++) r*=i; return r; }
+  function nCr(n,r){ if(r<0||r>n) return 0; return Math.round(factorial(n)/(factorial(r)*factorial(n-r))); }
+  function pascalRow(n){ const row=[]; for(let r=0;r<=n;r++) row.push(nCr(n,r)); return row; }
+
+  const ROWS = 7;
+  const triEl = document.getElementById("pascalTriangle");
+  for(let n=0;n<ROWS;n++){
+    const rowDiv = document.createElement("div");
+    rowDiv.className = "prow";
+    pascalRow(n).forEach((val,r) => {
+      const cell = document.createElement("div");
+      cell.className = "pcell";
+      cell.textContent = val;
+      cell.dataset.n = n; cell.dataset.r = r;
+      cell.addEventListener("click", () => selectCell(n,r));
+      rowDiv.appendChild(cell);
+    });
+    triEl.appendChild(rowDiv);
+  }
+  function selectCell(n,r){
+    document.querySelectorAll(".pcell").forEach(c => c.classList.remove("selected","parent"));
+    const cell = document.querySelector(`.pcell[data-n="${n}"][data-r="${r}"]`);
+    cell.classList.add("selected");
+    const readout = document.getElementById("pascalReadout");
+    if(n===0){ readout.textContent = `C(0,0) = 1 — the top of the triangle, choosing nothing from nothing.`; return; }
+    const p1 = document.querySelector(`.pcell[data-n="${n-1}"][data-r="${r-1}"]`);
+    const p2 = document.querySelector(`.pcell[data-n="${n-1}"][data-r="${r}"]`);
+    if(p1) p1.classList.add("parent");
+    if(p2) p2.classList.add("parent");
+    const v1 = p1 ? nCr(n-1,r-1) : 0, v2 = p2 ? nCr(n-1,r) : 0;
+    readout.innerHTML = `C(${n},${r}) = ${nCr(n,r)} &nbsp;=&nbsp; C(${n-1},${r-1}) + C(${n-1},${r}) &nbsp;=&nbsp; ${v1} + ${v2}<br><span style="color:var(--ink-soft); font-size:12.5px;">Either you include this item (left parent) or you exclude it (right parent) — mutually exclusive, so add.</span>`;
+  }
+
+  const nInput = document.getElementById("nInput"), rInput = document.getElementById("rInput");
+  function renderNR(){
+    const n = Math.max(0, parseInt(nInput.value)||0), r = Math.max(0, parseInt(rInput.value)||0);
+    const result = document.getElementById("nrResult");
+    if(r>n){ result.textContent = "r cannot exceed n."; return; }
+    const perm = Math.round(factorial(n)/factorial(n-r));
+    const comb = nCr(n,r);
+    result.innerHTML = `P(${n},${r}) = ${n}!/(${n}-${r})! = <b>${perm}</b> ordered arrangements &nbsp;·&nbsp; C(${n},${r}) = P(${n},${r})/${r}! = <b>${comb}</b> unordered groups`;
+  }
+  nInput.addEventListener("input", renderNR);
+  rInput.addEventListener("input", renderNR);
+  renderNR();
+
+  // ================= GROUP THEORY =================
+  let state = [0,1,2,3]; // labels at corners: top-left, top-right, bottom-right, bottom-left
+  let seq = [];
+  const positions = [[40,40],[180,40],[180,180],[40,180]];
+
+  function rotateState(s){ return [s[3],s[0],s[1],s[2]]; }
+  function reflectState(s){ return [s[3],s[2],s[1],s[0]]; }
+
+  function renderSquare(){
+    const g = document.getElementById("labelGroup");
+    g.innerHTML = "";
+    state.forEach((label,posIdx) => {
+      const [x,y] = positions[posIdx];
+      const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+      txt.setAttribute("x", x); txt.setAttribute("y", y+5);
+      txt.setAttribute("text-anchor","middle");
+      txt.setAttribute("class","vlabel");
+      txt.setAttribute("fill", ["var(--c0)","var(--c1)","var(--c2)","var(--c3)"][label]);
+      txt.textContent = label;
+      g.appendChild(txt);
+    });
+    document.getElementById("history").textContent = "Sequence: " + (seq.length ? seq.join(" → ") : "(none yet)");
+  }
+  document.getElementById("btnRotate").addEventListener("click", () => { state = rotateState(state); seq.push("Rotate"); renderSquare(); });
+  document.getElementById("btnReflect").addEventListener("click", () => { state = reflectState(state); seq.push("Reflect"); renderSquare(); });
+  document.getElementById("btnReset").addEventListener("click", () => { state=[0,1,2,3]; seq=[]; renderSquare(); });
+  renderSquare();
+
+  // Clock
+  const clockLabels = document.getElementById("clockLabels");
+  const hourPositions = [0,1,2,3].map(i => {
+    const angle = (i/4)*2*Math.PI - Math.PI/2;
+    return [90+62*Math.cos(angle), 90+62*Math.sin(angle)];
+  });
+  [0,1,2,3].forEach((h,i) => {
+    const [x,y] = hourPositions[i];
+    const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+    txt.setAttribute("x",x); txt.setAttribute("y",y+5);
+    txt.setAttribute("text-anchor","middle");
+    txt.setAttribute("class","vlabel");
+    txt.setAttribute("fill","var(--ink-soft)");
+    txt.textContent = h;
+    clockLabels.appendChild(txt);
+  });
+  let clockHour = 0;
+  function renderClock(){
+    const angle = (clockHour/4)*2*Math.PI - Math.PI/2;
+    const x2 = 90 + 55*Math.cos(angle), y2 = 90+55*Math.sin(angle);
+    document.getElementById("clockHand").setAttribute("x2",x2);
+    document.getElementById("clockHand").setAttribute("y2",y2);
+  }
+  document.getElementById("btnClockAdd").addEventListener("click", () => { clockHour=(clockHour+1)%4; renderClock(); });
+  document.getElementById("btnClockReset").addEventListener("click", () => { clockHour=0; renderClock(); });
+  renderClock();
+
+  // ================= TOPOLOGY =================
+  const SHAPES = {
+    cube: [8,12,6],
+    tetrahedron: [4,6,4],
+    octahedron: [6,12,8],
+    torus: [16,32,16]
+  };
+  const CAPTIONS = {
+    cube: "8 corners, 12 edges, 6 faces — topologically a sphere.",
+    tetrahedron: "4 corners, 6 edges, 4 triangular faces — fewer pieces, same χ=2, same sphere topology.",
+    octahedron: "6 corners, 12 edges, 8 triangular faces — still χ=2.",
+    torus: "A 4×4 grid wrapped into a donut — χ=0, genuinely different topology, one hole."
+  };
+  document.querySelectorAll("[data-shape]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const [V,E,F] = SHAPES[btn.dataset.shape];
+      document.getElementById("statV").textContent = V;
+      document.getElementById("statE").textContent = E;
+      document.getElementById("statF").textContent = F;
+      document.getElementById("statChi").textContent = V-E+F;
+      document.getElementById("eulerCaption").textContent = CAPTIONS[btn.dataset.shape];
+    });
+  });
+
+  // Draggable blob
+  const svg = document.getElementById("blobSvg");
+  let genus = 0;
+  let points = [
+    [200,60],[280,90],[300,160],[260,220],[140,220],[100,160],[120,90]
+  ];
+  let holePoints = null; // set when a hole is poked
+
+  function pathFromPoints(pts){
+    let d = `M ${pts[0][0]},${pts[0][1]} `;
+    for(let i=1;i<pts.length;i++) d += `L ${pts[i][0]},${pts[i][1]} `;
+    d += "Z";
+    return d;
+  }
+
+  function renderBlob(){
+    svg.innerHTML = "";
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d", pathFromPoints(points));
+    path.setAttribute("fill", "var(--accent-soft)");
+    path.setAttribute("stroke", "var(--accent)");
+    path.setAttribute("stroke-width","2.5");
+    svg.appendChild(path);
+
+    if(holePoints){
+      const hpath = document.createElementNS("http://www.w3.org/2000/svg","path");
+      hpath.setAttribute("d", pathFromPoints(holePoints));
+      hpath.setAttribute("fill", "var(--paper)");
+      hpath.setAttribute("stroke", "var(--accent)");
+      hpath.setAttribute("stroke-width","2");
+      hpath.setAttribute("stroke-dasharray","4 3");
+      svg.appendChild(hpath);
+    }
+
+    points.forEach((p,i) => {
+      const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      c.setAttribute("cx",p[0]); c.setAttribute("cy",p[1]); c.setAttribute("r",7);
+      c.setAttribute("fill","var(--accent)"); c.setAttribute("class","blobpoint");
+      c.addEventListener("pointerdown", (e) => startDrag(e,i));
+      svg.appendChild(c);
+    });
+  }
+
+  let dragIndex = null;
+  function startDrag(e,i){ dragIndex = i; e.target.setPointerCapture(e.pointerId); }
+  svg.addEventListener("pointermove", (e) => {
+    if(dragIndex===null) return;
+    const rect = svg.getBoundingClientRect();
+    const scaleX = 400/rect.width, scaleY = 260/rect.height;
+    const x = (e.clientX-rect.left)*scaleX, y = (e.clientY-rect.top)*scaleY;
+    points[dragIndex] = [x,y];
+    renderBlob();
+  });
+  svg.addEventListener("pointerup", () => dragIndex=null);
+  svg.addEventListener("pointerleave", () => dragIndex=null);
+
+  document.getElementById("btnPoke").addEventListener("click", () => {
+    genus = 1;
+    holePoints = [[210,120],[240,130],[235,160],[205,155]];
+    document.getElementById("genusCaption").textContent = "Genus: 1 — tearing a hole changed the topology. No amount of stretching can undo this now.";
+    document.getElementById("btnPoke").style.display = "none";
+    document.getElementById("btnPatch").style.display = "inline-block";
+    renderBlob();
+  });
+  document.getElementById("btnPatch").addEventListener("click", () => {
+    genus = 0;
+    holePoints = null;
+    document.getElementById("genusCaption").textContent = "Genus: 0 — gluing the tear shut restored the original topology.";
+    document.getElementById("btnPatch").style.display = "none";
+    document.getElementById("btnPoke").style.display = "inline-block";
+    renderBlob();
+  });
+
+  renderBlob();
+})();
+</script>
+</body>
+</html>

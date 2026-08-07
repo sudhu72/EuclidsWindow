@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Jewel — Euler's Identity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:660px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); width:90px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:56px; text-align:center; }
+  svg{ width:100%; max-width:400px; height:340px; display:block; margin:0 auto; }
+  .bignum{ font-family:"IBM Plex Mono", monospace; font-size:14px; background:#F5F4F0; border-radius:10px; padding:12px 16px; margin-top:14px; }
+  .history{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft); min-height:20px; margin-top:8px; }
+  .presetbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Part 14</div>
+    <h1>Our Jewel</h1>
+    <p>A rotation, repeated forever, traces a perfect circle — and lands, at exactly the halfway point, on one of the strangest-looking true statements in mathematics.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="powers">Powers of i</button>
+    <button class="tab" data-tab="circle">e^(iθ) on the Circle</button>
+    <button class="tab" data-tab="compound">Compounding Converges</button>
+  </div>
+
+  <!-- ============ POWERS OF i ============ -->
+  <div class="panel active" id="panel-powers">
+    <div class="card">
+      <h2>Multiply by i, Again and Again</h2>
+      <p class="sub">Each click rotates the vector 90°. Four clicks, and you're back where you started — the same cyclic group as Part 11's square.</p>
+      <svg id="powersSvg" viewBox="0 0 260 260"></svg>
+      <div class="row" style="justify-content:center;">
+        <button class="op" id="btnMulI">× i</button>
+        <button class="op" id="btnResetPowers">Reset</button>
+      </div>
+      <div class="history" id="powersHistory">i⁰ = 1</div>
+    </div>
+  </div>
+
+  <!-- ============ e^{iθ} ON THE CIRCLE ============ -->
+  <div class="panel" id="panel-circle">
+    <div class="card">
+      <h2>e<sup>iθ</sup> Traces the Unit Circle</h2>
+      <p class="sub">Drag θ. Watch cos θ and sin θ appear as projections onto the axes.</p>
+      <div class="presetbar">
+        <button class="op" data-preset="0">θ = 0</button>
+        <button class="op" data-preset="1.5707963267948966">θ = π/2</button>
+        <button class="op" data-preset="3.141592653589793">θ = π</button>
+        <button class="op" data-preset="6.283185307179586">θ = 2π</button>
+      </div>
+      <div class="row"><label>θ (radians)</label><input type="range" id="thetaSlider" min="0" max="6.2832" step="0.01" value="0"><span class="readout" id="thetaOut">0.00</span></div>
+      <svg id="circleSvg" viewBox="0 0 300 300"></svg>
+      <div class="bignum" id="circleResult"></div>
+    </div>
+  </div>
+
+  <!-- ============ COMPOUNDING ============ -->
+  <div class="panel" id="panel-compound">
+    <div class="card">
+      <h2>(1 + iθ/n)<sup>n</sup> — Compounding a Rotation</h2>
+      <p class="sub">The same continuous-compounding idea from Part 8, with an imaginary (rotational) rate instead of a real one. Watch it spiral into the exact circle as n grows.</p>
+      <div class="row"><label>n (steps)</label><input type="range" id="nSlider" min="1" max="60" step="1" value="4"><span class="readout" id="nOut">4</span></div>
+      <svg id="compoundSvg" viewBox="0 0 300 300"></svg>
+      <div class="bignum" id="compoundResult"></div>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Where this connects:</b> multiplying by i is the exact [[0,-1],[1,0]] rotation matrix from Part 1's "Rotate 90°" preset — its complex eigenvalues, reported there as having no real counterpart, are exactly ±i. The compounding tab is Part 8's continuous-compounding construction of e, pointed sideways into a rotation instead of a stretch.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("panel-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function complexMul([a,b],[c,d]){ return [a*c-b*d, a*d+b*c]; }
+
+  // ================= POWERS OF i =================
+  const powersSvg = document.getElementById("powersSvg");
+  let v = [1,0], step = 0;
+  const R = 100, CX=130, CY=130;
+
+  function drawAxes(svg, cx, cy, r){
+    svg.appendChild(el("line",{x1:cx-r-20,y1:cy,x2:cx+r+20,y2:cy,stroke:"var(--line)",["stroke-width"]:1}));
+    svg.appendChild(el("line",{x1:cx,y1:cy-r-20,x2:cx,y2:cy+r+20,stroke:"var(--line)",["stroke-width"]:1}));
+  }
+
+  function renderPowers(){
+    powersSvg.innerHTML = "";
+    drawAxes(powersSvg, CX, CY, R);
+    powersSvg.appendChild(el("circle",{cx:CX,cy:CY,r:R,fill:"none",stroke:"var(--line)",["stroke-width"]:1.4,["stroke-dasharray"]:"4 4"}));
+    const px = CX + v[0]*R, py = CY - v[1]*R;
+    powersSvg.appendChild(el("line",{x1:CX,y1:CY,x2:px,y2:py,stroke:"var(--accent)",["stroke-width"]:3}));
+    powersSvg.appendChild(el("circle",{cx:px,cy:py,r:7,fill:"var(--accent)"}));
+    const labels = ["1","i","-1","-i"];
+    [0,1,2,3].forEach(k => {
+      const ang = k*Math.PI/2;
+      const lx = CX + (R+22)*Math.cos(ang), ly = CY - (R+22)*Math.sin(ang);
+      const t = el("text",{x:lx,y:ly+4,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"13","fill":"var(--ink-soft)"});
+      t.textContent = labels[k];
+      powersSvg.appendChild(t);
+    });
+    document.getElementById("powersHistory").textContent = `i^${step} = (${v[0].toFixed(2)}, ${v[1].toFixed(2)}i)  —  ${step % 4 === 0 ? "back at the start!" : ""}`;
+  }
+  document.getElementById("btnMulI").addEventListener("click", () => {
+    v = complexMul(v,[0,1]); step++;
+    renderPowers();
+  });
+  document.getElementById("btnResetPowers").addEventListener("click", () => { v=[1,0]; step=0; renderPowers(); });
+  renderPowers();
+
+  // ================= e^{i theta} =================
+  const thetaSlider = document.getElementById("thetaSlider");
+  const circleSvg = document.getElementById("circleSvg");
+  const CR = 110, CCX=150, CCY=150;
+
+  function renderCircle(){
+    const theta = parseFloat(thetaSlider.value);
+    document.getElementById("thetaOut").textContent = theta.toFixed(2);
+    const x = Math.cos(theta), y = Math.sin(theta);
+    circleSvg.innerHTML = "";
+    drawAxes(circleSvg, CCX, CCY, CR);
+    circleSvg.appendChild(el("circle",{cx:CCX,cy:CCY,r:CR,fill:"none",stroke:"var(--line)",["stroke-width"]:1.4}));
+    const px = CCX + x*CR, py = CCY - y*CR;
+    // projections
+    circleSvg.appendChild(el("line",{x1:px,y1:py,x2:px,y2:CCY,stroke:"var(--c1)",["stroke-width"]:1.6,["stroke-dasharray"]:"4 3"}));
+    circleSvg.appendChild(el("line",{x1:px,y1:py,x2:CCX,y2:py,stroke:"var(--c2)",["stroke-width"]:1.6,["stroke-dasharray"]:"4 3"}));
+    circleSvg.appendChild(el("line",{x1:CCX,y1:CCY,x2:px,y2:py,stroke:"var(--accent)",["stroke-width"]:2.5}));
+    circleSvg.appendChild(el("circle",{cx:px,cy:py,r:7,fill:"var(--accent)"}));
+    circleSvg.appendChild(el("circle",{cx:CCX-CR,cy:CCY,r:5,fill:"var(--c4)" ,opacity:0.001}));
+    const box = document.getElementById("circleResult");
+    const near_pi = Math.abs(theta - Math.PI) < 0.015;
+    box.innerHTML = `e<sup>i·${theta.toFixed(2)}</sup> = cos(${theta.toFixed(2)}) + i·sin(${theta.toFixed(2)}) = <b>${x.toFixed(3)}</b> + <b>${y.toFixed(3)}</b>i` +
+      (near_pi ? `<br><span style="color:var(--accent); font-weight:600;">θ ≈ π: e^(iπ) + 1 ≈ ${(x+1).toFixed(4)} — Euler's Identity!</span>` : "");
+  }
+  thetaSlider.addEventListener("input", renderCircle);
+  document.querySelectorAll("[data-preset]").forEach(btn => {
+    btn.addEventListener("click", () => { thetaSlider.value = btn.dataset.preset; renderCircle(); });
+  });
+  renderCircle();
+
+  // ================= COMPOUNDING =================
+  const nSlider = document.getElementById("nSlider");
+  const compoundSvg = document.getElementById("compoundSvg");
+  const THETA_FIXED = Math.PI/3;
+
+  function compoundPath(theta, n){
+    let z = [1,0];
+    const stepZ = [1, theta/n];
+    const pts = [z];
+    for(let i=0;i<n;i++){ z = complexMul(z, stepZ); pts.push(z); }
+    return pts;
+  }
+  function renderCompound(){
+    const n = parseInt(nSlider.value);
+    document.getElementById("nOut").textContent = n;
+    compoundSvg.innerHTML = "";
+    drawAxes(compoundSvg, CCX, CCY, CR);
+    compoundSvg.appendChild(el("circle",{cx:CCX,cy:CCY,r:CR,fill:"none",stroke:"var(--line)",["stroke-width"]:1.4}));
+    const pts = compoundPath(THETA_FIXED, n);
+    let d = "";
+    pts.forEach((p,i) => {
+      const px = CCX + p[0]*CR, py = CCY - p[1]*CR;
+      d += (i===0 ? "M" : "L") + px + "," + py + " ";
+    });
+    compoundSvg.appendChild(el("path",{d, fill:"none", stroke:"var(--c1)", ["stroke-width"]:2}));
+    pts.forEach((p) => {
+      const px = CCX + p[0]*CR, py = CCY - p[1]*CR;
+      compoundSvg.appendChild(el("circle",{cx:px,cy:py,r:3,fill:"var(--c1)"}));
+    });
+    const final = pts[pts.length-1];
+    const mag = Math.hypot(final[0],final[1]);
+    const exact = [Math.cos(THETA_FIXED), Math.sin(THETA_FIXED)];
+    const ex = CCX+exact[0]*CR, ey=CCY-exact[1]*CR;
+    compoundSvg.appendChild(el("circle",{cx:ex,cy:ey,r:6,fill:"none",stroke:"var(--accent)",["stroke-width"]:2}));
+    document.getElementById("compoundResult").innerHTML =
+      `(1 + i·(π/3)/${n})<sup>${n}</sup> = ${final[0].toFixed(4)} + ${final[1].toFixed(4)}i &nbsp; |z| = ${mag.toFixed(4)} &nbsp; (exact e^{iπ/3} = ${exact[0].toFixed(4)} + ${exact[1].toFixed(4)}i, circled in purple)`;
+  }
+  nSlider.addEventListener("input", renderCompound);
+  renderCompound();
+
+})();
+</script>
+</body>
+</html>

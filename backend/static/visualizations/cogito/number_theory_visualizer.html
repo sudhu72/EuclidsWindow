@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Clock and the Atoms — Number Theory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95; --c4:#D9636B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:660px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); width:110px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  input[type=number]{ width:70px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; font-family:"IBM Plex Mono",monospace; }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:36px; text-align:center; }
+
+  /* ---- Clock ---- */
+  .clockwrap{ display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+  .clockbox{ width:260px; flex-shrink:0; }
+  .clockbox svg{ width:100%; height:260px; }
+  .clocknode{ cursor:pointer; transition:transform .1s; }
+  .clocknode:hover{ transform:scale(1.15); }
+  .clocknode.selectedA{ fill:var(--accent) !important; }
+  .clocknode.selectedB{ fill:var(--c1) !important; }
+  .clocknode.noinverse{ opacity:0.35; }
+  .clockresult{ font-family:"IBM Plex Mono", monospace; font-size:14px; background:var(--accent-soft); border-radius:10px; padding:14px; margin-top:10px; }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin-top:10px; }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+
+  /* ---- Euclid ---- */
+  .euclidsteps{ font-family:"IBM Plex Mono", monospace; font-size:14px; margin-top:16px; }
+  .estep{ padding:8px 12px; border-radius:8px; background:#F5F4F0; margin-bottom:6px; opacity:0.3; transition:opacity .2s, background .2s; }
+  .estep.shown{ opacity:1; }
+  .estep.final{ background:var(--accent-soft); font-weight:600; }
+
+  /* ---- Sieve ---- */
+  .sievegrid{ display:grid; grid-template-columns:repeat(10, 1fr); gap:5px; margin:18px 0; }
+  .scell{
+    aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+    font-family:"IBM Plex Mono", monospace; font-size:12px; border-radius:6px;
+    background:#F5F4F0; border:1px solid var(--line); transition:background .2s, color .2s;
+  }
+  .scell.crossed{ background:#E8E4DD; color:#B7ADA0; text-decoration:line-through; }
+  .scell.prime{ background:var(--c1); color:#fff; border-color:var(--c1); }
+  .scell.current{ outline:2px solid var(--c2); }
+
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Part 13</div>
+    <h1>The Clock and the Atoms</h1>
+    <p>Remainders that wrap around forever, and numbers that refuse to break apart — click, drag, and step through the exact machinery underneath your credit card's check digit.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="clock">Modular Clock</button>
+    <button class="tab" data-tab="euclid">Euclidean Algorithm</button>
+    <button class="tab" data-tab="sieve">Sieve of Eratosthenes</button>
+  </div>
+
+  <!-- ============ MODULAR CLOCK ============ -->
+  <div class="panel active" id="panel-clock">
+    <div class="card">
+      <h2>Pick a Modulus, Then Two Numbers</h2>
+      <p class="sub">Faded numbers have no multiplicative inverse for this modulus — try a prime modulus and watch every faded number disappear.</p>
+      <div class="row"><label>Modulus n</label><input type="range" id="modSlider" min="2" max="16" value="12"><span class="readout" id="modOut">12</span></div>
+      <div class="clockwrap">
+        <div class="clockbox"><svg id="clockSvg" viewBox="0 0 260 260"></svg></div>
+        <div style="flex:1; min-width:220px;">
+          <div class="legend">
+            <span><span class="dot" style="background:var(--accent)"></span>A</span>
+            <span><span class="dot" style="background:var(--c1)"></span>B</span>
+            <span><span class="dot" style="background:#F5F4F0; border:1px solid var(--line);"></span>faded = no inverse</span>
+          </div>
+          <div class="clockresult" id="clockResult">Click two numbers on the clock.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ EUCLIDEAN ALGORITHM ============ -->
+  <div class="panel" id="panel-euclid">
+    <div class="card">
+      <h2>Find gcd Without Factoring</h2>
+      <p class="sub">Step through Euclid's algorithm — the larger number always shrinks to a remainder, without ever changing the true gcd.</p>
+      <div class="row"><label>a</label><input type="number" id="eucA" value="48" min="1" max="9999"></div>
+      <div class="row"><label>b</label><input type="number" id="eucB" value="18" min="1" max="9999"></div>
+      <button class="op" id="btnEucStep">Next step</button>
+      <button class="op" id="btnEucReset">Reset</button>
+      <div class="euclidsteps" id="euclidSteps"></div>
+    </div>
+  </div>
+
+  <!-- ============ SIEVE ============ -->
+  <div class="panel" id="panel-sieve">
+    <div class="card">
+      <h2>Watch Primes Reveal Themselves</h2>
+      <p class="sub">Each round crosses out every multiple of the next surviving number. Whatever never gets crossed out is prime.</p>
+      <button class="op" id="btnSieveStep">Next round</button>
+      <button class="op" id="btnSieveReset">Reset</button>
+      <div class="sievegrid" id="sieveGrid"></div>
+      <p class="caption" id="sieveCaption">Click "Next round" to begin.</p>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Where this connects:</b> the clock here is the same cyclic group from Part 11, now with multiplication added — watch how a prime modulus lights up every number as invertible at once. The Euclidean Algorithm's "shrink without losing the answer" move echoes Pascal's Triangle's recursion (Part 10). The sieve is the combinatorial (Part 10) machinery underneath the primes that Fermat's Little Theorem and RSA both depend on.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("panel-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function gcd(a,b){ while(b){ [a,b]=[b,a%b]; } return a; }
+  function hasInverse(a,n){ const r=((a%n)+n)%n; return r!==0 && gcd(r,n)===1; }
+  function modInverse(a,n){
+    const r=((a%n)+n)%n;
+    for(let x=0;x<n;x++) if((r*x)%n===1) return x;
+    return null;
+  }
+
+  // ================= MODULAR CLOCK =================
+  const modSlider = document.getElementById("modSlider");
+  const clockSvg = document.getElementById("clockSvg");
+  let selA = null, selB = null;
+
+  function renderClock(){
+    const n = parseInt(modSlider.value);
+    document.getElementById("modOut").textContent = n;
+    clockSvg.innerHTML = "";
+    clockSvg.appendChild(el("circle",{cx:130,cy:130,r:110,fill:"none",stroke:"var(--line)",["stroke-width"]:2}));
+    for(let i=0;i<n;i++){
+      const angle = (i/n)*2*Math.PI - Math.PI/2;
+      const x = 130 + 92*Math.cos(angle), y = 130 + 92*Math.sin(angle);
+      const inv = hasInverse(i,n);
+      const c = el("circle",{cx:x,cy:y,r:16,fill: inv ? "#F5F4F0" : "#F5F4F0", stroke:"var(--line)",["stroke-width"]:1.5, class:"clocknode"+(inv?"":" noinverse")});
+      c.dataset.val = i;
+      c.addEventListener("click", () => selectNum(i));
+      clockSvg.appendChild(c);
+      const t = el("text",{x,y:y+4,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"12","fill":"var(--ink)"});
+      t.textContent = i;
+      t.style.pointerEvents = "none";
+      clockSvg.appendChild(t);
+    }
+    paintSelection();
+    updateResult();
+  }
+  function paintSelection(){
+    document.querySelectorAll(".clocknode").forEach(c => {
+      c.classList.remove("selectedA","selectedB");
+      const v = parseInt(c.dataset.val);
+      if(selA===v) c.classList.add("selectedA");
+      if(selB===v) c.classList.add("selectedB");
+    });
+  }
+  function selectNum(v){
+    if(selA===null || (selA!==null && selB!==null)){ selA=v; selB=null; }
+    else { selB=v; }
+    paintSelection();
+    updateResult();
+  }
+  function updateResult(){
+    const n = parseInt(modSlider.value);
+    const box = document.getElementById("clockResult");
+    if(selA===null){ box.textContent = "Click two numbers on the clock."; return; }
+    if(selB===null){
+      const inv = hasInverse(selA,n);
+      box.innerHTML = `A = ${selA}. gcd(${selA},${n}) = ${gcd(selA===0?n:selA,n)}. ${inv ? `Inverse exists: ${modInverse(selA,n)} (since ${selA}×${modInverse(selA,n)} ≡ 1 mod ${n})` : "No inverse — shares a common factor with " + n + "."}`;
+      return;
+    }
+    const sum = (selA+selB)%n, prod=(selA*selB)%n;
+    box.innerHTML = `A=${selA}, B=${selB} (mod ${n}) &nbsp;→&nbsp; A+B ≡ <b>${sum}</b> &nbsp;·&nbsp; A×B ≡ <b>${prod}</b>`;
+  }
+  modSlider.addEventListener("input", () => { selA=null; selB=null; renderClock(); });
+  renderClock();
+
+  // ================= EUCLIDEAN ALGORITHM =================
+  const eucA = document.getElementById("eucA"), eucB = document.getElementById("eucB");
+  let eucSteps = [], eucIndex = 0;
+
+  function computeEucSteps(a,b){
+    const steps = [];
+    while(b !== 0){
+      const q = Math.floor(a/b), r = a % b;
+      steps.push({a,b,q,r});
+      [a,b] = [b,r];
+    }
+    steps.push({final:true, gcd:a});
+    return steps;
+  }
+  function renderEuclid(){
+    const container = document.getElementById("euclidSteps");
+    container.innerHTML = "";
+    eucSteps.forEach((s,i) => {
+      const div = document.createElement("div");
+      div.className = "estep" + (i < eucIndex ? " shown" : "") + (s.final ? " final" : "");
+      div.textContent = s.final ? `gcd = ${s.gcd}` : `${s.a} = ${s.q} × ${s.b} + ${s.r}   (so gcd(${s.a},${s.b}) = gcd(${s.b},${s.r}))`;
+      container.appendChild(div);
+    });
+  }
+  function resetEuclid(){
+    const a = Math.max(1, parseInt(eucA.value)||1), b = Math.max(1, parseInt(eucB.value)||1);
+    eucSteps = a >= b ? computeEucSteps(a,b) : computeEucSteps(b,a);
+    eucIndex = 0;
+    renderEuclid();
+  }
+  document.getElementById("btnEucStep").addEventListener("click", () => {
+    if(eucIndex < eucSteps.length) eucIndex++;
+    renderEuclid();
+  });
+  document.getElementById("btnEucReset").addEventListener("click", resetEuclid);
+  [eucA,eucB].forEach(inp => inp.addEventListener("change", resetEuclid));
+  resetEuclid();
+
+  // ================= SIEVE =================
+  const SIEVE_N = 100;
+  let sieveState, sieveCurrent;
+  function resetSieve(){
+    sieveState = new Array(SIEVE_N+1).fill(null); // null=unknown, true=prime, false=composite
+    sieveState[0]=false; sieveState[1]=false;
+    sieveCurrent = 2;
+    renderSieve();
+    document.getElementById("sieveCaption").textContent = 'Click "Next round" to begin.';
+  }
+  function renderSieve(){
+    const grid = document.getElementById("sieveGrid");
+    grid.innerHTML = "";
+    for(let i=1;i<=SIEVE_N;i++){
+      const cell = document.createElement("div");
+      cell.className = "scell";
+      if(sieveState[i]===false) cell.classList.add("crossed");
+      if(sieveState[i]===true) cell.classList.add("prime");
+      if(i===sieveCurrent) cell.classList.add("current");
+      cell.textContent = i;
+      grid.appendChild(cell);
+    }
+  }
+  function sieveStep(){
+    // find next number not yet marked composite, starting at sieveCurrent
+    while(sieveCurrent<=SIEVE_N && sieveState[sieveCurrent]===false) sieveCurrent++;
+    if(sieveCurrent > SIEVE_N){
+      document.getElementById("sieveCaption").textContent = "Done — every uncrossed number is prime.";
+      for(let i=2;i<=SIEVE_N;i++) if(sieveState[i]!==false) sieveState[i]=true;
+      renderSieve();
+      return;
+    }
+    const p = sieveCurrent;
+    sieveState[p] = true;
+    for(let j=p*p; j<=SIEVE_N; j+=p) sieveState[j] = false;
+    document.getElementById("sieveCaption").textContent = `${p} survives — it's prime. Crossing out every multiple of ${p}.`;
+    sieveCurrent = p+1;
+    renderSieve();
+  }
+  document.getElementById("btnSieveStep").addEventListener("click", sieveStep);
+  document.getElementById("btnSieveReset").addEventListener("click", resetSieve);
+  resetSieve();
+
+})();
+</script>
+</body>
+</html>
