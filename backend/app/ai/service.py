@@ -96,7 +96,7 @@ class GenerativeTutorService:
         # then apply the standing-orders verification skill.
         from .concept_graph import get_concept_graph
         from .library import get_library
-        from .skills import COMPACT_SKILL
+        from .skills import COMPACT_SKILL, COMPACT_TEACHING
 
         library_context = get_library().context_for(question, k=3, max_chars=1500)
         if library_context:
@@ -106,7 +106,7 @@ class GenerativeTutorService:
             context = graph_context + "\n\n" + context
 
         prompt = (
-            REASONING_SYSTEM_PROMPT + "\n\n" + COMPACT_SKILL + "\n\n"
+            REASONING_SYSTEM_PROMPT + "\n\n" + COMPACT_TEACHING + "\n\n" + COMPACT_SKILL + "\n\n"
             + REASONING_USER_TEMPLATE.format(
                 context=context,
                 question=question,

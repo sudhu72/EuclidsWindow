@@ -82,23 +82,36 @@
       .append("circle")
       .attr("r", radius)
       .attr("fill", (d) => color(d.degree % 10))
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 1.5);
+      // Concepts with a Cogito Gallery visualization get a gold ring.
+      .attr("stroke", (d) => (d.viz ? "#d9a62e" : "#fff"))
+      .attr("stroke-width", (d) => (d.viz ? 2.5 : 1.5));
 
     node
       .append("text")
-      .text((d) => d.name)
+      .text((d) => (d.viz ? "▶ " + d.name : d.name))
       .attr("x", (d) => radius(d) + 3)
       .attr("y", 4)
       .attr("font-size", 10)
       .attr("fill", "#334155")
       .style("pointer-events", "none");
 
-    node.append("title").text((d) => `${d.name} · ${d.degree} links`);
+    node
+      .append("title")
+      .text((d) =>
+        d.viz
+          ? `${d.name} · ${d.degree} links · ▶ click to open the interactive visualization`
+          : `${d.name} · ${d.degree} links`
+      );
 
     node.on("click", (ev, d) => {
-      window.location.href =
-        "index.html?prompt=" + encodeURIComponent("explain " + d.name);
+      // Viz-bearing concepts open their Cogito Gallery animation; the rest
+      // hand off to the tutor as before.
+      if (d.viz) {
+        window.open(d.viz, "_blank", "noopener");
+      } else {
+        window.location.href =
+          "index.html?prompt=" + encodeURIComponent("explain " + d.name);
+      }
     });
 
     node

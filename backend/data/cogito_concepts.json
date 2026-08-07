@@ -1,0 +1,213 @@
+{
+  "_comment": "Cogito seed for the concept graph. Each entry maps a Cogito Gallery visualization to a concept node. If `id` matches an existing demo_topics node, the viz/source/extra links are attached to it; otherwise a new node is added. `related` strings are resolved to existing node ids/names/keywords to create edges, wiring the Cogito material into the main graph. `viz` is served from /visualizations/cogito/. Loaded by concept_graph.py.",
+  "concepts": [
+    {
+      "id": "euler",
+      "name": "Euler's Identity",
+      "keywords": ["euler identity", "e to the i pi"],
+      "related": ["complex_numbers", "roots_of_unity", "eulers_number_e", "trigonometry", "pi"],
+      "viz": "euler_identity_visualizer.html",
+      "source": "math_tutorial.md"
+    },
+    {
+      "id": "math_notation",
+      "name": "Math Notation as a Language",
+      "keywords": ["mathematical notation", "notation", "second language of math", "quantifiers", "symbols language"],
+      "related": ["set_theory", "mathematical_logic", "proof", "sequence"],
+      "viz": "language_visualizer.html",
+      "source": "language_of_mathematics.md"
+    },
+    {
+      "id": "normalization",
+      "name": "Normalization",
+      "keywords": ["normalization", "normalize", "z-score", "min-max", "softmax", "unit vector"],
+      "related": ["probability", "statistics", "loss_functions", "vectors", "dimensionality_reduction"],
+      "viz": "normalization_visualizer.html",
+      "source": "math_tutorial.md"
+    },
+    {
+      "id": "number_theory",
+      "name": "Number Theory",
+      "keywords": ["number theory", "modular arithmetic clock", "prime factorization"],
+      "related": ["prime_numbers", "modular_arithmetic", "cryptography"],
+      "viz": "number_theory_visualizer.html",
+      "source": "math_tutorial.md"
+    },
+    {
+      "id": "three_motions",
+      "name": "Three Motions: Transform, Zoom, Flow",
+      "keywords": ["linear transformation", "derivative as zoom", "flow", "three motions"],
+      "related": ["linear_equations", "derivative", "differential_equations", "matrices", "transformations"],
+      "viz": "three_motions_visualizer.html",
+      "source": "math_tutorial.md"
+    },
+    {
+      "id": "three_structures",
+      "name": "Three Structures: Counting, Symmetry, Shape",
+      "keywords": ["combinatorics symmetry topology", "three structures", "counting symmetry shape"],
+      "related": ["combinatorics", "symmetry", "topology"],
+      "viz": "three_structures_visualizer.html",
+      "source": "math_tutorial.md"
+    },
+    {
+      "id": "backpropagation",
+      "name": "Backpropagation",
+      "keywords": ["forward pass", "backward pass", "backprop"],
+      "related": ["neural_network_math", "derivative", "loss_functions", "chain_rule"],
+      "viz": "network_forward_backward_animation.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "chain_rule",
+      "name": "The Chain Rule",
+      "keywords": ["chain rule", "gear train derivative"],
+      "related": ["derivative", "backpropagation", "differential_equations"],
+      "viz": "chain_rule_gears_animation.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "attention",
+      "name": "Attention",
+      "keywords": ["attention", "query key value", "scaled dot product", "multi-head attention"],
+      "related": ["transformers", "matrices", "neural_network_math", "normalization"],
+      "viz": "attention_matrix_scaling_animation.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "kv_cache",
+      "name": "KV-Cache, GQA & MLA",
+      "keywords": ["kv cache", "grouped query attention", "gqa", "multi-head latent attention", "mla"],
+      "related": ["attention", "transformers"],
+      "viz": "kv_cache_gqa_mla_animation.html",
+      "source": "llm_agentic_graph_interview_prep_feynman.md"
+    },
+    {
+      "id": "cross_entropy",
+      "name": "Cross-Entropy Loss",
+      "keywords": ["cross entropy", "negative log likelihood", "log loss"],
+      "related": ["loss_functions", "logarithm", "probability"],
+      "viz": "cross_entropy_animation.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "l2_regularization",
+      "name": "L2 Regularization",
+      "keywords": ["l2 regularization", "weight decay", "ridge"],
+      "related": ["loss_functions", "optimization", "vectors"],
+      "viz": "l2_regularization_animation.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "early_stopping",
+      "name": "Early Stopping",
+      "keywords": ["early stopping", "validation loss", "overfitting"],
+      "related": ["loss_functions", "optimization", "neural_network_math"],
+      "viz": "early_stopping_animation.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "convolution",
+      "name": "Convolution (CNN)",
+      "keywords": ["convolution", "cnn", "kernel", "filter", "feature map"],
+      "related": ["neural_network_math", "matrices", "image_fft_2d"],
+      "viz": "cnn_convolution_animation.html",
+      "source": "cnn_and_audio_networks_feynman.md"
+    },
+    {
+      "id": "spectrogram",
+      "name": "Waveform to Spectrogram",
+      "keywords": ["spectrogram", "waveform", "time frequency", "audio features"],
+      "related": ["fft_algorithm", "fft_dft", "wave_equation_sound", "frequency_filtering"],
+      "viz": "waveform_to_spectrogram_animation.html",
+      "source": "cnn_and_audio_networks_feynman.md"
+    },
+    {
+      "id": "precision_recall",
+      "name": "Precision, Recall & Threshold",
+      "keywords": ["precision", "recall", "threshold", "confusion matrix"],
+      "related": ["statistics", "probability"],
+      "viz": "precision_recall_threshold_animation.html",
+      "source": "eda_feynman_tutorial.md"
+    },
+    {
+      "id": "class_imbalance",
+      "name": "The Accuracy Trap (Class Imbalance)",
+      "keywords": ["class imbalance", "accuracy trap", "imbalanced data"],
+      "related": ["statistics", "probability", "precision_recall"],
+      "viz": "imbalance_accuracy_trap.html",
+      "source": "kaggle_practice_feynman_tutorial.md"
+    },
+    {
+      "id": "outlier_robustness",
+      "name": "Mean vs Median (Outliers)",
+      "keywords": ["mean vs median", "outlier", "robust statistics"],
+      "related": ["statistics", "average"],
+      "viz": "outlier_robustness_animation.html",
+      "source": "eda_feynman_tutorial.md"
+    },
+    {
+      "id": "simpsons_paradox",
+      "name": "Simpson's Paradox",
+      "keywords": ["simpsons paradox", "trend reversal", "confounding"],
+      "related": ["statistics", "probability", "paradoxes"],
+      "viz": "simpsons_paradox_animation.html",
+      "source": "eda_feynman_tutorial.md"
+    },
+    {
+      "id": "eda_by_group",
+      "name": "EDA: Survival by Group",
+      "keywords": ["exploratory data analysis", "survival by group", "titanic eda", "grouped rates"],
+      "related": ["statistics", "probability", "outlier_robustness"],
+      "viz": "titanic_survival_by_group.html",
+      "source": "kaggle_practice_feynman_tutorial.md"
+    },
+    {
+      "id": "algorithm_patterns",
+      "name": "Algorithm Pattern Decision Tree",
+      "keywords": ["algorithm patterns", "pattern decision tree", "which algorithm"],
+      "related": ["binary_search", "two_pointers", "dynamic_programming", "bfs_dfs"],
+      "viz": "pattern_decision_tree.html",
+      "source": "03_the_pattern_map.md"
+    },
+    {
+      "id": "binary_search",
+      "name": "Binary Search",
+      "keywords": ["binary search", "lower bound", "upper bound"],
+      "related": ["sequence", "logarithm", "algorithm_patterns"],
+      "viz": "binary_search_visualizer.html",
+      "source": "08_binary_search_patterns.md"
+    },
+    {
+      "id": "two_pointers",
+      "name": "Two Pointers & Sliding Window",
+      "keywords": ["two pointers", "sliding window"],
+      "related": ["sequence", "algorithm_patterns"],
+      "viz": "two_pointers_sliding_window.html",
+      "source": "04_arrays_two_pointers_sliding_window.md"
+    },
+    {
+      "id": "monotonic_stack",
+      "name": "Monotonic Stack & Heap",
+      "keywords": ["monotonic stack", "heap", "priority queue"],
+      "related": ["sequence", "algorithm_patterns"],
+      "viz": "monotonic_stack_and_heap.html",
+      "source": "11_stacks_monotonic_bit_trie.md"
+    },
+    {
+      "id": "bfs_dfs",
+      "name": "BFS vs DFS",
+      "keywords": ["bfs", "dfs", "breadth first search", "depth first search", "graph traversal"],
+      "related": ["graph", "graph_theory", "hamiltonian_graph", "algorithm_patterns"],
+      "viz": "bfs_dfs_tree_graph.html",
+      "source": "06_trees_graphs_bfs_dfs.md"
+    },
+    {
+      "id": "dynamic_programming",
+      "name": "Dynamic Programming",
+      "keywords": ["dynamic programming", "dp", "memoization", "recurrence"],
+      "related": ["sequence", "optimization", "algorithm_patterns"],
+      "viz": "dp_grid_builder.html",
+      "source": "10_dynamic_programming.md"
+    }
+  ]
+}

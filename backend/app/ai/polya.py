@@ -260,9 +260,12 @@ class PolyaService:
         # Standing-orders skill (verification / no-fabrication) plus any
         # matching excerpts from the user's reference library.
         from .library import get_library
-        from .skills import skill_prelude
+        from .skills import skill_prelude, teaching_prelude
 
-        messages[0]["content"] = system + "\n\n" + skill_prelude(compact=not olympiad)
+        messages[0]["content"] = (
+            system + "\n\n" + teaching_prelude(compact=not olympiad)
+            + "\n\n" + skill_prelude(compact=not olympiad)
+        )
         library_context = get_library().context_for(user[:400], k=2, max_chars=1200)
         if library_context:
             messages[1]["content"] = library_context + "\n\n" + user

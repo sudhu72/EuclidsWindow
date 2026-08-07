@@ -63,9 +63,11 @@ class ConceptGraph:
         # meaningful here, so first-writer keeps it and we skip duplicates.
         for tid, node in self._nodes.items():
             for alias in [tid, node["name"], *node["keywords"]]:
-                key = _norm(alias)
-                if key and key not in self._alias_index:
-                    self._alias_index[key] = tid
+                self._register_alias(alias, tid)
+
+        # Merge the Cogito seed (gallery visualizations → concept nodes/edges)
+        # BEFORE building edges, so cogito↔cogito related links resolve too.
+        self._merge_cogito(topics_path.parent / "cogito_concepts.json")
 
         # Edges: resolve each related_concepts string to a node.
         for tid, node in self._nodes.items():
@@ -76,6 +78,61 @@ class ConceptGraph:
         logger.info(
             f"ConceptGraph: {len(self._nodes)} nodes, {len(self._edges)} edges"
         )
+
+    def _register_alias(self, alias: str, tid: str) -> None:
+        key = _norm(alias)
+        if key and key not in self._alias_index:
+            self._alias_index[key] = tid
+
+    def _merge_cogito(self, cogito_path: Path) -> None:
+        """Fold the Cogito seed into the graph.
+
+        Each entry attaches a Cogito Gallery visualization (``viz``) and its
+        source tutorial (``source``) to a concept. If the id already exists it
+        enriches that node (viz/source + extra ``related`` links); otherwise a
+        new node is added and indexed. Edges are built by the caller afterwards.
+        """
+        if not cogito_path.exists():
+            return
+        try:
+            entries = json.loads(cogito_path.read_text()).get("concepts", [])
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error(f"ConceptGraph: failed to read {cogito_path}: {exc}")
+            return
+        added = 0
+        for e in entries:
+            cid = e.get("id")
+            if not cid:
+                continue
+            related = [r for r in (e.get("related") or []) if isinstance(r, str)]
+            viz = e.get("viz")
+            source = e.get("source")
+            existing = self._nodes.get(cid)
+            if existing is not None:
+                # Enrich an existing topic node.
+                existing.setdefault("related", [])
+                for r in related:
+                    if r not in existing["related"]:
+                        existing["related"].append(r)
+                if viz:
+                    existing["viz"] = viz
+                if source:
+                    existing["source"] = source
+            else:
+                node = {
+                    "id": cid,
+                    "name": e.get("name", cid),
+                    "keywords": [k for k in (e.get("keywords") or []) if isinstance(k, str)],
+                    "related": related,
+                    "viz": viz,
+                    "source": source,
+                }
+                self._nodes[cid] = node
+                self._adj.setdefault(cid, set())
+                for alias in [cid, node["name"], *node["keywords"]]:
+                    self._register_alias(alias, cid)
+                added += 1
+        logger.info(f"ConceptGraph: merged Cogito seed ({added} new nodes, {len(entries)} entries)")
 
     def _add_edge(self, a: str, b: str) -> None:
         self._edges.add((a, b) if a < b else (b, a))
@@ -163,6 +220,11 @@ class ConceptGraph:
         ]
         if related:
             lines.append(f"- Directly related concepts: {', '.join(related)}")
+        if node.get("viz"):
+            lines.append(
+                "- An interactive visualization of this concept is available in the "
+                "app's Cogito Gallery; you may invite the learner to open it."
+            )
         lines.append(
             f"Answer about \"{node['name']}\" specifically; do not drift to a "
             "different topic that merely shares a name or keyword."
@@ -173,12 +235,23 @@ class ConceptGraph:
     # Serialization (for the explorer UI / API)
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _viz_url(node: Dict[str, Any]) -> Optional[str]:
+        viz = node.get("viz")
+        return f"/visualizations/cogito/{viz}" if viz else None
+
     def to_dict(self) -> Dict[str, Any]:
+        def _node(n: Dict[str, Any]) -> Dict[str, Any]:
+            d = {"id": n["id"], "name": n["name"], "degree": len(self._adj.get(n["id"], ()))}
+            url = self._viz_url(n)
+            if url:
+                d["viz"] = url
+                if n.get("source"):
+                    d["source"] = n["source"]
+            return d
+
         return {
-            "nodes": [
-                {"id": n["id"], "name": n["name"], "degree": len(self._adj.get(n["id"], ()))}
-                for n in self._nodes.values()
-            ],
+            "nodes": [_node(n) for n in self._nodes.values()],
             "edges": [{"source": a, "target": b} for a, b in sorted(self._edges)],
         }
 
@@ -188,10 +261,14 @@ class ConceptGraph:
         if not nid:
             return None
         keep = {nid, *self.neighbors(nid, hops)}
-        nodes = [
-            {"id": i, "name": self._nodes[i]["name"], "focus": i == nid}
-            for i in keep
-        ]
+        nodes = []
+        for i in keep:
+            n = self._nodes[i]
+            item = {"id": i, "name": n["name"], "focus": i == nid}
+            url = self._viz_url(n)
+            if url:
+                item["viz"] = url
+            nodes.append(item)
         edges = [
             {"source": a, "target": b}
             for a, b in self._edges

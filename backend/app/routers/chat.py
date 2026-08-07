@@ -14,20 +14,17 @@ from pydantic import BaseModel, Field
 
 from ..ai.concept_graph import get_concept_graph
 from ..ai.engine import LocalLLMEngine
-from ..ai.skills import COMPACT_SKILL
+from ..ai.skills import COMPACT_SKILL, COMPACT_TEACHING
 
 router = APIRouter(tags=["chat"])
 
 _engine = LocalLLMEngine()
 
 CHAT_SYSTEM_PROMPT = (
-    "You are Euclid, a friendly, rigorous math tutor. Teach with the Feynman "
-    "technique: explain in plain language as if to a curious 12-year-old, start "
-    "from a concrete example or analogy before any formula, then generalize. "
-    "One idea at a time; define each symbol you use. Be concise. "
+    "You are Euclid, a friendly, rigorous math tutor. Be concise, one idea at a "
+    "time, and define each symbol you use. "
     "Use \\(...\\) for inline math and $$...$$ on their own lines for display "
-    "math. State only what is correct — never invent history, dates, or facts; "
-    "if unsure, say so and stick to the mathematics.\n\n" + COMPACT_SKILL
+    "math.\n\n" + COMPACT_TEACHING + "\n\n" + COMPACT_SKILL
 )
 
 

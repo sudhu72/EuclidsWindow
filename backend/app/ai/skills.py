@@ -29,6 +29,24 @@ COMPACT_SKILL = (
 )
 
 
+# Hand-distilled core of feynman-method.md, sized for 1.5B-4B local models.
+# This is the *teaching style* (how to explain), distinct from the standing-orders
+# *verification* protocol above; both are injected into every generative call.
+COMPACT_TEACHING = (
+    "Teaching method (Feynman technique — apply to every explanation):\n"
+    "- Explain in plain words first; introduce the idea before the notation, and "
+    "never let jargon do the work an idea should do.\n"
+    "- Lead with WHY it works and what problem it solves, then HOW; build one honest "
+    "step at a time from what the learner already knows.\n"
+    "- Anchor every abstract point to one concrete example or analogy the learner can "
+    "recompute; name the exact spot that usually confuses people and address it.\n"
+    "- For problems, make Polya's steps visible: understand, plan (say why this method), "
+    "carry out, look back (sanity-check with an extreme case).\n"
+    "- Make the idea checkable: restate it plainly, and where the answer format allows, "
+    "invite the learner to put it in their own words. Warm, precise, honest — never fake certainty."
+)
+
+
 def _strip_frontmatter(text: str) -> str:
     return re.sub(r"\A---\n.*?\n---\n", "", text, flags=re.DOTALL)
 
@@ -60,3 +78,26 @@ def skill_for_current_provider(store) -> str:
     except Exception:
         provider = "ollama"
     return skill_prelude(compact=(provider == "ollama"))
+
+
+def teaching_prelude(compact: bool = True) -> str:
+    """Feynman teaching-style text to append to a system prompt.
+
+    Separate from :func:`skill_prelude` (which enforces verification): this
+    governs *how* the model explains — plain-words-first, why-before-how,
+    concrete analogies, Polya steps, and a closing Feynman Check. ``compact``
+    picks the distilled core (local models) vs the full document (cloud).
+    """
+    if compact:
+        return COMPACT_TEACHING
+    full = load_skill("feynman-method")
+    return full or COMPACT_TEACHING
+
+
+def teaching_for_current_provider(store) -> str:
+    """Pick compact vs full teaching prelude based on the active provider."""
+    try:
+        provider = (store.get_effective_settings().get("llm_provider") or "ollama").lower()
+    except Exception:
+        provider = "ollama"
+    return teaching_prelude(compact=(provider == "ollama"))

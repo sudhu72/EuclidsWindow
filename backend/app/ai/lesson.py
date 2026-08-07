@@ -233,7 +233,7 @@ class LessonService:
         style = "Include a fully worked example with concrete numbers." if stype == "example" else ""
         from .concept_graph import get_concept_graph
         from .library import get_library
-        from .skills import COMPACT_SKILL
+        from .skills import COMPACT_SKILL, COMPACT_TEACHING
 
         # GraphRAG: relationship grounding on the lesson topic keeps the scene on
         # the intended concept (e.g. "Euler's identity" -> complex numbers, not
@@ -242,7 +242,7 @@ class LessonService:
         library_context = get_library().context_for(f"{topic} {title}", k=2, max_chars=1200)
         grounding = "\n\n".join(c for c in (graph_context, library_context) if c)
         messages = [
-            {"role": "system", "content": EXPLAIN_SYSTEM_PROMPT + "\n" + COMPACT_SKILL},
+            {"role": "system", "content": EXPLAIN_SYSTEM_PROMPT + "\n" + COMPACT_TEACHING + "\n" + COMPACT_SKILL},
             {
                 "role": "user",
                 "content": (

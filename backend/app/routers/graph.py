@@ -17,6 +17,8 @@ class GraphNode(BaseModel):
     id: str
     name: str
     degree: int
+    viz: Optional[str] = None      # /visualizations/cogito/... when a Cogito viz exists
+    source: Optional[str] = None   # source tutorial for that visualization
 
 
 class GraphEdge(BaseModel):
@@ -33,6 +35,7 @@ class NeighborhoodNode(BaseModel):
     id: str
     name: str
     focus: bool
+    viz: Optional[str] = None
 
 
 class NeighborhoodResponse(BaseModel):
