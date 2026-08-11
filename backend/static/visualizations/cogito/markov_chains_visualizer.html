@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trees, Goldfish, and the Long Run — Markov Chains & Probability Trees</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --sun:#D9A62E; --rain:#0F8B8D; --sick:#D9636B; --healthy:#0F8B8D;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); width:200px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:52px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:12px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:14px; background:var(--accent-soft); border-radius:10px; padding:16px 18px; margin-top:16px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:26px; font-weight:700; color:var(--accent); }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  .matrix{ display:inline-grid; grid-template-columns:auto auto auto; gap:6px; font-family:"IBM Plex Mono",monospace; font-size:13px; align-items:center; margin:6px 0 14px; }
+  .matrix .mh{ color:var(--ink-soft); font-size:11.5px; text-align:center; }
+  .matrix .mc{ background:var(--accent-soft); border-radius:6px; padding:6px 10px; text-align:center; min-width:56px; }
+  /* distribution bars */
+  .bar{ height:34px; border-radius:8px; display:flex; overflow:hidden; border:1px solid var(--line); background:#F5F4F0; }
+  .bar > div{ display:flex; align-items:center; justify-content:center; color:#fff; font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; transition:width .35s ease; white-space:nowrap; overflow:hidden; }
+  .stat-line{ position:relative; height:20px; margin-top:6px; }
+  .stat-tick{ position:absolute; top:0; width:2px; height:14px; background:var(--ink); }
+  .stat-tick::after{ content:attr(data-l); position:absolute; top:14px; left:50%; transform:translateX(-50%); font-size:10.5px; color:var(--ink-soft); white-space:nowrap; font-family:"IBM Plex Mono",monospace; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft); margin-top:12px; max-height:110px; overflow-y:auto; white-space:pre; background:#F5F4F0; border-radius:8px; padding:10px 12px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); }
+  footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Markov Chains &amp; Probability Trees</div>
+    <h1>Trees, Goldfish, and the Long Run</h1>
+    <p>Multiply <em>down</em> a path, add <em>across</em> paths — then let the same rule repeat forever and watch it forget where it started. Three hands-on tools for the one idea behind Bayes' theorem, PageRank, and predictive text.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="tree">Probability Tree</button>
+    <button class="tab" data-tab="stepper">Markov Stepper</button>
+    <button class="tab" data-tab="walker">Long-Run Walker</button>
+  </div>
+
+  <!-- ============ TAB 1: PROBABILITY TREE (BAYES) ============ -->
+  <div class="panel active" id="panel-tree">
+    <div class="card">
+      <h2>The Test That Fools Doctors</h2>
+      <p class="sub">A rare disease, an excellent test, a positive result. Drag the sliders and watch <span class="formula">P(sick | positive)</span> defy your intuition — because the base rate, not the test, runs the show. Ten thousand imaginary people flow down the tree.</p>
+      <div class="row"><label>Disease prevalence &nbsp;P(D)</label><input type="range" id="tPrev" min="0.1" max="50" step="0.1" value="1"><span class="readout" id="tPrevOut">1.0%</span></div>
+      <div class="row"><label>Sensitivity &nbsp;P(+ | disease)</label><input type="range" id="tSens" min="50" max="100" step="0.5" value="99"><span class="readout" id="tSensOut">99%</span></div>
+      <div class="row"><label>Specificity &nbsp;P(− | healthy)</label><input type="range" id="tSpec" min="50" max="100" step="0.5" value="95"><span class="readout" id="tSpecOut">95%</span></div>
+      <svg id="treeSvg" viewBox="0 0 840 470" role="img" aria-label="Probability tree"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--sick)"></span>has disease</span>
+        <span><span class="dot" style="background:var(--healthy)"></span>healthy</span>
+        <span>Bold leaves = tested positive</span>
+      </div>
+      <div class="verdict" id="treeVerdict"></div>
+      <div class="caption">Multiply <b>down</b> each path to get its leaf; add the two positive leaves to get everyone who tested positive; then <b>part ÷ whole</b> gives the reversed probability. That reversal is Bayes' theorem — the tree <em>is</em> the theorem.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: MARKOV STEPPER ============ -->
+  <div class="panel" id="panel-stepper">
+    <div class="card">
+      <h2>Weather That Forgets Where It Started</h2>
+      <p class="sub">Set the transition rule, pick today's weather, then press <em>Step a day</em>. Your belief slides forward one matrix-multiply at a time — and no matter where you start, it settles on the same long-run climate.</p>
+      <div class="cols">
+        <div class="col">
+          <div class="row"><label>If Sunny → Sunny tomorrow</label><input type="range" id="mSS" min="0" max="100" step="1" value="80"><span class="readout" id="mSSOut">80%</span></div>
+          <div class="row"><label>If Rainy → Rainy tomorrow</label><input type="range" id="mRR" min="0" max="100" step="1" value="60"><span class="readout" id="mRROut">60%</span></div>
+          <div class="matrix" id="mMatrix"></div>
+          <div class="row" style="gap:6px;">
+            <button class="op" id="mStartS">Start 100% Sunny</button>
+            <button class="op" id="mStartR">Start 100% Rainy</button>
+          </div>
+          <div class="row" style="gap:6px;">
+            <button class="op active" id="mStep">Step a day ▶</button>
+            <button class="op" id="mRun">Run to settle ⏩</button>
+            <button class="op" id="mReset">Reset</button>
+          </div>
+        </div>
+        <div class="col">
+          <svg id="stepSvg" viewBox="0 0 380 240" role="img" aria-label="State diagram"></svg>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="caption" style="margin:0 0 6px;">Belief on <b>day <span id="mDay">0</span></b> — the black tick is the stationary distribution (where it's headed):</div>
+        <div class="bar" id="mBar"></div>
+        <div class="stat-line" id="mStatLine"></div>
+      </div>
+      <div class="steplog" id="mLog"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: LONG-RUN WALKER ============ -->
+  <div class="panel" id="panel-walker">
+    <div class="card">
+      <h2>One Wanderer, Counting His Days</h2>
+      <p class="sub">Release a single token to random-walk the very same weather graph. It has no plan and no memory — yet the <em>fraction of time</em> it spends in each state climbs toward the exact stationary distribution the Stepper predicted. That's what "stationary" really means.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="wRun">Start walking ▶</button>
+        <button class="op" id="wPause">Pause ⏸</button>
+        <button class="op" id="wReset">Reset</button>
+        <label style="width:auto; margin-left:10px;">Speed</label><input type="range" id="wSpeed" min="1" max="60" step="1" value="20" style="max-width:160px;">
+      </div>
+      <div class="cols" style="margin-top:8px;">
+        <div class="col" style="max-width:320px;">
+          <svg id="walkSvg" viewBox="0 0 320 240" role="img" aria-label="Walker on state diagram"></svg>
+        </div>
+        <div class="col">
+          <div class="caption" style="margin:0 0 6px;">Steps taken: <b id="wSteps">0</b> — empirical visit share vs. stationary (black tick):</div>
+          <div style="margin-bottom:14px;">
+            <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Sunny</div>
+            <div class="bar" id="wBarS"><div style="background:var(--sun); width:0%">0%</div></div>
+            <div class="stat-line" id="wStatS"></div>
+          </div>
+          <div>
+            <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Rainy</div>
+            <div class="bar" id="wBarR"><div style="background:var(--rain); width:0%">0%</div></div>
+            <div class="stat-line" id="wStatR"></div>
+          </div>
+        </div>
+      </div>
+      <div class="caption">The walker uses the transition rule you set in the <b>Markov Stepper</b> tab. Law of large numbers meets the Markov property: time-average → stationary distribution.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../04-markov-chains-and-probability-trees.md">Markov Chains &amp; Probability Trees</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var fmtPct = function(x){ return (x*100).toFixed(1) + "%"; };
+  var round = function(x){ return Math.round(x); };
+
+  /* ---------- tab switching ---------- */
+  var tabs = document.querySelectorAll(".tab");
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){
+      tabs.forEach(function(x){ x.classList.remove("active"); });
+      t.classList.add("active");
+      document.querySelectorAll(".panel").forEach(function(p){ p.classList.remove("active"); });
+      document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+      if(t.dataset.tab === "walker"){ syncWalkerToRule(); }
+    });
+  });
+
+  /* =========================================================
+     TAB 1 — PROBABILITY TREE (Bayes)
+     ========================================================= */
+  var tPrev = document.getElementById("tPrev"),
+      tSens = document.getElementById("tSens"),
+      tSpec = document.getElementById("tSpec");
+
+  function branch(x1,y1,x2,y2,label,color){
+    var mx = (x1+x2)/2, my=(y1+y2)/2;
+    return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+'" stroke-width="2"/>'+
+           '<rect x="'+(mx-24)+'" y="'+(my-11)+'" width="48" height="19" rx="5" fill="#fff" stroke="'+color+'" stroke-width="1"/>'+
+           '<text x="'+mx+'" y="'+(my+3)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="'+color+'">'+label+'</text>';
+  }
+  function node(x,y,label,fill){
+    return '<circle cx="'+x+'" cy="'+y+'" r="7" fill="'+fill+'"/>'+
+           '<text x="'+x+'" y="'+(y-13)+'" text-anchor="middle" font-family="Inter" font-weight="600" font-size="12.5" fill="var(--ink)">'+label+'</text>';
+  }
+  function leaf(x,y,title,count,joint,bold,color){
+    var w=150,h=44;
+    return '<rect x="'+x+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="8" fill="'+(bold?color:"#F5F4F0")+'" fill-opacity="'+(bold?"0.14":"1")+'" stroke="'+(bold?color:"var(--line)")+'" stroke-width="'+(bold?"2":"1")+'"/>'+
+           '<text x="'+(x+12)+'" y="'+(y-6)+'" font-family="Inter" font-weight="'+(bold?"700":"500")+'" font-size="12" fill="var(--ink)">'+title+'</text>'+
+           '<text x="'+(x+12)+'" y="'+(y+12)+'" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--ink-soft)">'+count+' ppl · p='+joint+'</text>';
+  }
+
+  function drawTree(){
+    var p = parseFloat(tPrev.value)/100,
+        sens = parseFloat(tSens.value)/100,
+        spec = parseFloat(tSpec.value)/100;
+    tPrevOut.textContent = (parseFloat(tPrev.value)).toFixed(1)+"%";
+    tSensOut.textContent = tSens.value+"%";
+    tSpecOut.textContent = tSpec.value+"%";
+
+    var N = 10000;
+    var sick = N*p, healthy = N*(1-p);
+    var TP = sick*sens, FN = sick*(1-sens);
+    var FP = healthy*(1-spec), TN = healthy*spec;
+    var pos = TP + FP;
+    var posterior = pos > 0 ? TP/pos : 0;
+
+    var rootX=40, rootY=235;
+    var l1x=250, dY=130, hY=340;
+    var l2x=560;
+    var svg = "";
+    // branches root -> L1
+    svg += branch(rootX+8, rootY, l1x, dY, p.toFixed(3), "var(--sick)");
+    svg += branch(rootX+8, rootY, l1x, hY, (1-p).toFixed(3), "var(--healthy)");
+    // branches L1 -> L2
+    svg += branch(l1x, dY, l2x, 70,  sens.toFixed(2), "var(--sick)");
+    svg += branch(l1x, dY, l2x, 175, (1-sens).toFixed(2), "var(--sick)");
+    svg += branch(l1x, hY, l2x, 300, (1-spec).toFixed(2), "var(--healthy)");
+    svg += branch(l1x, hY, l2x, 405, spec.toFixed(2), "var(--healthy)");
+    // nodes
+    svg += node(rootX, rootY, "10,000", "var(--accent)");
+    svg += node(l1x, dY, "Disease", "var(--sick)");
+    svg += node(l1x, hY, "Healthy", "var(--healthy)");
+    // leaves
+    svg += leaf(l2x, 70,  "Disease · Test +", round(TP), (p*sens).toFixed(4), true,  "var(--sick)");
+    svg += leaf(l2x, 175, "Disease · Test −", round(FN), (p*(1-sens)).toFixed(4), false, "var(--sick)");
+    svg += leaf(l2x, 300, "Healthy · Test +", round(FP), ((1-p)*(1-spec)).toFixed(4), true,  "var(--healthy)");
+    svg += leaf(l2x, 405, "Healthy · Test −", round(TN), ((1-p)*spec).toFixed(4), false, "var(--healthy)");
+    document.getElementById("treeSvg").innerHTML = svg;
+
+    document.getElementById("treeVerdict").innerHTML =
+      'True positives (sick &amp; +): <b>'+round(TP)+'</b> &nbsp;·&nbsp; False positives (healthy &amp; +): <b>'+round(FP)+'</b><br>'+
+      'Everyone who tested positive = '+round(TP)+' + '+round(FP)+' = <b>'+round(pos)+'</b><br>'+
+      'So P(sick | positive) = '+round(TP)+' / '+round(pos)+' = <span class="big">'+fmtPct(posterior)+'</span>';
+  }
+  [tPrev,tSens,tSpec].forEach(function(el){ el.addEventListener("input", drawTree); });
+  drawTree();
+
+  /* =========================================================
+     SHARED WEATHER RULE (Stepper + Walker)
+     ========================================================= */
+  var mSS = document.getElementById("mSS"), mRR = document.getElementById("mRR");
+  function rule(){
+    var pSS = parseFloat(mSS.value)/100, pRR = parseFloat(mRR.value)/100;
+    return { pSS:pSS, pSR:1-pSS, pRR:pRR, pRS:1-pRR };
+  }
+  function stationary(){
+    var r = rule();
+    var denom = r.pSR + r.pRS;
+    if(denom === 0){ return null; } // both states absorbing
+    var piS = r.pRS / denom;
+    return { S:piS, R:1-piS };
+  }
+
+  /* =========================================================
+     TAB 2 — MARKOV STEPPER
+     ========================================================= */
+  var mDay = 0, dist = { S:1, R:0 };
+  var mBar = document.getElementById("mBar"),
+      mLog = document.getElementById("mLog"),
+      mStatLine = document.getElementById("mStatLine");
+
+  function drawMatrix(){
+    var r = rule();
+    mSSOut.textContent = mSS.value+"%"; mRROut.textContent = mRR.value+"%";
+    document.getElementById("mMatrix").innerHTML =
+      '<div class="mh"></div><div class="mh">→ Sunny</div><div class="mh">→ Rainy</div>'+
+      '<div class="mh">Sunny →</div><div class="mc">'+r.pSS.toFixed(2)+'</div><div class="mc">'+r.pSR.toFixed(2)+'</div>'+
+      '<div class="mh">Rainy →</div><div class="mc">'+r.pRS.toFixed(2)+'</div><div class="mc">'+r.pRR.toFixed(2)+'</div>';
+  }
+  function drawStateDiagram(){
+    var r = rule();
+    var Sx=110, Sy=120, Rx=280, Ry=120, rad=42;
+    var svg = '<defs><marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-soft)"/></marker></defs>';
+    // S->R (top arc), R->S (bottom arc)
+    svg += '<path d="M '+(Sx+30)+' '+(Sy-28)+' Q '+((Sx+Rx)/2)+' '+(Sy-70)+' '+(Rx-30)+' '+(Ry-28)+'" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#arw)"/>';
+    svg += '<text x="'+((Sx+Rx)/2)+'" y="'+(Sy-56)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="var(--ink-soft)">'+r.pSR.toFixed(2)+'</text>';
+    svg += '<path d="M '+(Rx-30)+' '+(Ry+28)+' Q '+((Sx+Rx)/2)+' '+(Sy+70)+' '+(Sx+30)+' '+(Sy+28)+'" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#arw)"/>';
+    svg += '<text x="'+((Sx+Rx)/2)+'" y="'+(Sy+66)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="var(--ink-soft)">'+r.pRS.toFixed(2)+'</text>';
+    // self loops
+    svg += '<path d="M '+(Sx-30)+' '+(Sy-24)+' C '+(Sx-80)+' '+(Sy-70)+', '+(Sx-80)+' '+(Sy+70)+', '+(Sx-30)+' '+(Sy+24)+'" fill="none" stroke="var(--sun)" stroke-width="1.6" marker-end="url(#arw)"/>';
+    svg += '<text x="'+(Sx-70)+'" y="'+(Sy+4)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="var(--sun)">'+r.pSS.toFixed(2)+'</text>';
+    svg += '<path d="M '+(Rx+30)+' '+(Ry-24)+' C '+(Rx+80)+' '+(Ry-70)+', '+(Rx+80)+' '+(Ry+70)+', '+(Rx+30)+' '+(Ry+24)+'" fill="none" stroke="var(--rain)" stroke-width="1.6" marker-end="url(#arw)"/>';
+    svg += '<text x="'+(Rx+70)+'" y="'+(Ry+4)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="var(--rain)">'+r.pRR.toFixed(2)+'</text>';
+    // nodes
+    svg += '<circle cx="'+Sx+'" cy="'+Sy+'" r="'+rad+'" fill="var(--sun)" fill-opacity="0.15" stroke="var(--sun)" stroke-width="2"/>';
+    svg += '<text x="'+Sx+'" y="'+(Sy+5)+'" text-anchor="middle" font-family="Fraunces,serif" font-size="15" font-weight="600" fill="var(--ink)">Sunny</text>';
+    svg += '<circle cx="'+Rx+'" cy="'+Ry+'" r="'+rad+'" fill="var(--rain)" fill-opacity="0.15" stroke="var(--rain)" stroke-width="2"/>';
+    svg += '<text x="'+Rx+'" y="'+(Ry+5)+'" text-anchor="middle" font-family="Fraunces,serif" font-size="15" font-weight="600" fill="var(--ink)">Rainy</text>';
+    document.getElementById("stepSvg").innerHTML = svg;
+  }
+  function drawBar(){
+    var s = Math.round(dist.S*1000)/10, r = Math.round(dist.R*1000)/10;
+    mBar.innerHTML =
+      '<div style="background:var(--sun); width:'+dist.S*100+'%">'+(dist.S>0.08?("☀ "+s+"%"):"")+'</div>'+
+      '<div style="background:var(--rain); width:'+dist.R*100+'%">'+(dist.R>0.08?("☔ "+r+"%"):"")+'</div>';
+    var st = stationary();
+    mStatLine.innerHTML = st ? '<div class="stat-tick" data-l="π = '+(st.S*100).toFixed(1)+'% sunny" style="left:'+(st.S*100)+'%"></div>' : '';
+  }
+  function logStep(){
+    var line = "day "+String(mDay).padStart(2," ")+":  sunny "+(dist.S).toFixed(4)+"   rainy "+(dist.R).toFixed(4);
+    mLog.textContent = line + "\n" + mLog.textContent;
+  }
+  function stepDay(){
+    var r = rule();
+    var nS = dist.S*r.pSS + dist.R*r.pRS;
+    var nR = dist.S*r.pSR + dist.R*r.pRR;
+    dist = { S:nS, R:nR }; mDay++;
+    mDayEl.textContent = mDay; drawBar(); logStep();
+  }
+  var mDayEl = document.getElementById("mDay");
+  function resetStepper(startS){
+    dist = { S: startS, R: 1-startS }; mDay = 0;
+    mDayEl.textContent = 0; mLog.textContent = ""; drawBar(); logStep();
+  }
+  document.getElementById("mStep").addEventListener("click", stepDay);
+  document.getElementById("mRun").addEventListener("click", function(){
+    var i=0; var iv = setInterval(function(){ stepDay(); if(++i>=40){ clearInterval(iv); } }, 90);
+  });
+  document.getElementById("mReset").addEventListener("click", function(){ resetStepper(dist.S>=0.5?1:0); });
+  document.getElementById("mStartS").addEventListener("click", function(){ resetStepper(1); });
+  document.getElementById("mStartR").addEventListener("click", function(){ resetStepper(0); });
+  [mSS,mRR].forEach(function(el){ el.addEventListener("input", function(){ drawMatrix(); drawStateDiagram(); drawBar(); syncWalkerToRule(); }); });
+  drawMatrix(); drawStateDiagram(); resetStepper(1);
+
+  /* =========================================================
+     TAB 3 — LONG-RUN WALKER
+     ========================================================= */
+  var wState = 0; // 0 = Sunny, 1 = Rainy
+  var visits = [0,0], wSteps = 0, wTimer = null;
+  var wBarS = document.getElementById("wBarS").firstElementChild,
+      wBarR = document.getElementById("wBarR").firstElementChild;
+
+  function drawWalker(){
+    var Sx=90, Sy=120, Rx=230, Ry=120, rad=40;
+    var svg = '<defs><marker id="arw2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="var(--line)"/></marker></defs>';
+    svg += '<path d="M '+(Sx+28)+' '+(Sy-26)+' Q '+((Sx+Rx)/2)+' '+(Sy-62)+' '+(Rx-28)+' '+(Ry-26)+'" fill="none" stroke="var(--line)" stroke-width="1.6" marker-end="url(#arw2)"/>';
+    svg += '<path d="M '+(Rx-28)+' '+(Ry+26)+' Q '+((Sx+Rx)/2)+' '+(Sy+62)+' '+(Sx+28)+' '+(Sy+26)+'" fill="none" stroke="var(--line)" stroke-width="1.6" marker-end="url(#arw2)"/>';
+    svg += '<circle cx="'+Sx+'" cy="'+Sy+'" r="'+rad+'" fill="var(--sun)" fill-opacity="'+(wState===0?"0.32":"0.10")+'" stroke="var(--sun)" stroke-width="'+(wState===0?"3":"1.5")+'"/>';
+    svg += '<text x="'+Sx+'" y="'+(Sy+5)+'" text-anchor="middle" font-family="Fraunces,serif" font-size="14" font-weight="600" fill="var(--ink)">Sunny</text>';
+    svg += '<circle cx="'+Rx+'" cy="'+Ry+'" r="'+rad+'" fill="var(--rain)" fill-opacity="'+(wState===1?"0.32":"0.10")+'" stroke="var(--rain)" stroke-width="'+(wState===1?"3":"1.5")+'"/>';
+    svg += '<text x="'+Rx+'" y="'+(Ry+5)+'" text-anchor="middle" font-family="Fraunces,serif" font-size="14" font-weight="600" fill="var(--ink)">Rainy</text>';
+    // token
+    var tx = wState===0 ? Sx : Rx;
+    svg += '<circle cx="'+tx+'" cy="'+(Sy-rad-10)+'" r="7" fill="var(--accent)"><animate attributeName="cy" values="'+(Sy-rad-16)+';'+(Sy-rad-8)+';'+(Sy-rad-16)+'" dur="0.9s" repeatCount="indefinite"/></circle>';
+    document.getElementById("walkSvg").innerHTML = svg;
+  }
+  function drawWalkerBars(){
+    var tot = wSteps || 1;
+    var fS = visits[0]/tot, fR = visits[1]/tot;
+    wBarS.style.width = (fS*100)+"%"; wBarS.textContent = (fS*100).toFixed(1)+"%";
+    wBarR.style.width = (fR*100)+"%"; wBarR.textContent = (fR*100).toFixed(1)+"%";
+    document.getElementById("wSteps").textContent = wSteps;
+    var st = stationary();
+    document.getElementById("wStatS").innerHTML = st ? '<div class="stat-tick" data-l="π '+(st.S*100).toFixed(1)+'%" style="left:'+(st.S*100)+'%"></div>' : '';
+    document.getElementById("wStatR").innerHTML = st ? '<div class="stat-tick" data-l="π '+(st.R*100).toFixed(1)+'%" style="left:'+(st.R*100)+'%"></div>' : '';
+  }
+  function walkStep(){
+    var r = rule();
+    if(wState===0){ wState = Math.random() < r.pSS ? 0 : 1; }
+    else          { wState = Math.random() < r.pRR ? 1 : 0; }
+    visits[wState]++; wSteps++;
+    drawWalker(); drawWalkerBars();
+  }
+  function startWalk(){
+    if(wTimer) return;
+    var speed = parseInt(document.getElementById("wSpeed").value,10);
+    wTimer = setInterval(walkStep, Math.max(16, 1000/speed));
+    document.getElementById("wRun").classList.add("active");
+  }
+  function pauseWalk(){ if(wTimer){ clearInterval(wTimer); wTimer=null; } document.getElementById("wRun").classList.remove("active"); }
+  function resetWalk(){ pauseWalk(); wState=0; visits=[1,0]; wSteps=1; drawWalker(); drawWalkerBars(); }
+  function syncWalkerToRule(){ drawWalker(); drawWalkerBars(); }
+  document.getElementById("wRun").addEventListener("click", startWalk);
+  document.getElementById("wPause").addEventListener("click", pauseWalk);
+  document.getElementById("wReset").addEventListener("click", resetWalk);
+  document.getElementById("wSpeed").addEventListener("input", function(){ if(wTimer){ pauseWalk(); startWalk(); } });
+  resetWalk();
+})();
+</script>
+</body>
+</html>

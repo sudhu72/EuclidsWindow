@@ -7,7 +7,15 @@
       "keywords": ["euler identity", "e to the i pi"],
       "related": ["complex_numbers", "roots_of_unity", "eulers_number_e", "trigonometry", "pi"],
       "viz": "euler_identity_visualizer.html",
-      "source": "math_tutorial.md"
+      "source": "11-eulers-identity.md"
+    },
+    {
+      "id": "markov_chains",
+      "name": "Markov Chains & Probability Trees",
+      "keywords": ["markov chain", "probability tree", "transition matrix", "stationary distribution", "memoryless", "random walk", "base rate", "absorbing state", "gambler's ruin"],
+      "related": ["probability", "bayes_theorem", "matrices", "eigenvalues", "graph_theory", "statistics"],
+      "viz": "markov_chains_visualizer.html",
+      "source": "04-markov-chains-and-probability-trees.md"
     },
     {
       "id": "math_notation",
@@ -23,7 +31,7 @@
       "keywords": ["normalization", "normalize", "z-score", "min-max", "softmax", "unit vector"],
       "related": ["probability", "statistics", "loss_functions", "vectors", "dimensionality_reduction"],
       "viz": "normalization_visualizer.html",
-      "source": "math_tutorial.md"
+      "source": "05-machine-learning-bridges.md"
     },
     {
       "id": "number_theory",
@@ -31,7 +39,7 @@
       "keywords": ["number theory", "modular arithmetic clock", "prime factorization"],
       "related": ["prime_numbers", "modular_arithmetic", "cryptography"],
       "viz": "number_theory_visualizer.html",
-      "source": "math_tutorial.md"
+      "source": "10-number-theory.md"
     },
     {
       "id": "three_motions",
@@ -39,7 +47,7 @@
       "keywords": ["linear transformation", "derivative as zoom", "flow", "three motions"],
       "related": ["linear_equations", "derivative", "differential_equations", "matrices", "transformations"],
       "viz": "three_motions_visualizer.html",
-      "source": "math_tutorial.md"
+      "source": "01-linear-algebra.md"
     },
     {
       "id": "three_structures",
@@ -47,7 +55,15 @@
       "keywords": ["combinatorics symmetry topology", "three structures", "counting symmetry shape"],
       "related": ["combinatorics", "symmetry", "topology"],
       "viz": "three_structures_visualizer.html",
-      "source": "math_tutorial.md"
+      "source": "08-combinatorics.md"
+    },
+    {
+      "id": "symmetry_invariance",
+      "name": "Symmetry & Invariance",
+      "keywords": ["invariance", "invariant", "symmetry breaking", "noether", "conservation law", "parity argument", "mutilated chessboard", "equivariance"],
+      "related": ["symmetry", "three_structures", "transformations", "proof", "geometry", "emmy_noether"],
+      "viz": "symmetry_invariance_visualizer.html",
+      "source": "symmetry-and-invariance.md"
     },
     {
       "id": "backpropagation",

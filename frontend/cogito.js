@@ -15,8 +15,11 @@
     {
       id: "math",
       title: "Mathematics",
-      blurb: "Notation, transformations, structure, and number theory — the ideas behind the symbols.",
+      blurb: "Notation, transformations, structure, chance, and number theory — the ideas behind the symbols.",
       items: [
+        { file: "markov_chains_visualizer.html", title: "Markov Chains & Probability Trees",
+          one: "Drag a medical test's prevalence and accuracy, then watch a wandering token settle into its stationary distribution.",
+          prompt: "Explain probability trees and Markov chains from first principles: conditional probability and the base-rate surprise in medical tests, the memoryless property, transition matrices, and why the chain settles into a stationary distribution." },
         { file: "euler_identity_visualizer.html", title: "Our Jewel — Euler's Identity",
           one: "Watch e^{iπ} + 1 = 0 assemble on the unit circle, one motion at a time.",
           prompt: "Explain Euler's identity e^{i\\pi} + 1 = 0 from first principles — why does it connect e, i, pi, 1, and 0?" },
@@ -35,6 +38,9 @@
         { file: "three_structures_visualizer.html", title: "Three Structures — Counting, Symmetry, Shape",
           one: "Combinatorics, group theory, and topology as three ways to see structure.",
           prompt: "Explain how combinatorics (counting), group theory (symmetry), and topology (shape) each describe structure." },
+        { file: "symmetry_invariance_visualizer.html", title: "Symmetry & Invariance",
+          one: "Tile a mutilated chessboard, sweep equal areas in an orbit, and roll a ball off the Mexican hat.",
+          prompt: "Explain symmetry and invariance as the master concept: how an invariant like parity proves the mutilated chessboard cannot be tiled, why Noether's theorem ties every conservation law to a symmetry, and what spontaneous symmetry breaking means." },
       ],
     },
     {
