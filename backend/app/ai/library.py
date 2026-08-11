@@ -25,6 +25,9 @@ except Exception:  # pragma: no cover
 CHUNK_CHARS = 1200
 CHUNK_OVERLAP = 200
 COLLECTION = "library"
+# Chunks fetched per page when building the catalog — comfortably under
+# SQLite's ~32k bound-variable ceiling that Chroma hits on a full-collection get.
+CATALOG_PAGE = 2000
 
 _UA = "EuclidsWindow-Library/1.0 (+local math tutor)"
 # Link extensions to skip when crawling (binary assets), except PDFs which we
@@ -189,11 +192,26 @@ class LibraryService:
     def list_docs(self) -> List[Dict[str, Any]]:
         if not self.is_available():
             return []
-        got = self._collection.get(include=["metadatas"])
+        # Page through the collection: an unbounded get() binds one SQL variable
+        # per chunk, and Chroma's SQLite backend fails with "too many SQL
+        # variables" once the library grows past a few thousand chunks.
         counts: Dict[str, int] = {}
-        for meta in got.get("metadatas") or []:
-            src = meta.get("source", "?")
-            counts[src] = counts.get(src, 0) + 1
+        offset = 0
+        while True:
+            try:
+                got = self._collection.get(
+                    include=["metadatas"], limit=CATALOG_PAGE, offset=offset
+                )
+            except Exception as exc:
+                logger.warning(f"Library catalog page at offset {offset} failed: {exc}")
+                break
+            metadatas = got.get("metadatas") or []
+            for meta in metadatas:
+                src = (meta or {}).get("source", "?")
+                counts[src] = counts.get(src, 0) + 1
+            if len(metadatas) < CATALOG_PAGE:
+                break
+            offset += CATALOG_PAGE
         return [{"source": s, "chunks": c} for s, c in sorted(counts.items())]
 
     def delete_doc(self, source: str) -> int:
