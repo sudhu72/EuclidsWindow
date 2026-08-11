@@ -19,6 +19,9 @@ export interface AppSettings {
   local_music_timeout_seconds: number;
   local_music_fast_mode: boolean;
   local_diffusion_timeout_seconds: number;
+  /** Read-only: what fast mode actually runs. Derived — never send these back. */
+  effective_llm_model?: string | null;
+  effective_multi_agent_enabled?: boolean | null;
 }
 
 /** Every field is optional — the endpoint patches only what it's sent. */

@@ -1347,15 +1347,22 @@ async def ai_viz_agent(payload: VizAgentRequest) -> VizAgentResponse:
 def _settings_response() -> AppSettingsResponse:
     from .ai.providers import CLOUD_PROVIDERS
 
+    # Serve *configured* values: a settings form must round-trip what the user
+    # chose, not fast mode's derived model / multi-agent overrides, or writing
+    # the form back would persist them permanently. The derived values are
+    # reported separately, read-only, so the UI can still show what will run.
+    configured = settings_store.get_configured_settings()
     effective = settings_store.get_effective_settings()
-    effective["cloud_keys_set"] = {
-        provider: bool(effective.get(meta["key_setting"]))
+    configured["cloud_keys_set"] = {
+        provider: bool(configured.get(meta["key_setting"]))
         for provider, meta in CLOUD_PROVIDERS.items()
     }
     # Never send raw API keys to the frontend.
     for meta in CLOUD_PROVIDERS.values():
-        effective.pop(meta["key_setting"], None)
-    return AppSettingsResponse(**effective)
+        configured.pop(meta["key_setting"], None)
+    configured["effective_llm_model"] = effective["local_llm_model"]
+    configured["effective_multi_agent_enabled"] = effective["local_multi_agent_enabled"]
+    return AppSettingsResponse(**configured)
 
 
 @app.get("/api/settings", response_model=AppSettingsResponse)

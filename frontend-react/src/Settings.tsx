@@ -261,6 +261,12 @@ export default function Settings() {
               ))}
             </select>
           </label>
+          {s.effective_llm_model && s.effective_llm_model !== s.local_llm_model && (
+            <p className="set-hint">
+              Fast mode is running <strong>{s.effective_llm_model}</strong> instead. Your choice
+              above is kept and restored when you turn fast mode off.
+            </p>
+          )}
           <div className="set-actions">
             <button className="btn-ghost" onClick={() => void runTest("ollama")} disabled={busy}>
               Test model
@@ -311,7 +317,10 @@ export default function Settings() {
           <h4>Features</h4>
           {([
             ["local_ai_enabled", "Local AI reasoning", "Route uncurated questions to the local model."],
-            ["local_multi_agent_enabled", "Multi-agent pipeline", "Use the JSON-plan planner with visualization codegen."],
+            ["local_multi_agent_enabled", "Multi-agent pipeline",
+              s.fast_mode_enabled && s.effective_multi_agent_enabled === false
+                ? "Suspended while fast mode is on; your setting is kept."
+                : "Use the JSON-plan planner with visualization codegen."],
             ["local_web_rag_enabled", "Web RAG enrichment", "Pull in web context for long-tail topics."],
             ["fast_mode_enabled", "Fast mode", "Trade some depth for lower latency."],
           ] as [keyof AppSettings, string, string][]).map(([key, label, hint]) => (

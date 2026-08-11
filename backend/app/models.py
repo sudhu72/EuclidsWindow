@@ -241,6 +241,10 @@ class AppSettingsResponse(BaseModel):
     local_music_timeout_seconds: int
     local_music_fast_mode: bool
     local_diffusion_timeout_seconds: int
+    # Read-only: what fast mode actually runs, which differs from the configured
+    # values above when it is on. Never write these back — they are derived.
+    effective_llm_model: Optional[str] = None
+    effective_multi_agent_enabled: Optional[bool] = None
 
 
 class AppSettingsUpdate(BaseModel):

@@ -3266,10 +3266,18 @@ const applyPreset = (preset) => {
 const updateFastModeState = () => {
   if (!settingsFastModeEnabled) return;
   const fastOn = settingsFastModeEnabled.checked;
+  // Fast mode suspends these at runtime, so the controls are not editable while
+  // it is on — but their *values* must keep showing what the user chose. Forcing
+  // the checkbox off here used to write that suspension into stored settings on
+  // the next save, permanently disabling multi-agent. The server reports the
+  // suspended values separately (effective_*); it never edits the stored ones.
   settingsMultiAgentEnabled.disabled = fastOn;
   settingsLocalLlmModel.disabled = fastOn;
-  if (fastOn) {
-    settingsMultiAgentEnabled.checked = false;
+  const note = document.getElementById("settings-fast-mode-note");
+  if (note) {
+    note.textContent = fastOn
+      ? "Fast mode is running a smaller model with the multi-agent pipeline suspended. Your choices above are kept and restored when you turn it off."
+      : "";
   }
 };
 
