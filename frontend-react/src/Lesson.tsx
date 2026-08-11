@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { buildLesson, fetchScene, type LessonBuild, type LessonScene } from "./lessonApi";
-import { streamChat } from "./api";
+import { streamTutor, type TutorMeta } from "./api";
 import Markdown from "./Markdown";
 import Animation from "./Animation";
 
@@ -63,21 +63,33 @@ function Classmate({ q, a }: { q?: string | null; a?: string | null }) {
   );
 }
 
-function AskBox({ context }: { context: string }) {
+function AskBox({ context, level }: { context: string; level: string }) {
   const [q, setQ] = useState("");
   const [answer, setAnswer] = useState("");
+  const [meta, setMeta] = useState<TutorMeta | null>(null);
   const [busy, setBusy] = useState(false);
   async function ask() {
     const text = q.trim();
     if (!text || busy) return;
     setBusy(true);
     setAnswer("");
+    setMeta(null);
     let full = "";
     try {
-      await streamChat(`${context}\n\nQuestion: ${text}`, [], (tok) => {
-        full += tok;
-        setAnswer(full);
-      });
+      // The scene context frames the question, but the tutor is asked the
+      // learner's actual words so catalog + library matching sees them cleanly.
+      await streamTutor(
+        text,
+        {
+          learnerLevel: level,
+          history: context ? [{ role: "assistant", content: context }] : [],
+          onMeta: setMeta,
+        },
+        (tok) => {
+          full += tok;
+          setAnswer(full);
+        }
+      );
     } catch (e) {
       setAnswer(`⚠️ ${(e as Error).message}`);
     } finally {
@@ -101,6 +113,13 @@ function AskBox({ context }: { context: string }) {
       {answer && (
         <div className="bubble assistant ask-answer">
           <Markdown>{answer}</Markdown>
+          {meta && (
+            <div className="ask-meta">
+              {meta.source === "curated" ? "📗 curated lesson" : "✨ tutor"}
+              {meta.library_grounded ? " · grounded in your library" : ""}
+              {` · ${meta.learner_level} level`}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -248,7 +267,7 @@ export default function Lesson() {
             </button>
           </div>
 
-          <AskBox context={context} />
+          <AskBox context={context} level={level} />
         </div>
       )}
     </div>

@@ -424,3 +424,9 @@ body {
 .al-gh { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
 .al-gh summary { cursor: pointer; font-size: 13px; color: #57534e; }
 .al-ok { color: #15803d; }
+
+/* Provenance line under a tutor answer — what grounded it. */
+.ask-meta {
+  margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line);
+  font-size: 11px; color: var(--muted); letter-spacing: 0.02em;
+}

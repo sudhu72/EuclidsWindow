@@ -35,6 +35,7 @@ from .routers.graph import router as graph_router
 from .routers.chat import router as chat_router
 from .routers.voice import router as voice_router
 from .routers.learn import router as learn_router
+from .routers.tutor_stream import router as tutor_stream_router
 from .ai.viz_agent import VizAgent
 from .ai.animation_pipeline import AnimationPipeline
 from .ai.checker import SymbolicChecker
@@ -223,6 +224,7 @@ app.include_router(graph_router)
 app.include_router(chat_router)
 app.include_router(voice_router)
 app.include_router(learn_router)
+app.include_router(tutor_stream_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

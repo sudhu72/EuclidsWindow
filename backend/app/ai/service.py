@@ -71,6 +71,51 @@ class GenerativeTutorService:
                 logger.info("LLM model not available — skipping LLM path")
             return None
 
+        from .skills import COMPACT_SKILL, COMPACT_TEACHING
+
+        context = self.build_reasoning_context(question, history, curated_hint)
+        prompt = (
+            REASONING_SYSTEM_PROMPT + "\n\n" + COMPACT_TEACHING + "\n\n" + COMPACT_SKILL + "\n\n"
+            + REASONING_USER_TEMPLATE.format(
+                context=context,
+                question=question,
+                level_instruction=self.level_instruction(learner_level),
+            )
+        )
+
+        raw = engine.generate_with_timeout(prompt, self._llm_first_timeout)
+        if not raw:
+            return None
+
+        cleaned = self._clean_reasoning_output(raw)
+        if len(cleaned.strip()) < 30:
+            return None
+
+        self._store_cached_answer(cache_key, cleaned, None)
+        return cleaned
+
+    @staticmethod
+    def level_instruction(learner_level: Optional[str]) -> str:
+        from .prompts import LEVEL_INSTRUCTIONS
+
+        return LEVEL_INSTRUCTIONS.get((learner_level or "").strip().lower(), "")
+
+    def build_reasoning_context(
+        self,
+        question: str,
+        history: Optional[list] = None,
+        curated_hint: Optional[str] = None,
+    ) -> str:
+        """Assemble the grounding block that precedes the question.
+
+        Ordered outermost-first: concept graph (relationships, for
+        disambiguation), then the user's uploaded reference library (RAG text),
+        then any curated summary, then the recent conversation. Shared by the
+        one-shot and streaming tutor paths so the two can't drift apart.
+        """
+        from .concept_graph import get_concept_graph
+        from .library import get_library
+
         context = ""
         if curated_hint:
             context = (
@@ -87,43 +132,42 @@ class GenerativeTutorService:
             if lines:
                 context += "Conversation so far:\n" + "\n".join(lines) + "\n\n"
 
-        from .prompts import LEVEL_INSTRUCTIONS
-        level_key = (learner_level or "").strip().lower()
-        level_instruction = LEVEL_INSTRUCTIONS.get(level_key, "")
-
-        # Ground the answer in the concept graph (relationships, for
-        # disambiguation) and the user's uploaded reference library (RAG text),
-        # then apply the standing-orders verification skill.
-        from .concept_graph import get_concept_graph
-        from .library import get_library
-        from .skills import COMPACT_SKILL, COMPACT_TEACHING
-
         library_context = get_library().context_for(question, k=3, max_chars=1500)
         if library_context:
             context = library_context + "\n\n" + context
         graph_context = get_concept_graph().context_for(question)
         if graph_context:
             context = graph_context + "\n\n" + context
+        return context
 
-        prompt = (
-            REASONING_SYSTEM_PROMPT + "\n\n" + COMPACT_TEACHING + "\n\n" + COMPACT_SKILL + "\n\n"
-            + REASONING_USER_TEMPLATE.format(
-                context=context,
-                question=question,
-                level_instruction=level_instruction,
-            )
+    def build_reasoning_messages(
+        self,
+        question: str,
+        history: Optional[list] = None,
+        curated_hint: Optional[str] = None,
+        learner_level: Optional[str] = None,
+    ) -> list:
+        """The same grounded prompt as ``answer_reasoning``, in chat form.
+
+        ``generate_with_timeout`` takes one flat prompt; streaming goes through
+        the chat API, so the identical material is split into system (persona +
+        teaching style + standing orders + grounding) and user (level + question).
+        """
+        from .skills import COMPACT_SKILL, COMPACT_TEACHING
+
+        context = self.build_reasoning_context(question, history, curated_hint)
+        system = REASONING_SYSTEM_PROMPT + "\n\n" + COMPACT_TEACHING + "\n\n" + COMPACT_SKILL
+        if context:
+            system += "\n\n" + context
+        user = REASONING_USER_TEMPLATE.format(
+            context="",
+            question=question,
+            level_instruction=self.level_instruction(learner_level),
         )
-
-        raw = engine.generate_with_timeout(prompt, self._llm_first_timeout)
-        if not raw:
-            return None
-
-        cleaned = self._clean_reasoning_output(raw)
-        if len(cleaned.strip()) < 30:
-            return None
-
-        self._store_cached_answer(cache_key, cleaned, None)
-        return cleaned
+        return [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
 
     @staticmethod
     def _clean_reasoning_output(text: str) -> str:
