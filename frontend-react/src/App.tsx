@@ -7,8 +7,13 @@ import Library from "./Library";
 import Labs from "./Labs";
 import Settings from "./Settings";
 import Evaluation from "./Evaluation";
+import Symbols from "./Symbols";
+import Resources from "./Resources";
+import Prompts from "./Prompts";
 
-type Tab = "learn" | "discover" | "solve" | "chat" | "labs" | "library" | "settings" | "eval";
+type Tab =
+  | "learn" | "discover" | "solve" | "chat" | "labs" | "library"
+  | "symbols" | "resources" | "prompts" | "settings" | "eval";
 
 /** Primary destinations, shown as labelled tabs. */
 const TABS: [Tab, string][] = [
@@ -18,6 +23,9 @@ const TABS: [Tab, string][] = [
   ["chat", "Chat"],
   ["labs", "Labs"],
   ["library", "Library"],
+  ["symbols", "Symbols"],
+  ["resources", "Resources"],
+  ["prompts", "Prompts"],
 ];
 
 /** Utility destinations, shown as icon buttons in the right-hand cluster. */
@@ -40,6 +48,13 @@ export default function App() {
     setTabState(next);
     window.history.replaceState(null, "", next === "learn" ? " " : `#${next}`);
   };
+  // A prompt chosen in the Prompt Library is handed to Learn to build from.
+  const [seedTopic, setSeedTopic] = useState<string | null>(null);
+  const askInLearn = (question: string) => {
+    setSeedTopic(question);
+    setTab("learn");
+  };
+
   useEffect(() => {
     const onHashChange = () => setTabState(tabFromHash());
     window.addEventListener("hashchange", onHashChange);
@@ -88,12 +103,18 @@ export default function App() {
           <Labs />
         ) : tab === "library" ? (
           <Library />
+        ) : tab === "symbols" ? (
+          <Symbols />
+        ) : tab === "resources" ? (
+          <Resources />
+        ) : tab === "prompts" ? (
+          <Prompts onAsk={askInLearn} />
         ) : tab === "settings" ? (
           <Settings />
         ) : tab === "eval" ? (
           <Evaluation />
         ) : (
-          <Lesson />
+          <Lesson seedTopic={seedTopic} onSeedUsed={() => setSeedTopic(null)} />
         )}
       </main>
     </div>

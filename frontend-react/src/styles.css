@@ -430,3 +430,87 @@ body {
   margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line);
   font-size: 11px; color: var(--muted); letter-spacing: 0.02em;
 }
+
+/* Symbols explorer */
+.sym-grid {
+  display: grid; gap: 8px; margin-bottom: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+}
+.sym-card {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 8px; background: #fff; border: 1px solid var(--line);
+  border-radius: 10px; cursor: pointer; font-family: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.sym-card:hover { border-color: var(--ink); transform: translateY(-1px); }
+.sym-card.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.sym-glyph { font-size: 26px; line-height: 1.1; }
+.sym-name { font-size: 11px; color: var(--muted); text-align: center; }
+.sym-detail {
+  border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: #fff;
+}
+.sym-detail-glyph { font-size: 44px; line-height: 1; }
+.sym-detail h4 { margin: 6px 0 2px; }
+.sym-latex { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.sym-latex code { font-family: "SF Mono", monospace; }
+.sym-section { margin-top: 14px; }
+.sym-section h5 {
+  margin: 0 0 6px; font-size: 12px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--muted);
+}
+.sym-box {
+  background: #fafaf9; border-left: 3px solid var(--line);
+  padding: 10px 12px; border-radius: 0 8px 8px 0; line-height: 1.6; font-size: 14px;
+}
+.sym-box-warn { border-left-color: #d9a62e; }
+.sym-meanings { margin: 0; padding-left: 20px; line-height: 1.7; font-size: 14px; }
+.sym-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.sym-tag {
+  font-size: 12px; padding: 3px 9px; border-radius: 999px;
+  background: #f5f5f4; border: 1px solid var(--line); color: #44403c;
+}
+
+/* Resources */
+.res-list { display: flex; flex-direction: column; gap: 10px; }
+.res-card { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: #fff; }
+.res-head { display: flex; gap: 10px; align-items: flex-start; }
+.res-icon { font-size: 18px; line-height: 1.3; }
+.res-title { margin: 0; font-size: 15px; }
+.res-title a { color: var(--ink); }
+.res-author { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.res-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0 0 28px; }
+.res-pill {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 2px 8px; border-radius: 999px; background: #f5f5f4;
+  border: 1px solid var(--line); color: #57534e;
+}
+.res-isbn { font-size: 11px; color: var(--muted); }
+.res-desc { margin: 8px 0 0 28px; font-size: 14px; line-height: 1.6; color: #292524; }
+
+/* Prompt collections */
+.pc-cat { margin-bottom: 22px; }
+.pc-cat-head { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 15px; }
+.pc-swatch { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 10px; }
+.pc-count { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: auto; }
+.pc-topic { border: 1px solid var(--line); border-radius: 10px; margin-bottom: 6px; background: #fff; }
+.pc-topic-head {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 11px 13px; background: none; border: 0; cursor: pointer;
+  font-family: inherit; font-size: 14px; text-align: left; color: var(--ink);
+}
+.pc-topic-head:hover { background: #fafaf9; border-radius: 10px; }
+.pc-icon { flex: 0 0 18px; text-align: center; opacity: 0.7; }
+.pc-topic-name { font-weight: 600; }
+.pc-caret {
+  width: 6px; height: 6px; margin-left: 4px; flex: 0 0 6px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); opacity: 0.5; transition: transform 0.2s ease;
+}
+.pc-caret.open { transform: rotate(45deg); }
+.pc-prompts { margin: 0; padding: 0 13px 12px 40px; display: flex; flex-direction: column; gap: 4px; }
+.pc-prompt {
+  background: none; border: 0; padding: 6px 8px; margin-left: -8px; border-radius: 6px;
+  font-family: inherit; font-size: 14px; line-height: 1.55; text-align: left;
+  color: #292524; cursor: pointer; width: 100%;
+}
+.pc-prompt:hover { background: #f5f5f4; color: var(--ink); }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { buildLesson, fetchScene, type LessonBuild, type LessonScene } from "./lessonApi";
 import { streamTutor, type TutorMeta } from "./api";
 import Markdown from "./Markdown";
@@ -126,7 +126,13 @@ function AskBox({ context, level }: { context: string; level: string }) {
   );
 }
 
-export default function Lesson() {
+export default function Lesson({
+  seedTopic,
+  onSeedUsed,
+}: {
+  seedTopic?: string | null;
+  onSeedUsed?: () => void;
+}) {
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState("teen");
   const [status, setStatus] = useState("");
@@ -153,6 +159,18 @@ export default function Lesson() {
       setBuilding(false);
     }
   }
+
+  // A prompt handed over from the Prompt Library builds itself on arrival. The
+  // ref guards against React 18 StrictMode running the effect twice.
+  const seedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!seedTopic || seedRef.current === seedTopic) return;
+    seedRef.current = seedTopic;
+    setTopic(seedTopic);
+    void build(seedTopic);
+    onSeedUsed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedTopic]);
 
   async function retryScene(i: number) {
     if (!lesson) return;
