@@ -29,6 +29,14 @@ COLLECTION = "library"
 # SQLite's ~32k bound-variable ceiling that Chroma hits on a full-collection get.
 CATALOG_PAGE = 2000
 
+# Where a chunk came from. The distinction matters for `has_strong_match`: only
+# material the user deliberately added should be allowed to outrank a curated
+# topic. Crawled pages are background corpus — excellent for grounding an LLM
+# answer, but not evidence that the curated lesson is the wrong choice.
+ORIGIN_UPLOAD = "upload"  # a file the user uploaded, or a URL they named
+ORIGIN_WEB = "web"  # followed by the crawler or the autonomous learner
+DELIBERATE_ORIGINS = (ORIGIN_UPLOAD,)
+
 _UA = "EuclidsWindow-Library/1.0 (+local math tutor)"
 # Link extensions to skip when crawling (binary assets), except PDFs which we
 # do want to ingest.
@@ -91,7 +99,7 @@ class LibraryService:
     # Ingestion
     # ------------------------------------------------------------------
 
-    def ingest(self, filename: str, data: bytes) -> Dict[str, Any]:
+    def ingest(self, filename: str, data: bytes, origin: str = ORIGIN_UPLOAD) -> Dict[str, Any]:
         if not self.is_available():
             raise RuntimeError("Library store is unavailable")
         source = Path(filename).name
@@ -109,7 +117,7 @@ class LibraryService:
             for chunk in self._chunks(page_text):
                 ids.append(f"{source}::{n}")
                 docs.append(chunk)
-                metas.append({"source": source, "page": page_no, "chunk": n})
+                metas.append({"source": source, "page": page_no, "chunk": n, "origin": origin})
                 n += 1
         for i in range(0, len(ids), 64):  # batch to keep embedding memory sane
             self._collection.add(ids=ids[i:i + 64], documents=docs[i:i + 64], metadatas=metas[i:i + 64])
@@ -127,7 +135,9 @@ class LibraryService:
         # txt / md / anything text-like
         return [(1, data.decode("utf-8", errors="replace"))]
 
-    def ingest_text(self, source: str, text: str, page: int = 1) -> Dict[str, Any]:
+    def ingest_text(
+        self, source: str, text: str, page: int = 1, origin: str = ORIGIN_UPLOAD
+    ) -> Dict[str, Any]:
         """Chunk + embed already-extracted text (e.g. from a web page)."""
         if not self.is_available():
             raise RuntimeError("Library store is unavailable")
@@ -136,7 +146,10 @@ class LibraryService:
         self.delete_doc(source)  # re-ingest replaces
         chunks = self._chunks(text)
         ids = [f"{source}::{n}" for n in range(len(chunks))]
-        metas = [{"source": source, "page": page, "chunk": n} for n in range(len(chunks))]
+        metas = [
+            {"source": source, "page": page, "chunk": n, "origin": origin}
+            for n in range(len(chunks))
+        ]
         for i in range(0, len(ids), 64):
             self._collection.add(ids=ids[i:i + 64], documents=chunks[i:i + 64], metadatas=metas[i:i + 64])
         logger.info(f"Library: indexed '{source}' — {len(chunks)} chunks, {len(text)} chars")
@@ -156,13 +169,17 @@ class LibraryService:
             text, links = _html_text_and_links(resp.text, str(resp.url))
             return "html", text, links
 
-    def ingest_url(self, url: str) -> Dict[str, Any]:
-        """Fetch a single URL (PDF or web page) and index it into the library."""
+    def ingest_url(self, url: str, origin: str = ORIGIN_UPLOAD) -> Dict[str, Any]:
+        """Fetch a single URL (PDF or web page) and index it into the library.
+
+        Defaults to ``upload`` because naming a URL is a deliberate act; the
+        crawler and learner pass ``ORIGIN_WEB`` for links they followed.
+        """
         kind, payload, _ = self.fetch_url(url)
         if kind == "pdf":
             name = Path(url.split("?")[0]).name or "document.pdf"
-            return self.ingest(name, payload)
-        return self.ingest_text(url, payload)
+            return self.ingest(name, payload, origin=origin)
+        return self.ingest_text(url, payload, origin=origin)
 
     @staticmethod
     def _chunks(text: str) -> List[str]:
@@ -227,13 +244,18 @@ class LibraryService:
     # Retrieval
     # ------------------------------------------------------------------
 
-    def search(self, query: str, k: int = 4) -> List[Dict[str, Any]]:
+    def search(
+        self, query: str, k: int = 4, where: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Nearest chunks to ``query``; ``where`` filters on chunk metadata."""
         if not self.is_available() or not query.strip():
             return []
         try:
             if self._collection.count() == 0:
                 return []
-            res = self._collection.query(query_texts=[query], n_results=min(k, 10))
+            res = self._collection.query(
+                query_texts=[query], n_results=min(k, 10), where=where or None
+            )
         except Exception as exc:
             logger.warning(f"Library search failed: {exc}")
             return []
@@ -249,12 +271,26 @@ class LibraryService:
         return out
 
     def has_strong_match(self, query: str, max_distance: float = 0.6) -> bool:
-        """True when the library holds content clearly relevant to the query.
+        """True when *deliberately added* material clearly covers the query.
 
-        Used to let uploaded books take precedence over the curated-topic
+        Used to let the user's own books take precedence over the curated-topic
         keyword matcher, which can misfire on loosely related questions.
+
+        Only chunks whose origin is in ``DELIBERATE_ORIGINS`` are considered.
+        Crawled pages are excluded on purpose: once the crawler had filled the
+        store with ~600 documents of general math corpus, every math question
+        cleared the distance bar (measured: "define a triangle" 0.403, "7 times
+        8" 0.557, and even a nonsense string 0.607), so this returned True
+        universally and silently disabled the entire curated tier. Distance to
+        the nearest chunk measures topic coverage, not whether the library is a
+        better answer than a hand-written lesson — filtering by origin restores
+        the original intent and stays correct however large the corpus grows.
+
+        Chunks indexed before origin tracking carry no ``origin`` and are
+        therefore treated as background corpus; re-uploading a document marks it
+        deliberate again.
         """
-        hits = self.search(query, k=1)
+        hits = self.search(query, k=1, where={"origin": {"$in": list(DELIBERATE_ORIGINS)}})
         if not hits:
             return False
         distance = hits[0].get("distance")

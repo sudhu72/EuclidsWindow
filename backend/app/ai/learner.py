@@ -24,7 +24,7 @@ from typing import Any, Deque, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from ..logging_config import logger
-from .library import _ASSET_RE, _UA, get_library
+from .library import _ASSET_RE, _UA, ORIGIN_WEB, get_library
 
 # Curated defaults; the user can edit these in the UI.
 DEFAULT_SOURCES: List[Dict[str, Any]] = [
@@ -176,9 +176,13 @@ class MathLearner:
             try:
                 kind, payload, links = lib.fetch_url(url)
                 if kind == "pdf":
-                    res = lib.ingest(Path(url.split("?")[0]).name or "document.pdf", payload)
+                    res = lib.ingest(
+                        Path(url.split("?")[0]).name or "document.pdf",
+                        payload,
+                        origin=ORIGIN_WEB,
+                    )
                 else:
-                    res = lib.ingest_text(url, payload)
+                    res = lib.ingest_text(url, payload, origin=ORIGIN_WEB)
                 self._state["stats"]["ingested"] += 1
                 self._state["stats"]["chunks"] += res.get("chunks", 0)
                 self._state["last_activity"] = datetime.now().isoformat(timespec="seconds")
