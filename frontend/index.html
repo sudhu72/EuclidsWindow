@@ -5,40 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1" />
-    <link rel="stylesheet" href="styles.css?v=20260807-1" />
+    <link rel="stylesheet" href="styles.css?v=20260811-2" />
     <link href="vendor/fonts/cinzel-decorative.css" rel="stylesheet" />
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
   </head>
   <body>
     <header class="app-header">
-      <div class="brand"><img src="euclids-window-logo.svg" alt="Logo" class="brand-logo" />Euclid's Window</div>
-      <div class="subtitle" title="Like Euclid's Elements: start from self-evident axioms, derive everything step by step. No formula is handed to you without showing where it comes from and why it's true.">Learn math from first principles</div>
-      <nav class="nav-tabs">
-        <a href="/app" class="tab-btn tab-link"><span class="tab-icon">&#128218;</span> Learn</a>
-        <button class="tab-btn active" data-tab="discover"><span class="tab-icon">&#128161;</span> Discover</button>
-        <button class="tab-btn" data-tab="polya"><span class="tab-icon">&#8982;</span> Solve</button>
-        <a href="mathmap.html" class="tab-btn tab-link"><span class="tab-icon">&#9672;</span> Math Map</a>
-        <a href="/app" class="tab-btn tab-link"><span class="tab-icon">&#128172;</span> Chat &middot; Voice</a>
+      <a class="brand" href="/" title="Like Euclid's Elements: start from self-evident axioms, derive everything step by step. No formula is handed to you without showing where it comes from and why it's true.">
+        <img src="euclids-window-logo.svg" alt="" class="brand-logo" />
+        <span class="brand-text">
+          <span class="brand-name">Euclid's Window</span>
+          <span class="brand-tagline">Learn math from first principles</span>
+        </span>
+      </a>
+
+      <nav class="nav-tabs" aria-label="Main navigation">
+        <a href="/app" class="tab-btn tab-link">Learn</a>
+        <button class="tab-btn active" data-tab="discover">Discover</button>
+        <button class="tab-btn" data-tab="polya">Solve</button>
+        <a href="/app#chat" class="tab-btn tab-link">Chat</a>
+
         <div class="nav-dropdown" id="labs-dropdown">
-          <button class="tab-btn nav-dropdown-toggle"><span class="tab-icon">&#9881;</span> Labs <span class="dropdown-caret">&#9662;</span></button>
+          <button class="tab-btn nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Labs<span class="dropdown-caret" aria-hidden="true"></span></button>
           <div class="nav-dropdown-menu">
             <button class="nav-dropdown-item" data-tab="matrixlab"><span class="tab-icon">&#9638;</span> Matrix Lab</button>
             <button class="nav-dropdown-item" data-tab="musiclab"><span class="tab-icon">&#9835;</span> Music Lab</button>
             <button class="nav-dropdown-item" data-tab="calclab"><span class="tab-icon">&#8747;</span> Calculus Lab</button>
             <button class="nav-dropdown-item" data-tab="fftlab"><span class="tab-icon">&#8767;</span> FFT Lab</button>
-            <button class="nav-dropdown-item" data-tab="cryptolab"><span class="tab-icon">&#128274;</span> Crypto Lab</button>
+            <button class="nav-dropdown-item" data-tab="cryptolab"><span class="tab-icon">&#8853;</span> Crypto Lab</button>
             <button class="nav-dropdown-item" data-tab="logiclab"><span class="tab-icon">&#8866;</span> Logic Lab</button>
             <button class="nav-dropdown-item" data-tab="aibyhand"><span class="tab-icon">&#9636;</span> AI by Hand</button>
             <button class="nav-dropdown-item" data-tab="cogito"><span class="tab-icon">&#9673;</span> Cogito Gallery</button>
           </div>
         </div>
-        <button class="tab-btn" data-tab="mindmap"><span class="tab-icon">&#9702;</span> Concepts</button>
-        <button class="tab-btn" data-tab="euclid"><span class="tab-icon">&#9651;</span> Euclid</button>
-        <button class="tab-btn" data-tab="resources"><span class="tab-icon">&#9776;</span> Resources</button>
-        <button class="tab-btn" data-tab="symbols"><span class="tab-icon">&#120484;</span> Symbols</button>
-        <button class="tab-btn" data-tab="collections"><span class="tab-icon">&#10070;</span> Prompts</button>
-        <button class="tab-btn" data-tab="settings"><span class="tab-icon">&#9881;</span> Settings</button>
-        <button class="tab-btn" data-tab="eval"><span class="tab-icon">&#9632;</span> Eval</button>
+
+        <div class="nav-dropdown" id="explore-dropdown">
+          <button class="tab-btn nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">Explore<span class="dropdown-caret" aria-hidden="true"></span></button>
+          <div class="nav-dropdown-menu">
+            <a href="mathmap.html" class="nav-dropdown-item"><span class="tab-icon">&#9672;</span> Math Map</a>
+            <button class="nav-dropdown-item" data-tab="mindmap"><span class="tab-icon">&#9676;</span> Concept Graph</button>
+            <button class="nav-dropdown-item" data-tab="euclid"><span class="tab-icon">&#9651;</span> Euclid's Elements</button>
+            <button class="nav-dropdown-item" data-tab="symbols"><span class="tab-icon">&#120484;</span> Symbols</button>
+            <div class="nav-dropdown-sep" role="separator"></div>
+            <button class="nav-dropdown-item" data-tab="resources"><span class="tab-icon">&#9776;</span> Resources</button>
+            <button class="nav-dropdown-item" data-tab="collections"><span class="tab-icon">&#10070;</span> Prompt Library</button>
+          </div>
+        </div>
+
+        <span class="nav-divider" aria-hidden="true"></span>
+
+        <button class="tab-btn nav-icon-btn" data-tab="settings" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.1 14.4a1.5 1.5 0 0 0 .3 1.65l.05.05a1.83 1.83 0 1 1-2.6 2.6l-.05-.06a1.5 1.5 0 0 0-1.65-.3 1.5 1.5 0 0 0-.91 1.37v.15a1.83 1.83 0 1 1-3.66 0v-.08a1.5 1.5 0 0 0-.98-1.37 1.5 1.5 0 0 0-1.65.3l-.06.06a1.83 1.83 0 1 1-2.59-2.6l.05-.05a1.5 1.5 0 0 0 .3-1.65 1.5 1.5 0 0 0-1.37-.91H4.1a1.83 1.83 0 0 1 0-3.66h.08a1.5 1.5 0 0 0 1.37-.98 1.5 1.5 0 0 0-.3-1.65l-.05-.06a1.83 1.83 0 1 1 2.59-2.59l.06.05a1.5 1.5 0 0 0 1.65.3h.07a1.5 1.5 0 0 0 .91-1.37V4.1a1.83 1.83 0 0 1 3.66 0v.08a1.5 1.5 0 0 0 .91 1.37 1.5 1.5 0 0 0 1.65-.3l.05-.05a1.83 1.83 0 1 1 2.6 2.59l-.06.06a1.5 1.5 0 0 0-.3 1.65v.07a1.5 1.5 0 0 0 1.37.91h.15a1.83 1.83 0 0 1 0 3.66h-.08a1.5 1.5 0 0 0-1.37.91z"/></svg>
+        </button>
+        <button class="tab-btn nav-icon-btn" data-tab="eval" title="Evaluation" aria-label="Evaluation">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17M7 20.5v-6.5M12 20.5V5.5M17 20.5v-10"/></svg>
+        </button>
       </nav>
     </header>
 
@@ -2134,12 +2155,12 @@
     <script src="vendor/katex/auto-render.min.js"></script>
     <script src="vendor/d3.min.js"></script>
     <script src="vendor/vexflow.js"></script>
-    <script src="app.js?v=20260723-2"></script>
+    <script src="app.js?v=20260811-2"></script>
     <script src="music_core.js?v=20260708"></script>
     <script src="mozart_notes.js?v=20260402"></script>
     <script src="musiclab.js?v=20260720-1"></script>
     <script src="aibyhand.js?v=20260721-1"></script>
-    <script src="cogito.js?v=20260807-1"></script>
+    <script src="cogito.js?v=20260811-1"></script>
     <script src="discovery.js?v=20260721-1"></script>
     <script src="calclab.js?v=20260408-7"></script>
     <script src="fftlab.js?v=20260404b"></script>

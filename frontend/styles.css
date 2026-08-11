@@ -2,6 +2,18 @@
   box-sizing: border-box;
 }
 
+:root {
+  /* Header palette — warm stone neutrals with the logo's gold as the accent. */
+  --hdr-bg: #1c1917;
+  --hdr-fg: #fafaf9;
+  --hdr-muted: #a8a29e;
+  --hdr-dim: #8a827c;
+  --hdr-hairline: rgba(250, 250, 249, 0.09);
+  --hdr-accent: #d9a62e;
+  /* Fallback until app.js measures the real header; matches its min-height. */
+  --header-h: 64px;
+}
+
 body {
   margin: 0;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
@@ -9,149 +21,245 @@ body {
   color: #1c1917;
 }
 
+/* =============================================================================
+   App header — one compact row: brand on the left, navigation on the right.
+   The nav wraps rather than overflowing, so the page never scrolls sideways.
+   ============================================================================= */
+
 .app-header {
-  padding: 16px 32px;
-  background: #1c1917;
-  border-bottom: 2px solid #292524;
+  position: sticky;
+  top: 0;
+  z-index: 950;
   display: flex;
   align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
+  gap: 20px;
+  min-height: 64px;
+  padding: 0 24px;
+  background: linear-gradient(180deg, #1f1c1a 0%, #171412 100%);
+  border-bottom: 1px solid var(--hdr-hairline);
+  box-shadow: 0 10px 28px -22px rgba(0, 0, 0, 0.95);
 }
 
 .brand {
-  font-family: "Cinzel Decorative", "GFS Didot", "Palatino Linotype", "Book Antiqua", Palatino, serif;
-  font-size: 34px;
-  font-weight: 700;
-  color: #fafaf9;
   display: flex;
   align-items: center;
-  gap: 10px;
-  letter-spacing: 0.06em;
+  gap: 11px;
+  padding: 9px 0;
+  text-decoration: none;
+  color: inherit;
+  flex: 0 0 auto;
 }
 .brand-logo {
-  height: 56px;
+  height: 38px;
   width: auto;
-  vertical-align: middle;
+  transition: transform 0.25s ease;
 }
-
-.subtitle {
-  font-size: 13px;
-  color: #a8a29e;
-  font-style: italic;
-  letter-spacing: 0.03em;
+.brand:hover .brand-logo {
+  transform: translateY(-1px);
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.brand-name {
+  font-family: "Cinzel Decorative", "GFS Didot", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--hdr-fg);
+  letter-spacing: 0.055em;
+  white-space: nowrap;
+}
+.brand-tagline {
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--hdr-dim);
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .nav-tabs {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 1px;
   margin-left: auto;
+  /* Wrapping is the guarantee against a horizontally scrolling header. */
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 8px 0;
 }
 
 .tab-btn {
-  padding: 7px 13px;
-  border: 1px solid #44403c;
-  background: #292524;
-  border-radius: 6px;
+  position: relative;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.012em;
+  color: var(--hdr-muted);
   cursor: pointer;
-  font-size: 12px;
-  color: #d6d3d1;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.15s ease;
-  letter-spacing: 0.02em;
+  transition: color 0.18s ease, background-color 0.18s ease;
 }
-.tab-icon {
-  font-size: 13px;
-  line-height: 1;
-  opacity: 0.7;
-}
-
 .tab-btn:hover {
-  background: #44403c;
-  color: #fafaf9;
+  color: var(--hdr-fg);
+  background: rgba(250, 250, 249, 0.07);
+}
+.tab-btn:focus-visible {
+  outline: 2px solid var(--hdr-accent);
+  outline-offset: 2px;
 }
 
+/* Active tab: brighter label over a whisper of fill, marked by a gold rule. */
 .tab-btn.active {
-  background: #fafaf9;
-  color: #1c1917;
-  border-color: #fafaf9;
+  color: var(--hdr-fg);
   font-weight: 600;
+  background: rgba(250, 250, 249, 0.06);
+}
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--hdr-accent);
 }
 
-/* Labs dropdown */
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 8px;
+  background: rgba(250, 250, 249, 0.14);
+}
+
+.nav-icon-btn {
+  padding: 8px;
+  color: var(--hdr-dim);
+}
+.nav-icon-btn svg {
+  display: block;
+  width: 17px;
+  height: 17px;
+}
+.nav-icon-btn.active::after {
+  left: 7px;
+  right: 7px;
+}
+
+/* Dropdown menus (Labs, Explore) */
 .nav-dropdown {
   position: relative;
 }
 .nav-dropdown-toggle {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  gap: 7px;
 }
+/* A drawn chevron stays crisp at any size, unlike the ▾ glyph. */
 .dropdown-caret {
-  font-size: 9px;
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
   opacity: 0.6;
-  transition: transform 0.2s;
+  transition: transform 0.2s ease;
 }
 .nav-dropdown.open .dropdown-caret {
-  transform: rotate(180deg);
+  transform: translateY(1px) rotate(225deg);
 }
+.nav-dropdown.open > .nav-dropdown-toggle {
+  color: var(--hdr-fg);
+  background: rgba(250, 250, 249, 0.07);
+}
+
 .nav-dropdown-menu {
   display: none;
   position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  min-width: 160px;
-  background: #1c1917;
-  border: 1px solid #44403c;
-  border-radius: 6px;
-  padding: 4px 0;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 212px;
+  background: #232020;
+  border: 1px solid rgba(250, 250, 249, 0.1);
+  border-radius: 12px;
+  padding: 6px;
   z-index: 900;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 22px 44px -14px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 .nav-dropdown.open .nav-dropdown-menu {
   display: block;
+  animation: navMenuIn 0.15s ease-out;
 }
+@keyframes navMenuIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .nav-dropdown-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 8px 14px;
+  padding: 9px 10px;
   border: none;
+  border-radius: 8px;
   background: transparent;
   color: #d6d3d1;
-  font-size: 12px;
+  font-size: 13px;
   font-family: inherit;
-  cursor: pointer;
   text-align: left;
-  transition: background 0.12s;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+/* A fixed-width glyph column keeps every label starting on the same line. */
+.nav-dropdown-item .tab-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.55;
 }
 .nav-dropdown-item:hover {
-  background: #292524;
-  color: #fafaf9;
+  background: rgba(250, 250, 249, 0.08);
+  color: var(--hdr-fg);
 }
 .nav-dropdown-item.active {
-  background: #fafaf9;
-  color: #1c1917;
+  background: rgba(217, 166, 46, 0.16);
+  color: var(--hdr-fg);
   font-weight: 600;
+}
+.nav-dropdown-item.active .tab-icon {
+  color: var(--hdr-accent);
+  opacity: 1;
+}
+.nav-dropdown-sep {
+  height: 1px;
+  margin: 6px 10px;
+  background: rgba(250, 250, 249, 0.09);
 }
 
 .tab-link {
   text-decoration: none;
-  background: #44403c;
-  color: #fafaf9 !important;
-  border-color: #57534e;
 }
 
-.tab-link:hover {
-  background: #57534e;
-}
-
+/* Panels like the Learn/Solve columns scroll independently, which needs a
+   definite height here. --header-h is measured by app.js (see syncHeaderHeight)
+   so it stays exact when the nav wraps to a second row on narrow screens. */
 .app-layout {
   padding: 16px 24px;
-  height: calc(100vh - 80px);
+  height: calc(100vh - var(--header-h));
 }
 
 .tab-content {
@@ -1276,10 +1384,45 @@ body {
   .sidebar {
     display: none;
   }
+}
+
+/* Header responsiveness: shed ornament first, then let the nav drop to its own
+   row. It always wraps — the header never scrolls sideways. */
+@media (max-width: 1120px) {
+  .app-header {
+    gap: 14px;
+    padding: 0 18px;
+  }
+  .brand-tagline {
+    display: none;
+  }
+  .brand-name {
+    font-size: 18px;
+  }
+  .brand-logo {
+    height: 34px;
+  }
+  .tab-btn {
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 780px) {
+  .app-header {
+    flex-wrap: wrap;
+    padding: 8px 16px;
+  }
   .nav-tabs {
     margin-left: 0;
     width: 100%;
-    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding-top: 0;
+    border-top: 1px solid var(--hdr-hairline);
+    padding-left: 0;
+  }
+  .nav-dropdown-menu {
+    left: 0;
+    right: auto;
   }
 }
 

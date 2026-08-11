@@ -541,51 +541,78 @@ const formatTutorOutput = (payload) => {
 // =============================================================================
 // Tab Navigation
 // =============================================================================
-const LAB_TABS = new Set(["matrixlab", "musiclab", "calclab", "fftlab", "cryptolab", "logiclab", "aibyhand", "cogito"]);
-const labsDropdown = document.getElementById("labs-dropdown");
-const labsToggle = labsDropdown ? labsDropdown.querySelector(".nav-dropdown-toggle") : null;
-const labsItems = document.querySelectorAll(".nav-dropdown-item");
+// The content area is sized as `100vh - var(--header-h)`. The header grows when
+// the nav wraps to a second row on narrow screens, so publish its real height
+// rather than leaving the CSS fallback to drift.
+const appHeader = document.querySelector(".app-header");
+if (appHeader) {
+  const syncHeaderHeight = () => {
+    const h = Math.round(appHeader.getBoundingClientRect().height);
+    if (h > 0) document.documentElement.style.setProperty("--header-h", `${h}px`);
+  };
+  syncHeaderHeight();
+  if ("ResizeObserver" in window) new ResizeObserver(syncHeaderHeight).observe(appHeader);
+  else window.addEventListener("resize", syncHeaderHeight);
+}
+
+// The nav has two dropdowns (Labs, Explore); everything below is written
+// against the collection so adding a third needs no JS change.
+const navDropdowns = [...document.querySelectorAll(".nav-dropdown")];
+const navMenuItems = [...document.querySelectorAll(".nav-dropdown-item")];
+
+const closeNavDropdowns = (except) => {
+  navDropdowns.forEach(dd => {
+    if (dd === except) return;
+    dd.classList.remove("open");
+    const toggle = dd.querySelector(".nav-dropdown-toggle");
+    if (toggle) toggle.setAttribute("aria-expanded", "false");
+  });
+};
 
 tabBtns.forEach(btn => {
   if (btn.classList.contains("nav-dropdown-toggle")) return;
-  btn.addEventListener("click", () => {
-    const tabId = btn.dataset.tab;
-    switchToTab(tabId);
-  });
+  if (!btn.dataset.tab) return; // plain links (Learn, Chat) navigate away instead
+  btn.addEventListener("click", () => switchToTab(btn.dataset.tab));
 });
 
-labsItems.forEach(item => {
+navMenuItems.forEach(item => {
   item.addEventListener("click", () => {
-    const tabId = item.dataset.tab;
-    if (labsDropdown) labsDropdown.classList.remove("open");
-    switchToTab(tabId);
+    closeNavDropdowns();
+    if (item.dataset.tab) switchToTab(item.dataset.tab); // Math Map is a link
   });
 });
 
-if (labsToggle) {
-  labsToggle.addEventListener("click", (e) => {
+navDropdowns.forEach(dd => {
+  const toggle = dd.querySelector(".nav-dropdown-toggle");
+  if (!toggle) return;
+  toggle.addEventListener("click", (e) => {
     e.stopPropagation();
-    labsDropdown.classList.toggle("open");
+    const willOpen = !dd.classList.contains("open");
+    closeNavDropdowns(dd);
+    dd.classList.toggle("open", willOpen);
+    toggle.setAttribute("aria-expanded", String(willOpen));
   });
-}
-
-document.addEventListener("click", () => {
-  if (labsDropdown) labsDropdown.classList.remove("open");
+  dd.addEventListener("click", (e) => e.stopPropagation());
 });
-if (labsDropdown) {
-  labsDropdown.addEventListener("click", (e) => e.stopPropagation());
-}
+
+document.addEventListener("click", () => closeNavDropdowns());
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeNavDropdowns();
+});
 
 const switchToTab = (tabId) => {
   if (tabId === "tutor") tabId = "lesson"; // Tutor merged into the Learn tab
   tabBtns.forEach(b => b.classList.remove("active"));
   tabContents.forEach(c => c.classList.remove("active"));
-  labsItems.forEach(i => i.classList.remove("active"));
+  navMenuItems.forEach(i => i.classList.remove("active"));
 
-  if (LAB_TABS.has(tabId)) {
-    if (labsToggle) labsToggle.classList.add("active");
-    const activeItem = [...labsItems].find(i => i.dataset.tab === tabId);
-    if (activeItem) activeItem.classList.add("active");
+  // A tab lives either on the top row or inside a dropdown — light up whichever
+  // owns it, and for a dropdown its parent toggle too.
+  const menuItem = navMenuItems.find(i => i.dataset.tab === tabId);
+  if (menuItem) {
+    menuItem.classList.add("active");
+    const parentToggle = menuItem.closest(".nav-dropdown")?.querySelector(".nav-dropdown-toggle");
+    if (parentToggle) parentToggle.classList.add("active");
   } else {
     const activeBtn = [...tabBtns].find((b) => b.dataset.tab === tabId);
     if (activeBtn) activeBtn.classList.add("active");
