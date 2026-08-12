@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Visualization from "./Visualization";
+import RenderJobs from "./RenderJobs";
 import {
   generateImage,
   generateMusic,
@@ -123,7 +124,7 @@ export default function VizPanel({
         {status && <span className="status">{status}</span>}
       </div>
 
-      {job && job.status !== "done" && !viz && (
+      {job && job.status !== "completed" && !viz && (
         <div className="viz-progress">
           <div className="viz-progress-bar" style={{ width: `${Math.max(6, job.progress)}%` }} />
           <span className="viz-progress-label">{job.status} · {job.progress}%</span>
@@ -144,6 +145,8 @@ export default function VizPanel({
           <audio className="viz-audio" src={media.url} controls />
         </figure>
       )}
+
+      <RenderJobs />
     </section>
   );
 }

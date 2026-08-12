@@ -543,3 +543,24 @@ body {
   position: relative; display: block; text-align: center; line-height: 20px;
   font-size: 11px; color: #44403c;
 }
+
+/* Render jobs list */
+.rj { margin-top: 12px; }
+.rj > summary { cursor: pointer; font-size: 13px; color: #57534e; }
+.rj-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.rj-item {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px;
+}
+.rj-dot { width: 8px; height: 8px; border-radius: 50%; background: #a8a29e; flex: 0 0 8px; }
+.rj-ok { background: #16a34a; }
+.rj-bad { background: #dc2626; }
+.rj-busy { background: #d9a62e; }
+.rj-wait { background: #a8a29e; }
+.rj-kind { flex: 0 0 auto; }
+.rj-label {
+  flex: 1 1 200px; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.rj-status { color: var(--muted); font-size: 12px; }
+.rj-err { color: #b91c1c; flex-basis: 100%; font-size: 12px; }
