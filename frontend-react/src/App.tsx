@@ -10,10 +10,13 @@ import Evaluation from "./Evaluation";
 import Symbols from "./Symbols";
 import Resources from "./Resources";
 import Prompts from "./Prompts";
+import ConceptGraph from "./ConceptGraph";
+import MathMap from "./MathMap";
 
 type Tab =
   | "learn" | "discover" | "solve" | "chat" | "labs" | "library"
-  | "symbols" | "resources" | "prompts" | "settings" | "eval";
+  | "symbols" | "resources" | "prompts" | "concepts" | "mathmap"
+  | "settings" | "eval";
 
 /** Primary destinations, shown as labelled tabs. */
 const TABS: [Tab, string][] = [
@@ -26,6 +29,8 @@ const TABS: [Tab, string][] = [
   ["symbols", "Symbols"],
   ["resources", "Resources"],
   ["prompts", "Prompts"],
+  ["concepts", "Concepts"],
+  ["mathmap", "Map"],
 ];
 
 /** Utility destinations, shown as icon buttons in the right-hand cluster. */
@@ -109,6 +114,10 @@ export default function App() {
           <Resources />
         ) : tab === "prompts" ? (
           <Prompts onAsk={askInLearn} />
+        ) : tab === "concepts" ? (
+          <ConceptGraph onAsk={askInLearn} />
+        ) : tab === "mathmap" ? (
+          <MathMap onAsk={askInLearn} />
         ) : tab === "settings" ? (
           <Settings />
         ) : tab === "eval" ? (
