@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AiByHand from "./AiByHand";
 import LogicLab from "./LogicLab";
 import CryptoLab from "./CryptoLab";
 import CalculusLab from "./CalculusLab";
 import MatrixLab from "./MatrixLab";
 
-// Labs are ported one at a time. NATIVE lists the ones that no longer need the
-// classic frontend; the rest still open in embed mode (?tab=<id>&embed=1 hides
-// the classic chrome), which keeps them fully usable in the meantime. The embed
-// bridge — and that fallback — go away once every lab is native.
+// Music Lab and the two FFT labs stay in vanilla JS on purpose — Web Audio
+// timing, VexFlow engraving and live recording are where a React rewrite would
+// most easily lose fidelity. They load from /embed, a shell that carries only
+// those labs. Everything else here is native React.
 const LABS: { id: string; label: string; icon: string; desc: string }[] = [
   { id: "aibyhand", label: "AI by Hand", icon: "▦", desc: "Rebuild 19 AI/ML ideas the Feynman way, by hand." },
   { id: "musiclab", label: "Music Lab", icon: "♫", desc: "Hear the math of music: harmonics, strings, Mozart's dice." },
@@ -24,6 +24,20 @@ const NATIVE = new Set(["aibyhand", "logiclab", "cryptolab", "calclab", "matrixl
 
 export default function Labs({ onAsk }: { onAsk: (question: string) => void }) {
   const [active, setActive] = useState<string | null>(null);
+
+  // The embedded labs have "Explore in Tutor" links. They cannot reach Learn
+  // from inside the iframe, so the shell posts the question up to us.
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      const data = e.data as { source?: string; type?: string; question?: string };
+      if (data?.source === "euclid-embed" && data.type === "ask" && data.question) {
+        onAsk(data.question);
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [onAsk]);
 
   if (active) {
     const lab = LABS.find((l) => l.id === active)!;
@@ -56,7 +70,7 @@ export default function Labs({ onAsk }: { onAsk: (question: string) => void }) {
           <button className="btn" onClick={() => setActive(null)}>← All labs</button>
           <span className="labs-frame-title">{lab.icon} {lab.label}</span>
         </div>
-        <iframe className="labs-frame" src={`/?tab=${active}&embed=1`} title={lab.label} />
+        <iframe className="labs-frame" src={`/embed?tab=${active}`} title={lab.label} />
       </div>
     );
   }

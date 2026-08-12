@@ -97,14 +97,14 @@ flowchart TB
     U[User Browser]
 
     subgraph FE[Frontend]
-      UI[index.html + app.js + styles.css]
-      MM[mathmap.html + mathmap.js]
-      ML[musiclab.js]
-      CL[calclab.js]
-      FL[fftlab.js + fftlab-image.js]
-      CRYPTO[cryptolab.js]
-      LOGIC[logiclab.js]
-      SYM[symbols.js]
+      UI[React app at / — Learn, Discover, Solve, Chat, Labs, Library, Explore]
+      MM[Concept graph + Map of Mathematics]
+      ML[Embed shell at /embed — Music Lab]
+      CL[Calculus, Matrix, Logic, Crypto labs — native React]
+      FL[Embed shell at /embed — FFT audio + image]
+      CRYPTO[Cogito Gallery + Euclid's Elements]
+      LOGIC[Settings + Evaluation]
+      SYM[Symbols, Resources, Prompt Library]
       D3[D3 Concept Graph]
       PLT[Plotly + KaTeX Renderers]
       MER[Mermaid.js Diagrams]
@@ -271,22 +271,25 @@ EuclidsWindow/
 │   │   └── seed_db.py               # Database seeding utility
 │   ├── tests/
 │   └── requirements*.txt
-├── frontend/
-│   ├── index.html                   # Main multi-tab app UI
-│   ├── app.js                       # UI behavior, tab navigation, API integration
-│   ├── styles.css                   # Monochrome scholarly theme
-│   ├── musiclab.js                  # Music & Mathematics Lab (5 games)
-│   ├── calclab.js                   # Calculus Lab (6 interactive visualizations)
-│   ├── fftlab.js                    # FFT Lab: audio mode + mode switcher
+├── frontend-react/                  # The application (React + Vite)
+│   └── src/
+│       ├── App.tsx                  # Six primary tabs + an Explore menu
+│       ├── Lesson.tsx               # Learn: lessons, grounded tutor, scratchpad, export
+│       ├── Discover.tsx  Solve.tsx  Chat.tsx  Library.tsx
+│       ├── LogicLab.tsx  CryptoLab.tsx  CalculusLab.tsx  MatrixLab.tsx  AiByHand.tsx
+│       ├── logic.ts  crypto.ts  calculus.ts  matrix.ts   # lab maths, no UI
+│       ├── ConceptGraph.tsx  MathMap.tsx  Gallery.tsx  Euclid.tsx  Symbols.tsx
+│       ├── Settings.tsx  Evaluation.tsx  Resources.tsx  Prompts.tsx
+│       ├── Plot.tsx  Visualization.tsx  VizPanel.tsx  RenderJobs.tsx
+│       └── styles.css
+├── frontend/                        # Embed shell for the labs kept in vanilla JS
+│   ├── embed.html                   # Serves Music + FFT labs at /embed?tab=<id>
+│   ├── embed.css                    # Only the styles those labs still need
+│   ├── musiclab.js                  # Music & Mathematics Lab (Web Audio + VexFlow)
+│   ├── music_core.js  mozart_notes.js
+│   ├── fftlab.js                    # FFT Lab: audio mode (Web Audio recording)
 │   ├── fftlab-image.js              # FFT Lab: image mode (2D FFT)
-│   ├── cryptolab.js                 # Cryptology Lab (4 crypto games)
-│   ├── logiclab.js                  # Formal Logic Lab (4 logic puzzles)
-│   ├── cogito.js                    # Cogito Gallery (28 interactive visualizations)
-│   ├── symbols.js                   # Mathematical Symbols Explorer
-│   ├── mathmap.html                 # Dedicated map page
-│   ├── mathmap.js
-│   ├── mathmap.css
-│   └── euclids-window-logo.png      # B&W logo
+│   └── vendor/                      # Plotly, VexFlow, KaTeX, fonts
 ├── docs/
 │   ├── OLLAMA_TUNING.md
 │   └── LORA_TUNING_PLAYBOOK.md

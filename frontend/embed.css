@@ -1,0 +1,796 @@
+/* =============================================================================
+   Styles for the embedded labs only — Music Lab and the FFT labs, which stay
+   as embeds because Web Audio timing, VexFlow engraving and live recording are
+   where a React port would most easily lose fidelity.
+
+   Distilled from the classic styles.css: every rule whose selector still
+   matches the surviving markup, plus the element defaults those labs inherit.
+   Everything belonging to the old nav, tutor, and the labs now native in React
+   is gone.
+   ============================================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Header palette — warm stone neutrals with the logo's gold as the accent. */
+  --hdr-bg: #1c1917;
+  --hdr-fg: #fafaf9;
+  --hdr-muted: #a8a29e;
+  --hdr-dim: #8a827c;
+  --hdr-hairline: rgba(250, 250, 249, 0.09);
+  --hdr-accent: #d9a62e;
+  /* Fallback until app.js measures the real header; matches its min-height. */
+  --header-h: 64px;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: #f5f5f4;
+  color: #1c1917;
+}
+.tab-btn.active {
+  color: var(--hdr-fg);
+  font-weight: 600;
+  background: rgba(250, 250, 249, 0.06);
+}
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--hdr-accent);
+}
+.nav-icon-btn.active::after {
+  left: 7px;
+  right: 7px;
+}
+@keyframes navMenuIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.nav-dropdown-item.active {
+  background: rgba(217, 166, 46, 0.16);
+  color: var(--hdr-fg);
+  font-weight: 600;
+}
+.nav-dropdown-item.active .tab-icon {
+  color: var(--hdr-accent);
+  opacity: 1;
+}
+
+.tab-content {
+  display: none;
+  height: 100%;
+}
+
+.tab-content.active {
+  display: grid;
+}
+
+.btn-primary {
+  background: #1c1917;
+  color: #fafaf9;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+
+.btn-primary:hover {
+  background: #292524;
+}
+
+.conversation-item.active {
+  background: #d6d3d1;
+  font-weight: 500;
+}
+#tab-lesson .tutor-panel,
+#tab-polya .tutor-panel {
+  overflow-y: auto;
+}
+
+.tutor-panel {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid #d6d3d1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.tutor-header h3 {
+  margin: 0 0 6px 0;
+  color: #1c1917;
+}
+
+.tutor-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #78716c;
+}
+
+.btn-secondary {
+  background: #44403c;
+  color: #fafaf9;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+.btn-secondary:hover {
+  background: #57534e;
+}
+
+.btn-secondary:disabled {
+  background: #78716c;
+  cursor: not-allowed;
+}
+
+@media (max-width: 960px) {
+  #tab-matrixlab {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  #tab-matrixlab > .mat-split-right {
+    position: static;
+    height: auto;
+  }
+}
+
+.settings-form .btn-secondary {
+  justify-self: flex-start;
+}
+
+.loading-overlay.hidden {
+  display: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-toast.hidden {
+  display: none;
+}
+
+@media (max-width: 1200px) {
+  #tab-chat {
+    grid-template-columns: 240px 1fr;
+  }
+  .viz-panel {
+    display: none;
+  }
+
+  #tab-lesson {
+    grid-template-columns: 1fr;
+  }
+  #tab-polya {
+    grid-template-columns: 1fr;
+  }
+  .tutor-viz-panel {
+    display: flex;
+  }
+}
+
+@media (max-width: 800px) {
+  #tab-chat {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none;
+  }
+}
+@media (max-width: 1120px) {
+  .app-header {
+    gap: 14px;
+    padding: 0 18px;
+  }
+  .brand-tagline {
+    display: none;
+  }
+  .brand-name {
+    font-size: 18px;
+  }
+  .brand-logo {
+    height: 34px;
+  }
+  .tab-btn {
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 780px) {
+  .app-header {
+    flex-wrap: wrap;
+    padding: 8px 16px;
+  }
+  .nav-tabs {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+    padding-top: 0;
+    border-top: 1px solid var(--hdr-hairline);
+    padding-left: 0;
+  }
+  .nav-dropdown-menu {
+    left: 0;
+    right: auto;
+  }
+}
+
+#tab-musiclab {
+  grid-template-columns: 1fr;
+}
+
+.music-game-btn {
+  font-size: 12px;
+  padding: 6px 14px;
+}
+
+.music-game-btn.active {
+  background: #1c1917;
+  color: #fafaf9;
+}
+
+.music-game {
+  display: none;
+}
+
+.music-game.active {
+  display: block;
+}
+
+.music-game-header h4 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.music-game-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #57534e;
+  line-height: 1.5;
+}
+
+.music-math-note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #f5f5f4;
+  border: 1px solid #e7e5e4;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #44403c;
+}
+.dice-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.dice-bars-grid {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.dice-bar {
+  text-align: center;
+  border: 1px solid #d6d3d1;
+  border-radius: 4px;
+  padding: 6px 2px;
+  font-size: 11px;
+  background: #fafaf9;
+  transition: background 0.2s;
+}
+
+.dice-bar.playing {
+  background: #1c1917;
+  color: #fafaf9;
+}
+
+.dice-bar .bar-num {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.dice-bar .bar-roll {
+  font-size: 10px;
+  color: #78716c;
+}
+
+.dice-bar.playing .bar-roll {
+  color: #a8a29e;
+}
+
+.dice-score {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: #57534e;
+  letter-spacing: 1px;
+}
+
+.dice-sheet-music {
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+  background: #fafaf9;
+  padding: 10px 12px 6px;
+  margin: 10px 0;
+  overflow-x: auto;
+}
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #57534e;
+}
+.sheet-title {
+  font-style: italic;
+  font-weight: 600;
+}
+.sheet-sig {
+  font-family: ui-monospace, monospace;
+}
+#dice-staff-notation {
+  position: relative;
+  max-width: 920px;
+}
+#dice-staff-notation svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.staff-playing-highlight {
+  position: absolute;
+  background: rgba(28, 25, 23, 0.06);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.dice-prob-section {
+  border: 1px solid #e7e5e4;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 10px 0;
+  background: #fafaf9;
+}
+.dice-prob-header {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.dice-prob-flex {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.dice-prob-explain {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #57534e;
+  margin-top: 8px;
+}
+.dice-table-mini {
+  font-size: 9px;
+  font-family: ui-monospace, monospace;
+  line-height: 1.45;
+  overflow-x: auto;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 280px;
+}
+.dice-table-mini table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.dice-table-mini th,
+.dice-table-mini td {
+  border: 1px solid #e7e5e4;
+  padding: 2px 3px;
+  text-align: center;
+}
+.dice-table-mini th {
+  background: #f5f5f4;
+  font-weight: 600;
+}
+.dice-table-mini td.hl {
+  background: #1c1917;
+  color: #fafaf9;
+  font-weight: 700;
+}
+.harmonics-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.harmonics-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.harmonic-btn {
+  padding: 6px 10px;
+  border: 1px solid #d6d3d1;
+  background: #fafaf9;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.15s;
+}
+
+.harmonic-btn:hover,
+.harmonic-btn.active {
+  background: #1c1917;
+  color: #fafaf9;
+  border-color: #1c1917;
+}
+.harmonic-btn.dissonant {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.harmonic-btn.dissonant:hover,
+.harmonic-btn.dissonant.active {
+  background: #b91c1c;
+  color: #fef2f2;
+  border-color: #b91c1c;
+}
+
+.guitar-fraction-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.guitar-readout {
+  background: #fafaf9;
+  border: 1px solid #e7e5e4;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #1c1917;
+}
+
+#guitar-string-viz {
+  margin: 6px 0 4px;
+}
+.euclidean-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.eucl-circle-container {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.eucl-circle-container svg {
+  max-width: 280px;
+}
+.fib-keyboard {
+  display: flex;
+  position: relative;
+  height: 120px;
+  margin-bottom: 12px;
+  user-select: none;
+}
+
+.fib-key.white.playing { background: #d6d3d1; }
+.fib-key.black.playing { background: #57534e; }
+
+.fibonacci-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.pyth-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.pyth-comparison {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #44403c;
+  white-space: pre;
+}
+
+.music-explore-link {
+  margin-top: 8px;
+  text-align: right;
+}
+
+.music-explore-link a {
+  color: #1c1917;
+  font-weight: 600;
+  font-size: 12px;
+  text-decoration: none;
+  border-bottom: 1px solid #78716c;
+  padding-bottom: 1px;
+  transition: border-color 0.15s;
+}
+
+.music-explore-link a:hover {
+  border-color: #1c1917;
+}
+
+#tab-fftlab {
+  grid-template-columns: 1fr;
+}
+
+.fft-pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fft-step {
+  border: 1px solid #d6d3d1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fft-step-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #f5f5f4;
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.fft-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1c1917;
+  color: #fafaf9;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.fft-step-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fft-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.fft-status {
+  font-size: 12px;
+  color: #78716c;
+}
+
+.fft-viz-box {
+  min-height: 160px;
+  border: 1px solid #e7e5e4;
+  border-radius: 6px;
+  background: #fafaf9;
+  overflow: hidden;
+}
+
+.fft-band-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.fft-band {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid #e7e5e4;
+  border-radius: 4px;
+  font-size: 11px;
+  background: #fafaf9;
+}
+
+.fft-band label {
+  font-weight: 600;
+  color: #44403c;
+}
+
+.fft-band input[type="range"] {
+  width: 100%;
+  accent-color: #1c1917;
+}
+
+.fft-band .fft-band-hz {
+  color: #78716c;
+  font-size: 10px;
+}
+.fft-math-panel {
+  border: 1px solid #e7e5e4;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fft-math-tabs {
+  display: flex;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.fft-math-tab {
+  flex: 1;
+  padding: 6px 8px;
+  border: none;
+  background: #f5f5f4;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  color: #57534e;
+  transition: all 0.15s;
+}
+
+.fft-math-tab:hover {
+  background: #e7e5e4;
+}
+
+.fft-math-tab.active {
+  background: #1c1917;
+  color: #fafaf9;
+}
+
+.fft-math-content {
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #44403c;
+}
+
+.fft-math-content.hidden {
+  display: none;
+}
+.music-explore-links {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e7e5e4;
+  font-size: 13px;
+}
+
+.music-explore-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.music-explore-btn {
+  padding: 5px 12px;
+  border: 1px solid #d6d3d1;
+  background: #fafaf9;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #44403c;
+  transition: all 0.15s;
+}
+
+.music-explore-btn:hover {
+  background: #1c1917;
+  color: #fafaf9;
+  border-color: #1c1917;
+}
+.fft-mode-btn {
+  font-size: 13px;
+  padding: 6px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.fft-mode-btn.active {
+  background: #1c1917;
+  color: #fafaf9;
+  border-color: #1c1917;
+  font-weight: 600;
+}
+.fft-img-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.fft-img-box canvas {
+  border: 1px solid #d6d3d1;
+  border-radius: 6px;
+  background: #fafaf9;
+  image-rendering: pixelated;
+}
+.fft-img-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #57534e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#img-filter-type {
+  padding: 4px 8px;
+  border: 1px solid #d6d3d1;
+  border-radius: 4px;
+  font-size: 12px;
+  background: #fafaf9;
+  color: #1c1917;
+}
+.calc-game-btn.active {
+  background: #1c1917;
+  color: #fafaf9;
+}
+.calc-game.active {
+  display: block;
+}
+.calc-math-tab.active {
+  background: #1c1917;
+  color: #fafaf9;
+}
+.calc-math-content.hidden {
+  display: none;
+}
+.crypto-game.active { display: block; }
+.logic-game.active { display: block; }
+.sym-cat-btn.active { background: #1c1917; color: #fafaf9; border-color: #1c1917; }
+.sym-cat-btn:hover:not(.active) { border-color: #78716c; }
+.sym-card.active { border-color: #2563eb; background: #eff6ff; }
+.sym-detail.hidden { display: none; }
+.cogito-viewer.hidden { display: none; }
+.cogito-viewer-bar a.btn-secondary { font-size: 0.78rem; padding: 4px 10px; text-decoration: none; }
+
+
+/* --- embed shell ---------------------------------------------------------- */
+body { margin: 0; background: #f5f5f4; }
+.embed-root { padding: 14px 18px 28px; }
+.tab-content { display: none; height: auto; }
+.tab-content.active { display: block; }
+.embed-missing { padding: 40px; text-align: center; color: #78716c; font-family: Inter, system-ui, sans-serif; }

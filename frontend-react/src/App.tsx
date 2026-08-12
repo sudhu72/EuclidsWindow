@@ -153,8 +153,7 @@ export default function App() {
           ))}
         </nav>
         <nav className="links">
-          <a href="/">← Classic app</a>
-          <span className="badge">React · beta</span>
+          <span className="badge">Euclid&rsquo;s Window</span>
         </nav>
       </header>
       <main className="main">

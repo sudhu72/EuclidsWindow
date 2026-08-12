@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Euclid's Window — embedded lab</title>
+    <link rel="stylesheet" href="embed.css?v=20260812-1" />
+    <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+  </head>
+  <body>
+    <div class="embed-root">
+<div id="tab-musiclab" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div class="tutor-header">
+            <h3>Music &amp; Mathematics Lab</h3>
+            <p>Explore the deep connections between music and mathematics through interactive games.</p>
+          </div>
+
+          <!-- Game Selector -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary music-game-btn active" data-game="dice">Mozart's Dice Game</button>
+            <button class="btn-secondary music-game-btn" data-game="harmonics">Harmonic Series</button>
+            <button class="btn-secondary music-game-btn" data-game="guitar">Guitar &amp; Strings</button>
+            <button class="btn-secondary music-game-btn" data-game="euclidean">Euclidean Rhythms</button>
+            <button class="btn-secondary music-game-btn" data-game="fibonacci">Fibonacci Scales</button>
+            <button class="btn-secondary music-game-btn" data-game="pythagorean">Pythagorean Tuning</button>
+            <button class="btn-secondary music-game-btn" data-game="composer">AI Composer</button>
+          </div>
+
+          <!-- AI Composer (local LLM writes a symbolic score) -->
+          <div id="game-composer" class="music-game">
+            <div class="music-game-header">
+              <h4>AI Composer</h4>
+              <p>Describe a musical idea &mdash; a mood, a mathematical pattern, a style &mdash; and the local AI writes an actual score, note by note. Unlike audio generators, you can <em>see</em> every note it chose, hear it played, and study the mathematics of the rhythm and harmony.</p>
+            </div>
+            <div class="dice-game-area">
+              <div class="dice-controls" style="flex-wrap:wrap;">
+                <input id="composer-prompt" type="text" placeholder="e.g. a gentle waltz built on the Fibonacci sequence" style="flex:1;min-width:260px;padding:6px 10px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;" />
+                <select id="composer-bars" style="padding:6px;border:1px solid #d6d3d1;border-radius:6px;font-size:13px;">
+                  <option value="4">4 bars</option>
+                  <option value="8" selected>8 bars</option>
+                  <option value="12">12 bars</option>
+                  <option value="16">16 bars</option>
+                </select>
+                <button id="composer-generate" class="btn-primary">Compose</button>
+                <button id="composer-play" class="btn-secondary" disabled>Play</button>
+                <button id="composer-stop" class="btn-secondary" disabled>Stop</button>
+                <span id="composer-status" style="font-size:12px;color:#78716c;"></span>
+              </div>
+              <div id="composer-sheet" class="dice-sheet-music" style="display:none;">
+                <div class="sheet-header">
+                  <span class="sheet-title" id="composer-title"></span>
+                  <span class="sheet-sig" id="composer-sig"></span>
+                </div>
+                <div id="composer-staff-notation"></div>
+                <div id="composer-explanation" style="font-size:12px;color:#57534e;font-style:italic;padding:4px 2px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mozart's Dice Game -->
+          <div id="game-dice" class="music-game active">
+            <div class="music-game-header">
+              <h4>Mozart&rsquo;s Musical Dice Game</h4>
+              <p>Can dice compose music? Mozart proved they can. He pre-wrote 176 short musical phrases and organized them into a clever table. You roll two dice 16 times to pick one phrase per bar &mdash; and the result is always a beautiful minuet. Every roll creates a different piece, yet it always sounds like Mozart wrote it on purpose.</p>
+            </div>
+            <div class="dice-game-area">
+              <div class="dice-controls">
+                <button id="dice-example" class="btn-secondary" title="Load a pre-rolled example to hear what a dice minuet sounds like">Hear an Example</button>
+                <button id="dice-roll-all" class="btn-primary">Roll All 16 Bars</button>
+                <button id="dice-play" class="btn-secondary" disabled>Play Minuet</button>
+                <button id="dice-stop" class="btn-secondary" disabled>Stop</button>
+                <span id="dice-status" style="font-size:12px;color:#78716c;"></span>
+              </div>
+              <div id="dice-bars" class="dice-bars-grid"></div>
+
+              <!-- Sheet music display -->
+              <div id="dice-sheet-music" class="dice-sheet-music">
+                <div class="sheet-header">
+                  <span class="sheet-title">Minuet in C &mdash; composed by dice</span>
+                  <span class="sheet-sig">3/8 time &bull; C major</span>
+                </div>
+                <div id="dice-staff-notation"></div>
+              </div>
+
+              <!-- Dice probability chart -->
+              <div id="dice-prob-chart" class="dice-prob-section">
+                <div class="dice-prob-header"><strong>Why do some rolls happen more than others?</strong></div>
+                <div class="dice-prob-flex">
+                  <div id="dice-prob-viz" style="flex:1;min-height:200px;"></div>
+                  <div class="dice-table-mini" id="dice-table-mini"></div>
+                </div>
+                <div class="dice-prob-explain">
+                  When you roll two dice, the sum of 7 is the most common &mdash; there are 6 ways to make it (1+6, 2+5, 3+4, ...), giving it a <strong>16.7% chance</strong>. Sums like 2 or 12 only have 1 way each (<strong>2.8%</strong>). This creates a triangle-shaped probability distribution. Mozart was clever: he put his best melodies in the rows you&rsquo;re most likely to roll (sums 7&ndash;9).
+                </div>
+              </div>
+
+              <div id="dice-score" class="dice-score"></div>
+              <div class="music-math-note">
+                <strong>Why does it always sound good?</strong> Here&rsquo;s the secret: each of the 16 columns in the table represents a specific role in the song. Bars 1&ndash;4 set up the home key (C major), bars 5&ndash;8 move to a new key (G major), and bars 13&ndash;16 bring us back home. Every phrase in a column follows this harmonic plan, so no matter which row the dice pick, the music stays coherent. The melody changes, but the underlying structure is locked in place.
+                <div style="margin-top:10px;font-size:12px;color:#57534e;">
+                  <strong>The math behind it:</strong>
+                  With 11 choices per bar and 16 bars, there are 11<sup>16</sup> &asymp; <strong>46 quadrillion</strong> possible compositions &mdash; that&rsquo;s more than grains of sand on Earth. This is <em>combinatorics</em>: counting how many ways to combine things. The dice follow a <em>probability distribution</em> (not every outcome is equally likely). And the harmony rules are a form of <em>constrained randomness</em> &mdash; freedom within structure.
+                </div>
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain combinatorics">Combinatorics</a> &bull;
+                  <a href="#" data-music-prompt="explain probability">Probability</a> &bull;
+                  <a href="#" data-music-prompt="explain permutations and combinations">Permutations</a> &bull;
+                  <a href="#" data-music-prompt="explain modular arithmetic">Modular Arithmetic</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="What is Mozart's Musikalisches Würfelspiel and how does combinatorics create musical compositions?">Explore in Tutor &rarr;</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Harmonic Series Explorer -->
+          <div id="game-harmonics" class="music-game">
+            <div class="music-game-header">
+              <h4>Harmonic Series Explorer</h4>
+              <p>Why do some notes sound beautiful together? Every musical note you hear is actually many frequencies at once. A guitar string doesn&rsquo;t just vibrate at one speed &mdash; it vibrates at 2&times;, 3&times;, 4&times; and more, all at the same time. These are called <em>harmonics</em>.</p>
+            </div>
+            <div class="harmonics-area">
+              <div class="harmonics-controls">
+                <label>Fundamental (Hz): <input type="number" id="harm-freq" value="220" min="55" max="880" step="1" style="width:80px;" /></label>
+                <button id="harm-play-fund" class="btn-primary">Play Fundamental</button>
+                <button id="harm-play-chord" class="btn-secondary">Play First 6 Harmonics</button>
+                <button id="harm-stop" class="btn-secondary">Stop All</button>
+              </div>
+              <div id="harmonics-buttons" class="harmonics-grid"></div>
+              <div id="harmonics-viz" style="min-height:200px;"></div>
+              <div class="music-math-note">
+                <strong>Why do some notes &ldquo;fit&rdquo; together?</strong> It comes down to simple fractions. If a note vibrates at frequency <em>f</em>, the note one octave higher vibrates at exactly 2<em>f</em> (a 2:1 ratio). A &ldquo;perfect fifth&rdquo; up is 3<em>f</em>/2 (a 3:2 ratio). A &ldquo;major third&rdquo; is 5<em>f</em>/4. The simpler the fraction, the more pleasant the combination sounds &mdash; because the sound waves line up neatly. This is why Pythagoras called music &ldquo;numbers you can hear.&rdquo;
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain the harmonic series in mathematics">Harmonic Series</a> &bull;
+                  <a href="#" data-music-prompt="explain Fourier analysis">Fourier Analysis</a> &bull;
+                  <a href="#" data-music-prompt="explain the wave equation">Wave Equation</a> &bull;
+                  <a href="#" data-music-prompt="explain ratios and proportions">Ratios</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="What is the harmonic series and how does it relate to music?">Explore in Tutor &rarr;</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Guitar & Strings — length becomes pitch -->
+          <div id="game-guitar" class="music-game">
+            <div class="music-game-header">
+              <h4>Guitar &amp; Strings &mdash; length becomes pitch</h4>
+              <p>Pluck a string. Now shorten it &mdash; press a fret &mdash; and pluck again: a shorter string sounds <em>higher</em>. Halve the length and you jump exactly one <strong>octave</strong>, and the two notes sound beautiful together. This is where the fractions come from.</p>
+            </div>
+            <div class="harmonics-area">
+              <div id="guitar-string-viz"></div>
+
+              <div class="guitar-fraction-row" id="guitar-fraction-buttons"></div>
+
+              <div id="guitar-readout" class="guitar-readout"></div>
+
+              <div id="guitar-wave-viz" style="min-height:240px;margin-top:10px;"></div>
+
+              <div class="harmonics-controls" style="margin-top:10px;">
+                <button id="guitar-pluck" class="btn-primary">Pluck this note</button>
+                <button id="guitar-pluck-both" class="btn-secondary">Pluck open + this together</button>
+                <button id="guitar-stop" class="btn-secondary">Stop</button>
+              </div>
+
+              <div class="harmonics-controls" style="margin-top:8px;">
+                <label style="display:flex;align-items:center;gap:8px;">
+                  Pluck strength (amplitude):
+                  <input type="range" id="guitar-amp" min="0.05" max="0.5" step="0.01" value="0.28" style="width:160px;" />
+                  <span id="guitar-amp-label" style="font-size:12px;color:#78716c;">medium</span>
+                </label>
+                <span style="font-size:12px;color:#78716c;">Louder, not higher &mdash; amplitude is volume, length is pitch.</span>
+              </div>
+
+              <div class="music-math-note">
+                <strong>Where the fractions come from.</strong> On a string of fixed tension, frequency is inversely proportional to length: <em>f</em> &prop; 1/<em>L</em>. So if the open string sounds at frequency <em>f</em>, a string of length <em>L</em>&thinsp;/&thinsp;2 sounds at <strong>2<em>f</em></strong> &mdash; one octave up, a clean <strong>2:1</strong> ratio. The reason a half-length string sounds <em>pleasant</em> with the open string is that its wave completes exactly two cycles for every one of the open string, so the peaks line up over and over.
+                <div style="margin-top:8px;font-size:13px;line-height:1.9;">
+                  <table style="border-collapse:collapse;font-size:13px;">
+                    <tr><th style="text-align:left;padding:2px 14px 2px 0;">Length</th><th style="text-align:left;padding:2px 14px 2px 0;">Frequency</th><th style="text-align:left;padding:2px 14px 2px 0;">Ratio</th><th style="text-align:left;padding:2px 0;">Interval</th></tr>
+                    <tr><td style="padding:2px 14px 2px 0;">1&thinsp;/&thinsp;1 (open)</td><td>1&times; <em>f</em></td><td>1:1</td><td>unison</td></tr>
+                    <tr><td style="padding:2px 14px 2px 0;">3&thinsp;/&thinsp;4</td><td>4/3&times; <em>f</em></td><td>4:3</td><td>perfect fourth</td></tr>
+                    <tr><td style="padding:2px 14px 2px 0;">2&thinsp;/&thinsp;3</td><td>3/2&times; <em>f</em></td><td>3:2</td><td>perfect fifth</td></tr>
+                    <tr><td style="padding:2px 14px 2px 0;">1&thinsp;/&thinsp;2</td><td>2&times; <em>f</em></td><td>2:1</td><td>octave</td></tr>
+                  </table>
+                </div>
+                <div style="margin-top:8px;">The simpler the fraction, the more the waves line up, and the more consonant it sounds &mdash; exactly what Pythagoras discovered with a plucked string ~2500 years ago.</div>
+                <div style="margin-top:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;color:#7f1d1d;">
+                  <strong>Compare with dissonance (the red buttons).</strong> A <em>minor second</em> is a lopsided <strong>16:15</strong> and a <em>tritone</em> is <strong>45:32</strong> &mdash; ratios that need 15 or 32 cycles before the waves realign. Over a few cycles they never line up, so the combined (blue) wave looks jagged and you hear a rough, clashing &ldquo;beating.&rdquo; Same physics, ugly fraction: that&rsquo;s dissonance.
+                </div>
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain ratios and proportions">Ratios</a> &bull;
+                  <a href="#" data-music-prompt="explain inverse proportion and reciprocals">Inverse Proportion</a> &bull;
+                  <a href="#" data-music-prompt="explain the harmonic series in mathematics">Harmonic Series</a> &bull;
+                  <a href="#" data-music-prompt="explain frequency wavelength and the wave equation">Waves</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="On a guitar string, why does halving the length raise the pitch by exactly one octave, and how do string-length fractions like 2:3 and 3:4 produce consonant musical intervals?">Explore in Tutor &rarr;</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Euclidean Rhythms -->
+          <div id="game-euclidean" class="music-game">
+            <div class="music-game-header">
+              <h4>Euclidean Rhythm Generator</h4>
+              <p>What do ancient Greek math and African drumming have in common? Euclid&rsquo;s 2,300-year-old algorithm for finding the greatest common divisor (GCD) can also create the world&rsquo;s most popular rhythms. Just tell it how many beats to spread across how many steps, and it spaces them as evenly as possible.</p>
+            </div>
+            <div class="euclidean-area">
+              <div class="euclidean-controls">
+                <label>Beats (k): <input type="number" id="eucl-beats" value="3" min="1" max="16" style="width:60px;" /></label>
+                <label>Steps (n): <input type="number" id="eucl-steps" value="8" min="2" max="16" style="width:60px;" /></label>
+                <label>BPM: <input type="number" id="eucl-bpm" value="120" min="40" max="300" style="width:70px;" /></label>
+                <button id="eucl-generate" class="btn-primary">Generate</button>
+                <button id="eucl-play" class="btn-secondary" disabled>Play</button>
+                <button id="eucl-stop" class="btn-secondary">Stop</button>
+              </div>
+              <div id="eucl-circle" class="eucl-circle-container"></div>
+              <div id="eucl-pattern" style="font-family:monospace;font-size:16px;letter-spacing:2px;margin:8px 0;"></div>
+              <div id="eucl-name" style="font-size:13px;color:#78716c;"></div>
+              <div class="music-math-note">
+                <strong>How does a math algorithm make music?</strong> The idea is simple: if you have 3 beats and 8 slots, spread them as evenly as you can: <code>[x . . x . . x .]</code>. That pattern is the Cuban <em>tresillo</em> &mdash; one of the most used rhythms in pop music. With 5 beats in 8 slots you get the <em>cinquillo</em>; with 7 beats in 12 you get a West African bell pattern. The algorithm that does this spacing is the same one Euclid invented to find the GCD of two numbers. Mathematicians call these &ldquo;maximally even&rdquo; distributions.
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain Euclid's algorithm and GCD">Euclid&rsquo;s Algorithm</a> &bull;
+                  <a href="#" data-music-prompt="explain modular arithmetic">Modular Arithmetic</a> &bull;
+                  <a href="#" data-music-prompt="explain number theory">Number Theory</a> &bull;
+                  <a href="#" data-music-prompt="explain least common multiple">LCM &amp; Polyrhythms</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="What are Euclidean rhythms and how does modular arithmetic describe rhythmic cycles?">Explore in Tutor &rarr;</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fibonacci Scales -->
+          <div id="game-fibonacci" class="music-game">
+            <div class="music-game-header">
+              <h4>Fibonacci in Musical Scales</h4>
+              <p>Look at one octave on a piano. Count: <strong>13</strong> keys total, <strong>8</strong> white, <strong>5</strong> black (in groups of <strong>2</strong> and <strong>3</strong>). Those numbers &mdash; 1, 2, 3, 5, 8, 13 &mdash; are the Fibonacci sequence! This isn&rsquo;t a coincidence; the scales that sound best to our ears naturally follow this pattern.</p>
+            </div>
+            <div class="fibonacci-area">
+              <div id="fib-keyboard" class="fib-keyboard"></div>
+              <div class="fibonacci-controls">
+                <button id="fib-play-major" class="btn-primary">Play Major Scale (8 notes)</button>
+                <button id="fib-play-pentatonic" class="btn-secondary">Play Pentatonic (5 notes)</button>
+                <button id="fib-play-chromatic" class="btn-secondary">Play Chromatic (13 notes)</button>
+              </div>
+              <div id="fib-info" class="music-math-note">
+                <strong>Why Fibonacci?</strong> The Fibonacci sequence is 1, 1, 2, 3, 5, 8, 13... (each number is the sum of the two before it). The pentatonic scale uses <strong>5</strong> notes, the major scale uses <strong>8</strong>, and both live within <strong>13</strong> chromatic steps. Composers like Bart&oacute;k deliberately placed musical climaxes at the <em>golden ratio</em> point (&phi; &asymp; 1.618) &mdash; about 62% of the way through a piece &mdash; because it feels naturally satisfying.
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain the Fibonacci sequence">Fibonacci Sequence</a> &bull;
+                  <a href="#" data-music-prompt="explain the golden ratio">Golden Ratio</a> &bull;
+                  <a href="#" data-music-prompt="explain sequences and series">Sequences &amp; Series</a> &bull;
+                  <a href="#" data-music-prompt="explain patterns in nature">Patterns in Nature</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="Where does the Fibonacci sequence appear in musical structure and how did Bartók use the golden ratio?">Explore in Tutor &rarr;</a></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pythagorean Tuning -->
+          <div id="game-pythagorean" class="music-game">
+            <div class="music-game-header">
+              <h4>Pythagorean Tuning vs Equal Temperament</h4>
+              <p>2,500 years ago, Pythagoras discovered that the most beautiful musical intervals are simple fractions: multiply a frequency by 3/2 and you hear a &ldquo;perfect fifth,&rdquo; by 4/3 for a &ldquo;perfect fourth.&rdquo; But this simple idea hides an impossible puzzle&hellip;</p>
+            </div>
+            <div class="pyth-area">
+              <div class="pyth-controls">
+                <label>Base note (Hz): <input type="number" id="pyth-base" value="261.63" min="100" max="500" step="0.01" style="width:100px;" /></label>
+                <button id="pyth-play-pure" class="btn-primary">Play Pure Fifth (3:2)</button>
+                <button id="pyth-play-equal" class="btn-secondary">Play Equal-Tempered Fifth</button>
+                <button id="pyth-play-comma" class="btn-secondary">Hear the Comma</button>
+                <button id="pyth-stop" class="btn-secondary">Stop</button>
+              </div>
+              <div id="pyth-comparison" class="pyth-comparison"></div>
+              <div class="music-math-note">
+                <strong>Why can&rsquo;t you tune a piano perfectly?</strong> Start on a note and go up by a perfect fifth (multiply by 3/2) twelve times. You&rsquo;d expect to land back on the same note, seven octaves higher. But (3/2)<sup>12</sup> = 129.75, while 2<sup>7</sup> = 128. They don&rsquo;t match! That tiny gap (~1.4%) is called the <em>Pythagorean comma</em>. It means perfect tuning with pure fractions is mathematically impossible for all 12 notes at once. The modern solution, <em>equal temperament</em>, slightly detunes every interval so each semitone is exactly 2<sup>1/12</sup> apart &mdash; a compromise that lets you play in any key.
+                <div style="margin-top:10px;font-size:12px;">
+                  <strong>Related topics in the Map of Mathematics:</strong>
+                  <a href="#" data-music-prompt="explain ratios and proportions">Ratios</a> &bull;
+                  <a href="#" data-music-prompt="explain logarithms">Logarithms</a> &bull;
+                  <a href="#" data-music-prompt="explain irrational numbers">Irrational Numbers</a> &bull;
+                  <a href="#" data-music-prompt="explain exponents and powers">Exponents</a>
+                </div>
+                <div class="music-explore-link"><a href="#" data-music-prompt="What is Pythagorean tuning and why can't you tune a piano perfectly using pure ratios?">Explore in Tutor &rarr;</a></div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+<div id="tab-fftlab" class="tab-content">
+        <section class="tutor-panel" style="overflow-y:auto;">
+          <div class="tutor-header">
+            <h3>Fast Fourier Transform Lab</h3>
+            <p>Decompose signals into frequencies, edit them, and reconstruct. Works for both audio and images.</p>
+          </div>
+
+          <!-- Mode switcher -->
+          <div style="display:flex;gap:8px;margin-bottom:4px;">
+            <button class="btn-primary fft-mode-btn active" data-fftmode="audio">Audio FFT (1D)</button>
+            <button class="btn-secondary fft-mode-btn" data-fftmode="image">Image FFT (2D)</button>
+          </div>
+
+          <!-- Audio pipeline -->
+          <div id="fft-audio-mode" class="fft-mode-panel">
+          <div class="fft-pipeline">
+
+            <!-- Step 1: Record -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">1</span> Record or Load Audio</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="fft-record" class="btn-primary">Record</button>
+                  <button id="fft-stop-rec" class="btn-secondary" disabled>Stop</button>
+                  <button id="fft-load-sample" class="btn-secondary">Load Sample Tone</button>
+                  <span id="fft-rec-status" class="fft-status"></span>
+                </div>
+                <div id="fft-waveform" class="fft-viz-box"></div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="record" data-level="kids">
+                    Sound is invisible wiggles in the air. When you talk, your throat vibrates and pushes air in a wavy pattern. A microphone catches these wiggles and turns them into numbers — one number for each tiny moment in time. That list of numbers is your "signal."
+                  </div>
+                  <div class="fft-math-content hidden" data-step="record" data-level="teen">
+                    A microphone samples the air pressure thousands of times per second (typically 44,100 Hz). Each sample is a number between -1 and 1. This sequence x[0], x[1], ..., x[N-1] is the <strong>discrete time-domain signal</strong>. The sampling rate must be at least 2× the highest frequency you want to capture (Nyquist theorem).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="record" data-level="college">
+                    The continuous signal x(t) is sampled at rate f<sub>s</sub> to produce x[n] = x(n/f<sub>s</sub>). By the Nyquist-Shannon theorem, if x(t) is band-limited to B Hz, then f<sub>s</sub> &ge; 2B suffices for perfect reconstruction: x(t) = &sum; x[n] &middot; sinc(f<sub>s</sub>t - n). Quantization maps each sample to a finite bit-depth (16-bit = 65,536 levels).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="record" data-level="adult">
+                    Digital audio is a sampled, quantized representation. At 44.1 kHz / 16-bit, each second produces 88.2 KB of raw PCM data. The sampling theorem guarantees lossless reconstruction for signals below f<sub>s</sub>/2 = 22.05 kHz — conveniently above human hearing (~20 kHz). In practice, an anti-aliasing filter is applied before sampling to prevent spectral folding.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: FFT -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">2</span> Decompose — Forward FFT</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="fft-analyze" class="btn-primary" disabled>Run FFT</button>
+                  <span id="fft-analyze-status" class="fft-status"></span>
+                </div>
+                <div id="fft-spectrum" class="fft-viz-box"></div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="fft" data-level="kids">
+                    Imagine your voice is a smoothie made of different fruits. The FFT is like a magic un-blender — it takes the smoothie apart and tells you exactly how much of each fruit (frequency) is inside! Low sounds are like strawberries, high sounds are like blueberries. The tall bars in the chart show which "fruits" are loudest.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="fft" data-level="teen">
+                    The FFT converts your signal from <em>time domain</em> (amplitude vs. time) to <em>frequency domain</em> (amplitude vs. frequency). Every sound is a mix of pure sine waves at different frequencies. The FFT figures out which frequencies are present and how strong each one is. The formula: X[k] = &sum; x[n] &middot; e<sup>-2&pi;i&middot;kn/N</sup>. Brute force takes N&sup2; operations; the FFT shortcut does it in N&middot;log(N).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="fft" data-level="college">
+                    <strong>DFT:</strong> X[k] = &sum;<sub>n=0</sub><sup>N-1</sup> x[n] &middot; e<sup>-j2&pi;kn/N</sup>, k = 0, ..., N-1.<br>
+                    <strong>Cooley-Tukey FFT:</strong> Split into even/odd indices: X[k] = E[k] + W<sup>k</sup><sub>N</sub> &middot; O[k], where E and O are N/2-point DFTs, W<sub>N</sub> = e<sup>-j2&pi;/N</sup>. Recursion depth = log<sub>2</sub>N, each level does N multiplies &rArr; O(N log N).<br>
+                    <strong>Proof of correctness:</strong> The N-th roots of unity {W<sub>N</sub><sup>k</sup>} form an orthogonal basis for &Copf;<sup>N</sup>. The DFT is the change-of-basis matrix. Inverse exists because the Vandermonde matrix of roots of unity is non-singular.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="fft" data-level="adult">
+                    The DFT is a linear map F: &Copf;<sup>N</sup> &rarr; &Copf;<sup>N</sup> represented by the matrix F<sub>kn</sub> = &omega;<sup>kn</sup>, &omega; = e<sup>-2&pi;i/N</sup>. Cooley-Tukey exploits the factorization F<sub>N</sub> = (I<sub>N/2</sub> &otimes; F<sub>2</sub>) &middot; T &middot; (F<sub>N/2</sub> &oplus; F<sub>N/2</sub>) &middot; P, where T contains twiddle factors and P is the bit-reversal permutation. This reduces multiply count from N&sup2; to (N/2)log<sub>2</sub>N. In signal processing pipelines, overlap-add or overlap-save methods apply FFT-based convolution for real-time filtering at O(N log N) per frame.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Edit Frequencies -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">3</span> Edit — Remove Frequency Bands</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="fft-reset-filter" class="btn-secondary" disabled>Reset All Bands</button>
+                </div>
+                <div id="fft-editor" class="fft-viz-box"></div>
+                <div id="fft-band-controls" class="fft-band-controls"></div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="edit" data-level="kids">
+                    Now you get to play DJ! Each slider controls a group of frequencies. Slide one down to zero and that sound disappears — like muting the drums but keeping the singing. You're choosing which "ingredients" stay in the smoothie!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="edit" data-level="teen">
+                    Each frequency bin X[k] has a magnitude (loudness) and phase (timing). By setting a bin's magnitude to zero, you remove that frequency from the signal. This is <strong>frequency-domain filtering</strong>. Removing low frequencies = high-pass filter (removes bass). Removing high frequencies = low-pass filter (removes hiss). This is exactly how noise cancellation works!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="edit" data-level="college">
+                    Filtering in the frequency domain is multiplication: Y[k] = H[k] &middot; X[k], where H[k] is the transfer function. By the convolution theorem, this equals circular convolution in the time domain: y[n] = (h * x)[n]. An ideal brick-wall filter (H[k]=0 for |k|&gt;k<sub>c</sub>) has a sinc impulse response, which is non-causal and infinite-length — hence real filters use windowed approximations (Hamming, Hann, Blackman).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="edit" data-level="adult">
+                    Spectral editing multiplies the DFT by a diagonal matrix H = diag(H[0], ..., H[N-1]). The convolution theorem states F{h*x} = F{h} &middot; F{x}. Zeroing bins is an ideal (but discontinuous) filter; in practice, smooth roll-off windows reduce spectral leakage and Gibbs ringing. For audio, overlap-add with Hann windows (75% overlap) provides artifact-free real-time processing. The modified spectrum maintains Hermitian symmetry for real-valued output: X[N-k] = X[k]*.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4: Inverse FFT -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">4</span> Reconstruct — Inverse FFT &amp; Play</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="fft-reconstruct" class="btn-primary" disabled>Run Inverse FFT</button>
+                  <button id="fft-play-original" class="btn-secondary" disabled>Play Original</button>
+                  <button id="fft-play-modified" class="btn-secondary" disabled>Play Modified</button>
+                  <button id="fft-stop-play" class="btn-secondary">Stop</button>
+                </div>
+                <div id="fft-reconstructed" class="fft-viz-box"></div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="ifft" data-level="kids">
+                    Now the magic un-blender runs <em>backwards</em> — it re-blends the fruits you kept into a new smoothie! The sound you hear is the rebuilt version, with the parts you removed now gone. It's like erasing certain colors from a painting and seeing what's left!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="ifft" data-level="teen">
+                    The Inverse FFT reverses the process: x[n] = (1/N) &sum; X[k] &middot; e<sup>2&pi;i&middot;kn/N</sup>. Notice it's almost the same formula as the forward FFT, just with a <strong>positive</strong> exponent and a 1/N scaling factor. The FFT and IFFT are mathematical inverses — apply both and you get back exactly where you started (if you didn't edit anything).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="ifft" data-level="college">
+                    <strong>IDFT:</strong> x[n] = (1/N) &sum;<sub>k=0</sub><sup>N-1</sup> X[k] &middot; e<sup>j2&pi;kn/N</sup>.<br>
+                    <strong>Proof that F<sup>-1</sup>F = I:</strong> (F<sup>-1</sup>F)<sub>mn</sub> = (1/N) &sum;<sub>k</sub> &omega;<sup>-mk</sup>&omega;<sup>kn</sup> = (1/N) &sum;<sub>k</sub> &omega;<sup>k(n-m)</sup>. For n=m, each term is 1, sum = N, result = 1. For n&ne;m, it's a geometric series summing to (&omega;<sup>N(n-m)</sup>-1)/(&omega;<sup>(n-m)</sup>-1) = 0, since &omega;<sup>N</sup>=1. QED.<br>
+                    The IFFT uses the same Cooley-Tukey structure with conjugate twiddle factors.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="ifft" data-level="adult">
+                    The DFT matrix F is unitary up to scaling: F<sup>*</sup>F = NI, so F<sup>-1</sup> = (1/N)F<sup>*</sup>. Implementation trick: IFFT(X) = (1/N) &middot; conj(FFT(conj(X))), so a single FFT routine handles both directions. Parseval's theorem confirms energy conservation: &sum;|x[n]|&sup2; = (1/N)&sum;|X[k]|&sup2;. After spectral editing, comparing the energy of original vs. modified signals quantifies exactly how much signal power was removed by the filter.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /fft-pipeline -->
+          </div><!-- /fft-audio-mode -->
+
+          <!-- Image FFT pipeline -->
+          <div id="fft-image-mode" class="fft-mode-panel" style="display:none;">
+          <div class="fft-pipeline">
+
+            <!-- Image Step 1: Load -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">1</span> Load Image</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="img-load-sample" class="btn-primary">Load Sample Image</button>
+                  <label class="btn-secondary" style="cursor:pointer;">Upload Image <input type="file" id="img-upload" accept="image/*" style="display:none;" /></label>
+                  <span id="img-load-status" class="fft-status"></span>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div class="fft-img-box"><div class="fft-img-label">Original</div><canvas id="img-original" width="256" height="256"></canvas></div>
+                  <div class="fft-img-box"><div class="fft-img-label">Grayscale</div><canvas id="img-gray" width="256" height="256"></canvas></div>
+                </div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="img-load" data-level="kids">
+                    A picture is made of tiny dots called pixels. Each pixel has a brightness number — 0 is black, 255 is white. The whole image is just a big grid of numbers! We convert it to gray first so we only need one number per pixel instead of three (red, green, blue).
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-load" data-level="teen">
+                    A digital image is a 2D array (matrix) of pixel values. Grayscale conversion uses the luminance formula: Y = 0.299R + 0.587G + 0.114B. A 256&times;256 image has 65,536 pixel values. This matrix is the "spatial domain" — each cell says how bright that location is.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-load" data-level="college">
+                    The image f(x,y) &isin; &Ropf;<sup>M&times;N</sup> is a real-valued matrix. Grayscale conversion applies the ITU-R BT.601 luma: Y = 0.299R + 0.587G + 0.114B. For 2D DFT, we work with a square power-of-2 matrix (resize to 256&times;256). Each entry f(x,y) represents spatial-domain intensity.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-load" data-level="adult">
+                    In image processing pipelines, the input is typically converted to single-channel float32 and resized to a power-of-2 dimension for FFT efficiency. The BT.601 luma weights (0.299, 0.587, 0.114) model human eye sensitivity. For color images, FFT can be applied per-channel, but grayscale simplifies the demonstration of frequency-domain concepts.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Step 2: 2D FFT -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">2</span> 2D FFT — Decompose into Spatial Frequencies</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="img-fft" class="btn-primary" disabled>Run 2D FFT</button>
+                  <span id="img-fft-status" class="fft-status"></span>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div class="fft-img-box"><div class="fft-img-label">Magnitude Spectrum (log)</div><canvas id="img-spectrum" width="256" height="256"></canvas></div>
+                  <div class="fft-img-box"><div class="fft-img-label">Phase</div><canvas id="img-phase" width="256" height="256"></canvas></div>
+                </div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="img-fft" data-level="kids">
+                    The 2D FFT does the same magic un-blending — but for a picture instead of sound! The bright dot in the center of the spectrum means "smooth, even areas." Dots far from the center mean "sharp edges and fine details." The picture has been taken apart into its pattern ingredients!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-fft" data-level="teen">
+                    The 2D FFT breaks the image into spatial frequencies — how fast brightness changes across the image. Low frequencies (center of spectrum) = gradual gradients and overall brightness. High frequencies (edges of spectrum) = sharp edges and fine textures. The formula applies 1D FFT to each row, then each column. <strong>Magnitude</strong> tells you how strong each pattern is; <strong>phase</strong> tells you where it's positioned.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-fft" data-level="college">
+                    <strong>2D DFT:</strong> F(u,v) = &sum;<sub>x=0</sub><sup>M-1</sup> &sum;<sub>y=0</sub><sup>N-1</sup> f(x,y) &middot; e<sup>-j2&pi;(ux/M + vy/N)</sup>.<br>
+                    This is separable: apply 1D DFT along rows, then along columns. Complexity: O(MN&middot;log(MN)). The spectrum is shifted so DC (F(0,0) = &sum;f(x,y), the average brightness) is at the center. We display log(1+|F(u,v)|) because the dynamic range spans several orders of magnitude.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-fft" data-level="adult">
+                    The 2D DFT is separable, enabling row-column decomposition: apply N 1D FFTs along rows (O(MN log N)), then M 1D FFTs along columns (O(MN log M)). Total: O(MN log(MN)). The magnitude spectrum |F(u,v)| is symmetric (Hermitian for real input). The DC component F(0,0) equals the sum of all pixel values. Phase encodes spatial structure — swapping the phase of two images swaps their perceived content, proving that phase carries more perceptual information than magnitude.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Step 3: Filter -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">3</span> Edit — Frequency Domain Filtering</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <label>Filter: <select id="img-filter-type">
+                    <option value="none">None</option>
+                    <option value="lowpass">Low-Pass (blur)</option>
+                    <option value="highpass">High-Pass (edges)</option>
+                    <option value="bandpass">Band-Pass</option>
+                    <option value="bandstop">Band-Stop (notch)</option>
+                  </select></label>
+                  <label>Radius: <input type="range" id="img-filter-radius" min="1" max="128" value="30" style="width:120px;" /> <span id="img-filter-r-val">30</span></label>
+                  <label id="img-filter-r2-wrap" style="display:none;">Outer R: <input type="range" id="img-filter-radius2" min="1" max="128" value="80" style="width:100px;" /> <span id="img-filter-r2-val">80</span></label>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div class="fft-img-box"><div class="fft-img-label">Filter Mask</div><canvas id="img-mask" width="256" height="256"></canvas></div>
+                  <div class="fft-img-box"><div class="fft-img-label">Filtered Spectrum</div><canvas id="img-filtered-spectrum" width="256" height="256"></canvas></div>
+                </div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="img-filter" data-level="kids">
+                    Now you're an image DJ! <strong>Low-pass</strong> keeps only the smooth parts — the picture gets blurry like looking through foggy glass. <strong>High-pass</strong> keeps only the edges — you see the outlines like a coloring book! You're choosing which "patterns" to keep in your picture.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-filter" data-level="teen">
+                    The filter mask is a circle in the frequency domain. <strong>Low-pass</strong> (keep center) = blur, removes detail. <strong>High-pass</strong> (keep edges) = edge detection, removes smooth areas. <strong>Band-pass</strong> keeps only a ring of frequencies. This is literally how Instagram blur effects and Photoshop sharpening work under the hood — they're multiplying the spectrum by a mask!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-filter" data-level="college">
+                    Filtering: G(u,v) = H(u,v) &middot; F(u,v), where H is the transfer function. An ideal low-pass filter: H(u,v) = 1 if &radic;(u&sup2;+v&sup2;) &le; D<sub>0</sub>, else 0. This causes ringing (Gibbs phenomenon) due to the sharp cutoff. Butterworth and Gaussian filters provide smoother roll-off: H<sub>Gauss</sub>(u,v) = e<sup>-D(u,v)&sup2;/(2D<sub>0</sub>&sup2;)</sup>. The convolution theorem guarantees this equals spatial-domain convolution with the impulse response h(x,y) = F<sup>-1</sup>{H}.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-filter" data-level="adult">
+                    Frequency-domain filtering is the backbone of image processing: denoising (Wiener filter), sharpening (unsharp mask = original + &alpha;&middot;high-pass), and compression (JPEG uses DCT, a real-valued cousin of DFT). MRI reconstruction applies inverse 2D FFT to k-space data acquired by the scanner — the raw MRI signal IS the Fourier transform of the body slice. CT reconstruction uses the Fourier Slice Theorem: 1D FT of a projection at angle &theta; equals a slice through the 2D FT at that angle.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Image Step 4: Inverse 2D FFT -->
+            <div class="fft-step">
+              <div class="fft-step-header"><span class="fft-step-num">4</span> Reconstruct — Inverse 2D FFT</div>
+              <div class="fft-step-body">
+                <div class="fft-controls">
+                  <button id="img-ifft" class="btn-primary" disabled>Run Inverse 2D FFT</button>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <div class="fft-img-box"><div class="fft-img-label">Original</div><canvas id="img-compare-orig" width="256" height="256"></canvas></div>
+                  <div class="fft-img-box"><div class="fft-img-label">Reconstructed</div><canvas id="img-result" width="256" height="256"></canvas></div>
+                </div>
+                <div class="fft-math-panel">
+                  <div class="fft-math-tabs">
+                    <button class="fft-math-tab active" data-level="kids">Kids</button>
+                    <button class="fft-math-tab" data-level="teen">Teen</button>
+                    <button class="fft-math-tab" data-level="college">College</button>
+                    <button class="fft-math-tab" data-level="adult">Adult</button>
+                  </div>
+                  <div class="fft-math-content" data-step="img-ifft" data-level="kids">
+                    The inverse FFT puts the picture back together from whatever patterns you kept! If you kept only the smooth parts, the picture looks blurry. If you kept only the edges, you see an outline drawing. You've just done what Photoshop does — but you understand the MATH behind it!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-ifft" data-level="teen">
+                    The 2D Inverse FFT: f(x,y) = (1/MN) &sum;&sum; F(u,v) &middot; e<sup>j2&pi;(ux/M + vy/N)</sup>. It reconstructs each pixel by adding up all the frequency components you kept. Compare original vs. reconstructed side by side — you can literally SEE which information lives in which frequencies!
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-ifft" data-level="college">
+                    <strong>2D IDFT:</strong> f(x,y) = (1/MN) &sum;<sub>u=0</sub><sup>M-1</sup> &sum;<sub>v=0</sub><sup>N-1</sup> F(u,v) &middot; e<sup>j2&pi;(ux/M+vy/N)</sup>.<br>
+                    Separable: apply 1D IFFT along columns, then rows. The result is real-valued (imaginary parts are numerical noise &lt; 10<sup>-10</sup>) because the input was a real image with Hermitian spectrum. Parseval: &sum;|f(x,y)|&sup2; = (1/MN)&sum;|F(u,v)|&sup2; — energy in the filtered image equals energy of the retained spectral components.
+                  </div>
+                  <div class="fft-math-content hidden" data-step="img-ifft" data-level="adult">
+                    The reconstruction demonstrates the perfect invertibility of the DFT. In practice, JPEG compression applies a block-wise DCT (8&times;8), quantizes high-frequency coefficients to zero, and inverse-transforms to get the compressed image. The quality slider literally controls how many frequency components are discarded. This lab replicates that pipeline at full-image scale, making the compression-quality tradeoff viscerally visible.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /fft-pipeline -->
+          </div><!-- /fft-image-mode -->
+
+          <div class="music-explore-link" style="margin-top:16px;">
+            <a href="#" data-music-prompt="Explain the Fast Fourier Transform, its proof, and why it's one of the most important algorithms ever invented">Explore FFT in Tutor &rarr;</a>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="vendor/plotly.min.js"></script>
+    <script src="vendor/vexflow.js"></script>
+    <script>
+      // Show only the requested lab.
+      (function () {
+        "use strict";
+        var tab = new URLSearchParams(location.search).get("tab") || "musiclab";
+        var el = document.getElementById("tab-" + tab);
+        if (el) {
+          el.classList.add("active");
+        } else {
+          document.querySelector(".embed-root").innerHTML =
+            '<div class="embed-missing">No embedded lab called &ldquo;' + tab + '&rdquo;.</div>';
+        }
+
+        // These labs offer "Explore in Tutor" links. Inside an iframe there is
+        // no tutor to switch to, so hand the question up to the React app —
+        // which opens it in Learn. Previously these calls silently did nothing.
+        window.switchToTab = function () {};
+        window.sendTutorQuestion = function (question) {
+          try {
+            parent.postMessage({ source: "euclid-embed", type: "ask", question: question }, location.origin);
+          } catch (e) {
+            /* standalone, not embedded — nothing to hand it to */
+          }
+        };
+      })();
+    </script>
+    <script src="music_core.js"></script>
+    <script src="mozart_notes.js"></script>
+    <script src="musiclab.js"></script>
+    <script src="fftlab.js"></script>
+    <script src="fftlab-image.js"></script>
+  </body>
+</html>
