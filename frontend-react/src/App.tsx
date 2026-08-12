@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Chat from "./Chat";
 import Lesson from "./Lesson";
 import Discover from "./Discover";
@@ -12,13 +12,15 @@ import Resources from "./Resources";
 import Prompts from "./Prompts";
 import ConceptGraph from "./ConceptGraph";
 import MathMap from "./MathMap";
+import Gallery from "./Gallery";
+import Euclid from "./Euclid";
 
 type Tab =
   | "learn" | "discover" | "solve" | "chat" | "labs" | "library"
   | "symbols" | "resources" | "prompts" | "concepts" | "mathmap"
-  | "settings" | "eval";
+  | "gallery" | "euclid" | "settings" | "eval";
 
-/** Primary destinations, shown as labelled tabs. */
+/** Primary destinations, always visible as labelled tabs. */
 const TABS: [Tab, string][] = [
   ["learn", "Learn"],
   ["discover", "Discover"],
@@ -26,11 +28,20 @@ const TABS: [Tab, string][] = [
   ["chat", "Chat"],
   ["labs", "Labs"],
   ["library", "Library"],
-  ["symbols", "Symbols"],
-  ["resources", "Resources"],
-  ["prompts", "Prompts"],
-  ["concepts", "Concepts"],
-  ["mathmap", "Map"],
+];
+
+/**
+ * Reference surfaces, gathered under one menu. Deliberately kept out of the top
+ * row: thirteen flat tabs is what made the classic header unusable.
+ */
+const EXPLORE: [Tab, string, string][] = [
+  ["concepts", "Concept Graph", "◌"],
+  ["mathmap", "Map of Mathematics", "◈"],
+  ["gallery", "Cogito Gallery", "◉"],
+  ["euclid", "Euclid's Elements", "△"],
+  ["symbols", "Symbols", "𝑥"],
+  ["resources", "Resources", "☰"],
+  ["prompts", "Prompt Library", "❖"],
 ];
 
 /** Utility destinations, shown as icon buttons in the right-hand cluster. */
@@ -39,21 +50,26 @@ const UTILITY: [Tab, string, string][] = [
   ["eval", "Evaluation", "M3.5 20.5h17M7 20.5v-6.5M12 20.5V5.5M17 20.5v-10"],
 ];
 
-const TAB_IDS = new Set<string>([...TABS, ...UTILITY].map(([id]) => id));
+const ALL_IDS = new Set<string>([...TABS, ...EXPLORE, ...UTILITY].map(([id]) => id));
 
 /** `/app#chat` opens straight into that tab, so links can deep-link here. */
 function tabFromHash(): Tab {
   const id = window.location.hash.replace(/^#/, "");
-  return TAB_IDS.has(id) ? (id as Tab) : "learn";
+  return ALL_IDS.has(id) ? (id as Tab) : "learn";
 }
 
 export default function App() {
   const [tab, setTabState] = useState<Tab>(tabFromHash);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
   const setTab = (next: Tab) => {
     setTabState(next);
+    setMenuOpen(false);
     window.history.replaceState(null, "", next === "learn" ? " " : `#${next}`);
   };
-  // A prompt chosen in the Prompt Library is handed to Learn to build from.
+
+  // A prompt, concept or visualization chosen elsewhere is handed to Learn.
   const [seedTopic, setSeedTopic] = useState<string | null>(null);
   const askInLearn = (question: string) => {
     setSeedTopic(question);
@@ -66,6 +82,23 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
+  // Close the menu on an outside click or Escape.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  const exploreActive = EXPLORE.some(([id]) => id === tab);
+
   return (
     <div className="app">
       <header className="topbar">
@@ -76,6 +109,33 @@ export default function App() {
               {label}
             </button>
           ))}
+
+          <div className="tab-menu" ref={menuRef}>
+            <button
+              className={`tab ${exploreActive ? "on" : ""}`}
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-haspopup="true"
+              aria-expanded={menuOpen}
+            >
+              Explore
+              <span className={`tab-caret ${menuOpen ? "open" : ""}`} aria-hidden="true" />
+            </button>
+            {menuOpen && (
+              <div className="tab-menu-list">
+                {EXPLORE.map(([id, label, icon]) => (
+                  <button
+                    key={id}
+                    className={`tab-menu-item ${tab === id ? "on" : ""}`}
+                    onClick={() => setTab(id)}
+                  >
+                    <span className="tab-menu-icon" aria-hidden="true">{icon}</span>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <span className="tab-divider" aria-hidden="true" />
           {UTILITY.map(([id, label, d]) => (
             <button
@@ -118,6 +178,10 @@ export default function App() {
           <ConceptGraph onAsk={askInLearn} />
         ) : tab === "mathmap" ? (
           <MathMap onAsk={askInLearn} />
+        ) : tab === "gallery" ? (
+          <Gallery onAsk={askInLearn} />
+        ) : tab === "euclid" ? (
+          <Euclid onAsk={askInLearn} />
         ) : tab === "settings" ? (
           <Settings />
         ) : tab === "eval" ? (

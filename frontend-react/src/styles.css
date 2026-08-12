@@ -672,3 +672,70 @@ body {
   border: 1px solid var(--line); border-radius: 10px;
 }
 .mm-detail h4 { margin: 0; }
+
+/* Explore menu in the header */
+.tab-menu { position: relative; }
+.tab-caret {
+  width: 5px; height: 5px; margin-left: 2px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg); opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+.tab-caret.open { transform: translateY(1px) rotate(225deg); }
+.tab-menu-list {
+  position: absolute; top: calc(100% + 8px); right: 0; min-width: 218px;
+  background: #232020; border: 1px solid rgba(250, 250, 249, 0.1);
+  border-radius: 12px; padding: 6px; z-index: 900;
+  box-shadow: 0 22px 44px -14px rgba(0, 0, 0, 0.75);
+  animation: tabMenuIn 0.15s ease-out;
+}
+@keyframes tabMenuIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tab-menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 10px; border: 0; border-radius: 8px; background: transparent;
+  color: #d6d3d1; font-family: inherit; font-size: 13px; text-align: left;
+  cursor: pointer; transition: background 0.12s ease, color 0.12s ease;
+}
+.tab-menu-item:hover { background: rgba(250, 250, 249, 0.08); color: #fafaf9; }
+.tab-menu-item.on { background: rgba(217, 166, 46, 0.16); color: #fafaf9; font-weight: 600; }
+.tab-menu-icon { flex: 0 0 18px; width: 18px; text-align: center; opacity: 0.55; }
+.tab-menu-item.on .tab-menu-icon { color: #d9a62e; opacity: 1; }
+
+/* Cogito gallery */
+.gal-cat { margin-bottom: 24px; }
+.gal-cat h4 { margin: 0 0 2px; }
+.gal-grid {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+}
+.gal-card {
+  display: flex; flex-direction: column; gap: 6px; padding: 14px;
+  background: #fff; border: 1px solid var(--line); border-radius: 10px;
+}
+.gal-card h5 { margin: 0; font-size: 14px; }
+.gal-card p { margin: 0; font-size: 13px; color: #57534e; line-height: 1.55; flex: 1; }
+.gal-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.gal-frame-wrap { flex: 1; padding: 12px; min-height: 0; }
+.gal-frame {
+  width: 100%; height: 100%; min-height: 560px; border: 1px solid var(--line);
+  border-radius: 10px; background: #fff;
+}
+
+/* Euclid's Elements */
+.euc-list { display: flex; flex-direction: column; gap: 10px; }
+.euc-entry {
+  padding: 14px; background: #fff; border: 1px solid var(--line); border-radius: 10px;
+}
+.euc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.euc-ref {
+  font-family: "SF Mono", monospace; font-size: 12px; font-weight: 600; color: var(--ink);
+}
+.euc-original {
+  margin: 0; padding: 10px 14px; background: #fafaf9;
+  border-left: 3px solid #d9a62e; border-radius: 0 8px 8px 0;
+  font-family: Georgia, serif; font-size: 15px; line-height: 1.6;
+}
+.euc-modern { margin: 8px 0 0; font-size: 13.5px; color: #57534e; line-height: 1.6; }
