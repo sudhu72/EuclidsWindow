@@ -3,6 +3,7 @@ import AiByHand from "./AiByHand";
 import LogicLab from "./LogicLab";
 import CryptoLab from "./CryptoLab";
 import CalculusLab from "./CalculusLab";
+import MatrixLab from "./MatrixLab";
 
 // Labs are ported one at a time. NATIVE lists the ones that no longer need the
 // classic frontend; the rest still open in embed mode (?tab=<id>&embed=1 hides
@@ -15,11 +16,11 @@ const LABS: { id: string; label: string; icon: string; desc: string }[] = [
   { id: "fftlab", label: "FFT Lab", icon: "∿", desc: "Decompose signals into frequencies; record your own." },
   { id: "cryptolab", label: "Crypto Lab", icon: "⊕", desc: "Caesar wheel, frequency analysis, RSA, Diffie-Hellman." },
   { id: "logiclab", label: "Logic Lab", icon: "⊢", desc: "Truth tables, syllogisms, Knights & Knaves, logic gates." },
-  { id: "matrixlab", label: "Matrix Lab", icon: "▨", desc: "Matrix operations and linear transformations." },
+  { id: "matrixlab", label: "Matrix Lab", icon: "▨", desc: "Operations, by-hand practice, and the transform drawn." },
 ];
 
 /** Labs that are native React; everything else still uses the embed bridge. */
-const NATIVE = new Set(["aibyhand", "logiclab", "cryptolab", "calclab"]);
+const NATIVE = new Set(["aibyhand", "logiclab", "cryptolab", "calclab", "matrixlab"]);
 
 export default function Labs({ onAsk }: { onAsk: (question: string) => void }) {
   const [active, setActive] = useState<string | null>(null);
@@ -40,8 +41,10 @@ export default function Labs({ onAsk }: { onAsk: (question: string) => void }) {
               <LogicLab onAsk={onAsk} />
             ) : active === "cryptolab" ? (
               <CryptoLab onAsk={onAsk} />
-            ) : (
+            ) : active === "calclab" ? (
               <CalculusLab onAsk={onAsk} />
+            ) : (
+              <MatrixLab onAsk={onAsk} />
             )}
           </div>
         </div>

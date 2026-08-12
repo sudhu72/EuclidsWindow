@@ -859,3 +859,34 @@ body {
   margin-top: 10px; padding: 11px 14px; background: #fafaf9;
   border: 1px solid var(--line); border-radius: 10px; font-size: 13.5px; line-height: 1.7;
 }
+
+/* Matrix Lab */
+.mx-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; align-items: flex-start; }
+.mx-card {
+  padding: 12px 14px; background: #fff; border: 1px solid var(--line); border-radius: 10px;
+}
+.mx-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); margin-bottom: 8px;
+}
+.mx-grid { display: grid; gap: 6px; }
+.mx-cell {
+  width: 66px; padding: 7px 8px; border: 1px solid #d6d3d1; border-radius: 7px;
+  font-family: "SF Mono", monospace; font-size: 13px; text-align: center; background: #fff;
+}
+.mx-cell[readonly] { background: #fafaf9; color: #44403c; }
+.mx-practice {
+  margin-top: 14px; padding: 14px; background: #fffdf7;
+  border: 1px solid #f3e6c8; border-radius: 10px;
+}
+.mx-practice h4 { margin: 0 0 4px; }
+.mx-steps { margin-top: 10px; }
+.mx-steps > summary { cursor: pointer; font-size: 13px; color: #57534e; }
+.mx-steps pre {
+  margin: 8px 0 0; padding: 12px; background: #fafaf9; border: 1px solid var(--line);
+  border-radius: 8px; font-family: "SF Mono", monospace; font-size: 12px;
+  line-height: 1.7; overflow-x: auto;
+}
+.mx-anim { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 14px; }
+.mx-anim h4 { margin: 0 0 4px; }
+.mx-plot { max-width: 520px; margin: 0 auto; }
