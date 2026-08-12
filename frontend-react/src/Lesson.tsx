@@ -3,6 +3,7 @@ import { buildLesson, fetchScene, type LessonBuild, type LessonScene } from "./l
 import { streamTutor, type TutorMeta } from "./api";
 import Markdown from "./Markdown";
 import Animation from "./Animation";
+import VizPanel from "./VizPanel";
 
 const TYPE_ICON: Record<string, string> = { explain: "📖", example: "🧮", quiz: "❓" };
 const LEVELS = ["kids", "teen", "college", "adult"];
@@ -63,7 +64,15 @@ function Classmate({ q, a }: { q?: string | null; a?: string | null }) {
   );
 }
 
-function AskBox({ context, level }: { context: string; level: string }) {
+function AskBox({
+  context,
+  level,
+  onAnswer,
+}: {
+  context: string;
+  level: string;
+  onAnswer?: (text: string) => void;
+}) {
   const [q, setQ] = useState("");
   const [answer, setAnswer] = useState("");
   const [meta, setMeta] = useState<TutorMeta | null>(null);
@@ -90,6 +99,7 @@ function AskBox({ context, level }: { context: string; level: string }) {
           setAnswer(full);
         }
       );
+      onAnswer?.(full);
     } catch (e) {
       setAnswer(`⚠️ ${(e as Error).message}`);
     } finally {
@@ -140,6 +150,7 @@ export default function Lesson({
   const [scenes, setScenes] = useState<(LessonScene | null)[]>([]);
   const [idx, setIdx] = useState(0);
   const [building, setBuilding] = useState(false);
+  const [lastAnswer, setLastAnswer] = useState("");
 
   async function build(topicArg?: string) {
     const t = (topicArg ?? topic).trim();
@@ -272,6 +283,11 @@ export default function Lesson({
             )}
           </div>
 
+          <VizPanel
+            topic={section?.title ? `${lesson.topic} — ${section.title}` : lesson.topic}
+            answerText={lastAnswer || scene?.narration || ""}
+          />
+
           <div className="nav">
             <button className="btn" onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={idx === 0}>
               ← Prev
@@ -285,7 +301,7 @@ export default function Lesson({
             </button>
           </div>
 
-          <AskBox context={context} level={level} />
+          <AskBox context={context} level={level} onAnswer={setLastAnswer} />
         </div>
       )}
     </div>
