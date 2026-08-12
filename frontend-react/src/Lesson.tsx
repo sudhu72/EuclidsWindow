@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { buildLesson, fetchScene, type LessonBuild, type LessonScene } from "./lessonApi";
-import { streamTutor, type TutorMeta } from "./api";
+import { streamTutor, type TutorAids, type TutorMeta } from "./api";
 import Markdown from "./Markdown";
 import Animation from "./Animation";
 import VizPanel from "./VizPanel";
+import Scratchpad from "./Scratchpad";
+import { exportLesson } from "./exportLesson";
 
 const TYPE_ICON: Record<string, string> = { explain: "📖", example: "🧮", quiz: "❓" };
 const LEVELS = ["kids", "teen", "college", "adult"];
@@ -67,22 +69,31 @@ function Classmate({ q, a }: { q?: string | null; a?: string | null }) {
 function AskBox({
   context,
   level,
+  sessionId,
+  placeholder,
   onAnswer,
+  onExchange,
 }: {
   context: string;
   level: string;
+  sessionId: string;
+  placeholder?: string;
   onAnswer?: (text: string) => void;
+  onExchange?: (q: string, a: string) => void;
 }) {
   const [q, setQ] = useState("");
   const [answer, setAnswer] = useState("");
   const [meta, setMeta] = useState<TutorMeta | null>(null);
+  const [aids, setAids] = useState<TutorAids | null>(null);
   const [busy, setBusy] = useState(false);
-  async function ask() {
-    const text = q.trim();
+
+  async function ask(override?: string) {
+    const text = (override ?? q).trim();
     if (!text || busy) return;
     setBusy(true);
     setAnswer("");
     setMeta(null);
+    setAids(null);
     let full = "";
     try {
       // The scene context frames the question, but the tutor is asked the
@@ -91,8 +102,10 @@ function AskBox({
         text,
         {
           learnerLevel: level,
+          sessionId,
           history: context ? [{ role: "assistant", content: context }] : [],
           onMeta: setMeta,
+          onAids: setAids,
         },
         (tok) => {
           full += tok;
@@ -100,12 +113,14 @@ function AskBox({
         }
       );
       onAnswer?.(full);
+      onExchange?.(text, full);
     } catch (e) {
       setAnswer(`⚠️ ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
   }
+
   return (
     <div className="askbox">
       <form
@@ -115,7 +130,12 @@ function AskBox({
           void ask();
         }}
       >
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask about this scene…" disabled={busy} />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={placeholder || "Ask about this scene…"}
+          disabled={busy}
+        />
         <button type="submit" className="send" disabled={busy || !q.trim()}>
           {busy ? "…" : "Ask"}
         </button>
@@ -130,6 +150,24 @@ function AskBox({
               {` · ${meta.learner_level} level`}
             </div>
           )}
+        </div>
+      )}
+      {aids && aids.takeaways.length > 0 && (
+        <div className="aids">
+          <h5>Key takeaways</h5>
+          <ul>{aids.takeaways.map((t, i) => <li key={i}>{t}</li>)}</ul>
+        </div>
+      )}
+      {aids && aids.next_questions.length > 0 && (
+        <div className="aids">
+          <h5>Where to go next</h5>
+          <div className="chips">
+            {aids.next_questions.map((n, i) => (
+              <button key={i} className="chip" onClick={() => { setQ(n); void ask(n); }} disabled={busy}>
+                {n}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -151,6 +189,25 @@ export default function Lesson({
   const [idx, setIdx] = useState(0);
   const [building, setBuilding] = useState(false);
   const [lastAnswer, setLastAnswer] = useState("");
+  const [justAsk, setJustAsk] = useState(false);
+  // One context session per visit: the tutor keeps the thread across questions,
+  // and Reset starts a clean one.
+  const [sessionId, setSessionId] = useState(() => `learn-${Date.now().toString(36)}`);
+  const [qa, setQa] = useState<{ role: string; content: string }[]>([]);
+  const [sessionCount, setSessionCount] = useState(0);
+
+  const recordExchange = (question: string, answer: string) => {
+    setQa((prev) => [...prev, { role: "user", content: question }, { role: "assistant", content: answer }]);
+    setSessionCount((n) => n + 1);
+  };
+
+  async function resetSession() {
+    await fetch(`/api/context/session/${encodeURIComponent(sessionId)}`, { method: "DELETE" }).catch(() => undefined);
+    setSessionId(`learn-${Date.now().toString(36)}`);
+    setQa([]);
+    setSessionCount(0);
+    setLastAnswer("");
+  }
 
   async function build(topicArg?: string) {
     const t = (topicArg ?? topic).trim();
@@ -222,10 +279,56 @@ export default function Lesson({
         <button className="send" onClick={() => void build()} disabled={building || !topic.trim()}>
           {building ? "Building…" : "Build Lesson"}
         </button>
+        <button
+          className="btn-ghost"
+          onClick={() => setJustAsk(true)}
+          disabled={building}
+          title="Ask the tutor without building a whole lesson"
+        >
+          Just ask
+        </button>
+        <button
+          className="btn-ghost"
+          onClick={() => lesson && exportLesson(lesson, scenes, qa)}
+          disabled={!lesson || !scenes.some(Boolean)}
+          title="Download this lesson as a standalone HTML file"
+        >
+          Export
+        </button>
         <span className="status">{status}</span>
       </div>
 
-      {!lesson && !building && (
+      <div className="ctxbar">
+        <span>
+          Context: session <code>{sessionId.slice(-6)}</code> · {sessionCount}{" "}
+          {sessionCount === 1 ? "question" : "questions"}
+        </span>
+        <button className="link" onClick={() => void resetSession()} disabled={sessionCount === 0}>
+          Reset
+        </button>
+      </div>
+
+      {!lesson && !building && justAsk && (
+        <div className="lesson-body">
+          <h3 className="lesson-title">Ask the tutor</h3>
+          <p className="dsub">
+            A direct question, no lesson scaffolding. Build a lesson above whenever you want the
+            full walkthrough.
+          </p>
+          <AskBox
+            context=""
+            level={level}
+            sessionId={sessionId}
+            placeholder="Ask anything, e.g. why does a determinant measure area?"
+            onAnswer={setLastAnswer}
+            onExchange={recordExchange}
+          />
+          <VizPanel topic={topic || lastAnswer.slice(0, 80)} answerText={lastAnswer} />
+          <Scratchpad question={topic || "Check this working"} />
+        </div>
+      )}
+
+      {!lesson && !building && !justAsk && (
         <div className="starters">
           <div className="empty" style={{ margin: "8px auto 14px" }}>
             Learn any idea the Feynman way — a concrete example, one idea at a time, then a quiz —
@@ -288,6 +391,8 @@ export default function Lesson({
             answerText={lastAnswer || scene?.narration || ""}
           />
 
+          <Scratchpad question={section?.title ? `${lesson.topic} — ${section.title}` : lesson.topic} />
+
           <div className="nav">
             <button className="btn" onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={idx === 0}>
               ← Prev
@@ -301,7 +406,13 @@ export default function Lesson({
             </button>
           </div>
 
-          <AskBox context={context} level={level} onAnswer={setLastAnswer} />
+          <AskBox
+            context={context}
+            level={level}
+            sessionId={sessionId}
+            onAnswer={setLastAnswer}
+            onExchange={recordExchange}
+          />
         </div>
       )}
     </div>

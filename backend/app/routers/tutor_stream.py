@@ -69,9 +69,54 @@ def _sse(payload: dict) -> str:
     return f"data: {json.dumps(payload)}\n\n"
 
 
+def _closing_aids(req: "TutorStreamRequest", answer: str) -> dict:
+    """Takeaways and follow-ups for the final frame, plus session bookkeeping.
+
+    Runs after the answer is complete, so the learning aids see the whole text.
+    Never raises into the stream — the answer has already been delivered and a
+    missing set of follow-ups is not worth failing over.
+    """
+    aids: dict = {"takeaways": [], "next_questions": []}
+    if not answer.strip():
+        return aids
+    try:
+        from ..ai.didactics import build_learning_aids, extract_learning_focus
+
+        takeaways, next_questions = build_learning_aids(
+            extract_learning_focus(req.question), answer, [], req.learner_level or "teen"
+        )
+        aids["takeaways"] = list(takeaways or [])
+        aids["next_questions"] = list(next_questions or [])
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Tutor stream: learning aids failed: %s", exc)
+    if req.session_id:
+        try:
+            from ..main import context_service
+
+            context_service.add_message(req.session_id, "assistant", answer)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Tutor stream: could not record the reply: %s", exc)
+    return aids
+
+
 @router.post("/api/ai/tutor/stream")
 async def tutor_stream(req: TutorStreamRequest) -> StreamingResponse:
-    history = [m.model_dump() for m in req.history]
+    raw_history = [m.model_dump() for m in req.history]
+
+    # With a session, the semantic context window supplies the history — the same
+    # continuity /api/ai/tutor gives, so a long conversation keeps its thread
+    # without the client resending everything.
+    history = raw_history
+    if req.session_id:
+        from ..main import context_service
+
+        context_service.create_session(req.session_id)
+        await asyncio.to_thread(
+            context_service.add_message, req.session_id, "user", req.question
+        )
+        history = await asyncio.to_thread(
+            context_service.build_context, req.session_id, req.question, raw_history
+        )
 
     # --- Tier 1: curated catalog, unless this is a follow-up or the user's own
     # library covers the question better (the keyword matcher can misfire).
@@ -119,11 +164,13 @@ async def tutor_stream(req: TutorStreamRequest) -> StreamingResponse:
     def event_source():
         yield _sse({"meta": meta})
         got_any = False
+        collected: List[str] = []
         try:
             for chunk in engine.chat_stream(
                 messages, num_predict=1200, num_ctx=4096, temperature=0.4
             ):
                 got_any = True
+                collected.append(chunk)
                 yield _sse({"t": chunk})
         except Exception as exc:  # noqa: BLE001
             logger.warning("Tutor stream failed: %s", exc)
@@ -134,8 +181,9 @@ async def tutor_stream(req: TutorStreamRequest) -> StreamingResponse:
             # Streaming is Ollama-only; a cloud route yields nothing, so fall
             # back to the one-shot call rather than showing an empty answer.
             text = engine.chat(messages, num_predict=1200, num_ctx=4096, temperature=0.4)
-            yield _sse({"t": text or "The tutor is unavailable right now."})
-        yield _sse({"done": True, "takeaways": [], "next_questions": []})
+            collected.append(text or "The tutor is unavailable right now.")
+            yield _sse({"t": collected[-1]})
+        yield _sse({"done": True, **_closing_aids(req, "".join(collected))})
 
     return StreamingResponse(
         event_source(),

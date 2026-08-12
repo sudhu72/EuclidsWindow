@@ -6,6 +6,12 @@ export interface ChatMsg {
   content: string;
 }
 
+/** Follow-ups and takeaways, delivered once the answer is complete. */
+export interface TutorAids {
+  takeaways: string[];
+  next_questions: string[];
+}
+
 /** What the tutor used to answer, reported before any text arrives. */
 export interface TutorMeta {
   source: "curated" | "llm";
@@ -21,7 +27,13 @@ export interface TutorMeta {
  */
 export async function streamTutor(
   question: string,
-  opts: { history?: ChatMsg[]; learnerLevel?: string; onMeta?: (m: TutorMeta) => void },
+  opts: {
+    history?: ChatMsg[];
+    learnerLevel?: string;
+    sessionId?: string;
+    onMeta?: (m: TutorMeta) => void;
+    onAids?: (a: TutorAids) => void;
+  },
   onToken: (t: string) => void,
   signal?: AbortSignal
 ): Promise<void> {
@@ -32,6 +44,7 @@ export async function streamTutor(
       question,
       history: opts.history ?? [],
       learner_level: opts.learnerLevel ?? "teen",
+      session_id: opts.sessionId,
     }),
     signal,
   });
@@ -59,7 +72,13 @@ export async function streamTutor(
       if (data.meta) opts.onMeta?.(data.meta as TutorMeta);
       if (data.t) onToken(data.t as string);
       if (data.error) throw new Error(String(data.error));
-      if (data.done) return;
+      if (data.done) {
+        opts.onAids?.({
+          takeaways: (data.takeaways as string[]) ?? [],
+          next_questions: (data.next_questions as string[]) ?? [],
+        });
+        return;
+      }
     }
   }
 }
