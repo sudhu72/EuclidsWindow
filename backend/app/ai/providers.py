@@ -119,12 +119,16 @@ def _anthropic_chat(
 
     # No `temperature` (removed on current Claude models) and no `thinking`
     # config — omitting it is valid on every model the user might configure.
-    response = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=system,
-        messages=chat_messages,
-    )
+    kwargs: Dict = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "messages": chat_messages,
+    }
+    # Omit `system` entirely when there is none: an explicit null is rejected
+    # by the API ("Input should be a valid array").
+    if system:
+        kwargs["system"] = system
+    response = client.messages.create(**kwargs)
     if response.stop_reason == "refusal":
         logger.warning("Anthropic request was refused by safety classifiers")
         return None
