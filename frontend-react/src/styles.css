@@ -793,3 +793,45 @@ body {
 .tt-table .val-true { color: #15803d; }
 .tt-table .val-false { color: #a8a29e; }
 .tt-table .val-bad { background: #fef08a; color: #92400e; font-weight: 700; }
+
+/* Cryptology Lab */
+.cl-caesar { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+.cl-wheel-col { flex: 0 1 340px; min-width: 280px; }
+.cl-caesar-col { flex: 1 1 320px; min-width: 280px; display: flex; flex-direction: column; gap: 8px; }
+.cl-wheel { width: 100%; height: auto; display: block; }
+.cl-wheel-label {
+  margin-top: 6px; text-align: center; font-size: 13px; color: #57534e; min-height: 20px;
+}
+.cl-out { background: #fafaf9; }
+.cl-alphabet { font-family: "SF Mono", monospace; font-size: 11.5px; line-height: 1.8; }
+.cl-alphabet span { letter-spacing: 3px; }
+.cl-cipher { color: #b91c1c; font-weight: 600; }
+.cl-brute {
+  margin: 8px 0 0; padding: 10px; max-height: 260px; overflow: auto;
+  background: #fafaf9; border: 1px solid var(--line); border-radius: 8px;
+  font-family: "SF Mono", monospace; font-size: 11.5px; line-height: 1.6;
+}
+.cl-chart {
+  width: 100%; height: auto; margin-top: 12px; background: #fff;
+  border: 1px solid var(--line); border-radius: 10px;
+}
+.cl-legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.cl-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }
+.cl-steps { margin: 12px 0 0; padding-left: 22px; font-size: 14px; line-height: 1.9; }
+.cl-keys { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 13.5px; }
+.cl-pub { color: #2563eb; font-weight: 600; }
+.cl-priv { color: #b91c1c; font-weight: 600; }
+.cl-dh { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.cl-dh-side, .cl-dh-mid {
+  flex: 1 1 200px; padding: 12px 14px; background: #fff;
+  border: 1px solid var(--line); border-radius: 10px; font-size: 13px; line-height: 1.6;
+}
+.cl-dh-mid { background: #fafaf9; }
+.cl-dh h5 {
+  margin: 0 0 6px; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--muted);
+}
+.cl-dh p { margin: 0 0 4px; }
+.cl-wheel-formula {
+  font-family: "SF Mono", monospace; font-size: 11.5px; color: var(--muted); margin-top: 2px;
+}

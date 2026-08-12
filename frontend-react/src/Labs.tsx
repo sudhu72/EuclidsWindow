@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AiByHand from "./AiByHand";
 import LogicLab from "./LogicLab";
+import CryptoLab from "./CryptoLab";
 
 // Labs are ported one at a time. NATIVE lists the ones that no longer need the
 // classic frontend; the rest still open in embed mode (?tab=<id>&embed=1 hides
@@ -11,13 +12,13 @@ const LABS: { id: string; label: string; icon: string; desc: string }[] = [
   { id: "musiclab", label: "Music Lab", icon: "♫", desc: "Hear the math of music: harmonics, strings, Mozart's dice." },
   { id: "calclab", label: "Calculus Lab", icon: "∫", desc: "Derivatives, integrals, and limits, visualized." },
   { id: "fftlab", label: "FFT Lab", icon: "∿", desc: "Decompose signals into frequencies; record your own." },
-  { id: "cryptolab", label: "Crypto Lab", icon: "🔒", desc: "Ciphers, modular arithmetic, and public keys." },
+  { id: "cryptolab", label: "Crypto Lab", icon: "⊕", desc: "Caesar wheel, frequency analysis, RSA, Diffie-Hellman." },
   { id: "logiclab", label: "Logic Lab", icon: "⊢", desc: "Truth tables, syllogisms, Knights & Knaves, logic gates." },
   { id: "matrixlab", label: "Matrix Lab", icon: "▨", desc: "Matrix operations and linear transformations." },
 ];
 
 /** Labs that are native React; everything else still uses the embed bridge. */
-const NATIVE = new Set(["aibyhand", "logiclab"]);
+const NATIVE = new Set(["aibyhand", "logiclab", "cryptolab"]);
 
 export default function Labs({ onAsk }: { onAsk: (question: string) => void }) {
   const [active, setActive] = useState<string | null>(null);
@@ -32,7 +33,13 @@ export default function Labs({ onAsk }: { onAsk: (question: string) => void }) {
             <span className="labs-frame-title">{lab.icon} {lab.label}</span>
           </div>
           <div style={{ flex: 1, overflowY: "auto", display: "flex" }}>
-            {active === "aibyhand" ? <AiByHand /> : <LogicLab onAsk={onAsk} />}
+            {active === "aibyhand" ? (
+              <AiByHand />
+            ) : active === "logiclab" ? (
+              <LogicLab onAsk={onAsk} />
+            ) : (
+              <CryptoLab onAsk={onAsk} />
+            )}
           </div>
         </div>
       );
