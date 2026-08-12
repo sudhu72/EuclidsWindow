@@ -739,3 +739,57 @@ body {
   font-family: Georgia, serif; font-size: 15px; line-height: 1.6;
 }
 .euc-modern { margin: 8px 0 0; font-size: 13.5px; color: #57534e; line-height: 1.6; }
+
+/* Formal Logic Lab */
+.lg-game { margin: 14px 0; }
+.lg-formula {
+  width: 100%; max-width: 420px; padding: 9px 12px; border: 1px solid #d6d3d1;
+  border-radius: 8px; font-family: "SF Mono", monospace; font-size: 14px;
+}
+.lg-prereq {
+  margin: 10px 0 4px; padding: 11px 14px; background: #fafaf9;
+  border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0; font-size: 13.5px; line-height: 1.6;
+}
+.lg-prereq p { margin: 0 0 4px; }
+.lg-note {
+  margin-top: 14px; padding: 11px 14px; background: #fffdf7;
+  border: 1px solid #f3e6c8; border-radius: 10px; font-size: 13px; line-height: 1.65;
+}
+.lg-note p { margin: 0 0 6px; }
+.lg-note p:last-child { margin-bottom: 0; }
+.lg-levels { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.lg-level-body { font-size: 13.5px; line-height: 1.7; }
+.lg-desc { margin: 10px 0; font-size: 14px; line-height: 1.6; }
+.lg-desc p { margin: 0 0 6px; }
+.lg-scenario {
+  margin: 12px 0; padding: 12px 14px; background: #fff;
+  border: 1px solid var(--line); border-radius: 10px; font-size: 14.5px; line-height: 1.6;
+}
+.lg-scenario p { margin: 0 0 8px; }
+.lg-scenario p:last-child { margin-bottom: 0; }
+.lg-person { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.lg-syl {
+  margin: 12px 0; padding: 12px 14px; background: #fff;
+  border: 1px solid var(--line); border-radius: 10px; font-size: 14px; line-height: 1.7;
+}
+.lg-conc { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
+.lg-verdict {
+  margin-top: 12px; padding: 11px 14px; border-radius: 10px;
+  border: 1px solid var(--line); font-size: 14px; line-height: 1.6;
+}
+.lg-tautology { background: #f0fdf4; border-color: #86efac; }
+.lg-contradiction { background: #fef2f2; border-color: #fca5a5; }
+.lg-contingent { background: #fafaf9; }
+.lg-bad { margin-top: 10px; color: #b91c1c; font-size: 13.5px; }
+
+.tt-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+.tt-table th, .tt-table td {
+  padding: 6px 12px; text-align: center; border-bottom: 1px solid var(--line);
+  font-family: "SF Mono", monospace;
+}
+.tt-table th { background: #fafaf9; font-weight: 600; }
+.tt-table th.tt-out { background: var(--ink); color: var(--paper); }
+.tt-table .val-true { color: #15803d; }
+.tt-table .val-false { color: #a8a29e; }
+.tt-table .val-bad { background: #fef08a; color: #92400e; font-weight: 700; }

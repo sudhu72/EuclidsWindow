@@ -1,35 +1,38 @@
 import { useState } from "react";
 import AiByHand from "./AiByHand";
+import LogicLab from "./LogicLab";
 
-// The classic interactive labs (Web Audio synthesis, Plotly, canvas) are large;
-// rather than a risky one-shot rewrite, the React Labs menu opens each one in
-// embed mode (?tab=<id>&embed=1 hides the classic chrome). They're fully usable
-// here now; native React ports can follow lab by lab.
+// Labs are ported one at a time. NATIVE lists the ones that no longer need the
+// classic frontend; the rest still open in embed mode (?tab=<id>&embed=1 hides
+// the classic chrome), which keeps them fully usable in the meantime. The embed
+// bridge — and that fallback — go away once every lab is native.
 const LABS: { id: string; label: string; icon: string; desc: string }[] = [
   { id: "aibyhand", label: "AI by Hand", icon: "▦", desc: "Rebuild 19 AI/ML ideas the Feynman way, by hand." },
   { id: "musiclab", label: "Music Lab", icon: "♫", desc: "Hear the math of music: harmonics, strings, Mozart's dice." },
   { id: "calclab", label: "Calculus Lab", icon: "∫", desc: "Derivatives, integrals, and limits, visualized." },
   { id: "fftlab", label: "FFT Lab", icon: "∿", desc: "Decompose signals into frequencies; record your own." },
   { id: "cryptolab", label: "Crypto Lab", icon: "🔒", desc: "Ciphers, modular arithmetic, and public keys." },
-  { id: "logiclab", label: "Logic Lab", icon: "⊢", desc: "Syllogisms, Boolean algebra, and digital circuits." },
+  { id: "logiclab", label: "Logic Lab", icon: "⊢", desc: "Truth tables, syllogisms, Knights & Knaves, logic gates." },
   { id: "matrixlab", label: "Matrix Lab", icon: "▨", desc: "Matrix operations and linear transformations." },
 ];
 
-export default function Labs() {
+/** Labs that are native React; everything else still uses the embed bridge. */
+const NATIVE = new Set(["aibyhand", "logiclab"]);
+
+export default function Labs({ onAsk }: { onAsk: (question: string) => void }) {
   const [active, setActive] = useState<string | null>(null);
 
   if (active) {
     const lab = LABS.find((l) => l.id === active)!;
-    // AI by Hand is a native React port; the interactive labs are embedded.
-    if (active === "aibyhand") {
+    if (NATIVE.has(active)) {
       return (
         <div className="labs-frame-wrap">
           <div className="labs-frame-bar">
             <button className="btn" onClick={() => setActive(null)}>← All labs</button>
             <span className="labs-frame-title">{lab.icon} {lab.label}</span>
           </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            <AiByHand />
+          <div style={{ flex: 1, overflowY: "auto", display: "flex" }}>
+            {active === "aibyhand" ? <AiByHand /> : <LogicLab onAsk={onAsk} />}
           </div>
         </div>
       );

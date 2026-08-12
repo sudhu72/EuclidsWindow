@@ -165,7 +165,7 @@ export default function App() {
         ) : tab === "solve" ? (
           <Solve />
         ) : tab === "labs" ? (
-          <Labs />
+          <Labs onAsk={askInLearn} />
         ) : tab === "library" ? (
           <Library />
         ) : tab === "symbols" ? (
