@@ -122,17 +122,33 @@ function mergeAdjacentMath(text: string): string {
   return out;
 }
 
+// A math span or LaTeX environment, whose contents must not be treated as
+// prose. One capture group, so String.split puts these at odd indices.
+const MATH_SPAN =
+  /(\$\$[\s\S]*?\$\$|\\begin\{[a-zA-Z]+\*?\}[\s\S]*?\\end\{[a-zA-Z]+\*?\}|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\$[^$\n]+?\$)/;
+
 /**
  * LaTeX line breaks, which are not math.
  *
  * `\\[1em]` is a line break with extra spacing, but the normaliser that repairs
  * `\\(` into `\(` turns it into `\[` — a display-math opener with no closer, so
  * it survives to the page as a literal "[1em]". Handle these first.
+ *
+ * Only outside math: within a matrix or `aligned` block the same `\\` is a row
+ * separator. Rewriting those to blank lines splits the surrounding `$$...$$`
+ * across markdown paragraphs, which strands the rest of the matrix as raw text.
  */
 function convertLineBreaks(text: string): string {
   return text
-    .replace(/\\\\\s*\[\s*[\d.]+\s*(?:em|ex|pt|cm|mm|in)\s*\]/g, "\n\n")
-    .replace(/\\\\(?=\s|$)/g, "\n\n");
+    .split(new RegExp(MATH_SPAN.source, "g"))
+    .map((part, i) =>
+      i % 2 === 1
+        ? part
+        : part
+            .replace(/\\\\\s*\[\s*[\d.]+\s*(?:em|ex|pt|cm|mm|in)\s*\]/g, "\n\n")
+            .replace(/\\\\(?=\s|$)/g, "\n\n")
+    )
+    .join("");
 }
 
 // Small models emit LaTeX environments despite instructions. Convert the ones
@@ -179,6 +195,7 @@ function isMathLike(inner: string): boolean {
   if (/[\\=^_<>]/.test(s)) return true; // latex command / relational
   if (/\d\s*[-+*/]\s*[\d(]/.test(s)) return true; // arithmetic like 25 - (0.1)
   if (/^[a-zA-Z]('|\^.+)?(\([^)]*\))?$/.test(s)) return true; // x, f(x), x^2
+  if (/^[[(][\d\s.,;-]+[\])]$/.test(s)) return true; // a vector: [1,1,1,1]
   return false;
 }
 
