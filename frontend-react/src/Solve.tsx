@@ -2,11 +2,62 @@ import { useState } from "react";
 import { polyaStart, polyaCoach, type PolyaStart, type PolyaCoach } from "./polyaApi";
 import Markdown from "./Markdown";
 
+/**
+ * The four phases, each with Pólya's own guiding questions from *How to Solve
+ * It* — the compass panel shows the current phase's set.
+ */
 const PHASES = [
-  { key: "understand", icon: "🔍", title: "Understand the Problem", intro: "Make sure you truly understand what is asked. What is given? What are you finding?" },
-  { key: "plan", icon: "🧭", title: "Devise a Plan", intro: "Find a connection between the data and the unknown. What strategy could work?" },
-  { key: "execute", icon: "✏️", title: "Carry Out the Plan", intro: "Execute your plan, checking each step as you go." },
-  { key: "lookback", icon: "🔁", title: "Look Back", intro: "Check the result. Can you see it differently, or use it elsewhere?" },
+  {
+    key: "understand",
+    icon: "🔍",
+    title: "Understand the Problem",
+    intro: "Make sure you truly understand what is asked. What is given? What are you finding?",
+    questions: [
+      "What is the unknown — what are you asked to find or prove?",
+      "What are the data? What is given?",
+      "What is the condition connecting the data and the unknown?",
+      "Is the condition sufficient? Insufficient? Redundant? Contradictory?",
+      "Can you draw a figure? Introduce suitable notation?",
+      "Can you restate the problem in your own words?",
+    ],
+  },
+  {
+    key: "plan",
+    icon: "🧭",
+    title: "Devise a Plan",
+    intro: "Find a connection between the data and the unknown. What strategy could work?",
+    questions: [
+      "Have you seen this problem before, perhaps in a different form?",
+      "Do you know a related problem, or a theorem that could help?",
+      "Look at the unknown — do you know a problem with the same unknown?",
+      "Could you solve a simpler or more special case first?",
+      "Could you work backwards from what you want?",
+      "Did you use all the data? The whole condition?",
+    ],
+  },
+  {
+    key: "execute",
+    icon: "✏️",
+    title: "Carry Out the Plan",
+    intro: "Execute your plan, checking each step as you go.",
+    questions: [
+      "Carry out each step of your plan.",
+      "Can you see clearly that each step is correct?",
+      "Can you prove that each step is correct?",
+    ],
+  },
+  {
+    key: "lookback",
+    icon: "🔁",
+    title: "Look Back",
+    intro: "Check the result. Can you see it differently, or use it elsewhere?",
+    questions: [
+      "Can you check the result? Try a special case?",
+      "Can you check the argument?",
+      "Can you derive the result differently?",
+      "Can you use this result, or this method, for another problem?",
+    ],
+  },
 ];
 const LEVELS = ["kids", "teen", "college", "adult"];
 
@@ -73,6 +124,11 @@ export default function Solve() {
     }
   }
 
+  /** Seed the workspace with a prompt, the way the classic panel did. */
+  function appendQuestion(q: string) {
+    setInput((v) => (v ? `${v}\n${q}: ` : `${q}: `));
+  }
+
   function nextPhase() {
     if (phase < PHASES.length - 1) {
       const next = phase + 1;
@@ -136,6 +192,20 @@ export default function Solve() {
             ))}
           </div>
 
+          <aside className="compass">
+            <h5>{p.icon} Pólya&rsquo;s compass · phase {phase + 1}</h5>
+            <ul>
+              {p.questions.map((q) => (
+                <li key={q}>
+                  <button className="compass-q" onClick={() => appendQuestion(q)} title="Add to your workspace">
+                    {q}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <cite>— George Pólya, <em>How to Solve It</em></cite>
+          </aside>
+
           <div className="scene">
             <h4>{p.icon} {p.title}</h4>
             <p className="dsub">{p.intro}</p>
@@ -175,13 +245,33 @@ export default function Solve() {
                 )}
                 {coach.suggestions.length > 0 && (
                   <ul className="coach-sugg">
-                    {coach.suggestions.map((s, i) => <li key={i}>{s}</li>)}
+                    {coach.suggestions.map((s, i) => (
+                      <li key={i}>
+                        <button className="compass-q" onClick={() => appendQuestion(s)} title="Add to your workspace">
+                          💡 {s}
+                        </button>
+                      </li>
+                    ))}
                   </ul>
                 )}
                 {coach.ready && <div className="coach-ready">👍 Looks solid — move to the next step.</div>}
               </div>
             )}
           </div>
+
+          <details className="notebook" open>
+            <summary>My notebook</summary>
+            {Object.keys(notes).length === 0 ? (
+              <p className="set-hint">Your notes from each phase collect here.</p>
+            ) : (
+              PHASES.filter((ph) => notes[ph.key]).map((ph) => (
+                <div key={ph.key} className="notebook-entry">
+                  <strong>{ph.icon} {ph.title}</strong>
+                  <Markdown>{notes[ph.key]}</Markdown>
+                </div>
+              ))
+            )}
+          </details>
         </div>
       )}
     </div>
