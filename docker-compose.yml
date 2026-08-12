@@ -23,6 +23,9 @@ services:
     volumes:
       - ./backend/static:/app/backend/static
       - context-db:/app/backend/data/context_db
+      # Saved settings, including cloud API keys. Without this, every
+      # `--build` rebuild resets them, since the rest of data/ is image content.
+      - app-state:/app/backend/data/state
 
   ollama:
     image: ollama/ollama:latest
@@ -44,3 +47,4 @@ services:
 volumes:
   ollama-data:
   context-db:
+  app-state:

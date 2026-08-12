@@ -68,14 +68,35 @@ def cloud_chat(
     if provider not in CLOUD_PROVIDERS or not api_key:
         return None
     try:
-        if provider == "anthropic":
-            return _anthropic_chat(model, api_key, messages, json_mode, max_tokens, timeout_seconds)
-        return _openai_compat_chat(
+        return _dispatch_chat(
             provider, model, api_key, messages, json_mode, temperature, max_tokens, timeout_seconds
         )
     except Exception as exc:  # provider errors must never crash callers
         logger.error(f"Cloud provider '{provider}' request failed: {exc}")
         return None
+
+
+def _dispatch_chat(
+    provider: str,
+    model: str,
+    api_key: str,
+    messages: List[Dict[str, str]],
+    json_mode: bool,
+    temperature: Optional[float],
+    max_tokens: int,
+    timeout_seconds: int,
+) -> Optional[str]:
+    """Route to a provider, letting its errors propagate.
+
+    ``cloud_chat`` swallows those errors so a provider outage can't take the app
+    down. The connectivity test calls this directly instead, so it can report
+    what actually went wrong rather than guessing.
+    """
+    if provider == "anthropic":
+        return _anthropic_chat(model, api_key, messages, json_mode, max_tokens, timeout_seconds)
+    return _openai_compat_chat(
+        provider, model, api_key, messages, json_mode, temperature, max_tokens, timeout_seconds
+    )
 
 
 def _anthropic_chat(
@@ -108,6 +129,14 @@ def _anthropic_chat(
         logger.warning("Anthropic request was refused by safety classifiers")
         return None
     text = "".join(block.text for block in response.content if block.type == "text").strip()
+    if not text and response.stop_reason == "max_tokens":
+        # Current Claude models think by default, and max_tokens caps thinking
+        # plus reply together — too small a budget spends it all before any
+        # text block is produced.
+        logger.warning(
+            f"Anthropic model '{model}' hit max_tokens ({max_tokens}) before writing any "
+            "text; raise the token budget for this task"
+        )
     return text or None
 
 
@@ -157,6 +186,22 @@ def _openai_compat_chat(
     return content or None
 
 
+def _provider_error_message(exc: Exception) -> str:
+    """The provider's own explanation, not the SDK's wrapper around it.
+
+    An authentication failure, an unknown model and an exhausted credit balance
+    are three very different problems, and only the provider's message tells
+    them apart — so surface it verbatim rather than guessing on the user's
+    behalf.
+    """
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        error = body.get("error")
+        if isinstance(error, dict) and error.get("message"):
+            return str(error["message"])[:300]
+    return str(exc)[:300]
+
+
 def test_cloud_provider(provider: str, model: str, api_key: str) -> Tuple[bool, str]:
     """Cheap connectivity check for the Settings UI."""
     if provider not in CLOUD_PROVIDERS:
@@ -164,16 +209,25 @@ def test_cloud_provider(provider: str, model: str, api_key: str) -> Tuple[bool, 
     if not api_key:
         return False, "No API key saved for this provider."
     try:
-        text = cloud_chat(
+        # Bypasses cloud_chat's catch-all so the real failure reaches the user.
+        # The budget is generous because models that think by default spend it
+        # on thinking first; too small a budget fails a perfectly good key.
+        text = _dispatch_chat(
             provider,
             model,
             api_key,
             [{"role": "user", "content": "Reply with the single word: ok"}],
-            max_tokens=20,
-            timeout_seconds=30,
+            False,
+            None,
+            512,
+            30,
         )
     except Exception as exc:
-        return False, str(exc)[:200]
+        logger.error(f"Cloud provider '{provider}' test failed: {exc}")
+        return False, _provider_error_message(exc)
     if text:
         return True, f"Connected — {CLOUD_PROVIDERS[provider]['label']} ({model}) responded."
-    return False, "Provider returned no text; check the API key and model name."
+    return False, (
+        f"{CLOUD_PROVIDERS[provider]['label']} accepted the request but returned no text. "
+        "The model may have spent its whole token budget thinking — check the server log."
+    )

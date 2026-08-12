@@ -9,15 +9,26 @@ import urllib.request
 import urllib.error
 from .logging_config import logger
 
-SETTINGS_PATH = Path(__file__).resolve().parents[1] / "data" / "app_settings.json"
+_DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+
+# Lives under data/state/, which docker-compose backs with a named volume. The
+# rest of data/ is seed content baked into the image, so a settings file kept
+# there is destroyed by every `docker compose up --build` — taking the user's
+# saved API keys with it.
+SETTINGS_PATH = _DATA_DIR / "state" / "app_settings.json"
+_LEGACY_SETTINGS_PATH = _DATA_DIR / "app_settings.json"
 
 
 class SettingsStore:
     def read(self) -> Dict[str, Any]:
-        if not SETTINGS_PATH.exists():
-            return {}
+        path = SETTINGS_PATH
+        if not path.exists():
+            # Carry over settings written before the move to data/state/.
+            if not _LEGACY_SETTINGS_PATH.exists():
+                return {}
+            path = _LEGACY_SETTINGS_PATH
         try:
-            return json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
+            return json.loads(path.read_text(encoding="utf-8"))
         except Exception as exc:
             logger.warning(f"Failed to read settings store: {exc}")
             return {}
