@@ -5,3 +5,6 @@ node_modules/
 *.sqlite
 .DS_Store
 backend/static/animations/
+# Runtime settings, including saved cloud API keys. Docker keeps this on a
+# named volume, but running the app directly on the host writes it here.
+backend/data/state/
