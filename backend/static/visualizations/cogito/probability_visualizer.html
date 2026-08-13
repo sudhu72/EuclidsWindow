@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiply Down, Add Across — Probability &amp; Cross-Entropy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --pA:#0F8B8D; --pB:#D9A62E; --true:#0F8B8D; --pred:#463A73; --bad:#D9636B; --good:#0F8B8D;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:120px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:52px; text-align:center; }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  svg{ width:100%; height:auto; display:block; }
+  canvas{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:20px; font-weight:700; }
+  .bar{ height:34px; border-radius:8px; display:flex; overflow:hidden; border:1px solid var(--line); background:#F5F4F0; }
+  .bar > div{ display:flex; align-items:center; justify-content:center; color:#fff; font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; transition:width .3s ease; white-space:nowrap; overflow:hidden; }
+  .stat-line{ position:relative; height:20px; margin-top:6px; }
+  .stat-tick{ position:absolute; top:0; width:2px; height:14px; background:var(--ink); }
+  .stat-tick::after{ content:attr(data-l); position:absolute; top:14px; left:50%; transform:translateX(-50%); font-size:10.5px; color:var(--ink-soft); white-space:nowrap; font-family:"IBM Plex Mono",monospace; }
+  .surptable{ width:100%; border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-top:10px; }
+  .surptable th, .surptable td{ text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); }
+  .surptable th{ color:var(--ink-soft); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Probability &amp; Cross-Entropy</div>
+    <h1>Multiply Down, Add Across</h1>
+    <p>Two events branching into four outcomes, a forecaster graded on confidently-wrong beliefs, and one die rolled ten thousand times — three ways to feel the Operation-Choice Framework's "same unit adds, for-every multiplies" rule doing all the real work in probability.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="tree">AND / OR Tree</button>
+    <button class="tab" data-tab="xent">Cross-Entropy Grader</button>
+    <button class="tab" data-tab="lln">Law of Large Numbers</button>
+  </div>
+
+  <!-- ============ TAB 1: AND/OR TREE ============ -->
+  <div class="panel active" id="panel-tree">
+    <div class="card">
+      <h2>Two Events, Four Outcomes, Two Operations</h2>
+      <p class="sub"><b>What's happening:</b> event A and event B each either happen or don't. Multiplying <em>down</em> a path gives one leaf's probability (an AND); adding several leaves <em>across</em> gives an OR. Toggle whether B's odds depend on A to see conditional probability enter the same tree.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> with "Independent" selected, set P(A)=50%, P(B)=50%, and click <em>Highlight P(A or B)</em> — watch it total 75%, not 100%, because the AB leaf would otherwise be double-counted. Then switch to "B depends on A" and push P(B|A) high while P(B|¬A) stays low — watch the tree stop looking symmetric, exactly what dependence means.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="treeIndep">Independent</button>
+        <button class="op" id="treeDep">B depends on A</button>
+      </div>
+      <div class="row"><label>P(A)</label><input type="range" id="trPA" min="1" max="99" step="1" value="50"><span class="readout" id="trPAOut">50%</span></div>
+      <div class="row" id="rowIndepB"><label>P(B)</label><input type="range" id="trPB" min="1" max="99" step="1" value="50"><span class="readout" id="trPBOut">50%</span></div>
+      <div class="row" id="rowDepB1" style="display:none;"><label>P(B | A)</label><input type="range" id="trPBgA" min="1" max="99" step="1" value="80"><span class="readout" id="trPBgAOut">80%</span></div>
+      <div class="row" id="rowDepB2" style="display:none;"><label>P(B | ¬A)</label><input type="range" id="trPBgNA" min="1" max="99" step="1" value="20"><span class="readout" id="trPBgNAOut">20%</span></div>
+      <svg id="treeSvg" viewBox="0 0 760 300" role="img" aria-label="AND/OR probability tree"></svg>
+      <div class="row" style="gap:6px; margin-top:10px;">
+        <button class="op" id="btnShowAnd">Highlight P(A and B)</button>
+        <button class="op" id="btnShowOr">Highlight P(A or B)</button>
+        <button class="op" id="btnClearHi">Clear</button>
+      </div>
+      <div class="verdict" id="treeVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every probability formula you'll meet is one of these two moves — multiply down a single path (AND, an independent-events "for every" scaling), or add across several non-overlapping paths (OR) — occasionally with a double-counted overlap subtracted back out once.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: CROSS-ENTROPY GRADER ============ -->
+  <div class="panel" id="panel-xent">
+    <div class="card">
+      <h2>Grading a Forecaster's Honesty</h2>
+      <p class="sub"><b>What's happening:</b> the true chance of rain is <span class="formula">p</span>; the forecaster's stated belief is <span class="formula">q</span>. Cross-entropy <span class="formula">H(p,q)</span> is the average surprise you'd feel living through many days under the <em>true</em> odds while trusting the forecaster's belief — and it's always at least as large as the best-possible <span class="formula">H(p)</span>, the gap being the KL divergence.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set true rain-chance <span class="formula">p</span> to 90% and slide the forecaster's belief <span class="formula">q</span> down toward 10% — watch <span class="formula">H(p,q)</span> shoot upward while <span class="formula">H(p)</span> stays put. That's the cost of confident wrongness. Now set <span class="formula">q = p</span> exactly and watch the gap collapse to zero.</p>
+      <div class="row"><label>True P(rain) = p</label><input type="range" id="xeP" min="1" max="99" step="1" value="90"><span class="readout" id="xePOut">90%</span></div>
+      <div class="row"><label>Forecast P(rain) = q</label><input type="range" id="xeQ" min="1" max="99" step="1" value="60"><span class="readout" id="xeQOut">60%</span></div>
+      <div class="cols">
+        <div class="col">
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">True distribution p</div>
+          <div class="bar" id="xeBarP"></div>
+          <div style="font-size:12px; color:var(--ink-soft); margin:10px 0 3px;">Forecast distribution q</div>
+          <div class="bar" id="xeBarQ"></div>
+        </div>
+        <div class="col">
+          <table class="surptable">
+            <tr><th>Outcome</th><th>True p</th><th>Surprise −log(q)</th><th>Contribution p·(−log q)</th></tr>
+            <tbody id="xeTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="verdict" id="xeVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> H(p,q) ≥ H(p) always, with equality only when q=p — this is precisely why training a model to minimize cross-entropy pushes its beliefs toward the truth, never away from it.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: LAW OF LARGE NUMBERS ============ -->
+  <div class="panel" id="panel-lln">
+    <div class="card">
+      <h2>One Die, Rolled Ten Thousand Times</h2>
+      <p class="sub"><b>What's happening:</b> a single die roll is anyone's guess — 1 through 6, no pattern. But track the <em>running average</em> as more rolls pile up, and watch it clamp down onto 3.5, the true expectation, even though no single roll can ever land there.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Roll 1</em> a few times and watch the average swing wildly. Then press <em>Roll 1,000 more</em> repeatedly — the wilder swings vanish, and the trace hugs the dashed 3.5 line tighter with every batch. That narrowing, not any single roll, is what makes probability practically useful.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="llnRollOne">Roll 1 ▶</button>
+        <button class="op" id="llnRollMany">Roll 1,000 more ⏩</button>
+        <button class="op" id="llnReset">Reset</button>
+      </div>
+      <canvas id="llnCanvas" width="720" height="260"></canvas>
+      <div class="verdict" id="llnVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this single fact — averages of independent samples clamp onto the true expectation — is why insurance companies, casinos, and pollsters can be supremely confident about a crowd's behavior while being unable to predict any one individual roll, customer, or voter.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../03-probability.md">Probability &amp; Cross-Entropy</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* =========================================================
+     TAB 1 — AND/OR TREE
+     ========================================================= */
+  const trPA=document.getElementById("trPA"), trPB=document.getElementById("trPB"),
+        trPBgA=document.getElementById("trPBgA"), trPBgNA=document.getElementById("trPBgNA");
+  let treeMode = "indep", highlight = null; // highlight: null | "and" | "or"
+
+  function branch(x1,y1,x2,y2,label,color,dim){
+    const mx=(x1+x2)/2, my=(y1+y2)/2;
+    const g = [];
+    g.push(el("line",{x1,y1,x2,y2,stroke:color,["stroke-width"]:2, opacity: dim?0.25:1}));
+    g.push(el("rect",{x:mx-22,y:my-11,width:44,height:19,rx:5,fill:"#fff",stroke:color,["stroke-width"]:1, opacity: dim?0.35:1}));
+    const t = el("text",{x:mx,y:my+3,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"11",fill:color, opacity: dim?0.4:1});
+    t.textContent = label; g.push(t);
+    return g;
+  }
+  function leaf(x,y,title,prob,active,color){
+    const w=170,h=46;
+    const g=[];
+    g.push(el("rect",{x,y:y-h/2,width:w,height:h,rx:8, fill: active?color:"#F5F4F0", ["fill-opacity"]: active?"0.16":"1", stroke: active?color:"var(--line)", ["stroke-width"]: active?"2":"1"}));
+    const t1 = el("text",{x:x+12,y:y-6,"font-family":"Inter","font-weight": active?"700":"500","font-size":"12",fill:"var(--ink)"});
+    t1.textContent = title; g.push(t1);
+    const t2 = el("text",{x:x+12,y:y+12,"font-family":"IBM Plex Mono, monospace","font-size":"12",fill:"var(--ink-soft)"});
+    t2.textContent = "p = " + prob.toFixed(4); g.push(t2);
+    return g;
+  }
+  function drawTree(){
+    const pA = parseFloat(trPA.value)/100;
+    trPAOut.textContent = trPA.value+"%";
+    let pBgA, pBgNA;
+    if(treeMode==="indep"){
+      pBgA = pBgNA = parseFloat(trPB.value)/100;
+      trPBOut.textContent = trPB.value+"%";
+    } else {
+      pBgA = parseFloat(trPBgA.value)/100; pBgNA = parseFloat(trPBgNA.value)/100;
+      trPBgAOut.textContent = trPBgA.value+"%"; trPBgNAOut.textContent = trPBgNA.value+"%";
+    }
+    const pAB = pA*pBgA, pANB = pA*(1-pBgA), pNAB=(1-pA)*pBgNA, pNANB=(1-pA)*(1-pBgNA);
+    const rootX=30, rootY=150, l1x=250, l2x=560;
+
+    const svg = document.getElementById("treeSvg");
+    svg.innerHTML = "";
+    function activeFor(key){
+      if(highlight==="and") return key==="AB";
+      if(highlight==="or") return key==="AB"||key==="ANB"||key==="NAB";
+      return false;
+    }
+    let parts = [];
+    parts = parts.concat(branch(rootX+8, rootY, l1x, 70, pA.toFixed(2), "var(--pA)", false));
+    parts = parts.concat(branch(rootX+8, rootY, l1x, 230, (1-pA).toFixed(2), "var(--pA)", false));
+    parts = parts.concat(branch(l1x, 70, l2x, 40, pBgA.toFixed(2), "var(--pB)", false));
+    parts = parts.concat(branch(l1x, 70, l2x, 110, (1-pBgA).toFixed(2), "var(--pB)", false));
+    parts = parts.concat(branch(l1x, 230, l2x, 190, pBgNA.toFixed(2), "var(--pB)", false));
+    parts = parts.concat(branch(l1x, 230, l2x, 260, (1-pBgNA).toFixed(2), "var(--pB)", false));
+    parts.push(el("circle",{cx:rootX,cy:rootY,r:6,fill:"var(--accent)"}));
+    const tA = el("text",{x:l1x,y:70-16,["text-anchor"]:"middle","font-family":"Inter","font-weight":"600","font-size":"12",fill:"var(--pA)"}); tA.textContent="A"; parts.push(tA);
+    const tNA = el("text",{x:l1x,y:230+22,["text-anchor"]:"middle","font-family":"Inter","font-weight":"600","font-size":"12",fill:"var(--pA)"}); tNA.textContent="¬A"; parts.push(tNA);
+    parts = parts.concat(leaf(l2x, 40, "A and B", pAB, activeFor("AB"), "var(--good)"));
+    parts = parts.concat(leaf(l2x, 110, "A and ¬B", pANB, activeFor("ANB"), "var(--good)"));
+    parts = parts.concat(leaf(l2x, 190, "¬A and B", pNAB, activeFor("NAB"), "var(--good)"));
+    parts = parts.concat(leaf(l2x, 260, "¬A and ¬B", pNANB, activeFor("NANB"), "var(--good)"));
+    parts.forEach(p => svg.appendChild(p));
+
+    const v = document.getElementById("treeVerdict");
+    if(highlight==="and"){
+      v.innerHTML = `Multiply <b>down</b> the one path to "A and B": P(A) × P(B|A) = ${pA.toFixed(2)} × ${pBgA.toFixed(2)} = <span class="big">${pAB.toFixed(4)}</span>`;
+    } else if(highlight==="or"){
+      const orVal = pAB+pANB+pNAB;
+      const orAlt = pA + (pA*pBgA + (1-pA)*pBgNA) - pAB;
+      v.innerHTML = `Add <b>across</b> the three non-¬A¬B leaves: ${pAB.toFixed(4)} + ${pANB.toFixed(4)} + ${pNAB.toFixed(4)} = <span class="big">${orVal.toFixed(4)}</span><br>Equivalently: P(A) + P(B) − P(A and B) = ${pA.toFixed(2)} + ${(pAB+pNAB).toFixed(2)} − ${pAB.toFixed(2)} ≈ <b>${orAlt.toFixed(4)}</b> (rounding differences aside — same answer, one subtraction avoiding the double-count of the AB leaf).`;
+    } else {
+      v.innerHTML = `Four leaves sum to <b>${(pAB+pANB+pNAB+pNANB).toFixed(4)}</b> — always 1, since the tree must end somewhere. Pick a highlight button to see AND (multiply) or OR (add) in action.`;
+    }
+  }
+  document.getElementById("treeIndep").addEventListener("click", function(){
+    treeMode="indep"; this.classList.add("active"); document.getElementById("treeDep").classList.remove("active");
+    document.getElementById("rowIndepB").style.display=""; document.getElementById("rowDepB1").style.display="none"; document.getElementById("rowDepB2").style.display="none";
+    drawTree();
+  });
+  document.getElementById("treeDep").addEventListener("click", function(){
+    treeMode="dep"; this.classList.add("active"); document.getElementById("treeIndep").classList.remove("active");
+    document.getElementById("rowIndepB").style.display="none"; document.getElementById("rowDepB1").style.display=""; document.getElementById("rowDepB2").style.display="";
+    drawTree();
+  });
+  document.getElementById("btnShowAnd").addEventListener("click", () => { highlight="and"; drawTree(); });
+  document.getElementById("btnShowOr").addEventListener("click", () => { highlight="or"; drawTree(); });
+  document.getElementById("btnClearHi").addEventListener("click", () => { highlight=null; drawTree(); });
+  [trPA,trPB,trPBgA,trPBgNA].forEach(inp => inp.addEventListener("input", drawTree));
+  drawTree();
+
+  /* =========================================================
+     TAB 2 — CROSS-ENTROPY GRADER
+     ========================================================= */
+  const xeP = document.getElementById("xeP"), xeQ = document.getElementById("xeQ");
+  function renderXent(){
+    const p1 = parseFloat(xeP.value)/100, q1 = parseFloat(xeQ.value)/100;
+    const p2 = 1-p1, q2 = 1-q1;
+    xePOut.textContent = xeP.value+"%"; xeQOut.textContent = xeQ.value+"%";
+
+    document.getElementById("xeBarP").innerHTML =
+      `<div style="background:var(--true); width:${p1*100}%">${p1>0.12?"rain "+(p1*100).toFixed(0)+"%":""}</div>`+
+      `<div style="background:rgba(15,139,141,0.35); width:${p2*100}%">${p2>0.12?"no-rain "+(p2*100).toFixed(0)+"%":""}</div>`;
+    document.getElementById("xeBarQ").innerHTML =
+      `<div style="background:var(--pred); width:${q1*100}%">${q1>0.12?"rain "+(q1*100).toFixed(0)+"%":""}</div>`+
+      `<div style="background:rgba(70,58,115,0.35); width:${q2*100}%">${q2>0.12?"no-rain "+(q2*100).toFixed(0)+"%":""}</div>`;
+
+    const s1 = -Math.log(q1), s2 = -Math.log(q2);
+    const c1 = p1*s1, c2 = p2*s2;
+    const Hpq = c1+c2;
+    const sp1 = -Math.log(p1), sp2 = -Math.log(p2);
+    const Hp = p1*sp1 + p2*sp2;
+    const KL = Hpq - Hp;
+
+    document.getElementById("xeTable").innerHTML =
+      `<tr><td>Rain</td><td>${p1.toFixed(2)}</td><td>${s1.toFixed(3)}</td><td>${c1.toFixed(3)}</td></tr>`+
+      `<tr><td>No rain</td><td>${p2.toFixed(2)}</td><td>${s2.toFixed(3)}</td><td>${c2.toFixed(3)}</td></tr>`;
+
+    document.getElementById("xeVerdict").innerHTML =
+      `H(p,q) = <b>${Hpq.toFixed(3)}</b> nats &nbsp;·&nbsp; H(p) (best possible) = <b>${Hp.toFixed(3)}</b> nats &nbsp;·&nbsp; KL(p‖q) = <span class="big">${KL.toFixed(3)}</span> nats<br>`+
+      (KL < 0.01
+        ? `<b style="color:var(--good)">Forecast matches truth — the gap has collapsed to zero.</b>`
+        : `The forecaster's average surprise is running <b>${KL.toFixed(3)} nats higher</b> than a perfectly honest forecaster's would.`);
+  }
+  [xeP,xeQ].forEach(inp => inp.addEventListener("input", renderXent));
+  renderXent();
+
+  /* =========================================================
+     TAB 3 — LAW OF LARGE NUMBERS
+     ========================================================= */
+  const llnCanvas = document.getElementById("llnCanvas"), lctx = llnCanvas.getContext("2d");
+  const LW = llnCanvas.width, LH = llnCanvas.height;
+  let llnRolls = 0, llnSum = 0, llnTrace = []; // trace stores {n, avg} sampled logarithmically for a smooth plot
+
+  function llnRoll(){
+    llnRolls++;
+    llnSum += 1 + Math.floor(Math.random()*6);
+    if(llnRolls<=200 || llnRolls%Math.max(1,Math.floor(llnRolls/400))===0){
+      llnTrace.push([llnRolls, llnSum/llnRolls]);
+      if(llnTrace.length>500) llnTrace.splice(0, llnTrace.length-500);
+    }
+  }
+  function drawLln(){
+    lctx.clearRect(0,0,LW,LH);
+    const pad=36;
+    const maxN = Math.max(llnRolls, 10);
+    function px(n){ return pad + (n/maxN)*(LW-2*pad); }
+    function py(v){ return LH-pad - ((v-1)/5)*(LH-2*pad); } // v in [1,6]
+    // gridlines 1..6
+    lctx.strokeStyle="rgba(27,36,48,0.10)"; lctx.lineWidth=1;
+    for(let v=1;v<=6;v++){ lctx.beginPath(); lctx.moveTo(pad,py(v)); lctx.lineTo(LW-pad,py(v)); lctx.stroke(); }
+    lctx.fillStyle="var(--ink-soft)"; lctx.font='11px "IBM Plex Mono",monospace';
+    for(let v=1;v<=6;v++){ lctx.fillText(v, 8, py(v)+4); }
+    // dashed 3.5 line
+    lctx.strokeStyle="var(--accent)"; lctx.setLineDash([5,4]); lctx.lineWidth=1.6;
+    lctx.beginPath(); lctx.moveTo(pad,py(3.5)); lctx.lineTo(LW-pad,py(3.5)); lctx.stroke(); lctx.setLineDash([]);
+    lctx.fillStyle="var(--accent)"; lctx.fillText("expectation = 3.5", LW-pad-118, py(3.5)-6);
+    // trace
+    lctx.beginPath(); lctx.strokeStyle="var(--pred)"; lctx.lineWidth=2.2;
+    llnTrace.forEach((pt,i) => { const X=px(pt[0]), Y=py(pt[1]); if(i===0) lctx.moveTo(X,Y); else lctx.lineTo(X,Y); });
+    lctx.stroke();
+    if(llnTrace.length){
+      const last = llnTrace[llnTrace.length-1];
+      lctx.beginPath(); lctx.arc(px(last[0]), py(last[1]), 4, 0, 7); lctx.fillStyle="var(--pred)"; lctx.fill();
+    }
+    const avg = llnRolls ? (llnSum/llnRolls) : 0;
+    document.getElementById("llnVerdict").innerHTML =
+      `Rolls so far: <b>${llnRolls}</b> &nbsp;·&nbsp; running average: <span class="big">${avg.toFixed(4)}</span> &nbsp;·&nbsp; distance from 3.5: <b>${Math.abs(avg-3.5).toFixed(4)}</b>`;
+  }
+  document.getElementById("llnRollOne").addEventListener("click", () => { llnRoll(); drawLln(); });
+  document.getElementById("llnRollMany").addEventListener("click", () => { for(let i=0;i<1000;i++) llnRoll(); drawLln(); });
+  document.getElementById("llnReset").addEventListener("click", () => { llnRolls=0; llnSum=0; llnTrace=[]; drawLln(); });
+  drawLln();
+})();
+</script>
+</body>
+</html>

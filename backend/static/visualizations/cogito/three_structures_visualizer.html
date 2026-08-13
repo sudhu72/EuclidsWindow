@@ -114,6 +114,10 @@
   #blobSvg{ width:100%; max-width:420px; height:260px; touch-action:none; }
   .blobpoint{ cursor:grab; }
   .holebtn{ margin-top:10px; }
+  .mobiuswrap{ margin-top:24px; }
+  #mobiusSvg{ width:100%; max-width:440px; height:200px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:12px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
 
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer b{ color:var(--ink); }
@@ -123,7 +127,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Companion to the Feynman Math Tutorial · Parts 11–13</div>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Counting, Symmetry &amp; Shape</div>
     <h1>Three Structures</h1>
     <p>Counting without listing, symmetry's internal rulebook, and shape without measurement — three ideas that feel abstract until you can actually poke at them. Click, drag, and compose below.</p>
   </header>
@@ -179,7 +183,7 @@
       </div>
 
       <h2 style="margin-top:32px;">The Clock, Compared</h2>
-      <p class="sub">4-hour clock arithmetic is isomorphic to the four rotations above — same structure, different costume.</p>
+      <p class="sub">4-hour clock arithmetic has the exact same structure as the four rotations above (mathematicians call this being <em>isomorphic</em>) — identical rules, different costume.</p>
       <div class="groupwrap">
         <div class="clockbox">
           <svg class="clock" viewBox="0 0 180 180">
@@ -224,11 +228,24 @@
         <button class="op holebtn" id="btnPatch" style="display:none;">Patch it (glue the surface)</button>
         <p class="caption" id="genusCaption">Genus: 0 — a simple blob, no holes.</p>
       </div>
+
+      <h2 style="margin-top:32px;">The Strip With Only One Side</h2>
+      <p class="sub"><b>What's happening:</b> a Möbius strip is a paper loop with a half-twist before the ends are joined. Cut a normal loop and you always have two distinct faces; give it a half-twist first, and there's only <em>one</em> continuous surface. Here, "Lane A" and "Lane B" both represent that same surface, and the wrap between them is where the half-twist lives.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Walk the strip</em> and watch a lone ant walk forward, never once crossing an edge or lifting its pen. After crossing the twist <b>once</b>, it's on "the other side" — after crossing it <b>twice</b>, it's back exactly where it started. It walked the entire surface without ever needing to flip over, because there was only ever one surface to walk.</p>
+      <div class="mobiuswrap">
+        <svg id="mobiusSvg" viewBox="0 0 400 200"></svg>
+        <div class="controls">
+          <button class="op active" id="btnMobiusWalk">Walk the strip ▶</button>
+          <button class="op reset" id="btnMobiusReset">Reset</button>
+        </div>
+        <div class="verdict" id="mobiusVerdict"></div>
+      </div>
+      <p class="caption"><b>Why it matters:</b> this is the single most counterintuitive claim in topology, made walkable instead of taken on faith — cut an actual strip of paper with a half-twist and try it by hand if you have one, and this diagram will match exactly what you feel happen.</p>
     </div>
   </div>
 
   <footer>
-    <p><b>Where this connects:</b> combinations correct for overcounting the same way Jaccard similarity's union does (0.3). The non-abelian square example above is literally the Rubik's Cube's structure, miniaturized. Euler characteristic is a combinatorial count (Part 11) that happens to detect genuine topological information — dragging the blob changes its geometry constantly but never its genus, exactly as stretching a coffee mug into a donut shape never changes its one hole.</p>
+    <p><b>Where this connects:</b> combinations correct for overcounting the same way Jaccard similarity's union does. The order-dependent square example above is literally the Rubik's Cube's structure, miniaturized. The Euler characteristic is a simple count that happens to detect genuine topological information — dragging the blob changes its geometry constantly but never its genus, exactly as stretching a coffee mug into a donut never changes its one hole.</p>
   </footer>
 </div>
 
@@ -444,6 +461,65 @@
   });
 
   renderBlob();
+
+  // ================= MOBIUS STRIP =================
+  const mobSvg = document.getElementById("mobiusSvg");
+  const laneX0=30, laneX1=370, laneAY=70, laneBY=150;
+  let mobLane=0, mobX=0, mobTwists=0, mobLaps=0, mobTimer=null;
+
+  function renderMobius(){
+    mobSvg.innerHTML = "";
+    function line(x1,y1,x2,y2,color,w){
+      const l = document.createElementNS("http://www.w3.org/2000/svg","line");
+      l.setAttribute("x1",x1); l.setAttribute("y1",y1); l.setAttribute("x2",x2); l.setAttribute("y2",y2);
+      l.setAttribute("stroke",color); l.setAttribute("stroke-width",w); l.setAttribute("stroke-linecap","round");
+      mobSvg.appendChild(l);
+    }
+    function text(x,y,str,color){
+      const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+      t.setAttribute("x",x); t.setAttribute("y",y); t.setAttribute("font-family","IBM Plex Mono, monospace");
+      t.setAttribute("font-size","12"); t.setAttribute("fill",color); t.textContent = str;
+      mobSvg.appendChild(t);
+    }
+    line(laneX0,laneAY,laneX1,laneAY,"var(--c1)",6);
+    line(laneX0,laneBY,laneX1,laneBY,"var(--c2)",6);
+    text(laneX0, laneAY-14, "Lane A (one face)", "var(--c1)");
+    text(laneX0, laneBY+22, "Lane B (the \"other\" face)", "var(--c2)");
+    text(laneX1-70, (laneAY+laneBY)/2+4, "↺ half-twist", "var(--ink-soft)");
+    // the walking ant
+    const y = mobLane===0 ? laneAY : laneBY;
+    const x = laneX0 + mobX*(laneX1-laneX0);
+    const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    c.setAttribute("cx",x); c.setAttribute("cy",y); c.setAttribute("r",8);
+    c.setAttribute("fill", mobLane===0 ? "var(--c1)" : "var(--c2)");
+    mobSvg.appendChild(c);
+
+    document.getElementById("mobiusVerdict").innerHTML =
+      `Currently on: <b>${mobLane===0?"Lane A":"Lane B"}</b> &nbsp;·&nbsp; Twists crossed: <b>${mobTwists}</b> &nbsp;·&nbsp; Full loops completed: <b>${mobLaps}</b>` +
+      (mobLaps>0 ? `<br><b style="color:var(--c1)">Back at the start — after two twists, not one.</b> The ant visited both lanes and returned home without ever crossing an edge, which is only possible because there was truly one surface, not two.` : "");
+  }
+  function mobiusTick(){
+    mobX += 0.012;
+    if(mobX >= 1){
+      mobX = 0;
+      mobLane = 1-mobLane;
+      mobTwists++;
+      if(mobLane===0) mobLaps++;
+    }
+    renderMobius();
+  }
+  function startMobius(){ if(!mobTimer) mobTimer = setInterval(mobiusTick, 30); }
+  function pauseMobius(){ if(mobTimer){ clearInterval(mobTimer); mobTimer=null; } }
+  document.getElementById("btnMobiusWalk").addEventListener("click", (e) => {
+    if(mobTimer){ pauseMobius(); e.target.textContent="▶ Walk the strip"; e.target.classList.remove("active"); }
+    else { startMobius(); e.target.textContent="⏸ Pause"; e.target.classList.add("active"); }
+  });
+  document.getElementById("btnMobiusReset").addEventListener("click", () => {
+    pauseMobius(); mobLane=0; mobX=0; mobTwists=0; mobLaps=0;
+    document.getElementById("btnMobiusWalk").textContent="▶ Walk the strip"; document.getElementById("btnMobiusWalk").classList.remove("active");
+    renderMobius();
+  });
+  renderMobius();
 })();
 </script>
 </body>

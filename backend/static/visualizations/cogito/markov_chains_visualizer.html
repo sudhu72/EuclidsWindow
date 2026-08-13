@@ -67,6 +67,11 @@
   .stat-tick{ position:absolute; top:0; width:2px; height:14px; background:var(--ink); }
   .stat-tick::after{ content:attr(data-l); position:absolute; top:14px; left:50%; transform:translateX(-50%); font-size:10.5px; color:var(--ink-soft); white-space:nowrap; font-family:"IBM Plex Mono",monospace; }
   .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft); margin-top:12px; max-height:110px; overflow-y:auto; white-space:pre; background:#F5F4F0; border-radius:8px; padding:10px 12px; }
+  .flipstream{ font-family:"IBM Plex Mono", monospace; font-size:15px; letter-spacing:3px; background:#F5F4F0; border-radius:8px; padding:12px 14px; min-height:26px; word-break:break-all; }
+  .flipstream .hit{ color:#fff; background:var(--accent); border-radius:4px; padding:0 2px; }
+  .racecard{ border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .racecard h3{ margin:0 0 8px; font-family:"Fraunces",serif; font-size:15px; }
+  canvas{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer a{ color:var(--accent); }
   footer b{ color:var(--ink); }
@@ -78,19 +83,23 @@
     <div class="eyebrow">Companion to the Feynman Math Tutorial · Markov Chains &amp; Probability Trees</div>
     <h1>Trees, Goldfish, and the Long Run</h1>
     <p>Multiply <em>down</em> a path, add <em>across</em> paths — then let the same rule repeat forever and watch it forget where it started. Three hands-on tools for the one idea behind Bayes' theorem, PageRank, and predictive text.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
   </header>
 
   <div class="tabs">
     <button class="tab active" data-tab="tree">Probability Tree</button>
     <button class="tab" data-tab="stepper">Markov Stepper</button>
     <button class="tab" data-tab="walker">Long-Run Walker</button>
+    <button class="tab" data-tab="race">HH vs HT Race</button>
+    <button class="tab" data-tab="ruin">Gambler's Ruin</button>
   </div>
 
   <!-- ============ TAB 1: PROBABILITY TREE (BAYES) ============ -->
   <div class="panel active" id="panel-tree">
     <div class="card">
       <h2>The Test That Fools Doctors</h2>
-      <p class="sub">A rare disease, an excellent test, a positive result. Drag the sliders and watch <span class="formula">P(sick | positive)</span> defy your intuition — because the base rate, not the test, runs the show. Ten thousand imaginary people flow down the tree.</p>
+      <p class="sub"><b>What's happening:</b> a rare disease, a very accurate test, and a positive result. To find the chance you're <em>actually</em> sick, we send 10,000 imaginary people down the tree — first split by who's truly sick, then by who tests positive. The answer is the sick-<em>and</em>-positive group as a share of <em>everyone</em> who tested positive.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> keep the test excellent (99% / 95%) but drag prevalence down to ~1%. <span class="formula">P(sick | positive)</span> collapses to about 1-in-6 — because false alarms from the huge healthy majority far outnumber the few real cases. Slide prevalence back up and watch the number climb toward what your gut expected.</p>
       <div class="row"><label>Disease prevalence &nbsp;P(D)</label><input type="range" id="tPrev" min="0.1" max="50" step="0.1" value="1"><span class="readout" id="tPrevOut">1.0%</span></div>
       <div class="row"><label>Sensitivity &nbsp;P(+ | disease)</label><input type="range" id="tSens" min="50" max="100" step="0.5" value="99"><span class="readout" id="tSensOut">99%</span></div>
       <div class="row"><label>Specificity &nbsp;P(− | healthy)</label><input type="range" id="tSpec" min="50" max="100" step="0.5" value="95"><span class="readout" id="tSpecOut">95%</span></div>
@@ -101,7 +110,7 @@
         <span>Bold leaves = tested positive</span>
       </div>
       <div class="verdict" id="treeVerdict"></div>
-      <div class="caption">Multiply <b>down</b> each path to get its leaf; add the two positive leaves to get everyone who tested positive; then <b>part ÷ whole</b> gives the reversed probability. That reversal is Bayes' theorem — the tree <em>is</em> the theorem.</div>
+      <div class="caption"><b>Why it matters:</b> multiply <b>down</b> each path to get its leaf, add the two positive leaves to get everyone who tested positive, then take <b>part ÷ whole</b>. That flips "how accurate is the test?" into the question you actually care about — "given a positive, am I sick?" — which is Bayes' theorem. The tree <em>is</em> the theorem.</div>
     </div>
   </div>
 
@@ -109,7 +118,8 @@
   <div class="panel" id="panel-stepper">
     <div class="card">
       <h2>Weather That Forgets Where It Started</h2>
-      <p class="sub">Set the transition rule, pick today's weather, then press <em>Step a day</em>. Your belief slides forward one matrix-multiply at a time — and no matter where you start, it settles on the same long-run climate.</p>
+      <p class="sub"><b>What's happening:</b> tomorrow's weather depends only on today's — that single rule is what makes this a "Markov" chain. Set those odds, pick today's weather as your starting belief, and step forward one day at a time; each step just applies the same rule again.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Start 100% Sunny</em>, then <em>Run to settle</em>, and note where the bar lands. Now <em>Start 100% Rainy</em> and run again — it settles on the <em>exact same</em> split (the black tick). The chain forgets where it began; that settling point is the long-run climate.</p>
       <div class="cols">
         <div class="col">
           <div class="row"><label>If Sunny → Sunny tomorrow</label><input type="range" id="mSS" min="0" max="100" step="1" value="80"><span class="readout" id="mSSOut">80%</span></div>
@@ -130,7 +140,7 @@
         </div>
       </div>
       <div style="margin-top:16px;">
-        <div class="caption" style="margin:0 0 6px;">Belief on <b>day <span id="mDay">0</span></b> — the black tick is the stationary distribution (where it's headed):</div>
+        <div class="caption" style="margin:0 0 6px;">Belief on <b>day <span id="mDay">0</span></b> — the black tick marks the <b>stationary distribution</b>, the fixed long-run mix this belief is heading toward:</div>
         <div class="bar" id="mBar"></div>
         <div class="stat-line" id="mStatLine"></div>
       </div>
@@ -142,7 +152,8 @@
   <div class="panel" id="panel-walker">
     <div class="card">
       <h2>One Wanderer, Counting His Days</h2>
-      <p class="sub">Release a single token to random-walk the very same weather graph. It has no plan and no memory — yet the <em>fraction of time</em> it spends in each state climbs toward the exact stationary distribution the Stepper predicted. That's what "stationary" really means.</p>
+      <p class="sub"><b>What's happening:</b> instead of tracking a belief, we set one token loose to wander the same weather graph at random — step after step, with no plan and no memory of where it's been.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> let it run and watch the two bars — its share of time spent Sunny vs. Rainy — climb toward the black ticks, the very same split the Stepper predicted. One aimless wanderer, given enough time, spends its days in exactly the stationary proportions. <em>That</em> is what "stationary" really means.</p>
       <div class="row" style="gap:6px;">
         <button class="op active" id="wRun">Start walking ▶</button>
         <button class="op" id="wPause">Pause ⏸</button>
@@ -167,7 +178,62 @@
           </div>
         </div>
       </div>
-      <div class="caption">The walker uses the transition rule you set in the <b>Markov Stepper</b> tab. Law of large numbers meets the Markov property: time-average → stationary distribution.</div>
+      <div class="caption"><b>Why it matters:</b> the walker uses the same rule you set in the <b>Markov Stepper</b> tab. Track one wanderer long enough and its time-average lands on the stationary distribution — the same reason a fair coin, flipped enough times, sits near 50/50.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: HH vs HT RACE ============ -->
+  <div class="panel" id="panel-race">
+    <div class="card">
+      <h2>Why "HH" Takes Longer Than "HT"</h2>
+      <p class="sub"><b>What's happening:</b> two independent fair-coin streams, each hunting its own two-flip pattern — one watches for <b>HH</b>, the other for <b>HT</b>. Both patterns are equally likely on any given pair of flips, so it feels like they should take the same time to show up. They don't.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Watch one live race</em> a few times and see HH's stream often run noticeably longer. Then press <em>Run 1,000 more instantly</em> repeatedly — the running averages settle onto <b>6 flips for HH</b> and <b>4 flips for HT</b>, exactly the numbers the Polya worked example derives from scratch.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="raceWatch">Watch one live race ▶</button>
+        <button class="op" id="raceBatch">Run 1,000 more instantly ⏩</button>
+        <button class="op" id="raceReset">Reset stats</button>
+      </div>
+      <div class="racecard">
+        <h3>Hunting <span class="formula">HH</span></h3>
+        <div class="flipstream" id="raceStreamHH">—</div>
+      </div>
+      <div class="racecard">
+        <h3>Hunting <span class="formula">HT</span></h3>
+        <div class="flipstream" id="raceStreamHT">—</div>
+      </div>
+      <div class="caption" style="margin:6px 0;">Average flips-to-target across <b id="raceN">0</b> races so far (black tick = the theoretical answer):</div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">HH — theoretical average: 6 flips</div>
+        <div class="bar" id="raceBarHH"><div style="background:var(--sick); width:0%">—</div></div>
+        <div class="stat-line" id="raceStatHH"></div>
+      </div>
+      <div>
+        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">HT — theoretical average: 4 flips</div>
+        <div class="bar" id="raceBarHT"><div style="background:var(--healthy); width:0%">—</div></div>
+        <div class="stat-line" id="raceStatHT"></div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> a tail after a lone H sends the HH-hunt all the way back to zero progress, but an extra H while hunting HT costs nothing — it's still a perfectly good launchpad. Patterns that can "sabotage themselves" on a near-miss take longer on average, even though every individual pattern is exactly as likely to appear first.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: GAMBLER'S RUIN ============ -->
+  <div class="panel" id="panel-ruin">
+    <div class="card">
+      <h2>Absorbing States: When the Story Only Ends One of Two Ways</h2>
+      <p class="sub"><b>What's happening:</b> you start with some money, bet $1 on a fair coin every round, and stop the moment you either go broke ($0) or hit your target. $0 and the target are <b>absorbing states</b> — once you land there, the story is over.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag your starting bankroll and watch the theoretical win-chance track it exactly — <b>your share of the total pot</b>, nothing more exotic. Then <em>Run one walk</em> to watch a single bankroll wander up and down before finally hitting an edge, and <em>Run 1,000 walks</em> to confirm the empirical win rate lands on that same simple fraction.</p>
+      <div class="row"><label>Starting bankroll</label><input type="range" id="ruinStart" min="1" max="9" step="1" value="3"><span class="readout" id="ruinStartOut">$3</span></div>
+      <div class="caption" style="margin:0 0 10px;">Target: <b>$10</b> (fixed) — theoretical P(reach target before ruin) = start ÷ target = <b id="ruinTheory">30%</b></div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="ruinWatch">Run one walk (animated) ▶</button>
+        <button class="op" id="ruinBatch">Run 1,000 walks instantly ⏩</button>
+        <button class="op" id="ruinReset">Reset stats</button>
+      </div>
+      <canvas id="ruinCanvas" width="720" height="220"></canvas>
+      <div class="caption" style="margin:10px 0 6px;">Empirical win rate across <b id="ruinN">0</b> walks (black tick = theoretical):</div>
+      <div class="bar" id="ruinBar"><div style="background:var(--accent); width:0%">—</div></div>
+      <div class="stat-line" id="ruinStatLine"></div>
+      <div class="caption"><b>Why it matters:</b> the house doesn't even need an edge to grind most gamblers down — the closer your target is relative to your bankroll, the likelier ruin comes first, purely from the arithmetic of an absorbing random walk. This exact skeleton (states you can enter but never leave) models customer churn, disease progression, and credit-rating default.</div>
     </div>
   </div>
 
@@ -404,6 +470,158 @@
   document.getElementById("wReset").addEventListener("click", resetWalk);
   document.getElementById("wSpeed").addEventListener("input", function(){ if(wTimer){ pauseWalk(); startWalk(); } });
   resetWalk();
+
+  /* =========================================================
+     TAB 4 — HH vs HT RACE
+     ========================================================= */
+  var raceSumHH=0, raceSumHT=0, raceCount=0, raceTimer=null;
+  var elStreamHH=document.getElementById("raceStreamHH"), elStreamHT=document.getElementById("raceStreamHT");
+
+  function huntStep(state){
+    // state: {seq:[], last:null, target:'HH'|'HT', done:false, flips:0}
+    if(state.done) return;
+    var cur = Math.random()<0.5 ? 'H':'T';
+    state.flips++;
+    var isHit = state.last==='H' && ((state.target==='HH' && cur==='H') || (state.target==='HT' && cur==='T'));
+    state.seq.push({c:cur, hit:isHit});
+    state.last = cur;
+    if(isHit) state.done = true;
+  }
+  function renderStream(el, state){
+    el.innerHTML = state.seq.map(function(f,i){
+      var isLastTwo = i>=state.seq.length-2;
+      return (isLastTwo && state.done) ? '<span class="hit">'+f.c+'</span>' : f.c;
+    }).join('') || '—';
+  }
+  function raceStats(){
+    document.getElementById("raceN").textContent = raceCount;
+    var avgHH = raceCount ? raceSumHH/raceCount : 0, avgHT = raceCount ? raceSumHT/raceCount : 0;
+    var maxBar = 12;
+    var barHH = document.getElementById("raceBarHH").firstElementChild;
+    var barHT = document.getElementById("raceBarHT").firstElementChild;
+    barHH.style.width = Math.min(100, avgHH/maxBar*100)+"%"; barHH.textContent = raceCount ? avgHH.toFixed(2) : "—";
+    barHT.style.width = Math.min(100, avgHT/maxBar*100)+"%"; barHT.textContent = raceCount ? avgHT.toFixed(2) : "—";
+    document.getElementById("raceStatHH").innerHTML = '<div class="stat-tick" data-l="theory: 6" style="left:'+(6/maxBar*100)+'%"></div>';
+    document.getElementById("raceStatHT").innerHTML = '<div class="stat-tick" data-l="theory: 4" style="left:'+(4/maxBar*100)+'%"></div>';
+  }
+  function watchOneRace(){
+    if(raceTimer) return;
+    var sHH = {seq:[], last:null, target:'HH', done:false, flips:0};
+    var sHT = {seq:[], last:null, target:'HT', done:false, flips:0};
+    elStreamHH.innerHTML = "—"; elStreamHT.innerHTML = "—";
+    raceTimer = setInterval(function(){
+      huntStep(sHH); huntStep(sHT);
+      renderStream(elStreamHH, sHH); renderStream(elStreamHT, sHT);
+      if(sHH.done && sHT.done){
+        clearInterval(raceTimer); raceTimer=null;
+        raceSumHH += sHH.flips; raceSumHT += sHT.flips; raceCount++;
+        raceStats();
+      }
+    }, 260);
+  }
+  function runRaceBatch(n){
+    for(var i=0;i<n;i++){
+      var sHH = {last:null, target:'HH', done:false, flips:0};
+      var sHT = {last:null, target:'HT', done:false, flips:0};
+      while(!sHH.done){ huntStepFast(sHH); }
+      while(!sHT.done){ huntStepFast(sHT); }
+      raceSumHH += sHH.flips; raceSumHT += sHT.flips; raceCount++;
+    }
+    raceStats();
+  }
+  function huntStepFast(state){
+    var cur = Math.random()<0.5 ? 'H':'T';
+    state.flips++;
+    var isHit = state.last==='H' && ((state.target==='HH' && cur==='H') || (state.target==='HT' && cur==='T'));
+    state.last = cur;
+    if(isHit) state.done = true;
+  }
+  document.getElementById("raceWatch").addEventListener("click", watchOneRace);
+  document.getElementById("raceBatch").addEventListener("click", function(){ runRaceBatch(1000); });
+  document.getElementById("raceReset").addEventListener("click", function(){
+    raceSumHH=0; raceSumHT=0; raceCount=0;
+    elStreamHH.innerHTML="—"; elStreamHT.innerHTML="—";
+    raceStats();
+  });
+  raceStats();
+
+  /* =========================================================
+     TAB 5 — GAMBLER'S RUIN
+     ========================================================= */
+  var TARGET = 10;
+  var ruinStartSlider = document.getElementById("ruinStart");
+  var ruinWins=0, ruinCount=0, ruinTimer=null;
+  var rc = document.getElementById("ruinCanvas"), rctx = rc.getContext("2d");
+  var RW = rc.width, RH = rc.height;
+
+  function ruinTheory(){ return parseInt(ruinStartSlider.value,10) / TARGET; }
+  function drawRuinPath(path, finished){
+    rctx.clearRect(0,0,RW,RH);
+    var pad=30;
+    var plotW = RW-2*pad, plotH = RH-2*pad;
+    var maxX = Math.max(path.length-1, 20);
+    function px(i){ return pad + (i/maxX)*plotW; }
+    function py(v){ return pad + plotH - (v/TARGET)*plotH; }
+    // gridlines at 0 and TARGET
+    rctx.strokeStyle = "rgba(27,36,48,0.15)"; rctx.lineWidth=1;
+    [0,TARGET].forEach(function(v){
+      rctx.beginPath(); rctx.moveTo(pad, py(v)); rctx.lineTo(RW-pad, py(v)); rctx.stroke();
+    });
+    rctx.fillStyle="var(--ink-soft)"; rctx.font='11px "IBM Plex Mono",monospace';
+    rctx.fillText("ruin ($0)", pad, py(0)-4);
+    rctx.fillText("target ($"+TARGET+")", pad, py(TARGET)-4);
+    // path
+    rctx.beginPath(); rctx.strokeStyle="var(--accent)"; rctx.lineWidth=2.4;
+    for(var i=0;i<path.length;i++){ var X=px(i), Y=py(path[i]); if(i===0) rctx.moveTo(X,Y); else rctx.lineTo(X,Y); }
+    rctx.stroke();
+    if(finished){
+      var last = path[path.length-1];
+      rctx.beginPath(); rctx.arc(px(path.length-1), py(last), 5, 0, 7);
+      rctx.fillStyle = last>=TARGET ? "var(--healthy)" : "var(--sick)"; rctx.fill();
+    }
+  }
+  function ruinBarUpdate(){
+    document.getElementById("ruinN").textContent = ruinCount;
+    var rate = ruinCount ? ruinWins/ruinCount : 0;
+    var bar = document.getElementById("ruinBar").firstElementChild;
+    bar.style.width = (rate*100)+"%"; bar.textContent = ruinCount ? (rate*100).toFixed(1)+"%" : "—";
+    var th = ruinTheory();
+    document.getElementById("ruinStatLine").innerHTML = '<div class="stat-tick" data-l="theory: '+(th*100).toFixed(0)+'%" style="left:'+(th*100)+'%"></div>';
+  }
+  function updateRuinTheoryLabel(){
+    ruinStartOut.textContent = "$"+ruinStartSlider.value;
+    document.getElementById("ruinTheory").textContent = (ruinTheory()*100).toFixed(0)+"%";
+  }
+  function watchOneWalk(){
+    if(ruinTimer) return;
+    var bal = parseInt(ruinStartSlider.value,10);
+    var path = [bal];
+    ruinTimer = setInterval(function(){
+      bal += Math.random()<0.5 ? 1 : -1;
+      path.push(bal);
+      drawRuinPath(path, false);
+      if(bal<=0 || bal>=TARGET){
+        clearInterval(ruinTimer); ruinTimer=null;
+        drawRuinPath(path, true);
+        ruinCount++; if(bal>=TARGET) ruinWins++;
+        ruinBarUpdate();
+      }
+    }, 45);
+  }
+  function runRuinBatch(n){
+    var start = parseInt(ruinStartSlider.value,10);
+    for(var i=0;i<n;i++){
+      var bal = start;
+      while(bal>0 && bal<TARGET){ bal += Math.random()<0.5 ? 1 : -1; }
+      ruinCount++; if(bal>=TARGET) ruinWins++;
+    }
+    ruinBarUpdate();
+  }
+  document.getElementById("ruinWatch").addEventListener("click", watchOneWalk);
+  document.getElementById("ruinBatch").addEventListener("click", function(){ runRuinBatch(1000); });
+  document.getElementById("ruinReset").addEventListener("click", function(){ ruinWins=0; ruinCount=0; ruinBarUpdate(); drawRuinPath([parseInt(ruinStartSlider.value,10)], false); });
+  ruinStartSlider.addEventListener("input", function(){ updateRuinTheoryLabel(); ruinBarUpdate(); drawRuinPath([parseInt(ruinStartSlider.value,10)], false); });
+  updateRuinTheoryLabel(); ruinBarUpdate(); drawRuinPath([parseInt(ruinStartSlider.value,10)], false);
 })();
 </script>
 </body>

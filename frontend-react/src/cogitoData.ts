@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 28 self-contained interactive visualizations
+// Cogito Gallery manifest — 39 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -32,6 +32,66 @@ export const GALLERY: GalleryCategory[] = [
     "title": "Mathematics",
     "blurb": "Notation, transformations, structure, chance, and number theory — the ideas behind the symbols.",
     "items": [
+      {
+        "file": "elementary_math_visualizer.html",
+        "title": "The Toolkit, Made Visible",
+        "one": "Order of operations, sign rules, fractions, exponent laws, and logarithms — the moves everything else assumes.",
+        "prompt": "Explain the elementary toolkit the rest of mathematics assumes: why the order of operations is a convention rather than a law, why a negative times a negative is positive, how fractions really work, the exponent laws, and what a logarithm actually asks."
+      },
+      {
+        "file": "algebra_visualizer.html",
+        "title": "Restoring the Balance",
+        "one": "Tip a balance scale, expand the distributive property, complete the square, and feed a function machine.",
+        "prompt": "Explain algebra from first principles: an equation as a balance you keep level, what the distributive property really says, why completing the square works, and what a function machine is doing."
+      },
+      {
+        "file": "geometry_visualizer.html",
+        "title": "Shapes, Rearranged",
+        "one": "Prove the angle sum by tearing corners, rearrange Pythagoras, unroll a circle, and scale a cube.",
+        "prompt": "Explain geometry through rearrangement: why a triangle's angles sum to 180 degrees, a visual proof of the Pythagorean theorem, why a circle's area is pi r squared when you unroll it, and why area and volume scale differently."
+      },
+      {
+        "file": "trigonometry_visualizer.html",
+        "title": "Turning Angles Into Numbers",
+        "one": "Right-triangle ratios become the unit circle, radians, polar coordinates, and the familiar waves.",
+        "prompt": "Explain trigonometry from first principles: how right-triangle ratios become the unit circle, why radians are the natural angle measure, how polar and Cartesian coordinates relate, and why sine and cosine draw waves."
+      },
+      {
+        "file": "complex_numbers_visualizer.html",
+        "title": "The Missing Direction",
+        "one": "The number line gains a second axis; multiplication turns out to be rotate-and-scale.",
+        "prompt": "Explain complex numbers from first principles: why we needed a direction off the number line, why multiplying by i is a 90-degree rotation, how Bombelli's cubic forced the issue, and what the roots of unity are."
+      },
+      {
+        "file": "sequences_series_visualizer.html",
+        "title": "Running Totals, Made Visible",
+        "one": "Zeno's halving series converges, the harmonic series doesn't, and Taylor coefficients build themselves.",
+        "prompt": "Explain sequences and series: what convergence means, why Zeno's geometric series sums to a finite number while the harmonic series diverges, and how a power series builds up a Taylor approximation."
+      },
+      {
+        "file": "calculus_visualizer.html",
+        "title": "Zoom, Accumulate, Approximate",
+        "one": "Zoom until a curve looks straight, watch differentiation and integration undo each other, then stack a Taylor tower.",
+        "prompt": "Explain calculus from first principles: the derivative as zooming in until a curve looks straight, the integral as accumulation, why the fundamental theorem makes them inverses, and how Taylor series approximate a function."
+      },
+      {
+        "file": "probability_visualizer.html",
+        "title": "Multiply Down, Add Across",
+        "one": "Walk an AND/OR tree, grade predictions with cross-entropy, and watch the law of large numbers bite.",
+        "prompt": "Explain probability from first principles: why you multiply along a branch and add across branches, what cross-entropy measures about a prediction, and what the law of large numbers actually guarantees."
+      },
+      {
+        "file": "statistics_visualizer.html",
+        "title": "Reasoning Backward From Data",
+        "one": "A Galton board builds the bell curve, then sampling, hypothesis tests, and Simpson's paradox.",
+        "prompt": "Explain statistics as reasoning backward from data: why the Galton board produces a normal distribution, what a sampling distribution is, what a hypothesis test really claims, and how Simpson's paradox reverses a conclusion."
+      },
+      {
+        "file": "logic_visualizer.html",
+        "title": "What Must Be True",
+        "one": "Build truth tables row by row and check whether an argument is actually valid.",
+        "prompt": "Explain formal logic: how truth tables define the connectives, the difference between an argument being valid and its conclusion being true, and how to check validity mechanically."
+      },
       {
         "file": "markov_chains_visualizer.html",
         "title": "Markov Chains & Probability Trees",
@@ -92,6 +152,12 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Forward & Backward Pass",
         "one": "Step through a 3-layer network's forward pass and the backprop that follows.",
         "prompt": "Walk me through the forward pass and backpropagation of a small 3-layer neural network, step by step."
+      },
+      {
+        "file": "backprop_visualizer.html",
+        "title": "Compute Once, Reuse Backward",
+        "one": "Why backprop is cheap: the chain rule's middle term is shared, so each gradient reuses the last.",
+        "prompt": "Explain why backpropagation is efficient rather than just correct: how the chain rule's shared middle term lets each layer reuse the gradient computed after it, instead of recomputing derivatives from scratch for every weight."
       },
       {
         "file": "chain_rule_gears_animation.html",

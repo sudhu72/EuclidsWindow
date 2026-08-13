@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Running Totals, Made Visible — Sequences &amp; Series</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:100px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  svg,canvas{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  .good-t{ color:var(--c1); font-weight:700; } .bad-t{ color:var(--c3); font-weight:700; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft); margin-top:10px; max-height:150px; overflow-y:auto; white-space:pre-line; background:#F5F4F0; border-radius:8px; padding:10px 12px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Sequences &amp; Series</div>
+    <h1>Running Totals, Made Visible</h1>
+    <p>A list that settles or runs away, an infinite sum that closes a paradox, two similarly-shrinking series racing to opposite fates, a boundary where a power series simply stops meaning anything, and a function's coefficients pinned down one derivative at a time. Each one built from a picture, not asserted.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="seq">Sequences</button>
+    <button class="tab" data-tab="zeno">Zeno &amp; Geometric Series</button>
+    <button class="tab" data-tab="harmonic">Harmonic vs. Basel</button>
+    <button class="tab" data-tab="power">Power Series Convergence</button>
+    <button class="tab" data-tab="taylor">Building Taylor Coefficients</button>
+  </div>
+
+  <!-- ============ TAB 1: SEQUENCES ============ -->
+  <div class="panel active" id="panel-seq">
+    <div class="card">
+      <h2>Settle Down, Explode, or Oscillate Forever</h2>
+      <p class="sub"><b>What's happening:</b> pick a rule and watch the terms plot themselves, one by one. Some sequences home in on a single value; others run away; others never stop flipping back and forth.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> compare <span class="formula">1/n</span> (settles at 0) with <span class="formula">n</span> (runs away) and <span class="formula">(-1)ⁿ</span> (oscillates forever, never settling) — three genuinely different fates, side by side.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-seq="inv">aₙ = 1/n</button>
+        <button class="op" data-seq="lin">aₙ = n</button>
+        <button class="op" data-seq="osc">aₙ = (−1)ⁿ</button>
+        <button class="op" data-seq="fib">Fibonacci ratio aₙ/aₙ₋₁</button>
+      </div>
+      <svg id="seqSvg" viewBox="0 0 700 260"></svg>
+      <div class="verdict" id="seqVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> "does this settle down?" is the same question whether it's a sequence of numbers, a running average (Law of Large Numbers), or a Markov chain's belief converging on a stationary distribution.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: ZENO & GEOMETRIC SERIES ============ -->
+  <div class="panel" id="panel-zeno">
+    <div class="card">
+      <h2>The Wall the Running Total Never Crosses</h2>
+      <p class="sub"><b>What's happening:</b> each step covers a fixed fraction of what's left. Watch the running total climb toward a wall it approaches forever but never crosses — Zeno's paradox, resolved.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag the ratio r and watch the formula <span class="formula">a/(1−r)</span> predict exactly where the wall sits, matching the climbing bars every time.</p>
+      <div class="row"><label>First term a</label><input type="range" id="zenoA" min="1" max="10" step="0.5" value="5"><span class="readout" id="zenoAOut">5</span></div>
+      <div class="row"><label>Ratio r</label><input type="range" id="zenoR" min="0.1" max="0.9" step="0.05" value="0.5"><span class="readout" id="zenoROut">0.5</span></div>
+      <svg id="zenoSvg" viewBox="0 0 700 160"></svg>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnZenoStep">Add next term ▶</button>
+        <button class="op" id="btnZenoReset">Reset</button>
+      </div>
+      <div class="verdict" id="zenoVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> a bouncing ball, a decaying drug dose, a depreciating asset — anything that shrinks by a fixed fraction forever has a finite total, given by this exact formula.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: HARMONIC VS BASEL ============ -->
+  <div class="panel" id="panel-harmonic">
+    <div class="card">
+      <h2>Two Shrinking Series, Two Different Fates</h2>
+      <p class="sub"><b>What's happening:</b> <span class="formula">1+1/2+1/3+...</span> (harmonic, teal) and <span class="formula">1+1/4+1/9+...</span> (Basel, gold) both have terms shrinking to zero. Watch their running totals race — one keeps climbing forever, agonizingly slowly; the other flattens onto a ceiling.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> run to a few thousand terms and watch the harmonic total keep inching upward with no ceiling in sight, while the Basel total has already all-but-frozen near <span class="formula">π²/6 ≈ 1.645</span>.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnHarmStep">Add 10 terms ▶</button>
+        <button class="op" id="btnHarmBig">Add 1,000 terms ⏩</button>
+        <button class="op" id="btnHarmReset">Reset</button>
+      </div>
+      <svg id="harmSvg" viewBox="0 0 700 260"></svg>
+      <div class="verdict" id="harmVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> "the terms shrink to zero" is necessary for convergence but nowhere near sufficient — the harmonic series is the permanent counterexample to keep in mind.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: POWER SERIES CONVERGENCE ============ -->
+  <div class="panel" id="panel-power">
+    <div class="card">
+      <h2>A Boundary You Can Actually Watch</h2>
+      <p class="sub"><b>What's happening:</b> <span class="formula">1 + x + x² + x³ + ...</span> is the geometric series with ratio x instead of r. Pick x and watch the partial sums either settle onto <span class="formula">1/(1−x)</span> or run away — depending purely on which side of <span class="formula">x = ±1</span> you're on.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set x=0.9 (settles, slowly) then x=1.1 (explodes immediately) — the radius of convergence isn't a vague idea, it's this exact, sharp boundary.</p>
+      <div class="row"><label>x</label><input type="range" id="powerX" min="-1.3" max="1.3" step="0.02" value="0.6"><span class="readout" id="powerXOut">0.6</span></div>
+      <svg id="powerSvg" viewBox="0 0 700 260"></svg>
+      <div class="verdict" id="powerVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every power series — including every Taylor series — has a radius like this one, and a Taylor approximation is only trustworthy inside it.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: BUILDING TAYLOR COEFFICIENTS ============ -->
+  <div class="panel" id="panel-taylor">
+    <div class="card">
+      <h2>Pin Down Each Coefficient, One Derivative at a Time</h2>
+      <p class="sub"><b>What's happening:</b> assume <span class="formula">f(x) = c₀+c₁x+c₂x²+...</span> and match derivatives at <span class="formula">x=0</span> one at a time. Each step reveals exactly one more coefficient — no guessing, just <span class="formula">cₙ = f⁽ⁿ⁾(0)/n!</span>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> pick eˣ and step through — every coefficient becomes 1/n!, because every derivative of eˣ at 0 is just 1. Then try sin x and watch every other coefficient vanish, because sin's even derivatives at 0 are all zero.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-fn="exp">f(x) = eˣ</button>
+        <button class="op" data-fn="sin">f(x) = sin x</button>
+        <button class="op" data-fn="cos">f(x) = cos x</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnTayPrev">◀ Back</button>
+        <button class="op active" id="btnTayNext">Next coefficient ▶</button>
+        <button class="op" id="btnTayReset">Reset</button>
+      </div>
+      <div class="verdict" id="taylorVerdict"></div>
+      <div class="steplog" id="taylorLog"></div>
+      <div class="caption"><b>Why it matters:</b> this is the same series the <a href="calculus_visualizer.html">Calculus visualizer</a>'s "Taylor Tower" tab shows hugging the true curve — that tool shows the geometric payoff; this one shows the algebraic reason each coefficient is exactly what it is.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../sequences-and-series.md">Sequences &amp; Series</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x,y,str,color,size,anchor,weight){
+    const t = el("text",{x,y,["text-anchor"]:anchor||"middle","font-family":"IBM Plex Mono, monospace","font-size":size||12,fill:color||"var(--ink)"});
+    if(weight) t.setAttribute("font-weight",weight);
+    t.textContent = str;
+    return t;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+  function fmt(v){
+    if(!isFinite(v)) return v>0?"+∞":"-∞";
+    if(isNaN(v)) return "undefined";
+    return Math.abs(v-Math.round(v))<1e-6 ? String(Math.round(v)) : v.toFixed(4).replace(/0+$/,"").replace(/\.$/,"");
+  }
+
+  /* =========================================================
+     TAB 1 — SEQUENCES
+     ========================================================= */
+  let seqMode = "inv";
+  function seqValue(n, mode){
+    if(mode==="inv") return 1/n;
+    if(mode==="lin") return n;
+    if(mode==="osc") return Math.pow(-1,n);
+    if(mode==="fib"){
+      let a=1,b=1;
+      for(let i=2;i<n;i++){ const c=a+b; a=b; b=c; }
+      return n===1?1:b/a;
+    }
+  }
+  function renderSeq(){
+    const svg = document.getElementById("seqSvg");
+    svg.innerHTML = "";
+    const N=25, W=700,H=260, padL=50, padB=30, padT=20;
+    const vals = []; for(let n=1;n<=N;n++) vals.push(seqValue(n,seqMode));
+    const finite = vals.filter(v=>isFinite(v));
+    let ymax = Math.max(...finite, 1), ymin = Math.min(...finite, 0);
+    if(ymax-ymin<1e-6){ ymax+=1; ymin-=1; }
+    const plotW=W-padL-20, plotH=H-padT-padB;
+    function px(n){ return padL + (n-1)/(N-1)*plotW; }
+    function py(v){ return padT + plotH - (v-ymin)/(ymax-ymin)*plotH; }
+    svg.appendChild(el("line",{x1:padL,y1:py(0),x2:W-20,y2:py(0),stroke:"var(--line)",["stroke-width"]:1.2}));
+    let d="";
+    vals.forEach((v,i) => {
+      if(!isFinite(v)) return;
+      const X=px(i+1), Y=py(Math.max(ymin,Math.min(ymax,v)));
+      d += (d===""?"M":"L")+X+","+Y+" ";
+      svg.appendChild(el("circle",{cx:X,cy:Y,r:3.5,fill:"var(--c1)"}));
+    });
+    svg.appendChild(el("path",{d,fill:"none",stroke:"var(--accent)",["stroke-width"]:1.6,opacity:0.6}));
+    svg.appendChild(txt(padL,14,"aₙ","var(--ink-soft)",11,"start"));
+    svg.appendChild(txt(W-20,py(0)+18,"n →","var(--ink-soft)",11,"end"));
+    const last=vals[vals.length-1], prevlast=vals[vals.length-2];
+    let verdictText;
+    if(seqMode==="inv") verdictText = `aₙ = 1/n → converges to <b>0</b> as n grows.`;
+    else if(seqMode==="lin") verdictText = `aₙ = n → <b class="bad-t">diverges</b>, growing without bound.`;
+    else if(seqMode==="osc") verdictText = `aₙ = (−1)ⁿ → never settles, forever flipping between <b>1</b> and <b>−1</b>.`;
+    else verdictText = `Fibonacci ratio → converges to <b>${((1+Math.sqrt(5))/2).toFixed(4)}</b>, the golden ratio — last two terms: ${fmt(prevlast)}, ${fmt(last)}.`;
+    document.getElementById("seqVerdict").innerHTML = verdictText;
+  }
+  document.querySelectorAll("#panel-seq [data-seq]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      seqMode = btn.dataset.seq;
+      document.querySelectorAll("#panel-seq [data-seq]").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      renderSeq();
+    });
+  });
+  renderSeq();
+
+  /* =========================================================
+     TAB 2 — ZENO & GEOMETRIC SERIES
+     ========================================================= */
+  const zenoA=document.getElementById("zenoA"), zenoR=document.getElementById("zenoR");
+  let zenoTermsShown = 0;
+  function renderZeno(){
+    const a=parseFloat(zenoA.value), r=parseFloat(zenoR.value);
+    zenoAOut.textContent=fmt(a); zenoROut.textContent=fmt(r);
+    const S = a/(1-r);
+    const svg = document.getElementById("zenoSvg");
+    svg.innerHTML = "";
+    const W=700,H=160, padL=20, padR=20, wallX=W-padR-40;
+    const scale=(wallX-padL)/(S*1.15);
+    svg.appendChild(el("line",{x1:padL,y1:110,x2:wallX+30,y2:110,stroke:"var(--line)",["stroke-width"]:1.4}));
+    svg.appendChild(el("line",{x1:padL+S*scale,y1:40,x2:padL+S*scale,y2:130,stroke:"var(--c3)",["stroke-width"]:2,["stroke-dasharray"]:"5 4"}));
+    svg.appendChild(txt(padL+S*scale, 30, "wall: S = "+fmt(S), "var(--c3)", 12, "middle","700"));
+    let running=0;
+    for(let i=0;i<zenoTermsShown;i++){
+      const term = a*Math.pow(r,i);
+      const x0 = padL+running*scale;
+      running += term;
+      const x1 = padL+running*scale;
+      svg.appendChild(el("rect",{x:x0,y:90,width:Math.max(1,x1-x0),height:30,fill:i%2===0?"var(--c1)":"var(--c2)",["fill-opacity"]:0.6,stroke:"var(--ink)",["stroke-width"]:0.6}));
+    }
+    document.getElementById("btnZenoStep").disabled = zenoTermsShown>=30;
+    const v = document.getElementById("zenoVerdict");
+    v.innerHTML = zenoTermsShown===0
+      ? `S = a/(1−r) = ${fmt(a)}/(1−${fmt(r)}) = <span class="big">${fmt(S)}</span> — press "Add next term" to watch it climb.`
+      : `After ${zenoTermsShown} term${zenoTermsShown>1?'s':''}: running total = <b>${fmt(running)}</b> &nbsp;·&nbsp; predicted wall = <span class="big">${fmt(S)}</span> — ${running<S?'still climbing, never crossing.':'essentially arrived.'}`;
+  }
+  document.getElementById("btnZenoStep").addEventListener("click", () => { zenoTermsShown++; renderZeno(); });
+  document.getElementById("btnZenoReset").addEventListener("click", () => { zenoTermsShown=0; renderZeno(); });
+  [zenoA,zenoR].forEach(inp => inp.addEventListener("input", () => { zenoTermsShown=0; renderZeno(); }));
+  renderZeno();
+
+  /* =========================================================
+     TAB 3 — HARMONIC VS BASEL
+     ========================================================= */
+  let harmN = 0, harmSum=0, baselSum=0;
+  let harmTrace=[], baselTrace=[];
+  function renderHarm(){
+    const svg = document.getElementById("harmSvg");
+    svg.innerHTML = "";
+    const W=700,H=260, padL=50, padB=30, padT=20;
+    const plotW=W-padL-20, plotH=H-padT-padB;
+    const maxN = Math.max(harmN,1);
+    const ymax = Math.max(harmSum, Math.PI*Math.PI/6, 1)*1.1;
+    function px(n){ return padL + (n/maxN)*plotW; }
+    function py(v){ return padT+plotH - (v/ymax)*plotH; }
+    svg.appendChild(el("line",{x1:padL,y1:py(0),x2:W-20,y2:py(0),stroke:"var(--line)",["stroke-width"]:1.2}));
+    const baselTarget = Math.PI*Math.PI/6;
+    svg.appendChild(el("line",{x1:padL,y1:py(baselTarget),x2:W-20,y2:py(baselTarget),stroke:"var(--c2)",["stroke-width"]:1.2,["stroke-dasharray"]:"3 3"}));
+    svg.appendChild(txt(W-24,py(baselTarget)-6,"π²/6","var(--c2)",11,"end"));
+    function drawTrace(trace,color){
+      let d="";
+      trace.forEach((pt,i) => { const X=px(pt[0]), Y=py(Math.min(pt[1],ymax)); d += (i===0?"M":"L")+X+","+Y+" "; });
+      svg.appendChild(el("path",{d,fill:"none",stroke:color,["stroke-width"]:2.2}));
+    }
+    drawTrace(harmTrace,"var(--c1)");
+    drawTrace(baselTrace,"var(--c4)");
+    svg.appendChild(txt(padL,14,"partial sum","var(--ink-soft)",11,"start"));
+    svg.appendChild(txt(W-20,py(0)+18,"n terms →","var(--ink-soft)",11,"end"));
+    document.getElementById("harmVerdict").innerHTML =
+      `After <b>${harmN}</b> terms — Harmonic (teal): <b>${fmt(harmSum)}</b>, still climbing &nbsp;·&nbsp; Basel (purple): <b>${fmt(baselSum)}</b>, target <b>${baselTarget.toFixed(4)}</b>`;
+  }
+  function stepHarm(count){
+    for(let i=0;i<count;i++){
+      harmN++;
+      harmSum += 1/harmN;
+      baselSum += 1/(harmN*harmN);
+    }
+    harmTrace.push([harmN,harmSum]); baselTrace.push([harmN,baselSum]);
+    if(harmTrace.length>400){ harmTrace.shift(); baselTrace.shift(); }
+    renderHarm();
+  }
+  document.getElementById("btnHarmStep").addEventListener("click", () => stepHarm(10));
+  document.getElementById("btnHarmBig").addEventListener("click", () => stepHarm(1000));
+  document.getElementById("btnHarmReset").addEventListener("click", () => { harmN=0; harmSum=0; baselSum=0; harmTrace=[[0,0]]; baselTrace=[[0,0]]; renderHarm(); });
+  harmTrace=[[0,0]]; baselTrace=[[0,0]];
+  renderHarm();
+
+  /* =========================================================
+     TAB 4 — POWER SERIES CONVERGENCE
+     ========================================================= */
+  const powerX = document.getElementById("powerX");
+  function renderPower(){
+    const x = parseFloat(powerX.value);
+    powerXOut.textContent = fmt(x);
+    const svg = document.getElementById("powerSvg");
+    svg.innerHTML = "";
+    const W=700,H=260, padL=50, padB=30, padT=20;
+    const plotW=W-padL-20, plotH=H-padT-padB;
+    const converges = Math.abs(x)<1;
+    const target = converges ? 1/(1-x) : null;
+    const N = 30;
+    let sum=0; const trace=[[0,0]];
+    for(let n=0;n<N;n++){ sum += Math.pow(x,n); trace.push([n+1,sum]); if(!isFinite(sum)||Math.abs(sum)>50) break; }
+    const ys = trace.map(p=>p[1]);
+    let ymax = Math.max(...ys, target||1, 1), ymin = Math.min(...ys, 0);
+    if(!isFinite(ymax)||ymax>50) ymax=50;
+    if(ymax-ymin<1e-6) ymax=ymin+1;
+    function px(n){ return padL + (n/N)*plotW; }
+    function py(v){ return padT+plotH - (Math.max(ymin,Math.min(ymax,v))-ymin)/(ymax-ymin)*plotH; }
+    svg.appendChild(el("line",{x1:padL,y1:py(0),x2:W-20,y2:py(0),stroke:"var(--line)",["stroke-width"]:1.2}));
+    if(converges){
+      svg.appendChild(el("line",{x1:padL,y1:py(target),x2:W-20,y2:py(target),stroke:"var(--c2)",["stroke-width"]:1.2,["stroke-dasharray"]:"3 3"}));
+      svg.appendChild(txt(W-24,py(target)-6,"1/(1-x) = "+fmt(target),"var(--c2)",11,"end"));
+    }
+    let d="";
+    trace.forEach((pt,i) => { const X=px(pt[0]), Y=py(pt[1]); d += (i===0?"M":"L")+X+","+Y+" "; });
+    svg.appendChild(el("path",{d,fill:"none",stroke: converges?"var(--c1)":"var(--c3)",["stroke-width"]:2.2}));
+    svg.appendChild(txt(padL, 14, "partial sum", "var(--ink-soft)", 11, "start"));
+    document.getElementById("powerVerdict").innerHTML = converges
+      ? `|x| = ${Math.abs(x).toFixed(2)} < 1 → <span class="good-t">converges</span> to 1/(1−x) = <b>${fmt(target)}</b>`
+      : `|x| = ${Math.abs(x).toFixed(2)} ≥ 1 → <span class="bad-t">diverges</span> — outside the radius of convergence, the sum simply runs away.`;
+  }
+  powerX.addEventListener("input", renderPower);
+  renderPower();
+
+  /* =========================================================
+     TAB 5 — BUILDING TAYLOR COEFFICIENTS
+     ========================================================= */
+  let tayFn = "exp", tayStep = 0;
+  const TAY_MAX = 6;
+  function factorial(n){ let f=1; for(let i=2;i<=n;i++) f*=i; return f; }
+  function derivativeAtZero(fn, n){
+    // exact known patterns rather than numerical differentiation, to avoid float noise
+    if(fn==="exp") return 1;
+    if(fn==="sin"){ const m=n%4; return m===0?0:m===1?1:m===2?0:-1; }
+    if(fn==="cos"){ const m=n%4; return m===0?1:m===1?0:m===2?-1:0; }
+  }
+  function renderTaylor(){
+    document.getElementById("btnTayPrev").disabled = tayStep<=0;
+    document.getElementById("btnTayNext").disabled = tayStep>=TAY_MAX;
+    const lines = [];
+    for(let n=0;n<tayStep;n++){
+      const d = derivativeAtZero(tayFn,n);
+      const c = d/factorial(n);
+      lines.push(`f${'\''.repeat(n)}(0) = ${fmt(d)}  →  c${n} = f${'\''.repeat(Math.min(n,3))}${n>3?'⁽'+n+'⁾':''}(0)/${n}! = ${fmt(d)}/${factorial(n)} = ${fmt(c)}`);
+    }
+    document.getElementById("taylorLog").textContent = lines.join("\n");
+    const fname = tayFn==="exp"?"eˣ":tayFn==="sin"?"sin x":"cos x";
+    let seriesStr = "";
+    for(let n=0;n<tayStep;n++){
+      const c = derivativeAtZero(tayFn,n)/factorial(n);
+      if(Math.abs(c)<1e-9) continue;
+      const term = n===0 ? fmt(c) : (fmt(Math.abs(c))+(n===1?"x":"x"+sup(n))+(n>=2?"/"+factorial(n)+"!":""));
+      seriesStr += (seriesStr===""?"":(c<0?" − ":" + ")) + (seriesStr===""&&c<0?"−":"") + term;
+    }
+    document.getElementById("taylorVerdict").innerHTML = tayStep===0
+      ? `f(x) = ${fname}. Press "Next coefficient" to start matching derivatives at x=0.`
+      : `${fname} ≈ ${seriesStr||"0"} &nbsp;(${tayStep} term${tayStep>1?'s':''} so far)`;
+  }
+  function sup(n){ const m={0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶"}; return (""+n).split("").map(d=>m[d]).join(""); }
+  document.querySelectorAll("#panel-taylor [data-fn]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      tayFn = btn.dataset.fn; tayStep = 0;
+      document.querySelectorAll("#panel-taylor [data-fn]").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      renderTaylor();
+    });
+  });
+  document.getElementById("btnTayNext").addEventListener("click", () => { if(tayStep<TAY_MAX) tayStep++; renderTaylor(); });
+  document.getElementById("btnTayPrev").addEventListener("click", () => { if(tayStep>0) tayStep--; renderTaylor(); });
+  document.getElementById("btnTayReset").addEventListener("click", () => { tayStep=0; renderTaylor(); });
+  renderTaylor();
+})();
+</script>
+</body>
+</html>

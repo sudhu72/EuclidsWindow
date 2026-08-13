@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zoom, Accumulate, Approximate — Calculus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --curve:#0F8B8D; --tan:#D9A62E; --accum:#463A73; --bad:#D9636B;
+    --plot:#FBFBF8; --grid:#E4E9E7;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:70px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:54px; text-align:center; }
+  canvas{ width:100%; height:auto; display:block; background:var(--plot); border-radius:10px; border:1px solid var(--line); }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:250px; }
+  .stat{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:var(--accent-soft); border-radius:8px; padding:12px 14px; margin-top:6px; line-height:1.7; }
+  .stat b{ color:var(--accent); } .big{ font-size:18px; font-weight:700; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .sw{ width:16px; height:3px; border-radius:2px; display:inline-block; }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:12px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Calculus</div>
+    <h1>Zoom, Accumulate, Approximate</h1>
+    <p>The three moves the whole subject is built from: zoom in until a curve goes straight (the derivative), add up infinitely many thin slivers (the integral), and stack polynomial terms until they grip any curve (Taylor series). Each one made visible.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="zoom">Zoom In</button>
+    <button class="tab" data-tab="ftc">Two-Way Street</button>
+    <button class="tab" data-tab="taylor">Taylor Tower</button>
+  </div>
+
+  <!-- ============ TAB 1: ZOOM IN (local linearity) ============ -->
+  <div class="panel active" id="panel-zoom">
+    <div class="card">
+      <h2>Every Curve Is Secretly Straight</h2>
+      <p class="sub"><b>What's happening:</b> the <b>derivative</b> at a point is just "how steep the curve is right there." To measure steepness you need a straight line — so we zoom in, because any smooth curve looks straight once you're close enough (the way the ground looks flat even though Earth is round).</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drop the point anywhere and drag <em>zoom</em> all the way up. The curve flattens onto the gold tangent line, and the "curve-vs-tangent gap" reading below shrinks toward zero — the slope you measure <em>is</em> the derivative. Watch the dashed secant (slope across the whole window) slide onto the tangent as you close in.</p>
+      <div class="cols">
+        <div class="col" style="min-width:320px;">
+          <canvas id="zoomCanvas" width="440" height="360"></canvas>
+          <div class="legend">
+            <span><span class="sw" style="background:var(--curve)"></span>the curve</span>
+            <span><span class="sw" style="background:var(--tan)"></span>tangent line (slope = derivative)</span>
+          </div>
+        </div>
+        <div class="col">
+          <div class="row" style="gap:6px;">
+            <button class="op active" data-fn="sin">sin x</button>
+            <button class="op" data-fn="par">0.4x²</button>
+            <button class="op" data-fn="exp">eˣ</button>
+          </div>
+          <div class="row"><label>point x</label><input type="range" id="zx" min="-3" max="3" step="0.02" value="0.8"><span class="readout" id="zxOut">0.80</span></div>
+          <div class="row"><label>zoom</label><input type="range" id="zz" min="0" max="100" step="1" value="10"><span class="readout" id="zzOut">±3.0</span></div>
+          <div class="stat" id="zoomStat"></div>
+          <div class="caption"><b>Why it matters:</b> the <b>secant</b> (average slope across the window) sliding onto the <b>tangent</b> (slope at the single point) as the window shrinks to nothing <em>is</em> the definition of the derivative — a rate measured over an interval so small it becomes an instant.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: TWO-WAY STREET (FTC) ============ -->
+  <div class="panel" id="panel-ftc">
+    <div class="card">
+      <h2>The Fundamental Theorem, Live</h2>
+      <p class="sub"><b>What's happening:</b> the top curve is <span class="readout">f(x)</span>; the shaded region is the area under it so far, from 0 up to a sweeping <span class="readout">x</span>. The bottom curve, <span class="readout">F(x)</span>, plots that running total of area as x moves — an "area-so-far" odometer.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> let the sweep run (or drag x) and compare the two live numbers: the <em>height</em> of the top curve and the <em>slope</em> of the bottom curve. They stay identical, always. Where f is tall, the area piles up fast, so F climbs steeply; where f dips to zero, F goes flat.</p>
+      <div class="cols">
+        <div class="col" style="min-width:320px;">
+          <canvas id="ftcCanvas" width="440" height="400"></canvas>
+        </div>
+        <div class="col">
+          <div class="row" style="gap:6px;">
+            <button class="op active" data-ff="sin">f = sin x</button>
+            <button class="op" data-ff="hill">f = a hill</button>
+            <button class="op" data-ff="lin">f = 0.4x</button>
+          </div>
+          <div class="row" style="gap:6px;">
+            <button class="op active" id="ftcPlay">⏸ Pause sweep</button>
+          </div>
+          <div class="row"><label>x</label><input type="range" id="fx" min="0" max="100" step="0.5" value="0"><span class="readout" id="fxOut">0.0</span></div>
+          <div class="stat" id="ftcStat"></div>
+          <div class="caption"><b>Why it matters:</b> nudge x by a sliver <b>dx</b> and you tack on one thin rectangle of area <b>f(x)·dx</b> — so the running total climbs at rate <b>f(x)</b>. That's <b>F′(x) = f(x)</b>: the slope of the accumulation equals the height of the curve, which is exactly why differentiating and integrating undo each other.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: TAYLOR TOWER ============ -->
+  <div class="panel" id="panel-taylor">
+    <div class="card">
+      <h2>Building a Curve From Its DNA</h2>
+      <p class="sub"><b>What's happening:</b> a <b>Taylor series</b> rebuilds an entire curve using only information from a single point (here, x = 0). Each term you add is a higher power of x — a straight line, then a parabola, then steeper wiggles — layered on to match the true curve ever more closely.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start at 1 term and press <em>+ term</em> repeatedly. Watch the purple polynomial reach out and grip the true curve, and watch the shaded <b>grip zone</b> (where the two agree to within 0.02) widen with every term. This is literally how a calculator computes sin, cos, and eˣ — just additions and multiplications.</p>
+      <div class="cols">
+        <div class="col" style="min-width:320px;">
+          <canvas id="tayCanvas" width="440" height="360"></canvas>
+          <div class="legend">
+            <span><span class="sw" style="background:var(--curve)"></span>true function</span>
+            <span><span class="sw" style="background:var(--accum)"></span>Taylor polynomial</span>
+            <span><span class="sw" style="background:rgba(15,139,141,0.18); height:12px; width:16px;"></span>grip zone (error &lt; 0.02)</span>
+          </div>
+        </div>
+        <div class="col">
+          <div class="row" style="gap:6px;">
+            <button class="op active" data-tf="sin">sin x</button>
+            <button class="op" data-tf="cos">cos x</button>
+            <button class="op" data-tf="exp">eˣ</button>
+          </div>
+          <div class="row"><label>terms</label><input type="range" id="tn" min="1" max="8" step="1" value="1"><span class="readout" id="tnOut">1</span></div>
+          <div class="row" style="gap:6px;">
+            <button class="op" id="tPrev">− term</button>
+            <button class="op" id="tNext">+ term</button>
+          </div>
+          <div class="stat" id="tayStat"></div>
+          <div class="caption"><b>Why it matters:</b> more terms widen the <b>grip zone</b> outward. Near the center the first few terms already win (high powers of a small x are tiny); far from center, the high-power terms roar in and do the heavy lifting.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../calculus-the-language-of-change.md">Calculus — The Language of Change</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- generic plotting helpers ---------- */
+  // region = {x0,y0,w,h} in pixels; view = {xmin,xmax,ymin,ymax} in data units
+  function mapX(v,r,x){ return r.x0 + (x-v.xmin)/(v.xmax-v.xmin)*r.w; }
+  function mapY(v,r,y){ return r.y0 + r.h - (y-v.ymin)/(v.ymax-v.ymin)*r.h; }
+  function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function drawGridAxes(ctx,v,r){
+    ctx.save();
+    ctx.fillStyle=css('--plot'); ctx.fillRect(r.x0,r.y0,r.w,r.h);
+    ctx.strokeStyle=css('--grid'); ctx.lineWidth=1;
+    // vertical grid at integer-ish steps
+    var xs=niceStep(v.xmin,v.xmax);
+    for(var gx=Math.ceil(v.xmin/xs)*xs; gx<=v.xmax; gx+=xs){
+      var px=mapX(v,r,gx); ctx.beginPath(); ctx.moveTo(px,r.y0); ctx.lineTo(px,r.y0+r.h); ctx.stroke();
+    }
+    var ys=niceStep(v.ymin,v.ymax);
+    for(var gy=Math.ceil(v.ymin/ys)*ys; gy<=v.ymax; gy+=ys){
+      var py=mapY(v,r,gy); ctx.beginPath(); ctx.moveTo(r.x0,py); ctx.lineTo(r.x0+r.w,py); ctx.stroke();
+    }
+    // axes (x=0, y=0) if in view
+    ctx.strokeStyle=css('--ink-soft'); ctx.lineWidth=1.3;
+    if(0>=v.ymin&&0<=v.ymax){ var y0=mapY(v,r,0); ctx.beginPath(); ctx.moveTo(r.x0,y0); ctx.lineTo(r.x0+r.w,y0); ctx.stroke(); }
+    if(0>=v.xmin&&0<=v.xmax){ var x0=mapX(v,r,0); ctx.beginPath(); ctx.moveTo(x0,r.y0); ctx.lineTo(x0,r.y0+r.h); ctx.stroke(); }
+    ctx.restore();
+  }
+  function niceStep(a,b){ var span=b-a; var raw=span/6; var mag=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)); var n=raw/mag; var s=n<1.5?1:n<3?2:n<7?5:10; return s*mag; }
+
+  function plotFn(ctx,v,r,fn,color,lw){
+    ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=lw||2; ctx.lineJoin="round";
+    ctx.beginPath(); var pen=false;
+    for(var px=0;px<=r.w;px+=1){
+      var x=v.xmin+(px/r.w)*(v.xmax-v.xmin); var y=fn(x);
+      if(!isFinite(y)||y>v.ymax+ (v.ymax-v.ymin)||y<v.ymin-(v.ymax-v.ymin)){ pen=false; continue; }
+      var X=r.x0+px, Y=mapY(v,r,y);
+      if(!pen){ ctx.moveTo(X,Y); pen=true; } else ctx.lineTo(X,Y);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+  function clip(ctx,r){ ctx.save(); ctx.beginPath(); ctx.rect(r.x0,r.y0,r.w,r.h); ctx.clip(); }
+
+  /* ---------- tab switching ---------- */
+  var activeTab="zoom";
+  var tabs=document.querySelectorAll(".tab");
+  tabs.forEach(function(t){ t.addEventListener("click",function(){
+    tabs.forEach(function(x){x.classList.remove("active");}); t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(function(p){p.classList.remove("active");});
+    document.getElementById("panel-"+t.dataset.tab).classList.add("active");
+    activeTab=t.dataset.tab;
+  });});
+
+  /* =========================================================
+     TAB 1 — ZOOM IN
+     ========================================================= */
+  var zc=document.getElementById("zoomCanvas"), zctx=zc.getContext("2d");
+  var ZW=zc.width, ZH=zc.height;
+  var zfns={
+    sin:{f:Math.sin, d:Math.cos, label:"sin x", dlabel:"cos x"},
+    par:{f:function(x){return 0.4*x*x;}, d:function(x){return 0.8*x;}, label:"0.4x²", dlabel:"0.8x"},
+    exp:{f:Math.exp, d:Math.exp, label:"eˣ", dlabel:"eˣ"}
+  };
+  var zfn="sin";
+  function drawZoom(){
+    var x0=parseFloat(document.getElementById("zx").value);
+    var zzRaw=parseFloat(document.getElementById("zz").value);
+    var w=3.0*Math.pow(0.03/3.0, zzRaw/100);   // half-width 3.0 down to ~0.03
+    document.getElementById("zxOut").textContent=x0.toFixed(2);
+    document.getElementById("zzOut").textContent="±"+(w<0.1?w.toFixed(3):w.toFixed(2));
+    var F=zfns[zfn].f, D=zfns[zfn].d;
+    var fx0=F(x0), slope=D(x0);
+    // equal-aspect view centered at (x0,fx0)
+    var r={x0:0,y0:0,w:ZW,h:ZH};
+    var wy=w*(ZH/ZW);
+    var v={xmin:x0-w, xmax:x0+w, ymin:fx0-wy, ymax:fx0+wy};
+    zctx.clearRect(0,0,ZW,ZH);
+    drawGridAxes(zctx,v,r); clip(zctx,r);
+    // secant across full window
+    var xa=x0-w, xb=x0+w, sec=(F(xb)-F(xa))/(xb-xa);
+    zctx.strokeStyle="rgba(217,99,107,0.7)"; zctx.setLineDash([5,4]); zctx.lineWidth=1.5;
+    zctx.beginPath(); zctx.moveTo(mapX(v,r,xa),mapY(v,r,F(xa))); zctx.lineTo(mapX(v,r,xb),mapY(v,r,F(xb))); zctx.stroke();
+    zctx.setLineDash([]);
+    // tangent
+    plotFn(zctx,v,r,function(x){return fx0+slope*(x-x0);}, css('--tan'),2.5);
+    // curve
+    plotFn(zctx,v,r,F, css('--curve'),2.8);
+    // point
+    zctx.beginPath(); zctx.arc(mapX(v,r,x0),mapY(v,r,fx0),5,0,7); zctx.fillStyle=css('--accent'); zctx.fill();
+    zctx.restore();
+    // gap between curve and tangent at window edge
+    var gap=Math.abs(F(xb)-(fx0+slope*(xb-x0)));
+    document.getElementById("zoomStat").innerHTML=
+      'f(x) = '+zfns[zfn].label+' &nbsp;→&nbsp; f′(x) = '+zfns[zfn].dlabel+'<br>'+
+      'exact slope f′('+x0.toFixed(2)+') = <b>'+slope.toFixed(4)+'</b><br>'+
+      'secant slope over window = <b>'+sec.toFixed(4)+'</b><br>'+
+      'curve-vs-tangent gap at edge = <span class="big">'+(gap<1e-3?gap.toExponential(1):gap.toFixed(4))+'</span>';
+  }
+  document.querySelectorAll('#panel-zoom [data-fn]').forEach(function(b){ b.addEventListener("click",function(){
+    zfn=b.dataset.fn; document.querySelectorAll('#panel-zoom [data-fn]').forEach(function(x){x.classList.remove("active");}); b.classList.add("active"); drawZoom();
+  });});
+  document.getElementById("zx").addEventListener("input",drawZoom);
+  document.getElementById("zz").addEventListener("input",drawZoom);
+
+  /* =========================================================
+     TAB 2 — TWO-WAY STREET (FTC)
+     ========================================================= */
+  var fc=document.getElementById("ftcCanvas"), fctx=fc.getContext("2d");
+  var FW=fc.width, FH=fc.height, XMAX=6.3;
+  var ffns={
+    sin:{f:Math.sin, label:"sin x"},
+    hill:{f:function(x){return 1.1*Math.exp(-Math.pow(x-3.1,2)/1.6);}, label:"a hill"},
+    lin:{f:function(x){return 0.4*x;}, label:"0.4x"}
+  };
+  var ffn="sin", ftcX=0, ftcPlaying=true, ftcDir=1;
+  function Fintegral(f,X){ var n=Math.max(2,Math.round(X/0.01)), h=X/n, s=0; for(var i=0;i<n;i++){ s+=0.5*(f(i*h)+f((i+1)*h))*h; } return s; }
+  function drawFTC(){
+    var f=ffns[ffn].f;
+    fctx.clearRect(0,0,FW,FH);
+    var pad=34, gap=26, ph=(FH-2*pad-gap)/2;
+    var rTop={x0:pad,y0:pad,w:FW-2*pad,h:ph};
+    var rBot={x0:pad,y0:pad+ph+gap,w:FW-2*pad,h:ph};
+    // top view for f
+    var ymax=0, ymin=0; for(var x=0;x<=XMAX;x+=0.05){ ymax=Math.max(ymax,f(x)); ymin=Math.min(ymin,f(x)); }
+    ymax+=0.25; ymin-=0.2; if(ymin>-0.2)ymin=-0.2;
+    var vTop={xmin:0,xmax:XMAX,ymin:ymin,ymax:ymax};
+    drawGridAxes(fctx,vTop,rTop);
+    // shaded area 0..ftcX
+    clip(fctx,rTop);
+    fctx.beginPath(); fctx.moveTo(mapX(vTop,rTop,0),mapY(vTop,rTop,0));
+    for(var xa=0;xa<=ftcX;xa+=0.03){ fctx.lineTo(mapX(vTop,rTop,xa),mapY(vTop,rTop,f(xa))); }
+    fctx.lineTo(mapX(vTop,rTop,ftcX),mapY(vTop,rTop,0)); fctx.closePath();
+    fctx.fillStyle="rgba(70,58,115,0.16)"; fctx.fill();
+    fctx.restore();
+    plotFn(fctx,vTop,rTop,f,css('--curve'),2.6);
+    // sweep line + height marker of f(ftcX)
+    var pxX=mapX(vTop,rTop,ftcX);
+    fctx.strokeStyle="rgba(27,36,48,0.35)"; fctx.setLineDash([4,4]); fctx.beginPath(); fctx.moveTo(pxX,rTop.y0); fctx.lineTo(pxX,rTop.y0+rTop.h); fctx.stroke(); fctx.setLineDash([]);
+    fctx.beginPath(); fctx.arc(pxX,mapY(vTop,rTop,f(ftcX)),4,0,7); fctx.fillStyle=css('--curve'); fctx.fill();
+    fctx.fillStyle=css('--ink-soft'); fctx.font='12px "IBM Plex Mono",monospace';
+    fctx.fillText("f(x) = "+f(ftcX).toFixed(3), rTop.x0+6, rTop.y0+14);
+    // bottom: F accumulation
+    var Fmax=0,Fmin=0; for(var xs=0;xs<=XMAX;xs+=0.1){ var Fv=Fintegral(f,xs); Fmax=Math.max(Fmax,Fv); Fmin=Math.min(Fmin,Fv); }
+    Fmax+=0.2; Fmin-=0.1; if(Fmin>-0.1)Fmin=-0.1;
+    var vBot={xmin:0,xmax:XMAX,ymin:Fmin,ymax:Fmax};
+    drawGridAxes(fctx,vBot,rBot);
+    clip(fctx,rBot);
+    // F curve up to ftcX
+    fctx.strokeStyle=css('--accum'); fctx.lineWidth=2.6; fctx.beginPath(); var pen=false;
+    for(var xb=0;xb<=ftcX+0.001;xb+=0.04){ var Fy=Fintegral(f,xb); var X=mapX(vBot,rBot,xb),Y=mapY(vBot,rBot,Fy); if(!pen){fctx.moveTo(X,Y);pen=true;}else fctx.lineTo(X,Y);} fctx.stroke();
+    // point on F and its tangent with slope = f(ftcX)
+    var FatX=Fintegral(f,ftcX), slope=f(ftcX);
+    fctx.beginPath(); fctx.arc(mapX(vBot,rBot,ftcX),mapY(vBot,rBot,FatX),4.5,0,7); fctx.fillStyle=css('--accum'); fctx.fill();
+    fctx.strokeStyle=css('--tan'); fctx.lineWidth=2.4;
+    var tx0=Math.max(0,ftcX-1.1), tx1=Math.min(XMAX,ftcX+1.1);
+    fctx.beginPath(); fctx.moveTo(mapX(vBot,rBot,tx0),mapY(vBot,rBot,FatX+slope*(tx0-ftcX))); fctx.lineTo(mapX(vBot,rBot,tx1),mapY(vBot,rBot,FatX+slope*(tx1-ftcX))); fctx.stroke();
+    fctx.restore();
+    fctx.fillStyle=css('--accent'); fctx.font='12px "IBM Plex Mono",monospace';
+    fctx.fillText("F(x) = area so far = "+FatX.toFixed(3), rBot.x0+6, rBot.y0+14);
+    fctx.fillText("slope of F = "+slope.toFixed(3), rBot.x0+6, rBot.y0+rBot.h-8);
+    document.getElementById("fxOut").textContent=ftcX.toFixed(1);
+    document.getElementById("fx").value=(ftcX/XMAX*100);
+    document.getElementById("ftcStat").innerHTML=
+      'f = '+ffns[ffn].label+'<br>'+
+      'height of f at x: <b>'+slope.toFixed(3)+'</b><br>'+
+      'slope of accumulation F at x: <b>'+slope.toFixed(3)+'</b><br>'+
+      '<span class="big">they are equal — always.</span> F′(x)=f(x).';
+  }
+  document.querySelectorAll('#panel-ftc [data-ff]').forEach(function(b){ b.addEventListener("click",function(){
+    ffn=b.dataset.ff; document.querySelectorAll('#panel-ftc [data-ff]').forEach(function(x){x.classList.remove("active");}); b.classList.add("active");
+  });});
+  document.getElementById("ftcPlay").addEventListener("click",function(){ ftcPlaying=!ftcPlaying; this.textContent=ftcPlaying?"⏸ Pause sweep":"▶ Play sweep"; this.classList.toggle("active",ftcPlaying); });
+  document.getElementById("fx").addEventListener("input",function(){ ftcPlaying=false; document.getElementById("ftcPlay").textContent="▶ Play sweep"; document.getElementById("ftcPlay").classList.remove("active"); ftcX=parseFloat(this.value)/100*XMAX; });
+
+  /* =========================================================
+     TAB 3 — TAYLOR TOWER
+     ========================================================= */
+  var tc=document.getElementById("tayCanvas"), tctx=tc.getContext("2d");
+  var TW=tc.width, TH=tc.height;
+  function fact(k){ var f=1; for(var i=2;i<=k;i++)f*=i; return f; }
+  var tfns={
+    sin:{ f:Math.sin, term:function(j){return {pow:2*j+1, sign:(j%2===0?1:-1)};}, win:6.3, ymax:2.2, name:"sin x" },
+    cos:{ f:Math.cos, term:function(j){return {pow:2*j, sign:(j%2===0?1:-1)};}, win:6.3, ymax:2.2, name:"cos x" },
+    exp:{ f:Math.exp, term:function(j){return {pow:j, sign:1};}, win:3.2, ymax:12, name:"eˣ" }
+  };
+  var tfn="sin";
+  function taylorVal(kind,N,x){ var s=0; for(var j=0;j<N;j++){ var t=tfns[kind].term(j); s+=t.sign*Math.pow(x,t.pow)/fact(t.pow); } return s; }
+  function taylorExpr(kind,N){
+    var parts=[]; for(var j=0;j<N;j++){ var t=tfns[kind].term(j); var p=t.pow;
+      var base = p===0?"1":(p===1?"x":"x"+sup(p)); var den=p<2?"":"/"+p+"!";
+      parts.push((t.sign<0?"− ":(j>0?"+ ":""))+base+den);
+    } return parts.join(" ");
+  }
+  function sup(n){ var m={0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹"}; return (""+n).split("").map(function(d){return m[d];}).join(""); }
+  function drawTaylor(){
+    var N=parseInt(document.getElementById("tn").value,10);
+    document.getElementById("tnOut").textContent=N;
+    var win=tfns[tfn].win, ym=tfns[tfn].ymax;
+    var r={x0:0,y0:0,w:TW,h:TH};
+    var v={xmin:-win,xmax:win,ymin:-ym,ymax:ym};
+    tctx.clearRect(0,0,TW,TH);
+    drawGridAxes(tctx,v,r);
+    // grip zone: largest symmetric interval where |poly-true|<0.02
+    var grip=0;
+    for(var x=0;x<=win;x+=win/300){ if(Math.abs(taylorVal(tfn,N,x)-tfns[tfn].f(x))<0.02) grip=x; else break; }
+    if(grip>0){ tctx.fillStyle="rgba(15,139,141,0.12)"; tctx.fillRect(mapX(v,r,-grip),r.y0,mapX(v,r,grip)-mapX(v,r,-grip),r.h); }
+    clip(tctx,r);
+    plotFn(tctx,v,r,tfns[tfn].f,css('--curve'),2.8);
+    plotFn(tctx,v,r,function(x){return taylorVal(tfn,N,x);},css('--accum'),2.6);
+    tctx.restore();
+    var degTxt = tfns[tfn].name;
+    document.getElementById("tayStat").innerHTML=
+      degTxt+' ≈<br><b style="font-size:14px">'+taylorExpr(tfn,N)+'</b><br>'+
+      'terms: <b>'+N+'</b> &nbsp;·&nbsp; grip zone: <span class="big">±'+grip.toFixed(2)+'</span>';
+  }
+  document.querySelectorAll('#panel-taylor [data-tf]').forEach(function(b){ b.addEventListener("click",function(){
+    tfn=b.dataset.tf; document.querySelectorAll('#panel-taylor [data-tf]').forEach(function(x){x.classList.remove("active");}); b.classList.add("active"); drawTaylor();
+  });});
+  document.getElementById("tn").addEventListener("input",drawTaylor);
+  document.getElementById("tNext").addEventListener("click",function(){ var s=document.getElementById("tn"); s.value=Math.min(8,parseInt(s.value,10)+1); drawTaylor(); });
+  document.getElementById("tPrev").addEventListener("click",function(){ var s=document.getElementById("tn"); s.value=Math.max(1,parseInt(s.value,10)-1); drawTaylor(); });
+
+  /* ---------- master loop ---------- */
+  function loop(){
+    if(activeTab==="zoom"){ /* redrawn on input; draw once here too */ }
+    else if(activeTab==="ftc"){
+      if(ftcPlaying){ ftcX+=ftcDir*0.03; if(ftcX>=XMAX){ftcX=XMAX;ftcDir=-1;} if(ftcX<=0){ftcX=0;ftcDir=1;} }
+      drawFTC();
+    }
+    requestAnimationFrame(loop);
+  }
+  drawZoom(); drawTaylor(); drawFTC();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

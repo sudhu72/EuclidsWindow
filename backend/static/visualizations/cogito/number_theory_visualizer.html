@@ -80,6 +80,15 @@
   .scell.prime{ background:var(--c1); color:#fff; border-color:var(--c1); }
   .scell.current{ outline:2px solid var(--c2); }
 
+  /* ---- Fermat / RSA ---- */
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:12px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .keybox{ border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .keybox h4{ margin:0 0 4px; font-family:"Fraunces",serif; font-size:14px; }
+  .rsaflow{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:#F5F4F0; border-radius:8px; padding:12px 14px; line-height:1.8; }
+  .cols2{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .col2{ flex:1; min-width:260px; }
+
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer b{ color:var(--ink); }
 </style>
@@ -87,7 +96,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Companion to the Feynman Math Tutorial · Part 13</div>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Number Theory</div>
     <h1>The Clock and the Atoms</h1>
     <p>Remainders that wrap around forever, and numbers that refuse to break apart — click, drag, and step through the exact machinery underneath your credit card's check digit.</p>
   </header>
@@ -96,13 +105,15 @@
     <button class="tab active" data-tab="clock">Modular Clock</button>
     <button class="tab" data-tab="euclid">Euclidean Algorithm</button>
     <button class="tab" data-tab="sieve">Sieve of Eratosthenes</button>
+    <button class="tab" data-tab="fermat">Fermat's Chairs</button>
+    <button class="tab" data-tab="rsa">RSA Round Trip</button>
   </div>
 
   <!-- ============ MODULAR CLOCK ============ -->
   <div class="panel active" id="panel-clock">
     <div class="card">
       <h2>Pick a Modulus, Then Two Numbers</h2>
-      <p class="sub">Faded numbers have no multiplicative inverse for this modulus — try a prime modulus and watch every faded number disappear.</p>
+      <p class="sub">Faded numbers can't be "divided by" in this clock arithmetic — they have no <em>multiplicative inverse</em> (no partner that multiplies with them back to 1). Try a prime modulus and watch every faded number light up.</p>
       <div class="row"><label>Modulus n</label><input type="range" id="modSlider" min="2" max="16" value="12"><span class="readout" id="modOut">12</span></div>
       <div class="clockwrap">
         <div class="clockbox"><svg id="clockSvg" viewBox="0 0 260 260"></svg></div>
@@ -143,8 +154,49 @@
     </div>
   </div>
 
+  <!-- ============ FERMAT'S CHAIRS ============ -->
+  <div class="panel" id="panel-fermat">
+    <div class="card">
+      <h2>The "Musical Chairs" Proof, Made Visible</h2>
+      <p class="sub"><b>What's happening:</b> pick a prime <span class="formula">p</span> and a multiplier <span class="formula">a</span>. The top row is the chairs <span class="formula">1, 2, ..., p−1</span> in order; the bottom row is what happens when you multiply every chair by <span class="formula">a</span>, mod <span class="formula">p</span>. The lines show where each chair lands.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> for any prime <span class="formula">p</span> and any <span class="formula">a</span> not divisible by it, notice the bottom row is always a <em>reshuffle</em> of the exact same numbers — no chair vanishes, none repeats, none is new. That's the whole proof: since multiplying just permutes the chairs, the product of all of them can't change, and cancelling that shared product from both sides leaves <span class="formula">a^(p−1) ≡ 1 (mod p)</span> — verified live below.</p>
+      <div class="row"><label>Prime p</label><input type="range" id="fermP" min="5" max="13" step="2" value="7"><span class="readout" id="fermPOut">7</span></div>
+      <div class="row"><label>Multiplier a</label><input type="range" id="fermA" min="1" max="6" step="1" value="3"><span class="readout" id="fermAOut">3</span></div>
+      <svg id="fermSvg" viewBox="0 0 640 170" style="width:100%; height:auto;"></svg>
+      <div class="verdict" id="fermVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this "same set, different order" argument — a genuine <em>symmetry</em> of the chair set — is the entire content of Fermat's Little Theorem, and it's what RSA's decrypt-undoes-encrypt guarantee is ultimately built on (next tab).</div>
+    </div>
+  </div>
+
+  <!-- ============ RSA ROUND TRIP ============ -->
+  <div class="panel" id="panel-rsa">
+    <div class="card">
+      <h2>Encrypt, Then Decrypt — Watch It Actually Work</h2>
+      <p class="sub"><b>What's happening:</b> the exact toy RSA recipe from the tutorial — primes <span class="formula">p=3, q=11</span>, so <span class="formula">n=33</span> and <span class="formula">φ(n)=20</span>. Pick a public exponent <span class="formula">e</span>; its private partner <span class="formula">d</span> is computed automatically so that <span class="formula">e×d ≡ 1 (mod 20)</span>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> slide the message <span class="formula">m</span> and watch it get scrambled into a ciphertext <span class="formula">c</span> by the public key, then unscrambled back to the exact original by the private key — every single time, for every message and every valid <span class="formula">e</span> you pick. That reliability is Fermat's theorem, at work behind the scenes.</p>
+      <div class="row" style="gap:6px;">
+        <label style="width:auto;">Public exponent e</label>
+        <button class="op active" data-e="7">e = 7</button>
+        <button class="op" data-e="3">e = 3</button>
+        <button class="op" data-e="13">e = 13</button>
+        <button class="op" data-e="17">e = 17</button>
+      </div>
+      <div class="row"><label>Message m</label><input type="range" id="rsaM" min="1" max="32" step="1" value="4"><span class="readout" id="rsaMOut">4</span></div>
+      <div class="cols2">
+        <div class="col2">
+          <div class="keybox"><h4>Public key (share freely)</h4><span class="formula" id="rsaPub">(e=7, n=33)</span></div>
+          <div class="keybox"><h4>Private key (kept secret)</h4><span class="formula" id="rsaPriv">(d=3, n=33)</span></div>
+        </div>
+        <div class="col2">
+          <div class="rsaflow" id="rsaFlow"></div>
+        </div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> factoring <span class="formula">n=33</span> back into <span class="formula">3 × 11</span> is trivial at this toy size — real RSA is this identical four-step recipe with <span class="formula">p</span> and <span class="formula">q</span> hundreds of digits long, where factoring <span class="formula">n</span> back apart is the computationally infeasible step that keeps the private key private.</div>
+    </div>
+  </div>
+
   <footer>
-    <p><b>Where this connects:</b> the clock here is the same cyclic group from Part 11, now with multiplication added — watch how a prime modulus lights up every number as invertible at once. The Euclidean Algorithm's "shrink without losing the answer" move echoes Pascal's Triangle's recursion (Part 10). The sieve is the combinatorial (Part 10) machinery underneath the primes that Fermat's Little Theorem and RSA both depend on.</p>
+    <p><b>Where this connects:</b> the clock here is the same repeating cyclic structure from group theory, now with multiplication added — watch how a prime modulus makes every number invertible at once. The Euclidean Algorithm's "shrink without losing the answer" move echoes the recursion in Pascal's Triangle (combinatorics). The sieve is the counting machinery underneath the primes that Fermat's Little Theorem and RSA both depend on.</p>
   </footer>
 </div>
 
@@ -306,6 +358,97 @@
   document.getElementById("btnSieveStep").addEventListener("click", sieveStep);
   document.getElementById("btnSieveReset").addEventListener("click", resetSieve);
   resetSieve();
+
+  // ================= SHARED: fast modular exponentiation =================
+  function modPow(base, exp, mod){
+    base = ((base % mod) + mod) % mod;
+    let result = 1;
+    while(exp > 0){
+      if(exp & 1) result = (result*base) % mod;
+      exp = Math.floor(exp/2);
+      base = (base*base) % mod;
+    }
+    return result;
+  }
+
+  // ================= FERMAT'S CHAIRS =================
+  const fermP = document.getElementById("fermP"), fermA = document.getElementById("fermA");
+  function renderFermat(){
+    let p = parseInt(fermP.value);
+    fermA.max = p-1;
+    let a = Math.min(parseInt(fermA.value), p-1);
+    fermA.value = a;
+    document.getElementById("fermPOut").textContent = p;
+    document.getElementById("fermAOut").textContent = a;
+
+    const chairs = []; for(let i=1;i<p;i++) chairs.push(i);
+    const perm = {}; chairs.forEach(i => perm[i] = (a*i) % p);
+
+    const svg = document.getElementById("fermSvg");
+    svg.innerHTML = "";
+    const margin=40, W=640, yTop=40, yBottom=130;
+    const step = chairs.length>1 ? (W-2*margin)/(chairs.length-1) : 0;
+    const xOf = k => margin + (k-1)*step;
+
+    chairs.forEach((i,idx) => {
+      const hue = (i*47) % 360;
+      const color = `hsl(${hue},60%,45%)`;
+      svg.appendChild(el("line",{x1:xOf(i), y1:yTop+14, x2:xOf(perm[i]), y2:yBottom-14, stroke:color, ["stroke-width"]:2, opacity:0.75}));
+    });
+    chairs.forEach(i => {
+      const ct = el("circle",{cx:xOf(i), cy:yTop, r:14, fill:"#fff", stroke:"var(--accent)", ["stroke-width"]:1.6});
+      svg.appendChild(ct);
+      const tt = el("text",{x:xOf(i), y:yTop+4, ["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"12","fill":"var(--ink)"});
+      tt.textContent = i; svg.appendChild(tt);
+      const cb = el("circle",{cx:xOf(i), cy:yBottom, r:14, fill:"#fff", stroke:"var(--c1)", ["stroke-width"]:1.6});
+      svg.appendChild(cb);
+      const tb = el("text",{x:xOf(i), y:yBottom+4, ["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"12","fill":"var(--ink)"});
+      tb.textContent = i; svg.appendChild(tb);
+    });
+    svg.appendChild((()=>{ const t=el("text",{x:margin, y:yTop-20, "font-family":"IBM Plex Mono, monospace","font-size":"11","fill":"var(--ink-soft)"}); t.textContent="chairs 1..p−1"; return t; })());
+    svg.appendChild((()=>{ const t=el("text",{x:margin, y:yBottom+28, "font-family":"IBM Plex Mono, monospace","font-size":"11","fill":"var(--ink-soft)"}); t.textContent=`after multiplying by a=${a}, mod ${p}`; return t; })());
+
+    let prodBefore = 1; chairs.forEach(i => prodBefore *= i);
+    let prodAfter = 1; chairs.forEach(i => prodAfter *= perm[i]);
+    const beforeMod = prodBefore % p, afterMod = prodAfter % p;
+    const fermatCheck = modPow(a, p-1, p);
+    document.getElementById("fermVerdict").innerHTML =
+      `Same multiset check: {${chairs.join(",")}} and {${chairs.map(i=>perm[i]).join(",")}} — identical numbers, just reshuffled.<br>` +
+      `Product of chairs mod p = <b>${beforeMod}</b> &nbsp;·&nbsp; product after shuffling mod p = <b>${afterMod}</b> (equal, as they must be)<br>` +
+      `Cancelling that shared product leaves: a^(p−1) mod p = ${a}^${p-1} mod ${p} = <b>${fermatCheck}</b> ${fermatCheck===1 ? "✓" : ""}`;
+  }
+  fermP.addEventListener("input", renderFermat);
+  fermA.addEventListener("input", renderFermat);
+  renderFermat();
+
+  // ================= RSA ROUND TRIP =================
+  const RSA_N = 33, RSA_PHI = 20;
+  let rsaE = 7;
+  const rsaM = document.getElementById("rsaM");
+  document.querySelectorAll('#panel-rsa [data-e]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      rsaE = parseInt(btn.dataset.e);
+      document.querySelectorAll('#panel-rsa [data-e]').forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderRsa();
+    });
+  });
+  rsaM.addEventListener("input", renderRsa);
+  function renderRsa(){
+    const m = parseInt(rsaM.value);
+    document.getElementById("rsaMOut").textContent = m;
+    const d = modInverse(rsaE, RSA_PHI);
+    document.getElementById("rsaPub").textContent = `(e=${rsaE}, n=${RSA_N})`;
+    document.getElementById("rsaPriv").textContent = `(d=${d}, n=${RSA_N})`;
+    const c = modPow(m, rsaE, RSA_N);
+    const back = modPow(c, d, RSA_N);
+    document.getElementById("rsaFlow").innerHTML =
+      `message m = <b>${m}</b><br>` +
+      `encrypt:  c = m^e mod n = ${m}^${rsaE} mod ${RSA_N} = <b>${c}</b><br>` +
+      `decrypt:  m' = c^d mod n = ${c}^${d} mod ${RSA_N} = <b>${back}</b><br>` +
+      (back===m ? `<b style="color:var(--c1)">✓ recovered exactly — m' = m</b>` : `✗ mismatch`);
+  }
+  renderRsa();
 
 })();
 </script>

@@ -4,226 +4,713 @@
     {
       "id": "euler",
       "name": "Euler's Identity",
-      "keywords": ["euler identity", "e to the i pi"],
-      "related": ["complex_numbers", "roots_of_unity", "eulers_number_e", "trigonometry", "pi"],
+      "keywords": [
+        "euler identity",
+        "e to the i pi"
+      ],
+      "related": [
+        "complex_numbers",
+        "roots_of_unity",
+        "eulers_number_e",
+        "trigonometry",
+        "pi"
+      ],
       "viz": "euler_identity_visualizer.html",
       "source": "11-eulers-identity.md"
     },
     {
       "id": "markov_chains",
       "name": "Markov Chains & Probability Trees",
-      "keywords": ["markov chain", "probability tree", "transition matrix", "stationary distribution", "memoryless", "random walk", "base rate", "absorbing state", "gambler's ruin"],
-      "related": ["probability", "bayes_theorem", "matrices", "eigenvalues", "graph_theory", "statistics"],
+      "keywords": [
+        "markov chain",
+        "probability tree",
+        "transition matrix",
+        "stationary distribution",
+        "memoryless",
+        "random walk",
+        "base rate",
+        "absorbing state",
+        "gambler's ruin"
+      ],
+      "related": [
+        "probability",
+        "bayes_theorem",
+        "matrices",
+        "eigenvalues",
+        "graph_theory",
+        "statistics"
+      ],
       "viz": "markov_chains_visualizer.html",
       "source": "04-markov-chains-and-probability-trees.md"
     },
     {
       "id": "math_notation",
       "name": "Math Notation as a Language",
-      "keywords": ["mathematical notation", "notation", "second language of math", "quantifiers", "symbols language"],
-      "related": ["set_theory", "mathematical_logic", "proof", "sequence"],
+      "keywords": [
+        "mathematical notation",
+        "notation",
+        "second language of math",
+        "quantifiers",
+        "symbols language"
+      ],
+      "related": [
+        "set_theory",
+        "mathematical_logic",
+        "proof",
+        "sequence"
+      ],
       "viz": "language_visualizer.html",
       "source": "language_of_mathematics.md"
     },
     {
       "id": "normalization",
       "name": "Normalization",
-      "keywords": ["normalization", "normalize", "z-score", "min-max", "softmax", "unit vector"],
-      "related": ["probability", "statistics", "loss_functions", "vectors", "dimensionality_reduction"],
+      "keywords": [
+        "normalization",
+        "normalize",
+        "z-score",
+        "min-max",
+        "softmax",
+        "unit vector"
+      ],
+      "related": [
+        "probability",
+        "statistics",
+        "loss_functions",
+        "vectors",
+        "dimensionality_reduction"
+      ],
       "viz": "normalization_visualizer.html",
       "source": "05-machine-learning-bridges.md"
     },
     {
       "id": "number_theory",
       "name": "Number Theory",
-      "keywords": ["number theory", "modular arithmetic clock", "prime factorization"],
-      "related": ["prime_numbers", "modular_arithmetic", "cryptography"],
+      "keywords": [
+        "number theory",
+        "modular arithmetic clock",
+        "prime factorization"
+      ],
+      "related": [
+        "prime_numbers",
+        "modular_arithmetic",
+        "cryptography"
+      ],
       "viz": "number_theory_visualizer.html",
       "source": "10-number-theory.md"
     },
     {
       "id": "three_motions",
       "name": "Three Motions: Transform, Zoom, Flow",
-      "keywords": ["linear transformation", "derivative as zoom", "flow", "three motions"],
-      "related": ["linear_equations", "derivative", "differential_equations", "matrices", "transformations"],
+      "keywords": [
+        "linear transformation",
+        "derivative as zoom",
+        "flow",
+        "three motions"
+      ],
+      "related": [
+        "linear_equations",
+        "derivative",
+        "differential_equations",
+        "matrices",
+        "transformations"
+      ],
       "viz": "three_motions_visualizer.html",
       "source": "01-linear-algebra.md"
     },
     {
       "id": "three_structures",
       "name": "Three Structures: Counting, Symmetry, Shape",
-      "keywords": ["combinatorics symmetry topology", "three structures", "counting symmetry shape"],
-      "related": ["combinatorics", "symmetry", "topology"],
+      "keywords": [
+        "combinatorics symmetry topology",
+        "three structures",
+        "counting symmetry shape"
+      ],
+      "related": [
+        "combinatorics",
+        "symmetry",
+        "topology"
+      ],
       "viz": "three_structures_visualizer.html",
       "source": "08-combinatorics.md"
     },
     {
       "id": "symmetry_invariance",
       "name": "Symmetry & Invariance",
-      "keywords": ["invariance", "invariant", "symmetry breaking", "noether", "conservation law", "parity argument", "mutilated chessboard", "equivariance"],
-      "related": ["symmetry", "three_structures", "transformations", "proof", "geometry", "emmy_noether"],
+      "keywords": [
+        "invariance",
+        "invariant",
+        "symmetry breaking",
+        "noether",
+        "conservation law",
+        "parity argument",
+        "mutilated chessboard",
+        "equivariance"
+      ],
+      "related": [
+        "symmetry",
+        "three_structures",
+        "transformations",
+        "proof",
+        "geometry",
+        "emmy_noether"
+      ],
       "viz": "symmetry_invariance_visualizer.html",
       "source": "symmetry-and-invariance.md"
     },
     {
       "id": "backpropagation",
       "name": "Backpropagation",
-      "keywords": ["forward pass", "backward pass", "backprop"],
-      "related": ["neural_network_math", "derivative", "loss_functions", "chain_rule"],
+      "keywords": [
+        "forward pass",
+        "backward pass",
+        "backprop"
+      ],
+      "related": [
+        "neural_network_math",
+        "derivative",
+        "loss_functions",
+        "chain_rule"
+      ],
       "viz": "network_forward_backward_animation.html",
       "source": "ml_deep_learning_llm_feynman_tutorial.md"
     },
     {
       "id": "chain_rule",
       "name": "The Chain Rule",
-      "keywords": ["chain rule", "gear train derivative"],
-      "related": ["derivative", "backpropagation", "differential_equations"],
+      "keywords": [
+        "chain rule",
+        "gear train derivative"
+      ],
+      "related": [
+        "derivative",
+        "backpropagation",
+        "differential_equations"
+      ],
       "viz": "chain_rule_gears_animation.html",
       "source": "ml_deep_learning_llm_feynman_tutorial.md"
     },
     {
       "id": "attention",
       "name": "Attention",
-      "keywords": ["attention", "query key value", "scaled dot product", "multi-head attention"],
-      "related": ["transformers", "matrices", "neural_network_math", "normalization"],
+      "keywords": [
+        "attention",
+        "query key value",
+        "scaled dot product",
+        "multi-head attention"
+      ],
+      "related": [
+        "transformers",
+        "matrices",
+        "neural_network_math",
+        "normalization"
+      ],
       "viz": "attention_matrix_scaling_animation.html",
       "source": "ml_deep_learning_llm_feynman_tutorial.md"
     },
     {
       "id": "kv_cache",
       "name": "KV-Cache, GQA & MLA",
-      "keywords": ["kv cache", "grouped query attention", "gqa", "multi-head latent attention", "mla"],
-      "related": ["attention", "transformers"],
+      "keywords": [
+        "kv cache",
+        "grouped query attention",
+        "gqa",
+        "multi-head latent attention",
+        "mla"
+      ],
+      "related": [
+        "attention",
+        "transformers"
+      ],
       "viz": "kv_cache_gqa_mla_animation.html",
       "source": "llm_agentic_graph_interview_prep_feynman.md"
     },
     {
       "id": "cross_entropy",
       "name": "Cross-Entropy Loss",
-      "keywords": ["cross entropy", "negative log likelihood", "log loss"],
-      "related": ["loss_functions", "logarithm", "probability"],
+      "keywords": [
+        "cross entropy",
+        "negative log likelihood",
+        "log loss"
+      ],
+      "related": [
+        "loss_functions",
+        "logarithm",
+        "probability"
+      ],
       "viz": "cross_entropy_animation.html",
       "source": "ml_deep_learning_llm_feynman_tutorial.md"
     },
     {
       "id": "l2_regularization",
       "name": "L2 Regularization",
-      "keywords": ["l2 regularization", "weight decay", "ridge"],
-      "related": ["loss_functions", "optimization", "vectors"],
+      "keywords": [
+        "l2 regularization",
+        "weight decay",
+        "ridge"
+      ],
+      "related": [
+        "loss_functions",
+        "optimization",
+        "vectors"
+      ],
       "viz": "l2_regularization_animation.html",
       "source": "ml_deep_learning_llm_feynman_tutorial.md"
     },
     {
       "id": "early_stopping",
       "name": "Early Stopping",
-      "keywords": ["early stopping", "validation loss", "overfitting"],
-      "related": ["loss_functions", "optimization", "neural_network_math"],
+      "keywords": [
+        "early stopping",
+        "validation loss",
+        "overfitting"
+      ],
+      "related": [
+        "loss_functions",
+        "optimization",
+        "neural_network_math"
+      ],
       "viz": "early_stopping_animation.html",
       "source": "ml_deep_learning_llm_feynman_tutorial.md"
     },
     {
       "id": "convolution",
       "name": "Convolution (CNN)",
-      "keywords": ["convolution", "cnn", "kernel", "filter", "feature map"],
-      "related": ["neural_network_math", "matrices", "image_fft_2d"],
+      "keywords": [
+        "convolution",
+        "cnn",
+        "kernel",
+        "filter",
+        "feature map"
+      ],
+      "related": [
+        "neural_network_math",
+        "matrices",
+        "image_fft_2d"
+      ],
       "viz": "cnn_convolution_animation.html",
       "source": "cnn_and_audio_networks_feynman.md"
     },
     {
       "id": "spectrogram",
       "name": "Waveform to Spectrogram",
-      "keywords": ["spectrogram", "waveform", "time frequency", "audio features"],
-      "related": ["fft_algorithm", "fft_dft", "wave_equation_sound", "frequency_filtering"],
+      "keywords": [
+        "spectrogram",
+        "waveform",
+        "time frequency",
+        "audio features"
+      ],
+      "related": [
+        "fft_algorithm",
+        "fft_dft",
+        "wave_equation_sound",
+        "frequency_filtering"
+      ],
       "viz": "waveform_to_spectrogram_animation.html",
       "source": "cnn_and_audio_networks_feynman.md"
     },
     {
       "id": "precision_recall",
       "name": "Precision, Recall & Threshold",
-      "keywords": ["precision", "recall", "threshold", "confusion matrix"],
-      "related": ["statistics", "probability"],
+      "keywords": [
+        "precision",
+        "recall",
+        "threshold",
+        "confusion matrix"
+      ],
+      "related": [
+        "statistics",
+        "probability"
+      ],
       "viz": "precision_recall_threshold_animation.html",
       "source": "eda_feynman_tutorial.md"
     },
     {
       "id": "class_imbalance",
       "name": "The Accuracy Trap (Class Imbalance)",
-      "keywords": ["class imbalance", "accuracy trap", "imbalanced data"],
-      "related": ["statistics", "probability", "precision_recall"],
+      "keywords": [
+        "class imbalance",
+        "accuracy trap",
+        "imbalanced data"
+      ],
+      "related": [
+        "statistics",
+        "probability",
+        "precision_recall"
+      ],
       "viz": "imbalance_accuracy_trap.html",
       "source": "kaggle_practice_feynman_tutorial.md"
     },
     {
       "id": "outlier_robustness",
       "name": "Mean vs Median (Outliers)",
-      "keywords": ["mean vs median", "outlier", "robust statistics"],
-      "related": ["statistics", "average"],
+      "keywords": [
+        "mean vs median",
+        "outlier",
+        "robust statistics"
+      ],
+      "related": [
+        "statistics",
+        "average"
+      ],
       "viz": "outlier_robustness_animation.html",
       "source": "eda_feynman_tutorial.md"
     },
     {
       "id": "simpsons_paradox",
       "name": "Simpson's Paradox",
-      "keywords": ["simpsons paradox", "trend reversal", "confounding"],
-      "related": ["statistics", "probability", "paradoxes"],
+      "keywords": [
+        "simpsons paradox",
+        "trend reversal",
+        "confounding"
+      ],
+      "related": [
+        "statistics",
+        "probability",
+        "paradoxes"
+      ],
       "viz": "simpsons_paradox_animation.html",
       "source": "eda_feynman_tutorial.md"
     },
     {
       "id": "eda_by_group",
       "name": "EDA: Survival by Group",
-      "keywords": ["exploratory data analysis", "survival by group", "titanic eda", "grouped rates"],
-      "related": ["statistics", "probability", "outlier_robustness"],
+      "keywords": [
+        "exploratory data analysis",
+        "survival by group",
+        "titanic eda",
+        "grouped rates"
+      ],
+      "related": [
+        "statistics",
+        "probability",
+        "outlier_robustness"
+      ],
       "viz": "titanic_survival_by_group.html",
       "source": "kaggle_practice_feynman_tutorial.md"
     },
     {
       "id": "algorithm_patterns",
       "name": "Algorithm Pattern Decision Tree",
-      "keywords": ["algorithm patterns", "pattern decision tree", "which algorithm"],
-      "related": ["binary_search", "two_pointers", "dynamic_programming", "bfs_dfs"],
+      "keywords": [
+        "algorithm patterns",
+        "pattern decision tree",
+        "which algorithm"
+      ],
+      "related": [
+        "binary_search",
+        "two_pointers",
+        "dynamic_programming",
+        "bfs_dfs"
+      ],
       "viz": "pattern_decision_tree.html",
       "source": "03_the_pattern_map.md"
     },
     {
       "id": "binary_search",
       "name": "Binary Search",
-      "keywords": ["binary search", "lower bound", "upper bound"],
-      "related": ["sequence", "logarithm", "algorithm_patterns"],
+      "keywords": [
+        "binary search",
+        "lower bound",
+        "upper bound"
+      ],
+      "related": [
+        "sequence",
+        "logarithm",
+        "algorithm_patterns"
+      ],
       "viz": "binary_search_visualizer.html",
       "source": "08_binary_search_patterns.md"
     },
     {
       "id": "two_pointers",
       "name": "Two Pointers & Sliding Window",
-      "keywords": ["two pointers", "sliding window"],
-      "related": ["sequence", "algorithm_patterns"],
+      "keywords": [
+        "two pointers",
+        "sliding window"
+      ],
+      "related": [
+        "sequence",
+        "algorithm_patterns"
+      ],
       "viz": "two_pointers_sliding_window.html",
       "source": "04_arrays_two_pointers_sliding_window.md"
     },
     {
       "id": "monotonic_stack",
       "name": "Monotonic Stack & Heap",
-      "keywords": ["monotonic stack", "heap", "priority queue"],
-      "related": ["sequence", "algorithm_patterns"],
+      "keywords": [
+        "monotonic stack",
+        "heap",
+        "priority queue"
+      ],
+      "related": [
+        "sequence",
+        "algorithm_patterns"
+      ],
       "viz": "monotonic_stack_and_heap.html",
       "source": "11_stacks_monotonic_bit_trie.md"
     },
     {
       "id": "bfs_dfs",
       "name": "BFS vs DFS",
-      "keywords": ["bfs", "dfs", "breadth first search", "depth first search", "graph traversal"],
-      "related": ["graph", "graph_theory", "hamiltonian_graph", "algorithm_patterns"],
+      "keywords": [
+        "bfs",
+        "dfs",
+        "breadth first search",
+        "depth first search",
+        "graph traversal"
+      ],
+      "related": [
+        "graph",
+        "graph_theory",
+        "hamiltonian_graph",
+        "algorithm_patterns"
+      ],
       "viz": "bfs_dfs_tree_graph.html",
       "source": "06_trees_graphs_bfs_dfs.md"
     },
     {
       "id": "dynamic_programming",
       "name": "Dynamic Programming",
-      "keywords": ["dynamic programming", "dp", "memoization", "recurrence"],
-      "related": ["sequence", "optimization", "algorithm_patterns"],
+      "keywords": [
+        "dynamic programming",
+        "dp",
+        "memoization",
+        "recurrence"
+      ],
+      "related": [
+        "sequence",
+        "optimization",
+        "algorithm_patterns"
+      ],
       "viz": "dp_grid_builder.html",
       "source": "10_dynamic_programming.md"
+    },
+    {
+      "id": "elementary_toolkit",
+      "name": "The Elementary Toolkit",
+      "keywords": [
+        "order of operations",
+        "pemdas",
+        "bodmas",
+        "sign rules",
+        "negative times negative",
+        "exponent laws",
+        "what is a logarithm"
+      ],
+      "related": [
+        "fractions",
+        "exponents",
+        "logarithm",
+        "integers_topic",
+        "multiplication",
+        "division"
+      ],
+      "viz": "elementary_math_visualizer.html",
+      "source": "elementary-math-toolkit.md"
+    },
+    {
+      "id": "algebra_basics",
+      "name": "Algebra",
+      "keywords": [
+        "balance scale",
+        "completing the square",
+        "function machine",
+        "rearranging equations"
+      ],
+      "related": [
+        "equation",
+        "distributive_property",
+        "quadratic_equation",
+        "function",
+        "polynomial",
+        "linear_equations"
+      ],
+      "viz": "algebra_visualizer.html",
+      "source": "algebra-toolkit.md"
+    },
+    {
+      "id": "geometry",
+      "name": "Geometry",
+      "keywords": [
+        "angle sum",
+        "pythagorean rearrangement",
+        "circle unrolling",
+        "square cube law"
+      ],
+      "related": [
+        "pythagorean_theorem",
+        "triangles",
+        "circles",
+        "area",
+        "angles",
+        "polygons"
+      ],
+      "viz": "geometry_visualizer.html",
+      "source": "geometry-toolkit.md"
+    },
+    {
+      "id": "trigonometry",
+      "name": "Trigonometry",
+      "keywords": [
+        "unit circle",
+        "radians",
+        "arc length",
+        "sohcahtoa",
+        "angle sum proof",
+        "sine wave"
+      ],
+      "related": [
+        "trig_identities",
+        "angles",
+        "circles",
+        "polar_coordinates",
+        "pi",
+        "triangles"
+      ],
+      "viz": "trigonometry_visualizer.html",
+      "source": "trigonometry-toolkit.md"
+    },
+    {
+      "id": "complex_numbers",
+      "name": "Complex Numbers",
+      "keywords": [
+        "imaginary unit",
+        "rotate and scale",
+        "bombelli",
+        "complex plane",
+        "argand diagram"
+      ],
+      "related": [
+        "roots_of_unity",
+        "euler",
+        "polar_coordinates",
+        "transformations",
+        "polynomial"
+      ],
+      "viz": "complex_numbers_visualizer.html",
+      "source": "complex-numbers-toolkit.md"
+    },
+    {
+      "id": "sequence",
+      "name": "Sequences & Series",
+      "keywords": [
+        "convergence",
+        "geometric series",
+        "harmonic series",
+        "basel problem",
+        "zeno",
+        "power series"
+      ],
+      "related": [
+        "taylor_series",
+        "limit",
+        "infinity",
+        "fibonacci_rhythm",
+        "riemann_sums"
+      ],
+      "viz": "sequences_series_visualizer.html",
+      "source": "sequences-and-series.md"
+    },
+    {
+      "id": "fundamental_theorem_calculus",
+      "name": "The Fundamental Theorem of Calculus",
+      "keywords": [
+        "fundamental theorem",
+        "zoom in until straight",
+        "accumulation",
+        "derivative and integral are inverses",
+        "taylor tower"
+      ],
+      "related": [
+        "derivative",
+        "integral",
+        "limit",
+        "riemann_sums",
+        "taylor_series",
+        "the chain rule"
+      ],
+      "viz": "calculus_visualizer.html",
+      "source": "calculus-the-language-of-change.md"
+    },
+    {
+      "id": "probability",
+      "name": "Probability",
+      "keywords": [
+        "and or tree",
+        "multiply down add across",
+        "law of large numbers",
+        "probability tree"
+      ],
+      "related": [
+        "bayes_theorem",
+        "cross_entropy",
+        "markov_chains",
+        "statistics",
+        "central_limit_theorem"
+      ],
+      "viz": "probability_visualizer.html",
+      "source": "03-probability.md"
+    },
+    {
+      "id": "statistics",
+      "name": "Statistics",
+      "keywords": [
+        "galton board",
+        "sampling distribution",
+        "hypothesis test",
+        "p value",
+        "correlation"
+      ],
+      "related": [
+        "central_limit_theorem",
+        "simpsons_paradox",
+        "probability",
+        "average",
+        "curve_fitting"
+      ],
+      "viz": "statistics_visualizer.html",
+      "source": "statistics-toolkit.md"
+    },
+    {
+      "id": "mathematical_logic",
+      "name": "Formal Logic",
+      "keywords": [
+        "truth table",
+        "argument validity",
+        "connectives",
+        "valid vs true",
+        "modus ponens"
+      ],
+      "related": [
+        "proof",
+        "set_theory",
+        "logic_puzzles",
+        "paradoxes",
+        "axioms"
+      ],
+      "viz": "logic_visualizer.html",
+      "source": "07-logic.md"
+    },
+    {
+      "id": "backprop_reuse",
+      "name": "Backpropagation as Reuse",
+      "keywords": [
+        "compute once reuse backward",
+        "shared middle term",
+        "why backprop is efficient",
+        "gradient reuse"
+      ],
+      "related": [
+        "backpropagation",
+        "the chain rule",
+        "derivative",
+        "neural_network_math",
+        "loss_functions"
+      ],
+      "viz": "backprop_visualizer.html",
+      "source": "05-machine-learning-bridges.md"
     }
   ]
 }

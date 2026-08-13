@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Toolkit, Made Visible — Elementary Mathematics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:90px; }
+  input[type=text]{ flex:1; min-width:220px; padding:9px 12px; border:1px solid var(--line); border-radius:8px; font-family:"IBM Plex Mono",monospace; font-size:15px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  .exprbig{ font-family:"IBM Plex Mono", monospace; font-size:22px; background:#F5F4F0; border-radius:10px; padding:18px 20px; margin:14px 0; text-align:center; line-height:1.5; word-break:break-word; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  .good-t{ color:var(--c1); font-weight:700; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft); margin-top:10px; max-height:150px; overflow-y:auto; white-space:pre-line; background:#F5F4F0; border-radius:8px; padding:10px 12px; }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  svg{ width:100%; height:auto; display:block; }
+  .patttable{ width:100%; border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:14px; margin-top:10px; }
+  .patttable td, .patttable th{ text-align:center; padding:8px 10px; border-bottom:1px solid var(--line); }
+  .patttable th{ color:var(--ink-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+  .patttable tr.hidden td{ color:var(--line); }
+  .patttable tr.pivot{ background:var(--accent-soft); }
+  .patttable tr.forced td{ color:var(--c3); font-weight:700; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Elementary Mathematics</div>
+    <h1>The Toolkit, Made Visible</h1>
+    <p>Five rules everyone uses and almost nobody re-derives: why multiplication runs before addition, why two negatives make a positive, why dividing by a fraction flips it, why an exponent can go all the way down to zero and past it, and why a 20-year table of logarithms once "doubled the life of the astronomer." Each one built from a picture or a pattern instead of asserted.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="pemdas">Order of Operations</button>
+    <button class="tab" data-tab="signs">Sign Rules</button>
+    <button class="tab" data-tab="fractions">Fractions</button>
+    <button class="tab" data-tab="exponents">Exponent Laws</button>
+    <button class="tab" data-tab="logs">Logarithms</button>
+  </div>
+
+  <!-- ============ TAB 1: ORDER OF OPERATIONS ============ -->
+  <div class="panel active" id="panel-pemdas">
+    <div class="card">
+      <h2>Watch an Expression Collapse, One Finishing Step at a Time</h2>
+      <p class="sub"><b>What's happening:</b> type any expression using <span class="formula">+ − * / ^ ( )</span>, or pick a preset. Each "Next step" collapses exactly one piece into a single number — always the piece that PEMDAS says must finish first, because it's building a unit something else needs.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> step through the default expression and watch parentheses collapse first, then the exponent, then multiplication/division, and addition/subtraction only at the very end — never once a coincidence, always "this piece has to become one number before the next operation can touch it."</p>
+      <div class="row">
+        <input type="text" id="exprInput" value="3 + 4 * 2 - (5 - 1) / 2">
+        <button class="op" id="btnParse">Load expression</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op" data-preset="3 + 4 * 2 - (5 - 1) / 2">Mixed ops</button>
+        <button class="op" data-preset="2 + 3 * 4">Classic PEMDAS trap</button>
+        <button class="op" data-preset="(2 + 3) * 4">Same numbers, parens added</button>
+        <button class="op" data-preset="2 ^ 3 + 1">Exponent first</button>
+        <button class="op" data-preset="10 - 4 - 3">Left-to-right ties</button>
+      </div>
+      <div class="exprbig" id="pemdasDisplay">—</div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnPemdasPrev">◀ Back</button>
+        <button class="op active" id="btnPemdasNext">Next step ▶</button>
+        <button class="op" id="btnPemdasReset">Reset</button>
+      </div>
+      <div class="verdict" id="pemdasVerdict"></div>
+      <div class="steplog" id="pemdasLog"></div>
+      <div class="caption"><b>Why it matters:</b> every one of these collapses is "build a same-unit quantity before combining it with anything else" — parentheses (explicit override) and exponents (repeated multiplication) and multiplication/division (repeated addition) all finish before addition/subtraction ever gets a turn.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: SIGN RULES ============ -->
+  <div class="panel" id="panel-signs">
+    <div class="card">
+      <h2>Let the Pattern Force the Sign</h2>
+      <p class="sub"><b>What's happening:</b> the top rows of this table (positive × negative) are ordinary, undisputed arithmetic. Reveal rows downward through zero and watch what the <em>pattern itself</em> demands the next rows must be — nobody has to tell you the sign, the unbroken straight line does.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> reveal one row at a time and predict the next answer before it appears. The moment you cross <span class="formula">0 × (−2) = 0</span> going downward, the pattern insists the next row climbs back up into positive numbers — that forced climb <em>is</em> "negative times negative is positive."</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnSignNext">Reveal next row ▼</button>
+        <button class="op" id="btnSignReset">Reset</button>
+      </div>
+      <table class="patttable" id="signTable"></table>
+      <div class="verdict" id="signVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is the cleanest example in elementary math of a rule that doesn't need to be trusted on authority — refusing to let an already-true pattern break is a fully sufficient proof on its own.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: FRACTIONS ============ -->
+  <div class="panel" id="panel-fractions">
+    <div class="card">
+      <h2>Multiplying: The Overlap of Two Cuts</h2>
+      <p class="sub"><b>What's happening:</b> shading a fraction of one direction, then a fraction of the other, leaves a double-shaded overlap — and that overlap's share of the whole rectangle is exactly the product of the two fractions.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set both fractions to simple values and count the grid cells yourself — the double-shaded count divided by the total cell count always matches the multiplied fraction, exactly.</p>
+      <div class="cols">
+        <div class="col">
+          <div class="row"><label>Fraction A</label><input type="range" id="fmNumA" min="1" max="6" step="1" value="1"><span class="readout" id="fmNumAOut">1</span> / <input type="range" id="fmDenA" min="1" max="6" step="1" value="2"><span class="readout" id="fmDenAOut">2</span></div>
+          <div class="row"><label>Fraction B</label><input type="range" id="fmNumB" min="1" max="6" step="1" value="1"><span class="readout" id="fmNumBOut">1</span> / <input type="range" id="fmDenB" min="1" max="6" step="1" value="3"><span class="readout" id="fmDenBOut">3</span></div>
+          <svg id="fracMulSvg" viewBox="0 0 240 240"></svg>
+        </div>
+        <div class="col">
+          <div class="verdict" id="fracMulVerdict"></div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:32px;">Dividing: How Many of These Fit Inside That?</h2>
+      <p class="sub"><b>What's happening:</b> a bar of length <span class="formula">a</span> gets chopped into chunks of size <span class="formula">b/c</span>. Count the chunks — that count is the division's answer, and it always matches flip-and-multiply exactly.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> shrink the chunk size and watch the chunk count climb — dividing by a smaller fraction always gives a bigger answer, because more small things fit than big things do.</p>
+      <div class="row"><label>Bar length a</label><input type="range" id="fdA" min="1" max="6" step="1" value="3"><span class="readout" id="fdAOut">3</span></div>
+      <div class="row"><label>Chunk size</label><input type="range" id="fdB" min="1" max="4" step="1" value="3"><span class="readout" id="fdBOut">3</span> / <input type="range" id="fdC" min="1" max="4" step="1" value="4"><span class="readout" id="fdCOut">4</span></div>
+      <svg id="fracDivSvg" viewBox="0 0 480 100"></svg>
+      <div class="verdict" id="fracDivVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> "flip and multiply" is never a separate rule — it's multiplying by a disguised 1 (a fraction's reciprocal times itself), legal at any time, for any number.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: EXPONENT LAWS ============ -->
+  <div class="panel" id="panel-exponents">
+    <div class="card">
+      <h2>Concatenating Chains of Repeated Multiplication</h2>
+      <p class="sub"><b>What's happening:</b> <span class="formula">aᵘ</span> is <span class="formula">u</span> copies of <span class="formula">a</span> multiplied together. Glue a chain of <span class="formula">u</span> copies to a chain of <span class="formula">v</span> copies, and you get one longer chain of <span class="formula">u+v</span> copies — which is exactly why exponents <em>add</em> when same-base powers multiply.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set u and v to small numbers and count the factors in the glued chain yourself — it always matches u+v.</p>
+      <div class="row"><label>Base a</label><input type="range" id="exA" min="2" max="5" step="1" value="4"><span class="readout" id="exAOut">4</span></div>
+      <div class="row"><label>Exponent u</label><input type="range" id="exU" min="1" max="4" step="1" value="3"><span class="readout" id="exUOut">3</span></div>
+      <div class="row"><label>Exponent v</label><input type="range" id="exV" min="1" max="4" step="1" value="2"><span class="readout" id="exVOut">2</span></div>
+      <div class="verdict" id="exponentVerdict"></div>
+
+      <h2 style="margin-top:32px;">Pushing the Pattern Past Zero</h2>
+      <p class="sub"><b>What's happening:</b> reveal rows of <span class="formula">aⁿ</span> downward. Each step down divides by <span class="formula">a</span> — watch what that division-pattern forces once <span class="formula">n</span> reaches 0, then goes negative.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> predict each new row before it appears — the pattern alone hands you <span class="formula">a⁰=1</span> and "negative exponent = reciprocal," with no new rule required.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnExpNext">Reveal next row ▼</button>
+        <button class="op" id="btnExpReset">Reset</button>
+      </div>
+      <table class="patttable" id="expTable"></table>
+      <div class="verdict" id="expPatternVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> zero and negative exponents were never separate definitions to memorize — they're what the multiplication-chain pattern was always going to say, the moment you pushed it one step past where most people stop.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: LOGARITHMS ============ -->
+  <div class="panel" id="panel-logs">
+    <div class="card">
+      <h2>Napier and Briggs's Trick, Rebuilt: A Working Slide Rule</h2>
+      <p class="sub"><b>What's happening:</b> the ruler below is marked by <em>logarithm</em>, not by value — the distance from the left edge to any mark is proportional to <span class="formula">log₁₀(value)</span>. Slide the teal length for x1, then continue with the gold length for x2, laid end to end. The landing point is the product <span class="formula">x1 × x2</span> — read off by <em>adding two lengths</em>, exactly the trick that let 17th-century astronomers avoid multiplying by hand.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set x1=2, x2=4 and check the landing point lands exactly on 8. Then try x1=2.5, x2=6 — even with non-whole numbers, adding the two log-lengths lands exactly on the product, every time, because that's all a logarithm ever was: the length that turns multiplying into adding.</p>
+      <div class="row"><label>x1</label><input type="range" id="srX1" min="1" max="9.9" step="0.1" value="2"><span class="readout" id="srX1Out">2.0</span></div>
+      <div class="row"><label>x2</label><input type="range" id="srX2" min="1" max="9.9" step="0.1" value="4"><span class="readout" id="srX2Out">4.0</span></div>
+      <svg id="slideRuleSvg" viewBox="0 0 720 140" role="img" aria-label="Logarithmic slide rule"></svg>
+      <div class="verdict" id="slideRuleVerdict"></div>
+      <div class="caption">A real physical slide rule trades this digital exactness for a quick, eyeballed reading — good to a few significant figures, which was more than enough to save an astronomer's career.</div>
+
+      <h2 style="margin-top:32px;">The Law, Checked Numerically</h2>
+      <p class="sub"><b>What's happening:</b> pick any two numbers and watch <span class="formula">log(a)+log(b)</span> land exactly on <span class="formula">log(a×b)</span> — the single equation that made the slide rule, and the log table before it, worth building.</p>
+      <div class="row"><label>a</label><input type="range" id="logA" min="1" max="99" step="1" value="12"><span class="readout" id="logAOut">12</span></div>
+      <div class="row"><label>b</label><input type="range" id="logB" min="1" max="99" step="1" value="7"><span class="readout" id="logBOut">7</span></div>
+      <div class="verdict" id="logLawVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every logarithmic scale in science and engineering — decibels, pH, the Richter scale, algorithmic complexity — is downstream of this one addition-from-multiplication trick.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../elementary-math-toolkit.md">Elementary Mathematics — The Toolkit</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* =========================================================
+     TAB 1 — ORDER OF OPERATIONS (tiny recursive-descent parser)
+     ========================================================= */
+  function tokenize(str){
+    const toks = []; let i=0;
+    while(i<str.length){
+      const c = str[i];
+      if(/\s/.test(c)){ i++; continue; }
+      if(/[0-9.]/.test(c)){
+        let j=i; while(j<str.length && /[0-9.]/.test(str[j])) j++;
+        toks.push({type:"num", value:parseFloat(str.slice(i,j))}); i=j; continue;
+      }
+      if("+-*/^()".includes(c)){ toks.push({type:c}); i++; continue; }
+      throw new Error("Unexpected character: "+c);
+    }
+    return toks;
+  }
+  function parseExpr(toks){
+    let node = parseTerm(toks);
+    while(toks.length && (toks[0].type==="+"||toks[0].type==="-")){
+      const op = toks.shift().type;
+      const right = parseTerm(toks);
+      node = {type:"binop", op, left:node, right};
+    }
+    return node;
+  }
+  function parseTerm(toks){
+    let node = parsePow(toks);
+    while(toks.length && (toks[0].type==="*"||toks[0].type==="/")){
+      const op = toks.shift().type;
+      const right = parsePow(toks);
+      node = {type:"binop", op, left:node, right};
+    }
+    return node;
+  }
+  function parsePow(toks){
+    let node = parseUnary(toks);
+    if(toks.length && toks[0].type==="^"){
+      toks.shift();
+      const right = parsePow(toks); // right-associative
+      node = {type:"binop", op:"^", left:node, right};
+    }
+    return node;
+  }
+  function parseUnary(toks){
+    if(toks.length && toks[0].type==="-"){
+      toks.shift();
+      return {type:"unary", op:"-", child:parseUnary(toks)};
+    }
+    return parseAtom(toks);
+  }
+  function parseAtom(toks){
+    if(!toks.length) throw new Error("Unexpected end of expression");
+    if(toks[0].type==="num"){ return {type:"num", value:toks.shift().value}; }
+    if(toks[0].type==="("){
+      toks.shift();
+      const node = parseExpr(toks);
+      if(!toks.length || toks[0].type!==")") throw new Error("Missing closing parenthesis");
+      toks.shift();
+      return {type:"paren", child:node};
+    }
+    throw new Error("Unexpected token");
+  }
+  function computeOp(op,a,b){
+    if(op==="+") return a+b;
+    if(op==="-") return a-b;
+    if(op==="*") return a*b;
+    if(op==="/") return a/b;
+    if(op==="^") return Math.pow(a,b);
+  }
+  const OPSYM = {"+":"+","-":"−","*":"×","/":"÷","^":"^"};
+  function fmt(v){
+    if(!isFinite(v)) return "undefined";
+    return Math.abs(v - Math.round(v)) < 1e-9 ? String(Math.round(v)) : v.toFixed(3).replace(/0+$/,"").replace(/\.$/,"");
+  }
+  // collect binop/unary nodes in evaluation (post-order) sequence
+  function collectSteps(node, steps){
+    if(node.type==="num") return;
+    if(node.type==="paren"){ collectSteps(node.child, steps); return; }
+    if(node.type==="unary"){ collectSteps(node.child, steps); steps.push(node); return; }
+    collectSteps(node.left, steps);
+    collectSteps(node.right, steps);
+    steps.push(node);
+  }
+  function nodeValue(node){
+    if(node.type==="num") return node.value;
+    if(node.type==="paren") return nodeValue(node.child);
+    return node.value; // set once evaluated
+  }
+  function render(node, evaluatedSet){
+    if(node.type==="num") return fmt(node.value);
+    if(node.type==="paren"){
+      if(evaluatedSet.has(node.child) || node.child.type==="num") return render(node.child, evaluatedSet);
+      return "(" + render(node.child, evaluatedSet) + ")";
+    }
+    if(node.type==="unary"){
+      if(evaluatedSet.has(node)) return fmt(node.value);
+      return "−" + render(node.child, evaluatedSet);
+    }
+    if(evaluatedSet.has(node)) return fmt(node.value);
+    const l = render(node.left, evaluatedSet), r = render(node.right, evaluatedSet);
+    return "(" + l + " " + OPSYM[node.op] + " " + r + ")";
+  }
+  function reasonFor(node){
+    if(node.type==="unary") return "applying a minus sign to a single value";
+    if(node.op==="^") return "exponent — must collapse before any multiplication/division touches it";
+    if(node.op==="*"||node.op==="/") return "multiplication/division — builds a same-unit quantity before addition can combine it";
+    return "addition/subtraction — combining already same-unit quantities, so it runs last";
+  }
+
+  let pemAst=null, pemSteps=[], pemIndex=0, pemEvaluated=new Set(), pemError=null;
+  function loadExpr(str){
+    pemError = null;
+    try{
+      const toks = tokenize(str);
+      pemAst = parseExpr(toks);
+      if(toks.length) throw new Error("Unexpected trailing input");
+    } catch(e){
+      pemError = e.message; pemAst=null;
+    }
+    pemSteps = []; if(pemAst) collectSteps(pemAst, pemSteps);
+    pemIndex = 0; pemEvaluated = new Set();
+    renderPemdas();
+  }
+  function renderPemdas(){
+    const disp = document.getElementById("pemdasDisplay");
+    const log = document.getElementById("pemdasLog");
+    const verdict = document.getElementById("pemdasVerdict");
+    if(pemError){ disp.textContent = "Error: "+pemError; verdict.textContent=""; log.textContent=""; return; }
+    disp.textContent = render(pemAst, pemEvaluated);
+    document.getElementById("btnPemdasPrev").disabled = pemIndex<=0;
+    document.getElementById("btnPemdasNext").disabled = pemIndex>=pemSteps.length;
+    if(pemIndex===0){
+      verdict.innerHTML = `Ready — <b>${pemSteps.length}</b> collapsing step${pemSteps.length===1?"":"s"} total. Press <em>Next step</em>.`;
+    } else if(pemIndex>=pemSteps.length){
+      verdict.innerHTML = `<b class="big">Done.</b> Final value: <b>${fmt(nodeValue(pemAst))}</b>`;
+    } else {
+      const node = pemSteps[pemIndex-1];
+      verdict.innerHTML = `Step ${pemIndex}: ${reasonFor(node)}.`;
+    }
+    const lines = [];
+    for(let i=0;i<pemIndex;i++){
+      const node = pemSteps[i];
+      if(node.type==="unary"){
+        lines.push(`Step ${i+1}: flip sign of ${fmt(nodeValue(node.child))} → ${fmt(node.value)}`);
+      } else {
+        lines.push(`Step ${i+1}: ${fmt(nodeValue(node.left))} ${OPSYM[node.op]} ${fmt(nodeValue(node.right))} = ${fmt(node.value)}  (${reasonFor(node)})`);
+      }
+    }
+    log.textContent = lines.join("\n");
+  }
+  document.getElementById("btnPemdasNext").addEventListener("click", () => {
+    if(pemIndex>=pemSteps.length) return;
+    const node = pemSteps[pemIndex];
+    if(node.type==="unary") node.value = -nodeValue(node.child);
+    else node.value = computeOp(node.op, nodeValue(node.left), nodeValue(node.right));
+    pemEvaluated.add(node);
+    pemIndex++;
+    renderPemdas();
+  });
+  document.getElementById("btnPemdasPrev").addEventListener("click", () => {
+    if(pemIndex<=0) return;
+    pemIndex--;
+    pemEvaluated.delete(pemSteps[pemIndex]);
+    renderPemdas();
+  });
+  document.getElementById("btnPemdasReset").addEventListener("click", () => { loadExpr(document.getElementById("exprInput").value); });
+  document.getElementById("btnParse").addEventListener("click", () => { loadExpr(document.getElementById("exprInput").value); });
+  document.querySelectorAll("[data-preset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById("exprInput").value = btn.dataset.preset;
+      loadExpr(btn.dataset.preset);
+    });
+  });
+  loadExpr(document.getElementById("exprInput").value);
+
+  /* =========================================================
+     TAB 2 — SIGN RULES
+     ========================================================= */
+  const SIGN_ROWS = [3,2,1,0,-1,-2,-3]; // multiplier n, times -2
+  let signRevealed = 1;
+  function renderSignTable(){
+    let html = "<tr><th>n</th><th>×</th><th>result</th></tr>";
+    SIGN_ROWS.forEach((n,i) => {
+      const shown = i<signRevealed;
+      const val = n*(-2);
+      const cls = !shown ? "hidden" : (n===0 ? "pivot" : (n<0 ? "forced" : ""));
+      html += `<tr class="${cls}"><td>${n}</td><td>× (−2)</td><td>${shown ? val : "?"}</td></tr>`;
+    });
+    document.getElementById("signTable").innerHTML = html;
+    const v = document.getElementById("signVerdict");
+    if(signRevealed<=4){
+      v.innerHTML = `Every revealed row so far is plain, undisputed arithmetic (positive × negative). Keep revealing to reach the pivot at <b>n=0</b>.`;
+    } else {
+      const lastN = SIGN_ROWS[signRevealed-1];
+      v.innerHTML = `Crossing zero, the pattern <b>demands</b> each step down still adds 2 to the previous answer — there's no other way to keep the line straight. That forces <b>${lastN} × (−2) = ${lastN*(-2)}</b>, a positive number, purely from refusing to break the pattern. <b class="big">Negative × negative = positive.</b>`;
+    }
+    document.getElementById("btnSignNext").disabled = signRevealed>=SIGN_ROWS.length;
+  }
+  document.getElementById("btnSignNext").addEventListener("click", () => { if(signRevealed<SIGN_ROWS.length) signRevealed++; renderSignTable(); });
+  document.getElementById("btnSignReset").addEventListener("click", () => { signRevealed=1; renderSignTable(); });
+  renderSignTable();
+
+  /* =========================================================
+     TAB 3 — FRACTIONS
+     ========================================================= */
+  const fmNumA=document.getElementById("fmNumA"), fmDenA=document.getElementById("fmDenA"),
+        fmNumB=document.getElementById("fmNumB"), fmDenB=document.getElementById("fmDenB");
+  function renderFracMul(){
+    const nA=parseInt(fmNumA.value,10), dA=parseInt(fmDenA.value,10);
+    const nB=parseInt(fmNumB.value,10), dB=parseInt(fmDenB.value,10);
+    fmNumAOut.textContent=nA; fmDenAOut.textContent=dA; fmNumBOut.textContent=nB; fmDenBOut.textContent=dB;
+    const W=240,H=240;
+    const svg = document.getElementById("fracMulSvg");
+    svg.innerHTML = "";
+    const cw = W/dB, ch = H/dA; // dB columns, dA rows
+    // full grid
+    for(let r=0;r<dA;r++){
+      for(let c=0;c<dB;c++){
+        const shadedA = r<nA;      // fraction A shades top nA of dA rows
+        const shadedB = c<nB;      // fraction B shades left nB of dB cols
+        let fill = "#F5F4F0";
+        if(shadedA && shadedB) fill = "var(--accent)";
+        else if(shadedA) fill = "rgba(15,139,141,0.25)";
+        else if(shadedB) fill = "rgba(217,166,46,0.3)";
+        svg.appendChild(el("rect",{x:c*cw,y:r*ch,width:cw,height:ch,fill,stroke:"var(--line)",["stroke-width"]:1}));
+      }
+    }
+    document.getElementById("fracMulVerdict").innerHTML =
+      `${nA}/${dA} of the rectangle shaded teal (rows) &nbsp;·&nbsp; ${nB}/${dB} shaded gold (columns)<br>`+
+      `Double-shaded overlap: <b>${nA*nB}</b> cells out of <b>${dA*dB}</b> total = <span class="big">${nA}/${dA} × ${nB}/${dB} = ${nA*nB}/${dA*dB}</span>`;
+  }
+  [fmNumA,fmDenA,fmNumB,fmDenB].forEach(inp => inp.addEventListener("input", renderFracMul));
+  renderFracMul();
+
+  const fdA=document.getElementById("fdA"), fdB=document.getElementById("fdB"), fdC=document.getElementById("fdC");
+  function renderFracDiv(){
+    const a=parseInt(fdA.value,10), b=parseInt(fdB.value,10), c=parseInt(fdC.value,10);
+    fdAOut.textContent=a; fdBOut.textContent=b; fdCOut.textContent=c;
+    const chunkSize = b/c;
+    const count = a/chunkSize; // = a * c/b
+    const W=480,H=100, pad=10;
+    const svg = document.getElementById("fracDivSvg");
+    svg.innerHTML = "";
+    const totalW = W-2*pad;
+    const barPxPerUnit = totalW/a;
+    svg.appendChild(el("rect",{x:pad,y:30,width:totalW,height:40,fill:"none",stroke:"var(--ink)",["stroke-width"]:2}));
+    const chunkPx = chunkSize*barPxPerUnit;
+    const fullChunks = Math.floor(count+1e-9);
+    for(let i=0;i<fullChunks;i++){
+      const x = pad + i*chunkPx;
+      svg.appendChild(el("rect",{x,y:30,width:chunkPx,height:40,fill: i%2===0?"rgba(70,58,115,0.28)":"rgba(15,139,141,0.28)",stroke:"var(--line)",["stroke-width"]:1}));
+      svg.appendChild(el("text",{x:x+chunkPx/2,y:55,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"11",fill:"var(--ink)"})).textContent=i+1;
+    }
+    const remainder = count - fullChunks;
+    if(remainder>1e-9){
+      const x = pad + fullChunks*chunkPx;
+      svg.appendChild(el("rect",{x,y:30,width:remainder*chunkPx,height:40,fill:"rgba(217,99,107,0.35)",stroke:"var(--line)",["stroke-width"]:1}));
+    }
+    document.getElementById("fracDivVerdict").innerHTML =
+      `Bar length <b>${a}</b>, chopped into chunks of size <b>${b}/${c}</b>: exactly <b>${fmtFrac(count)}</b> chunks fit.<br>`+
+      `Flip-and-multiply check: ${a} ÷ (${b}/${c}) = ${a} × ${c}/${b} = <span class="big">${fmtFrac(a*c/b)}</span> — same answer, always.`;
+  }
+  function fmtFrac(v){ return Math.abs(v-Math.round(v))<1e-9 ? String(Math.round(v)) : v.toFixed(2); }
+  [fdA,fdB,fdC].forEach(inp => inp.addEventListener("input", renderFracDiv));
+  renderFracDiv();
+
+  /* =========================================================
+     TAB 4 — EXPONENT LAWS
+     ========================================================= */
+  const exA=document.getElementById("exA"), exU=document.getElementById("exU"), exV=document.getElementById("exV");
+  function renderExponentChain(){
+    const a=parseInt(exA.value,10), u=parseInt(exU.value,10), v=parseInt(exV.value,10);
+    exAOut.textContent=a; exUOut.textContent=u; exVOut.textContent=v;
+    const chainU = new Array(u).fill(a).join(" × ");
+    const chainV = new Array(v).fill(a).join(" × ");
+    const chainUV = new Array(u+v).fill(a).join(" × ");
+    document.getElementById("exponentVerdict").innerHTML =
+      `a^u = ${a}^${u} = ${chainU} = <b>${Math.pow(a,u)}</b><br>`+
+      `a^v = ${a}^${v} = ${chainV} = <b>${Math.pow(a,v)}</b><br>`+
+      `a^u × a^v = glue the chains = ${chainUV} = ${a}^${u+v} = <span class="big">${Math.pow(a,u+v)}</span> &nbsp;·&nbsp; check: ${Math.pow(a,u)} × ${Math.pow(a,v)} = ${Math.pow(a,u)*Math.pow(a,v)}`;
+  }
+  [exA,exU,exV].forEach(inp => inp.addEventListener("input", renderExponentChain));
+  renderExponentChain();
+
+  const EXP_ROWS = [3,2,1,0,-1,-2,-3];
+  let expRevealed = 1;
+  const EXP_BASE = 4;
+  function renderExpTable(){
+    let html = "<tr><th>n</th><th>4ⁿ</th></tr>";
+    EXP_ROWS.forEach((n,i) => {
+      const shown = i<expRevealed;
+      const val = Math.pow(EXP_BASE, n);
+      const display = shown ? (n>=0 ? fmtFrac(val) : `1/${Math.pow(EXP_BASE,-n)}`) : "?";
+      const cls = !shown ? "hidden" : (n===0 ? "pivot" : (n<0 ? "forced" : ""));
+      html += `<tr class="${cls}"><td>${n}</td><td>${display}</td></tr>`;
+    });
+    document.getElementById("expTable").innerHTML = html;
+    const v = document.getElementById("expPatternVerdict");
+    if(expRevealed<=4){
+      v.innerHTML = `Every revealed row is ordinary repeated multiplication of 4. Keep revealing to pass through <b>n=0</b>.`;
+    } else {
+      const n = EXP_ROWS[expRevealed-1];
+      v.innerHTML = `Each step down divides the previous value by 4 — that's the same pattern that built the whole table. Forced by the pattern: <b>4⁰ = 1</b> (dividing 4¹ by 4 once), and <b>4${n} = 1/${Math.pow(EXP_BASE,-n)}</b> — a negative exponent is nothing but the reciprocal the pattern was always going to produce.`;
+    }
+    document.getElementById("btnExpNext").disabled = expRevealed>=EXP_ROWS.length;
+  }
+  document.getElementById("btnExpNext").addEventListener("click", () => { if(expRevealed<EXP_ROWS.length) expRevealed++; renderExpTable(); });
+  document.getElementById("btnExpReset").addEventListener("click", () => { expRevealed=1; renderExpTable(); });
+  renderExpTable();
+
+  /* =========================================================
+     TAB 5 — LOGARITHMS (a working log-scaled slide rule)
+     ========================================================= */
+  const srX1=document.getElementById("srX1"), srX2=document.getElementById("srX2");
+  const RULE_X0=40, RULE_W=640, RULE_Y=70;
+  function rulePos(v){ return RULE_X0 + (Math.log10(v)/2)*RULE_W; } // v in [1,100]
+  function fmtLog(v){ return Math.abs(v-Math.round(v))<1e-9 ? String(Math.round(v)) : v.toFixed(3); }
+
+  function renderSlideRule(){
+    const x1=parseFloat(srX1.value), x2=parseFloat(srX2.value);
+    srX1Out.textContent=x1.toFixed(1); srX2Out.textContent=x2.toFixed(1);
+    const svg = document.getElementById("slideRuleSvg");
+    svg.innerHTML = "";
+    // baseline
+    svg.appendChild(el("line",{x1:RULE_X0,y1:RULE_Y,x2:RULE_X0+RULE_W,y2:RULE_Y,stroke:"var(--ink)",["stroke-width"]:2}));
+    // ticks
+    const majors = [1,10,100];
+    const ticks = [1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100];
+    ticks.forEach(v => {
+      const x = rulePos(v);
+      const isMajor = majors.includes(v);
+      const h = isMajor ? 22 : 12;
+      svg.appendChild(el("line",{x1:x,y1:RULE_Y-h,x2:x,y2:RULE_Y+h,stroke:"var(--ink-soft)",["stroke-width"]:isMajor?1.6:1}));
+      svg.appendChild(el("text",{x,y:RULE_Y+h+14,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":isMajor?"12":"10",fill:"var(--ink-soft)"})).textContent = v;
+    });
+    // teal bar for x1: from 1 to x1
+    const p1a = rulePos(1), p1b = rulePos(x1);
+    svg.appendChild(el("rect",{x:p1a,y:RULE_Y-38,width:(p1b-p1a),height:10,fill:"var(--c1)",opacity:0.75,rx:3}));
+    svg.appendChild(el("text",{x:(p1a+p1b)/2,y:RULE_Y-44,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"12","font-weight":"600",fill:"var(--c1)"})).textContent = "x1 = "+fmtLog(x1);
+    // gold bar for x2: starts at x1's landing point, same length as log(x2)
+    const goldLen = rulePos(x2)-rulePos(1);
+    const p2a = p1b, p2b = p1b+goldLen;
+    svg.appendChild(el("rect",{x:p2a,y:RULE_Y-24,width:goldLen,height:10,fill:"var(--c2)",opacity:0.85,rx:3}));
+    svg.appendChild(el("text",{x:(p2a+p2b)/2,y:RULE_Y-30,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"12","font-weight":"600",fill:"var(--c2)"})).textContent = "x2 = "+fmtLog(x2);
+    // landing marker
+    svg.appendChild(el("line",{x1:p2b,y1:RULE_Y-50,x2:p2b,y2:RULE_Y+34,stroke:"var(--c3)",["stroke-width"]:2,["stroke-dasharray"]:"4 3"}));
+    const product = x1*x2;
+    svg.appendChild(el("text",{x:p2b,y:RULE_Y-54,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"13","font-weight":"700",fill:"var(--c3)"})).textContent = fmtLog(product);
+
+    document.getElementById("slideRuleVerdict").innerHTML =
+      `log₁₀(${fmtLog(x1)}) = <b>${Math.log10(x1).toFixed(4)}</b> &nbsp;+&nbsp; log₁₀(${fmtLog(x2)}) = <b>${Math.log10(x2).toFixed(4)}</b> &nbsp;=&nbsp; <b>${(Math.log10(x1)+Math.log10(x2)).toFixed(4)}</b><br>`+
+      `Reading the ruler at that combined length gives <span class="big">${fmtLog(product)}</span> &nbsp;·&nbsp; direct multiplication: ${fmtLog(x1)} × ${fmtLog(x2)} = <span class="big">${fmtLog(product)}</span> — identical, always.`;
+  }
+  [srX1,srX2].forEach(inp => inp.addEventListener("input", renderSlideRule));
+  renderSlideRule();
+
+  const logA=document.getElementById("logA"), logB=document.getElementById("logB");
+  function renderLogLaw(){
+    const a=parseInt(logA.value,10), b=parseInt(logB.value,10);
+    logAOut.textContent=a; logBOut.textContent=b;
+    const la=Math.log10(a), lb=Math.log10(b);
+    document.getElementById("logLawVerdict").innerHTML =
+      `log(${a}) + log(${b}) = ${la.toFixed(4)} + ${lb.toFixed(4)} = <b>${(la+lb).toFixed(4)}</b> &nbsp;·&nbsp; log(${a}×${b}) = log(${a*b}) = <b>${Math.log10(a*b).toFixed(4)}</b> — <span class="good-t">match</span><br>`+
+      `log(${a}) − log(${b}) = ${(la-lb).toFixed(4)} &nbsp;·&nbsp; log(${a}÷${b}) = log(${fmtLog(a/b)}) = <b>${Math.log10(a/b).toFixed(4)}</b> — <span class="good-t">match</span>`;
+  }
+  [logA,logB].forEach(inp => inp.addEventListener("input", renderLogLaw));
+  renderLogLaw();
+})();
+</script>
+</body>
+</html>

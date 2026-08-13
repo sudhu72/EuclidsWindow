@@ -60,15 +60,17 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Companion to the Feynman Math Tutorial · Parts 1, 2, 8</div>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Transform, Zoom, Flow</div>
     <h1>Three Motions</h1>
     <p>A matrix warping the plane, a curve flattening as you zoom, and an equation's arrows guiding a path over time — three ideas that are much easier to trust once you can watch them happen.</p>
   </header>
 
   <div class="tabs">
     <button class="tab active" data-tab="linalg">Linear Transformations</button>
+    <button class="tab" data-tab="span">Span Builder</button>
     <button class="tab" data-tab="calc">Tangent Line &amp; Riemann Sum</button>
     <button class="tab" data-tab="ode">Direction Fields</button>
+    <button class="tab" data-tab="osc">Oscillator</button>
   </div>
 
   <!-- ============ LINEAR ALGEBRA ============ -->
@@ -92,6 +94,26 @@
         <div class="stat" id="eigStat">eigenvalues: —</div>
       </div>
       <p class="caption">Grey = original grid and basis vectors. Purple = after the matrix acts. Dashed gold lines, if shown, are eigenvector directions — the only lines that map onto themselves.</p>
+    </div>
+  </div>
+
+  <!-- ============ SPAN BUILDER ============ -->
+  <div class="panel" id="panel-span">
+    <div class="card">
+      <h2>Every Point You Can Reach By Scaling and Adding</h2>
+      <p class="sub"><b>What's happening:</b> pick two vectors, <span class="formula">u</span> and <span class="formula">v</span>. Their <b>span</b> is every point reachable as <span class="formula">c₁u + c₂v</span> for <em>some</em> pair of numbers — drag the sliders and watch the combined vector <span class="formula">w</span> move to exactly that point.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Sweep and trace</em> to fire hundreds of random <span class="formula">(c₁,c₂)</span> pairs and watch the dots fill in — with independent vectors, they cover the <em>entire plane</em>. Then set <span class="formula">v = 2×u</span> (try u=(2,1), v=(4,2)) and sweep again: every dot lands on one single line, no matter how hard the sliders try. That collapse <em>is</em> what "linearly dependent" means.</p>
+      <div class="row"><label>u = (</label><input type="number" id="spUx" value="2" step="0.5" style="width:52px;"><span>,</span><input type="number" id="spUy" value="1" step="0.5" style="width:52px;"><span>)</span></div>
+      <div class="row"><label>v = (</label><input type="number" id="spVx" value="1" step="0.5" style="width:52px;"><span>,</span><input type="number" id="spVy" value="2" step="0.5" style="width:52px;"><span>)</span></div>
+      <div class="row"><label>c₁</label><input type="range" id="spC1" min="-3" max="3" step="0.1" value="1"><span class="readout" id="spC1Out">1.0</span></div>
+      <div class="row"><label>c₂</label><input type="range" id="spC2" min="-3" max="3" step="0.1" value="1"><span class="readout" id="spC2Out">1.0</span></div>
+      <button class="op" id="btnSweep">Sweep and trace ▶</button>
+      <button class="op" id="btnClearSweep">Clear trace</button>
+      <svg id="spanSvg" viewBox="-160 -160 320 320"></svg>
+      <div class="statrow">
+        <div class="stat" id="spanStat">w = c₁u + c₂v = —</div>
+      </div>
+      <p class="caption"><b>Why it matters:</b> teal = u, gold = v, purple = w = c₁u+c₂v. Faint dots are the sweep's trail. Independent vectors' span is the whole plane — the machinery behind "these two vectors form a basis." Dependent vectors' span collapses to one line through the origin, exactly when <span class="formula">det(u,v) = 0</span>.</p>
     </div>
   </div>
 
@@ -131,8 +153,23 @@
     </div>
   </div>
 
+  <!-- ============ OSCILLATOR ============ -->
+  <div class="panel" id="panel-osc">
+    <div class="card">
+      <h2>The Restoring-Force Equation: A Spring, Not a Drift</h2>
+      <p class="sub"><b>What's happening:</b> the direction-field tab's equation, <span class="formula">dx/dt = k·x</span>, only ever grows or decays — it can't swing back and forth. A spring needs a different rule: the force always pulls <em>back toward center</em>, proportional to how far you've stretched it, <span class="formula">d²x/dt² = −ω²x</span>. Watch the mass bounce while the trace below draws out <span class="formula">x(t)</span> in real time.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> raise <span class="formula">ω</span> and watch the spring oscillate faster — a stiffer spring restores itself quicker. Then raise the damping <span class="formula">b</span> above zero and watch the once-endless swing decay into stillness, exactly the way a real pendulum eventually settles.</p>
+      <div class="row"><label>ω</label><input type="range" id="oscOmega" min="0.5" max="3" step="0.1" value="1.5"><span class="readout" id="oscOmegaOut">1.5</span></div>
+      <div class="row"><label>damping b</label><input type="range" id="oscDamp" min="0" max="1" step="0.05" value="0"><span class="readout" id="oscDampOut">0.00</span></div>
+      <button class="op active" id="btnOscPlay">⏸ Pause</button>
+      <button class="op" id="btnOscReset">Reset</button>
+      <svg id="oscSvg" viewBox="0 0 400 300"></svg>
+      <p class="caption">Left: the mass on its spring, oscillating around the center line. Right: <span class="formula">x(t)</span> traced live — undamped, it repeats forever; damped, it decays toward zero, the same "restoring force wins in the end" shape as Newton's cooling law.</p>
+    </div>
+  </div>
+
   <footer>
-    <p><b>Where this connects:</b> the eigenvector directions here are the same "stretch, don't rotate" idea from Part 1.2 — try the shear preset and notice only one direction survives. The tangent line is Part 2's "local straight-line approximation," and the Riemann sum is literally the construction behind the Fundamental Theorem of Calculus. The direction field traces exactly the "leaf on a river of arrows" picture from Part 8 — Euler's method is that picture, made computational, one tiny step at a time.</p>
+    <p><b>Where this connects:</b> the eigenvector directions here are the same "stretch, don't rotate" idea from linear algebra — try the shear preset and notice only one direction survives. The span builder is the same tutorial's other core idea, one level more basic than eigenvectors: not "which direction survives," but "which points are reachable at all" by scaling and adding two vectors. The tangent line is calculus's "local straight-line approximation," and the Riemann sum is literally the construction behind the Fundamental Theorem of Calculus. The direction field traces exactly the "leaf on a river of arrows" picture from differential equations — Euler's method is that picture, made computational, one tiny step at a time — and the oscillator is that same differential-equations toolkit applied to the one shape (restoring force) a pure growth/decay equation can never produce.</p>
   </footer>
 </div>
 
@@ -386,6 +423,126 @@
   });
   document.getElementById("btnClearPath").addEventListener("click", () => { startPoint=null; renderOde(); });
   renderOde();
+
+  // ================= SPAN BUILDER =================
+  const spUx=document.getElementById("spUx"), spUy=document.getElementById("spUy"),
+        spVx=document.getElementById("spVx"), spVy=document.getElementById("spVy"),
+        spC1=document.getElementById("spC1"), spC2=document.getElementById("spC2");
+  const spanSvg = document.getElementById("spanSvg");
+  let sweepDots = [], sweepTimer = null;
+
+  function renderSpan(){
+    const ux=parseFloat(spUx.value)||0, uy=parseFloat(spUy.value)||0,
+          vx=parseFloat(spVx.value)||0, vy=parseFloat(spVy.value)||0;
+    const c1=parseFloat(spC1.value), c2=parseFloat(spC2.value);
+    document.getElementById("spC1Out").textContent = c1.toFixed(1);
+    document.getElementById("spC2Out").textContent = c2.toFixed(1);
+    const wx=c1*ux+c2*vx, wy=c1*uy+c2*vy;
+    const det = ux*vy-uy*vx;
+    const independent = Math.abs(det) > 1e-6;
+
+    spanSvg.innerHTML = "";
+    spanSvg.appendChild(el("line",{x1:-160,y1:0,x2:160,y2:0,stroke:"var(--line)",["stroke-width"]:1}));
+    spanSvg.appendChild(el("line",{x1:0,y1:-160,x2:0,y2:160,stroke:"var(--line)",["stroke-width"]:1}));
+    sweepDots.forEach(pt => {
+      spanSvg.appendChild(el("circle",{cx:pt[0]*SCALE, cy:-pt[1]*SCALE, r:2, fill: independent ? "var(--accent)" : "var(--c2)", opacity:0.4}));
+    });
+    function arrow(x2,y2,color,w){
+      spanSvg.appendChild(el("line",{x1:0,y1:0,x2,y2,stroke:color,["stroke-width"]:w||3}));
+      spanSvg.appendChild(el("circle",{cx:x2,cy:y2,r:4,fill:color}));
+    }
+    arrow(ux*SCALE, -uy*SCALE, "var(--c1)");
+    arrow(vx*SCALE, -vy*SCALE, "var(--c2)");
+    arrow(wx*SCALE, -wy*SCALE, "var(--accent)", 3.4);
+
+    document.getElementById("spanStat").innerHTML =
+      `w = ${c1.toFixed(1)}·u + ${c2.toFixed(1)}·v = (${wx.toFixed(2)}, ${wy.toFixed(2)}) &nbsp;·&nbsp; ` +
+      (independent
+        ? `<b style="color:var(--c1)">independent — span = the whole plane</b>`
+        : `<b style="color:var(--c2)">dependent (det=0) — span collapses to one line</b>`);
+  }
+  function sweepOnce(){
+    const ux=parseFloat(spUx.value)||0, uy=parseFloat(spUy.value)||0,
+          vx=parseFloat(spVx.value)||0, vy=parseFloat(spVy.value)||0;
+    for(let i=0;i<15;i++){
+      if(sweepDots.length>700) sweepDots.shift();
+      const rc1 = Math.random()*6-3, rc2 = Math.random()*6-3;
+      sweepDots.push([rc1*ux+rc2*vx, rc1*uy+rc2*vy]);
+    }
+    renderSpan();
+  }
+  document.getElementById("btnSweep").addEventListener("click", () => {
+    if(sweepTimer) return;
+    let ticks=0;
+    sweepTimer = setInterval(() => { sweepOnce(); if(++ticks>=30){ clearInterval(sweepTimer); sweepTimer=null; } }, 50);
+  });
+  document.getElementById("btnClearSweep").addEventListener("click", () => { sweepDots=[]; renderSpan(); });
+  [spUx,spUy,spVx,spVy,spC1,spC2].forEach(inp => inp.addEventListener("input", renderSpan));
+  renderSpan();
+
+  // ================= OSCILLATOR =================
+  const oscSvg = document.getElementById("oscSvg");
+  const oscOmega = document.getElementById("oscOmega"), oscDamp = document.getElementById("oscDamp");
+  const oscOmegaOut = document.getElementById("oscOmegaOut"), oscDampOut = document.getElementById("oscDampOut");
+  const OSC_A = 2, OSC_WINDOW = 12;
+  let oscT = 0, oscTrace = [], oscTimer = null;
+
+  function oscX(t){
+    const w = parseFloat(oscOmega.value), b = parseFloat(oscDamp.value);
+    return OSC_A * Math.exp(-b*t) * Math.cos(w*t);
+  }
+  function renderOsc(){
+    oscOmegaOut.textContent = parseFloat(oscOmega.value).toFixed(1);
+    oscDampOut.textContent = parseFloat(oscDamp.value).toFixed(2);
+    const x = oscX(oscT);
+    oscSvg.innerHTML = "";
+
+    // spring diagram (left)
+    const ceilingX=75, ceilingY=20;
+    const massY = 150 + x*40;
+    oscSvg.appendChild(el("line",{x1:30,y1:ceilingY,x2:120,y2:ceilingY,stroke:"var(--ink)",["stroke-width"]:3}));
+    const segs=8; let d=`M${ceilingX},${ceilingY} `;
+    for(let i=1;i<segs;i++){
+      const yy = ceilingY + (massY-ceilingY)*i/segs;
+      const xx = ceilingX + (i%2===0?12:-12);
+      d += `L${xx},${yy} `;
+    }
+    d += `L${ceilingX},${massY} `;
+    oscSvg.appendChild(el("path",{d, fill:"none", stroke:"var(--c1)", ["stroke-width"]:2}));
+    oscSvg.appendChild(el("line",{x1:20,y1:150,x2:130,y2:150,stroke:"var(--line)",["stroke-width"]:1, ["stroke-dasharray"]:"3 3"}));
+    oscSvg.appendChild(el("circle",{cx:ceilingX,cy:massY,r:12,fill:"var(--accent)"}));
+
+    // trace plot (right)
+    const plotX0=180, plotX1=400, plotY0=30, plotY1=270, plotMidY=(plotY0+plotY1)/2;
+    oscSvg.appendChild(el("line",{x1:plotX0,y1:plotMidY,x2:plotX1,y2:plotMidY,stroke:"var(--line)",["stroke-width"]:1}));
+    oscSvg.appendChild(el("line",{x1:plotX0,y1:plotY0,x2:plotX0,y2:plotY1,stroke:"var(--line)",["stroke-width"]:1}));
+    let dtrace = "";
+    oscTrace.forEach(pt => {
+      const tRel = oscT - pt[0];
+      if(tRel > OSC_WINDOW || tRel < 0) return;
+      const px = plotX1 - (tRel/OSC_WINDOW)*(plotX1-plotX0);
+      const py = plotMidY - pt[1]*40;
+      dtrace += (dtrace===""?"M":"L") + px + "," + py + " ";
+    });
+    oscSvg.appendChild(el("path",{d:dtrace, fill:"none", stroke:"var(--accent)", ["stroke-width"]:2}));
+    oscSvg.appendChild(el("circle",{cx:plotX1,cy:plotMidY-x*40,r:4,fill:"var(--c1)"}));
+  }
+  function oscTick(){
+    oscT += 0.05;
+    oscTrace.push([oscT, oscX(oscT)]);
+    while(oscTrace.length && (oscT - oscTrace[0][0]) > OSC_WINDOW+2) oscTrace.shift();
+    renderOsc();
+  }
+  function startOsc(){ if(!oscTimer) oscTimer = setInterval(oscTick, 40); }
+  function pauseOsc(){ if(oscTimer){ clearInterval(oscTimer); oscTimer=null; } }
+  document.getElementById("btnOscPlay").addEventListener("click", (e) => {
+    if(oscTimer){ pauseOsc(); e.target.textContent="▶ Play"; e.target.classList.remove("active"); }
+    else { startOsc(); e.target.textContent="⏸ Pause"; e.target.classList.add("active"); }
+  });
+  document.getElementById("btnOscReset").addEventListener("click", () => { oscT=0; oscTrace=[]; renderOsc(); });
+  [oscOmega,oscDamp].forEach(inp => inp.addEventListener("input", renderOsc));
+  renderOsc();
+  startOsc();
 
 })();
 </script>

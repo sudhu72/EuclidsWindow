@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shapes, Rearranged — Geometry, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:90px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  .good-t{ color:var(--c1); font-weight:700; }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  .bar{ height:30px; border-radius:8px; display:flex; align-items:center; overflow:hidden; border:1px solid var(--line); background:#fff; margin-bottom:8px; }
+  .bar > div{ display:flex; align-items:center; justify-content:flex-end; padding-right:8px; color:#fff; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; transition:width .25s ease; white-space:nowrap; height:100%; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Geometry</div>
+    <h1>Shapes, Rearranged</h1>
+    <p>Five facts everyone learns and almost nobody watches happen: why a transversal stamps the same angle pattern twice, why a triangle's angles are forced to 180°, why the same four triangles prove a²+b²=c² two different ways, why a sliced pizza becomes a rectangle, and why elephants need such thick legs. Each one built from a picture, not asserted.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="angles">Angle Facts</button>
+    <button class="tab" data-tab="triangle">Triangle Proof</button>
+    <button class="tab" data-tab="pythagoras">Pythagorean Rearrangement</button>
+    <button class="tab" data-tab="circle">Circle Unrolling</button>
+    <button class="tab" data-tab="scaling">Square-Cube Scaling</button>
+  </div>
+
+  <!-- ============ TAB 1: ANGLE FACTS ============ -->
+  <div class="panel active" id="panel-angles">
+    <div class="card">
+      <h2>The Stamped-Copy Pattern</h2>
+      <p class="sub"><b>What's happening:</b> two parallel lines, cut by one transversal, create an identical angle pattern at each crossing — as if a rubber stamp hit the page twice. Drag the transversal's angle and watch every one of the eight angles update together.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> pick each relationship button and watch which pair of angles highlights — corresponding angles sit in matching positions and are always equal; alternate interior angles sit on opposite sides of the transversal, between the lines, and are also always equal; co-interior angles sit on the same side, between the lines, and always add to 180°.</p>
+      <div class="row"><label>Transversal angle</label><input type="range" id="angTheta" min="15" max="165" step="1" value="55"><span class="readout" id="angThetaOut">55°</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnRelNone">Show all</button>
+        <button class="op" id="btnRelCorr">Corresponding</button>
+        <button class="op" id="btnRelAlt">Alternate interior</button>
+        <button class="op" id="btnRelCoint">Co-interior</button>
+      </div>
+      <svg id="angleSvg" viewBox="0 0 500 300"></svg>
+      <div class="verdict" id="angleVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> these three facts, chained together, are the entire raw material the triangle angle-sum proof (next tab) assembles into a single straight line.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: TRIANGLE PROOF ============ -->
+  <div class="panel" id="panel-triangle">
+    <div class="card">
+      <h2>Watch the Angle-Sum Assemble Itself</h2>
+      <p class="sub"><b>What's happening:</b> drag the apex of the triangle. A construction line, parallel to the base, is drawn through the apex — and by the transversal facts from the previous tab, the two base angles get "relocated" up to the apex, sitting right next to its own angle, all three visibly forming one straight line: 180°.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag the apex into a tall, skinny triangle, then a short, wide one — the three relocated angles keep assembling into a straight line every time, for every shape you can make.</p>
+      <div class="row"><label>Apex x</label><input type="range" id="triAx" min="110" max="290" step="1" value="200"><span class="readout" id="triAxOut">200</span></div>
+      <div class="row"><label>Apex y</label><input type="range" id="triAy" min="40" max="180" step="1" value="80"><span class="readout" id="triAyOut">80</span></div>
+      <svg id="triangleSvg" viewBox="0 0 400 260"></svg>
+      <div class="verdict" id="triangleVerdict"></div>
+
+      <h2 style="margin-top:28px;">Thales's Trick: Scale It and Watch the Angles Freeze</h2>
+      <p class="sub"><b>What's happening:</b> scale the same triangle up or down from its left vertex. Every side length changes — but every angle stays frozen, because scaling never touches shape, only size. That frozen-angle, scaled-sides pattern is exactly what Thales used to measure the pyramid.</p>
+      <div class="row"><label>Scale k</label><input type="range" id="triScale" min="0.5" max="2" step="0.05" value="1"><span class="readout" id="triScaleOut">1.00</span></div>
+      <svg id="similaritySvg" viewBox="0 0 400 260"></svg>
+      <div class="verdict" id="similarityVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> "same angles, scaled sides" is the entire content of similarity — and it's a free, exact ratio the moment you can guarantee two triangles share their angles, no protractor required in the field.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: PYTHAGOREAN REARRANGEMENT ============ -->
+  <div class="panel" id="panel-pythagoras">
+    <div class="card">
+      <h2>Same Four Triangles, Two Arrangements, One Leftover Area</h2>
+      <p class="sub"><b>What's happening:</b> a square of side (a+b) always holds the same four right triangles (legs a, b) no matter how you place them inside it — so whatever's left over has to have the identical total area, however differently-shaped the leftover looks.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> toggle between arrangements and watch the leftover space snap from one tilted square (area c²) into two upright squares (areas a² and b²) — the readout confirms both leftovers are exactly the same number, for any a and b you choose.</p>
+      <div class="row"><label>Leg a</label><input type="range" id="pytA" min="1" max="6" step="0.5" value="3"><span class="readout" id="pytAOut">3</span></div>
+      <div class="row"><label>Leg b</label><input type="range" id="pytB" min="1" max="6" step="0.5" value="4"><span class="readout" id="pytBOut">4</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnArrTilted">Arrangement 1: tilted c² square</button>
+        <button class="op" id="btnArrSplit">Arrangement 2: split a² + b² squares</button>
+      </div>
+      <svg id="pythSvg" viewBox="0 0 340 340"></svg>
+      <div class="verdict" id="pythVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is area conservation doing all the work — nobody had to assume a²+b²=c², it fell out of refusing to let the same square's total area change just because you rearranged what's inside it.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: CIRCLE UNROLLING ============ -->
+  <div class="panel" id="panel-circle">
+    <div class="card">
+      <h2>Slicing a Pizza Until It's a Rectangle</h2>
+      <p class="sub"><b>What's happening:</b> the circle on the left is sliced into equal wedges. On the right, those same wedges are laid out alternating tip-up, tip-down — interlocking into a shape that hugs closer and closer to a true rectangle, width <span class="formula">πr</span>, height <span class="formula">r</span>, as the wedge count climbs.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag the wedge count from a chunky 4 up to 100 and watch the right-hand shape's zigzag edges smooth into straight lines, while the area readout locks onto <span class="formula">πr²</span>.</p>
+      <div class="row"><label>Wedges N</label><input type="range" id="circN" min="4" max="120" step="1" value="12"><span class="readout" id="circNOut">12</span></div>
+      <div class="cols">
+        <div class="col"><svg id="circleSvg" viewBox="0 0 200 200"></svg></div>
+        <div class="col"><svg id="unrollSvg" viewBox="0 0 340 130"></svg></div>
+      </div>
+      <div class="verdict" id="circleVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the only approximation here is treating each wedge's curved outer edge as straight — and that error shrinks to nothing as the wedges get thinner, which is the exact same limiting idea calculus later formalizes as a Riemann sum.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: SQUARE-CUBE SCALING ============ -->
+  <div class="panel" id="panel-scaling">
+    <div class="card">
+      <h2>Length, Area, and Volume Race Apart</h2>
+      <p class="sub"><b>What's happening:</b> scale every dimension of a shape by <span class="formula">k</span>. Length scales by <span class="formula">k</span>, area by <span class="formula">k²</span>, volume by <span class="formula">k³</span> — three different exponents racing apart the moment k moves away from 1.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> push k up to 2 and watch length merely double while volume rockets to 8× — then watch the strength-to-weight bar (∝1/k) shrink, the exact reason a scaled-up mouse would collapse under its own re-sized bones.</p>
+      <div class="row"><label>Scale k</label><input type="range" id="scaleK" min="0.5" max="3" step="0.05" value="1"><span class="readout" id="scaleKOut">1.00</span></div>
+      <div class="cols">
+        <div class="col"><svg id="cubeSvg" viewBox="0 0 200 200"></svg></div>
+        <div class="col">
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Length ∝ k</div>
+          <div class="bar" id="barL"><div style="background:var(--c1)"></div></div>
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Area ∝ k²</div>
+          <div class="bar" id="barA"><div style="background:var(--c2)"></div></div>
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Volume ∝ k³</div>
+          <div class="bar" id="barV"><div style="background:var(--c4)"></div></div>
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Strength ÷ weight ∝ 1/k</div>
+          <div class="bar" id="barR"><div style="background:var(--c3)"></div></div>
+        </div>
+      </div>
+      <div class="verdict" id="scalingVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this single mismatch of exponents is why elephants have disproportionately thick legs, why shrews must eat almost constantly, and why a scaled-up bridge model needs far more than proportionally thicker beams.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../geometry-toolkit.md">Geometry — The Toolkit</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x,y,str,color,size,anchor,weight){
+    const t = el("text",{x,y,["text-anchor"]:anchor||"middle","font-family":"IBM Plex Mono, monospace","font-size":size||12,fill:color||"var(--ink)"});
+    if(weight) t.setAttribute("font-weight",weight);
+    t.textContent = str;
+    return t;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* =========================================================
+     TAB 1 — ANGLE FACTS
+     ========================================================= */
+  const angTheta = document.getElementById("angTheta");
+  let relMode = "none";
+  const TOP_Y = 100, BOT_Y = 220, MID_X = 250;
+  function renderAngles(){
+    const thetaDeg = parseFloat(angTheta.value);
+    angThetaOut.textContent = thetaDeg.toFixed(0)+"°";
+    const theta = thetaDeg*Math.PI/180;
+    const svg = document.getElementById("angleSvg");
+    svg.innerHTML = "";
+    // horizontal parallel lines
+    svg.appendChild(el("line",{x1:20,y1:TOP_Y,x2:480,y2:TOP_Y,stroke:"var(--ink)",["stroke-width"]:2}));
+    svg.appendChild(el("line",{x1:20,y1:BOT_Y,x2:480,y2:BOT_Y,stroke:"var(--ink)",["stroke-width"]:2}));
+    svg.appendChild(txt(30,TOP_Y-10,"line 1","var(--ink-soft)",11,"start"));
+    svg.appendChild(txt(30,BOT_Y+20,"line 2","var(--ink-soft)",11,"start"));
+    // transversal through midpoint, both directions
+    const midY = (TOP_Y+BOT_Y)/2;
+    const sUp = (midY-TOP_Y+40)/Math.sin(theta);   // extend a bit above top line
+    const sDown = -(BOT_Y-midY+40)/Math.sin(theta); // extend a bit below bottom line
+    function pt(s){ return [MID_X + s*Math.cos(theta), midY - s*Math.sin(theta)]; }
+    const [ux,uy] = pt(sUp), [dx,dy] = pt(sDown);
+    svg.appendChild(el("line",{x1:ux,y1:uy,x2:dx,y2:dy,stroke:"var(--accent)",["stroke-width"]:2.4}));
+    // crossing points
+    const s1 = (midY-TOP_Y)/Math.sin(theta); // s at which y=TOP_Y
+    const s2 = -(BOT_Y-midY)/Math.sin(theta);
+    const [c1x,c1y] = pt(s1), [c2x,c2y] = pt(s2);
+    // angle values: NE=theta, NW=180-theta, SE=180-theta, SW=theta  (degrees)
+    const NE = thetaDeg, NW = 180-thetaDeg, SE = 180-thetaDeg, SW = thetaDeg;
+    function labelQuad(cx,cy,val,dxOff,dyOff,id){
+      const g = txt(cx+dxOff, cy+dyOff, val.toFixed(0)+"°", "var(--ink)", 13, "middle", "600");
+      g.setAttribute("data-id", id);
+      svg.appendChild(g);
+      const bg = el("rect",{x:cx+dxOff-18,y:cy+dyOff-13,width:36,height:18,fill:"transparent",rx:5,["data-bg"]:id});
+      svg.insertBefore(bg, g);
+      return {label:g, bg};
+    }
+    const labels = {};
+    labels.c1NE = labelQuad(c1x,c1y,NE, 30,-16,"c1NE");
+    labels.c1NW = labelQuad(c1x,c1y,NW,-30,-16,"c1NW");
+    labels.c1SE = labelQuad(c1x,c1y,SE, 30, 20,"c1SE");
+    labels.c1SW = labelQuad(c1x,c1y,SW,-30, 20,"c1SW");
+    labels.c2NE = labelQuad(c2x,c2y,NE, 30,-16,"c2NE");
+    labels.c2NW = labelQuad(c2x,c2y,NW,-30,-16,"c2NW");
+    labels.c2SE = labelQuad(c2x,c2y,SE, 30, 20,"c2SE");
+    labels.c2SW = labelQuad(c2x,c2y,SW,-30, 20,"c2SW");
+    svg.appendChild(el("circle",{cx:c1x,cy:c1y,r:3,fill:"var(--ink)"}));
+    svg.appendChild(el("circle",{cx:c2x,cy:c2y,r:3,fill:"var(--ink)"}));
+
+    let pair = null, relText = "";
+    if(relMode==="corr"){ pair=["c1NE","c2NE"]; relText = `Corresponding angles: both <b>${NE.toFixed(0)}°</b> — same position at each crossing, always equal.`; }
+    else if(relMode==="alt"){ pair=["c1SW","c2NE"]; relText = `Alternate interior angles: both <b>${SW.toFixed(0)}°</b> — opposite sides of the transversal, between the lines, always equal.`; }
+    else if(relMode==="coint"){ pair=["c1SW","c2NW"]; relText = `Co-interior angles: <b>${SW.toFixed(0)}°</b> + <b>${NW.toFixed(0)}°</b> = <b>180°</b> — same side, between the lines, always supplementary.`; }
+    document.querySelectorAll("#angleSvg rect[data-bg]").forEach(r => {
+      const id = r.getAttribute("data-bg");
+      r.setAttribute("fill", (pair && pair.includes(id)) ? "var(--c2)" : "transparent");
+      r.setAttribute("opacity", "0.35");
+    });
+    document.getElementById("angleVerdict").innerHTML = pair ? relText : "Every crossing repeats the identical pattern — pick a relationship above to highlight a specific pair.";
+  }
+  angTheta.addEventListener("input", renderAngles);
+  [["btnRelNone","none"],["btnRelCorr","corr"],["btnRelAlt","alt"],["btnRelCoint","coint"]].forEach(([id,mode]) => {
+    document.getElementById(id).addEventListener("click", function(){
+      relMode = mode;
+      document.querySelectorAll("#panel-angles .row .op").forEach(b=>b.classList.remove("active"));
+      this.classList.add("active");
+      renderAngles();
+    });
+  });
+  renderAngles();
+
+  /* =========================================================
+     TAB 2 — TRIANGLE PROOF + SIMILARITY
+     ========================================================= */
+  const triAx=document.getElementById("triAx"), triAy=document.getElementById("triAy");
+  const L=[60,220], R=[340,220];
+  function angleBetween(p, q1, q2){
+    const v1=[q1[0]-p[0], q1[1]-p[1]], v2=[q2[0]-p[0], q2[1]-p[1]];
+    const dot = v1[0]*v2[0]+v1[1]*v2[1];
+    const n1 = Math.hypot(v1[0],v1[1]), n2=Math.hypot(v2[0],v2[1]);
+    return Math.acos(Math.max(-1,Math.min(1,dot/(n1*n2))))*180/Math.PI;
+  }
+  function renderTriangle(){
+    const A=[parseFloat(triAx.value), parseFloat(triAy.value)];
+    triAxOut.textContent = A[0].toFixed(0); triAyOut.textContent = A[1].toFixed(0);
+    const svg = document.getElementById("triangleSvg");
+    svg.innerHTML = "";
+    // construction line through A, parallel to base (horizontal)
+    svg.appendChild(el("line",{x1:A[0]-70,y1:A[1],x2:A[0]+70,y2:A[1],stroke:"var(--c2)",["stroke-width"]:1.8,["stroke-dasharray"]:"5 4"}));
+    // triangle edges
+    svg.appendChild(el("line",{x1:L[0],y1:L[1],x2:R[0],y2:R[1],stroke:"var(--ink)",["stroke-width"]:2}));
+    svg.appendChild(el("line",{x1:L[0],y1:L[1],x2:A[0],y2:A[1],stroke:"var(--ink)",["stroke-width"]:2}));
+    svg.appendChild(el("line",{x1:R[0],y1:R[1],x2:A[0],y2:A[1],stroke:"var(--ink)",["stroke-width"]:2}));
+    const angleL = angleBetween(L, R, A);
+    const angleR = angleBetween(R, L, A);
+    const angleA = angleBetween(A, L, R);
+    // relocated angles at A: between construction-line-left-ray and A->L ; between A->R and construction-line-right-ray
+    const relocLeft = angleBetween(A, [A[0]-70,A[1]], L);
+    const relocRight = angleBetween(A, R, [A[0]+70,A[1]]);
+    svg.appendChild(txt(L[0]+30, L[1]-14, angleL.toFixed(0)+"°", "var(--c1)", 13, "middle","700"));
+    svg.appendChild(txt(R[0]-30, R[1]-14, angleR.toFixed(0)+"°", "var(--c4)", 13, "middle","700"));
+    svg.appendChild(txt(A[0], A[1]-28<20?A[1]+34:A[1]-16, angleA.toFixed(0)+"°", "var(--accent)", 13, "middle","700"));
+    svg.appendChild(txt(A[0]-40, A[1]+16, relocLeft.toFixed(0)+"°", "var(--c1)", 12, "middle","700"));
+    svg.appendChild(txt(A[0]+40, A[1]+16, relocRight.toFixed(0)+"°", "var(--c4)", 12, "middle","700"));
+    svg.appendChild(el("circle",{cx:A[0],cy:A[1],r:3,fill:"var(--ink)"}));
+    svg.appendChild(el("circle",{cx:L[0],cy:L[1],r:3,fill:"var(--ink)"}));
+    svg.appendChild(el("circle",{cx:R[0],cy:R[1],r:3,fill:"var(--ink)"}));
+    const sum = relocLeft+angleA+relocRight;
+    document.getElementById("triangleVerdict").innerHTML =
+      `Base angles: <b style="color:var(--c1)">${angleL.toFixed(1)}°</b> (left), <b style="color:var(--c4)">${angleR.toFixed(1)}°</b> (right) — relocated to the apex as <b style="color:var(--c1)">${relocLeft.toFixed(1)}°</b> and <b style="color:var(--c4)">${relocRight.toFixed(1)}°</b> (alternate interior angles, unchanged in value).<br>`+
+      `Along the construction line at the apex: ${relocLeft.toFixed(1)}° + ${angleA.toFixed(1)}° + ${relocRight.toFixed(1)}° = <span class="big">${sum.toFixed(1)}°</span> — a straight line, every time.`;
+  }
+  [triAx,triAy].forEach(inp => inp.addEventListener("input", renderTriangle));
+  renderTriangle();
+
+  const triScale = document.getElementById("triScale");
+  function renderSimilarity(){
+    const k = parseFloat(triScale.value);
+    triScaleOut.textContent = k.toFixed(2);
+    const A0=[parseFloat(triAx.value), parseFloat(triAy.value)];
+    const pivot = L;
+    function scalePt(p){ return [pivot[0]+(p[0]-pivot[0])*k, pivot[1]+(p[1]-pivot[1])*k]; }
+    const Rs = scalePt(R), As = scalePt(A0);
+    const svg = document.getElementById("similaritySvg");
+    svg.innerHTML = "";
+    // faded original
+    svg.appendChild(el("polygon",{points:`${L[0]},${L[1]} ${R[0]},${R[1]} ${A0[0]},${A0[1]}`, fill:"none", stroke:"var(--ink-soft)", ["stroke-width"]:1.5, ["stroke-dasharray"]:"4 3"}));
+    // scaled
+    svg.appendChild(el("polygon",{points:`${L[0]},${L[1]} ${Rs[0]},${Rs[1]} ${As[0]},${As[1]}`, fill:"var(--accent-soft)", stroke:"var(--accent)", ["stroke-width"]:2.4}));
+    const origSides = { LR:Math.hypot(R[0]-L[0],R[1]-L[1]), LA:Math.hypot(A0[0]-L[0],A0[1]-L[1]), RA:Math.hypot(A0[0]-R[0],A0[1]-R[1]) };
+    const newSides = { LR:Math.hypot(Rs[0]-L[0],Rs[1]-L[1]), LA:Math.hypot(As[0]-L[0],As[1]-L[1]), RA:Math.hypot(As[0]-Rs[0],As[1]-Rs[1]) };
+    const angleL0 = angleBetween(L,R,A0), angleLs = angleBetween(L,Rs,As);
+    document.getElementById("similarityVerdict").innerHTML =
+      `Side L–R: ${origSides.LR.toFixed(0)} → ${newSides.LR.toFixed(0)} (×${(newSides.LR/origSides.LR).toFixed(2)}) &nbsp;·&nbsp; Side L–A: ${origSides.LA.toFixed(0)} → ${newSides.LA.toFixed(0)} (×${(newSides.LA/origSides.LA).toFixed(2)})<br>`+
+      `Angle at L: ${angleL0.toFixed(1)}° → <span class="good-t">${angleLs.toFixed(1)}° (unchanged)</span> — every side scaled by exactly <b>${k.toFixed(2)}</b>, every angle frozen. That's similarity.`;
+  }
+  [triScale,triAx,triAy].forEach(inp => inp.addEventListener("input", renderSimilarity));
+  renderSimilarity();
+
+  /* =========================================================
+     TAB 3 — PYTHAGOREAN REARRANGEMENT
+     ========================================================= */
+  const pytA=document.getElementById("pytA"), pytB=document.getElementById("pytB");
+  let arrMode = "tilted";
+  const PYT_SCALE = 28, PYT_ORIGIN = [20,320]; // bottom-left of big square, math coords (y-up), converted below
+  function toSvg(pt){ return [PYT_ORIGIN[0]+pt[0]*PYT_SCALE, PYT_ORIGIN[1]-pt[1]*PYT_SCALE]; }
+  function poly(points, fill, stroke, opacity){
+    const p = points.map(toSvg).map(pt=>pt.join(",")).join(" ");
+    return el("polygon",{points:p, fill, stroke: stroke||"var(--ink)", ["stroke-width"]:1.5, ["fill-opacity"]:opacity===undefined?1:opacity});
+  }
+  function renderPyth(){
+    const a=parseFloat(pytA.value), b=parseFloat(pytB.value);
+    pytAOut.textContent=a; pytBOut.textContent=b;
+    const S=a+b, c=Math.hypot(a,b);
+    const svg = document.getElementById("pythSvg");
+    svg.innerHTML = "";
+    // big square outline
+    svg.appendChild(poly([[0,0],[S,0],[S,S],[0,S]], "none", "var(--ink)"));
+    if(arrMode==="tilted"){
+      const P1=[a,0], P2=[S,a], P3=[b,S], P4=[0,b];
+      // 4 triangles
+      svg.appendChild(poly([[0,0],P1,P4], "var(--c1)", "var(--ink)", 0.55));
+      svg.appendChild(poly([[S,0],P2,P1], "var(--c2)", "var(--ink)", 0.55));
+      svg.appendChild(poly([[S,S],P3,P2], "var(--c1)", "var(--ink)", 0.55));
+      svg.appendChild(poly([[0,S],P4,P3], "var(--c2)", "var(--ink)", 0.55));
+      // tilted square
+      svg.appendChild(poly([P1,P2,P3,P4], "var(--c3)", "var(--accent)", 0.35));
+      const mid = toSvg([S/2, S/2]);
+      svg.appendChild(txt(mid[0], mid[1], "c² = "+(c*c).toFixed(2), "var(--accent)", 13, "middle", "700"));
+    } else {
+      // split arrangement: b-square bottom-left, a-square top-right, two a x b rectangles split into triangles
+      svg.appendChild(poly([[0,0],[b,0],[b,b],[0,b]], "var(--c3)", "var(--accent)", 0.35));
+      svg.appendChild(poly([[b,b],[S,b],[S,S],[b,S]], "var(--c3)", "var(--accent)", 0.35));
+      // bottom-right rectangle split
+      svg.appendChild(poly([[b,0],[S,0],[S,b]], "var(--c1)", "var(--ink)", 0.55));
+      svg.appendChild(poly([[b,0],[S,b],[b,b]], "var(--c2)", "var(--ink)", 0.55));
+      // top-left rectangle split
+      svg.appendChild(poly([[0,b],[b,b],[b,S]], "var(--c2)", "var(--ink)", 0.55));
+      svg.appendChild(poly([[0,b],[b,S],[0,S]], "var(--c1)", "var(--ink)", 0.55));
+      const m1=toSvg([b/2,b/2]), m2=toSvg([(b+S)/2,(b+S)/2]);
+      svg.appendChild(txt(m1[0],m1[1], "b²="+(b*b).toFixed(2), "var(--accent)", 12, "middle","700"));
+      svg.appendChild(txt(m2[0],m2[1], "a²="+(a*a).toFixed(2), "var(--accent)", 12, "middle","700"));
+    }
+    const leftover = arrMode==="tilted" ? c*c : a*a+b*b;
+    document.getElementById("pythVerdict").innerHTML =
+      `Big square: (a+b)² = ${S.toFixed(2)}² = <b>${(S*S).toFixed(2)}</b> &nbsp;·&nbsp; 4 triangles: 4×(½×${a}×${b}) = <b>${(4*0.5*a*b).toFixed(2)}</b><br>`+
+      `Leftover area = ${(S*S).toFixed(2)} − ${(4*0.5*a*b).toFixed(2)} = <span class="big">${leftover.toFixed(2)}</span> — `+
+      (arrMode==="tilted" ? `shaped as one tilted square, c² = ${(c*c).toFixed(2)}.` : `shaped as two upright squares, a²+b² = ${(a*a).toFixed(2)} + ${(b*b).toFixed(2)} = ${(a*a+b*b).toFixed(2)}.`)+
+      ` <b class="good-t">Same number either way.</b>`;
+  }
+  [pytA,pytB].forEach(inp => inp.addEventListener("input", renderPyth));
+  document.getElementById("btnArrTilted").addEventListener("click", function(){ arrMode="tilted"; this.classList.add("active"); document.getElementById("btnArrSplit").classList.remove("active"); renderPyth(); });
+  document.getElementById("btnArrSplit").addEventListener("click", function(){ arrMode="split"; this.classList.add("active"); document.getElementById("btnArrTilted").classList.remove("active"); renderPyth(); });
+  renderPyth();
+
+  /* =========================================================
+     TAB 4 — CIRCLE UNROLLING
+     ========================================================= */
+  const circN = document.getElementById("circN");
+  function renderCircle(){
+    const N = parseInt(circN.value,10);
+    circNOut.textContent = N;
+    const r = 5; // arbitrary unit radius for area math; drawn scaled separately
+    const csvg = document.getElementById("circleSvg");
+    csvg.innerHTML = "";
+    const cx=100, cy=100, R=85;
+    csvg.appendChild(el("circle",{cx,cy,r:R,fill:"none",stroke:"var(--ink)",["stroke-width"]:2}));
+    for(let i=0;i<N;i++){
+      const a = (i/N)*2*Math.PI;
+      const x2=cx+R*Math.cos(a), y2=cy+R*Math.sin(a);
+      csvg.appendChild(el("line",{x1:cx,y1:cy,x2,y2,stroke: i%2===0?"var(--c1)":"var(--c2)",["stroke-width"]:1.2}));
+    }
+    // unrolled strip
+    const usvg = document.getElementById("unrollSvg");
+    usvg.innerHTML = "";
+    const UW=340, UH=130, pad=10;
+    const drawR = UH-2*pad; // pixel height representing radius r
+    const w = (2*Math.PI*drawR)/N; // pixel base width per wedge
+    let maxX = 0;
+    for(let i=0;i<N;i++){
+      const x0 = pad + i*(w/2);
+      const tipUp = i%2===0;
+      const color = i%2===0 ? "var(--c1)" : "var(--c2)";
+      if(tipUp){
+        usvg.appendChild(el("polygon",{points:`${x0},${pad+drawR} ${x0+w},${pad+drawR} ${x0+w/2},${pad}`, fill:color, ["fill-opacity"]:0.55, stroke:"var(--ink)", ["stroke-width"]:0.6}));
+      } else {
+        usvg.appendChild(el("polygon",{points:`${x0},${pad} ${x0+w},${pad} ${x0+w/2},${pad+drawR}`, fill:color, ["fill-opacity"]:0.55, stroke:"var(--ink)", ["stroke-width"]:0.6}));
+      }
+      maxX = Math.max(maxX, x0+w);
+    }
+    usvg.appendChild(el("line",{x1:pad,y1:pad+drawR+10,x2:Math.min(maxX,UW-pad),y2:pad+drawR+10,stroke:"var(--accent)",["stroke-width"]:1.2,["stroke-dasharray"]:"3 3"}));
+    usvg.appendChild(txt((pad+Math.min(maxX,UW-pad))/2, pad+drawR+24, "≈ π·r", "var(--accent)", 11));
+
+    const exactArea = Math.PI*r*r; // always exact
+    const approxWidthUnits = (maxX-pad)/drawR * r; // convert pixel width back to "r units"
+    const approxArea = approxWidthUnits*r;
+    document.getElementById("circleVerdict").innerHTML =
+      `Exact area of ${N} pie slices, summed: <b>${exactArea.toFixed(4)}</b> (= πr², always exact — cutting and moving pieces never changes total area)<br>`+
+      `Straight-edged rectangle approximation: width ≈ <b>${approxWidthUnits.toFixed(4)}</b> (target: πr = ${(Math.PI*r).toFixed(4)}) × height r → area ≈ <b>${approxArea.toFixed(4)}</b> — converging as N grows.`;
+  }
+  circN.addEventListener("input", renderCircle);
+  renderCircle();
+
+  /* =========================================================
+     TAB 5 — SQUARE-CUBE SCALING
+     ========================================================= */
+  const scaleK = document.getElementById("scaleK");
+  function renderScaling(){
+    const k = parseFloat(scaleK.value);
+    scaleKOut.textContent = k.toFixed(2);
+    const svg = document.getElementById("cubeSvg");
+    svg.innerHTML = "";
+    const baseSize = 40;
+    const size = baseSize*k;
+    const cx=100, cy=110;
+    // simple isometric-ish cube: front square + top/side parallelogram hints
+    const depth = size*0.4;
+    const x0=cx-size/2, y0=cy-size/2;
+    // back face (offset)
+    svg.appendChild(el("polygon",{points:`${x0+depth},${y0-depth} ${x0+size+depth},${y0-depth} ${x0+size+depth},${y0+size-depth} ${x0+depth},${y0+size-depth}`, fill:"var(--accent-soft)", stroke:"var(--accent)", ["stroke-width"]:1.2}));
+    // connecting edges
+    [[x0,y0,x0+depth,y0-depth],[x0+size,y0,x0+size+depth,y0-depth],[x0+size,y0+size,x0+size+depth,y0+size-depth],[x0,y0+size,x0+depth,y0+size-depth]].forEach(([a,b,c,d])=>{
+      svg.appendChild(el("line",{x1:a,y1:b,x2:c,y2:d,stroke:"var(--accent)",["stroke-width"]:1}));
+    });
+    // front face
+    svg.appendChild(el("rect",{x:x0,y:y0,width:size,height:size,fill:"var(--accent)",["fill-opacity"]:0.75,stroke:"var(--accent)",["stroke-width"]:1.6}));
+    document.getElementById("barL").firstElementChild.style.width = Math.min(100, k*30)+"%";
+    document.getElementById("barA").firstElementChild.style.width = Math.min(100, k*k*30)+"%";
+    document.getElementById("barV").firstElementChild.style.width = Math.min(100, k*k*k*30)+"%";
+    document.getElementById("barR").firstElementChild.style.width = Math.min(100, (1/k)*60)+"%";
+    document.getElementById("barL").firstElementChild.textContent = "×"+k.toFixed(2);
+    document.getElementById("barA").firstElementChild.textContent = "×"+(k*k).toFixed(2);
+    document.getElementById("barV").firstElementChild.textContent = "×"+(k*k*k).toFixed(2);
+    document.getElementById("barR").firstElementChild.textContent = "×"+(1/k).toFixed(2);
+    document.getElementById("scalingVerdict").innerHTML =
+      `k = ${k.toFixed(2)}: length ×<b>${k.toFixed(2)}</b>, area ×<b>${(k*k).toFixed(2)}</b>, volume ×<b>${(k*k*k).toFixed(2)}</b>.<br>`+
+      `Strength-to-weight ∝ area/volume = 1/k → <b>${(1/k).toFixed(2)}×</b> the original — ${k>1?'shrinking':'growing'} as the shape ${k>1?'grows':'shrinks'}.`;
+  }
+  scaleK.addEventListener("input", renderScaling);
+  renderScaling();
+})();
+</script>
+</body>
+</html>

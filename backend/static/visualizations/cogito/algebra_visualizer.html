@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restoring the Balance — Algebra, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:90px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  input[type=number]{ width:66px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; font-family:"IBM Plex Mono",monospace; }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  .good-t{ color:var(--c1); font-weight:700; } .bad-t{ color:var(--c3); font-weight:700; }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft); margin-top:10px; max-height:140px; overflow-y:auto; white-space:pre-line; background:#F5F4F0; border-radius:8px; padding:10px 12px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Algebra</div>
+    <h1>Restoring the Balance</h1>
+    <p>Five moves everyone learns and almost nobody watches happen: why solving an equation is literally "restoring a balance" (the word algebra's own meaning), why one rectangle proves the distributive property, why completing a square hands you the quadratic formula for free, how factoring is a searchable puzzle, and what a function actually does. Each one built from a picture, not asserted.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="balance">Balance Scale</button>
+    <button class="tab" data-tab="distrib">Distributive Property</button>
+    <button class="tab" data-tab="square">Completing the Square</button>
+    <button class="tab" data-tab="factor">Factoring Puzzle</button>
+    <button class="tab" data-tab="function">Function Machine</button>
+  </div>
+
+  <!-- ============ TAB 1: BALANCE SCALE ============ -->
+  <div class="panel active" id="panel-balance">
+    <div class="card">
+      <h2>Solve It By Keeping Both Pans Level</h2>
+      <p class="sub"><b>What's happening:</b> the equation is a balance scale. Each step below applies one legal move to <em>both</em> pans at once — the only kind of move a level scale allows — until the left pan holds nothing but <span class="formula">x</span> alone.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> step through a preset equation and watch the scale stay level after every single move — that's not a coincidence, it's the definition of a legal algebraic step. Then check the final answer by substituting it back into the original equation.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-preset="3,4,19">3x + 4 = 19</button>
+        <button class="op" data-preset="2,-5,11">2x − 5 = 11</button>
+        <button class="op" data-preset="-4,7,-1">−4x + 7 = −1</button>
+        <button class="op" data-preset="5,12,2">5x + 12 = 2</button>
+      </div>
+      <svg id="balanceSvg" viewBox="0 0 400 220"></svg>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnBalPrev">◀ Back</button>
+        <button class="op active" id="btnBalNext">Next step ▶</button>
+        <button class="op" id="btnBalReset">Reset</button>
+      </div>
+      <div class="verdict" id="balanceVerdict"></div>
+      <div class="steplog" id="balanceLog"></div>
+      <div class="caption"><b>Why it matters:</b> "restoration" — moving a piece from one side to the other while keeping everything balanced — is the literal 9th-century meaning of the word "algebra."</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: DISTRIBUTIVE PROPERTY ============ -->
+  <div class="panel" id="panel-distrib">
+    <div class="card">
+      <h2>One Rectangle, Counted Two Ways</h2>
+      <p class="sub"><b>What's happening:</b> a single rectangle of height <span class="formula">a</span> and width <span class="formula">(b+c)</span> is sliced by one vertical line into two smaller rectangles, widths <span class="formula">b</span> and <span class="formula">c</span>. Its total area is <span class="formula">a(b+c)</span> — and, counted as two pieces, it's also <span class="formula">ab + ac</span>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag a, b, and c and watch both area readouts track each other exactly, every time — the distributive property isn't a rule to trust, it's this one rectangle refusing to have two different total areas.</p>
+      <div class="row"><label>a (height)</label><input type="range" id="dpA" min="1" max="6" step="1" value="3"><span class="readout" id="dpAOut">3</span></div>
+      <div class="row"><label>b (width 1)</label><input type="range" id="dpB" min="1" max="6" step="1" value="2"><span class="readout" id="dpBOut">2</span></div>
+      <div class="row"><label>c (width 2)</label><input type="range" id="dpC" min="1" max="6" step="1" value="4"><span class="readout" id="dpCOut">4</span></div>
+      <svg id="distribSvg" viewBox="0 0 340 160"></svg>
+      <div class="verdict" id="distribVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> mental-math shortcuts like `7 × 98 = 7×100 − 7×2 = 686` are this exact identity, deployed for speed instead of proof.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: COMPLETING THE SQUARE ============ -->
+  <div class="panel" id="panel-square">
+    <div class="card">
+      <h2>Finish the Square With Its Missing Corner</h2>
+      <p class="sub"><b>What's happening:</b> <span class="formula">x² + bx</span> looks like a complete <span class="formula">x</span>-by-<span class="formula">x</span> square with a <span class="formula">b</span>-wide strip bolted on. Split that strip in half, wrap the two halves around two adjacent sides, and exactly one small corner piece — area <span class="formula">(b/2)²</span> — is missing to finish a genuine, larger square.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag x and b, then press <em>Add the missing corner</em> and watch the outline snap into one perfect square of side <span class="formula">(x + b/2)</span> — with the area tally confirming <span class="formula">x² + bx + (b/2)² = (x+b/2)²</span> exactly, every time.</p>
+      <div class="row"><label>x</label><input type="range" id="csX" min="2" max="6" step="0.5" value="4"><span class="readout" id="csXOut">4</span></div>
+      <div class="row"><label>b</label><input type="range" id="csB" min="1" max="8" step="0.5" value="3"><span class="readout" id="csBOut">3</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnCompleteToggle">Add the missing corner ▶</button>
+      </div>
+      <svg id="squareSvg" viewBox="0 0 300 300"></svg>
+      <div class="verdict" id="squareVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> run this exact construction on the general <span class="formula">ax²+bx+c=0</span> once, symbolically, and what falls out is the quadratic formula — not a separate fact, the same picture, generalized.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: FACTORING PUZZLE ============ -->
+  <div class="panel" id="panel-factor">
+    <div class="card">
+      <h2>Find the Two Numbers Doing Both Jobs</h2>
+      <p class="sub"><b>What's happening:</b> factoring <span class="formula">x² + Bx + C</span> means finding two numbers that <em>multiply</em> to <span class="formula">C</span> and <em>add</em> to <span class="formula">B</span>, simultaneously. Pick a target quadratic, then search for the pair.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> pick a target, then drag p and q until both checks turn green at once — that's the entire "factoring algorithm," a small searchable puzzle rather than a memorized procedure.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-target="5,6">x² + 5x + 6</button>
+        <button class="op" data-target="-1,-6">x² − x − 6</button>
+        <button class="op" data-target="7,12">x² + 7x + 12</button>
+        <button class="op" data-target="-2,-15">x² − 2x − 15</button>
+        <button class="op" data-target="2,-8">x² + 2x − 8</button>
+      </div>
+      <div class="row"><label>Try p</label><input type="range" id="facP" min="-10" max="10" step="1" value="0"><span class="readout" id="facPOut">0</span></div>
+      <div class="row"><label>Try q</label><input type="range" id="facQ" min="-10" max="10" step="1" value="0"><span class="readout" id="facQOut">0</span></div>
+      <div class="verdict" id="factorVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the moment both checks pass, <span class="formula">(x+p)(x+q)=0</span> turns one hard quadratic into two trivial linear equations — solving by factoring, done.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: FUNCTION MACHINE ============ -->
+  <div class="panel" id="panel-function">
+    <div class="card">
+      <h2>Feed It a Number, It Hands One Back</h2>
+      <p class="sub"><b>What's happening:</b> a function is a deterministic machine. Sweep the input and watch the output trace out the graph, one point at a time — a straight line for a linear machine, a parabola with one clean turning point for a quadratic one.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> switch to the quadratic machine and sweep the input past the vertex — the marked turning point sits exactly at <span class="formula">x = −b/2a</span>, the same point completing the square was built to find.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnFnLinear">Linear: mx + b</button>
+        <button class="op" id="btnFnQuad">Quadratic: ax² + bx + c</button>
+      </div>
+      <div class="row" id="rowFnLinear">
+        <label>m</label><input type="range" id="fnM" min="-3" max="3" step="0.5" value="1.5"><span class="readout" id="fnMOut">1.5</span>
+        <label>b</label><input type="range" id="fnB" min="-5" max="5" step="0.5" value="1"><span class="readout" id="fnBOut">1</span>
+      </div>
+      <div class="row" id="rowFnQuad" style="display:none;">
+        <label>a</label><input type="range" id="fnQa" min="-2" max="2" step="0.25" value="1"><span class="readout" id="fnQaOut">1</span>
+        <label>b</label><input type="range" id="fnQb" min="-6" max="6" step="0.5" value="-2"><span class="readout" id="fnQbOut">-2</span>
+        <label>c</label><input type="range" id="fnQc" min="-5" max="5" step="0.5" value="-1"><span class="readout" id="fnQcOut">-1</span>
+      </div>
+      <div class="row"><label>Input x</label><input type="range" id="fnX" min="-5" max="5" step="0.1" value="-5"><span class="readout" id="fnXOut">-5.0</span></div>
+      <svg id="functionSvg" viewBox="0 0 380 260"></svg>
+      <div class="verdict" id="functionVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every straight-line pricing plan and every projectile's height-over-time curve is one of these two machines, just with different labels on the dials.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../algebra-toolkit.md">Algebra — The Toolkit</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x,y,str,color,size,anchor,weight){
+    const t = el("text",{x,y,["text-anchor"]:anchor||"middle","font-family":"IBM Plex Mono, monospace","font-size":size||13,fill:color||"var(--ink)"});
+    if(weight) t.setAttribute("font-weight",weight);
+    t.textContent = str;
+    return t;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+  function fmt(v){
+    if(!isFinite(v)) return "undefined";
+    return Math.abs(v-Math.round(v))<1e-9 ? String(Math.round(v)) : v.toFixed(2).replace(/0+$/,"").replace(/\.$/,"");
+  }
+
+  /* =========================================================
+     TAB 1 — BALANCE SCALE
+     ========================================================= */
+  let balA=3, balB=4, balC=19, balStep=0;
+  const balSteps = []; // computed fresh on load
+  function loadBalance(a,b,c){
+    balA=a; balB=b; balC=c; balStep=0;
+    renderBalance();
+  }
+  function exprText(a,b){
+    if(a===1 && b===0) return "x";
+    let s = (a===1?"x":a===-1?"-x":a+"x");
+    if(b!==0) s += (b>0? " + "+fmt(b) : " - "+fmt(Math.abs(b)));
+    return s;
+  }
+  function renderBalance(){
+    const svg = document.getElementById("balanceSvg");
+    svg.innerHTML = "";
+    // fulcrum
+    svg.appendChild(el("polygon",{points:"200,190 185,215 215,215",fill:"var(--ink-soft)"}));
+    svg.appendChild(el("line",{x1:200,y1:190,x2:200,y2:120,stroke:"var(--ink-soft)",["stroke-width"]:2.5}));
+    svg.appendChild(el("line",{x1:60,y1:120,x2:340,y2:120,stroke:"var(--ink)",["stroke-width"]:3}));
+    // pans
+    svg.appendChild(el("line",{x1:100,y1:120,x2:100,y2:165,stroke:"var(--ink-soft)",["stroke-width"]:1.4}));
+    svg.appendChild(el("line",{x1:300,y1:120,x2:300,y2:165,stroke:"var(--ink-soft)",["stroke-width"]:1.4}));
+    svg.appendChild(el("path",{d:"M 60,165 Q 100,195 140,165 L 130,165 Q 100,180 70,165 Z",fill:"var(--accent-soft)",stroke:"var(--accent)",["stroke-width"]:1.5}));
+    svg.appendChild(el("path",{d:"M 260,165 Q 300,195 340,165 L 330,165 Q 300,180 270,165 Z",fill:"var(--accent-soft)",stroke:"var(--accent)",["stroke-width"]:1.5}));
+    const leftExpr = exprText(balA, balB);
+    const rightExpr = fmt(balC);
+    svg.appendChild(txt(100, 155, leftExpr, "var(--accent)", 16, "middle", "700"));
+    svg.appendChild(txt(300, 155, rightExpr, "var(--accent)", 16, "middle", "700"));
+    svg.appendChild(txt(200, 100, "=", "var(--ink-soft)", 18, "middle", "700"));
+
+    const totalSteps = (balB!==0?1:0) + (balA!==1?1:0);
+    document.getElementById("btnBalPrev").disabled = balStep<=0;
+    document.getElementById("btnBalNext").disabled = balStep>=totalSteps;
+    const v = document.getElementById("balanceVerdict");
+    if(balStep>=totalSteps){
+      v.innerHTML = `<b class="big good-t">Solved: x = ${fmt(balC)}</b>`;
+    } else {
+      v.innerHTML = `Scale reads: <b>${leftExpr} = ${rightExpr}</b> — press Next step to apply the next legal move.`;
+    }
+  }
+  function stepBalance(){
+    const totalSteps = (balB!==0?1:0) + (balA!==1?1:0);
+    if(balStep>=totalSteps) return;
+    const log = document.getElementById("balanceLog");
+    if(balB!==0){
+      log.textContent = `Subtract ${fmt(balB)} from both pans: ${exprText(balA,balB)} - ${fmt(balB)} = ${fmt(balC)} - ${fmt(balB)}\n` + log.textContent;
+      balC -= balB; balB = 0;
+    } else if(balA!==1){
+      log.textContent = `Divide both pans by ${fmt(balA)}: ${exprText(balA,balB)} / ${fmt(balA)} = ${fmt(balC)} / ${fmt(balA)}\n` + log.textContent;
+      balC = balC/balA; balA = 1;
+    }
+    balStep++;
+    renderBalance();
+  }
+  function unstepBalance(){
+    // simplest: reload preset and replay balStep-1 steps
+    if(balStep<=0) return;
+    const targetStep = balStep-1;
+    const preset = document.querySelector("#panel-balance .op.active[data-preset]");
+    const [a,b,c] = preset ? preset.dataset.preset.split(",").map(Number) : [3,4,19];
+    balA=a; balB=b; balC=c; balStep=0;
+    document.getElementById("balanceLog").textContent = "";
+    for(let i=0;i<targetStep;i++) stepBalance();
+  }
+  document.getElementById("btnBalNext").addEventListener("click", stepBalance);
+  document.getElementById("btnBalPrev").addEventListener("click", unstepBalance);
+  document.getElementById("btnBalReset").addEventListener("click", () => {
+    const preset = document.querySelector("#panel-balance .op.active[data-preset]");
+    const [a,b,c] = preset ? preset.dataset.preset.split(",").map(Number) : [3,4,19];
+    document.getElementById("balanceLog").textContent = "";
+    loadBalance(a,b,c);
+  });
+  document.querySelectorAll("#panel-balance [data-preset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#panel-balance [data-preset]").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      const [a,b,c] = btn.dataset.preset.split(",").map(Number);
+      document.getElementById("balanceLog").textContent = "";
+      loadBalance(a,b,c);
+    });
+  });
+  loadBalance(3,4,19);
+
+  /* =========================================================
+     TAB 2 — DISTRIBUTIVE PROPERTY
+     ========================================================= */
+  const dpA=document.getElementById("dpA"), dpB=document.getElementById("dpB"), dpC=document.getElementById("dpC");
+  function renderDistrib(){
+    const a=parseInt(dpA.value,10), b=parseInt(dpB.value,10), c=parseInt(dpC.value,10);
+    dpAOut.textContent=a; dpBOut.textContent=b; dpCOut.textContent=c;
+    const svg = document.getElementById("distribSvg");
+    svg.innerHTML = "";
+    const scale=18, x0=20, y0=20;
+    const hpx = a*scale, bpx=b*scale, cpx=c*scale;
+    svg.appendChild(el("rect",{x:x0,y:y0,width:bpx,height:hpx,fill:"var(--c1)",["fill-opacity"]:0.5,stroke:"var(--ink)",["stroke-width"]:1.5}));
+    svg.appendChild(el("rect",{x:x0+bpx,y:y0,width:cpx,height:hpx,fill:"var(--c2)",["fill-opacity"]:0.55,stroke:"var(--ink)",["stroke-width"]:1.5}));
+    svg.appendChild(el("line",{x1:x0+bpx,y1:y0-6,x2:x0+bpx,y2:y0+hpx+6,stroke:"var(--accent)",["stroke-width"]:1.6,["stroke-dasharray"]:"4 3"}));
+    svg.appendChild(txt(x0+bpx/2, y0+hpx+20, "b="+b, "var(--c1)", 12, "middle","600"));
+    svg.appendChild(txt(x0+bpx+cpx/2, y0+hpx+20, "c="+c, "var(--c2)", 12, "middle","600"));
+    svg.appendChild(txt(x0-10, y0+hpx/2, "a="+a, "var(--ink-soft)", 12, "end","600"));
+    svg.appendChild(txt(x0+(bpx+cpx)/2, y0-10, "width = b+c = "+(b+c), "var(--ink-soft)", 11.5, "middle"));
+    document.getElementById("distribVerdict").innerHTML =
+      `Whole rectangle: a×(b+c) = ${a}×(${b}+${c}) = ${a}×${b+c} = <b>${a*(b+c)}</b><br>`+
+      `Two pieces added: a×b + a×c = ${a}×${b} + ${a}×${c} = ${a*b} + ${a*c} = <b>${a*b+a*c}</b> — <span class="good-t">identical, always.</span>`;
+  }
+  [dpA,dpB,dpC].forEach(inp => inp.addEventListener("input", renderDistrib));
+  renderDistrib();
+
+  /* =========================================================
+     TAB 3 — COMPLETING THE SQUARE
+     ========================================================= */
+  const csX=document.getElementById("csX"), csB=document.getElementById("csB");
+  let squareCompleted = false;
+  function renderSquare(){
+    const x=parseFloat(csX.value), b=parseFloat(csB.value);
+    csXOut.textContent=fmt(x); csBOut.textContent=fmt(b);
+    const svg = document.getElementById("squareSvg");
+    svg.innerHTML = "";
+    const scale=22, ox=30, oy=30;
+    const X=x*scale, half=(b/2)*scale;
+    // base x-by-x square
+    svg.appendChild(el("rect",{x:ox,y:oy,width:X,height:X,fill:"var(--c1)",["fill-opacity"]:0.45,stroke:"var(--ink)",["stroke-width"]:1.6}));
+    svg.appendChild(txt(ox+X/2,oy+X/2,"x²","var(--ink)",14,"middle","700"));
+    // right strip (b/2 wide, x tall)
+    svg.appendChild(el("rect",{x:ox+X,y:oy,width:half,height:X,fill:"var(--c2)",["fill-opacity"]:0.5,stroke:"var(--ink)",["stroke-width"]:1.4}));
+    // bottom strip (x wide, b/2 tall)
+    svg.appendChild(el("rect",{x:ox,y:oy+X,width:X,height:half,fill:"var(--c2)",["fill-opacity"]:0.5,stroke:"var(--ink)",["stroke-width"]:1.4}));
+    if(X>26){ svg.appendChild(txt(ox+X+half/2,oy+X/2,"(b/2)x","var(--ink)",10.5,"middle")); }
+    // corner: missing outline, or filled if completed
+    if(squareCompleted){
+      svg.appendChild(el("rect",{x:ox+X,y:oy+X,width:half,height:half,fill:"var(--c3)",["fill-opacity"]:0.6,stroke:"var(--ink)",["stroke-width"]:1.4}));
+      svg.appendChild(el("rect",{x:ox,y:oy,width:X+half,height:X+half,fill:"none",stroke:"var(--accent)",["stroke-width"]:2.6}));
+      svg.appendChild(txt(ox+X+half+14, oy+X+half+16, "(x+b/2)² completed", "var(--accent)", 12, "start","700"));
+    } else {
+      svg.appendChild(el("rect",{x:ox+X,y:oy+X,width:half,height:half,fill:"none",stroke:"var(--c3)",["stroke-width"]:1.6,["stroke-dasharray"]:"4 3"}));
+      svg.appendChild(txt(ox+X+half/2,oy+X+half/2+4,"?","var(--c3)",13,"middle","700"));
+    }
+    document.getElementById("btnCompleteToggle").textContent = squareCompleted ? "Remove the corner ◀" : "Add the missing corner ▶";
+    const x2=x*x, bx=b*x, corner=(b/2)*(b/2), sum=x2+bx+corner, completedSide=x+b/2, completedArea=completedSide*completedSide;
+    document.getElementById("squareVerdict").innerHTML =
+      `x² = <b>${fmt(x2)}</b> &nbsp;+&nbsp; bx = <b>${fmt(bx)}</b> &nbsp;+&nbsp; (b/2)² = <b>${fmt(corner)}</b> &nbsp;=&nbsp; <span class="big">${fmt(sum)}</span><br>`+
+      `(x + b/2)² = (${fmt(x)} + ${fmt(b/2)})² = ${fmt(completedSide)}² = <span class="big">${fmt(completedArea)}</span> — <span class="good-t">identical, always.</span>`;
+  }
+  [csX,csB].forEach(inp => inp.addEventListener("input", renderSquare));
+  document.getElementById("btnCompleteToggle").addEventListener("click", () => { squareCompleted = !squareCompleted; renderSquare(); });
+  renderSquare();
+
+  /* =========================================================
+     TAB 4 — FACTORING PUZZLE
+     ========================================================= */
+  const facP=document.getElementById("facP"), facQ=document.getElementById("facQ");
+  let targetB=5, targetC=6;
+  function renderFactor(){
+    const p=parseInt(facP.value,10), q=parseInt(facQ.value,10);
+    facPOut.textContent=p; facQOut.textContent=q;
+    const sum=p+q, prod=p*q;
+    const sumOK = sum===targetB, prodOK = prod===targetC;
+    const v = document.getElementById("factorVerdict");
+    v.innerHTML =
+      `Target: x² + ${targetB}x + ${targetC} &nbsp;·&nbsp; need p+q=${targetB}, p×q=${targetC}<br>`+
+      `p+q = ${p}+${q} = ${sum} ${sumOK?'<span class="good-t">✓</span>':'<span class="bad-t">✗</span>'} &nbsp;·&nbsp; `+
+      `p×q = ${p}×${q} = ${prod} ${prodOK?'<span class="good-t">✓</span>':'<span class="bad-t">✗</span>'}`+
+      (sumOK && prodOK ? `<br><span class="big good-t">Found it: x² + ${targetB}x + ${targetC} = (x+${p})(x+${q})</span> — expand it yourself to check.` : "");
+  }
+  [facP,facQ].forEach(inp => inp.addEventListener("input", renderFactor));
+  document.querySelectorAll("#panel-factor [data-target]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#panel-factor [data-target]").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      const [B,C] = btn.dataset.target.split(",").map(Number);
+      targetB=B; targetC=C;
+      facP.value=0; facQ.value=0;
+      renderFactor();
+    });
+  });
+  renderFactor();
+
+  /* =========================================================
+     TAB 5 — FUNCTION MACHINE
+     ========================================================= */
+  let fnMode = "linear";
+  const fnM=document.getElementById("fnM"), fnB=document.getElementById("fnB"),
+        fnQa=document.getElementById("fnQa"), fnQb=document.getElementById("fnQb"), fnQc=document.getElementById("fnQc"),
+        fnX=document.getElementById("fnX");
+  let fnTrail = [];
+  function fnValue(x){
+    if(fnMode==="linear") return parseFloat(fnM.value)*x + parseFloat(fnB.value);
+    return parseFloat(fnQa.value)*x*x + parseFloat(fnQb.value)*x + parseFloat(fnQc.value);
+  }
+  function fmapX(x){ return 190 + x*30; }
+  function fmapY(y){ return 220 - y*18; }
+  function renderFunction(){
+    fnMOut.textContent=fnM.value; fnBOut.textContent=fnB.value;
+    fnQaOut.textContent=fnQa.value; fnQbOut.textContent=fnQb.value; fnQcOut.textContent=fnQc.value;
+    const x = parseFloat(fnX.value);
+    fnXOut.textContent = x.toFixed(1);
+    const y = fnValue(x);
+    const svg = document.getElementById("functionSvg");
+    svg.innerHTML = "";
+    // axes
+    svg.appendChild(el("line",{x1:20,y1:130,x2:360,y2:130,stroke:"var(--line)",["stroke-width"]:1.4}));
+    svg.appendChild(el("line",{x1:190,y1:10,x2:190,y2:250,stroke:"var(--line)",["stroke-width"]:1.4}));
+    // curve
+    let d = "";
+    for(let px=-5;px<=5;px+=0.1){
+      const py = fnValue(px);
+      const X=fmapX(px), Y=fmapY(py);
+      if(Y<5||Y>255) { d += ""; continue; }
+      d += (d===""?"M":"L") + X + "," + Y + " ";
+    }
+    svg.appendChild(el("path",{d, fill:"none", stroke:"var(--accent)", ["stroke-width"]:2.2}));
+    // vertex marker for quadratic
+    if(fnMode==="quad"){
+      const a=parseFloat(fnQa.value), b=parseFloat(fnQb.value);
+      if(Math.abs(a)>1e-9){
+        const vx=-b/(2*a), vy=fnValue(vx);
+        svg.appendChild(el("circle",{cx:fmapX(vx),cy:fmapY(vy),r:5,fill:"var(--c2)"}));
+        svg.appendChild(txt(fmapX(vx), fmapY(vy)-12, "vertex", "var(--c2)", 11, "middle","700"));
+      }
+    }
+    // moving point
+    svg.appendChild(el("circle",{cx:fmapX(x),cy:fmapY(y),r:6,fill:"var(--c1)"}));
+    svg.appendChild(el("line",{x1:fmapX(x),y1:fmapY(y),x2:fmapX(x),y2:130,stroke:"var(--c1)",["stroke-width"]:1,["stroke-dasharray"]:"3 3"}));
+
+    const formula = fnMode==="linear"
+      ? `f(x) = ${fmt(parseFloat(fnM.value))}x + ${fmt(parseFloat(fnB.value))}`
+      : `f(x) = ${fmt(parseFloat(fnQa.value))}x² + ${fmt(parseFloat(fnQb.value))}x + ${fmt(parseFloat(fnQc.value))}`;
+    document.getElementById("functionVerdict").innerHTML =
+      `${formula}<br>Input x = <b>${x.toFixed(1)}</b> → Output f(x) = <span class="big">${fmt(y)}</span>`;
+  }
+  document.getElementById("btnFnLinear").addEventListener("click", function(){
+    fnMode="linear"; this.classList.add("active"); document.getElementById("btnFnQuad").classList.remove("active");
+    document.getElementById("rowFnLinear").style.display=""; document.getElementById("rowFnQuad").style.display="none";
+    renderFunction();
+  });
+  document.getElementById("btnFnQuad").addEventListener("click", function(){
+    fnMode="quad"; this.classList.add("active"); document.getElementById("btnFnLinear").classList.remove("active");
+    document.getElementById("rowFnLinear").style.display="none"; document.getElementById("rowFnQuad").style.display="";
+    renderFunction();
+  });
+  [fnM,fnB,fnQa,fnQb,fnQc,fnX].forEach(inp => inp.addEventListener("input", renderFunction));
+  renderFunction();
+})();
+</script>
+</body>
+</html>

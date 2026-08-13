@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reasoning Backward From Data — Statistics, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:100px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  svg,canvas{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  .good-t{ color:var(--c1); font-weight:700; } .bad-t{ color:var(--c3); font-weight:700; }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .sw{ width:16px; height:3px; border-radius:2px; display:inline-block; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Statistics</div>
+    <h1>Reasoning Backward From Data</h1>
+    <p>A billionaire dragging an average around while the median stands still, a pegboard that turns pure randomness into a bell curve, a sampling distribution that settles down no matter how lopsided the population is, a p-value computed live, and a trend that reverses the moment you combine two groups. Each one built from a picture, not asserted.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dist">Distributions &amp; Summary Stats</button>
+    <button class="tab" data-tab="galton">Galton Board</button>
+    <button class="tab" data-tab="sampling">Sampling Distribution</button>
+    <button class="tab" data-tab="hyp">Hypothesis Testing</button>
+    <button class="tab" data-tab="corr">Correlation &amp; Simpson's Paradox</button>
+  </div>
+
+  <!-- ============ TAB 1: DISTRIBUTIONS & SUMMARY STATS ============ -->
+  <div class="panel active" id="panel-dist">
+    <div class="card">
+      <h2>Mean, Median, and the Billionaire in the Bar</h2>
+      <p class="sub"><b>What's happening:</b> pick a dataset shape and watch where the mean (accent), median (teal), and mode (gold) land — on symmetric data they huddle together; on skewed data they scatter.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> switch to "Skewed (income-like)" and watch the mean get dragged toward the long tail while the median barely moves — the exact reason income is reported as a median.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-shape="sym">Symmetric-ish</button>
+        <button class="op" data-shape="skew">Skewed (income-like)</button>
+        <button class="op" data-shape="bimodal">Bimodal</button>
+      </div>
+      <svg id="distSvg" viewBox="0 0 700 240"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--accent)"></span>mean</span>
+        <span><span class="sw" style="background:var(--c1)"></span>median</span>
+        <span><span class="sw" style="background:var(--c2)"></span>mode (tallest bar)</span>
+      </div>
+      <div class="verdict" id="distVerdict"></div>
+
+      <h2 style="margin-top:28px;">Bessel's Correction, Caught in the Act</h2>
+      <p class="sub"><b>What's happening:</b> draw repeated small samples (n=5) from a population with a known true variance of 4. Watch the naive "divide by n" estimate average out too low, while "divide by n−1" lands on target.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnBesselDraw">Draw 1 sample ▶</button>
+        <button class="op" id="btnBesselMany">Draw 1,000 samples ⏩</button>
+        <button class="op" id="btnBesselReset">Reset</button>
+      </div>
+      <div class="verdict" id="besselVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every reported "sample standard deviation" in a study, poll, or lab report is quietly using n−1 for exactly this reason.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: GALTON BOARD ============ -->
+  <div class="panel" id="panel-galton">
+    <div class="card">
+      <h2>A Bell Curve, Built From Nothing But Coin Flips</h2>
+      <p class="sub"><b>What's happening:</b> each ball bounces left or right at every peg, purely at random, many rows deep. No single ball's path is predictable — but drop enough of them, and the bins at the bottom fill into an unmistakable bell curve.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drop balls one at a time and watch the pile look ragged and unpredictable; then drop hundreds at once and watch the ragged pile snap into a smooth, symmetric curve.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnGaltonOne">Drop 1 ball ▶</button>
+        <button class="op" id="btnGaltonMany">Drop 200 balls ⏩</button>
+        <button class="op" id="btnGaltonReset">Reset</button>
+      </div>
+      <svg id="galtonSvg" viewBox="0 0 620 380"></svg>
+      <div class="verdict" id="galtonVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is the Central Limit Theorem, physically enacted — sum enough small independent random effects and a bell curve appears, no matter the mechanism producing the individual effects.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: SAMPLING DISTRIBUTION ============ -->
+  <div class="panel" id="panel-sampling">
+    <div class="card">
+      <h2>Sample Means Settle Into a Bell Curve — Even From a Lopsided Population</h2>
+      <p class="sub"><b>What's happening:</b> the population on the left is heavily skewed. Draw repeated samples of size n, compute each sample's mean, and watch the histogram of those means build up on the right.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> draw a few hundred sample means at n=5 (still a bit lopsided), then switch to n=30 and draw again — the sample-mean histogram both centers on the true population mean and narrows, exactly as σ/√n predicts.</p>
+      <div class="row"><label>Sample size n</label><input type="range" id="samplingN" min="2" max="50" step="1" value="5"><span class="readout" id="samplingNOut">5</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnSampOne">Draw 1 sample mean ▶</button>
+        <button class="op" id="btnSampMany">Draw 300 sample means ⏩</button>
+        <button class="op" id="btnSampReset">Reset</button>
+      </div>
+      <div class="cols">
+        <div class="col"><svg id="popSvg" viewBox="0 0 320 200"></svg></div>
+        <div class="col"><svg id="sampSvg" viewBox="0 0 320 200"></svg></div>
+      </div>
+      <div class="verdict" id="samplingVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is the exact machine underneath every confidence interval — it's what makes "how wrong could my sample mean be" a computable, honest question instead of a shrug.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: HYPOTHESIS TESTING ============ -->
+  <div class="panel" id="panel-hyp">
+    <div class="card">
+      <h2>Could Pure Chance Alone Explain This?</h2>
+      <p class="sub"><b>What's happening:</b> recreate Fisher's Lady Tasting Tea (8 cups, sorted into two groups of 4) or a coin-flip test. The bars show every possible outcome's chance under pure guessing; the p-value is the highlighted tail — how surprising your actual result would be if nothing real were going on.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> in the tea test, set "correct" to 8 (all correct) and read off the classic 1/70 ≈ 1.4% p-value — then try 6 correct and watch the p-value grow, since a decent-but-imperfect result is far less surprising under pure guessing.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnHypTea">Lady Tasting Tea</button>
+        <button class="op" id="btnHypCoin">Coin-Flip Test</button>
+      </div>
+      <div class="row" id="rowTea">
+        <label>Correct (of 8)</label><input type="range" id="teaCorrect" min="0" max="8" step="2" value="8"><span class="readout" id="teaCorrectOut">8</span>
+      </div>
+      <div class="row" id="rowCoin" style="display:none;">
+        <label>Flips n</label><input type="range" id="coinN" min="4" max="40" step="1" value="20"><span class="readout" id="coinNOut">20</span>
+        <label>Heads observed</label><input type="range" id="coinK" min="0" max="40" step="1" value="15"><span class="readout" id="coinKOut">15</span>
+      </div>
+      <svg id="hypSvg" viewBox="0 0 700 220"></svg>
+      <div class="verdict" id="hypVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> a p-value is never "the probability the null hypothesis is true" — it's "how likely this data would be, if the null hypothesis were true."</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: CORRELATION & SIMPSON'S PARADOX ============ -->
+  <div class="panel" id="panel-corr">
+    <div class="card">
+      <h2>Moving Together Is Not the Same as Causing</h2>
+      <p class="sub"><b>What's happening:</b> set how strongly two variables actually move together and watch the scatter plot and the computed correlation coefficient r track each other.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set the correlation near 0 and toggle "hidden confounder" on — watch two variables that don't directly affect each other still show a strong correlation, purely because a third factor drives both (ice cream sales and drowning deaths, both driven by hot weather).</p>
+      <div class="row"><label>True correlation</label><input type="range" id="corrR" min="-1" max="1" step="0.05" value="0.7"><span class="readout" id="corrROut">0.7</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnConfounder">Hidden confounder: off</button>
+        <button class="op" id="btnCorrRedraw">Redraw points</button>
+      </div>
+      <svg id="corrSvg" viewBox="0 0 320 240"></svg>
+      <div class="verdict" id="corrVerdict"></div>
+
+      <h2 style="margin-top:28px;">Simpson's Paradox: A Trend That Reverses on Combining</h2>
+      <p class="sub"><b>What's happening:</b> real 1986 kidney-stone treatment data. Treatment A wins in <em>both</em> subgroups shown separately — but Treatment B wins once the subgroups are combined.</p>
+      <svg id="simpsonSvg" viewBox="0 0 700 240"></svg>
+      <div class="verdict" id="simpsonVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> Treatment A was used mostly on the harder large-stone cases — always check the subgroup breakdown before trusting a combined number.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../statistics-toolkit.md">Statistics — The Toolkit</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x,y,str,color,size,anchor,weight){
+    const t = el("text",{x,y,["text-anchor"]:anchor||"middle","font-family":"IBM Plex Mono, monospace","font-size":size||12,fill:color||"var(--ink)"});
+    if(weight) t.setAttribute("font-weight",weight);
+    t.textContent = str;
+    return t;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+  function fmt(v,d){
+    d = d===undefined?3:d;
+    if(!isFinite(v)) return "undefined";
+    return Math.abs(v-Math.round(v))<1e-6 ? String(Math.round(v)) : v.toFixed(d);
+  }
+  // simple seeded-ish RNG helpers
+  function randNormal(){ let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+  function comb(n,k){ let r=1; for(let i=0;i<k;i++) r=r*(n-i)/(i+1); return r; }
+
+  function histogramSvg(svg, data, opts){
+    opts = opts||{};
+    svg.innerHTML = "";
+    const W=700,H=opts.h||240, padL=30, padB=30, padT=20, padR=20;
+    const plotW=W-padL-padR, plotH=H-padT-padB;
+    const nbins = opts.bins||20;
+    const dmin = opts.min!==undefined?opts.min:Math.min(...data);
+    const dmax = opts.max!==undefined?opts.max:Math.max(...data);
+    const binW = (dmax-dmin)/nbins || 1;
+    const counts = new Array(nbins).fill(0);
+    data.forEach(v => { let b=Math.floor((v-dmin)/binW); if(b<0)b=0; if(b>=nbins)b=nbins-1; counts[b]++; });
+    const maxCount = Math.max(...counts,1);
+    function px(i){ return padL + (i/nbins)*plotW; }
+    function py(c){ return padT+plotH - (c/maxCount)*plotH; }
+    svg.appendChild(el("line",{x1:padL,y1:padT+plotH,x2:W-padR,y2:padT+plotH,stroke:"var(--line)",["stroke-width"]:1.4}));
+    let modeIdx=0;
+    counts.forEach((c,i) => { if(c>counts[modeIdx]) modeIdx=i; });
+    counts.forEach((c,i) => {
+      const x=px(i), w=plotW/nbins-1.5;
+      svg.appendChild(el("rect",{x,y:py(c),width:Math.max(1,w),height:plotH-(py(c)-padT),fill: i===modeIdx?"var(--c2)":"var(--c1)", ["fill-opacity"]:0.6, stroke:"var(--ink)",["stroke-width"]:0.5}));
+    });
+    return {padL,padB,padT,padR,plotW,plotH,W,H,dmin,dmax,binW,nbins,px:(v)=>padL+((v-dmin)/(dmax-dmin))*plotW};
+  }
+
+  /* =========================================================
+     TAB 1a — DISTRIBUTIONS & SUMMARY STATS
+     ========================================================= */
+  const DATASETS = {
+    sym: () => { const d=[]; for(let i=0;i<400;i++) d.push(50+randNormal()*10); return d; },
+    skew: () => { const d=[]; for(let i=0;i<400;i++) d.push(20+40*(-Math.log(Math.random()))); return d; },
+    bimodal: () => { const d=[]; for(let i=0;i<400;i++) d.push(Math.random()<0.5 ? 30+randNormal()*6 : 70+randNormal()*6); return d; }
+  };
+  let distShape="sym", distData = DATASETS.sym();
+  function mean(a){ return a.reduce((s,x)=>s+x,0)/a.length; }
+  function median(a){ const s=[...a].sort((x,y)=>x-y); const n=s.length; return n%2? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2; }
+  function renderDist(){
+    const geo = histogramSvg(document.getElementById("distSvg"), distData, {bins:24});
+    const svg = document.getElementById("distSvg");
+    const m = mean(distData), med = median(distData);
+    function drawMarker(x,color,label,yoff){
+      const px = geo.px(x);
+      svg.appendChild(el("line",{x1:px,y1:geo.padT-4,x2:px,y2:geo.padT+geo.plotH,stroke:color,["stroke-width"]:2.2}));
+      svg.appendChild(txt(px,geo.padT-8-(yoff||0),label,color,11,"middle","700"));
+    }
+    drawMarker(m,"var(--accent)","mean "+fmt(m,1),0);
+    drawMarker(med,"var(--c1)","median "+fmt(med,1),14);
+    document.getElementById("distVerdict").innerHTML =
+      `Mean = <b>${fmt(m,2)}</b> &nbsp;·&nbsp; Median = <b>${fmt(med,2)}</b> &nbsp;·&nbsp; Gap = <b>${fmt(Math.abs(m-med),2)}</b>`+
+      (Math.abs(m-med)>3 ? ` — <span class="bad-t">large gap: the mean is being dragged by a skewed tail.</span>` : ` — close together, roughly symmetric data.`);
+  }
+  document.querySelectorAll("#panel-dist [data-shape]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      distShape = btn.dataset.shape;
+      distData = DATASETS[distShape]();
+      document.querySelectorAll("#panel-dist [data-shape]").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      renderDist();
+    });
+  });
+  renderDist();
+
+  /* =========================================================
+     TAB 1b — BESSEL'S CORRECTION
+     ========================================================= */
+  const TRUE_VAR = 4, TRUE_SD = 2, N_SAMPLE = 5;
+  let besselTrials=0, besselSumBiased=0, besselSumUnbiased=0;
+  function drawBesselSample(){
+    const sample=[]; for(let i=0;i<N_SAMPLE;i++) sample.push(randNormal()*TRUE_SD);
+    const m = mean(sample);
+    const ss = sample.reduce((s,x)=>s+(x-m)*(x-m),0);
+    besselTrials++;
+    besselSumBiased += ss/N_SAMPLE;
+    besselSumUnbiased += ss/(N_SAMPLE-1);
+  }
+  function renderBessel(){
+    const v = document.getElementById("besselVerdict");
+    if(besselTrials===0){ v.innerHTML = `True variance = <b>${TRUE_VAR}</b>. Draw samples to see the two estimates diverge.`; return; }
+    const avgBiased = besselSumBiased/besselTrials, avgUnbiased = besselSumUnbiased/besselTrials;
+    v.innerHTML = `After <b>${besselTrials}</b> samples of size ${N_SAMPLE} — avg(SS/n) = <b class="${Math.abs(avgBiased-TRUE_VAR)>0.3?'bad-t':''}">${fmt(avgBiased,3)}</b> (too low) &nbsp;·&nbsp; avg(SS/(n−1)) = <b class="good-t">${fmt(avgUnbiased,3)}</b> (true value: ${TRUE_VAR})`;
+  }
+  document.getElementById("btnBesselDraw").addEventListener("click", () => { drawBesselSample(); renderBessel(); });
+  document.getElementById("btnBesselMany").addEventListener("click", () => { for(let i=0;i<1000;i++) drawBesselSample(); renderBessel(); });
+  document.getElementById("btnBesselReset").addEventListener("click", () => { besselTrials=0; besselSumBiased=0; besselSumUnbiased=0; renderBessel(); });
+  renderBessel();
+
+  /* =========================================================
+     TAB 2 — GALTON BOARD
+     ========================================================= */
+  const GALTON_ROWS = 10, GALTON_BINS = GALTON_ROWS+1;
+  let galtonCounts = new Array(GALTON_BINS).fill(0);
+  function dropBall(){
+    let pos = 0;
+    for(let r=0;r<GALTON_ROWS;r++){ pos += Math.random()<0.5 ? 0 : 1; }
+    galtonCounts[pos]++;
+  }
+  function renderGalton(){
+    const svg = document.getElementById("galtonSvg");
+    svg.innerHTML = "";
+    const W=620,H=380;
+    const pegTop=20, pegGapX=48, pegGapY=26;
+    const boardCX = W/2;
+    // draw pegs
+    for(let r=0;r<GALTON_ROWS;r++){
+      const n = r+1;
+      const y = pegTop + r*pegGapY;
+      for(let i=0;i<n;i++){
+        const x = boardCX - (n-1)*pegGapX/2 + i*pegGapX;
+        svg.appendChild(el("circle",{cx:x,cy:y,r:3,fill:"var(--ink-soft)"}));
+      }
+    }
+    // bins
+    const binsY = pegTop+GALTON_ROWS*pegGapY+20;
+    const maxCount = Math.max(...galtonCounts,1);
+    const binW = pegGapX*0.9;
+    for(let b=0;b<GALTON_BINS;b++){
+      const x = boardCX - (GALTON_BINS-1)*pegGapX/2 + b*pegGapX;
+      const h = (galtonCounts[b]/maxCount)*(H-binsY-20);
+      svg.appendChild(el("rect",{x:x-binW/2,y:H-20-h,width:binW,height:h,fill:"var(--c1)",["fill-opacity"]:0.65,stroke:"var(--ink)",["stroke-width"]:0.6}));
+    }
+    svg.appendChild(el("line",{x1:20,y1:H-20,x2:W-20,y2:H-20,stroke:"var(--ink)",["stroke-width"]:1.4}));
+    const total = galtonCounts.reduce((a,b)=>a+b,0);
+    document.getElementById("galtonVerdict").innerHTML = `Balls dropped: <b>${total}</b> — each one made ${GALTON_ROWS} independent random left/right choices.`;
+  }
+  document.getElementById("btnGaltonOne").addEventListener("click", () => { dropBall(); renderGalton(); });
+  document.getElementById("btnGaltonMany").addEventListener("click", () => { for(let i=0;i<200;i++) dropBall(); renderGalton(); });
+  document.getElementById("btnGaltonReset").addEventListener("click", () => { galtonCounts = new Array(GALTON_BINS).fill(0); renderGalton(); });
+  renderGalton();
+
+  /* =========================================================
+     TAB 3 — SAMPLING DISTRIBUTION
+     ========================================================= */
+  const POP_DATA = (() => { const d=[]; for(let i=0;i<3000;i++) d.push(-Math.log(Math.random())*10); return d; })(); // exponential-ish, mean~10
+  let sampleMeans = [];
+  const samplingN = document.getElementById("samplingN");
+  function drawSampleMean(){
+    const n = parseInt(samplingN.value,10);
+    let s=0; for(let i=0;i<n;i++) s += POP_DATA[Math.floor(Math.random()*POP_DATA.length)];
+    sampleMeans.push(s/n);
+  }
+  function renderSampling(){
+    samplingNOut.textContent = samplingN.value;
+    histogramSvg(document.getElementById("popSvg"), POP_DATA, {bins:20, h:200});
+    txt_title("popSvg","Population (skewed)");
+    if(sampleMeans.length){
+      histogramSvg(document.getElementById("sampSvg"), sampleMeans, {bins:20, h:200});
+    } else {
+      document.getElementById("sampSvg").innerHTML = "";
+    }
+    txt_title("sampSvg","Sample means (n="+samplingN.value+")");
+    const v = document.getElementById("samplingVerdict");
+    if(sampleMeans.length===0){ v.innerHTML = `Draw some sample means to see the right-hand histogram build up.`; return; }
+    const m = mean(sampleMeans);
+    const sd = Math.sqrt(sampleMeans.reduce((s,x)=>s+(x-m)*(x-m),0)/sampleMeans.length);
+    const popMean = mean(POP_DATA), popSD = Math.sqrt(POP_DATA.reduce((s,x)=>s+(x-popMean)*(x-popMean),0)/POP_DATA.length);
+    const predictedSE = popSD/Math.sqrt(parseInt(samplingN.value,10));
+    v.innerHTML = `${sampleMeans.length} sample means drawn — mean=<b>${fmt(m,2)}</b> (population mean ≈ ${fmt(popMean,2)}), spread=<b>${fmt(sd,2)}</b> (predicted σ/√n ≈ ${fmt(predictedSE,2)})`;
+  }
+  function txt_title(svgId, str){
+    const svg = document.getElementById(svgId);
+    svg.appendChild(txt(10,14,str,"var(--ink-soft)",11,"start","600"));
+  }
+  document.getElementById("btnSampOne").addEventListener("click", () => { drawSampleMean(); renderSampling(); });
+  document.getElementById("btnSampMany").addEventListener("click", () => { for(let i=0;i<300;i++) drawSampleMean(); renderSampling(); });
+  document.getElementById("btnSampReset").addEventListener("click", () => { sampleMeans=[]; renderSampling(); });
+  samplingN.addEventListener("input", () => { sampleMeans=[]; renderSampling(); });
+  renderSampling();
+
+  /* =========================================================
+     TAB 4 — HYPOTHESIS TESTING
+     ========================================================= */
+  let hypMode = "tea";
+  const teaCorrect = document.getElementById("teaCorrect");
+  const coinN = document.getElementById("coinN"), coinK = document.getElementById("coinK");
+  const TEA_DIST = {0:1,2:16,4:36,6:16,8:1}; // exact combinatorial counts, total 70
+  function renderHyp(){
+    const svg = document.getElementById("hypSvg");
+    svg.innerHTML = "";
+    const W=700,H=220, padL=40,padB=30,padT=20,padR=20;
+    const plotW=W-padL-padR, plotH=H-padT-padB;
+    if(hypMode==="tea"){
+      const obs = parseInt(teaCorrect.value,10);
+      teaCorrectOut.textContent = obs;
+      const keys=[0,2,4,6,8];
+      const maxP = Math.max(...keys.map(k=>TEA_DIST[k]))/70;
+      function px(i){ return padL + (i/(keys.length))*plotW + plotW/(keys.length*2); }
+      function py(p){ return padT+plotH - (p/maxP)*plotH; }
+      // one-sided: "as good as or better than" the observed score (matches Fisher's classic 1/70 framing)
+      const tailKeys = keys.filter(k => k >= obs);
+      let pValue=0; tailKeys.forEach(k=>pValue+=TEA_DIST[k]/70);
+      keys.forEach((k,i) => {
+        const p = TEA_DIST[k]/70;
+        const x=px(i)-18, y=py(p);
+        const inTail = tailKeys.includes(k);
+        svg.appendChild(el("rect",{x,y,width:36,height:plotT_h(y,padT,plotH),fill: inTail?"var(--c3)":"var(--c1)", ["fill-opacity"]:0.65, stroke:"var(--ink)",["stroke-width"]:0.6}));
+        svg.appendChild(txt(px(i),padT+plotH+16,k+" correct","var(--ink-soft)",11));
+        svg.appendChild(txt(px(i),y-6,(p*100).toFixed(1)+"%","var(--ink)",10.5));
+      });
+      svg.appendChild(el("line",{x1:padL,y1:padT+plotH,x2:W-padR,y2:padT+plotH,stroke:"var(--ink)",["stroke-width"]:1.4}));
+      document.getElementById("hypVerdict").innerHTML =
+        `Observed: <b>${obs} correct</b> out of 8. "As extreme or more" outcomes: {${tailKeys.join(", ")}}<br>`+
+        `p-value = (${tailKeys.map(k=>TEA_DIST[k]).join("+")})/70 = <span class="big">${(pValue*100).toFixed(2)}%</span> ${pValue<0.05?'<span class="bad-t">— surprising under pure guessing</span>':'<span class="good-t">— unremarkable under pure guessing</span>'}`;
+    } else {
+      const n = parseInt(coinN.value,10);
+      coinK.max = n; if(parseInt(coinK.value,10)>n) coinK.value=n;
+      const k = parseInt(coinK.value,10);
+      coinNOut.textContent = n; coinKOut.textContent = k;
+      const probs = []; for(let i=0;i<=n;i++) probs.push(comb(n,i)*Math.pow(0.5,n));
+      const maxP = Math.max(...probs);
+      function px(i){ return padL + (i/(n+1))*plotW + plotW/((n+1)*2); }
+      function py(p){ return padT+plotH - (p/maxP)*plotH; }
+      const dist = Math.abs(k-n/2);
+      let pValue=0;
+      for(let i=0;i<=n;i++){ if(Math.abs(i-n/2) >= dist-1e-9) pValue+=probs[i]; }
+      for(let i=0;i<=n;i++){
+        const inTail = Math.abs(i-n/2) >= dist-1e-9;
+        const x=px(i)-Math.max(2,plotW/(n+1)/2-1), y=py(probs[i]);
+        svg.appendChild(el("rect",{x,y,width:Math.max(4,plotW/(n+1)-2),height:plotT_h(y,padT,plotH),fill: inTail?"var(--c3)":"var(--c1)", ["fill-opacity"]:0.65}));
+      }
+      svg.appendChild(el("line",{x1:padL,y1:padT+plotH,x2:W-padR,y2:padT+plotH,stroke:"var(--ink)",["stroke-width"]:1.4}));
+      svg.appendChild(txt(padL,14,"P(k heads | fair coin, n="+n+")","var(--ink-soft)",11,"start"));
+      document.getElementById("hypVerdict").innerHTML =
+        `Observed: <b>${k}</b> heads out of ${n} flips (fair-coin expectation: ${(n/2)}) <br>`+
+        `Two-tailed p-value (as far or farther from ${n/2}) = <span class="big">${(pValue*100).toFixed(2)}%</span> ${pValue<0.05?'<span class="bad-t">— surprising under a fair coin</span>':'<span class="good-t">— unremarkable under a fair coin</span>'}`;
+    }
+  }
+  function plotT_h(y, padT, plotH){ return (padT+plotH) - y; }
+  document.getElementById("btnHypTea").addEventListener("click", function(){
+    hypMode="tea"; this.classList.add("active"); document.getElementById("btnHypCoin").classList.remove("active");
+    document.getElementById("rowTea").style.display=""; document.getElementById("rowCoin").style.display="none";
+    renderHyp();
+  });
+  document.getElementById("btnHypCoin").addEventListener("click", function(){
+    hypMode="coin"; this.classList.add("active"); document.getElementById("btnHypTea").classList.remove("active");
+    document.getElementById("rowTea").style.display="none"; document.getElementById("rowCoin").style.display="";
+    renderHyp();
+  });
+  [teaCorrect,coinN,coinK].forEach(inp => inp.addEventListener("input", renderHyp));
+  renderHyp();
+
+  /* =========================================================
+     TAB 5a — CORRELATION
+     ========================================================= */
+  const corrR = document.getElementById("corrR");
+  let confounderOn = false, corrSeed = [];
+  function genCorrPoints(r, n){
+    const pts = [];
+    for(let i=0;i<n;i++){
+      const x = randNormal();
+      const y = r*x + Math.sqrt(Math.max(0,1-r*r))*randNormal();
+      pts.push([x,y]);
+    }
+    return pts;
+  }
+  function genConfounderPoints(n){
+    // hidden variable z drives both x and y independently, giving apparent correlation with true r~0
+    const pts = [];
+    for(let i=0;i<n;i++){
+      const z = randNormal();
+      const x = 0.8*z + 0.6*randNormal();
+      const y = 0.8*z + 0.6*randNormal();
+      pts.push([x,y]);
+    }
+    return pts;
+  }
+  function pearsonR(pts){
+    const n=pts.length;
+    const mx=pts.reduce((s,p)=>s+p[0],0)/n, my=pts.reduce((s,p)=>s+p[1],0)/n;
+    let sxy=0,sxx=0,syy=0;
+    pts.forEach(p => { const dx=p[0]-mx, dy=p[1]-my; sxy+=dx*dy; sxx+=dx*dx; syy+=dy*dy; });
+    return sxy/Math.sqrt(sxx*syy);
+  }
+  function renderCorr(){
+    corrROut.textContent = fmt(parseFloat(corrR.value),2);
+    const svg = document.getElementById("corrSvg");
+    svg.innerHTML = "";
+    const pts = confounderOn ? genConfounderPoints(120) : genCorrPoints(parseFloat(corrR.value), 120);
+    const W=320,H=240, cx=160,cy=120, scale=40;
+    svg.appendChild(el("line",{x1:20,y1:cy,x2:300,y2:cy,stroke:"var(--line)",["stroke-width"]:1.2}));
+    svg.appendChild(el("line",{x1:cx,y1:20,x2:cx,y2:220,stroke:"var(--line)",["stroke-width"]:1.2}));
+    pts.forEach(([x,y]) => {
+      svg.appendChild(el("circle",{cx:cx+x*scale,cy:cy-y*scale,r:3.5,fill:"var(--c1)",["fill-opacity"]:0.6}));
+    });
+    const r = pearsonR(pts);
+    document.getElementById("corrVerdict").innerHTML = confounderOn
+      ? `Hidden confounder ON — x and y have no direct link, yet computed r = <b>${fmt(r,2)}</b> — driven entirely by the shared hidden variable.`
+      : `Target correlation = ${fmt(parseFloat(corrR.value),2)} &nbsp;·&nbsp; Computed r from these points = <b>${fmt(r,2)}</b>`;
+  }
+  corrR.addEventListener("input", renderCorr);
+  document.getElementById("btnCorrRedraw").addEventListener("click", renderCorr);
+  document.getElementById("btnConfounder").addEventListener("click", function(){
+    confounderOn = !confounderOn;
+    this.textContent = "Hidden confounder: " + (confounderOn?"on":"off");
+    this.classList.toggle("active", confounderOn);
+    renderCorr();
+  });
+  renderCorr();
+
+  /* =========================================================
+     TAB 5b — SIMPSON'S PARADOX
+     ========================================================= */
+  function renderSimpson(){
+    const svg = document.getElementById("simpsonSvg");
+    svg.innerHTML = "";
+    const data = [
+      {label:"Small stones", A:[81,87], B:[234,270]},
+      {label:"Large stones", A:[192,263], B:[55,80]},
+      {label:"Overall (combined)", A:[81+192,87+263], B:[234+55,270+80]}
+    ];
+    const W=700,H=240, groupW=210, barW=60, padT=30, baseY=200;
+    data.forEach((d,i) => {
+      const gx = 40 + i*groupW;
+      const pctA = 100*d.A[0]/d.A[1], pctB = 100*d.B[0]/d.B[1];
+      const hA = pctA/100*140, hB = pctB/100*140;
+      svg.appendChild(el("rect",{x:gx,y:baseY-hA,width:barW,height:hA,fill:"var(--c1)",["fill-opacity"]:0.7,stroke:"var(--ink)",["stroke-width"]:0.6}));
+      svg.appendChild(el("rect",{x:gx+barW+16,y:baseY-hB,width:barW,height:hB,fill:"var(--c2)",["fill-opacity"]:0.7,stroke:"var(--ink)",["stroke-width"]:0.6}));
+      svg.appendChild(txt(gx+barW/2, baseY-hA-8, pctA.toFixed(1)+"%", "var(--c1)", 12, "middle","700"));
+      svg.appendChild(txt(gx+barW+16+barW/2, baseY-hB-8, pctB.toFixed(1)+"%", "var(--c2)", 12, "middle","700"));
+      svg.appendChild(txt(gx+barW+8, baseY+18, d.label, "var(--ink)", 12, "middle","600"));
+      svg.appendChild(txt(gx+barW+8, baseY+32, `n=${d.A[1]+d.B[1]}`, "var(--ink-soft)", 10.5, "middle"));
+    });
+    svg.appendChild(el("line",{x1:20,y1:baseY,x2:W-20,y2:baseY,stroke:"var(--ink)",["stroke-width"]:1.4}));
+    document.getElementById("simpsonVerdict").innerHTML =
+      `<span class="sw" style="background:var(--c1); display:inline-block; width:12px; height:12px; border-radius:2px;"></span> Treatment A &nbsp;&nbsp;`+
+      `<span class="sw" style="background:var(--c2); display:inline-block; width:12px; height:12px; border-radius:2px;"></span> Treatment B<br>`+
+      `A wins small stones (93.1% vs 86.7%) <b>and</b> large stones (73.0% vs 68.8%) — but B wins overall (82.6% vs 78.0%). <span class="bad-t">The reversal is real, not a rounding error.</span>`;
+  }
+  renderSimpson();
+})();
+</script>
+</body>
+</html>
