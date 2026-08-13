@@ -49,6 +49,11 @@ def upload(base_url: str, path: Path) -> tuple[bool, str]:
         f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'.encode(),
         b"Content-Type: text/markdown\r\n\r\n",
         data,
+        f"\r\n--{boundary}\r\n".encode(),
+        # Marks these as shipped-with-the-app material rather than something the
+        # user chose to add. They are preferred over the crawled corpus when
+        # grounding an answer, but do not override a curated lesson.
+        b'Content-Disposition: form-data; name="origin"\r\n\r\ncurated',
         f"\r\n--{boundary}--\r\n".encode(),
     ])
     req = urllib.request.Request(

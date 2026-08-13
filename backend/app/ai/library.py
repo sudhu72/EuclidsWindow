@@ -35,7 +35,18 @@ CATALOG_PAGE = 2000
 # answer, but not evidence that the curated lesson is the wrong choice.
 ORIGIN_UPLOAD = "upload"  # a file the user uploaded, or a URL they named
 ORIGIN_WEB = "web"  # followed by the crawler or the autonomous learner
+ORIGIN_CURATED = "curated"  # tutorials shipped with the app (the cogito seed)
+ORIGINS = (ORIGIN_UPLOAD, ORIGIN_WEB, ORIGIN_CURATED)
+
+# Only the user's own material may override a curated topic. Seeded tutorials
+# are deliberately NOT here: they cover the introductory ground the curated
+# lessons are written for, so counting them would suppress the curated tier for
+# exactly the beginner questions it exists to answer.
 DELIBERATE_ORIGINS = (ORIGIN_UPLOAD,)
+
+# ...but for grounding text, both are worth more than the background corpus:
+# hand-picked material, whoever added it, beats an arbitrary crawled page.
+PREFERRED_ORIGINS = (ORIGIN_UPLOAD, ORIGIN_CURATED)
 
 _UA = "EuclidsWindow-Library/1.0 (+local math tutor)"
 # Link extensions to skip when crawling (binary assets), except PDFs which we
@@ -289,6 +300,15 @@ class LibraryService:
         Chunks indexed before origin tracking carry no ``origin`` and are
         therefore treated as background corpus; re-uploading a document marks it
         deliberate again.
+
+        Seeded tutorials (``ORIGIN_CURATED``) are excluded for the same reason,
+        found the same way: they cover introductory ground thoroughly, so once
+        the cogito seed grew to 48 tutorials this returned True for "what is a
+        triangle" (0.43) and "explain fractions to a child" (0.464) and
+        suppressed the curated lesson for precisely the beginner questions it
+        was written for. They still ground the answer — see
+        ``PREFERRED_ORIGINS`` in ``context_for`` — they just no longer veto the
+        curated tier.
         """
         hits = self.search(query, k=1, where={"origin": {"$in": list(DELIBERATE_ORIGINS)}})
         if not hits:
@@ -297,7 +317,12 @@ class LibraryService:
         return distance is not None and distance < max_distance
 
     def context_for(
-        self, query: str, k: int = 3, max_chars: int = 1800, max_distance: float = 0.55
+        self,
+        query: str,
+        k: int = 3,
+        max_chars: int = 1800,
+        max_distance: float = 0.55,
+        reserved: int = 1,
     ) -> str:
         """Formatted grounding block for prompt injection, or '' if no library.
 
@@ -309,11 +334,39 @@ class LibraryService:
         on-topic excerpts land at cosine distance 0.24-0.45 while the off-topic
         Euler's-Identity query lands at 0.62-0.75, so a 0.55 gate sits in the
         empty gap and drops the false matches with margin on both sides.
+
+        ``reserved`` slots of the ``k`` budget are filled from
+        ``PREFERRED_ORIGINS`` first. Nearest-neighbour ranking alone is a
+        popularity contest that hand-picked material loses on volume: the
+        crawler grew the corpus past 80k chunks, after which a tutorial written
+        for the question ranked 3rd or 4th behind textbook PDFs and — with
+        callers passing k=2 or k=3 — was never injected at all. Reserving a slot
+        restores it without silencing the corpus, which still fills the rest.
+
+        Reserved hits face the same distance gate, so an off-topic tutorial is
+        still dropped: this changes precedence among relevant material, it does
+        not lower the bar for relevance.
         """
+        general = self.search(query, k=k)
+        preferred = (
+            self.search(
+                query, k=reserved, where={"origin": {"$in": list(PREFERRED_ORIGINS)}}
+            )
+            if reserved > 0
+            else []
+        )
+        seen = set()
+        merged = []
+        for h in [*preferred, *general]:
+            key = (h.get("source"), h.get("page"), h["text"][:80])
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(h)
         hits = [
-            h for h in self.search(query, k=k)
+            h for h in merged
             if h.get("distance") is None or h["distance"] < max_distance
-        ]
+        ][:k]
         if not hits:
             return ""
         parts = []

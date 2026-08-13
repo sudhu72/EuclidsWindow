@@ -2,11 +2,11 @@
 import asyncio
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from ..ai.crawler import get_crawler
-from ..ai.library import get_library
+from ..ai.library import ORIGIN_CURATED, ORIGIN_UPLOAD, get_library
 
 router = APIRouter(tags=["library"])
 
@@ -38,10 +38,18 @@ class CrawlRequest(BaseModel):
 
 
 @router.post("/api/library/upload", response_model=LibraryIngestResponse)
-async def library_upload(file: UploadFile = File(...)) -> LibraryIngestResponse:
+async def library_upload(
+    file: UploadFile = File(...),
+    origin: str = Form(ORIGIN_UPLOAD),
+) -> LibraryIngestResponse:
     name = file.filename or "upload"
     if not name.lower().endswith(ALLOWED_SUFFIXES):
         raise HTTPException(status_code=422, detail="Upload a .pdf, .txt, or .md file.")
+    # Only the seeding script sets this; a browser upload is the user's own
+    # material and keeps the default. The two are ranked differently, so the
+    # field is restricted rather than free-form.
+    if origin not in (ORIGIN_UPLOAD, ORIGIN_CURATED):
+        raise HTTPException(status_code=422, detail=f"Unknown origin '{origin}'.")
     data = await file.read()
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="File exceeds the 50 MB limit.")
@@ -49,7 +57,7 @@ async def library_upload(file: UploadFile = File(...)) -> LibraryIngestResponse:
     if not library.is_available():
         raise HTTPException(status_code=503, detail="Library store is unavailable.")
     try:
-        result = await asyncio.to_thread(library.ingest, name, data)
+        result = await asyncio.to_thread(library.ingest, name, data, origin)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
