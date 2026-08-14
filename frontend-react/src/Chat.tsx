@@ -3,6 +3,8 @@ import { streamChat, type ChatMsg } from "./api";
 import { voice, type VoiceStatus } from "./voice";
 import Markdown from "./Markdown";
 
+const LEVELS = ["kids", "teen", "college", "adult"];
+
 function Bubble({ role, content }: ChatMsg) {
   return (
     <div className={`bubble ${role}`}>
@@ -17,6 +19,7 @@ export default function Chat() {
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [speak, setSpeak] = useState(false);
+  const [level, setLevel] = useState("teen");
   const [vstatus, setVstatus] = useState<VoiceStatus | null>(null);
   const stopDictation = useRef<(() => void) | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -38,14 +41,20 @@ export default function Chat() {
     setBusy(true);
     let full = "";
     try {
-      await streamChat(q, history, (tok) => {
-        full += tok;
-        setMessages((m) => {
-          const copy = m.slice();
-          copy[copy.length - 1] = { role: "assistant", content: full };
-          return copy;
-        });
-      });
+      await streamChat(
+        q,
+        history,
+        (tok) => {
+          full += tok;
+          setMessages((m) => {
+            const copy = m.slice();
+            copy[copy.length - 1] = { role: "assistant", content: full };
+            return copy;
+          });
+        },
+        undefined,
+        level
+      );
     } catch (err) {
       full = `⚠️ ${(err as Error).message}`;
       setMessages((m) => {
@@ -109,6 +118,18 @@ export default function Chat() {
           placeholder={listening ? "Listening…" : "Ask a math question…"}
           disabled={busy}
         />
+        <select
+          value={level}
+          onChange={(e) => setLevel(e.target.value)}
+          title="Learner level"
+          aria-label="Learner level"
+        >
+          {LEVELS.map((l) => (
+            <option key={l} value={l}>
+              {l[0].toUpperCase() + l.slice(1)}
+            </option>
+          ))}
+        </select>
         <button
           type="button"
           className={`icon ${speak ? "on" : ""}`}

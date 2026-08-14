@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Plot, { buildLayout } from "./Plot";
+import Markdown from "./Markdown";
 import {
   OPERATIONS,
   applyOperation,
@@ -14,6 +15,7 @@ import {
   type Operation,
   type Vec,
 } from "./matrix";
+import { LEVELS, LEVEL_PROSE, PREREQ, type Level } from "./matrixData";
 
 const DIMS = [2, 3, 4];
 
@@ -127,6 +129,7 @@ export default function MatrixLab({ onAsk }: { onAsk: (question: string) => void
   const [revealed, setRevealed] = useState(false);
   const [anim, setAnim] = useState<{ state: "idle" | "running" | "done" | "error"; url?: string; format?: string; message?: string; seconds: number }>({ state: "idle", seconds: 0 });
   const [animWhich, setAnimWhich] = useState<"A" | "B" | "C">("A");
+  const [level, setLevel] = useState<Level>("kids");
 
   // Keep the grids in step with the chosen dimensions.
   useEffect(() => setA((m) => resize(m, aRows, aCols)), [aRows, aCols]);
@@ -280,6 +283,10 @@ export default function MatrixLab({ onAsk }: { onAsk: (question: string) => void
           Set the shapes, do the arithmetic by hand, then watch what the matrix does to the plane.
         </p>
 
+        <div className="lg-prereq">
+          <Markdown>{PREREQ}</Markdown>
+        </div>
+
         <div className="cal-controls">
           {dimSelect("A", aRows, aCols, setARows, setACols)}
           {dimSelect("B", bRows, bCols, setBRows, setBCols)}
@@ -409,6 +416,23 @@ export default function MatrixLab({ onAsk }: { onAsk: (question: string) => void
             </div>
           </>
         )}
+
+        <div className="lg-levels">
+          <div className="chips">
+            {LEVELS.map((l) => (
+              <button
+                key={l}
+                className={`chip ${level === l ? "active" : ""}`}
+                onClick={() => setLevel(l)}
+              >
+                {l[0].toUpperCase() + l.slice(1)}
+              </button>
+            ))}
+          </div>
+          <div className="lg-level-body">
+            <Markdown>{LEVEL_PROSE[level]}</Markdown>
+          </div>
+        </div>
       </div>
     </div>
   );

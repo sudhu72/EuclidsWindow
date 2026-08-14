@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from ..ai.concept_graph import get_concept_graph
 from ..ai.engine import LocalLLMEngine
+from ..ai.prompts import LEVEL_INSTRUCTIONS
 from ..ai.skills import COMPACT_SKILL, COMPACT_TEACHING
 
 router = APIRouter(tags=["chat"])
@@ -36,11 +37,13 @@ class ChatMessage(BaseModel):
 class ChatStreamRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
     history: List[ChatMessage] = Field(default_factory=list)
+    level: str = Field(default="teen", pattern="^(kids|teen|college|adult)$")
 
 
 def _build_messages(req: ChatStreamRequest) -> List[dict]:
     grounding = get_concept_graph().context_for(req.message)
-    system = CHAT_SYSTEM_PROMPT + (("\n\n" + grounding) if grounding else "")
+    level_instruction = LEVEL_INSTRUCTIONS.get(req.level, LEVEL_INSTRUCTIONS["teen"])
+    system = CHAT_SYSTEM_PROMPT + "\n\n" + level_instruction + (("\n" + grounding) if grounding else "")
     messages = [{"role": "system", "content": system}]
     for m in req.history[-8:]:  # keep the tail so context stays bounded
         messages.append({"role": m.role, "content": m.content})

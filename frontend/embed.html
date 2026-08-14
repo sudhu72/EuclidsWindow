@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Euclid's Window — embedded lab</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="embed.css?v=20260812-1" />
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
   </head>
@@ -111,6 +112,26 @@
                 </div>
                 <div class="music-explore-link"><a href="#" data-music-prompt="What is Mozart's Musikalisches Würfelspiel and how does combinatorics create musical compositions?">Explore in Tutor &rarr;</a></div>
               </div>
+              <div class="fft-math-panel">
+                <div class="fft-math-tabs">
+                  <button class="fft-math-tab active" data-level="kids">Kids</button>
+                  <button class="fft-math-tab" data-level="teen">Teen</button>
+                  <button class="fft-math-tab" data-level="college">College</button>
+                  <button class="fft-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="fft-math-content" data-level="kids">
+                  Rolling dice to make music is like a puzzle where you never know exactly what you&rsquo;ll get &mdash; but Mozart set up rules ahead of time so that <em>every</em> possible roll still sounds like a nice little tune. It&rsquo;s a game with freedom AND rules at the same time!
+                </div>
+                <div class="fft-math-content hidden" data-level="teen">
+                  This is &ldquo;constrained randomness&rdquo;: Mozart pre-composed which melodies are allowed in each slot, and the dice just pick among them. Because two dice add up to 7 far more often than 2 or 12 (there are 6 ways to make 7, but only 1 way to make 2 or 12), Mozart put his best melodies in the &ldquo;safe&rdquo; middle rows &mdash; the ones you&rsquo;re most likely to actually roll.
+                </div>
+                <div class="fft-math-content hidden" data-level="college">
+                  This is combinatorics: 16 independent draws across a fixed table give roughly 11<sup>16</sup> &asymp; 46 quadrillion distinct minuets. The two-dice sum is the discrete convolution of two uniform distributions on {1,&hellip;,6}, producing the familiar triangular distribution on {2,&hellip;,12} with mode 7 &mdash; the same distribution that shows up anywhere two independent uniform sources are summed.
+                </div>
+                <div class="fft-math-content hidden" data-level="adult">
+                  This &ldquo;aleatoric but structured&rdquo; technique anticipates 20th-century chance-composition methods (Cage&rsquo;s chance operations, Xenakis&rsquo;s stochastic music), and it&rsquo;s a direct analogue of how modern generative models work: sampling from a <em>constrained</em> distribution the composer/designer shaped in advance, rather than from pure uniform noise.
+                </div>
+              </div>
             </div>
           </div>
 
@@ -139,6 +160,26 @@
                   <a href="#" data-music-prompt="explain ratios and proportions">Ratios</a>
                 </div>
                 <div class="music-explore-link"><a href="#" data-music-prompt="What is the harmonic series and how does it relate to music?">Explore in Tutor &rarr;</a></div>
+              </div>
+              <div class="fft-math-panel">
+                <div class="fft-math-tabs">
+                  <button class="fft-math-tab active" data-level="kids">Kids</button>
+                  <button class="fft-math-tab" data-level="teen">Teen</button>
+                  <button class="fft-math-tab" data-level="college">College</button>
+                  <button class="fft-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="fft-math-content" data-level="kids">
+                  Every note you hear is secretly a bunch of notes stacked on top of each other, like a chord hiding inside one single sound! Notes that share simple number patterns &mdash; like sharing candy evenly between friends &mdash; sound nice together.
+                </div>
+                <div class="fft-math-content hidden" data-level="teen">
+                  Overtones are whole-number multiples of a fundamental frequency f: f, 2f, 3f, 4f&hellip; Two notes sound consonant when their frequencies form a simple ratio (octave = 2:1, perfect fifth = 3:2) because their sound waves&rsquo; peaks line up often; complicated ratios line up rarely, which is what dissonance is.
+                </div>
+                <div class="fft-math-content hidden" data-level="college">
+                  The harmonic series is the mode decomposition of a vibrating string or air column under its boundary conditions &mdash; each harmonic is a standing-wave solution of the 1D wave equation. Timbre is literally the amplitude envelope across these modes: this is a Fourier series realized physically, before any transform math is applied to it.
+                </div>
+                <div class="fft-math-content hidden" data-level="adult">
+                  An instrument&rsquo;s recognizable timbre is its harmonic-amplitude fingerprint — exactly what audio engineers shape with an EQ, and exactly what additive synthesizers reconstruct directly from Fourier coefficients. It's the same math the FFT Lab elsewhere in this app performs on real recorded audio.
+                </div>
               </div>
             </div>
           </div>
@@ -197,6 +238,26 @@
                 </div>
                 <div class="music-explore-link"><a href="#" data-music-prompt="On a guitar string, why does halving the length raise the pitch by exactly one octave, and how do string-length fractions like 2:3 and 3:4 produce consonant musical intervals?">Explore in Tutor &rarr;</a></div>
               </div>
+              <div class="fft-math-panel">
+                <div class="fft-math-tabs">
+                  <button class="fft-math-tab active" data-level="kids">Kids</button>
+                  <button class="fft-math-tab" data-level="teen">Teen</button>
+                  <button class="fft-math-tab" data-level="college">College</button>
+                  <button class="fft-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="fft-math-content" data-level="kids">
+                  A shorter string sounds higher, like a rubber band stretched short and plucked buzzes faster than a long one. Pressing a fret just shortens the part of the string that&rsquo;s free to vibrate.
+                </div>
+                <div class="fft-math-content hidden" data-level="teen">
+                  Frequency is inversely proportional to length: f &prop; 1/L. Halve the length and you double the frequency &mdash; that&rsquo;s exactly one octave up. Simple length ratios like 2:3 and 3:4 sound pleasant because the two strings&rsquo; waves realign often.
+                </div>
+                <div class="fft-math-content hidden" data-level="college">
+                  For a string fixed at both ends, the fundamental frequency is f = v/(2L), so f &prop; 1/L follows directly from the wave equation&rsquo;s boundary conditions. A rational length ratio p:q means the two waves recoincide every lcm(p,q) cycles &mdash; the smaller that number, the more consonant the interval, which is the physical basis of Pythagorean tuning.
+                </div>
+                <div class="fft-math-content hidden" data-level="adult">
+                  This scales to any resonant physical system — organ pipes, drumheads, laser cavities all obey the same boundary-value math. It&rsquo;s also why fret placement on a modern guitar (spaced by the 12th root of 2 per fret, not by pure Pythagorean ratios) is itself an engineering compromise, the same one the Pythagorean Tuning game further down explores directly.
+                </div>
+              </div>
             </div>
           </div>
 
@@ -229,6 +290,26 @@
                 </div>
                 <div class="music-explore-link"><a href="#" data-music-prompt="What are Euclidean rhythms and how does modular arithmetic describe rhythmic cycles?">Explore in Tutor &rarr;</a></div>
               </div>
+              <div class="fft-math-panel">
+                <div class="fft-math-tabs">
+                  <button class="fft-math-tab active" data-level="kids">Kids</button>
+                  <button class="fft-math-tab" data-level="teen">Teen</button>
+                  <button class="fft-math-tab" data-level="college">College</button>
+                  <button class="fft-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="fft-math-content" data-level="kids">
+                  Spreading beats out evenly is like sharing cookies fairly around a table so nobody&rsquo;s crowd of cookies is squished together and nobody has none at all.
+                </div>
+                <div class="fft-math-content hidden" data-level="teen">
+                  The same leftover-dividing process Euclid used to find the greatest common divisor of two numbers also works to space beats out as evenly as possible. Different beats-per-steps ratios reproduce famous rhythms from around the world without anyone having to invent them by ear.
+                </div>
+                <div class="fft-math-content hidden" data-level="college">
+                  Bjorklund&rsquo;s algorithm produces the maximally even distribution of k onsets among n slots using the same recursive remainder structure as Euclid&rsquo;s gcd(k, n). This equivalence is formalized in Toussaint&rsquo;s 2005 paper &ldquo;The Euclidean Algorithm Generates Traditional Musical Rhythms.&rdquo;
+                </div>
+                <div class="fft-math-content hidden" data-level="adult">
+                  These patterns appear independently across many world music traditions (Cuban tresillo, West African bell patterns, flamenco) — evidence that maximally-even spacing is close to a universal rhythmic optimum, not a Western invention. Drum-machine firmware (e.g. Elektron sequencers) ships a literal &ldquo;Euclidean&rdquo; mode built on this exact algorithm.
+                </div>
+              </div>
             </div>
           </div>
 
@@ -255,6 +336,26 @@
                   <a href="#" data-music-prompt="explain patterns in nature">Patterns in Nature</a>
                 </div>
                 <div class="music-explore-link"><a href="#" data-music-prompt="Where does the Fibonacci sequence appear in musical structure and how did Bartók use the golden ratio?">Explore in Tutor &rarr;</a></div>
+              </div>
+              <div class="fft-math-panel">
+                <div class="fft-math-tabs">
+                  <button class="fft-math-tab active" data-level="kids">Kids</button>
+                  <button class="fft-math-tab" data-level="teen">Teen</button>
+                  <button class="fft-math-tab" data-level="college">College</button>
+                  <button class="fft-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="fft-math-content" data-level="kids">
+                  Count the black and white keys in one octave on a piano and you get Fibonacci numbers hiding in plain sight: 2 black keys, then 3 black keys, 5 black keys total, 8 white keys, 13 keys altogether!
+                </div>
+                <div class="fft-math-content hidden" data-level="teen">
+                  The Fibonacci sequence (1, 1, 2, 3, 5, 8, 13&hellip;) shows up directly in scale note-counts. Ratios of consecutive Fibonacci numbers get closer and closer to the golden ratio &phi; &asymp; 1.618, which composers have used to place a piece&rsquo;s dramatic high point.
+                </div>
+                <div class="fft-math-content hidden" data-level="college">
+                  Fₙ₊₁/Fₙ &rarr; &phi; follows from the characteristic equation x&sup2; = x + 1 of the Fibonacci recurrence. &phi;&rsquo;s continued fraction [1;1,1,1,&hellip;] makes it the &ldquo;most irrational&rdquo; number — the hardest to approximate by a simple fraction — which is exactly why golden-ratio-spaced events never fall into a repeating pattern, a property also exploited in phyllotaxis (leaf and seed arrangement).
+                </div>
+                <div class="fft-math-content hidden" data-level="adult">
+                  Béla Bartók&rsquo;s <em>Music for Strings, Percussion and Celesta</em> places its climax near the golden-ratio point of the piece&rsquo;s total duration — a deliberate structural use of &phi; that parallels how the same ratio is used in visual design and architecture for a comparably &ldquo;naturally balanced&rdquo; effect.
+                </div>
               </div>
             </div>
           </div>
@@ -284,6 +385,26 @@
                   <a href="#" data-music-prompt="explain exponents and powers">Exponents</a>
                 </div>
                 <div class="music-explore-link"><a href="#" data-music-prompt="What is Pythagorean tuning and why can't you tune a piano perfectly using pure ratios?">Explore in Tutor &rarr;</a></div>
+              </div>
+              <div class="fft-math-panel">
+                <div class="fft-math-tabs">
+                  <button class="fft-math-tab active" data-level="kids">Kids</button>
+                  <button class="fft-math-tab" data-level="teen">Teen</button>
+                  <button class="fft-math-tab" data-level="college">College</button>
+                  <button class="fft-math-tab" data-level="adult">Adult</button>
+                </div>
+                <div class="fft-math-content" data-level="kids">
+                  Taking twelve &ldquo;perfect&rdquo; musical steps almost gets you back to where you started &mdash; but not quite! It&rsquo;s like walking around a room in steps that are ALMOST but not exactly the right size to land back on your own footprints.
+                </div>
+                <div class="fft-math-content hidden" data-level="teen">
+                  (3/2)<sup>12</sup> &asymp; 129.75, while 2<sup>7</sup> = 128 &mdash; these should match if pure fifths tiled perfectly into octaves, but they don&rsquo;t. That ~1.4% gap is the Pythagorean comma, and it forces a choice between perfectly pure intervals and being able to play in every key.
+                </div>
+                <div class="fft-math-content hidden" data-level="college">
+                  Equal temperament resolves the comma by defining each semitone as the twelfth root of two (2<sup>1/12</sup>), replacing rational frequency ratios with an irrational geometric sequence. Every interval becomes uniformly, equally &ldquo;impure&rdquo;, trading perfect consonance for total transposability &mdash; an elegant, forced application of logarithms to acoustics.
+                </div>
+                <div class="fft-math-content hidden" data-level="adult">
+                  This is a real engineering trade-off still relevant today: fixed-pitch instruments (piano, fretted guitar) must commit to equal temperament, while instruments with continuous pitch control (violin, voice, trombone) can and do drift toward pure &ldquo;just&rdquo; ratios in context — a measurable, documented effect in professional string-quartet recordings.
+                </div>
               </div>
             </div>
           </div>

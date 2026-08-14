@@ -9,7 +9,7 @@ import {
   modPow,
   rsaKeys,
 } from "./crypto";
-import { COPY, SAMPLE_TEXTS } from "./cryptoData";
+import { COPY, LEVELS, SAMPLE_TEXTS, type Level } from "./cryptoData";
 
 type Game = "caesar" | "frequency" | "rsa" | "diffiehellman";
 
@@ -30,6 +30,7 @@ function GameShell({
   children: React.ReactNode;
 }) {
   const copy = COPY[game];
+  const [level, setLevel] = useState<Level>("kids");
   if (!copy) return <>{children}</>;
   return (
     <>
@@ -44,6 +45,22 @@ function GameShell({
         )}
       </div>
       {children}
+      <div className="lg-levels">
+        <div className="chips">
+          {LEVELS.map((l) => (
+            <button
+              key={l}
+              className={`chip ${level === l ? "active" : ""}`}
+              onClick={() => setLevel(l)}
+            >
+              {l[0].toUpperCase() + l.slice(1)}
+            </button>
+          ))}
+        </div>
+        <div className="lg-level-body">
+          <Markdown>{copy.levels[level] || ""}</Markdown>
+        </div>
+      </div>
     </>
   );
 }

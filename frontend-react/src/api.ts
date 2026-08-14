@@ -87,12 +87,13 @@ export async function streamChat(
   message: string,
   history: ChatMsg[],
   onToken: (t: string) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  level?: string
 ): Promise<void> {
   const resp = await fetch("/api/chat/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, history }),
+    body: JSON.stringify({ message, history, level: level ?? "teen" }),
     signal,
   });
   if (!resp.ok || !resp.body) {
