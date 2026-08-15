@@ -16,7 +16,9 @@
       "level": 0,
       "category": "number_theory",
       "euclid_ref": "VII.Def.2",
-      "prerequisites": ["unit"]
+      "prerequisites": [
+        "unit"
+      ]
     },
     {
       "slug": "counting",
@@ -25,7 +27,9 @@
       "level": 1,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["number"]
+      "prerequisites": [
+        "number"
+      ]
     },
     {
       "slug": "natural_numbers",
@@ -34,7 +38,9 @@
       "level": 1,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["counting"]
+      "prerequisites": [
+        "counting"
+      ]
     },
     {
       "slug": "integers",
@@ -43,34 +49,43 @@
       "level": 2,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["natural_numbers"]
+      "prerequisites": [
+        "natural_numbers"
+      ]
     },
     {
       "slug": "rational_numbers",
       "name": "Rational Numbers",
-      "description": "Numbers expressible as a ratio p/q of two integers where q ≠ 0. Includes fractions and terminating/repeating decimals.",
+      "description": "Numbers expressible as a ratio p/q of two integers where q \u2260 0. Includes fractions and terminating/repeating decimals.",
       "level": 2,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["integers", "fractions"]
+      "prerequisites": [
+        "integers",
+        "fractions"
+      ]
     },
     {
       "slug": "real_numbers",
       "name": "Real Numbers",
-      "description": "All rational and irrational numbers; every point on the number line. Includes √2, π, e, and all decimals.",
+      "description": "All rational and irrational numbers; every point on the number line. Includes \u221a2, \u03c0, e, and all decimals.",
       "level": 3,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["rational_numbers"]
+      "prerequisites": [
+        "rational_numbers"
+      ]
     },
     {
       "slug": "complex_numbers",
       "name": "Complex Numbers",
-      "description": "Numbers of the form a + bi where i² = −1. Extend the reals to solve all polynomial equations (Fundamental Theorem of Algebra).",
+      "description": "Numbers of the form a + bi where i\u00b2 = \u22121. Extend the reals to solve all polynomial equations (Fundamental Theorem of Algebra).",
       "level": 4,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["real_numbers"]
+      "prerequisites": [
+        "real_numbers"
+      ]
     },
     {
       "slug": "place_value",
@@ -79,7 +94,9 @@
       "level": 1,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["natural_numbers"]
+      "prerequisites": [
+        "natural_numbers"
+      ]
     },
     {
       "slug": "number_systems",
@@ -88,7 +105,10 @@
       "level": 2,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["place_value", "natural_numbers"]
+      "prerequisites": [
+        "place_value",
+        "natural_numbers"
+      ]
     },
     {
       "slug": "divisibility",
@@ -97,7 +117,9 @@
       "level": 2,
       "category": "number_theory",
       "euclid_ref": "VII.Def.3",
-      "prerequisites": ["natural_numbers"]
+      "prerequisites": [
+        "natural_numbers"
+      ]
     },
     {
       "slug": "prime_numbers",
@@ -106,7 +128,9 @@
       "level": 2,
       "category": "number_theory",
       "euclid_ref": "VII.Def.11",
-      "prerequisites": ["divisibility"]
+      "prerequisites": [
+        "divisibility"
+      ]
     },
     {
       "slug": "number_theory",
@@ -115,9 +139,11 @@
       "level": 3,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["prime_numbers", "divisibility"]
+      "prerequisites": [
+        "prime_numbers",
+        "divisibility"
+      ]
     },
-
     {
       "slug": "addition",
       "name": "Addition",
@@ -125,7 +151,9 @@
       "level": 1,
       "category": "arithmetic",
       "euclid_ref": null,
-      "prerequisites": ["number"]
+      "prerequisites": [
+        "number"
+      ]
     },
     {
       "slug": "subtraction",
@@ -134,7 +162,9 @@
       "level": 1,
       "category": "arithmetic",
       "euclid_ref": null,
-      "prerequisites": ["addition"]
+      "prerequisites": [
+        "addition"
+      ]
     },
     {
       "slug": "multiplication",
@@ -143,7 +173,9 @@
       "level": 1,
       "category": "arithmetic",
       "euclid_ref": null,
-      "prerequisites": ["addition"]
+      "prerequisites": [
+        "addition"
+      ]
     },
     {
       "slug": "division",
@@ -152,7 +184,9 @@
       "level": 1,
       "category": "arithmetic",
       "euclid_ref": null,
-      "prerequisites": ["multiplication"]
+      "prerequisites": [
+        "multiplication"
+      ]
     },
     {
       "slug": "fractions",
@@ -161,7 +195,9 @@
       "level": 2,
       "category": "arithmetic",
       "euclid_ref": null,
-      "prerequisites": ["division"]
+      "prerequisites": [
+        "division"
+      ]
     },
     {
       "slug": "ratio",
@@ -170,7 +206,9 @@
       "level": 2,
       "category": "arithmetic",
       "euclid_ref": "V.Def.3",
-      "prerequisites": ["fractions"]
+      "prerequisites": [
+        "fractions"
+      ]
     },
     {
       "slug": "percentage",
@@ -179,16 +217,20 @@
       "level": 2,
       "category": "arithmetic",
       "euclid_ref": null,
-      "prerequisites": ["ratio"]
+      "prerequisites": [
+        "ratio"
+      ]
     },
     {
       "slug": "exponents",
       "name": "Exponents & Powers",
-      "description": "Repeated multiplication: aⁿ = a × a × ... × a (n times). Foundation for exponential growth, logarithms, and polynomial algebra.",
+      "description": "Repeated multiplication: a\u207f = a \u00d7 a \u00d7 ... \u00d7 a (n times). Foundation for exponential growth, logarithms, and polynomial algebra.",
       "level": 2,
       "category": "arithmetic",
       "euclid_ref": null,
-      "prerequisites": ["multiplication"]
+      "prerequisites": [
+        "multiplication"
+      ]
     },
     {
       "slug": "logarithm",
@@ -197,7 +239,9 @@
       "level": 3,
       "category": "arithmetic",
       "euclid_ref": null,
-      "prerequisites": ["exponents"]
+      "prerequisites": [
+        "exponents"
+      ]
     },
     {
       "slug": "average",
@@ -206,18 +250,23 @@
       "level": 2,
       "category": "arithmetic",
       "euclid_ref": null,
-      "prerequisites": ["addition", "division"]
+      "prerequisites": [
+        "addition",
+        "division"
+      ]
     },
     {
       "slug": "modular_arithmetic",
       "name": "Modular Arithmetic",
-      "description": "Arithmetic of remainders: a ≡ b (mod n) means n divides (a − b). Clock arithmetic, cryptography, error detection.",
+      "description": "Arithmetic of remainders: a \u2261 b (mod n) means n divides (a \u2212 b). Clock arithmetic, cryptography, error detection.",
       "level": 3,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["division", "integers"]
+      "prerequisites": [
+        "division",
+        "integers"
+      ]
     },
-
     {
       "slug": "set_theory",
       "name": "Set Theory",
@@ -225,7 +274,9 @@
       "level": 2,
       "category": "foundations",
       "euclid_ref": null,
-      "prerequisites": ["number"]
+      "prerequisites": [
+        "number"
+      ]
     },
     {
       "slug": "mathematical_logic",
@@ -234,7 +285,9 @@
       "level": 3,
       "category": "foundations",
       "euclid_ref": null,
-      "prerequisites": ["set_theory"]
+      "prerequisites": [
+        "set_theory"
+      ]
     },
     {
       "slug": "axioms",
@@ -243,18 +296,21 @@
       "level": 3,
       "category": "foundations",
       "euclid_ref": "I.Post",
-      "prerequisites": ["mathematical_logic"]
+      "prerequisites": [
+        "mathematical_logic"
+      ]
     },
     {
       "slug": "proof",
       "name": "Methods of Proof",
-      "description": "Direct proof, proof by contradiction, proof by induction, and contrapositive — the tools for establishing mathematical truth.",
+      "description": "Direct proof, proof by contradiction, proof by induction, and contrapositive \u2014 the tools for establishing mathematical truth.",
       "level": 3,
       "category": "foundations",
       "euclid_ref": null,
-      "prerequisites": ["axioms"]
+      "prerequisites": [
+        "axioms"
+      ]
     },
-
     {
       "slug": "point",
       "name": "Point",
@@ -271,7 +327,9 @@
       "level": 0,
       "category": "geometry",
       "euclid_ref": "I.Def.2",
-      "prerequisites": ["point"]
+      "prerequisites": [
+        "point"
+      ]
     },
     {
       "slug": "angle",
@@ -280,7 +338,9 @@
       "level": 1,
       "category": "geometry",
       "euclid_ref": "I.Def.8",
-      "prerequisites": ["line"]
+      "prerequisites": [
+        "line"
+      ]
     },
     {
       "slug": "right_angle",
@@ -289,7 +349,9 @@
       "level": 1,
       "category": "geometry",
       "euclid_ref": "I.Def.10",
-      "prerequisites": ["angle"]
+      "prerequisites": [
+        "angle"
+      ]
     },
     {
       "slug": "triangle",
@@ -298,16 +360,22 @@
       "level": 1,
       "category": "geometry",
       "euclid_ref": "I.Def.19",
-      "prerequisites": ["line", "angle"]
+      "prerequisites": [
+        "line",
+        "angle"
+      ]
     },
     {
       "slug": "right_triangle",
       "name": "Right Triangle",
-      "description": "A triangle with one right angle — the foundation of trigonometry and the Pythagorean theorem.",
+      "description": "A triangle with one right angle \u2014 the foundation of trigonometry and the Pythagorean theorem.",
       "level": 2,
       "category": "geometry",
       "euclid_ref": null,
-      "prerequisites": ["triangle", "right_angle"]
+      "prerequisites": [
+        "triangle",
+        "right_angle"
+      ]
     },
     {
       "slug": "area",
@@ -316,7 +384,9 @@
       "level": 1,
       "category": "geometry",
       "euclid_ref": null,
-      "prerequisites": ["line"]
+      "prerequisites": [
+        "line"
+      ]
     },
     {
       "slug": "square",
@@ -325,25 +395,34 @@
       "level": 2,
       "category": "geometry",
       "euclid_ref": "I.Def.22",
-      "prerequisites": ["right_angle", "area"]
+      "prerequisites": [
+        "right_angle",
+        "area"
+      ]
     },
     {
       "slug": "circle",
       "name": "Circle",
-      "description": "The set of all points equidistant from a center. Circumference = 2πr, Area = πr².",
+      "description": "The set of all points equidistant from a center. Circumference = 2\u03c0r, Area = \u03c0r\u00b2.",
       "level": 2,
       "category": "geometry",
       "euclid_ref": "I.Def.15",
-      "prerequisites": ["point", "line"]
+      "prerequisites": [
+        "point",
+        "line"
+      ]
     },
     {
       "slug": "pi",
-      "name": "Pi (π)",
+      "name": "Pi (\u03c0)",
       "description": "The ratio of a circle's circumference to its diameter, approximately 3.14159. Irrational and transcendental.",
       "level": 2,
       "category": "geometry",
       "euclid_ref": null,
-      "prerequisites": ["circle", "ratio"]
+      "prerequisites": [
+        "circle",
+        "ratio"
+      ]
     },
     {
       "slug": "polygon",
@@ -352,16 +431,22 @@
       "level": 2,
       "category": "geometry",
       "euclid_ref": null,
-      "prerequisites": ["triangle", "angle"]
+      "prerequisites": [
+        "triangle",
+        "angle"
+      ]
     },
     {
       "slug": "transformations",
       "name": "Geometric Transformations",
-      "description": "Translation, rotation, reflection, and dilation — operations that move or resize figures while preserving or scaling properties.",
+      "description": "Translation, rotation, reflection, and dilation \u2014 operations that move or resize figures while preserving or scaling properties.",
       "level": 3,
       "category": "geometry",
       "euclid_ref": null,
-      "prerequisites": ["polygon", "angle"]
+      "prerequisites": [
+        "polygon",
+        "angle"
+      ]
     },
     {
       "slug": "symmetry",
@@ -370,18 +455,23 @@
       "level": 3,
       "category": "geometry",
       "euclid_ref": null,
-      "prerequisites": ["transformations"]
+      "prerequisites": [
+        "transformations"
+      ]
     },
     {
       "slug": "pythagorean_theorem",
       "name": "Pythagorean Theorem",
-      "description": "In a right triangle, a² + b² = c² where c is the hypotenuse. Over 370 known proofs.",
+      "description": "In a right triangle, a\u00b2 + b\u00b2 = c\u00b2 where c is the hypotenuse. Over 370 known proofs.",
       "level": 3,
       "category": "geometry",
       "euclid_ref": "I.47",
-      "prerequisites": ["right_triangle", "square", "area"]
+      "prerequisites": [
+        "right_triangle",
+        "square",
+        "area"
+      ]
     },
-
     {
       "slug": "number_line",
       "name": "Number Line",
@@ -389,7 +479,10 @@
       "level": 1,
       "category": "number_theory",
       "euclid_ref": null,
-      "prerequisites": ["integers", "line"]
+      "prerequisites": [
+        "integers",
+        "line"
+      ]
     },
     {
       "slug": "coordinate_plane",
@@ -398,18 +491,23 @@
       "level": 2,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["number_line", "right_angle"]
+      "prerequisites": [
+        "number_line",
+        "right_angle"
+      ]
     },
     {
       "slug": "slope",
       "name": "Slope",
-      "description": "The steepness of a line: rise/run = (y₂−y₁)/(x₂−x₁). Foreshadows the derivative in calculus.",
+      "description": "The steepness of a line: rise/run = (y\u2082\u2212y\u2081)/(x\u2082\u2212x\u2081). Foreshadows the derivative in calculus.",
       "level": 2,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["coordinate_plane", "ratio"]
+      "prerequisites": [
+        "coordinate_plane",
+        "ratio"
+      ]
     },
-
     {
       "slug": "variable",
       "name": "Variables & Expressions",
@@ -417,7 +515,10 @@
       "level": 2,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["addition", "multiplication"]
+      "prerequisites": [
+        "addition",
+        "multiplication"
+      ]
     },
     {
       "slug": "equation",
@@ -426,7 +527,9 @@
       "level": 2,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["variable"]
+      "prerequisites": [
+        "variable"
+      ]
     },
     {
       "slug": "linear_equations",
@@ -435,7 +538,10 @@
       "level": 2,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["equation", "slope"]
+      "prerequisites": [
+        "equation",
+        "slope"
+      ]
     },
     {
       "slug": "function",
@@ -444,16 +550,20 @@
       "level": 2,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["equation"]
+      "prerequisites": [
+        "equation"
+      ]
     },
     {
       "slug": "inverse_function",
       "name": "Inverse Function",
-      "description": "A function that reverses another: if f(a) = b then f⁻¹(b) = a. Exists when f is one-to-one.",
+      "description": "A function that reverses another: if f(a) = b then f\u207b\u00b9(b) = a. Exists when f is one-to-one.",
       "level": 3,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["function"]
+      "prerequisites": [
+        "function"
+      ]
     },
     {
       "slug": "polynomial",
@@ -462,16 +572,21 @@
       "level": 2,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["variable", "exponents"]
+      "prerequisites": [
+        "variable",
+        "exponents"
+      ]
     },
     {
       "slug": "quadratic_function",
       "name": "Quadratic Function",
-      "description": "A polynomial of degree 2: f(x) = ax² + bx + c. Roots given by the quadratic formula.",
+      "description": "A polynomial of degree 2: f(x) = ax\u00b2 + bx + c. Roots given by the quadratic formula.",
       "level": 3,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["polynomial"]
+      "prerequisites": [
+        "polynomial"
+      ]
     },
     {
       "slug": "parabola",
@@ -480,7 +595,10 @@
       "level": 3,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["quadratic_function", "coordinate_plane"]
+      "prerequisites": [
+        "quadratic_function",
+        "coordinate_plane"
+      ]
     },
     {
       "slug": "sequence",
@@ -489,7 +607,10 @@
       "level": 3,
       "category": "algebra",
       "euclid_ref": null,
-      "prerequisites": ["function", "natural_numbers"]
+      "prerequisites": [
+        "function",
+        "natural_numbers"
+      ]
     },
     {
       "slug": "infinity",
@@ -498,37 +619,46 @@
       "level": 4,
       "category": "foundations",
       "euclid_ref": null,
-      "prerequisites": ["sequence", "set_theory"]
+      "prerequisites": [
+        "sequence",
+        "set_theory"
+      ]
     },
-
     {
       "slug": "trigonometry",
       "name": "Trigonometric Ratios",
-      "description": "sin, cos, tan — ratios of sides in a right triangle. Extend to the unit circle for all angles.",
+      "description": "sin, cos, tan \u2014 ratios of sides in a right triangle. Extend to the unit circle for all angles.",
       "level": 3,
       "category": "trigonometry",
       "euclid_ref": null,
-      "prerequisites": ["right_triangle", "ratio"]
+      "prerequisites": [
+        "right_triangle",
+        "ratio"
+      ]
     },
     {
       "slug": "trig_identities",
       "name": "Trigonometric Identities",
-      "description": "Fundamental relationships: sin²θ + cos²θ = 1, addition formulas, double-angle formulas.",
+      "description": "Fundamental relationships: sin\u00b2\u03b8 + cos\u00b2\u03b8 = 1, addition formulas, double-angle formulas.",
       "level": 3,
       "category": "trigonometry",
       "euclid_ref": null,
-      "prerequisites": ["trigonometry"]
+      "prerequisites": [
+        "trigonometry"
+      ]
     },
     {
       "slug": "polar_coordinates",
       "name": "Polar Coordinates",
-      "description": "Representing points as (r, θ) — distance from origin and angle. Natural for circular and spiral shapes.",
+      "description": "Representing points as (r, \u03b8) \u2014 distance from origin and angle. Natural for circular and spiral shapes.",
       "level": 3,
       "category": "trigonometry",
       "euclid_ref": null,
-      "prerequisites": ["trigonometry", "coordinate_plane"]
+      "prerequisites": [
+        "trigonometry",
+        "coordinate_plane"
+      ]
     },
-
     {
       "slug": "limits",
       "name": "Limits",
@@ -536,16 +666,22 @@
       "level": 3,
       "category": "calculus",
       "euclid_ref": null,
-      "prerequisites": ["function", "real_numbers"]
+      "prerequisites": [
+        "function",
+        "real_numbers"
+      ]
     },
     {
       "slug": "derivatives",
       "name": "Derivatives",
-      "description": "The instantaneous rate of change: f′(x) = lim[f(x+h)−f(x)]/h. Slope of tangent line; velocity from position.",
+      "description": "The instantaneous rate of change: f\u2032(x) = lim[f(x+h)\u2212f(x)]/h. Slope of tangent line; velocity from position.",
       "level": 4,
       "category": "calculus",
       "euclid_ref": null,
-      "prerequisites": ["limits", "slope"]
+      "prerequisites": [
+        "limits",
+        "slope"
+      ]
     },
     {
       "slug": "integrals",
@@ -554,7 +690,10 @@
       "level": 4,
       "category": "calculus",
       "euclid_ref": null,
-      "prerequisites": ["limits", "area"]
+      "prerequisites": [
+        "limits",
+        "area"
+      ]
     },
     {
       "slug": "differential_equations",
@@ -563,16 +702,22 @@
       "level": 5,
       "category": "calculus",
       "euclid_ref": null,
-      "prerequisites": ["derivatives", "integrals"]
+      "prerequisites": [
+        "derivatives",
+        "integrals"
+      ]
     },
     {
       "slug": "taylor_series",
       "name": "Taylor Series",
-      "description": "Approximating any smooth function by a polynomial: f(x) ≈ Σ f⁽ⁿ⁾(a)(x−a)ⁿ/n!. Powers calculators and numerical methods.",
+      "description": "Approximating any smooth function by a polynomial: f(x) \u2248 \u03a3 f\u207d\u207f\u207e(a)(x\u2212a)\u207f/n!. Powers calculators and numerical methods.",
       "level": 5,
       "category": "calculus",
       "euclid_ref": null,
-      "prerequisites": ["derivatives", "sequence"]
+      "prerequisites": [
+        "derivatives",
+        "sequence"
+      ]
     },
     {
       "slug": "riemann_sums",
@@ -581,27 +726,34 @@
       "level": 4,
       "category": "calculus",
       "euclid_ref": null,
-      "prerequisites": ["limits", "integrals"]
+      "prerequisites": [
+        "limits",
+        "integrals"
+      ]
     },
     {
       "slug": "calculus_optimization",
       "name": "Calculus Optimization",
-      "description": "Using derivatives to find maxima and minima: set f′(x) = 0, check f″(x). The basis of engineering design and ML.",
+      "description": "Using derivatives to find maxima and minima: set f\u2032(x) = 0, check f\u2033(x). The basis of engineering design and ML.",
       "level": 4,
       "category": "calculus",
       "euclid_ref": null,
-      "prerequisites": ["derivatives"]
+      "prerequisites": [
+        "derivatives"
+      ]
     },
     {
       "slug": "calculus_physics",
       "name": "Calculus in Physics: Motion & Forces",
-      "description": "Position → velocity → acceleration via derivatives; F = ma as an ODE; projectile trajectories via integration.",
+      "description": "Position \u2192 velocity \u2192 acceleration via derivatives; F = ma as an ODE; projectile trajectories via integration.",
       "level": 4,
       "category": "calculus",
       "euclid_ref": null,
-      "prerequisites": ["derivatives", "integrals"]
+      "prerequisites": [
+        "derivatives",
+        "integrals"
+      ]
     },
-
     {
       "slug": "vectors",
       "name": "Vectors",
@@ -609,7 +761,9 @@
       "level": 3,
       "category": "linear_algebra",
       "euclid_ref": null,
-      "prerequisites": ["coordinate_plane"]
+      "prerequisites": [
+        "coordinate_plane"
+      ]
     },
     {
       "slug": "matrices",
@@ -618,7 +772,10 @@
       "level": 3,
       "category": "linear_algebra",
       "euclid_ref": null,
-      "prerequisites": ["vectors", "linear_equations"]
+      "prerequisites": [
+        "vectors",
+        "linear_equations"
+      ]
     },
     {
       "slug": "linear_algebra",
@@ -627,27 +784,32 @@
       "level": 4,
       "category": "linear_algebra",
       "euclid_ref": null,
-      "prerequisites": ["matrices"]
+      "prerequisites": [
+        "matrices"
+      ]
     },
     {
       "slug": "eigenvalues",
       "name": "Eigenvalues & Eigenvectors",
-      "description": "Av = λv — vectors unchanged in direction by a transformation. Govern stability, principal components, and quantum states.",
+      "description": "Av = \u03bbv \u2014 vectors unchanged in direction by a transformation. Govern stability, principal components, and quantum states.",
       "level": 4,
       "category": "linear_algebra",
       "euclid_ref": null,
-      "prerequisites": ["linear_algebra"]
+      "prerequisites": [
+        "linear_algebra"
+      ]
     },
     {
       "slug": "svd",
       "name": "Singular Value Decomposition",
-      "description": "A = UΣVᵀ — every matrix factors into rotation, scaling, rotation. The Swiss army knife of data science.",
+      "description": "A = U\u03a3V\u1d40 \u2014 every matrix factors into rotation, scaling, rotation. The Swiss army knife of data science.",
       "level": 5,
       "category": "linear_algebra",
       "euclid_ref": null,
-      "prerequisites": ["eigenvalues"]
+      "prerequisites": [
+        "eigenvalues"
+      ]
     },
-
     {
       "slug": "probability",
       "name": "Probability",
@@ -655,7 +817,10 @@
       "level": 3,
       "category": "probability",
       "euclid_ref": null,
-      "prerequisites": ["fractions", "counting"]
+      "prerequisites": [
+        "fractions",
+        "counting"
+      ]
     },
     {
       "slug": "combinatorics",
@@ -664,7 +829,10 @@
       "level": 3,
       "category": "probability",
       "euclid_ref": null,
-      "prerequisites": ["multiplication", "natural_numbers"]
+      "prerequisites": [
+        "multiplication",
+        "natural_numbers"
+      ]
     },
     {
       "slug": "statistics",
@@ -673,27 +841,34 @@
       "level": 3,
       "category": "probability",
       "euclid_ref": null,
-      "prerequisites": ["probability", "average"]
+      "prerequisites": [
+        "probability",
+        "average"
+      ]
     },
     {
       "slug": "binomial_theorem",
       "name": "Binomial Theorem",
-      "description": "(a+b)ⁿ = Σ C(n,k) aⁿ⁻ᵏ bᵏ — expanding powers using Pascal's triangle. Connects combinatorics and algebra.",
+      "description": "(a+b)\u207f = \u03a3 C(n,k) a\u207f\u207b\u1d4f b\u1d4f \u2014 expanding powers using Pascal's triangle. Connects combinatorics and algebra.",
       "level": 3,
       "category": "probability",
       "euclid_ref": null,
-      "prerequisites": ["combinatorics", "exponents"]
+      "prerequisites": [
+        "combinatorics",
+        "exponents"
+      ]
     },
     {
       "slug": "bayes_theorem",
       "name": "Bayes' Theorem",
-      "description": "P(A|B) = P(B|A)·P(A)/P(B) — updating beliefs with evidence. Foundation of Bayesian inference and spam filters.",
+      "description": "P(A|B) = P(B|A)\u00b7P(A)/P(B) \u2014 updating beliefs with evidence. Foundation of Bayesian inference and spam filters.",
       "level": 4,
       "category": "probability",
       "euclid_ref": null,
-      "prerequisites": ["probability"]
+      "prerequisites": [
+        "probability"
+      ]
     },
-
     {
       "slug": "graph_theory",
       "name": "Graph Theory",
@@ -701,7 +876,9 @@
       "level": 3,
       "category": "discrete_math",
       "euclid_ref": null,
-      "prerequisites": ["set_theory"]
+      "prerequisites": [
+        "set_theory"
+      ]
     },
     {
       "slug": "game_theory",
@@ -710,7 +887,10 @@
       "level": 4,
       "category": "discrete_math",
       "euclid_ref": null,
-      "prerequisites": ["probability", "linear_equations"]
+      "prerequisites": [
+        "probability",
+        "linear_equations"
+      ]
     },
     {
       "slug": "cryptography",
@@ -719,9 +899,11 @@
       "level": 5,
       "category": "discrete_math",
       "euclid_ref": null,
-      "prerequisites": ["modular_arithmetic", "prime_numbers"]
+      "prerequisites": [
+        "modular_arithmetic",
+        "prime_numbers"
+      ]
     },
-
     {
       "slug": "optimization",
       "name": "Optimization",
@@ -729,7 +911,10 @@
       "level": 4,
       "category": "applied",
       "euclid_ref": null,
-      "prerequisites": ["calculus_optimization", "linear_algebra"]
+      "prerequisites": [
+        "calculus_optimization",
+        "linear_algebra"
+      ]
     },
     {
       "slug": "topology",
@@ -738,16 +923,22 @@
       "level": 5,
       "category": "advanced",
       "euclid_ref": null,
-      "prerequisites": ["set_theory", "real_numbers"]
+      "prerequisites": [
+        "set_theory",
+        "real_numbers"
+      ]
     },
     {
       "slug": "fractals",
       "name": "Fractals",
-      "description": "Self-similar structures with fractional dimension: Mandelbrot set, Koch snowflake, Sierpiński triangle.",
+      "description": "Self-similar structures with fractional dimension: Mandelbrot set, Koch snowflake, Sierpi\u0144ski triangle.",
       "level": 4,
       "category": "advanced",
       "euclid_ref": null,
-      "prerequisites": ["sequence", "complex_numbers"]
+      "prerequisites": [
+        "sequence",
+        "complex_numbers"
+      ]
     },
     {
       "slug": "chaos_theory",
@@ -756,9 +947,10 @@
       "level": 5,
       "category": "advanced",
       "euclid_ref": null,
-      "prerequisites": ["differential_equations"]
+      "prerequisites": [
+        "differential_equations"
+      ]
     },
-
     {
       "slug": "neural_network_math",
       "name": "Neural Network Mathematics",
@@ -766,7 +958,10 @@
       "level": 5,
       "category": "ml_mathematics",
       "euclid_ref": null,
-      "prerequisites": ["linear_algebra", "calculus_optimization"]
+      "prerequisites": [
+        "linear_algebra",
+        "calculus_optimization"
+      ]
     },
     {
       "slug": "backpropagation",
@@ -775,7 +970,10 @@
       "level": 5,
       "category": "ml_mathematics",
       "euclid_ref": null,
-      "prerequisites": ["derivatives", "neural_network_math"]
+      "prerequisites": [
+        "derivatives",
+        "neural_network_math"
+      ]
     },
     {
       "slug": "loss_functions",
@@ -784,16 +982,22 @@
       "level": 5,
       "category": "ml_mathematics",
       "euclid_ref": null,
-      "prerequisites": ["calculus_optimization", "probability"]
+      "prerequisites": [
+        "calculus_optimization",
+        "probability"
+      ]
     },
     {
       "slug": "attention",
       "name": "Attention Mechanism",
-      "description": "Softmax(QKᵀ/√d)V — learned relevance weighting. The core of Transformers, enabling context-aware processing.",
+      "description": "Softmax(QK\u1d40/\u221ad)V \u2014 learned relevance weighting. The core of Transformers, enabling context-aware processing.",
       "level": 6,
       "category": "ml_mathematics",
       "euclid_ref": null,
-      "prerequisites": ["linear_algebra", "neural_network_math"]
+      "prerequisites": [
+        "linear_algebra",
+        "neural_network_math"
+      ]
     },
     {
       "slug": "transformers",
@@ -802,16 +1006,22 @@
       "level": 6,
       "category": "ml_mathematics",
       "euclid_ref": null,
-      "prerequisites": ["attention", "backpropagation"]
+      "prerequisites": [
+        "attention",
+        "backpropagation"
+      ]
     },
     {
       "slug": "lora",
       "name": "LoRA (Low-Rank Adaptation)",
-      "description": "Fine-tuning large models by learning low-rank weight updates ΔW = BA, reducing trainable parameters by 100–1000×.",
+      "description": "Fine-tuning large models by learning low-rank weight updates \u0394W = BA, reducing trainable parameters by 100\u20131000\u00d7.",
       "level": 6,
       "category": "ml_mathematics",
       "euclid_ref": null,
-      "prerequisites": ["svd", "neural_network_math"]
+      "prerequisites": [
+        "svd",
+        "neural_network_math"
+      ]
     },
     {
       "slug": "rag",
@@ -820,18 +1030,23 @@
       "level": 6,
       "category": "ml_mathematics",
       "euclid_ref": null,
-      "prerequisites": ["transformers", "vectors"]
+      "prerequisites": [
+        "transformers",
+        "vectors"
+      ]
     },
     {
       "slug": "dimensionality_reduction",
       "name": "Dimensionality Reduction",
-      "description": "PCA, t-SNE, UMAP — projecting high-dimensional data to fewer dimensions while preserving structure.",
+      "description": "PCA, t-SNE, UMAP \u2014 projecting high-dimensional data to fewer dimensions while preserving structure.",
       "level": 5,
       "category": "ml_mathematics",
       "euclid_ref": null,
-      "prerequisites": ["eigenvalues", "statistics"]
+      "prerequisites": [
+        "eigenvalues",
+        "statistics"
+      ]
     },
-
     {
       "slug": "harmonic_series_music",
       "name": "Harmonic Series in Music",
@@ -839,7 +1054,9 @@
       "level": 3,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["ratio"]
+      "prerequisites": [
+        "ratio"
+      ]
     },
     {
       "slug": "pythagorean_tuning",
@@ -848,7 +1065,9 @@
       "level": 3,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["ratio"]
+      "prerequisites": [
+        "ratio"
+      ]
     },
     {
       "slug": "fibonacci_music",
@@ -857,7 +1076,9 @@
       "level": 3,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["sequence"]
+      "prerequisites": [
+        "sequence"
+      ]
     },
     {
       "slug": "mozarts_dice_game",
@@ -866,7 +1087,10 @@
       "level": 4,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["probability", "combinatorics"]
+      "prerequisites": [
+        "probability",
+        "combinatorics"
+      ]
     },
     {
       "slug": "euclidean_rhythm",
@@ -875,7 +1099,10 @@
       "level": 4,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["modular_arithmetic", "divisibility"]
+      "prerequisites": [
+        "modular_arithmetic",
+        "divisibility"
+      ]
     },
     {
       "slug": "group_theory_music",
@@ -884,7 +1111,10 @@
       "level": 6,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["symmetry", "harmonic_series_music"]
+      "prerequisites": [
+        "symmetry",
+        "harmonic_series_music"
+      ]
     },
     {
       "slug": "fractal_music",
@@ -893,7 +1123,10 @@
       "level": 5,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["fractals", "fibonacci_music"]
+      "prerequisites": [
+        "fractals",
+        "fibonacci_music"
+      ]
     },
     {
       "slug": "wave_equation_sound",
@@ -902,9 +1135,11 @@
       "level": 6,
       "category": "music_and_math",
       "euclid_ref": null,
-      "prerequisites": ["differential_equations", "harmonic_series_music"]
+      "prerequisites": [
+        "differential_equations",
+        "harmonic_series_music"
+      ]
     },
-
     {
       "slug": "fft_algorithm",
       "name": "Fast Fourier Transform",
@@ -912,7 +1147,10 @@
       "level": 5,
       "category": "signal_processing",
       "euclid_ref": null,
-      "prerequisites": ["complex_numbers", "trigonometry"]
+      "prerequisites": [
+        "complex_numbers",
+        "trigonometry"
+      ]
     },
     {
       "slug": "inverse_fft",
@@ -921,7 +1159,9 @@
       "level": 5,
       "category": "signal_processing",
       "euclid_ref": null,
-      "prerequisites": ["fft_algorithm"]
+      "prerequisites": [
+        "fft_algorithm"
+      ]
     },
     {
       "slug": "frequency_filtering",
@@ -930,7 +1170,10 @@
       "level": 5,
       "category": "signal_processing",
       "euclid_ref": null,
-      "prerequisites": ["fft_algorithm", "inverse_fft"]
+      "prerequisites": [
+        "fft_algorithm",
+        "inverse_fft"
+      ]
     },
     {
       "slug": "image_fft_2d",
@@ -939,7 +1182,10 @@
       "level": 6,
       "category": "signal_processing",
       "euclid_ref": null,
-      "prerequisites": ["fft_algorithm", "linear_algebra"]
+      "prerequisites": [
+        "fft_algorithm",
+        "linear_algebra"
+      ]
     },
     {
       "slug": "fourier_image_compression",
@@ -948,7 +1194,66 @@
       "level": 6,
       "category": "signal_processing",
       "euclid_ref": null,
-      "prerequisites": ["image_fft_2d", "frequency_filtering"]
+      "prerequisites": [
+        "image_fft_2d",
+        "frequency_filtering"
+      ]
+    },
+    {
+      "slug": "lang_of_math_argument",
+      "name": "The Language of Mathematics: A Grammar for Rational Argument",
+      "description": "Mathematics as a formal language built to remove ambiguity, and how any rational argument borrows its grammar: precise terms, explicit premises, valid inference, a conclusion that follows.",
+      "level": 4,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": [
+        "mathematical_logic"
+      ]
+    },
+    {
+      "slug": "constructing_rational_arguments",
+      "name": "Constructing a Rational Argument: Premises, Validity, and the Toulmin Model",
+      "description": "Stephen Toulmin's model (claim, grounds, warrant, backing, qualifier, rebuttal) extends the bare syllogism to real-world arguments built on probable, not certain, evidence.",
+      "level": 4,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": [
+        "lang_of_math_argument"
+      ]
+    },
+    {
+      "slug": "history_of_rational_argument",
+      "name": "From Aristotle to Boole: A History of the Rules of Reason",
+      "description": "The lineage of formal reasoning from Aristotle's syllogism and Euclid's axiomatic method through Bacon, Descartes, Hobbes, Pascal, and Leibniz to Boole's algebra of logic.",
+      "level": 4,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": [
+        "mathematical_logic",
+        "axioms"
+      ]
+    },
+    {
+      "slug": "case_study_death_penalty_argument",
+      "name": "Case Study: Formalizing the Death-Penalty Debate",
+      "description": "Beccaria's utilitarian and Kant's retributivist arguments formalized side by side, as a case study in separating an argument's logical form from its contested premises.",
+      "level": 5,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": [
+        "constructing_rational_arguments"
+      ]
+    },
+    {
+      "slug": "case_study_science_history_sociology_arguments",
+      "name": "Case Study: Three Arguments That Changed the World",
+      "description": "Semmelweis, Nightingale, and Lincoln's use of evidence and logical structure, showing how a sound argument's validity and its persuasive power are separate properties.",
+      "level": 5,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": [
+        "constructing_rational_arguments"
+      ]
     }
   ]
 }

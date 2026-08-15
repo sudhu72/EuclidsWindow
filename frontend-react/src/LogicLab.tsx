@@ -2,21 +2,24 @@ import { useMemo, useState } from "react";
 import Markdown from "./Markdown";
 import { safeEvaluator, truthTable, type TruthTable } from "./logic";
 import {
+  ARGUMENT_EXAMPLES,
   COPY,
   GATE_PUZZLES,
   KNAVE_PUZZLES,
   LEVELS,
   SYLLOGISMS,
+  type ArgumentExample,
   type Level,
 } from "./logicData";
 
-type Game = "truthtable" | "syllogism" | "knights" | "gates";
+type Game = "truthtable" | "syllogism" | "knights" | "gates" | "argument";
 
 const GAMES: [Game, string][] = [
   ["truthtable", "Truth Tables"],
   ["syllogism", "Syllogisms"],
   ["knights", "Knights & Knaves"],
   ["gates", "Logic Gates"],
+  ["argument", "Argument Builder"],
 ];
 
 /** Shared chrome for each game: brief, the game itself, note, level prose. */
@@ -380,6 +383,104 @@ function GatesGame() {
   );
 }
 
+const TOULMIN_FIELDS: [keyof ArgumentExample, string][] = [
+  ["claim", "Claim"],
+  ["grounds", "Grounds (evidence)"],
+  ["warrant", "Warrant (why the grounds support the claim)"],
+  ["backing", "Backing (support for the warrant)"],
+  ["qualifier", "Qualifier (how strongly it follows)"],
+  ["rebuttal", "Rebuttal (when it wouldn't hold)"],
+];
+
+const BLANK_CUSTOM = { claim: "", grounds: "", warrant: "", backing: "", qualifier: "", rebuttal: "" };
+
+function ArgumentBuilderGame() {
+  const [mode, setMode] = useState<"examples" | "custom">("examples");
+  const [idx, setIdx] = useState(1); // default to Beccaria — a real, immediately interesting case
+  const [custom, setCustom] = useState({ ...BLANK_CUSTOM });
+  const ex = ARGUMENT_EXAMPLES[idx];
+
+  return (
+    <div className="lg-game">
+      <div className="set-actions">
+        <button
+          className={`chip ${mode === "examples" ? "active" : ""}`}
+          onClick={() => setMode("examples")}
+        >
+          Load an example
+        </button>
+        <button
+          className={`chip ${mode === "custom" ? "active" : ""}`}
+          onClick={() => setMode("custom")}
+        >
+          Build your own
+        </button>
+      </div>
+
+      {mode === "examples" ? (
+        <>
+          <div className="set-actions">
+            <select value={idx} onChange={(e) => setIdx(Number(e.target.value))}>
+              {ARGUMENT_EXAMPLES.map((a, i) => (
+                <option key={a.title} value={i}>
+                  {a.domain} — {a.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="set-hint" style={{ margin: "8px 0" }}>
+            <em>Source: {ex.source}</em>
+          </p>
+
+          <div className="lg-scenario">
+            {TOULMIN_FIELDS.map(([key, label]) => (
+              <p key={key} style={{ margin: "0 0 8px" }}>
+                <strong>{label}:</strong> {ex[key] as string}
+              </p>
+            ))}
+          </div>
+
+          <h5 style={{ margin: "14px 0 6px" }}>In strict logical form</h5>
+          <ol className="cl-steps">
+            {ex.logicalForm.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ol>
+
+          <div className="lg-verdict lg-contingent" style={{ marginTop: 10 }}>
+            {ex.note}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="set-hint" style={{ margin: "0 0 10px" }}>
+            Pick a real argument you actually hold — about school, a hobby, current events, anything
+            — and fill in each part. Leaving a field blank is itself informative: it's usually the
+            part your argument is quietly assuming rather than stating.
+          </p>
+          {TOULMIN_FIELDS.map(([key, label]) => (
+            <label key={key} className="set-row" style={{ alignItems: "flex-start" }}>
+              <span style={{ flexBasis: 220 }}>{label}</span>
+              <textarea
+                className="pad-text"
+                rows={2}
+                value={custom[key as keyof typeof BLANK_CUSTOM]}
+                onChange={(e) =>
+                  setCustom((c) => ({ ...c, [key]: e.target.value }))
+                }
+                placeholder={key === "claim" ? "What are you arguing?" : "…"}
+              />
+            </label>
+          ))}
+          <button className="btn-ghost" onClick={() => setCustom({ ...BLANK_CUSTOM })}>
+            Clear
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 /** Formal Logic Lab — truth tables, syllogisms, Knights & Knaves, logic gates. */
 export default function LogicLab({ onAsk }: { onAsk: (question: string) => void }) {
   const [game, setGame] = useState<Game>("truthtable");
@@ -406,6 +507,7 @@ export default function LogicLab({ onAsk }: { onAsk: (question: string) => void 
           {game === "syllogism" && <SyllogismGame />}
           {game === "knights" && <KnightsGame />}
           {game === "gates" && <GatesGame />}
+          {game === "argument" && <ArgumentBuilderGame />}
         </GameShell>
       </div>
     </div>

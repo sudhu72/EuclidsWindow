@@ -89,8 +89,123 @@ export const COPY: Record<string, GameCopy> = {
       "college": "Boolean algebra forms a **complemented distributive lattice**. Shannon’s expansion theorem: f = x&middot;f_x=1 + x&prime;&middot;f_x=0 (the basis of BDD construction). **Functional completeness**: {NAND} and {NOR} are each universal — any Boolean function can be built from one gate type alone. The **Quine–McCluskey algorithm** finds minimal sum-of-products forms. Circuit complexity theory asks: what is the minimum number of gates needed for a given function?",
       "adult": "Circuit complexity is a central topic in theoretical CS. P/poly captures non-uniform polynomial-size circuits; if NP &notin; P/poly, then P ≠ NP. The **natural proofs barrier** (Razborov–Rudich, 1997) shows that standard techniques cannot prove super-polynomial circuit lower bounds for NP functions if one-way functions exist. In practice, synthesis tools (ABC, Yosys) use AIG (And-Inverter Graph) representations and SAT-based optimization to design circuits with billions of gates."
     }
+  },
+  "argument": {
+    "title": "Argument Builder — The Language of Rational Argument",
+    "subtitle": "Take a real historical argument apart into its logical skeleton, or build your own — the same grammar that proves a theorem can hold up (or fall apart) in law, science, ethics, and policy.",
+    "prereq": "**Math you’ll use:** *The syllogism, extended.* A rational argument is a syllogism's premises and conclusion, plus a place for evidence that's only probable rather than certain. Stephen Toulmin's 1958 model names the missing pieces: **Claim**, **Grounds**, **Warrant**, **Backing**, **Qualifier**, **Rebuttal**. This is the same machinery as the Syllogism game above, built out to handle real-world arguments that don't come with guaranteed premises.",
+    "anecdote": "**Historical note:** Aristotle's *Prior Analytics* (~350 BCE) gave the world its first formal argument structure — the syllogism — and *Rhetoric* named the three appeals (logos, ethos, pathos) that still describe how arguments persuade. Two thousand years later, philosopher Stephen Toulmin argued in *The Uses of Argument* (1958) that real courtroom, scientific, and political arguments rarely fit the bare syllogism, because their evidence is only probable — his six-part model is the field's standard tool for laying one out ever since.\n\n**Social usage:** Legal briefs, grant proposals, scientific papers, and policy memos are all, structurally, Toulmin arguments — a claim, evidence, and (often left unstated, and often where the real disagreement hides) a warrant connecting the two.",
+    "prompt": "Explain how to construct a rational argument using premises, validity, and the Toulmin model of claim, grounds, warrant, and rebuttal",
+    "levels": {
+      "kids": "Building an argument is like stacking blocks: your reasons are the blocks at the bottom, and your conclusion sits on top. If even one bottom block is wobbly — not really true — the whole tower can fall, even if everything above it was stacked perfectly! Pick an example below and see how each piece fits, or build your own.",
+      "teen": "Most real arguments — about school rules, history, or science — aren't pure math syllogisms, because their evidence is only *probably* true, not certain. The Toulmin model adds the missing pieces: your **Claim** (what you're arguing), your **Grounds** (the evidence), your **Warrant** (WHY that evidence supports that claim — often the part nobody says out loud), and a **Rebuttal** (when your claim wouldn't hold). Load a real example and see which piece is actually doing the work.",
+      "college": "The classical syllogism is deductively airtight but brittle — it has no vocabulary for defeasible, probable evidence, which is what most real arguments about policy, ethics, and open scientific questions actually run on. Toulmin's model generalizes it: **Warrant** plays the role of an (often implicit) major premise, **Backing** justifies the warrant itself if challenged, and **Rebuttal** is the one piece classical deductive logic has no room for at all, since a valid deductive argument can't be defeated by new information without denying a premise outright.",
+      "adult": "This is the actual skeleton behind persuasive legal briefs, grant proposals, and policy memos, whether or not the author has heard of Toulmin. A memo that states a claim and cites evidence but never states the warrant — why that evidence is supposed to support that claim — asks a skeptical reader to take the connection on faith, which is exactly where careful readers push back. Load one of the historical examples below, or draft your own real argument and see it laid out the same way."
+    }
   }
 };
+
+export interface ArgumentExample {
+  domain: string;
+  title: string;
+  source: string;
+  claim: string;
+  grounds: string;
+  warrant: string;
+  backing: string;
+  qualifier: string;
+  rebuttal: string;
+  logicalForm: string[];
+  note: string;
+}
+
+export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
+  {
+    domain: "Mathematics",
+    title: "A Pure Syllogism (for contrast)",
+    source: "Aristotle, applied to Euclid",
+    claim: "This triangle's angles sum to 180°.",
+    grounds: "It is a Euclidean-plane triangle.",
+    warrant: "Every Euclidean-plane triangle's angles sum to 180° (proved from the parallel postulate).",
+    backing: "The proof itself — Euclid, Elements I.32.",
+    qualifier: "Certainly — no exceptions, given the axioms.",
+    rebuttal: "None, within Euclidean geometry. (On a sphere's surface, the warrant itself changes — angles sum to more than 180°.)",
+    logicalForm: [
+      "P1: Every Euclidean-plane triangle has angles summing to 180°.",
+      "P2: This is a Euclidean-plane triangle.",
+      "∴ This triangle's angles sum to 180°.",
+    ],
+    note: "The reference case: grounds, warrant, and conclusion are all certain, so the Qualifier and Rebuttal are trivial. Every argument below is what happens once that certainty is gone.",
+  },
+  {
+    domain: "Ethics / Philosophy",
+    title: "Beccaria's Case Against the Death Penalty (utilitarian)",
+    source: "Cesare Beccaria, On Crimes and Punishments, 1764",
+    claim: "The death penalty is not justified.",
+    grounds: "Life imprisonment deters crime more reliably than execution, because deterrence depends on the certainty of punishment, not its severity.",
+    warrant: "The sole legitimate purpose of punishment is preventing future crime, not exacting revenge.",
+    backing: "Observed patterns of certain, moderate punishment outperforming rare, severe punishment.",
+    qualifier: "Beccaria argues this as a matter of principle, not probability.",
+    rebuttal: "Fails if punishment has a legitimate purpose besides deterrence (see Kant, next example) — then the warrant itself is being denied, not the grounds.",
+    logicalForm: [
+      "P1: Punishment is justified only insofar as it prevents future crime.",
+      "P2: Life imprisonment prevents future crime more reliably than execution.",
+      "∴ Execution is not justified.",
+    ],
+    note: "Valid in form. Its soundness rests entirely on P1 (a contested ethical premise — see Kant) and P2 (a contested empirical claim — deterrence research remains genuinely unsettled).",
+  },
+  {
+    domain: "Ethics / Philosophy",
+    title: "Kant's Case For Retribution (deontological)",
+    source: "Immanuel Kant, The Metaphysics of Morals, 1797",
+    claim: "Justice requires the death penalty for murder.",
+    grounds: "For the crime of murder, no lesser punishment is proportionate.",
+    warrant: "Punishment must be proportionate to the crime — that is what makes it just, independent of whether it deters anyone.",
+    backing: "The principle of proportionate retribution (ius talionis).",
+    qualifier: "Kant argues this as a categorical requirement, not a probabilistic one.",
+    rebuttal: "Fails only if proportionate retribution is not, in fact, the correct ground of just punishment — a values question Beccaria's argument doesn't even address, since it starts from a different warrant entirely.",
+    logicalForm: [
+      "P1: Just punishment must be proportionate to the crime, regardless of consequences.",
+      "P2: For murder, only death is proportionate.",
+      "∴ Justice requires the death penalty for murder.",
+    ],
+    note: "Also valid in form. Notice it and Beccaria's argument don't actually contradict each other logically — they answer different questions (what produces good outcomes vs. what is deserved), which is why this debate rarely resolves by evidence alone. See the Case Study topics in Learn for the fuller picture, including the empirical and sociological layers.",
+  },
+  {
+    domain: "Science",
+    title: "Semmelweis and the Hidden Cause of Childbed Fever",
+    source: "Ignaz Semmelweis, 1847",
+    claim: "Doctors' unwashed hands, carrying \"cadaverous particles\" from autopsies, are causing maternal deaths.",
+    grounds: "The doctor-staffed ward (autopsy contact) had a ~10% death rate; the midwife-staffed ward (no autopsy contact) had ~4%, on similar patients. A colleague died of matching symptoms after a cadaver-scalpel cut.",
+    warrant: "A large, otherwise-unexplained mortality gap between two comparable wards points to the one major factor that differs between them.",
+    backing: "The leading rival theory (\"bad air\"/miasma) couldn't explain a difference between two wards sharing the same hospital air.",
+    qualifier: "Probable, pending a direct test.",
+    rebuttal: "Mandatory handwashing with chlorinated lime, tested directly, dropped the doctors' ward to the midwives' death rate almost immediately — the rebuttal condition was checked, not just assumed away.",
+    logicalForm: [
+      "P1: An intervention that removes the one major differing factor should close the mortality gap, if that factor is the cause.",
+      "P2: Mandatory handwashing (removing hand-borne \"cadaverous particles\") closed the gap.",
+      "∴ Hand-borne particles were a cause of the deaths.",
+    ],
+    note: "Valid and — as later confirmed by germ theory — sound, decades before anyone knew *why* it worked. Rejected by most contemporaries anyway: a reminder that a good argument and a persuasive one aren't automatically the same thing.",
+  },
+  {
+    domain: "Sociology / Public Health",
+    title: "Nightingale's Rose Diagram",
+    source: "Florence Nightingale, 1858",
+    claim: "Unsanitary conditions, not battle wounds, are the leading cause of death among British soldiers.",
+    grounds: "Army mortality statistics from the Crimean War, broken down by cause of death and month.",
+    warrant: "A cause responsible for most recorded deaths is the leading cause of death.",
+    backing: "Nightingale's own statistical training (she studied under mathematician James Joseph Sylvester).",
+    qualifier: "Demonstrated, not merely argued — she treated the data as already conclusive.",
+    rebuttal: "None seriously raised — the obstacle wasn't the argument's soundness but getting Parliament to actually engage with it, which is why she invented the polar area diagram: the same evidence, made impossible to ignore visually.",
+    logicalForm: [
+      "P1: Recorded cause-of-death data show disease deaths far outnumbering battle-wound deaths.",
+      "P2: This pattern holds consistently across the war's duration.",
+      "∴ Unsanitary conditions were the leading killer, not combat.",
+    ],
+    note: "A case where the logic was never really the obstacle — the argument's *presentation* was. The polar area diagram (an early pie-chart relative) is itself part of the argument: it's what finally moved Parliament to fund sanitary reform.",
+  },
+];
 
 export const SYLLOGISMS: Syllogism[] = [
   {
