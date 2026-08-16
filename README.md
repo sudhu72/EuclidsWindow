@@ -2,12 +2,12 @@
 
 **Learn math from first principles** — like Euclid's *Elements*: start from self-evident axioms, derive everything step by step.
 
-Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, seven interactive labs (matrix algebra, calculus, music theory, signal processing, cryptology, formal logic, and FFT), dynamic 3Blue1Brown-style Manim animations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 145+ curated topics and 109 concept-graph nodes spanning arithmetic through orbital mechanics — and, beyond mathematics narrowly, the language of rational argument itself: how to construct, formalize, and evaluate a real argument.
+Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, seven interactive labs (matrix algebra, calculus, music theory, signal processing, cryptology, formal logic, and FFT), dynamic 3Blue1Brown-style Manim animations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 146+ curated topics and 110 concept-graph nodes spanning arithmetic through orbital mechanics — and, beyond mathematics narrowly, the language of rational argument itself: how to construct, formalize, and evaluate a real argument.
 
 ## What You Get
 
 - **Generative Tutor (3-tier architecture)**
-  - **Tier 1 — Curated content** (instant): 145+ hand-written topics with 4 learner-level variants, served on first question
+  - **Tier 1 — Curated content** (instant): 146+ hand-written topics with 4 learner-level variants, served on first question
   - **Tier 2 — LLM reasoning** (conversational): Follow-up questions and uncurated topics routed to a local LLM (Ollama) with level-aware prompts and curated context as grounding
   - **Tier 3 — Multi-agent / legacy planner**: JSON-plan LLM path with visualization code generation
   - Context-aware with response modes (`plain`, `axiomatic`, `both`)
@@ -43,7 +43,7 @@ Euclid's Window is a local-first math tutoring platform that combines structured
   - **FFT Lab (Audio)** — record/load audio, forward FFT (Cooley-Tukey), 10-band frequency editor, inverse FFT, playback of original vs. modified signal
   - **FFT Lab (Image)** — load/upload image, 2D FFT (row-column decomposition), magnitude spectrum + phase display, frequency-domain filtering (low-pass / high-pass / band-pass / band-stop with adjustable radius), inverse 2D FFT with side-by-side comparison
   - **Cryptology Lab** — four games built on real math: Caesar Cipher with interactive SVG wheel (modular arithmetic), Frequency Analysis (statistics breaks codes), RSA Playground (public-key encryption with real number theory), Diffie-Hellman Key Exchange (discrete logarithms). Each game starts with a math prerequisite brief linking to relevant topics
-  - **Formal Logic Lab** — five interactive tools: Truth Table Builder (propositional formula evaluator), Syllogism Validator (Aristotle's engine of reason with classic and fallacy examples), Knights & Knaves puzzles (proof by contradiction), Logic Gate Circuit Builder (wire AND/OR/NOT gates to build XOR, NAND, majority vote, half adder, multiplexer), and **Argument Builder** — the Toulmin model (claim/grounds/warrant/backing/qualifier/rebuttal) applied to real historical arguments (Beccaria vs. Kant on capital punishment, Semmelweis, Nightingale's rose diagram), or build your own. Includes historical anecdotes from mathematics and social usage
+  - **Formal Logic Lab** — five interactive tools: Truth Table Builder (propositional formula evaluator), Syllogism Validator (Aristotle's engine of reason with classic and fallacy examples), Knights & Knaves puzzles (proof by contradiction), Logic Gate Circuit Builder (wire AND/OR/NOT gates to build XOR, NAND, majority vote, half adder, multiplexer), and **Argument Builder** — the Toulmin model (claim/grounds/warrant/backing/qualifier/rebuttal) applied to 8 real arguments spanning math, ethics, science, sociology, history, philosophy, and education policy (Beccaria vs. Kant on capital punishment, Semmelweis, Nightingale's rose diagram, Madison's Federalist No. 10, Pascal's Wager, and a common causal fallacy), each checked symbolically against a live propositional-logic truth table, or build your own. Includes historical anecdotes from mathematics and social usage
   - **Cogito Gallery** — a browsable collection of 39 self-contained interactive visualizations adapted from the Feynman-method "cogito" tutorials, across three tracks: **Mathematics** — a ladder from the elementary toolkit (order of operations, sign rules, fractions, exponents, logarithms) through algebra, geometry, trigonometry, complex numbers, sequences & series, calculus, probability, statistics and formal logic, then on to Markov chains, symmetry & invariance, Euler's identity, math notation, normalization, number theory, transforms and structure — **ML & Deep Learning** (forward/backward pass, backprop as reuse, chain rule, attention matrix math, KV-cache/GQA/MLA, cross-entropy, L2 regularization, precision/recall, Simpson's paradox), and **Algorithms** (binary search, two pointers/sliding window, monotonic stack & heap, BFS/DFS, DP grid, pattern decision tree). Each card opens the animation in an in-app viewer or sends its concept to the tutor via an "Explore in Tutor" deep-link
   - Each lab step includes tabbed math explanations for all four learner levels
 
@@ -132,7 +132,7 @@ flowchart TB
     subgraph DATA[Data + Persistence]
       SQLITE[(SQLite DB)]
       CHROMA[(ChromaDB Vector Store)]
-      JSON[(JSON Seeds: 145+ topics, 109 concepts, resources)]
+      JSON[(JSON Seeds: 146+ topics, 110 concepts, resources)]
       STATIC[(backend/static visualizations/media)]
     end
 
@@ -262,7 +262,7 @@ EuclidsWindow/
 │   │   ├── db/
 │   │   └── manim_scenes/
 │   ├── data/
-│   │   ├── demo_topics.json         # 145+ topics with 4 learner-level variants
+│   │   ├── demo_topics.json         # 146+ topics with 4 learner-level variants
 │   │   ├── math_map.json            # Categories + topic prompts for Math Map
 │   │   ├── seed_concepts.json       # Concept graph nodes + prerequisites
 │   │   ├── seed_euclid.json         # Euclid's Elements references
@@ -311,7 +311,7 @@ EuclidsWindow/
 
 ## Topic Coverage
 
-Content in `demo_topics.json` spans 145+ curated topics across 16 categories. The concept graph (`seed_concepts.json`) contains 109 nodes with prerequisite chains. Each topic has 4-level (kids/teen/college/adult) explanations:
+Content in `demo_topics.json` spans 146+ curated topics across 16 categories. The concept graph (`seed_concepts.json`) contains 110 nodes with prerequisite chains. Each topic has 4-level (kids/teen/college/adult) explanations:
 
 | Category | Example Topics |
 |---|---|
@@ -332,7 +332,7 @@ Content in `demo_topics.json` spans 145+ curated topics across 16 categories. Th
 | **Famous Mathematicians** | Euler, Ramanujan, Emmy Noether, Fermat |
 | **Chaos & Fractals** | Chaos Theory, Fractals, Differential Equations |
 | **Mathematical Logic** | Axioms, Proofs, Set Theory, Mathematical Logic |
-| **Rational Argument** | The Language of Mathematics, Constructing Rational Arguments (Toulmin model), History of Rational Argument (Aristotle to Boole), Case Study: the Death-Penalty Debate, Case Study: Semmelweis/Nightingale/Lincoln |
+| **Rational Argument** | The Language of Mathematics, Constructing Rational Arguments (Toulmin model), History of Rational Argument (Aristotle to Boole), Case Study: the Death-Penalty Debate, Case Study: Semmelweis/Nightingale/Lincoln, Case Study: Madison/Pascal's Wager/a Fallacy in the Wild |
 
 ## Quick Start
 

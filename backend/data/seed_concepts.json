@@ -1254,6 +1254,17 @@
       "prerequisites": [
         "constructing_rational_arguments"
       ]
+    },
+    {
+      "slug": "case_study_more_rational_arguments",
+      "name": "Case Study: A Republic, a Wager, and a Fallacy in the Wild",
+      "description": "Madison's disjunctive syllogism, Pascal's decision-theoretic wager, and a real-world affirming-the-consequent fallacy \u2014 three more patterns of rational (and irrational) argument, worked out symbolically.",
+      "level": 5,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": [
+        "constructing_rational_arguments"
+      ]
     }
   ]
 }
