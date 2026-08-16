@@ -117,6 +117,22 @@ export interface ArgumentExample {
   rebuttal: string;
   logicalForm: string[];
   note: string;
+  /**
+   * Optional propositional-logic rendering: the argument's warrant/grounds/
+   * claim reduced to single-letter variables, so its validity can be checked
+   * mechanically with the same truthTable() engine the Truth Table Builder
+   * game uses. Omitted for arguments that are inductive/statistical rather
+   * than deductive — there's no tautology to check for those, on purpose.
+   */
+  symbolic?: {
+    symbols: { symbol: string; meaning: string }[];
+    /** Symbolic premise/conclusion lines, e.g. "J → D", "¬D", "∴ ¬J". */
+    premises: string[];
+    /** The whole argument as one implication, in the app's formula syntax (&&, ||, !, ->, <->). */
+    formula: string;
+    patternName: string;
+    explain: string;
+  };
 }
 
 export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
@@ -136,6 +152,16 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "∴ This triangle's angles sum to 180°.",
     ],
     note: "The reference case: grounds, warrant, and conclusion are all certain, so the Qualifier and Rebuttal are trivial. Every argument below is what happens once that certainty is gone.",
+    symbolic: {
+      symbols: [
+        { symbol: "T", meaning: "this is a Euclidean-plane triangle" },
+        { symbol: "A", meaning: "its angles sum to 180°" },
+      ],
+      premises: ["T → A   (warrant)", "T   (grounds)", "∴ A   (claim)"],
+      formula: "((T -> A) && T) -> A",
+      patternName: "Modus Ponens",
+      explain: "The oldest valid form there is: affirm the antecedent of a true conditional, and the consequent is forced. Check the table below — it's true in every single row, no matter what T and A actually mean. That's what \"valid\" means: the FORM guarantees the conclusion, independent of content.",
+    },
   },
   {
     domain: "Ethics / Philosophy",
@@ -153,6 +179,16 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "∴ Execution is not justified.",
     ],
     note: "Valid in form. Its soundness rests entirely on P1 (a contested ethical premise — see Kant) and P2 (a contested empirical claim — deterrence research remains genuinely unsettled).",
+    symbolic: {
+      symbols: [
+        { symbol: "J", meaning: "execution is justified as punishment" },
+        { symbol: "D", meaning: "execution deters crime more reliably than life imprisonment" },
+      ],
+      premises: ["J → D   (warrant: if justified, it must be the better deterrent)", "¬D   (grounds: it is NOT the better deterrent)", "∴ ¬J   (claim: execution is not justified)"],
+      formula: "((J -> D) && !D) -> !J",
+      patternName: "Modus Tollens",
+      explain: "Deny the consequent of a true conditional, and you're forced to deny the antecedent too. This is a different valid pattern from Modus Ponens above — it's how Beccaria's argument actually moves: not from a cause to its effect, but from the ABSENCE of an expected effect back to the absence of its supposed justification. The table below confirms it's a tautology, too.",
+    },
   },
   {
     domain: "Ethics / Philosophy",
@@ -170,6 +206,16 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "∴ Justice requires the death penalty for murder.",
     ],
     note: "Also valid in form. Notice it and Beccaria's argument don't actually contradict each other logically — they answer different questions (what produces good outcomes vs. what is deserved), which is why this debate rarely resolves by evidence alone. See the Case Study topics in Learn for the fuller picture, including the empirical and sociological layers.",
+    symbolic: {
+      symbols: [
+        { symbol: "M", meaning: "the crime is murder" },
+        { symbol: "D", meaning: "death is the proportionate, just punishment" },
+      ],
+      premises: ["M → D   (warrant: for murder, death is what proportionality requires)", "M   (grounds: this crime is murder)", "∴ D   (claim: death is the just punishment here)"],
+      formula: "((M -> D) && M) -> D",
+      patternName: "Modus Ponens",
+      explain: "Same valid pattern as the pure-math example above, wearing different clothes — and that's the point. Kant's and Beccaria's arguments are both perfectly valid; the truth tables below can't tell you which one is right, because validity only checks the FORM. Whether M→D or J→D is actually true is a question about ethics, not logic — see 'the language of mathematics' can formalize an argument without settling it.",
+    },
   },
   {
     domain: "Science",
@@ -186,7 +232,17 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "P2: Mandatory handwashing (removing hand-borne \"cadaverous particles\") closed the gap.",
       "∴ Hand-borne particles were a cause of the deaths.",
     ],
-    note: "Valid and — as later confirmed by germ theory — sound, decades before anyone knew *why* it worked. Rejected by most contemporaries anyway: a reminder that a good argument and a persuasive one aren't automatically the same thing.",
+    note: "Strictly, this is NOT deductively valid — see the symbolic form below. It's abductive: inference to the best explanation, the normal and legitimate mode of scientific reasoning, not a flaw. What made it convincing wasn't logical necessity but ruling out the leading rival explanation (miasma) and then testing the remaining hypothesis directly. Later confirmed by germ theory, decades after the fact — and rejected by most contemporaries anyway: a reminder that a good argument and a persuasive one aren't automatically the same thing.",
+    symbolic: {
+      symbols: [
+        { symbol: "F", meaning: "hand-borne particles from autopsies are the cause" },
+        { symbol: "R", meaning: "handwashing closes the mortality gap" },
+      ],
+      premises: ["F → R   (warrant: if F is the cause, removing it should close the gap)", "R   (grounds: the gap DID close)", "∴ F   (claim: F was the cause)"],
+      formula: "((F -> R) && R) -> F",
+      patternName: "Affirming the Consequent — a fallacy, if treated as deductive",
+      explain: "Run this one through the table below and it is NOT always true — try F=false, R=true. That's the same invalid pattern the Syllogism game calls out (\"the ground could be wet for many reasons besides rain\"). Semmelweis's real argument survives this anyway, because it isn't trying to be deductive: it's the best surviving explanation after ruling out the alternative (miasma), then confirmed by a direct test. Most of real science reasons this way — which is exactly why it needs the ruling-out step this pattern skips.",
+    },
   },
   {
     domain: "Sociology / Public Health",
@@ -203,7 +259,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "P2: This pattern holds consistently across the war's duration.",
       "∴ Unsanitary conditions were the leading killer, not combat.",
     ],
-    note: "A case where the logic was never really the obstacle — the argument's *presentation* was. The polar area diagram (an early pie-chart relative) is itself part of the argument: it's what finally moved Parliament to fund sanitary reform.",
+    note: "A case where the logic was never really the obstacle — the argument's *presentation* was. The polar area diagram (an early pie-chart relative) is itself part of the argument: it's what finally moved Parliament to fund sanitary reform. No symbolic form below, on purpose: this is a statistical generalization from a large, representative sample, not a deductive argument — its strength comes from the size and representativeness of the data, and there's no tautology to check. That's not a weakness; it's the actual dividing line between inductive and deductive reasoning (see 'From Aristotle to Boole' in Learn).",
   },
 ];
 

@@ -394,6 +394,68 @@ const TOULMIN_FIELDS: [keyof ArgumentExample, string][] = [
 
 const BLANK_CUSTOM = { claim: "", grounds: "", warrant: "", backing: "", qualifier: "", rebuttal: "" };
 
+/** The argument's warrant/grounds/claim as propositional logic — run through the
+ *  same truthTable() engine the Truth Table Builder game uses, so "valid" isn't
+ *  just asserted, it's checked. Omitted (renders nothing) for arguments whose
+ *  `symbolic` field is absent — those are inductive, not deductive, on purpose. */
+function ArgumentSymbolicForm({ ex }: { ex: ArgumentExample }) {
+  const sym = ex.symbolic;
+  const result = useMemo<{ table?: TruthTable; error?: string }>(() => {
+    if (!sym) return {};
+    try {
+      return { table: truthTable(sym.formula) };
+    } catch (e) {
+      return { error: (e as Error).message };
+    }
+  }, [sym]);
+
+  if (!sym) return null;
+
+  return (
+    <>
+      <h5 style={{ margin: "14px 0 6px" }}>In symbolic form — propositional logic</h5>
+      <ul className="lg-symbols" style={{ margin: "0 0 8px", paddingLeft: 18 }}>
+        {sym.symbols.map((s) => (
+          <li key={s.symbol}>
+            <strong>{s.symbol}</strong> = {s.meaning}
+          </li>
+        ))}
+      </ul>
+      <ol className="cl-steps">
+        {sym.premises.map((line, i) => (
+          <li key={i}>{line}</li>
+        ))}
+      </ol>
+      <p className="set-hint" style={{ margin: "6px 0" }}>
+        Pattern: <strong>{sym.patternName}</strong> &nbsp;·&nbsp; formula tested below:{" "}
+        <code>{sym.formula}</code>
+      </p>
+
+      {result.error && <div className="lg-bad">Could not evaluate that formula: {result.error}</div>}
+      {result.table && (
+        <>
+          <BitTable
+            vars={result.table.vars}
+            rows={result.table.rows.map((r) => ({
+              values: r.values,
+              cells: [{ value: r.result }],
+            }))}
+            extraHead={["Whole argument"]}
+          />
+          <div className={`lg-verdict lg-${result.table.verdict}`} style={{ marginTop: 8 }}>
+            <strong>
+              {result.table.verdict === "tautology"
+                ? "✓ Tautology — true in every row. This pattern is deductively valid, always, regardless of what the letters mean."
+                : "✗ Not a tautology — false in at least one row. This pattern is NOT deductively valid on its own."}
+            </strong>
+          </div>
+        </>
+      )}
+      <p className="set-hint" style={{ margin: "8px 0 0" }}>{sym.explain}</p>
+    </>
+  );
+}
+
 function ArgumentBuilderGame() {
   const [mode, setMode] = useState<"examples" | "custom">("examples");
   const [idx, setIdx] = useState(1); // default to Beccaria — a real, immediately interesting case
@@ -446,6 +508,8 @@ function ArgumentBuilderGame() {
               <li key={i}>{line}</li>
             ))}
           </ol>
+
+          <ArgumentSymbolicForm ex={ex} />
 
           <div className="lg-verdict lg-contingent" style={{ marginTop: 10 }}>
             {ex.note}
