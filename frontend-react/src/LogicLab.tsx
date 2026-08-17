@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Markdown from "./Markdown";
 import { safeEvaluator, truthTable, type TruthTable } from "./logic";
 import {
@@ -11,8 +11,17 @@ import {
   type ArgumentExample,
   type Level,
 } from "./logicData";
+import {
+  ALL_GATE_TYPES,
+  CIRCUIT_CHALLENGES,
+  INVERTING,
+  evalGate,
+  gateArity,
+  type CircuitChallenge,
+  type GateType,
+} from "./circuitData";
 
-type Game = "truthtable" | "syllogism" | "knights" | "gates" | "argument";
+type Game = "truthtable" | "syllogism" | "knights" | "gates" | "argument" | "circuit";
 
 const GAMES: [Game, string][] = [
   ["truthtable", "Truth Tables"],
@@ -20,6 +29,7 @@ const GAMES: [Game, string][] = [
   ["knights", "Knights & Knaves"],
   ["gates", "Logic Gates"],
   ["argument", "Argument Builder"],
+  ["circuit", "Circuit Builder"],
 ];
 
 /** Shared chrome for each game: brief, the game itself, note, level prose. */
@@ -641,6 +651,373 @@ function ArgumentBuilderGame() {
   );
 }
 
+interface GateNode {
+  id: string;
+  type: GateType;
+  in1: string | null;
+  in2: string | null;
+}
+
+const CIRCUIT_PAD = 24;
+const CIRCUIT_COL_W = 150;
+const CIRCUIT_ROW_H = 74;
+const IN_W = 64;
+const IN_H = 44;
+const GATE_W = 96;
+const GATE_H = 50;
+const TRUE_COLOR = "#15803d";
+const FALSE_COLOR = "#a8a29e";
+
+function labelForNode(id: string, inputLabels: string[], gates: GateNode[]): string {
+  if (inputLabels.includes(id)) return id;
+  const g = gates.find((x) => x.id === id);
+  return g ? `${g.id} (${g.type})` : id;
+}
+
+/** One playable circuit: input toggles, a gate palette + wiring controls, and
+ *  an SVG diagram whose wires are colored live by the signal they carry.
+ *  Keyed by mode in the parent so switching sandbox/challenge fully resets it. */
+function CircuitWorkspace({ challenge }: { challenge: CircuitChallenge | null }) {
+  const [inputLabels, setInputLabels] = useState<string[]>(challenge?.inputLabels ?? ["A", "B"]);
+  const [inputValues, setInputValues] = useState<Record<string, number>>(() =>
+    Object.fromEntries((challenge?.inputLabels ?? ["A", "B"]).map((l) => [l, 0]))
+  );
+  const [gates, setGates] = useState<GateNode[]>([]);
+  const [outputId, setOutputId] = useState<string>(inputLabels[0]);
+  const [showHint, setShowHint] = useState(false);
+  const gateCounter = useRef(0);
+
+  const allowedGates = challenge?.allowedGates ?? ALL_GATE_TYPES;
+
+  function sourcesUpTo(idx: number): string[] {
+    return [...inputLabels, ...gates.slice(0, idx).map((g) => g.id)];
+  }
+
+  function addInput() {
+    if (inputLabels.length >= 4) return;
+    const next = "ABCD"[inputLabels.length];
+    setInputLabels((l) => [...l, next]);
+    setInputValues((v) => ({ ...v, [next]: 0 }));
+  }
+
+  function removeInput() {
+    if (inputLabels.length <= 1) return;
+    const removed = inputLabels[inputLabels.length - 1];
+    setInputLabels((l) => l.slice(0, -1));
+    setInputValues((v) => {
+      const n = { ...v };
+      delete n[removed];
+      return n;
+    });
+    setGates((g) => g.filter((x) => x.in1 !== removed && x.in2 !== removed));
+  }
+
+  function addGate(type: GateType) {
+    const idx = gates.length;
+    const sources = sourcesUpTo(idx);
+    gateCounter.current += 1;
+    const id = `g${gateCounter.current}`;
+    const in1 = sources[0] ?? null;
+    const in2 = gateArity(type) === 2 ? sources[1] ?? sources[0] ?? null : null;
+    setGates((g) => [...g, { id, type, in1, in2 }]);
+    setOutputId(id);
+  }
+
+  function removeLastGate() {
+    if (gates.length === 0) return;
+    const removedId = gates[gates.length - 1].id;
+    const next = gates.slice(0, -1);
+    setGates(next);
+    setOutputId((o) => (o === removedId ? next[next.length - 1]?.id ?? inputLabels[0] : o));
+  }
+
+  function updateGateInput(gateIdx: number, which: "in1" | "in2", value: string) {
+    setGates((g) => g.map((x, i) => (i === gateIdx ? { ...x, [which]: value } : x)));
+  }
+
+  const values = useMemo(() => {
+    const v: Record<string, number> = {};
+    for (const l of inputLabels) v[l] = inputValues[l] ?? 0;
+    for (const g of gates) {
+      const a = g.in1 ? v[g.in1] ?? 0 : 0;
+      const b = g.in2 ? v[g.in2] ?? 0 : 0;
+      v[g.id] = evalGate(g.type, a, b);
+    }
+    return v;
+  }, [inputLabels, inputValues, gates]);
+
+  const outputValue = values[outputId] ?? 0;
+
+  const challengeResult = useMemo(() => {
+    if (!challenge) return null;
+    const n = inputLabels.length;
+    let allOk = true;
+    const rows: { bits: number[]; got: number; want: number; ok: boolean }[] = [];
+    for (let r = 0; r < 1 << n; r++) {
+      const bits = inputLabels.map((_, i) => (r >> (n - 1 - i)) & 1);
+      const v: Record<string, number> = {};
+      inputLabels.forEach((l, i) => (v[l] = bits[i]));
+      for (const g of gates) {
+        const a = g.in1 ? v[g.in1] ?? 0 : 0;
+        const b = g.in2 ? v[g.in2] ?? 0 : 0;
+        v[g.id] = evalGate(g.type, a, b);
+      }
+      const got = v[outputId] ?? 0;
+      const want = challenge.target(...bits);
+      const ok = got === want;
+      if (!ok) allOk = false;
+      rows.push({ bits, got, want, ok });
+    }
+    return { rows, allOk };
+  }, [challenge, inputLabels, gates, outputId]);
+
+  // ---- layout ---------------------------------------------------------
+  function inputBoxPos(i: number) {
+    return { x: CIRCUIT_PAD, y: CIRCUIT_PAD + i * CIRCUIT_ROW_H };
+  }
+  function gateBoxPos(i: number) {
+    return { x: CIRCUIT_PAD + CIRCUIT_COL_W * (i + 1), y: CIRCUIT_PAD + i * CIRCUIT_ROW_H };
+  }
+  function outPin(id: string): { x: number; y: number } {
+    const ii = inputLabels.indexOf(id);
+    if (ii >= 0) {
+      const p = inputBoxPos(ii);
+      return { x: p.x + IN_W, y: p.y + IN_H / 2 };
+    }
+    const gi = gates.findIndex((g) => g.id === id);
+    if (gi >= 0) {
+      const p = gateBoxPos(gi);
+      return { x: p.x + GATE_W, y: p.y + GATE_H / 2 };
+    }
+    return { x: CIRCUIT_PAD, y: CIRCUIT_PAD };
+  }
+
+  const rows = Math.max(inputLabels.length, gates.length, 1);
+  const svgW = CIRCUIT_PAD * 2 + CIRCUIT_COL_W * (gates.length + 1) + 70;
+  const svgH = CIRCUIT_PAD * 2 + rows * CIRCUIT_ROW_H;
+  const bulbPos = { x: svgW - CIRCUIT_PAD - 24, y: outPin(outputId).y };
+
+  return (
+    <div className="lg-game">
+      {challenge && (
+        <>
+          <p className="set-hint" style={{ margin: "0 0 8px" }}>{challenge.blurb}</p>
+          <div className="set-actions">
+            <button className="btn-ghost" onClick={() => setShowHint((v) => !v)}>
+              {showHint ? "Hide hint" : "Hint"}
+            </button>
+          </div>
+          {showHint && <div className="lg-note" style={{ marginTop: 8 }}>{challenge.hint}</div>}
+        </>
+      )}
+
+      <div className="set-actions" style={{ marginTop: challenge ? 10 : 0 }}>
+        {allowedGates.map((t) => (
+          <button key={t} className="chip" onClick={() => addGate(t)}>
+            + {t}
+          </button>
+        ))}
+        <button className="btn-ghost" onClick={removeLastGate} disabled={gates.length === 0}>
+          Remove last gate
+        </button>
+        {!challenge && (
+          <>
+            <button className="btn-ghost" onClick={addInput} disabled={inputLabels.length >= 4}>
+              + Input
+            </button>
+            <button className="btn-ghost" onClick={removeInput} disabled={inputLabels.length <= 1}>
+              − Input
+            </button>
+          </>
+        )}
+      </div>
+
+      <div style={{ overflowX: "auto", marginTop: 12 }}>
+        <svg width={svgW} height={svgH} role="img" aria-label="Logic circuit diagram" style={{ display: "block" }}>
+          {/* wires, drawn first so boxes sit on top of their ends */}
+          {gates.map((g, gi) => {
+            const p = gateBoxPos(gi);
+            const pins: { srcId: string | null; y: number }[] =
+              gateArity(g.type) === 1
+                ? [{ srcId: g.in1, y: p.y + GATE_H / 2 }]
+                : [
+                    { srcId: g.in1, y: p.y + 14 },
+                    { srcId: g.in2, y: p.y + GATE_H - 14 },
+                  ];
+            return pins.map((pin, pi) =>
+              pin.srcId ? (
+                <line
+                  key={`${g.id}-w${pi}`}
+                  x1={outPin(pin.srcId).x}
+                  y1={outPin(pin.srcId).y}
+                  x2={p.x}
+                  y2={pin.y}
+                  stroke={values[pin.srcId] ? TRUE_COLOR : FALSE_COLOR}
+                  strokeWidth={2.5}
+                />
+              ) : null
+            );
+          })}
+          {outputId && (
+            <line
+              x1={outPin(outputId).x}
+              y1={outPin(outputId).y}
+              x2={bulbPos.x}
+              y2={bulbPos.y}
+              stroke={outputValue ? TRUE_COLOR : FALSE_COLOR}
+              strokeWidth={2.5}
+            />
+          )}
+
+          {/* input toggles */}
+          {inputLabels.map((l, i) => {
+            const p = inputBoxPos(i);
+            const on = !!inputValues[l];
+            return (
+              <g
+                key={l}
+                style={{ cursor: "pointer" }}
+                onClick={() => setInputValues((v) => ({ ...v, [l]: v[l] ? 0 : 1 }))}
+              >
+                <rect x={p.x} y={p.y} width={IN_W} height={IN_H} rx={8}
+                      fill={on ? "#dcfce7" : "#f5f5f4"} stroke={on ? TRUE_COLOR : "#1c1917"} strokeWidth={2} />
+                <text x={p.x + IN_W / 2} y={p.y + IN_H / 2 - 3} textAnchor="middle" fontSize="13" fontWeight={700}>
+                  {l}
+                </text>
+                <text x={p.x + IN_W / 2} y={p.y + IN_H / 2 + 14} textAnchor="middle" fontSize="11"
+                      fill={on ? TRUE_COLOR : "#78716c"}>
+                  {on ? "1" : "0"}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* gate boxes */}
+          {gates.map((g, gi) => {
+            const p = gateBoxPos(gi);
+            const val = values[g.id];
+            return (
+              <g key={g.id}>
+                <rect x={p.x} y={p.y} width={GATE_W} height={GATE_H} rx={8}
+                      fill="#fff" stroke={val ? TRUE_COLOR : "#1c1917"} strokeWidth={2} />
+                <text x={p.x + GATE_W / 2} y={p.y + 21} textAnchor="middle" fontSize="13" fontWeight={700}>
+                  {g.type}
+                </text>
+                <text x={p.x + GATE_W / 2} y={p.y + 38} textAnchor="middle" fontSize="10" fill="#78716c">
+                  {g.id}
+                </text>
+                {INVERTING[g.type] && (
+                  <circle cx={p.x + GATE_W + 5} cy={p.y + GATE_H / 2} r={4} fill="#fff"
+                          stroke={val ? TRUE_COLOR : "#1c1917"} strokeWidth={2} />
+                )}
+              </g>
+            );
+          })}
+
+          {/* output bulb */}
+          <circle cx={bulbPos.x} cy={bulbPos.y} r={20}
+                  fill={outputValue ? "#fef08a" : "#f5f5f4"}
+                  stroke={outputValue ? "#ca8a04" : "#1c1917"} strokeWidth={2.5} />
+          <text x={bulbPos.x} y={bulbPos.y + 5} textAnchor="middle" fontSize="14" fontWeight={700}>
+            {outputValue}
+          </text>
+        </svg>
+      </div>
+
+      {gates.length > 0 && (
+        <table className="lg-circuit-table" style={{ width: "100%", marginTop: 12, fontSize: 13 }}>
+          <tbody>
+            {gates.map((g, gi) => (
+              <tr key={g.id}>
+                <td style={{ padding: "4px 8px 4px 0", whiteSpace: "nowrap" }}>
+                  <strong>{g.id}</strong> = {g.type}(
+                </td>
+                <td style={{ padding: "4px" }}>
+                  <select value={g.in1 ?? ""} onChange={(e) => updateGateInput(gi, "in1", e.target.value)}>
+                    {sourcesUpTo(gi).map((s) => (
+                      <option key={s} value={s}>{labelForNode(s, inputLabels, gates)}</option>
+                    ))}
+                  </select>
+                </td>
+                {gateArity(g.type) === 2 && (
+                  <>
+                    <td style={{ padding: "4px" }}>,</td>
+                    <td style={{ padding: "4px" }}>
+                      <select value={g.in2 ?? ""} onChange={(e) => updateGateInput(gi, "in2", e.target.value)}>
+                        {sourcesUpTo(gi).map((s) => (
+                          <option key={s} value={s}>{labelForNode(s, inputLabels, gates)}</option>
+                        ))}
+                      </select>
+                    </td>
+                  </>
+                )}
+                <td style={{ padding: "4px 0" }}>
+                  ) = <strong style={{ color: values[g.id] ? TRUE_COLOR : FALSE_COLOR }}>{values[g.id]}</strong>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <div className="set-row" style={{ marginTop: 10 }}>
+        <span>Output =</span>
+        <select value={outputId} onChange={(e) => setOutputId(e.target.value)}>
+          {[...inputLabels, ...gates.map((g) => g.id)].map((s) => (
+            <option key={s} value={s}>{labelForNode(s, inputLabels, gates)}</option>
+          ))}
+        </select>
+      </div>
+
+      {challenge && challengeResult && (
+        <div className={`lg-verdict ${challengeResult.allOk ? "lg-tautology" : "lg-contingent"}`} style={{ marginTop: 12 }}>
+          {challengeResult.allOk ? (
+            <strong>🎉 Solved! Your circuit matches the target for all {challengeResult.rows.length} input combinations.</strong>
+          ) : (
+            <>
+              <strong>
+                Not yet — {challengeResult.rows.filter((r) => !r.ok).length} of {challengeResult.rows.length} input
+                combinations don't match the target.
+              </strong>
+              <div style={{ marginTop: 6, fontFamily: "monospace", fontSize: 12 }}>
+                {challengeResult.rows.map((r, i) => (
+                  <div key={i} style={{ color: r.ok ? TRUE_COLOR : "#b91c1c" }}>
+                    {inputLabels.map((l, li) => `${l}=${r.bits[li]}`).join(" ")} → got {r.got}, want {r.want}{" "}
+                    {r.ok ? "✓" : "✗"}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Circuit Builder — place gates, wire them together, watch the signal light up. */
+function CircuitBuilderGame() {
+  const [mode, setMode] = useState<number | "sandbox">("sandbox");
+  const challenge = mode === "sandbox" ? null : CIRCUIT_CHALLENGES[mode];
+
+  return (
+    <div className="lg-game">
+      <div className="set-actions">
+        <button className={`chip ${mode === "sandbox" ? "active" : ""}`} onClick={() => setMode("sandbox")}>
+          Sandbox
+        </button>
+        {CIRCUIT_CHALLENGES.map((c, i) => (
+          <button key={c.title} className={`chip ${mode === i ? "active" : ""}`} onClick={() => setMode(i)}>
+            Challenge {i + 1}
+          </button>
+        ))}
+      </div>
+      {mode !== "sandbox" && <h5 style={{ margin: "10px 0 4px" }}>{challenge!.title}</h5>}
+      <CircuitWorkspace key={String(mode)} challenge={challenge} />
+    </div>
+  );
+}
+
 /** Formal Logic Lab — truth tables, syllogisms, Knights & Knaves, logic gates. */
 export default function LogicLab({ onAsk }: { onAsk: (question: string) => void }) {
   const [game, setGame] = useState<Game>("truthtable");
@@ -668,6 +1045,7 @@ export default function LogicLab({ onAsk }: { onAsk: (question: string) => void 
           {game === "knights" && <KnightsGame />}
           {game === "gates" && <GatesGame />}
           {game === "argument" && <ArgumentBuilderGame />}
+          {game === "circuit" && <CircuitBuilderGame />}
         </GameShell>
       </div>
     </div>

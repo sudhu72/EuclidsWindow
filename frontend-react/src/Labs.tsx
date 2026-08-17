@@ -15,7 +15,7 @@ const LABS: { id: string; label: string; icon: string; desc: string }[] = [
   { id: "calclab", label: "Calculus Lab", icon: "∫", desc: "Tangents, Riemann sums, optimisation, ODEs, orbits." },
   { id: "fftlab", label: "FFT Lab", icon: "∿", desc: "Decompose signals into frequencies; record your own." },
   { id: "cryptolab", label: "Crypto Lab", icon: "⊕", desc: "Caesar wheel, frequency analysis, RSA, Diffie-Hellman." },
-  { id: "logiclab", label: "Logic Lab", icon: "⊢", desc: "Truth tables, syllogisms, Knights & Knaves, logic gates, argument builder." },
+  { id: "logiclab", label: "Logic Lab", icon: "⊢", desc: "Truth tables, syllogisms, Knights & Knaves, logic gates, argument builder, circuit builder." },
   { id: "matrixlab", label: "Matrix Lab", icon: "▨", desc: "Operations, by-hand practice, and the transform drawn." },
 ];
 
