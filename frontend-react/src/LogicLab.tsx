@@ -394,6 +394,96 @@ const TOULMIN_FIELDS: [keyof ArgumentExample, string][] = [
 
 const BLANK_CUSTOM = { claim: "", grounds: "", warrant: "", backing: "", qualifier: "", rebuttal: "" };
 
+/** The "building an argument is like stacking blocks" analogy, made literal and
+ *  interactive: two premise blocks (Grounds, Warrant) hold up a Claim block.
+ *  Knock either premise out and the claim topples — even if the other premise,
+ *  and the reasoning connecting them, is perfectly solid. That's the whole
+ *  point of the Toulmin model: a claim needs BOTH good grounds AND a warrant
+ *  that actually licenses the step from those grounds to that claim. */
+function ArgumentTower({ claim, grounds, warrant }: { claim: string; grounds: string; warrant: string }) {
+  const [groundsTrue, setGroundsTrue] = useState(true);
+  const [warrantTrue, setWarrantTrue] = useState(true);
+  const claimStands = groundsTrue && warrantTrue;
+
+  return (
+    <div className="lg-tower" style={{ maxWidth: 360, margin: "0 auto" }}>
+      <svg
+        viewBox="0 0 260 190"
+        role="img"
+        aria-label="Two blocks labelled Grounds and Warrant holding up a block labelled Claim"
+        style={{ width: "100%", height: "auto", display: "block" }}
+      >
+        <line x1="10" y1="172" x2="250" y2="172" stroke="#a8a29e" strokeWidth="2" />
+
+        <g
+          style={{
+            transform: groundsTrue ? "none" : "rotate(-20deg)",
+            transformOrigin: "55px 172px",
+            transition: "transform 0.5s cubic-bezier(.36,1.6,.4,1)",
+          }}
+        >
+          <rect x="15" y="117" width="80" height="55" rx="4"
+                fill={groundsTrue ? "#fef3c7" : "#fecaca"} stroke="#1c1917" strokeWidth="2" />
+          <text x="55" y="141" textAnchor="middle" fontSize="12" fontWeight={700}>Grounds</text>
+          <text x="55" y="157" textAnchor="middle" fontSize="9" fill="#57534e">
+            {groundsTrue ? "solid" : "wobbly!"}
+          </text>
+        </g>
+
+        <g
+          style={{
+            transform: warrantTrue ? "none" : "rotate(18deg)",
+            transformOrigin: "205px 172px",
+            transition: "transform 0.5s cubic-bezier(.36,1.6,.4,1)",
+          }}
+        >
+          <rect x="165" y="117" width="80" height="55" rx="4"
+                fill={warrantTrue ? "#fef3c7" : "#fecaca"} stroke="#1c1917" strokeWidth="2" />
+          <text x="205" y="141" textAnchor="middle" fontSize="12" fontWeight={700}>Warrant</text>
+          <text x="205" y="157" textAnchor="middle" fontSize="9" fill="#57534e">
+            {warrantTrue ? "solid" : "wobbly!"}
+          </text>
+        </g>
+
+        <g
+          style={{
+            transform: claimStands ? "none" : "translate(14px, 30px) rotate(30deg)",
+            transformOrigin: "130px 117px",
+            transition: "transform 0.5s cubic-bezier(.34,1.4,.3,1)",
+          }}
+        >
+          <rect x="70" y="60" width="120" height="55" rx="4"
+                fill={claimStands ? "#bbf7d0" : "#e7e5e4"} stroke="#1c1917" strokeWidth="2.5" />
+          <text x="130" y="92" textAnchor="middle" fontSize="12" fontWeight={700}>Claim</text>
+          <text x="130" y="107" textAnchor="middle" fontSize="9" fill="#57534e">
+            {claimStands ? "stands" : "topples!"}
+          </text>
+        </g>
+      </svg>
+
+      <div className="set-actions">
+        <button className={`chip ${groundsTrue ? "active" : ""}`} onClick={() => setGroundsTrue((v) => !v)}>
+          Grounds {groundsTrue ? "✓ true" : "✗ FALSE"}
+        </button>
+        <button className={`chip ${warrantTrue ? "active" : ""}`} onClick={() => setWarrantTrue((v) => !v)}>
+          Warrant {warrantTrue ? "✓ true" : "✗ FALSE"}
+        </button>
+      </div>
+      <p className="set-hint" style={{ margin: "8px 0 0" }}>
+        {claimStands ? (
+          <>Both blocks are solid, so the claim stands: <em>{claim || "your claim"}</em></>
+        ) : !groundsTrue && !warrantTrue ? (
+          <>Neither block is solid — the claim has nothing to stand on.</>
+        ) : !groundsTrue ? (
+          <>The <strong>grounds</strong> block is wobbly ({grounds || "your grounds"}) — even with a perfectly solid warrant, the claim topples. This is what "valid but not sound" looks like: the reasoning can be flawless and the conclusion still fails, because a premise isn't actually true.</>
+        ) : (
+          <>The <strong>warrant</strong> block is wobbly ({warrant || "your warrant"}) — even with perfectly true grounds, the claim topples, because nothing actually licenses the step from those grounds to that claim.</>
+        )}
+      </p>
+    </div>
+  );
+}
+
 /** The argument's warrant/grounds/claim as propositional logic — run through the
  *  same truthTable() engine the Truth Table Builder game uses, so "valid" isn't
  *  just asserted, it's checked. Omitted (renders nothing) for arguments whose
@@ -502,6 +592,9 @@ function ArgumentBuilderGame() {
             ))}
           </div>
 
+          <h5 style={{ margin: "14px 0 6px" }}>The claim, held up by its blocks</h5>
+          <ArgumentTower key={ex.title} claim={ex.claim} grounds={ex.grounds} warrant={ex.warrant} />
+
           <h5 style={{ margin: "14px 0 6px" }}>In strict logical form</h5>
           <ol className="cl-steps">
             {ex.logicalForm.map((line, i) => (
@@ -539,6 +632,9 @@ function ArgumentBuilderGame() {
           <button className="btn-ghost" onClick={() => setCustom({ ...BLANK_CUSTOM })}>
             Clear
           </button>
+
+          <h5 style={{ margin: "14px 0 6px" }}>The claim, held up by its blocks</h5>
+          <ArgumentTower key="custom" claim={custom.claim} grounds={custom.grounds} warrant={custom.warrant} />
         </>
       )}
     </div>
