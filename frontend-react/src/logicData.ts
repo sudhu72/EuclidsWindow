@@ -93,7 +93,7 @@ export const COPY: Record<string, GameCopy> = {
   "argument": {
     "title": "Argument Builder — The Language of Rational Argument",
     "subtitle": "Take a real historical argument apart into its logical skeleton, or build your own — the same grammar that proves a theorem can hold up (or fall apart) in law, science, ethics, and policy.",
-    "prereq": "**Math you’ll use:** *The syllogism, extended.* A rational argument is a syllogism's premises and conclusion, plus a place for evidence that's only probable rather than certain. Stephen Toulmin's 1958 model names the missing pieces: **Claim**, **Grounds**, **Warrant**, **Backing**, **Qualifier**, **Rebuttal**. This is the same machinery as the Syllogism game above, built out to handle real-world arguments that don't come with guaranteed premises.",
+    "prereq": "**Math you’ll use:** *The syllogism, extended.* A rational argument is a syllogism's premises and conclusion, plus a place for evidence that's only probable rather than certain. Stephen Toulmin's 1958 model names the missing pieces: **Claim**, **Grounds**, **Warrant**, **Backing**, **Qualifier**, **Rebuttal**. This is the same machinery as the Syllogism game (in this Lab's other tab), built out to handle real-world arguments that don't come with guaranteed premises.",
     "anecdote": "**Historical note:** Aristotle's *Prior Analytics* (~350 BCE) gave the world its first formal argument structure — the syllogism — and *Rhetoric* named the three appeals (logos, ethos, pathos) that still describe how arguments persuade. Two thousand years later, philosopher Stephen Toulmin argued in *The Uses of Argument* (1958) that real courtroom, scientific, and political arguments rarely fit the bare syllogism, because their evidence is only probable — his six-part model is the field's standard tool for laying one out ever since.\n\n**Social usage:** Legal briefs, grant proposals, scientific papers, and policy memos are all, structurally, Toulmin arguments — a claim, evidence, and (often left unstated, and often where the real disagreement hides) a warrant connecting the two.",
     "prompt": "Explain how to construct a rational argument using premises, validity, and the Toulmin model of claim, grounds, warrant, and rebuttal",
     "levels": {
@@ -151,7 +151,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "P2: This is a Euclidean-plane triangle.",
       "∴ This triangle's angles sum to 180°.",
     ],
-    note: "The reference case: grounds, warrant, and conclusion are all certain, so the Qualifier and Rebuttal are trivial. Every argument below is what happens once that certainty is gone.",
+    note: "The reference case: grounds, warrant, and conclusion are all certain, so the Qualifier and Rebuttal are trivial. Every other argument in this picker is what happens once that certainty is gone.",
     symbolic: {
       symbols: [
         { symbol: "T", meaning: "this is a Euclidean-plane triangle" },
@@ -160,7 +160,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       premises: ["T → A   (warrant)", "T   (grounds)", "∴ A   (claim)"],
       formula: "((T -> A) && T) -> A",
       patternName: "Modus Ponens",
-      explain: "The oldest valid form there is: affirm the antecedent of a true conditional, and the consequent is forced. Check the table below — it's true in every single row, no matter what T and A actually mean. That's what \"valid\" means: the FORM guarantees the conclusion, independent of content.",
+      explain: "The oldest valid form there is: affirm the antecedent of a true conditional, and the consequent is forced. Check the table above — it's true in every single row, no matter what T and A actually mean. That's what \"valid\" means: the FORM guarantees the conclusion, independent of content.",
     },
   },
   {
@@ -187,7 +187,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       premises: ["J → D   (warrant: if justified, it must be the better deterrent)", "¬D   (grounds: it is NOT the better deterrent)", "∴ ¬J   (claim: execution is not justified)"],
       formula: "((J -> D) && !D) -> !J",
       patternName: "Modus Tollens",
-      explain: "Deny the consequent of a true conditional, and you're forced to deny the antecedent too. This is a different valid pattern from Modus Ponens above — it's how Beccaria's argument actually moves: not from a cause to its effect, but from the ABSENCE of an expected effect back to the absence of its supposed justification. The table below confirms it's a tautology, too.",
+      explain: "Deny the consequent of a true conditional, and you're forced to deny the antecedent too. This is a different valid pattern from Modus Ponens (see the pure-math example) — it's how Beccaria's argument actually moves: not from a cause to its effect, but from the ABSENCE of an expected effect back to the absence of its supposed justification. The table above confirms it's a tautology, too.",
     },
   },
   {
@@ -214,7 +214,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       premises: ["M → D   (warrant: for murder, death is what proportionality requires)", "M   (grounds: this crime is murder)", "∴ D   (claim: death is the just punishment here)"],
       formula: "((M -> D) && M) -> D",
       patternName: "Modus Ponens",
-      explain: "Same valid pattern as the pure-math example above, wearing different clothes — and that's the point. Kant's and Beccaria's arguments are both perfectly valid; the truth tables below can't tell you which one is right, because validity only checks the FORM. Whether M→D or J→D is actually true is a question about ethics, not logic — see 'the language of mathematics' can formalize an argument without settling it.",
+      explain: "Same valid pattern the pure-math example uses, wearing different clothes — and that's the point. Kant's and Beccaria's arguments are both perfectly valid; a truth table can't tell you which one is right, because validity only checks the FORM. Whether M→D or J→D is actually true is a question about ethics, not logic — the language of mathematics can formalize an argument without settling it.",
     },
   },
   {
@@ -232,7 +232,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "P2: Mandatory handwashing (removing hand-borne \"cadaverous particles\") closed the gap.",
       "∴ Hand-borne particles were a cause of the deaths.",
     ],
-    note: "Strictly, this is NOT deductively valid — see the symbolic form below. It's abductive: inference to the best explanation, the normal and legitimate mode of scientific reasoning, not a flaw. What made it convincing wasn't logical necessity but ruling out the leading rival explanation (miasma) and then testing the remaining hypothesis directly. Later confirmed by germ theory, decades after the fact — and rejected by most contemporaries anyway: a reminder that a good argument and a persuasive one aren't automatically the same thing.",
+    note: "Strictly, this is NOT deductively valid — see the symbolic form above. It's abductive: inference to the best explanation, the normal and legitimate mode of scientific reasoning, not a flaw. What made it convincing wasn't logical necessity but ruling out the leading rival explanation (miasma) and then testing the remaining hypothesis directly. Later confirmed by germ theory, decades after the fact — and rejected by most contemporaries anyway: a reminder that a good argument and a persuasive one aren't automatically the same thing.",
     symbolic: {
       symbols: [
         { symbol: "F", meaning: "hand-borne particles from autopsies are the cause" },
@@ -241,7 +241,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       premises: ["F → R   (warrant: if F is the cause, removing it should close the gap)", "R   (grounds: the gap DID close)", "∴ F   (claim: F was the cause)"],
       formula: "((F -> R) && R) -> F",
       patternName: "Affirming the Consequent — a fallacy, if treated as deductive",
-      explain: "Run this one through the table below and it is NOT always true — try F=false, R=true. That's the same invalid pattern the Syllogism game calls out (\"the ground could be wet for many reasons besides rain\"). Semmelweis's real argument survives this anyway, because it isn't trying to be deductive: it's the best surviving explanation after ruling out the alternative (miasma), then confirmed by a direct test. Most of real science reasons this way — which is exactly why it needs the ruling-out step this pattern skips.",
+      explain: "Run this one through the table above and it is NOT always true — try F=false, R=true. That's the same invalid pattern the Syllogism game calls out (\"the ground could be wet for many reasons besides rain\"). Semmelweis's real argument survives this anyway, because it isn't trying to be deductive: it's the best surviving explanation after ruling out the alternative (miasma), then confirmed by a direct test. Most of real science reasons this way — which is exactly why it needs the ruling-out step this pattern skips.",
     },
   },
   {
@@ -259,7 +259,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "P2: This pattern holds consistently across the war's duration.",
       "∴ Unsanitary conditions were the leading killer, not combat.",
     ],
-    note: "A case where the logic was never really the obstacle — the argument's *presentation* was. The polar area diagram (an early pie-chart relative) is itself part of the argument: it's what finally moved Parliament to fund sanitary reform. No symbolic form below, on purpose: this is a statistical generalization from a large, representative sample, not a deductive argument — its strength comes from the size and representativeness of the data, and there's no tautology to check. That's not a weakness; it's the actual dividing line between inductive and deductive reasoning (see 'From Aristotle to Boole' in Learn).",
+    note: "A case where the logic was never really the obstacle — the argument's *presentation* was. The polar area diagram (an early pie-chart relative) is itself part of the argument: it's what finally moved Parliament to fund sanitary reform. No symbolic form for this one, on purpose: this is a statistical generalization from a large, representative sample, not a deductive argument — its strength comes from the size and representativeness of the data, and there's no tautology to check. That's not a weakness; it's the actual dividing line between inductive and deductive reasoning (see 'From Aristotle to Boole' in Learn).",
   },
   {
     domain: "History / Political Theory",
@@ -276,7 +276,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "P2: Removing the causes is impracticable.",
       "∴ We must control the effects instead.",
     ],
-    note: "Valid — and a genuinely different pattern from anything above. Madison uses this disjunctive syllogism to set up the rest of Federalist No. 10's real argument (a large, diverse republic controls factional effects better than a small one), which is formalized in full in the 'Constructing a Rational Argument' topic in Learn.",
+    note: "Valid — and a genuinely different pattern from Modus Ponens or Modus Tollens. Madison uses this disjunctive syllogism to set up the rest of Federalist No. 10's real argument (a large, diverse republic controls factional effects better than a small one), which is formalized in full in the 'Constructing a Rational Argument' topic in Learn.",
     symbolic: {
       symbols: [
         { symbol: "C", meaning: "we cure factions by removing their causes" },
@@ -285,7 +285,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       premises: ["C ∨ E   (warrant: these are the only two possible cures)", "¬C   (grounds: removing the causes is impracticable)", "∴ E   (claim: we must control the effects)"],
       formula: "((C || E) && !C) -> E",
       patternName: "Disjunctive Syllogism",
-      explain: "Rule out one option from an exhaustive either/or, and the other is forced — a third valid pattern, distinct from Modus Ponens and Modus Tollens above. Check the table: true in every row, so this is a tautology regardless of what C and E actually stand for. The real, arguable question is whether the warrant's \"exactly two\" is really exhaustive — Madison has to convince you there's no third cure, not just that the logic from two-to-one works.",
+      explain: "Rule out one option from an exhaustive either/or, and the other is forced — a third valid pattern, distinct from Modus Ponens and Modus Tollens (see the other examples). Check the table: true in every row, so this is a tautology regardless of what C and E actually stand for. The real, arguable question is whether the warrant's \"exactly two\" is really exhaustive — Madison has to convince you there's no third cure, not just that the logic from two-to-one works.",
     },
   },
   {
@@ -303,7 +303,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "P2: Wagering against God has a bounded best case and a possible infinite worst case.",
       "∴ Wagering for God is the rational choice, regardless of the actual odds.",
     ],
-    note: "No symbolic tautology below, for a different reason than Nightingale's. This isn't a deductive argument (like the syllogisms above) or an inductive one (like Nightingale's) — it's a decision-theoretic argument, comparing payoffs under uncertainty rather than deriving a true conclusion from true premises. \"Valid\" doesn't even apply to a dominance argument the way it applies to Modus Ponens; what actually matters is whether the payoff structure Pascal describes is accurate, which is exactly where the \"many gods\" rebuttal attacks it. Three examples in this Lab, three different reasons a real argument might have no truth table to check.",
+    note: "No symbolic tautology for this one, for a different reason than Nightingale's. This isn't a deductive argument (like the syllogism examples) or an inductive one (like Nightingale's) — it's a decision-theoretic argument, comparing payoffs under uncertainty rather than deriving a true conclusion from true premises. \"Valid\" doesn't even apply to a dominance argument the way it applies to Modus Ponens; what actually matters is whether the payoff structure Pascal describes is accurate, which is exactly where the \"many gods\" rebuttal attacks it. Three examples in this Lab, three different reasons a real argument might have no truth table to check.",
   },
   {
     domain: "Education Policy",
@@ -320,7 +320,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       "P2: Scores rose after the ban.",
       "∴ Banning phones caused the rise.",
     ],
-    note: "This is post hoc ergo propter hoc from the 'Constructing a Rational Argument' topic in Learn, worked out in full — and worth comparing directly against Semmelweis above. Same invalid skeleton, same \"not a tautology\" result below. The only real difference between the two: Semmelweis went on to rule out the leading rival explanation and test his conclusion directly; this argument, as usually repeated, does neither. The logic gap is identical — what differs is how honestly each one owns it.",
+    note: "This is post hoc ergo propter hoc from the 'Constructing a Rational Argument' topic in Learn, worked out in full — and worth comparing directly against the Semmelweis example. Same invalid skeleton, same \"not a tautology\" result above. The only real difference between the two: Semmelweis went on to rule out the leading rival explanation and test his conclusion directly; this argument, as usually repeated, does neither. The logic gap is identical — what differs is how honestly each one owns it.",
     symbolic: {
       symbols: [
         { symbol: "B", meaning: "banning phones is the cause of the score rise" },
@@ -329,7 +329,7 @@ export const ARGUMENT_EXAMPLES: ArgumentExample[] = [
       premises: ["B → S   (warrant: if B caused it, we'd see S)", "S   (grounds: S did happen)", "∴ B   (claim: B caused it)"],
       formula: "((B -> S) && S) -> B",
       patternName: "Affirming the Consequent — the same invalid skeleton as Semmelweis, used badly",
-      explain: "Try B=false, S=true in the table below — not a tautology, exactly like Semmelweis's argument. The logic is equally invalid in both cases; the difference is entirely in what happened next. That's the actual lesson: spotting an invalid deductive skeleton doesn't tell you an argument is worthless, and spotting a valid one doesn't tell you it's good either. It tells you where to look next — at the premises, and at what alternatives were actually ruled out.",
+      explain: "Try B=false, S=true in the table above — not a tautology, exactly like Semmelweis's argument. The logic is equally invalid in both cases; the difference is entirely in what happened next. That's the actual lesson: spotting an invalid deductive skeleton doesn't tell you an argument is worthless, and spotting a valid one doesn't tell you it's good either. It tells you where to look next — at the premises, and at what alternatives were actually ruled out.",
     },
   },
 ];
