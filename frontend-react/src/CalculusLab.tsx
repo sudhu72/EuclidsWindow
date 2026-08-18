@@ -230,28 +230,48 @@ function OptimizeGame() {
   const [key, setKey] = useState("fence");
   const prob = OPT_PROBLEMS[key];
   const [x, setX] = useState(prob.xRange[0] + (prob.xRange[1] - prob.xRange[0]) / 3);
+  const [found, setFound] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
-  // Each problem has its own domain, so the handle has to move with it.
+  // Each problem has its own domain (and its own answer), so a new problem
+  // means a fresh search — reset the handle and hide the optimum again.
   useEffect(() => {
     setX(prob.xRange[0] + (prob.xRange[1] - prob.xRange[0]) / 3);
+    setFound(false);
+    setRevealed(false);
   }, [prob]);
+
+  const deriv = prob.objDeriv(x);
+  const atZero = Math.abs(deriv) < 0.05;
+  const showAnswer = found || revealed;
+
+  // Once you've actually landed on the turning point, keep the star and the
+  // reveal — don't punish someone for sliding away afterward to explore.
+  useEffect(() => {
+    if (atZero) setFound(true);
+  }, [atZero]);
 
   const data = useMemo(() => {
     const xs = linspace(prob.xRange[0], prob.xRange[1], 240);
-    return [
+    const traces: unknown[] = [
       { x: xs, y: xs.map(prob.obj), mode: "lines", line: { color: INK, width: 2 }, name: prob.yLabel },
       { x: [x], y: [prob.obj(x)], mode: "markers", marker: { color: RED, size: 12 }, name: "current" },
-      {
+    ];
+    if (showAnswer) {
+      traces.push({
         x: [prob.optimal], y: [prob.obj(prob.optimal)], mode: "markers",
         marker: { color: GREEN, size: 12, symbol: "star" }, name: "optimum",
-      },
-    ];
-  }, [prob, x]);
-
-  const deriv = prob.objDeriv(x);
+      });
+    }
+    return traces;
+  }, [prob, x, showAnswer]);
 
   return (
     <div className="cal-game">
+      <p className="set-hint" style={{ margin: "0 0 8px" }}>
+        Drag the slider until the derivative reads (essentially) zero — that's the turning point, and
+        it's hidden on the plot until you find it.
+      </p>
       <div className="cal-controls">
         <label className="cal-select">
           <span>problem</span>
@@ -269,19 +289,31 @@ function OptimizeGame() {
               xaxis: { title: prob.xLabel, range: prob.xRange, autorange: false },
               yaxis: { title: prob.yLabel },
             })}
-            ariaLabel="Objective function with the current value and the optimum" />
+            ariaLabel={showAnswer
+              ? "Objective function with the current value and the optimum"
+              : "Objective function with the current value; the optimum is still hidden"} />
 
       <div className="cal-readout">
         {prob.describe(x)} · derivative = <strong>{deriv.toFixed(3)}</strong>{" "}
-        {Math.abs(deriv) < 0.05
+        {atZero
           ? "— essentially zero, so this is the turning point"
           : deriv > 0
           ? "— still climbing, increase x"
           : "— past the peak, decrease x"}
-        <div className="set-hint">
+      </div>
+
+      {showAnswer ? (
+        <div className={`lg-verdict ${found ? "lg-tautology" : "lg-contingent"}`} style={{ marginTop: 10 }}>
+          {found && !revealed
+            ? "🎉 "
+            : ""}
           Optimum at {prob.xLabel.split(" ")[0]} = {prob.optimal.toFixed(3)}, where the derivative crosses zero.
         </div>
-      </div>
+      ) : (
+        <div className="set-actions" style={{ marginTop: 10 }}>
+          <button className="btn-ghost" onClick={() => setRevealed(true)}>Reveal the optimum</button>
+        </div>
+      )}
     </div>
   );
 }
