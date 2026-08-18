@@ -272,7 +272,9 @@ function CaesarGame() {
 
 function FrequencyGame() {
   const [text, setText] = useState(SAMPLE_TEXTS.caesar);
-  const [guess, setGuess] = useState<{ shift: number; chi2: number } | null>(null);
+  const [userShift, setUserShift] = useState(0);
+  const [checked, setChecked] = useState<"idle" | "correct" | "close" | "wrong">("idle");
+  const [revealed, setRevealed] = useState<{ shift: number; chi2: number } | null>(null);
 
   const { freqs, total } = useMemo(() => letterFrequencies(text), [text]);
   const max = Math.max(...ALPHA.map((l) => Math.max(freqs[l], ENGLISH_FREQ[l])), 1);
@@ -280,6 +282,23 @@ function FrequencyGame() {
     () => ALPHA.slice().sort((a, b) => freqs[b] - freqs[a]).slice(0, 5),
     [freqs]
   );
+  const best = useMemo(() => bestCaesarShift(text), [text]);
+  const preview = useMemo(() => caesar(text.toUpperCase(), userShift, false), [text, userShift]);
+
+  function resetPuzzle(t: string) {
+    setText(t);
+    setUserShift(0);
+    setChecked("idle");
+    setRevealed(null);
+  }
+
+  function checkGuess() {
+    const diff = Math.min(
+      Math.abs(userShift - best.shift),
+      26 - Math.abs(userShift - best.shift)
+    );
+    setChecked(diff === 0 ? "correct" : diff <= 2 ? "close" : "wrong");
+  }
 
   const W = 720;
   const H = 190;
@@ -289,17 +308,14 @@ function FrequencyGame() {
   return (
     <div className="lg-game">
       <div className="set-actions">
-        <select onChange={(e) => setText(SAMPLE_TEXTS[e.target.value] ?? text)} defaultValue="caesar">
+        <select onChange={(e) => resetPuzzle(SAMPLE_TEXTS[e.target.value] ?? text)} defaultValue="caesar">
           <option value="caesar">Sample: Caesar-shifted</option>
           <option value="subst">Sample: substitution cipher</option>
         </select>
-        <button className="send" onClick={() => setGuess(bestCaesarShift(text))}>
-          Suggest the shift
-        </button>
       </div>
 
       <textarea className="pad-text" rows={3} value={text}
-                onChange={(e) => { setText(e.target.value); setGuess(null); }}
+                onChange={(e) => resetPuzzle(e.target.value)}
                 placeholder="Paste ciphertext…" />
 
       {/* Overlaid rather than two separate charts — the task is comparing the
@@ -338,11 +354,47 @@ function FrequencyGame() {
         In English the top five are <strong>E, T, A, O, I</strong>.
       </p>
 
-      {guess && (
-        <div className="lg-verdict lg-contingent">
-          <strong>Best shift: k = {guess.shift}</strong> (χ² = {guess.chi2.toFixed(1)})
+      <h5 style={{ margin: "14px 0 6px" }}>Crack it yourself</h5>
+      <p className="set-hint" style={{ margin: "0 0 8px" }}>
+        The tallest red bar is almost certainly standing in for E — that tells you the shift.
+        Try it below and see if the decrypted text turns into real English.
+      </p>
+      <label className="set-row">
+        <span>Your guess: k = {userShift}</span>
+        <input type="range" min={0} max={25} value={userShift}
+               onChange={(e) => { setUserShift(Number(e.target.value)); setChecked("idle"); }} />
+      </label>
+      <textarea className="pad-text cl-out" rows={3} value={preview.slice(0, 240)} readOnly
+                aria-label="Decrypted preview at your guessed shift" />
+
+      <div className="set-actions" style={{ marginTop: 8 }}>
+        <button className="send" onClick={checkGuess}>Check my guess</button>
+        <button className="btn-ghost" onClick={() => setRevealed(best)}>Reveal the shift</button>
+      </div>
+
+      {checked === "correct" && (
+        <div className="lg-verdict lg-tautology" style={{ marginTop: 10 }}>
+          🎉 That's it — k = {userShift} turns this back into real English.
+        </div>
+      )}
+      {checked === "close" && (
+        <div className="lg-verdict lg-contingent" style={{ marginTop: 10 }}>
+          Close — off by a couple. Read the preview above: does it *almost* look like English, just
+          shifted a letter or two? Nudge the slider until it clicks.
+        </div>
+      )}
+      {checked === "wrong" && (
+        <div className="lg-verdict lg-contradiction" style={{ marginTop: 10 }}>
+          Not yet. Look at the chart: whichever red bar is tallest is standing in for E — count how
+          far it is from the real E to find the shift.
+        </div>
+      )}
+
+      {revealed && (
+        <div className="lg-verdict lg-contingent" style={{ marginTop: 10 }}>
+          <strong>Best shift: k = {revealed.shift}</strong> (χ² = {revealed.chi2.toFixed(1)})
           <pre className="cl-brute" style={{ marginTop: 8 }}>
-            {caesar(text.toUpperCase(), guess.shift, false).slice(0, 240)}
+            {caesar(text.toUpperCase(), revealed.shift, false).slice(0, 240)}
           </pre>
         </div>
       )}
