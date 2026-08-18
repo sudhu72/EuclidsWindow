@@ -727,9 +727,13 @@ body {
 .gal-card h5 { margin: 0; font-size: 14px; }
 .gal-card p { margin: 0; font-size: 13px; color: #57534e; line-height: 1.55; flex: 1; }
 .gal-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-.gal-frame-wrap { flex: 1; padding: 12px; min-height: 0; }
+/* Lives inside .lesson-body (the panel's one scrolling container) rather
+   than competing with it as a sibling flex item — that competition is what
+   let the iframe's min-height overflow its box and overlap the explain
+   panel below it. A fixed height here just grows the scroll area instead. */
+.gal-frame-wrap { padding: 0 0 16px; }
 .gal-frame {
-  width: 100%; height: 100%; min-height: 560px; border: 1px solid var(--line);
+  display: block; width: 100%; height: 560px; border: 1px solid var(--line);
   border-radius: 10px; background: #fff;
 }
 

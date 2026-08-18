@@ -102,16 +102,16 @@ export default function Gallery({ onAsk }: { onAsk: (question: string) => void }
             Explore in Learn
           </button>
         </div>
-        <div className="gal-frame-wrap">
-          <iframe
-            className="gal-frame"
-            src={`${GALLERY_BASE}${open.file}`}
-            title={open.title}
-            sandbox="allow-scripts allow-same-origin allow-popups"
-          />
-        </div>
         <div className="lesson-body">
-          <h4 style={{ marginTop: 0 }}>Explain this at the {level} level</h4>
+          <div className="gal-frame-wrap">
+            <iframe
+              className="gal-frame"
+              src={`${GALLERY_BASE}${open.file}`}
+              title={open.title}
+              sandbox="allow-scripts allow-same-origin allow-popups"
+            />
+          </div>
+          <h4>Explain this at the {level} level</h4>
           <LevelExplain item={open} level={level} />
         </div>
       </div>
