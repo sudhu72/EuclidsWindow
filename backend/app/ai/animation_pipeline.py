@@ -91,6 +91,17 @@ RULES — follow every one:
     lines stacked with `.arrange(DOWN)`, or call `.scale_to_fit_width(12.5)`
     on the title mobject right after creating it — never leave a long title
     unscaled to run off the left/right edges.
+12. NEVER use `SVGMobject`, `ImageMobject`, or any other class that loads a
+    file from disk — there are no asset files in this sandbox and the render
+    will fail. Build every shape from Manim's built-in primitives (Circle,
+    Square, Line, Arrow, Dot, Polygon, Text, MathTex, NumberLine, Axes, …).
+13. Never place a new title or heading at the same position as one already
+    on screen (e.g. a second `.to_edge(UP)` text while the first is still
+    showing) — that stacks them into unreadable overlapping text. Before
+    introducing a new heading, either `self.play(FadeOut(old_title))` or
+    `self.play(Transform(old_title, new_title))` first. The same rule
+    applies to any other mobject a later beat replaces: fade or remove it,
+    don't just add the new one on top.
 
 CREATIVE STANDARDS (from 3Blue1Brown):
 - Geometry before algebra: show the shape first, the equation second.
@@ -131,6 +142,9 @@ Requirements:
 - Animate at least one moving/transforming element
 - Draw geometry specific to TOPIC above — not the worked example's triangle
 - Keep the title under ~35 characters or split/scale it to fit the frame
+- Build shapes from Manim primitives only — never SVGMobject/ImageMobject
+- Fade or remove any heading/element before a later beat replaces it — never
+  stack a new title on top of one still on screen
 
 Output the complete Python script (class GeneratedScene(Scene)).
 """)
@@ -530,6 +544,98 @@ class AnimationPipeline:
         title_error = AnimationPipeline._validate_title_width(tree)
         if title_error:
             return title_error
+        asset_error = AnimationPipeline._validate_no_file_assets(tree)
+        if asset_error:
+            return asset_error
+        overlap_error = AnimationPipeline._validate_title_overlap(tree)
+        if overlap_error:
+            return overlap_error
+        return None
+
+    @staticmethod
+    def _validate_no_file_assets(tree: ast.AST) -> Optional[str]:
+        """Reject SVGMobject/ImageMobject — there are no asset files to load.
+
+        No image or SVG assets exist in this sandbox, so any use of these
+        classes fails at render time with an opaque path-resolution error
+        (``seek_full_path_from_defaults``) well after the cheap checks above
+        already ran. Unlike the title-width check this needs no heuristic —
+        any use of these classes is guaranteed to fail here, always.
+        """
+        FILE_MOBJECTS = {"SVGMobject", "ImageMobject", "SVGPathMobject"}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                if node.func.id in FILE_MOBJECTS:
+                    return (
+                        f"{node.func.id}(...) loads a file from disk — no asset files exist "
+                        f"in this sandbox, so this will always fail. Build the shape from "
+                        f"Manim primitives instead (Circle, Square, Line, Polygon, Arrow, …)."
+                    )
+        return None
+
+    @staticmethod
+    def _validate_title_overlap(tree: ast.AST) -> Optional[str]:
+        """Catch a second top-anchored heading stacking on an uncleared first.
+
+        A common failure: the scene assigns a Text()/Tex()/MathTex() mobject
+        positioned at the top of frame (``.to_edge(UP)``), then later assigns
+        another one the same way without fading or removing the first — the
+        two render on top of each other as unreadable overlapping text.
+        Walks ``construct()``'s top-level statements in source order (nested
+        control flow isn't tracked — a cheap heuristic, not full data-flow
+        analysis, same spirit as the checks above).
+        """
+        construct = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "construct":
+                construct = node
+                break
+        if construct is None:
+            return None
+
+        def is_top_anchored_text(call: ast.AST) -> bool:
+            has_text_base, has_top_edge = False, False
+            node = call
+            while isinstance(node, ast.Call):
+                func = node.func
+                if isinstance(func, ast.Name) and func.id in ("Text", "Tex", "MathTex"):
+                    has_text_base = True
+                if isinstance(func, ast.Attribute) and func.attr == "to_edge":
+                    if any(isinstance(a, ast.Name) and a.id == "UP" for a in node.args):
+                        has_top_edge = True
+                node = func.value if isinstance(func, ast.Attribute) else None
+            return has_text_base and has_top_edge
+
+        def referenced_names(node: ast.AST) -> set:
+            return {n.id for n in ast.walk(node) if isinstance(n, ast.Name)}
+
+        on_screen: dict = {}  # var name -> line assigned
+        for stmt in construct.body:
+            for sub in ast.walk(stmt):
+                if not isinstance(sub, ast.Call):
+                    continue
+                func = sub.func
+                is_fadeout = isinstance(func, ast.Name) and func.id == "FadeOut"
+                is_remove = isinstance(func, ast.Attribute) and func.attr == "remove"
+                if is_fadeout or is_remove:
+                    for name in referenced_names(sub):
+                        on_screen.pop(name, None)
+
+            if isinstance(stmt, ast.Assign) and isinstance(stmt.value, ast.Call):
+                if is_top_anchored_text(stmt.value):
+                    if on_screen:
+                        uncleared = ", ".join(on_screen)
+                        new_name = next(
+                            (t.id for t in stmt.targets if isinstance(t, ast.Name)), "it"
+                        )
+                        return (
+                            f"'{new_name}' (line {stmt.lineno}) is a second top-anchored "
+                            f"heading while '{uncleared}' is still on screen — they'll "
+                            f"overlap. FadeOut or remove the old one first."
+                        )
+                    for target in stmt.targets:
+                        if isinstance(target, ast.Name):
+                            on_screen[target.id] = stmt.lineno
         return None
 
     @staticmethod

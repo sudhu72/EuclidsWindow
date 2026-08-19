@@ -104,6 +104,84 @@ def test_validate_code_allows_short_title():
     assert error is None
 
 
+def test_validate_code_rejects_svg_mobject():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        icon = SVGMobject('lock.svg')\n"
+        "        self.play(Create(icon))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+    assert "asset" in error.lower() or "disk" in error.lower()
+
+
+def test_validate_code_rejects_image_mobject():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        pic = ImageMobject('key.png')\n"
+        "        self.play(FadeIn(pic))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+
+
+def test_validate_code_allows_only_builtin_primitives():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        circle = Circle(radius=2, color=PRIMARY)\n"
+        "        self.play(Create(circle))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
+def test_validate_code_rejects_stacked_top_headings():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        title = Text('Modular Arithmetic').to_edge(UP)\n"
+        "        self.play(Write(title))\n"
+        "        subtitle = Text('Secret Codes').to_edge(UP)\n"
+        "        self.play(Write(subtitle))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+    assert "overlap" in error.lower()
+
+
+def test_validate_code_allows_second_heading_after_fadeout():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        title = Text('Modular Arithmetic').to_edge(UP)\n"
+        "        self.play(Write(title))\n"
+        "        self.play(FadeOut(title))\n"
+        "        subtitle = Text('Secret Codes').to_edge(UP)\n"
+        "        self.play(Write(subtitle))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
+def test_validate_code_allows_a_single_top_heading():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        title = Text('Modular Arithmetic').to_edge(UP)\n"
+        "        self.play(Write(title))\n"
+        "        circle = Circle()\n"
+        "        self.play(Create(circle))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
 def test_heuristic_phase_unaffected_by_graph_context(monkeypatch):
     # Phase 1's template keyword match must not see the graph's related-concept
     # words — only the caller-supplied topic/context, unchanged from before.
