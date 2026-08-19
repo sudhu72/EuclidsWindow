@@ -22,6 +22,93 @@ from .prompts import LEVEL_INSTRUCTIONS
 
 SCENE_TYPES = ("explain", "example", "quiz")
 
+# Cues that a topic is asking "how/why does this work" rather than "what is
+# this" — those earn an explicit reasoning walkthrough instead of examples.
+PROCEDURAL_RE = re.compile(
+    r"\b(how (?:do|does|can|would)|why does|prove|derive|derivation|steps?|"
+    r"algorithm|procedure|solve|construct|calculate|compute)\b",
+    re.IGNORECASE,
+)
+
+STYLE_INSTRUCTIONS = {
+    "one_shot": (
+        "Include exactly one fully worked example with concrete numbers, "
+        "drawn from the grounding above if it gives you one to work from."
+    ),
+    "multi_shot": (
+        "Include two short worked examples that approach the idea from "
+        "different angles (e.g. a numeric case and the related concept named "
+        "in the grounding above) rather than two near-identical examples."
+    ),
+    "chain_of_thought": (
+        "Walk through this as an explicit chain of reasoning, narrating "
+        "Polya's four phases by name: Understand (what's given, what's "
+        "asked), Plan (which method, and why this one), Carry out (the "
+        "actual steps), Look back (sanity-check with a simple or extreme "
+        "case)."
+    ),
+}
+
+DEMYSTIFY_INSTRUCTION = (
+    "Jargon and etymology: for the 1-2 most important technical terms in this "
+    "section, restate the term in one plain phrase a beginner could repeat "
+    "back before using it again. For at most one of those, if the word's "
+    "origin genuinely illuminates the idea, add a short etymology in "
+    "parentheses (language + root meaning, e.g. \"derivative — from Latin "
+    "derivare, 'to draw off': the rate something flows away from a point\"); "
+    "only state an origin you are confident is correct, and skip it entirely "
+    "for plain English words or when you are unsure, rather than inventing "
+    "one. Stay within the narration's normal length — do not pad it out."
+)
+
+
+def _ground(topic: str, extra_query: str, stype: str) -> Dict[str, Any]:
+    """Survey local content and pick a one-shot / multi-shot / CoT style.
+
+    Looks at the concept graph and RAG library BEFORE generation so the
+    model writes from what the app already knows about this topic, rather
+    than from the base model's own (unverified) knowledge. The shot style is
+    chosen from how much of that grounding actually exists — a topic with
+    several graph neighbors, a Gallery visualization, or multiple library
+    hits earns several worked angles (multi-shot); a bare procedural
+    question ("how do you...", "prove...") earns an explicit Polya-phase
+    walkthrough (chain-of-thought) regardless of how much grounding exists;
+    everything else gets one clean worked example (one-shot).
+    """
+    from .concept_graph import get_concept_graph
+    from .library import get_library
+
+    graph = get_concept_graph()
+    node_id = graph.resolve(topic)
+    neighbor_count = len(graph.neighbors(node_id)) if node_id else 0
+    has_viz = bool(node_id and (graph.node(node_id) or {}).get("viz"))
+    graph_context = graph.context_for(topic)
+
+    library = get_library()
+    query = f"{topic} {extra_query}".strip()
+    library_context = library.context_for(query, k=2, max_chars=1200)
+    library_hits = sum(
+        1 for h in library.search(query, k=3) if (h.get("distance") if h.get("distance") is not None else 1.0) < 0.55
+    )
+
+    if PROCEDURAL_RE.search(f"{topic} {extra_query}"):
+        style = "chain_of_thought"
+    elif neighbor_count + library_hits + (1 if has_viz else 0) >= 2:
+        style = "multi_shot"
+    else:
+        style = "one_shot"
+
+    logger.info(
+        f"LessonService._ground: '{topic[:60]}' -> {style} "
+        f"(node={node_id}, neighbors={neighbor_count}, viz={has_viz}, library_hits={library_hits})"
+    )
+    return {
+        "graph_context": graph_context,
+        "library_context": library_context,
+        "style": style,
+        "style_instruction": STYLE_INSTRUCTIONS[style],
+    }
+
 OUTLINE_SYSTEM_PROMPT = textwrap.dedent("""\
     You design short math lessons using the Feynman method: lead the learner to
     re-discover the idea from what they already know, concrete examples before
@@ -140,12 +227,19 @@ class LessonService:
 
     def outline(self, topic: str, level: str = "teen") -> Optional[Dict[str, Any]]:
         level_instruction = LEVEL_INSTRUCTIONS.get(level, "")
+        # Ground the plan in the concept graph before designing sections, so a
+        # topic the app already maps (e.g. a Gallery-linked concept and its
+        # neighbors) shapes the outline instead of being re-derived blind.
+        graph_context = _ground(topic, "", "explain")["graph_context"]
         raw = self._engine.chat_json(
             [
                 {"role": "system", "content": OUTLINE_SYSTEM_PROMPT},
                 {
                     "role": "user",
-                    "content": f"{level_instruction}Design a lesson on: {topic[:300]}",
+                    "content": (
+                        (graph_context + "\n\n" if graph_context else "")
+                        + f"{level_instruction}Design a lesson on: {topic[:300]}"
+                    ),
                 },
             ],
             timeout_seconds=60,
@@ -230,25 +324,28 @@ class LessonService:
         self, topic: str, level: str, title: str, stype: str, summary: str
     ) -> Optional[Dict[str, Any]]:
         level_instruction = LEVEL_INSTRUCTIONS.get(level, "")
-        style = "Include a fully worked example with concrete numbers." if stype == "example" else ""
-        from .concept_graph import get_concept_graph
-        from .library import get_library
         from .skills import COMPACT_SKILL, COMPACT_TEACHING
 
         # GraphRAG: relationship grounding on the lesson topic keeps the scene on
         # the intended concept (e.g. "Euler's identity" -> complex numbers, not
         # planar graphs). Vector grounding then adds textbook detail on top.
-        graph_context = get_concept_graph().context_for(topic)
-        library_context = get_library().context_for(f"{topic} {title}", k=2, max_chars=1200)
-        grounding = "\n\n".join(c for c in (graph_context, library_context) if c)
+        # How much of each exists also decides the shot style below.
+        g = _ground(topic, title, stype)
+        grounding = "\n\n".join(c for c in (g["graph_context"], g["library_context"]) if c)
         messages = [
-            {"role": "system", "content": EXPLAIN_SYSTEM_PROMPT + "\n" + COMPACT_TEACHING + "\n" + COMPACT_SKILL},
+            {
+                "role": "system",
+                "content": (
+                    EXPLAIN_SYSTEM_PROMPT + "\n" + COMPACT_TEACHING + "\n" + COMPACT_SKILL
+                    + "\n" + DEMYSTIFY_INSTRUCTION
+                ),
+            },
             {
                 "role": "user",
                 "content": (
                     (grounding + "\n\n" if grounding else "")
                     + f"{level_instruction}Lesson topic: {topic[:200]}\n"
-                    f"Section: {title}\n{summary}\n{style}"
+                    f"Section: {title}\n{summary}\n{g['style_instruction']}"
                 ),
             },
         ]
