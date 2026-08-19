@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 61 self-contained interactive visualizations
+// Cogito Gallery manifest — 63 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -157,6 +157,12 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Eigenvalues and Eigenvectors — The Directions a Transformation Can't Rotate Away From",
         "one": "Most vectors get pushed off their line by a transformation; eigenvectors are the special directions that only get stretched.",
         "prompt": "Explain eigenvalues and eigenvectors from first principles: what makes a direction special enough that a linear transformation only scales it instead of rotating it, and why that matters."
+      },
+      {
+        "file": "set_theory_visualizer.html",
+        "title": "Collections, Counted Two Ways — Set Theory",
+        "one": "Union, intersection, and subset aren't just Venn-diagram shading — they're the grammar every other branch of math quietly assumes.",
+        "prompt": "Explain set theory from first principles: what a set actually is, what union/intersection/subset mean, why the empty set matters, and how these few rules end up underneath the rest of mathematics."
       }
     ]
   },
@@ -368,6 +374,12 @@ export const GALLERY: GalleryCategory[] = [
         "title": "The ReAct Agent Loop — Thought → Action → Observation",
         "one": "An LLM agent that interleaves reasoning with acting: think, take an action, observe the result, and repeat.",
         "prompt": "Explain the ReAct (Reasoning + Acting) agent pattern: how interleaving a Thought step with an Action and an Observation lets an LLM use tools and correct course mid-task."
+      },
+      {
+        "file": "reinforcement_learning_visualizer.html",
+        "title": "Reinforcement Learning, live",
+        "one": "An agent that learns by trial, error, and reward — no labeled examples, just a policy that gets better every episode.",
+        "prompt": "Explain reinforcement learning from first principles: what a policy, a reward signal, and a Markov decision process are, and how an agent improves its policy purely from trial and error."
       }
     ]
   },

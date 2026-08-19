@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Reinforcement Learning, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 16px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:150px;}
+  input[type=range]{flex:1;min-width:160px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  canvas{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;max-width:100%;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .arm-row{display:flex;justify-content:center;gap:20px;margin:14px 0;flex-wrap:wrap;}
+  .arm-box{border:1px solid var(--border);border-radius:10px;padding:12px 18px;text-align:center;min-width:130px;}
+  .arm-box .name{font-family:'Kalam',cursive;font-size:15px;}
+  .arm-box .true-rate{font-size:10.5px;color:var(--chalk-dim);margin-top:2px;}
+  .arm-box .bar-track{height:60px;width:28px;margin:8px auto;background:rgba(244,241,232,.06);border-radius:4px;position:relative;display:flex;align-items:flex-end;}
+  .arm-box .bar-fill{width:100%;border-radius:4px;background:var(--blue);transition:height .3s ease;}
+  .arm-box.best .bar-fill{background:var(--green);}
+  .arm-box .pulls{font-size:11px;color:var(--chalk-dim);}
+
+  table.gridtable{border-collapse:collapse;margin:10px auto;}
+  table.gridtable td{width:76px;height:76px;text-align:center;border:1px solid var(--border);font-size:12px;color:var(--chalk-dim);position:relative;vertical-align:middle;}
+  table.gridtable td.goal{background:rgba(143,209,158,.18);border-color:var(--green);color:var(--green);font-weight:700;}
+  table.gridtable td.pit{background:rgba(255,130,102,.18);border-color:var(--coral);color:var(--coral);font-weight:700;}
+  table.gridtable td .vval{font-family:'Kalam',cursive;font-size:15px;color:var(--chalk);display:block;}
+  table.gridtable td .arrow{font-size:18px;color:var(--amber);display:block;margin-top:2px;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Reinforcement Learning, live</h1>
+  <p class="sub">Three tabs, matching the tutorial's three verified experiments.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="bandit">Multi-Armed Bandit</button>
+    <button class="tabbtn" data-tab="vi">Value Iteration</button>
+    <button class="tabbtn" data-tab="ql">Q-Learning</button>
+  </div>
+
+  <!-- ============ TAB 1: MULTI-ARMED BANDIT ============ -->
+  <div class="tabpanel active" id="tab-bandit">
+    <div class="panel">
+      <h2>Epsilon-Greedy vs. Upper Confidence Bound</h2>
+      <p class="sub">Three arms, true (hidden-from-the-agent) win rates 0.30 / 0.50 / 0.70. Watch each strategy's "% of pulls on the best arm" climb — or plateau — live. A dashed reference line always shows fixed ε=0.1 for comparison.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnStratEG">Epsilon-Greedy</button>
+        <button class="op" id="btnStratUCB">UCB</button>
+      </div>
+      <div class="row" id="rowEpsilon"><label>epsilon (ε)</label><input type="range" id="epsSlider" min="0" max="50" step="1" value="10"><span class="readout" id="epsOut">0.10</span></div>
+      <div class="row" id="rowUCB" style="display:none;"><label>exploration constant c</label><input type="range" id="ucbSlider" min="1" max="30" step="1" value="10"><span class="readout" id="ucbOut">1.0</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" data-pulls="2000">Run 2,000 pulls</button>
+        <button class="op" data-pulls="20000">Run 20,000 pulls</button>
+        <button class="op" data-pulls="100000">Run 100,000 pulls</button>
+        <button class="op" id="btnBanditReset">Reset</button>
+      </div>
+      <div class="arm-row" id="armRow"></div>
+      <canvas id="banditCanvas" width="720" height="220"></canvas>
+      <div class="plot-caption">solid = current strategy &nbsp;·&nbsp; dashed gray = fixed ε=0.1 reference, same pulls</div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">average reward per pull</div><div class="num" id="banditAvg">-</div></div>
+        <div class="metric green"><div class="lbl">% pulls on best arm</div><div class="num" id="banditPct">-</div></div>
+        <div class="metric amber"><div class="lbl">theoretical ceiling</div><div class="num">0.700</div></div>
+      </div>
+      <div class="story-line" id="banditStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: VALUE ITERATION ============ -->
+  <div class="tabpanel" id="tab-vi">
+    <div class="panel">
+      <h2>Watch the Values Settle, Round by Round</h2>
+      <p class="sub">4×4 grid. Goal (top-right) pays +10; pit (row 1, col 1) pays -10; every other move costs -1. All values start at 0 — a deliberately wrong guess.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="btnViStep">Next round</button>
+        <button class="op" id="btnViReset">Reset</button>
+      </div>
+      <table class="gridtable" id="viGrid"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">round</div><div class="num" id="viRound">0</div></div>
+        <div class="metric amber"><div class="lbl">max change this round</div><div class="num" id="viDelta">-</div></div>
+      </div>
+      <div class="story-line" id="viStory">Click "Next round" to begin — every cell starts at 0.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: Q-LEARNING ============ -->
+  <div class="tabpanel" id="tab-ql">
+    <div class="panel">
+      <h2>Learning the Same Answer by Wandering Blind</h2>
+      <p class="sub">Identical grid — but this agent is never told the rewards or the transition rule. It only wanders, bumps into the pit or reaches the goal, and updates Q(s,a) from what actually happened.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="btnQlRun">Run 500 more episodes</button>
+        <button class="op" id="btnQlReset">Reset</button>
+      </div>
+      <table class="gridtable" id="qlGrid"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">episodes so far</div><div class="num" id="qlEpisodes">0</div></div>
+        <div class="metric green"><div class="lbl">cells matching value iteration</div><div class="num" id="qlMatch">0 / 16</div></div>
+      </div>
+      <div class="story-line" id="qlStory">Click "Run 500 more episodes" to start learning from scratch.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../reinforcement_learning_feynman.md">Reinforcement Learning</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function fmt(v, d){ return (typeof v === "number" && isFinite(v)) ? v.toFixed(d===undefined?4:d) : "-"; }
+
+  function makeLCG(seed){ let s=seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+
+  function tabClick(name){
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.toggle("active", p.id==="tab-"+name));
+  }
+  document.querySelectorAll(".tabbtn").forEach(b=>b.addEventListener("click", ()=>tabClick(b.dataset.tab)));
+
+  // ============================================================
+  // TAB 1: MULTI-ARMED BANDIT
+  // ============================================================
+  (function(){
+    const trueP = [0.30, 0.50, 0.70];
+    const BEST = 2;
+    const armNames = ["Arm A", "Arm B", "Arm C"];
+    let strategy = "eg"; // "eg" or "ucb"
+    let lastResult = null, lastReference = null;
+
+    function runEpsilonGreedy(epsilon, pulls, seed){
+      const rand = makeLCG(seed);
+      const counts=[0,0,0], sums=[0,0,0];
+      let totalReward=0, bestArmPulls=0;
+      const history=[];
+      const sampleEvery = Math.max(1, Math.floor(pulls/200));
+      for (let t=1;t<=pulls;t++){
+        let arm;
+        if (rand() < epsilon || t<=3){ arm = Math.floor(rand()*3); }
+        else { let best=0,bestAvg=-Infinity; for(let a=0;a<3;a++){ const avg = counts[a]>0?sums[a]/counts[a]:0; if(avg>bestAvg){bestAvg=avg;best=a;} } arm=best; }
+        const reward = rand() < trueP[arm] ? 1 : 0;
+        counts[arm]++; sums[arm]+=reward; totalReward+=reward;
+        if (arm===BEST) bestArmPulls++;
+        if (t % sampleEvery === 0) history.push([t, bestArmPulls/t*100]);
+      }
+      return {avgReward: totalReward/pulls, pctBest: bestArmPulls/pulls*100, counts, sums, history};
+    }
+    function runUCB(c, pulls, seed){
+      const rand = makeLCG(seed);
+      const counts=[0,0,0], sums=[0,0,0];
+      let totalReward=0, bestArmPulls=0;
+      const history=[];
+      const sampleEvery = Math.max(1, Math.floor(pulls/200));
+      for (let t=1;t<=pulls;t++){
+        let arm;
+        if (t<=3){ arm = t-1; }
+        else { let best=0,bestScore=-Infinity; for(let a=0;a<3;a++){ const score = sums[a]/counts[a] + c*Math.sqrt(2*Math.log(t)/counts[a]); if(score>bestScore){bestScore=score;best=a;} } arm=best; }
+        const reward = rand() < trueP[arm] ? 1 : 0;
+        counts[arm]++; sums[arm]+=reward; totalReward+=reward;
+        if (arm===BEST) bestArmPulls++;
+        if (t % sampleEvery === 0) history.push([t, bestArmPulls/t*100]);
+      }
+      return {avgReward: totalReward/pulls, pctBest: bestArmPulls/pulls*100, counts, sums, history};
+    }
+
+    function renderArms(res){
+      const row = document.getElementById("armRow");
+      row.innerHTML = "";
+      for (let a=0;a<3;a++){
+        const avg = res && res.counts[a]>0 ? res.sums[a]/res.counts[a] : 0;
+        const div = document.createElement("div");
+        div.className = "arm-box" + (a===BEST ? " best" : "");
+        div.innerHTML =
+          '<div class="name">'+armNames[a]+'</div>'+
+          '<div class="true-rate">true rate: '+trueP[a].toFixed(2)+'</div>'+
+          '<div class="bar-track"><div class="bar-fill" style="height:'+(avg*100)+'%"></div></div>'+
+          '<div class="pulls">'+(res?res.counts[a]:0)+' pulls</div>';
+        row.appendChild(div);
+      }
+    }
+
+    function drawBanditChart(){
+      const canvas = document.getElementById("banditCanvas");
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height, pad = 40;
+      ctx.clearRect(0,0,W,H);
+      ctx.strokeStyle = "rgba(244,241,232,0.10)"; ctx.lineWidth = 1;
+      ctx.fillStyle = "#7f8f83"; ctx.font = "11px 'JetBrains Mono', monospace";
+      [0,25,50,75,100].forEach(p=>{
+        const y = H-pad-(p/100)*(H-2*pad);
+        ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke();
+        ctx.fillText(p+"%", 4, y+4);
+      });
+      if (!lastResult) return;
+      const maxT = lastResult.history.length ? lastResult.history[lastResult.history.length-1][0] : 1;
+      function xOf(t){ return pad + (t/maxT)*(W-2*pad); }
+      function yOf(p){ return H-pad-(p/100)*(H-2*pad); }
+      if (lastReference){
+        ctx.beginPath(); ctx.strokeStyle = "rgba(244,241,232,0.35)"; ctx.lineWidth = 1.6; ctx.setLineDash([5,4]);
+        lastReference.history.forEach((pt,i)=>{ const x=xOf(pt[0]),y=yOf(pt[1]); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+        ctx.stroke(); ctx.setLineDash([]);
+      }
+      ctx.beginPath(); ctx.strokeStyle = "#ffce54"; ctx.lineWidth = 2.2;
+      lastResult.history.forEach((pt,i)=>{ const x=xOf(pt[0]),y=yOf(pt[1]); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+      ctx.stroke();
+      ctx.fillStyle = "#7f8f83"; ctx.fillText("pulls → "+maxT.toLocaleString(), W-pad-90, H-8);
+    }
+
+    function run(pulls){
+      const seed = 42;
+      if (strategy === "eg"){
+        const eps = parseInt(document.getElementById("epsSlider").value,10)/100;
+        lastResult = runEpsilonGreedy(eps, pulls, seed);
+      } else {
+        const c = parseInt(document.getElementById("ucbSlider").value,10)/10;
+        lastResult = runUCB(c, pulls, seed);
+      }
+      lastReference = (strategy==="eg" && parseInt(document.getElementById("epsSlider").value,10)===10)
+        ? null : runEpsilonGreedy(0.1, pulls, seed+1000);
+      renderArms(lastResult);
+      drawBanditChart();
+      document.getElementById("banditAvg").textContent = fmt(lastResult.avgReward,4);
+      document.getElementById("banditPct").textContent = fmt(lastResult.pctBest,1)+"%";
+      document.getElementById("banditStory").textContent =
+        strategy==="eg"
+        ? "Fixed ε explores at the same rate forever — watch the curve plateau instead of keep climbing."
+        : "UCB's exploration bonus shrinks as each arm gets tested — watch the curve keep climbing toward 100%, unlike the dashed reference.";
+    }
+    function resetBandit(){ lastResult=null; lastReference=null; renderArms(null); drawBanditChart();
+      document.getElementById("banditAvg").textContent="-"; document.getElementById("banditPct").textContent="-";
+      document.getElementById("banditStory").textContent = "Pick a strategy and run some pulls.";
+    }
+
+    document.getElementById("btnStratEG").addEventListener("click", function(){
+      strategy="eg"; this.classList.add("active"); document.getElementById("btnStratUCB").classList.remove("active");
+      document.getElementById("rowEpsilon").style.display=""; document.getElementById("rowUCB").style.display="none";
+    });
+    document.getElementById("btnStratUCB").addEventListener("click", function(){
+      strategy="ucb"; this.classList.add("active"); document.getElementById("btnStratEG").classList.remove("active");
+      document.getElementById("rowEpsilon").style.display="none"; document.getElementById("rowUCB").style.display="";
+    });
+    document.getElementById("epsSlider").addEventListener("input", ()=>{ document.getElementById("epsOut").textContent=(parseInt(document.getElementById("epsSlider").value,10)/100).toFixed(2); });
+    document.getElementById("ucbSlider").addEventListener("input", ()=>{ document.getElementById("ucbOut").textContent=(parseInt(document.getElementById("ucbSlider").value,10)/10).toFixed(1); });
+    document.querySelectorAll("#tab-bandit [data-pulls]").forEach(btn=>{
+      btn.addEventListener("click", ()=> run(parseInt(btn.dataset.pulls,10)));
+    });
+    document.getElementById("btnBanditReset").addEventListener("click", resetBandit);
+    resetBandit();
+  })();
+
+  // ============================================================
+  // TABS 2 & 3: SHARED GRID WORLD
+  // ============================================================
+  const GRID_R = 4, GRID_C = 4;
+  const GOAL = [0,3], PIT = [1,1];
+  const ACTIONS = [[-1,0],[1,0],[0,-1],[0,1]];
+  const ARROWS = ["↑","↓","←","→"];
+  const GAMMA = 0.9;
+  function isTerminal(r,c){ return (r===GOAL[0]&&c===GOAL[1]) || (r===PIT[0]&&c===PIT[1]); }
+  function step(r,c,a){
+    let nr=r+ACTIONS[a][0], nc=c+ACTIONS[a][1];
+    if (nr<0||nr>=GRID_R||nc<0||nc>=GRID_C){ nr=r; nc=c; }
+    if (nr===GOAL[0]&&nc===GOAL[1]) return {r:nr,c:nc,reward:10};
+    if (nr===PIT[0]&&nc===PIT[1]) return {r:nr,c:nc,reward:-10};
+    return {r:nr,c:nc,reward:-1};
+  }
+  function buildGridSkeleton(tableId){
+    const t = document.getElementById(tableId);
+    t.innerHTML = "";
+    for (let r=0;r<GRID_R;r++){
+      const tr = document.createElement("tr");
+      for (let c=0;c<GRID_C;c++){
+        const td = document.createElement("td");
+        td.id = tableId+"_"+r+"_"+c;
+        if (r===GOAL[0]&&c===GOAL[1]) td.classList.add("goal");
+        if (r===PIT[0]&&c===PIT[1]) td.classList.add("pit");
+        tr.appendChild(td);
+      }
+      t.appendChild(tr);
+    }
+  }
+  function renderGridValues(tableId, V){
+    for (let r=0;r<GRID_R;r++) for (let c=0;c<GRID_C;c++){
+      const cell = document.getElementById(tableId+"_"+r+"_"+c);
+      if (isTerminal(r,c)){ cell.innerHTML = (r===GOAL[0]&&c===GOAL[1]) ? "GOAL<br>+10" : "PIT<br>-10"; continue; }
+      let best=-Infinity, bestA=0;
+      for (let a=0;a<4;a++){ const {r:nr,c:nc,reward} = step(r,c,a); const val = reward + GAMMA*V[nr][nc]; if (val>best){best=val; bestA=a;} }
+      cell.innerHTML = '<span class="vval">'+V[r][c].toFixed(2)+'</span><span class="arrow">'+ARROWS[bestA]+'</span>';
+    }
+  }
+
+  // ============================================================
+  // TAB 2: VALUE ITERATION
+  // ============================================================
+  (function(){
+    buildGridSkeleton("viGrid");
+    let V = Array.from({length:GRID_R},()=>new Array(GRID_C).fill(0));
+    let round = 0;
+    function renderVI(){
+      renderGridValues("viGrid", V);
+      document.getElementById("viRound").textContent = round;
+    }
+    function stepVI(){
+      const Vnew = Array.from({length:GRID_R},()=>new Array(GRID_C).fill(0));
+      let maxDelta = 0;
+      for (let r=0;r<GRID_R;r++) for (let c=0;c<GRID_C;c++){
+        if (isTerminal(r,c)){ Vnew[r][c]=0; continue; }
+        let best=-Infinity;
+        for (let a=0;a<4;a++){ const {r:nr,c:nc,reward} = step(r,c,a); const val = reward + GAMMA*V[nr][nc]; if (val>best) best=val; }
+        Vnew[r][c]=best;
+        maxDelta = Math.max(maxDelta, Math.abs(Vnew[r][c]-V[r][c]));
+      }
+      V = Vnew; round++;
+      document.getElementById("viDelta").textContent = fmt(maxDelta,4);
+      renderVI();
+      document.getElementById("viStory").textContent =
+        maxDelta < 1e-6 ? "Converged — the values (and arrows) have stopped changing." : "Round "+round+": values still updating toward their fixed point.";
+    }
+    document.getElementById("btnViStep").addEventListener("click", stepVI);
+    document.getElementById("btnViReset").addEventListener("click", ()=>{
+      V = Array.from({length:GRID_R},()=>new Array(GRID_C).fill(0)); round=0;
+      document.getElementById("viDelta").textContent="-";
+      document.getElementById("viStory").textContent = 'Click "Next round" to begin — every cell starts at 0.';
+      renderVI();
+    });
+    renderVI();
+  })();
+
+  // ============================================================
+  // TAB 3: Q-LEARNING
+  // ============================================================
+  (function(){
+    buildGridSkeleton("qlGrid");
+    // Reference table from value iteration (converged), for the live "cells matching" tally.
+    const VI_REFERENCE = [
+      [6.20, 8.00, 10.00, 0.00],
+      [4.58, 0.00, 8.00, 10.00],
+      [3.12, 4.58, 6.20, 8.00],
+      [1.81, 3.12, 4.58, 6.20]
+    ];
+    let Q = Array.from({length:GRID_R},()=>Array.from({length:GRID_C},()=>[0,0,0,0]));
+    let episodes = 0;
+    const rand = makeLCG(2024);
+    const alpha = 0.3, epsilon = 0.2, maxSteps = 100;
+
+    function runEpisodes(n){
+      for (let e=0;e<n;e++){
+        let r = Math.floor(rand()*GRID_R), c = Math.floor(rand()*GRID_C);
+        if (isTerminal(r,c)) continue;
+        for (let t=0;t<maxSteps;t++){
+          let a;
+          if (rand()<epsilon) a = Math.floor(rand()*4);
+          else { let best=0,bv=-Infinity; for(let ai=0;ai<4;ai++) if(Q[r][c][ai]>bv){bv=Q[r][c][ai]; best=ai;} a=best; }
+          const {r:nr,c:nc,reward} = step(r,c,a);
+          const maxNext = isTerminal(nr,nc) ? 0 : Math.max(...Q[nr][nc]);
+          Q[r][c][a] += alpha*(reward + GAMMA*maxNext - Q[r][c][a]);
+          r=nr; c=nc;
+          if (isTerminal(r,c)) break;
+        }
+      }
+      episodes += n;
+    }
+    function currentV(){
+      return Array.from({length:GRID_R},(_,r)=>Array.from({length:GRID_C},(_,c)=> isTerminal(r,c)?0:Math.max(...Q[r][c])));
+    }
+    function renderQL(){
+      const V = currentV();
+      renderGridValues("qlGrid", V);
+      document.getElementById("qlEpisodes").textContent = episodes;
+      let matches = 0;
+      for (let r=0;r<GRID_R;r++) for (let c=0;c<GRID_C;c++){
+        if (isTerminal(r,c)) { matches++; continue; }
+        if (Math.abs(V[r][c]-VI_REFERENCE[r][c]) < 0.05) matches++;
+      }
+      document.getElementById("qlMatch").textContent = matches + " / 16";
+      document.getElementById("qlStory").textContent =
+        matches===16 ? "All 16 cells now match value iteration's answer — learned purely from wandering." : "Learning from experience alone — no reward table or transition rule was ever given to this agent.";
+    }
+    document.getElementById("btnQlRun").addEventListener("click", ()=>{ runEpisodes(500); renderQL(); });
+    document.getElementById("btnQlReset").addEventListener("click", ()=>{
+      Q = Array.from({length:GRID_R},()=>Array.from({length:GRID_C},()=>[0,0,0,0])); episodes=0;
+      document.getElementById("qlStory").textContent = 'Click "Run 500 more episodes" to start learning from scratch.';
+      renderQL();
+    });
+    renderQL();
+  })();
+
+})();
+</script>
+</body>
+</html>

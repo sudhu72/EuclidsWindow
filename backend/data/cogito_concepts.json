@@ -1005,6 +1005,32 @@
       ],
       "viz": "galton_board_animation.html",
       "source": "eda_feynman_tutorial.md"
+    },
+    {
+      "id": "set_theory",
+      "name": "Sets",
+      "keywords": [],
+      "related": [
+        "mathematical_logic"
+      ],
+      "viz": "set_theory_visualizer.html",
+      "source": "set-theory.md"
+    },
+    {
+      "id": "reinforcement_learning",
+      "name": "Reinforcement Learning",
+      "keywords": [
+        "reinforcement learning",
+        "q-learning",
+        "reward signal",
+        "policy gradient",
+        "markov decision process"
+      ],
+      "related": [
+        "markov_chains"
+      ],
+      "viz": "reinforcement_learning_visualizer.html",
+      "source": "reinforcement_learning_feynman.md"
     }
   ]
 }
