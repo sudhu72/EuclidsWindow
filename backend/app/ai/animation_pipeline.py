@@ -86,6 +86,11 @@ RULES — follow every one:
 9. Do NOT import anything except `from manim import *` and `import numpy as np`.
 10. Use these color constants: PRIMARY="#58C4DD", SECONDARY="#83C167",
     ACCENT="#FFFF00", HIGHLIGHT="#FF6B6B", DIM="#888888".
+11. Keep every title/label under ~35 characters so it fits an 854px frame at
+    default font size. For a longer title, split it into two shorter Text()
+    lines stacked with `.arrange(DOWN)`, or call `.scale_to_fit_width(12.5)`
+    on the title mobject right after creating it — never leave a long title
+    unscaled to run off the left/right edges.
 
 CREATIVE STANDARDS (from 3Blue1Brown):
 - Geometry before algebra: show the shape first, the equation second.
@@ -94,9 +99,18 @@ CREATIVE STANDARDS (from 3Blue1Brown):
 - One new idea per scene. Progressive disclosure.
 - buff >= 0.5 for edge text positioning.
 - No more than 5-6 elements visible at once.
+- The geometry must be invented fresh for THIS topic. A number line, a grid
+  of remainders, a clock face, points on a circle, or arrows between two sets
+  are all fair game — reach for whatever shape actually represents the idea,
+  even if it takes some invention for an abstract topic.
 
-WORKED EXAMPLE — match this style exactly (geometry drawn first, labels
-next, then the equation last, with a self.wait() after each beat):
+WORKED EXAMPLE — this is the Pythagorean theorem, shown ONLY so you can see
+the STYLE conventions to follow: code structure, self.camera setup, color
+constants, opacity layering, pacing (self.wait after each beat), and the
+geometry-before-equation ordering. It is NOT a template for what to draw.
+Do not reuse this triangle, these squares, or the labels a/b/c — draw
+whatever shape actually represents YOUR topic instead, even if that means
+inventing a new kind of diagram this example doesn't show:
 ```python
 {fewshot_example}
 ```
@@ -115,6 +129,8 @@ Requirements:
 - Use smooth animations (Write, Create, FadeIn, Transform)
 - Label important elements clearly
 - Animate at least one moving/transforming element
+- Draw geometry specific to TOPIC above — not the worked example's triangle
+- Keep the title under ~35 characters or split/scale it to fit the frame
 
 Output the complete Python script (class GeneratedScene(Scene)).
 """)
@@ -370,39 +386,48 @@ class AnimationPipeline:
     def _llm_generate(
         self, topic: str, context: str, learner_level: str = "teen", plan: Optional[dict] = None
     ) -> Optional[str]:
-        """Ask the local LLM (codegen model) to write a full Manim scene."""
+        """Ask the local LLM (codegen model) to write a full Manim scene.
+
+        One malformed response (prose instead of code, a truncated class)
+        used to end the whole LLM phase immediately — the render-error retry
+        loop only ever runs once code already exists, so a bad first response
+        here fell straight through to the generic fallback with no second
+        try. Retries once at a lower temperature before giving up, the same
+        pattern used elsewhere in the pipeline (lesson.py, discovery.py).
+        """
         level_instruction = LEVEL_INSTRUCTIONS.get(learner_level, LEVEL_INSTRUCTIONS["teen"])
-        raw = self._llm.chat(
-            [
-                {
-                    "role": "system",
-                    "content": CODEGEN_SYSTEM_PROMPT.format(fewshot_example=FEWSHOT_EXAMPLE),
-                },
-                {
-                    "role": "user",
-                    "content": CODEGEN_PROMPT_TEMPLATE.format(
-                        level_instruction=level_instruction,
-                        topic=topic,
-                        context=context[:800],
-                        plan_block=self._format_plan(plan),
-                    ),
-                },
-            ],
-            task="codegen",
-            timeout_seconds=90,
-            num_predict=2000,
-            temperature=0.3,
-        )
-        if not raw:
-            logger.warning("AnimationPipeline: LLM returned no output")
-            return None
+        messages = [
+            {
+                "role": "system",
+                "content": CODEGEN_SYSTEM_PROMPT.format(fewshot_example=FEWSHOT_EXAMPLE),
+            },
+            {
+                "role": "user",
+                "content": CODEGEN_PROMPT_TEMPLATE.format(
+                    level_instruction=level_instruction,
+                    topic=topic,
+                    context=context[:800],
+                    plan_block=self._format_plan(plan),
+                ),
+            },
+        ]
+        for attempt in range(2):
+            raw = self._llm.chat(
+                messages,
+                task="codegen",
+                timeout_seconds=90,
+                num_predict=2000,
+                temperature=0.3 if attempt == 0 else 0.15,
+            )
+            if not raw:
+                logger.warning(f"AnimationPipeline: LLM returned no output (attempt {attempt + 1})")
+                continue
+            code = self._extract_python(raw)
+            if code and "GeneratedScene" in code and "construct" in code:
+                logger.info(f"AnimationPipeline: LLM generated valid-looking code (attempt {attempt + 1})")
+                return code
+            logger.warning(f"AnimationPipeline: LLM output did not contain GeneratedScene (attempt {attempt + 1})")
 
-        code = self._extract_python(raw)
-        if code and "GeneratedScene" in code and "construct" in code:
-            logger.info("AnimationPipeline: LLM generated valid-looking code")
-            return code
-
-        logger.warning("AnimationPipeline: LLM output did not contain GeneratedScene")
         return None
 
     def _llm_fix(self, code: str, error: str) -> Optional[str]:
@@ -502,6 +527,39 @@ class AnimationPipeline:
         latex_error = AnimationPipeline._validate_latex(tree)
         if latex_error:
             return latex_error
+        title_error = AnimationPipeline._validate_title_width(tree)
+        if title_error:
+            return title_error
+        return None
+
+    @staticmethod
+    def _validate_title_width(tree: ast.AST) -> Optional[str]:
+        """Catch a long, unscaled Text() literal before it overflows the frame.
+
+        An 854px-wide frame at the default font size fits roughly 35
+        characters; a title longer than that with no ``font_size`` override
+        runs off both edges, which is exactly the failure this exists to
+        catch cheaply, the same spirit as the LaTeX brace check above.
+        A ``font_size`` kwarg is treated as "the author already sized this
+        down on purpose" and skipped, so this only flags the common
+        inadvertent case, not every long label.
+        """
+        LIMIT = 40
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
+                continue
+            if node.func.id != "Text":
+                continue
+            if any(kw.arg == "font_size" for kw in node.keywords):
+                continue
+            for arg in node.args:
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and len(arg.value) > LIMIT:
+                    snippet = arg.value[:40]
+                    return (
+                        f"Text(\"{snippet}…\") is {len(arg.value)} chars with no font_size "
+                        f"override — it will overflow the frame. Shorten it, split it across "
+                        f"two Text() lines, or add font_size=28."
+                    )
         return None
 
     @staticmethod

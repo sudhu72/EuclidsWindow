@@ -38,6 +38,72 @@ def test_llm_path_receives_graph_context(monkeypatch):
     assert "a request about complex exponentials" in captured["plan_context"]
 
 
+def test_llm_generate_retries_once_on_malformed_output(monkeypatch):
+    # A malformed first response (no GeneratedScene) used to end the whole
+    # LLM phase immediately; it should now get a second try at a lower
+    # temperature before giving up.
+    pipeline = AnimationPipeline()
+    calls = []
+
+    def fake_chat(messages, **kwargs):
+        calls.append(kwargs.get("temperature"))
+        if len(calls) == 1:
+            return "Sorry, I can't help with that."  # no code at all
+        return "class GeneratedScene(Scene):\n    def construct(self):\n        pass\n"
+
+    monkeypatch.setattr(pipeline._llm, "chat", fake_chat)
+    code = pipeline._llm_generate("some topic", "", "teen", None)
+
+    assert code is not None
+    assert "GeneratedScene" in code
+    assert len(calls) == 2
+    assert calls[0] != calls[1]  # second attempt used a different temperature
+
+
+def test_llm_generate_gives_up_after_two_malformed_attempts(monkeypatch):
+    pipeline = AnimationPipeline()
+    monkeypatch.setattr(pipeline._llm, "chat", lambda messages, **kwargs: "not code")
+    code = pipeline._llm_generate("some topic", "", "teen", None)
+    assert code is None
+
+
+def test_validate_code_rejects_long_unscaled_title():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        title = Text('Modular Arithmetic: The Key to Cryptography')\n"
+        "        self.play(Write(title))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+    assert "overflow" in error.lower()
+
+
+def test_validate_code_allows_long_title_with_font_size():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        title = Text('Modular Arithmetic: The Key to Cryptography', font_size=28)\n"
+        "        self.play(Write(title))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is None
+
+
+def test_validate_code_allows_short_title():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        title = Text('Modular Arithmetic')\n"
+        "        self.play(Write(title))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is None
+
+
 def test_heuristic_phase_unaffected_by_graph_context(monkeypatch):
     # Phase 1's template keyword match must not see the graph's related-concept
     # words — only the caller-supplied topic/context, unchanged from before.
