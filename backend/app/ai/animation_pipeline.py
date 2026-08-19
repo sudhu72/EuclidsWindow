@@ -2,15 +2,33 @@
 
 Generates 3Blue1Brown-style animations from natural-language prompts using:
 1. Heuristic template matching for known math topics (fast, reliable)
-2. LLM-driven code generation for novel topics (creative, flexible)
-3. Sandboxed rendering via the existing VisualizationExecutor
-4. Iterative error recovery (feed render errors back to LLM for fix)
+2. A lightweight scene-planning pass for novel topics — ask the LLM to
+   sequence a handful of "beats" (what appears, how long) *before* asking it
+   to also write correct Python, so a small local model isn't doing
+   pedagogy and code generation in the same breath
+3. LLM-driven code generation for novel topics, guided by that plan, a
+   level-appropriate framing, and a known-good worked example
+4. Static validation — including a LaTeX brace-balance check — before
+   paying for an expensive render
+5. Sandboxed rendering via the existing VisualizationExecutor
+6. Iterative error recovery (feed render errors back to LLM for fix)
 
-Inspired by the Hermes Agent manim-video skill:
+The plan step and few-shot example are adapted from two references: the
+staged "reasoning-first" pipeline in HarleyCoops/Math-To-Manim (parse intent
+-> sequence curriculum -> plan visuals -> compose -> validate -> repair), and
+the "Manimator" paper's scene-description-then-codegen split and role-played
+few-shot prompting (arXiv:2507.14306). Both assume a strong model can afford
+several large LLM calls; this app also has to work well on a 1.5B CPU model,
+so the plan step is a single short, optional, best-effort call — if it
+fails or the model is too weak to produce usable JSON, generation proceeds
+without a plan exactly as it did before, and the caller never blocks on it.
+
+Originally inspired by the Hermes Agent manim-video skill:
 https://github.com/NousResearch/hermes-agent/tree/main/skills/creative/manim-video
 """
 
 import ast
+import json
 import re
 import textwrap
 from typing import Optional, Tuple
@@ -25,6 +43,7 @@ from .manim_templates import (
     build_generic_scene,
     fill_template,
 )
+from .prompts import LEVEL_INSTRUCTIONS
 
 _TOPIC_KEYWORDS: list[Tuple[list[str], str]] = [
     (["derivative", "tangent", "slope", "differentiat"], "derivative"),
@@ -75,16 +94,22 @@ CREATIVE STANDARDS (from 3Blue1Brown):
 - One new idea per scene. Progressive disclosure.
 - buff >= 0.5 for edge text positioning.
 - No more than 5-6 elements visible at once.
+
+WORKED EXAMPLE — match this style exactly (geometry drawn first, labels
+next, then the equation last, with a self.wait() after each beat):
+```python
+{fewshot_example}
+```
 """)
 
 CODEGEN_PROMPT_TEMPLATE = textwrap.dedent("""\
-Write a Manim CE scene that animates the following mathematical concept:
+{level_instruction}Write a Manim CE scene that animates the following mathematical concept:
 
 TOPIC: {topic}
 
 CONTEXT (from the tutor):
 {context}
-
+{plan_block}
 Requirements:
 - Show geometry/visuals BEFORE equations
 - Use smooth animations (Write, Create, FadeIn, Transform)
@@ -92,6 +117,43 @@ Requirements:
 - Animate at least one moving/transforming element
 
 Output the complete Python script (class GeneratedScene(Scene)).
+""")
+
+# ---------------------------------------------------------------------------
+# Scene planning — a short, optional reasoning pass before code generation.
+#
+# Asking a small local model to sequence a lesson AND write correct Python in
+# one completion tends to produce code that either has the pedagogy right or
+# the syntax right, rarely both. Splitting "what happens, in what order" into
+# its own short JSON call gives the model a much narrower job to do at each
+# step, matching Math-To-Manim's separation of curriculum/visual planning
+# from Manim composition — kept to one cheap call, not that project's full
+# multi-agent pipeline, since this also has to run on CPU-only local models.
+# ---------------------------------------------------------------------------
+
+PLAN_SYSTEM_PROMPT = textwrap.dedent("""\
+You are a math teacher storyboarding a short animation, not writing code yet.
+Output ONLY a JSON object, no markdown fences, no commentary, shaped exactly like:
+{
+  "beats": [
+    {"shows": "short description of what appears or happens", "seconds": 2.5},
+    {"shows": "...", "seconds": 2.5}
+  ],
+  "key_equation": "the single most important equation, in LaTeX, or empty string",
+  "metaphor": "one concrete, everyday comparison for this concept, or empty string"
+}
+Rules: 3 to 6 beats. Beats must build in teaching order — the thing the
+learner needs to understand FIRST comes first (usually a picture/shape
+before any equation). Total seconds should be 10-14. Keep each "shows"
+under 15 words.
+""")
+
+PLAN_PROMPT_TEMPLATE = textwrap.dedent("""\
+{level_instruction}Storyboard a short animation for this topic: {topic}
+
+Context from the tutor: {context}
+
+Output the JSON plan now.
 """)
 
 FIX_PROMPT_TEMPLATE = textwrap.dedent("""\
@@ -107,6 +169,14 @@ ERROR:
 
 Output ONLY the corrected Python code.  No commentary.
 """)
+
+# A real, already-verified scene (the "pythagorean" template, fully filled)
+# used as a concrete style anchor in the codegen prompt rather than hand-authored
+# prompt-only prose — few-shot grounding in the Manimator sense, but the example
+# is exactly the production code this app already renders, so there's nothing
+# new to keep correct.
+_FEWSHOT_TEMPLATE_NAME, _FEWSHOT_PARAMS = TOPIC_TEMPLATE_MAP["pythagorean"]
+FEWSHOT_EXAMPLE = fill_template(_FEWSHOT_TEMPLATE_NAME, _FEWSHOT_PARAMS).strip()
 
 
 class AnimationPipeline:
@@ -125,6 +195,7 @@ class AnimationPipeline:
         topic: str,
         context: str = "",
         *,
+        learner_level: str = "teen",
         quality: str = "low",
         output_format: str = "gif",
     ) -> Optional[VisualizationPayload]:
@@ -132,9 +203,11 @@ class AnimationPipeline:
 
         Returns a VisualizationPayload with viz_type=manim on success, None on failure.
         """
-        logger.info(f"AnimationPipeline.generate: topic={topic!r}")
+        logger.info(f"AnimationPipeline.generate: topic={topic!r} level={learner_level!r}")
 
         # Phase 1: a curated template for this topic — fast and always correct.
+        # These are hand-written for a general audience already, so the level
+        # only shapes the LLM path below, not the template fast path.
         code = self._heuristic_code(topic, context)
         if code is not None:
             payload = self._render_with_retry(code, topic, "template")
@@ -144,7 +217,8 @@ class AnimationPipeline:
         # Phase 2: LLM codegen for novel topics (creative but unreliable on
         # small local models). Try it, but never depend on it.
         if self._llm.is_available():
-            llm_code = self._llm_generate(topic, context)
+            plan = self._plan_scene(topic, context, learner_level)
+            llm_code = self._llm_generate(topic, context, learner_level, plan)
             if llm_code is not None:
                 payload = self._render_with_retry(llm_code, topic, "llm")
                 if payload is not None:
@@ -192,17 +266,117 @@ class AnimationPipeline:
             return None
 
     # ------------------------------------------------------------------
+    # Phase 1.5: optional scene planning (see module docstring)
+    # ------------------------------------------------------------------
+
+    def _plan_scene(self, topic: str, context: str, learner_level: str) -> Optional[dict]:
+        """Ask the LLM to storyboard the scene before writing any code.
+
+        Best-effort and cheap: short timeout, short output, and any failure
+        (timeout, malformed JSON, an obviously broken shape) just means
+        codegen proceeds without a plan — exactly the old behavior. Never
+        raises, never blocks the pipeline on a slow/weak model.
+        """
+        level_instruction = LEVEL_INSTRUCTIONS.get(learner_level, LEVEL_INSTRUCTIONS["teen"])
+        try:
+            raw = self._llm.chat(
+                [
+                    {"role": "system", "content": PLAN_SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": PLAN_PROMPT_TEMPLATE.format(
+                            level_instruction=level_instruction, topic=topic, context=context[:500]
+                        ),
+                    },
+                ],
+                task="codegen",
+                timeout_seconds=35,
+                num_predict=400,
+                temperature=0.4,
+                json_format=True,
+            )
+        except Exception as exc:  # noqa: BLE001 - planning is always optional
+            logger.warning(f"AnimationPipeline: scene planning call failed: {exc}")
+            return None
+        if not raw:
+            return None
+
+        plan = self._parse_plan(raw)
+        if plan is None:
+            logger.warning("AnimationPipeline: scene plan was unusable, proceeding without one")
+        else:
+            logger.info(f"AnimationPipeline: planned {len(plan['beats'])} beats")
+        return plan
+
+    @staticmethod
+    def _parse_plan(raw: str) -> Optional[dict]:
+        """Validate the plan's shape; return None (not a partial plan) if it's off."""
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return None
+        beats = data.get("beats")
+        if not isinstance(beats, list) or not (3 <= len(beats) <= 6):
+            return None
+        clean_beats = []
+        total_seconds = 0.0
+        for b in beats:
+            if not isinstance(b, dict) or "shows" not in b:
+                return None
+            shows = str(b["shows"]).strip()[:120]
+            try:
+                seconds = float(b.get("seconds", 2.0))
+            except (TypeError, ValueError):
+                seconds = 2.0
+            seconds = max(0.5, min(seconds, 6.0))
+            total_seconds += seconds
+            clean_beats.append({"shows": shows, "seconds": round(seconds, 1)})
+        if total_seconds > 20:
+            return None
+        return {
+            "beats": clean_beats,
+            "key_equation": str(data.get("key_equation", ""))[:80],
+            "metaphor": str(data.get("metaphor", ""))[:160],
+        }
+
+    @staticmethod
+    def _format_plan(plan: Optional[dict]) -> str:
+        if not plan:
+            return ""
+        lines = [f"{i+1}. {b['shows']} (~{b['seconds']}s)" for i, b in enumerate(plan["beats"])]
+        block = "\nFollow this scene plan, beat by beat:\n" + "\n".join(lines)
+        if plan.get("key_equation"):
+            block += f"\nKey equation to end on: {plan['key_equation']}"
+        if plan.get("metaphor"):
+            block += f"\nMetaphor to anchor it: {plan['metaphor']}"
+        return block + "\n"
+
+    # ------------------------------------------------------------------
     # Phase 2: LLM code generation
     # ------------------------------------------------------------------
 
-    def _llm_generate(self, topic: str, context: str) -> Optional[str]:
+    def _llm_generate(
+        self, topic: str, context: str, learner_level: str = "teen", plan: Optional[dict] = None
+    ) -> Optional[str]:
         """Ask the local LLM (codegen model) to write a full Manim scene."""
+        level_instruction = LEVEL_INSTRUCTIONS.get(learner_level, LEVEL_INSTRUCTIONS["teen"])
         raw = self._llm.chat(
             [
-                {"role": "system", "content": CODEGEN_SYSTEM_PROMPT},
+                {
+                    "role": "system",
+                    "content": CODEGEN_SYSTEM_PROMPT.format(fewshot_example=FEWSHOT_EXAMPLE),
+                },
                 {
                     "role": "user",
-                    "content": CODEGEN_PROMPT_TEMPLATE.format(topic=topic, context=context[:800]),
+                    "content": CODEGEN_PROMPT_TEMPLATE.format(
+                        level_instruction=level_instruction,
+                        topic=topic,
+                        context=context[:800],
+                        plan_block=self._format_plan(plan),
+                    ),
                 },
             ],
             task="codegen",
@@ -315,6 +489,42 @@ class AnimationPipeline:
             return "Missing class GeneratedScene(Scene)"
         if "def construct" not in code:
             return "GeneratedScene has no construct() method"
+
+        latex_error = AnimationPipeline._validate_latex(tree)
+        if latex_error:
+            return latex_error
+        return None
+
+    @staticmethod
+    def _validate_latex(tree: ast.AST) -> Optional[str]:
+        """Brace-balance check on every MathTex(...)/Tex(...) string literal.
+
+        A small model asked to write LaTeX by hand very commonly drops a
+        closing brace (e.g. `r"\\frac{a}{b"`), which Manim/LaTeX only
+        reports as an opaque compile failure well into an expensive render.
+        Catching the unbalanced case here — cheaply, with no external LaTeX
+        toolchain — is the one piece of Math-To-Manim's static LaTeX check
+        this pipeline can do without shipping a LaTeX compiler.
+        """
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
+                continue
+            if node.func.id not in ("MathTex", "Tex"):
+                continue
+            for arg in node.args:
+                if not (isinstance(arg, ast.Constant) and isinstance(arg.value, str)):
+                    continue
+                depth = 0
+                for ch in arg.value:
+                    if ch == "{":
+                        depth += 1
+                    elif ch == "}":
+                        depth -= 1
+                        if depth < 0:
+                            break
+                if depth != 0:
+                    snippet = arg.value[:40]
+                    return f"Unbalanced braces in {node.func.id}(r\"{snippet}…\")"
         return None
 
     @staticmethod

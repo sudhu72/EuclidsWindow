@@ -527,6 +527,7 @@ class VisualizationOnDemandRequest(BaseModel):
     quality: str = Field("low", pattern="^(low|medium|high)$")
     output_format: str = Field("gif", pattern="^(gif|mp4)$")
     async_render: bool = True
+    learner_level: str = Field("teen", pattern="^(kids|teen|college|adult)$")
 
 
 class VisualizationOnDemandResponse(BaseModel):

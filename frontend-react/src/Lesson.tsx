@@ -381,7 +381,7 @@ export default function Lesson({
               <>
                 <Markdown>{scene.narration || ""}</Markdown>
                 <Classmate q={scene.classmate_question} a={scene.classmate_answer} />
-                <Animation topic={`${lesson.topic} — ${section?.title || ""}`} />
+                <Animation topic={`${lesson.topic} — ${section?.title || ""}`} level={level} />
               </>
             )}
           </div>

@@ -1131,6 +1131,7 @@ async def ai_visualize(payload: VisualizationOnDemandRequest) -> VisualizationOn
         animation_pipeline.generate,
         payload.question,
         "",
+        learner_level=payload.learner_level,
         quality=payload.quality,
         output_format=payload.output_format,
     )
@@ -1161,6 +1162,7 @@ async def ai_animate(payload: VisualizationOnDemandRequest):
         animation_pipeline.generate,
         payload.question,
         "",
+        learner_level=payload.learner_level,
         quality=payload.quality,
         output_format=payload.output_format,
     )

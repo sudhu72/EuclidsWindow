@@ -15,7 +15,7 @@ import {
  * (no animation id came back), it falls back to the synchronous pipeline,
  * which always produces something.
  */
-export default function Animation({ topic }: { topic: string }) {
+export default function Animation({ topic, level = "teen" }: { topic: string; level?: string }) {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [viz, setViz] = useState<ManimViz | null>(null);
   const [job, setJob] = useState<AnimationJob | null>(null);
@@ -27,7 +27,7 @@ export default function Animation({ topic }: { topic: string }) {
     setJob(null);
     setViz(null);
     try {
-      const id = await queueAnimation(topic);
+      const id = await queueAnimation(topic, level);
       if (id) {
         const done = await pollAnimation(id, setJob);
         if (done.status === "completed" && done.url) {
@@ -42,7 +42,7 @@ export default function Animation({ topic }: { topic: string }) {
         if (done.error) throw new Error(done.error);
       }
       // Nothing queued — render inline instead.
-      const v = await animate(topic);
+      const v = await animate(topic, level);
       if (!v) throw new Error("No animation could be produced.");
       setViz(v);
       setState("done");

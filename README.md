@@ -58,7 +58,7 @@ Euclid's Window is a local-first math tutoring platform that combines structured
 - **On-demand visuals & dynamic animation pipeline**
   - Instant Plotly charts via deterministic visual planner (keyword-matched)
   - VizAgent auto-generation from LLM answer text (Plotly, Mermaid, geometric SVG)
-  - **Dynamic Manim animation pipeline**: heuristic template matching for 14+ math topics (derivatives, integrals, linear transforms, Taylor series, Fourier, complex numbers, etc.) with LLM-driven code generation fallback for novel topics, sandboxed rendering, and iterative error recovery
+  - **Dynamic Manim animation pipeline**: heuristic template matching for 14+ math topics (derivatives, integrals, linear transforms, Taylor series, Fourier, complex numbers, etc.); for novel topics, a lightweight scene-planning pass storyboards the animation's beats before any code is written, code generation is grounded with a known-good worked example and adapts to the learner's level (kids/teen/college/adult), and generated code goes through static validation — including a LaTeX brace-balance check — plus iterative error recovery before an expensive render is attempted. The plan-then-code split and few-shot grounding are adapted from [Math-To-Manim](https://github.com/HarleyCoops/Math-To-Manim)'s staged reasoning pipeline and the ["Manimator" paper](https://arxiv.org/abs/2507.14306) (arXiv:2507.14306), scaled down to a single optional, best-effort planning call so it still runs well on CPU-only local models
   - Matrix Lab animation generator — renders user-defined matrix transformations as Manim GIFs directly from the lab UI
   - Animation rendering via Manim (background jobs with progress polling)
   - Diffusion image generation (Stable Diffusion, optional GPU)

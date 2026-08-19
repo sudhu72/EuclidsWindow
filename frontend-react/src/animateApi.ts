@@ -39,12 +39,14 @@ async function json<T>(resp: Response): Promise<T> {
 }
 
 /** Synchronous render — kept for short clips and as the queue's fallback. */
-export async function animate(topic: string): Promise<ManimViz | null> {
+export async function animate(topic: string, level = "teen"): Promise<ManimViz | null> {
   const d = await json<{ visualization?: ManimViz | null }>(
     await fetch("/api/ai/animate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: topic, quality: "low", output_format: "gif" }),
+      body: JSON.stringify({
+        question: topic, quality: "low", output_format: "gif", learner_level: level,
+      }),
     })
   );
   const viz = d.visualization ?? null;
@@ -52,7 +54,7 @@ export async function animate(topic: string): Promise<ManimViz | null> {
 }
 
 /** Queue an animation for a topic. Returns the id to poll, if one was queued. */
-export async function queueAnimation(topic: string): Promise<string | null> {
+export async function queueAnimation(topic: string, level = "teen"): Promise<string | null> {
   const d = await json<{ animation_id?: string | null }>(
     await fetch("/api/ai/visualize", {
       method: "POST",
@@ -63,6 +65,7 @@ export async function queueAnimation(topic: string): Promise<string | null> {
         quality: "low",
         output_format: "gif",
         async_render: true,
+        learner_level: level,
       }),
     })
   );
