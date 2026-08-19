@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Visualization from "./Visualization";
 import RenderJobs from "./RenderJobs";
+import { getSettings } from "./settingsApi";
 import {
   generateImage,
   generateMusic,
@@ -31,6 +32,16 @@ export default function VizPanel({
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [media, setMedia] = useState<{ kind: "image" | "music"; url: string } | null>(null);
+  // Image/Music need local diffusion + music-gen models, off by default and
+  // GPU-bound — showing them as normal buttons when that's disabled just
+  // means every click 503s. Hide rather than disable-with-no-explanation.
+  const [mediaEnabled, setMediaEnabled] = useState(false);
+
+  useEffect(() => {
+    getSettings()
+      .then((s) => setMediaEnabled(s.local_media_enabled))
+      .catch(() => setMediaEnabled(false));
+  }, []);
 
   const reset = () => {
     setViz(null);
@@ -115,12 +126,16 @@ export default function VizPanel({
         >
           Auto-visualize
         </button>
-        <button className="btn-ghost" onClick={() => void makeMedia("image")} disabled={busy || !topic.trim()}>
-          Image
-        </button>
-        <button className="btn-ghost" onClick={() => void makeMedia("music")} disabled={busy || !topic.trim()}>
-          Music
-        </button>
+        {mediaEnabled && (
+          <button className="btn-ghost" onClick={() => void makeMedia("image")} disabled={busy || !topic.trim()}>
+            Image
+          </button>
+        )}
+        {mediaEnabled && (
+          <button className="btn-ghost" onClick={() => void makeMedia("music")} disabled={busy || !topic.trim()}>
+            Music
+          </button>
+        )}
         {status && <span className="status">{status}</span>}
       </div>
 
