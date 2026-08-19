@@ -217,8 +217,17 @@ class AnimationPipeline:
         # Phase 2: LLM codegen for novel topics (creative but unreliable on
         # small local models). Try it, but never depend on it.
         if self._llm.is_available():
-            plan = self._plan_scene(topic, context, learner_level)
-            llm_code = self._llm_generate(topic, context, learner_level, plan)
+            # Concept-graph disambiguation only for the LLM path — the same
+            # collision risk the graph exists to prevent elsewhere (e.g.
+            # "Euler's Identity" vs. planar-graph "Euler's Formula"). Kept out
+            # of Phase 1's heuristic keyword match above so it can't skew
+            # template routing with stray related-concept words.
+            from .concept_graph import get_concept_graph
+
+            graph_context = get_concept_graph().context_for(topic)
+            llm_context = f"{context}\n\n{graph_context}".strip() if graph_context else context
+            plan = self._plan_scene(topic, llm_context, learner_level)
+            llm_code = self._llm_generate(topic, llm_context, learner_level, plan)
             if llm_code is not None:
                 payload = self._render_with_retry(llm_code, topic, "llm")
                 if payload is not None:

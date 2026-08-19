@@ -7,9 +7,11 @@ question → by-hand → discover → explain → connections).
 
 It is grounded by the concept graph so the "connections" (what it rests on /
 what it unlocks) are real structural links from the app's own topic map, not
-invented — that's the basic→advanced ladder the learner climbs. The prose and
-the tiny worked example are LLM-written, so they're illustrative rather than
-NumPy-verified like the curated lab.
+invented — that's the basic→advanced ladder the learner climbs. It is also
+grounded by the RAG library, so the by-hand example and discovery step have
+real material to build from rather than the base model's own unverified
+recall. The prose and the tiny worked example are still LLM-written, so
+they're illustrative rather than NumPy-verified like the curated lab.
 """
 import textwrap
 from typing import Any, Dict, List, Optional
@@ -51,6 +53,8 @@ class DiscoveryService:
 
     def discover(self, topic: str, level: str = "teen") -> Optional[Dict[str, Any]]:
         from .concept_graph import get_concept_graph
+        from .library import get_library
+        from .skills import COMPACT_SKILL, COMPACT_TEACHING
 
         graph = get_concept_graph()
         graph_context = graph.context_for(topic)
@@ -59,13 +63,19 @@ class DiscoveryService:
         nb = graph.neighborhood(topic, hops=1)
         related = [n["name"] for n in nb["nodes"] if not n["focus"]] if nb else []
 
+        library_context = get_library().context_for(topic, k=2, max_chars=1200)
+        grounding = "\n\n".join(c for c in (graph_context, library_context) if c)
+
         level_instruction = LEVEL_INSTRUCTIONS.get(level, "")
         messages = [
-            {"role": "system", "content": DISCOVERY_SYSTEM_PROMPT},
+            {
+                "role": "system",
+                "content": DISCOVERY_SYSTEM_PROMPT + "\n" + COMPACT_TEACHING + "\n" + COMPACT_SKILL,
+            },
             {
                 "role": "user",
                 "content": (
-                    (graph_context + "\n\n" if graph_context else "")
+                    (grounding + "\n\n" if grounding else "")
                     + f"{level_instruction}Lead me to discover this topic myself: {topic[:200]}"
                 ),
             },
@@ -76,13 +86,20 @@ class DiscoveryService:
                 messages,
                 task="discover",  # routes to the stronger local_discover_model (qwen3:8b)
                 timeout_seconds=180,  # qwen3:8b is a slower "thinking" model
-                num_predict=2000,
+                # Grounding gives the model real material to elaborate on (good),
+                # but a verbose "know" field can then eat the whole budget before
+                # later fields are written (bad) — sized up from 2000 so a
+                # 7-field schema with library excerpts to draw from still fits.
+                num_predict=2800,
                 num_ctx=8192,
                 temperature=0.4 if attempt == 0 else 0.6,
             )
             if raw and raw.get("byhand") and raw.get("discover"):
                 break
-        if not raw:
+        # A truncated final attempt still returns a (partial) dict, not None —
+        # ship nothing rather than a discovery path with silently blank stages.
+        if not raw or not raw.get("byhand") or not raw.get("discover"):
+            logger.warning(f"DiscoveryService: incomplete JSON for '{topic[:60]}', giving up")
             return None
 
         def _list(value: Any) -> List[str]:
