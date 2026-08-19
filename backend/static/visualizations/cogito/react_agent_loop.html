@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The ReAct agent loop — Thought → Action → Observation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c;
+    --bg-panel:#1b2b23;
+    --bg-node:#20342a;
+    --chalk:#f4f1e8;
+    --chalk-dim:#7f8f83;
+    --amber:#ffce54;
+    --coral:#ff8266;
+    --mint:#8fd19e;
+    --sky:#7ec8e3;
+    --violet:#c9a6ff;
+    --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:28px 22px 60px;}
+  .wrap{max-width:1120px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:27px;margin:0 0 4px;line-height:1.2;}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 18px;max-width:820px;line-height:1.5;}
+  .sub b{color:var(--chalk);font-weight:500;}
+
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+  button{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--bg-panel);color:var(--chalk);
+          border:1px solid var(--border);border-radius:7px;padding:8px 14px;cursor:pointer;transition:all .15s ease;}
+  button:hover:not(:disabled){border-color:rgba(255,206,84,.55);color:var(--amber);}
+  button:disabled{opacity:.4;cursor:default;}
+  button.primary{background:var(--amber);color:#1a1a1a;border-color:var(--amber);font-weight:700;}
+  button.primary:hover:not(:disabled){color:#1a1a1a;filter:brightness(1.08);}
+  .taskpick{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 20px;}
+  .taskpick .lbl{font-size:11px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:1px;}
+  .taskbtn{font-size:11.5px;}
+  .taskbtn.sel{border-color:var(--sky);color:var(--sky);}
+  .hint{color:var(--chalk-dim);font-size:11px;}
+
+  .taskbar{background:var(--bg-panel);border:1px solid var(--border);border-radius:9px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+  .taskbar .q{font-size:10px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:1px;}
+  .taskbar .t{font-size:15px;color:var(--chalk);font-weight:500;margin-top:2px;}
+  .stepcount{font-family:'Kalam',cursive;font-size:16px;color:var(--amber);white-space:nowrap;}
+
+  .stage{display:grid;grid-template-columns:340px 1fr;gap:26px;align-items:start;}
+  @media(max-width:820px){.stage{grid-template-columns:1fr;}}
+
+  /* ---- loop diagram ---- */
+  .loopwrap{background:var(--bg-panel);border:1px solid var(--border);border-radius:11px;padding:18px 16px;}
+  .loopwrap .cap{font-size:10px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;text-align:center;}
+  svg{width:100%;height:auto;display:block;}
+  .node rect{fill:var(--bg-node);stroke:var(--border);stroke-width:1.5;transition:all .3s ease;}
+  .node text{fill:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;}
+  .node .sub2{fill:var(--chalk-dim);font-size:9px;}
+  .node.lit rect{stroke-width:2.5;filter:drop-shadow(0 0 8px rgba(0,0,0,.4));}
+  .node.model.lit rect{stroke:var(--amber);fill:#2a3f31;}
+  .node.action.lit rect{stroke:var(--sky);fill:#22323a;}
+  .node.tool.lit rect{stroke:var(--violet);fill:#2c2740;}
+  .node.obs.lit rect{stroke:var(--mint);fill:#22392b;}
+  .node.done.lit rect{stroke:var(--mint);fill:#22392b;}
+  .edge{stroke:var(--border);stroke-width:2;fill:none;marker-end:url(#arrow);transition:stroke .3s ease;}
+  .edge.lit{stroke:var(--amber);}
+  .edgelabel{fill:var(--chalk-dim);font-size:9px;font-family:'JetBrains Mono',monospace;}
+  .stopchip{opacity:0;transition:opacity .4s ease;}
+  .stopchip.show{opacity:1;}
+
+  /* ---- transcript / scratchpad ---- */
+  .scratch{background:var(--bg-panel);border:1px solid var(--border);border-radius:11px;padding:18px 20px;min-height:360px;}
+  .scratch .cap{font-size:10px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;display:flex;justify-content:space-between;}
+  .line{font-size:13px;line-height:1.5;margin:0 0 10px;padding:8px 12px;border-radius:7px;border-left:3px solid var(--border);
+        background:rgba(244,241,232,.03);opacity:0;transform:translateY(8px);animation:pop .35s ease forwards;white-space:pre-wrap;word-break:break-word;}
+  @keyframes pop{to{opacity:1;transform:translateY(0);}}
+  .line .k{font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:1px;display:block;margin-bottom:3px;}
+  .line.thought{border-left-color:var(--amber);} .line.thought .k{color:var(--amber);}
+  .line.action{border-left-color:var(--sky);} .line.action .k{color:var(--sky);}
+  .line.obs{border-left-color:var(--mint);} .line.obs .k{color:var(--mint);}
+  .line.final{border-left-color:var(--mint);background:rgba(143,209,158,.10);} .line.final .k{color:var(--mint);}
+  .line .tool-tag{color:var(--violet);}
+  .empty{color:var(--chalk-dim);font-size:12px;font-style:italic;}
+
+  .legend{margin-top:22px;background:var(--bg-panel);border:1px dashed var(--border);border-radius:10px;padding:14px 20px;}
+  .legend .k{font-family:'Kalam',cursive;font-size:16px;color:var(--amber);margin-bottom:4px;}
+  .legend p{margin:0;font-size:12.5px;color:var(--chalk-dim);line-height:1.6;}
+  .legend b{color:var(--chalk);font-weight:500;}
+  .legend code{color:var(--mint);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The ReAct agent loop — Thought → Action → Observation</h1>
+  <p class="sub">An agent is just an LLM call wrapped in a loop with tools. Each turn the model emits a <b>Thought</b> and either an <b>Action</b> (call a tool) or a <b>Final Answer</b>. The loop runs the tool, feeds the <b>Observation</b> back, and asks again — so the model can <b>react to real results it couldn't predict</b>. Step through it below. (This mirrors <code>ml/agentic/agents_from_scratch.ipynb</code>.)</p>
+
+  <div class="controls">
+    <button class="primary" id="stepBtn">▶ Step</button>
+    <button id="autoBtn">⏩ Auto-play</button>
+    <button id="resetBtn">↺ Reset</button>
+    <span class="hint">or press → to step</span>
+  </div>
+
+  <div class="taskpick">
+    <span class="lbl">Task:</span>
+    <button class="taskbtn sel" data-task="0">population of France × 2 (multi-hop)</button>
+    <button class="taskbtn" data-task="1">15% of 240 (single tool)</button>
+    <button class="taskbtn" data-task="2">capital of Japan (lookup)</button>
+  </div>
+
+  <div class="taskbar">
+    <div><div class="q">Current goal</div><div class="t" id="goalText"></div></div>
+    <div class="stepcount" id="stepCount">step 0</div>
+  </div>
+
+  <div class="stage">
+    <div class="loopwrap">
+      <div class="cap">the loop</div>
+      <svg viewBox="0 0 300 340" id="loopSvg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#7f8f83"/>
+          </marker>
+          <marker id="arrowlit" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#ffce54"/>
+          </marker>
+        </defs>
+
+        <!-- edges (drawn first, behind nodes) -->
+        <path id="e_m_a" class="edge" d="M150,66 L150,96"/>
+        <path id="e_a_t" class="edge" d="M96,124 L60,124 L60,168"/>
+        <path id="e_t_o" class="edge" d="M60,214 L60,250 L104,250"/>
+        <path id="e_o_m" class="edge" d="M150,236 C210,210 210,90 176,52"/>
+        <text class="edgelabel" x="156" y="84">parse</text>
+        <text class="edgelabel" x="14" y="150">run tool</text>
+        <text class="edgelabel" x="66" y="242">result</text>
+        <text class="edgelabel" x="196" y="150">feed back ↺</text>
+
+        <!-- nodes -->
+        <g class="node model" id="n_model">
+          <rect x="96" y="30" width="108" height="36" rx="8"/>
+          <text x="150" y="46" text-anchor="middle">LLM / brain</text>
+          <text x="150" y="59" text-anchor="middle" class="sub2">picks next step</text>
+        </g>
+        <g class="node action" id="n_action">
+          <rect x="8" y="106" width="96" height="36" rx="8"/>
+          <text x="56" y="122" text-anchor="middle">Action</text>
+          <text x="56" y="135" text-anchor="middle" class="sub2">tool[input]</text>
+        </g>
+        <g class="node tool" id="n_tool">
+          <rect x="12" y="168" width="96" height="46" rx="8"/>
+          <text x="60" y="188" text-anchor="middle">Tool runs</text>
+          <text x="60" y="201" text-anchor="middle" class="sub2">search / calc</text>
+        </g>
+        <g class="node obs" id="n_obs">
+          <rect x="104" y="228" width="104" height="40" rx="8"/>
+          <text x="156" y="246" text-anchor="middle">Observation</text>
+          <text x="156" y="259" text-anchor="middle" class="sub2">real result</text>
+        </g>
+
+        <!-- stop condition chip -->
+        <g class="stopchip" id="stopChip">
+          <rect x="196" y="286" width="96" height="40" rx="8" fill="#22392b" stroke="#8fd19e" stroke-width="2"/>
+          <text x="244" y="304" text-anchor="middle" fill="#8fd19e" font-size="11" font-weight="700">Final Answer</text>
+          <text x="244" y="317" text-anchor="middle" fill="#7f8f83" font-size="9">loop stops ✓</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="scratch">
+      <div class="cap"><span>scratchpad · the agent's working memory</span><span id="stateTag"></span></div>
+      <div id="transcript"><p class="empty">Press <b>Step</b> to run the agent one turn at a time…</p></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="k">Why the loop beats one big prompt</div>
+    <p>A single call has to compute everything in one shot. The loop lets the model <b>act, see a real result, and decide again</b> — step 2's input (the population) literally didn't exist until step 1's tool ran in the world. Two invariants make it safe: the <b>loop</b> (not the model) runs the tools, and every <b>Observation is untrusted data</b> the model reasons <i>about</i>, never a command channel. That boundary is what stops a poisoned tool result from hijacking the agent.</p>
+  </div>
+</div>
+
+<script>
+// Each task is a scripted sequence of turns, mirroring the notebook's MockLLM.
+// A turn is either {thought, action:{tool,input}, obs} or {thought, final}.
+const TASKS = [
+  { goal:"What is the population of France, multiplied by 2?",
+    turns:[
+      { thought:"I need the population first.", tool:"search", input:"France population",
+        obs:"The population of France is 68,000,000." },
+      { thought:"Now multiply it by 2.", tool:"calculator", input:"68000000 * 2",
+        obs:"136000000" },
+      { thought:"I have the result.", final:"136000000" },
+    ]},
+  { goal:"What is 15% of 240?",
+    turns:[
+      { thought:"This is arithmetic; use the calculator.", tool:"calculator", input:"15 / 100 * 240",
+        obs:"36.0" },
+      { thought:"Done.", final:"36.0" },
+    ]},
+  { goal:"What is the capital of Japan?",
+    turns:[
+      { thought:"I should look this up.", tool:"search", input:"capital of Japan",
+        obs:"The capital of Japan is Tokyo." },
+      { thought:"I found it.", final:"The capital of Japan is Tokyo." },
+    ]},
+];
+
+const NODES = ["n_model","n_action","n_tool","n_obs"];
+const EDGES = ["e_m_a","e_a_t","e_t_o","e_o_m"];
+let taskIdx = 0;
+// phase within a turn: 0=model thinks, 1=action, 2=tool, 3=observation (or done after model on final)
+let turn = 0, phase = -1, autoTimer = null, finished = false;
+
+const transcript = document.getElementById('transcript');
+const goalText = document.getElementById('goalText');
+const stepCount = document.getElementById('stepCount');
+const stateTag = document.getElementById('stateTag');
+const stopChip = document.getElementById('stopChip');
+const stepBtn = document.getElementById('stepBtn');
+
+function clearHighlights(){
+  NODES.forEach(id=>document.getElementById(id).classList.remove('lit'));
+  EDGES.forEach(id=>{const e=document.getElementById(id);e.classList.remove('lit');e.setAttribute('marker-end','url(#arrow)');});
+}
+function litNode(id){document.getElementById(id).classList.add('lit');}
+function litEdge(id){const e=document.getElementById(id);e.classList.add('lit');e.setAttribute('marker-end','url(#arrowlit)');}
+
+function addLine(cls, kicker, html){
+  const div=document.createElement('div');
+  div.className='line '+cls;
+  div.innerHTML=`<span class="k">${kicker}</span>${html}`;
+  transcript.appendChild(div);
+  div.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+function resetView(keepTask){
+  turn=0; phase=-1; finished=false;
+  clearHighlights(); stopChip.classList.remove('show');
+  transcript.innerHTML='<p class="empty">Press <b>Step</b> to run the agent one turn at a time…</p>';
+  goalText.textContent=TASKS[taskIdx].goal;
+  stepCount.textContent='step 0';
+  stateTag.textContent='';
+  stepBtn.disabled=false; stepBtn.textContent='▶ Step';
+  if(!keepTask) stopAuto();
+}
+
+function step(){
+  if(finished) return;
+  const t=TASKS[taskIdx];
+  const cur=t.turns[turn];
+
+  // first real step: clear the empty placeholder
+  if(phase===-1 && transcript.querySelector('.empty')) transcript.innerHTML='';
+
+  phase++;
+  clearHighlights();
+
+  if(phase===0){
+    // model produces a Thought
+    litNode('n_model');
+    stateTag.textContent='model thinking…';
+    stepCount.textContent='step '+(turn+1);
+    addLine('thought','Thought', cur.thought);
+    if(cur.final!==undefined){
+      // final answer: skip straight to done on next step
+    } else {
+      litEdge('e_m_a');
+    }
+  } else if(phase===1){
+    if(cur.final!==undefined){
+      // model chose to answer -> stop condition
+      litNode('n_model');
+      addLine('final','Final Answer', cur.final);
+      stopChip.classList.add('show');
+      stateTag.textContent='✓ stop condition met';
+      finishTask();
+      return;
+    }
+    // Action chosen
+    litNode('n_action'); litEdge('e_a_t');
+    stateTag.textContent='parsed an action';
+    addLine('action','Action', `<span class="tool-tag">${cur.tool}</span>[ ${cur.input} ]`);
+  } else if(phase===2){
+    // tool executes
+    litNode('n_tool'); litEdge('e_t_o');
+    stateTag.textContent='running tool…';
+  } else if(phase===3){
+    // observation fed back
+    litNode('n_obs'); litEdge('e_o_m');
+    stateTag.textContent='observation fed back → model reacts';
+    addLine('obs','Observation', cur.obs);
+    // advance to next turn
+    turn++; phase=-1;
+  }
+}
+
+function finishTask(){
+  finished=true;
+  stepBtn.disabled=true; stepBtn.textContent='done ✓';
+  stopAuto();
+}
+
+function toggleAuto(){
+  if(autoTimer){ stopAuto(); return; }
+  document.getElementById('autoBtn').textContent='⏸ Pause';
+  autoTimer=setInterval(()=>{ if(finished){ stopAuto(); return;} step(); }, 850);
+}
+function stopAuto(){ if(autoTimer){clearInterval(autoTimer);autoTimer=null;} document.getElementById('autoBtn').textContent='⏩ Auto-play'; }
+
+stepBtn.addEventListener('click', ()=>{ stopAuto(); step(); });
+document.getElementById('autoBtn').addEventListener('click', toggleAuto);
+document.getElementById('resetBtn').addEventListener('click', ()=>resetView(false));
+document.addEventListener('keydown', e=>{ if(e.key==='ArrowRight'){ e.preventDefault(); stopAuto(); step(); } });
+
+document.querySelectorAll('.taskbtn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.taskbtn').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+    taskIdx=+b.dataset.task;
+    resetView(false);
+  });
+});
+
+resetView(false);
+</script>
+</body>
+</html>

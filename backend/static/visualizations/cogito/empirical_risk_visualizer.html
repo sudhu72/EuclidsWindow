@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Empirical Risk vs. Risk: watch generalization theory happen live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  table.hyp{border-collapse:collapse;margin:14px auto;width:100%;max-width:560px;}
+  table.hyp th, table.hyp td{border:1px solid var(--border);padding:8px 10px;text-align:center;font-size:12.5px;}
+  table.hyp th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+  table.hyp tr.winner td{color:var(--amber);font-weight:700;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  .verdict-line{text-align:center;font-size:14px;margin-top:10px;font-family:'Kalam',cursive;}
+  .verdict-line.pass{color:var(--green);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Empirical Risk vs. Risk: watch generalization theory happen live</h1>
+  <p class="sub">Three tabs, matching the tutorial's three verified demonstrations.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="lln">Empirical vs. True Risk</button>
+    <button class="tabbtn" data-tab="memorize">When Memorizing Backfires</button>
+    <button class="tabbtn" data-tab="bound">The Generalization Bound, Proven</button>
+  </div>
+
+  <!-- ============ TAB 1: EMPIRICAL VS TRUE RISK ============ -->
+  <div class="tabpanel active" id="tab-lln">
+    <div class="panel">
+      <h2>One Fixed Rule, Growing Sample Size</h2>
+      <p class="sub">Rule: predict 1 when x &gt; 0.6, with 20% label noise on the true x &gt; 0.5 boundary. True risk = 0.26, computed exactly from the population. Drag n and watch empirical risk settle toward it.</p>
+      <div class="row"><label>training sample size n</label><input type="range" id="llnN" min="5" max="2000" step="1" value="20"><span class="readout" id="llnNOut">20</span></div>
+      <svg id="llnSvg" width="640" height="280" viewBox="0 0 640 280"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">true risk R(f)</div><div class="num">0.260</div></div>
+        <div class="metric coral"><div class="lbl">empirical risk R̂ₙ(f)</div><div class="num" id="llnEmp">-</div></div>
+        <div class="metric amber"><div class="lbl">gap</div><div class="num" id="llnGap">-</div></div>
+      </div>
+      <div class="story-line" id="llnStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: WHEN MEMORIZING BACKFIRES ============ -->
+  <div class="tabpanel" id="tab-memorize">
+    <div class="panel">
+      <h2>Zero Training Error, Coin-Flip Real Performance</h2>
+      <p class="sub">A hypothesis rich enough to memorize every training point exactly, defaulting to "0" on anything unseen. Same 20%-noise data as Tab 1.</p>
+      <div class="row">
+        <button class="op primary" id="btnMemRun">Train and test on 200,000 fresh points</button>
+      </div>
+      <svg id="memSvg" width="640" height="220" viewBox="0 0 640 220"></svg>
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">empirical risk (training)</div><div class="num" id="memEmp">-</div></div>
+        <div class="metric coral"><div class="lbl">true risk (fresh test data)</div><div class="num" id="memTrue">-</div></div>
+        <div class="metric amber"><div class="lbl">generalization gap</div><div class="num" id="memGap">-</div></div>
+      </div>
+      <div class="story-line" id="memStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: THE GENERALIZATION BOUND, PROVEN ============ -->
+  <div class="tabpanel" id="tab-bound">
+    <div class="panel">
+      <h2>Draw a Sample. Try to Break the Bound.</h2>
+      <p class="sub">Five inputs, known population, three candidate rules. True risks are fixed and known. Draw a fresh n=8 training sample and watch which rule ERM picks — and whether R(f̂ₙ) − R(f*) ≤ 2ε holds, every single time.</p>
+      <div class="row">
+        <button class="op primary" id="btnBoundDraw">Draw a fresh training sample</button>
+      </div>
+      <table class="hyp" id="boundTable"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">ε = sup|R̂ₙ−R|</div><div class="num" id="boundEps">-</div></div>
+        <div class="metric coral"><div class="lbl">R(f̂ₙ) − R(f*)</div><div class="num" id="boundRegret">-</div></div>
+        <div class="metric green"><div class="lbl">2ε</div><div class="num" id="boundTwoEps">-</div></div>
+      </div>
+      <div class="verdict-line" id="boundVerdict"></div>
+      <div class="story-line" id="boundStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../empirical_risk_vs_risk_feynman.md">Empirical Risk vs. Risk</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function makeLCG(seed){ let s = seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  function trueLabel(x, flip){ const base = x > 0.5 ? 1 : 0; return flip ? 1-base : base; }
+
+  /* ============================================================
+     TAB 1 — EMPIRICAL VS TRUE RISK
+     ============================================================ */
+  function fFixed(x){ return x > 0.6 ? 1 : 0; }
+  const TRUE_RISK_FIXED = 0.26;
+
+  function renderLLN(){
+    const n = parseInt(document.getElementById("llnN").value, 10);
+    document.getElementById("llnNOut").textContent = n;
+    const rand = makeLCG(n*7+1);
+    let err = 0;
+    const points = [];
+    for(let i=0;i<n;i++){
+      const x = rand();
+      const flip = rand() < 0.2;
+      const y = trueLabel(x, flip);
+      const pred = fFixed(x);
+      if (pred !== y) err++;
+      if (i < 200) points.push({x, y, pred});
+    }
+    const empRisk = err/n;
+    document.getElementById("llnEmp").textContent = empRisk.toFixed(4);
+    document.getElementById("llnGap").textContent = Math.abs(empRisk-TRUE_RISK_FIXED).toFixed(4);
+
+    const svg = document.getElementById("llnSvg");
+    svg.innerHTML = "";
+    const W=640,H=280,pad=40;
+    function X(x){ return pad + x*(W-2*pad); }
+    function Y(v){ return H-pad - v*(H-2*pad)*2; }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    svg.appendChild(el("line",{x1:pad,y1:Y(TRUE_RISK_FIXED),x2:W-pad,y2:Y(TRUE_RISK_FIXED),stroke:"var(--blue)","stroke-width":2,"stroke-dasharray":"6 4"}));
+    const label = el("text",{x:W-pad-4,y:Y(TRUE_RISK_FIXED)-8,"text-anchor":"end","font-family":"JetBrains Mono, monospace","font-size":11,fill:"var(--blue)"});
+    label.textContent = "true risk = 0.26";
+    svg.appendChild(label);
+    svg.appendChild(el("circle",{cx:X(0.5), cy:Y(empRisk), r:7, fill:"var(--coral)", stroke:"var(--bg)","stroke-width":1.5}));
+    const empLabel = el("text",{x:X(0.5),y:Y(empRisk)-14,"text-anchor":"middle","font-family":"JetBrains Mono, monospace","font-size":11,fill:"var(--coral)"});
+    empLabel.textContent = "R̂ₙ(f) = " + empRisk.toFixed(3);
+    svg.appendChild(empLabel);
+
+    const story = document.getElementById("llnStory");
+    story.textContent = n < 50
+      ? "Small n: empirical risk bounces around wildly — the Law of Large Numbers hasn't kicked in yet."
+      : (n < 500 ? "Growing n: the gap is visibly shrinking." : "Large n: empirical risk has settled in tight around the true risk, exactly as promised.");
+  }
+  document.getElementById("llnN").addEventListener("input", renderLLN);
+  renderLLN();
+
+  /* ============================================================
+     TAB 2 — WHEN MEMORIZING BACKFIRES
+     ============================================================ */
+  function runMemorize(){
+    const rand = makeLCG(555);
+    const n = 50;
+    const lookup = new Map();
+    let trainErr = 0;
+    for (let i=0;i<n;i++){
+      const x = rand();
+      const flip = rand() < 0.2;
+      const y = trueLabel(x, flip);
+      lookup.set(x, y);
+    }
+    // training error is exactly 0 by construction (perfect recall of its own keys)
+    const empRisk = 0;
+
+    const nTest = 200000;
+    let testErr = 0;
+    for (let i=0;i<nTest;i++){
+      const x = rand();
+      const flip = rand() < 0.2;
+      const y = trueLabel(x, flip);
+      const pred = lookup.has(x) ? lookup.get(x) : 0;
+      if (pred !== y) testErr++;
+    }
+    const trueRisk = testErr/nTest;
+
+    document.getElementById("memEmp").textContent = empRisk.toFixed(4);
+    document.getElementById("memTrue").textContent = trueRisk.toFixed(4);
+    document.getElementById("memGap").textContent = (trueRisk-empRisk).toFixed(4);
+
+    const svg = document.getElementById("memSvg");
+    svg.innerHTML = "";
+    const W=640,H=220,pad=50;
+    function X(v){ return pad + v*(W-2*pad); }
+    const barY1 = 70, barY2 = 140, barH = 30;
+    svg.appendChild(el("rect",{x:X(0),y:barY1,width:X(empRisk)-X(0),height:barH,fill:"var(--green)"}));
+    const l1 = el("text",{x:10,y:barY1+barH/2+4,"font-family":"JetBrains Mono, monospace","font-size":12,fill:"var(--chalk)"});
+    l1.textContent = "training (empirical) risk: " + empRisk.toFixed(3);
+    svg.appendChild(l1);
+    svg.appendChild(el("rect",{x:X(0),y:barY2,width:Math.max(2,X(trueRisk)-X(0)),height:barH,fill:"var(--coral)"}));
+    const l2 = el("text",{x:10,y:barY2-6,"font-family":"JetBrains Mono, monospace","font-size":12,fill:"var(--chalk)"});
+    l2.textContent = "true risk (fresh test data): " + trueRisk.toFixed(3);
+    svg.appendChild(l2);
+    svg.appendChild(el("line",{x1:pad,y1:20,x2:pad,y2:H-20,stroke:"var(--chalk-dim)","stroke-width":1}));
+    svg.appendChild(el("line",{x1:X(0.5),y1:20,x2:X(0.5),y2:H-20,stroke:"var(--chalk-dim)","stroke-width":1,"stroke-dasharray":"3 3",opacity:0.5}));
+
+    document.getElementById("memStory").textContent =
+      "The lookup table recalled all 50 training points perfectly, yet on fresh data it defaults to guessing \"0\" almost always — landing near a coin flip, worse than the true best rule's ~0.20 risk.";
+  }
+  document.getElementById("btnMemRun").addEventListener("click", runMemorize);
+  runMemorize();
+
+  /* ============================================================
+     TAB 3 — THE GENERALIZATION BOUND, PROVEN
+     ============================================================ */
+  const xs = [1,2,3,4,5];
+  const pY1 = {1:0.9, 2:0.7, 3:0.4, 4:0.3, 5:0.1};
+  const hyps = {
+    f1: x => x<=2 ? 1 : 0,
+    f2: x => x<=3 ? 1 : 0,
+    f3: x => 1,
+  };
+  function trueRiskOf(f){
+    let r = 0;
+    for (const x of xs){
+      const pred = f(x);
+      const errProb = pred===1 ? (1-pY1[x]) : pY1[x];
+      r += 0.2*errProb;
+    }
+    return r;
+  }
+  const R = {};
+  for (const name in hyps) R[name] = trueRiskOf(hyps[name]);
+  const fStar = Object.keys(R).reduce((a,b) => R[a] < R[b] ? a : b);
+
+  let boundSeed = 8; // the first draw reproduces the tutorial's own worked example exactly
+  function drawBoundSample(){
+    const rand = makeLCG(boundSeed);
+    boundSeed++;
+    const n = 8;
+    const sampleX = [], sampleY = [];
+    for (let i=0;i<n;i++){
+      const x = xs[Math.floor(rand()*5)];
+      const y = rand() < pY1[x] ? 1 : 0;
+      sampleX.push(x); sampleY.push(y);
+    }
+    const Rhat = {};
+    for (const name in hyps){
+      let err = 0;
+      for (let i=0;i<n;i++) if (hyps[name](sampleX[i]) !== sampleY[i]) err++;
+      Rhat[name] = err/n;
+    }
+    const fHat = Object.keys(Rhat).reduce((a,b) => Rhat[a] <= Rhat[b] ? a : b);
+    const eps = Math.max(...Object.keys(R).map(name => Math.abs(Rhat[name]-R[name])));
+    const regret = R[fHat] - R[fStar];
+    const twoEps = 2*eps;
+
+    const table = document.getElementById("boundTable");
+    let html = "<tr><th>hypothesis</th><th>true risk R(f)</th><th>empirical risk R̂ₙ(f)</th><th>|gap|</th></tr>";
+    for (const name of ["f1","f2","f3"]){
+      const isFStar = name === fStar, isFHat = name === fHat;
+      const rowClass = isFHat ? "winner" : "";
+      const tag = (isFStar?" (f*)":"") + (isFHat?" (f̂ₙ)":"");
+      html += `<tr class="${rowClass}"><td>${name}${tag}</td><td>${R[name].toFixed(3)}</td><td>${Rhat[name].toFixed(3)}</td><td>${Math.abs(Rhat[name]-R[name]).toFixed(3)}</td></tr>`;
+    }
+    table.innerHTML = html;
+
+    document.getElementById("boundEps").textContent = eps.toFixed(4);
+    document.getElementById("boundRegret").textContent = regret.toFixed(4);
+    document.getElementById("boundTwoEps").textContent = twoEps.toFixed(4);
+
+    const verdict = document.getElementById("boundVerdict");
+    const holds = regret <= twoEps + 1e-9;
+    verdict.className = "verdict-line" + (holds ? " pass" : "");
+    verdict.textContent = holds ? `✓ ${regret.toFixed(4)} ≤ ${twoEps.toFixed(4)} — the bound holds` : "✗ the bound failed — this should be mathematically impossible, please report this";
+
+    const story = document.getElementById("boundStory");
+    story.textContent = fHat === fStar
+      ? "This sample happened to correctly identify the true best hypothesis."
+      : `Sampling noise fooled ERM into picking ${fHat} instead of the true best ${fStar} — and the bound still holds.`;
+  }
+  document.getElementById("btnBoundDraw").addEventListener("click", drawBoundSample);
+  drawBoundSample();
+})();
+</script>
+</body>
+</html>

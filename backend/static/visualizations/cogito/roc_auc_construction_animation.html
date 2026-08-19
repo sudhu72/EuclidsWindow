@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Building a ROC curve, one threshold at a time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .legend-row{display:flex;justify-content:center;gap:22px;margin-bottom:16px;font-size:12px;color:var(--chalk-dim);flex-wrap:wrap;}
+  .legend-row span{display:flex;align-items:center;gap:6px;}
+  .swatch{width:14px;height:14px;border-radius:3px;display:inline-block;}
+
+  .email-row{display:flex;justify-content:center;gap:10px;margin:10px 0 22px;flex-wrap:wrap;}
+  .email{width:74px;padding:10px 6px 8px;border-radius:8px;text-align:center;border:2px solid var(--border);transition:all .3s ease;}
+  .email .p{font-family:'Kalam',cursive;font-size:15px;}
+  .email .lab{font-size:10px;color:var(--chalk-dim);margin-top:2px;}
+  .email.truth-pos{border-color:var(--blue);}
+  .email.truth-neg{border-color:var(--chalk-dim);}
+  .email.pred-pos.truth-pos{background:rgba(143,209,158,.18);}
+  .email.pred-pos.truth-neg{background:rgba(255,130,102,.22);}
+  .email.pred-neg.truth-pos{background:rgba(255,130,102,.22);}
+  .email.pred-neg.truth-neg{background:rgba(127,143,131,.12);}
+  .email .tag{font-size:9px;margin-top:4px;font-weight:700;letter-spacing:.02em;}
+
+  .slider-wrap{max-width:560px;margin:6px auto 4px;text-align:center;}
+  .slider-wrap input[type=range]{width:100%;accent-color:var(--amber);}
+  .slider-caption{font-size:12px;color:var(--chalk-dim);margin-top:6px;}
+  .threshold-readout{text-align:center;font-family:'Kalam',cursive;font-size:20px;margin:10px 0 18px;}
+
+  table.conf{border-collapse:collapse;margin:0 auto 6px;}
+  table.conf th, table.conf td{border:1px solid var(--border);padding:10px 18px;text-align:center;font-size:13px;}
+  table.conf th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  table.conf td{font-family:'Kalam',cursive;font-size:18px;}
+  .conf-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-bottom:14px;}
+
+  .metric-row{display:flex;justify-content:center;gap:26px;margin:16px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:98px;}
+  .metric .lbl{font-size:11px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:20px;margin-top:4px;}
+  .metric.fpr .num{color:var(--coral);}
+  .metric.tpr .num{color:var(--blue);}
+  .metric.prec .num{color:var(--amber);}
+  .metric.auc .num{color:var(--green);}
+
+  .cols{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;justify-content:center;}
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:16px;min-height:20px;}
+
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  .faq-content code{background:rgba(244,241,232,.08);color:var(--amber);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Building a ROC curve, one threshold at a time</h1>
+  <p class="sub">Same 10 scored emails as the precision/recall widget — but now the dial sweeps threshold, and we plot False Positive Rate against True Positive Rate at every stop, instead of just reading off one.</p>
+
+  <div class="panel">
+    <div class="legend-row">
+      <span><i class="swatch" style="border:2px solid var(--blue)"></i>truly positive (spam)</span>
+      <span><i class="swatch" style="border:2px solid var(--chalk-dim)"></i>truly negative (not spam)</span>
+      <span><i class="swatch" style="background:rgba(143,209,158,.4)"></i>correct</span>
+      <span><i class="swatch" style="background:rgba(255,130,102,.4)"></i>wrong</span>
+    </div>
+
+    <div class="email-row" id="emailRow"></div>
+
+    <div class="slider-wrap">
+      <input type="range" id="thSlider" min="0" max="10" step="1" value="5">
+      <div class="slider-caption">Drag to sweep the decision threshold from strict (left) to lenient (right)</div>
+    </div>
+    <div class="threshold-readout">threshold ≥ <span id="thVal">0.70</span></div>
+
+    <table class="conf">
+      <tr><th></th><th>actually spam</th><th>actually not spam</th></tr>
+      <tr><th>flagged spam</th><td id="cTP">-</td><td id="cFP">-</td></tr>
+      <tr><th>flagged not spam</th><td id="cFN">-</td><td id="cTN">-</td></tr>
+    </table>
+    <div class="conf-caption">the confusion matrix at the current threshold</div>
+
+    <div class="metric-row">
+      <div class="metric fpr"><div class="lbl">FPR</div><div class="num" id="mFPR">-</div></div>
+      <div class="metric tpr"><div class="lbl">TPR (recall)</div><div class="num" id="mTPR">-</div></div>
+      <div class="metric prec"><div class="lbl">Precision</div><div class="num" id="mPrec">-</div></div>
+      <div class="metric auc"><div class="lbl">AUC (whole curve)</div><div class="num" id="mAUC">-</div></div>
+    </div>
+
+    <div class="story-line" id="storyLine"></div>
+  </div>
+
+  <div class="panel">
+    <h2>The ROC curve this classifier actually traces</h2>
+    <div class="cols">
+      <div>
+        <svg id="rocSvg" width="360" height="360" viewBox="0 0 360 360"></svg>
+        <div class="plot-caption">x = FPR, y = TPR &nbsp;·&nbsp; dashed diagonal = random guessing &nbsp;·&nbsp; shaded area = AUC</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <button id="btnProof">Show the pairwise proof (why AUC = 0.80, two ways)</button>
+    </div>
+    <div class="faq-content" id="proofContent">
+      <p><strong>Geometric AUC:</strong> the trapezoid-rule area under the staircase above, using every one of the 10 emails' own scores as a threshold stop, comes out to exactly <code>0.80</code>.</p>
+      <p><strong>Probabilistic AUC:</strong> compare all 5×5 = 25 possible (spam email, not-spam email) pairs. Count how often the spam email's score is higher (a tie would count as half). For this dataset: <code>20 / 25 = 0.80</code> — no ties, and an exact match with the geometric number above, because they are the same fact computed two different ways: <em>AUC is the probability a random positive outranks a random negative.</em></p>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../model_evaluation_metrics_feynman.md">Model Evaluation Metrics</a>, Parts 3–4.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const data = [
+    {name:"A", label:1, score:0.95}, {name:"B", label:1, score:0.90}, {name:"C", label:0, score:0.85},
+    {name:"D", label:1, score:0.80}, {name:"E", label:1, score:0.70}, {name:"F", label:0, score:0.60},
+    {name:"G", label:0, score:0.55}, {name:"H", label:1, score:0.40}, {name:"I", label:0, score:0.30},
+    {name:"J", label:0, score:0.10}
+  ];
+  // Distinct thresholds, high (strict) to low (lenient), plus a stop above the max and below the min.
+  const distinctScores = Array.from(new Set(data.map(d=>d.score))).sort((a,b)=>b-a);
+  const thresholds = [1.00, ...distinctScores, 0.00];
+  const P = data.filter(d=>d.label===1).length;
+  const N = data.filter(d=>d.label===0).length;
+
+  function confusionAt(t){
+    let TP=0,FP=0,FN=0,TN=0;
+    for(const d of data){
+      const pred = d.score >= t ? 1 : 0;
+      if(pred===1 && d.label===1) TP++;
+      else if(pred===1 && d.label===0) FP++;
+      else if(pred===0 && d.label===1) FN++;
+      else TN++;
+    }
+    return {TP,FP,FN,TN};
+  }
+
+  const rocPoints = thresholds.map(t => {
+    const {TP,FP,FN,TN} = confusionAt(t);
+    return {t, FPR: FP/(FP+TN), TPR: TP/(TP+FN)};
+  });
+  // Dedup + sort by FPR (ties by TPR) for a clean staircase / trapezoid calc.
+  const curvePts = [];
+  const seen = new Set();
+  for(const p of [...rocPoints].sort((a,b)=> a.FPR-b.FPR || a.TPR-b.TPR)){
+    const key = p.FPR.toFixed(3)+","+p.TPR.toFixed(3);
+    if(!seen.has(key)){ seen.add(key); curvePts.push(p); }
+  }
+  let AUC = 0;
+  for(let i=1;i<curvePts.length;i++){
+    const a = curvePts[i-1], b = curvePts[i];
+    AUC += (b.FPR - a.FPR) * (a.TPR + b.TPR) / 2;
+  }
+
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function renderEmails(){
+    const row = document.getElementById("emailRow");
+    row.innerHTML = "";
+    for(const d of data){
+      const box = document.createElement("div");
+      box.className = "email";
+      box.id = "email-" + d.name;
+      box.innerHTML = `<div class="p">✉️</div><div class="lab">${d.name} · ${d.score.toFixed(2)}</div><div class="tag"></div>`;
+      row.appendChild(box);
+    }
+  }
+
+  function drawStaticCurve(svg){
+    const pad = 34, size = 360, plot = size - pad*1.6;
+    function X(fpr){ return pad + fpr*plot; }
+    function Y(tpr){ return (size-pad*0.6) - tpr*plot; }
+    // axes
+    svg.appendChild(el("line",{x1:X(0),y1:Y(0),x2:X(1),y2:Y(0),stroke:"var(--chalk-dim)","stroke-width":1}));
+    svg.appendChild(el("line",{x1:X(0),y1:Y(0),x2:X(0),y2:Y(1),stroke:"var(--chalk-dim)","stroke-width":1}));
+    const axisLabelStyle = {"font-family":"JetBrains Mono, monospace","font-size":10,fill:"var(--chalk-dim)"};
+    const lx = el("text", Object.assign({x:X(0.5),y:size-4,"text-anchor":"middle"}, axisLabelStyle)); lx.textContent="False Positive Rate"; svg.appendChild(lx);
+    const ly = el("text", Object.assign({x:12,y:Y(0.5),"text-anchor":"middle",transform:`rotate(-90 12 ${Y(0.5)})`}, axisLabelStyle)); ly.textContent="True Positive Rate"; svg.appendChild(ly);
+    // diagonal baseline
+    svg.appendChild(el("line",{x1:X(0),y1:Y(0),x2:X(1),y2:Y(1),stroke:"var(--chalk-dim)","stroke-width":1.4,"stroke-dasharray":"5 4"}));
+    // filled AUC area
+    let areaD = `M ${X(0)},${Y(0)} `;
+    for(const p of curvePts) areaD += `L ${X(p.FPR)},${Y(p.TPR)} `;
+    areaD += `L ${X(1)},${Y(0)} Z`;
+    svg.appendChild(el("path",{d:areaD, fill:"rgba(143,209,158,0.16)", stroke:"none"}));
+    // staircase curve
+    let curveD = `M ${X(curvePts[0].FPR)},${Y(curvePts[0].TPR)} `;
+    for(let i=1;i<curvePts.length;i++) curveD += `L ${X(curvePts[i].FPR)},${Y(curvePts[i].TPR)} `;
+    svg.appendChild(el("path",{d:curveD, fill:"none", stroke:"var(--green)", "stroke-width":2.6}));
+    // dots at every plotted point
+    for(const p of curvePts){
+      svg.appendChild(el("circle",{cx:X(p.FPR), cy:Y(p.TPR), r:3, fill:"var(--chalk-dim)"}));
+    }
+    return {X, Y};
+  }
+
+  let coords = null;
+  let markerEl = null;
+
+  function render(){
+    const idx = parseInt(document.getElementById("thSlider").value, 10);
+    const t = thresholds[idx];
+    document.getElementById("thVal").textContent = t.toFixed(2);
+    const {TP,FP,FN,TN} = confusionAt(t);
+    document.getElementById("cTP").textContent = TP;
+    document.getElementById("cFP").textContent = FP;
+    document.getElementById("cFN").textContent = FN;
+    document.getElementById("cTN").textContent = TN;
+    const FPR = FP/(FP+TN), TPR = TP/(TP+FN);
+    const prec = (TP+FP)>0 ? TP/(TP+FP) : 1;
+    document.getElementById("mFPR").textContent = FPR.toFixed(2);
+    document.getElementById("mTPR").textContent = TPR.toFixed(2);
+    document.getElementById("mPrec").textContent = prec.toFixed(3);
+    document.getElementById("mAUC").textContent = AUC.toFixed(2);
+
+    for(const d of data){
+      const box = document.getElementById("email-"+d.name);
+      const pred = d.score >= t ? 1 : 0;
+      box.classList.remove("truth-pos","truth-neg","pred-pos","pred-neg");
+      box.classList.add(d.label===1 ? "truth-pos" : "truth-neg");
+      box.classList.add(pred===1 ? "pred-pos" : "pred-neg");
+      const tag = box.querySelector(".tag");
+      if(pred===1 && d.label===1){ tag.textContent="TP"; tag.style.color="var(--green)"; }
+      else if(pred===1 && d.label===0){ tag.textContent="FP"; tag.style.color="var(--coral)"; }
+      else if(pred===0 && d.label===1){ tag.textContent="FN"; tag.style.color="var(--coral)"; }
+      else { tag.textContent="TN"; tag.style.color="var(--chalk-dim)"; }
+    }
+
+    if(markerEl) markerEl.remove();
+    const svg = document.getElementById("rocSvg");
+    markerEl = el("circle",{cx:coords.X(FPR), cy:coords.Y(TPR), r:6.5, fill:"var(--amber)", stroke:"var(--bg)", "stroke-width":2});
+    svg.appendChild(markerEl);
+
+    const story = document.getElementById("storyLine");
+    if(idx===0) story.textContent = "Threshold impossibly strict — nothing flagged positive. Every ROC curve starts here, at (0,0).";
+    else if(idx===thresholds.length-1) story.textContent = "Threshold impossibly lenient — everything flagged positive. Every ROC curve ends here, at (1,1).";
+    else story.textContent = `At this threshold: FPR=${FPR.toFixed(2)}, TPR=${TPR.toFixed(2)} — the amber dot's current position on the curve.`;
+  }
+
+  renderEmails();
+  const svg = document.getElementById("rocSvg");
+  coords = drawStaticCurve(svg);
+  document.getElementById("thSlider").addEventListener("input", render);
+  render();
+
+  const btn = document.getElementById("btnProof");
+  const content = document.getElementById("proofContent");
+  btn.addEventListener("click", () => {
+    content.classList.toggle("open");
+    btn.textContent = content.classList.contains("open") ? "Hide the pairwise proof" : "Show the pairwise proof (why AUC = 0.80, two ways)";
+  });
+})();
+</script>
+</body>
+</html>

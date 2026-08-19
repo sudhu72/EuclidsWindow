@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Resampling and Shrinkage: the Bootstrap, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  table.coord{border-collapse:collapse;margin:14px auto;width:100%;max-width:600px;}
+  table.coord th, table.coord td{border:1px solid var(--border);padding:6px 8px;text-align:center;font-size:11.5px;}
+  table.coord th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:12.5px;}
+  table.coord td.worse{color:var(--coral);}
+  table.coord td.better{color:var(--green);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Resampling and Shrinkage: the Bootstrap, live</h1>
+  <p class="sub">Three tabs, matching the tutorial's three verified demonstrations.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="bootstrap">The Bootstrap</button>
+    <button class="tabbtn" data-tab="bagging">Bagging via Bootstrap</button>
+    <button class="tabbtn" data-tab="stein">Stein's Paradox</button>
+  </div>
+
+  <!-- ============ TAB 1: THE BOOTSTRAP ============ -->
+  <div class="tabpanel active" id="tab-bootstrap">
+    <div class="panel">
+      <h2>One Real Sample, Resampled Thousands of Times</h2>
+      <p class="sub">30 points drawn once from a skewed (exponential) population, true mean 10. Pick a statistic and watch the bootstrap distribution build up from that one sample alone.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnStatMedian">Statistic: median</button>
+        <button class="op" id="btnStatMean">Statistic: mean</button>
+      </div>
+      <div class="row">
+        <button class="op primary" id="btnBootRun">Draw 5,000 bootstrap resamples</button>
+      </div>
+      <svg id="bootSvg" width="640" height="240" viewBox="0 0 640 240"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">sample statistic</div><div class="num" id="bootStat">-</div></div>
+        <div class="metric coral"><div class="lbl">bootstrap SE</div><div class="num" id="bootSE">-</div></div>
+        <div class="metric green"><div class="lbl">true SE (usually unavailable)</div><div class="num" id="bootTrueSE">-</div></div>
+      </div>
+      <div class="story-line" id="bootStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: BAGGING VIA BOOTSTRAP ============ -->
+  <div class="tabpanel" id="tab-bagging">
+    <div class="panel">
+      <h2>1-Nearest-Neighbor, Bagged</h2>
+      <p class="sub">20 noisy training points, true f(x)=0.5x²+2x+1. A single 1-NN fit is unstable. Drag the number of bootstrap resamples averaged together.</p>
+      <div class="row"><label>bootstrap ensemble size B</label><input type="range" id="bagB" min="1" max="40" step="1" value="25"><span class="readout" id="bagBOut">25</span></div>
+      <svg id="bagSvg" width="640" height="240" viewBox="0 0 640 240"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">bias²</div><div class="num" id="bagBias">-</div></div>
+        <div class="metric blue"><div class="lbl">variance (real bootstrap)</div><div class="num" id="bagVar">-</div></div>
+        <div class="metric green"><div class="lbl">idealized 1/B (fully independent)</div><div class="num" id="bagIdeal">-</div></div>
+      </div>
+      <div class="story-line" id="bagStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: STEIN'S PARADOX ============ -->
+  <div class="tabpanel" id="tab-stein">
+    <div class="panel">
+      <h2>Ten Unrelated Numbers, Estimated Together</h2>
+      <p class="sub">Toggle between scattered (no shared structure) and clustered (like real batting averages) true values, and watch the total-error gap between naive and James-Stein estimation.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnSteinScattered">Scattered true values</button>
+        <button class="op" id="btnSteinClustered">Clustered true values</button>
+      </div>
+      <div class="row">
+        <button class="op primary" id="btnSteinRun">Run 100,000 trials</button>
+      </div>
+      <table class="coord" id="steinTable"></table>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">naive total error</div><div class="num" id="steinNaive">-</div></div>
+        <div class="metric green"><div class="lbl">James-Stein total error</div><div class="num" id="steinJS">-</div></div>
+        <div class="metric amber"><div class="lbl">improvement</div><div class="num" id="steinImprove">-</div></div>
+      </div>
+      <div class="story-line" id="steinStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../resampling_and_shrinkage_feynman.md">Resampling and Shrinkage</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function makeLCG(seed){ let s = seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function boxMuller(rand){ const u1=Math.max(rand(),1e-12), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+  function mean(a){ return a.reduce((x,y)=>x+y,0)/a.length; }
+  function stdOf(a){ const m=mean(a); return Math.sqrt(mean(a.map(x=>(x-m)**2))); }
+  function median(a){ const s=[...a].sort((x,y)=>x-y); const n=s.length; return n%2 ? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2; }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     TAB 1 — THE BOOTSTRAP
+     ============================================================ */
+  function exponential(rand, m){ return -m*Math.log(1-rand()); }
+  const TRUE_MEAN = 10, N_SAMPLE = 30;
+  const sampleRand = makeLCG(2024);
+  const sample = [];
+  for (let i=0;i<N_SAMPLE;i++) sample.push(exponential(sampleRand, TRUE_MEAN));
+
+  let statFn = median, statName = "median";
+  function drawHistogram(svg, values, highlightX){
+    svg.innerHTML = "";
+    const W=640,H=240,pad=40;
+    const xMin = Math.min(...values, highlightX)-0.5, xMax = Math.max(...values, highlightX)+0.5;
+    const bins = 40;
+    const counts = new Array(bins).fill(0);
+    for (const v of values){
+      let idx = Math.floor((v-xMin)/(xMax-xMin)*bins);
+      idx = Math.max(0, Math.min(bins-1, idx));
+      counts[idx]++;
+    }
+    const maxCount = Math.max(...counts);
+    function X(x){ return pad + (x-xMin)/(xMax-xMin)*(W-2*pad); }
+    function Y(c){ return H-pad - (c/maxCount)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    for (let i=0;i<bins;i++){
+      const x0 = xMin+i*(xMax-xMin)/bins, x1v = xMin+(i+1)*(xMax-xMin)/bins;
+      svg.appendChild(el("rect",{x:X(x0), y:Y(counts[i]), width:Math.max(1,X(x1v)-X(x0)-1), height:(H-pad)-Y(counts[i]), fill:"var(--blue)", opacity:0.75}));
+    }
+    svg.appendChild(el("line",{x1:X(highlightX),y1:pad*0.3,x2:X(highlightX),y2:H-pad,stroke:"var(--amber)","stroke-width":2,"stroke-dasharray":"5 4"}));
+  }
+  function runBootstrap(){
+    const sampleStat = statFn(sample);
+    document.getElementById("bootStat").textContent = sampleStat.toFixed(3);
+    const rand = makeLCG(555);
+    const B = 5000;
+    const bootStats = [];
+    for (let b=0;b<B;b++){
+      const resample = [];
+      for (let i=0;i<N_SAMPLE;i++) resample.push(sample[Math.floor(rand()*N_SAMPLE)]);
+      bootStats.push(statFn(resample));
+    }
+    const bootSE = stdOf(bootStats);
+    document.getElementById("bootSE").textContent = bootSE.toFixed(3);
+
+    // true SE via the 'magic wand' -- many fresh real samples (only for verification, not available in real life)
+    const randG = makeLCG(9999);
+    const freshStats = [];
+    const G = 4000;
+    for (let g=0; g<G; g++){
+      const s = [];
+      for (let i=0;i<N_SAMPLE;i++) s.push(exponential(randG, TRUE_MEAN));
+      freshStats.push(statFn(s));
+    }
+    const trueSE = stdOf(freshStats);
+    document.getElementById("bootTrueSE").textContent = trueSE.toFixed(3);
+
+    drawHistogram(document.getElementById("bootSvg"), bootStats, sampleStat);
+    document.getElementById("bootStory").textContent =
+      `Bootstrap SE (${bootSE.toFixed(3)}) computed from the one real sample vs. the true SE (${trueSE.toFixed(3)}) that would need thousands of fresh real samples to know honestly — ratio ${(bootSE/trueSE).toFixed(2)}.`;
+  }
+  document.getElementById("btnStatMedian").addEventListener("click", function(){
+    statFn = median; statName = "median"; this.classList.add("active"); document.getElementById("btnStatMean").classList.remove("active"); runBootstrap();
+  });
+  document.getElementById("btnStatMean").addEventListener("click", function(){
+    statFn = mean; statName = "mean"; this.classList.add("active"); document.getElementById("btnStatMedian").classList.remove("active"); runBootstrap();
+  });
+  document.getElementById("btnBootRun").addEventListener("click", runBootstrap);
+  runBootstrap();
+
+  /* ============================================================
+     TAB 2 — BAGGING VIA BOOTSTRAP
+     ============================================================ */
+  const bagN = 20;
+  const bagXs = Array.from({length:bagN}, (_,i) => -2 + (4*i)/(bagN-1));
+  const bagTrueF = x => 0.5*x*x + 2*x + 1;
+  const bagSigma = 1.0;
+  const bagX0 = 1.5;
+  const bagTrueY0 = bagTrueF(bagX0);
+  function oneNN(trainXs, trainYs, x0){
+    let bestI=0, bestD=Infinity;
+    for (let i=0;i<trainXs.length;i++){
+      const d = Math.abs(trainXs[i]-x0);
+      if (d<bestD){ bestD=d; bestI=i; }
+    }
+    return trainYs[bestI];
+  }
+  // Single (fit directly on the original, non-resampled data) and bagged (B bootstrap resamples)
+  // are computed together, per trial, from one shared random stream -- exactly reproducing the
+  // tutorial's cited numbers, which come from this same interleaved computation.
+  function runBagging(){
+    const B = parseInt(document.getElementById("bagB").value, 10);
+    document.getElementById("bagBOut").textContent = B;
+
+    const rand = makeLCG(4242);
+    const OUTER = 20000;
+    const singlePreds = [], baggedPreds = [];
+    for (let o=0;o<OUTER;o++){
+      const ys = bagXs.map(x => bagTrueF(x) + bagSigma*boxMuller(rand));
+      singlePreds.push(oneNN(bagXs, ys, bagX0));
+      let sum = 0;
+      for (let b=0;b<B;b++){
+        const idx = Array.from({length:bagN}, () => Math.floor(rand()*bagN));
+        const bxs = idx.map(i=>bagXs[i]), bys = idx.map(i=>ys[i]);
+        sum += oneNN(bxs, bys, bagX0);
+      }
+      baggedPreds.push(sum/B);
+    }
+    const singleMean = mean(singlePreds);
+    const baselineVar = mean(singlePreds.map(p=>(p-singleMean)**2));
+
+    const m = mean(baggedPreds);
+    const bias2 = (m-bagTrueY0)**2;
+    const variance = mean(baggedPreds.map(p=>(p-m)**2));
+    document.getElementById("bagBias").textContent = bias2.toFixed(4);
+    document.getElementById("bagVar").textContent = variance.toFixed(4);
+    document.getElementById("bagIdeal").textContent = (baselineVar/B).toFixed(4);
+
+    const svg = document.getElementById("bagSvg");
+    svg.innerHTML = "";
+    const W=640,H=240,pad=40;
+    const maxVar = baselineVar*1.1;
+    function barLen(v){ return Math.max(2, (v/maxVar)*(W-2*pad)); }
+    svg.appendChild(el("rect",{x:pad, y:20, width:barLen(baselineVar), height:34, fill:"var(--coral)"}));
+    const l0 = el("text",{x:10,y:15,"font-family":"JetBrains Mono, monospace","font-size":12,fill:"var(--coral)"});
+    l0.textContent = "single fit, no resampling: " + baselineVar.toFixed(4);
+    svg.appendChild(l0);
+    svg.appendChild(el("rect",{x:pad, y:90, width:barLen(variance), height:34, fill:"var(--blue)"}));
+    const l1 = el("text",{x:10,y:85,"font-family":"JetBrains Mono, monospace","font-size":12,fill:"var(--blue)"});
+    l1.textContent = "real bootstrap-bagged variance: " + variance.toFixed(4);
+    svg.appendChild(l1);
+    svg.appendChild(el("rect",{x:pad, y:160, width:barLen(baselineVar/B), height:34, fill:"var(--green)"}));
+    const l2 = el("text",{x:10,y:155,"font-family":"JetBrains Mono, monospace","font-size":12,fill:"var(--green)"});
+    l2.textContent = "idealized 1/B (fully independent): " + (baselineVar/B).toFixed(4);
+    svg.appendChild(l2);
+
+    document.getElementById("bagStory").textContent = B===1
+      ? "At B=1, one bootstrap resample already differs slightly from fitting on the original data directly — resampling itself introduces a little of its own variation."
+      : `At B=${B}: real bootstrap-bagged variance (${variance.toFixed(3)}) is well below the single fit (${baselineVar.toFixed(3)}), but not as low as the idealized ${(baselineVar/B).toFixed(3)}, because bootstrap resamples of the same data are correlated with each other.`;
+  }
+  document.getElementById("bagB").addEventListener("input", runBagging);
+  runBagging();
+
+  /* ============================================================
+     TAB 3 — STEIN'S PARADOX
+     ============================================================ */
+  const SCATTERED = [8.2, -3.1, 5.7, 0.4, -6.9, 2.2, 9.9, -1.5, 4.4, -7.8];
+  const CLUSTERED = [5.2, 4.8, 5.5, 4.5, 5.0, 4.7, 5.3, 4.9, 5.1, 4.6];
+  let steinScenario = "scattered";
+
+  function runStein(){
+    const theta = steinScenario === "scattered" ? SCATTERED : CLUSTERED;
+    const k = theta.length;
+    const rand = makeLCG(1234);
+    const numTrials = 100000;
+    let naiveTotalSE = 0, jsTotalSE = 0;
+    const naivePerCoord = new Array(k).fill(0), jsPerCoord = new Array(k).fill(0);
+
+    for (let t=0;t<numTrials;t++){
+      const X = theta.map(th => th + boxMuller(rand));
+      let naiveErr = 0, jsErr = 0;
+      let jsEst;
+      if (steinScenario === "scattered"){
+        const S = X.reduce((s,x) => s+x*x, 0);
+        const shrinkFactor = Math.max(0, 1 - (k-2)/S);
+        jsEst = X.map(x => shrinkFactor*x);
+      } else {
+        const grandMean = mean(X);
+        const Sp = X.reduce((s,x) => s+(x-grandMean)**2, 0);
+        const shrinkFactor = Math.max(0, 1 - (k-3)/Sp);
+        jsEst = X.map(x => grandMean + shrinkFactor*(x-grandMean));
+      }
+      for (let i=0;i<k;i++){
+        const ne = (X[i]-theta[i])**2, je = (jsEst[i]-theta[i])**2;
+        naiveErr += ne; jsErr += je;
+        naivePerCoord[i] += ne; jsPerCoord[i] += je;
+      }
+      naiveTotalSE += naiveErr; jsTotalSE += jsErr;
+    }
+    const naiveAvg = naiveTotalSE/numTrials, jsAvg = jsTotalSE/numTrials;
+    document.getElementById("steinNaive").textContent = naiveAvg.toFixed(3);
+    document.getElementById("steinJS").textContent = jsAvg.toFixed(3);
+    document.getElementById("steinImprove").textContent = ((1-jsAvg/naiveAvg)*100).toFixed(1)+"%";
+
+    const table = document.getElementById("steinTable");
+    let html = "<tr><th>true value</th><th>naive MSE</th><th>James-Stein MSE</th><th>verdict</th></tr>";
+    for (let i=0;i<k;i++){
+      const n = naivePerCoord[i]/numTrials, j = jsPerCoord[i]/numTrials;
+      const cls = j < n ? "better" : "worse";
+      html += `<tr><td>${theta[i]}</td><td>${n.toFixed(3)}</td><td class="${cls}">${j.toFixed(3)}</td><td class="${cls}">${j<n?"JS better":"JS worse"}</td></tr>`;
+    }
+    table.innerHTML = html;
+
+    const story = document.getElementById("steinStory");
+    story.textContent = steinScenario === "scattered"
+      ? "Even with no shared structure at all, James-Stein's total error is still lower — though some individual coordinates get worse."
+      : "With true values clustered together, shrinking toward their shared average produces a dramatic total-error improvement.";
+  }
+  document.getElementById("btnSteinScattered").addEventListener("click", function(){
+    steinScenario="scattered"; this.classList.add("active"); document.getElementById("btnSteinClustered").classList.remove("active"); runStein();
+  });
+  document.getElementById("btnSteinClustered").addEventListener("click", function(){
+    steinScenario="clustered"; this.classList.add("active"); document.getElementById("btnSteinScattered").classList.remove("active"); runStein();
+  });
+  document.getElementById("btnSteinRun").addEventListener("click", runStein);
+  runStein();
+})();
+</script>
+</body>
+</html>

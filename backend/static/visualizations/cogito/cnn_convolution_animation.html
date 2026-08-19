@@ -26,6 +26,9 @@
   table.grid td.in-window{background:rgba(255,206,84,.18);border-color:var(--amber);}
   table.grid td.filled{color:var(--chalk);background:rgba(143,209,158,.15);border-color:var(--green);}
   table.kernel td{width:40px;height:40px;font-size:13px;background:rgba(255,130,102,.08);border-color:var(--coral);color:var(--coral);}
+  table.products td{width:52px;height:46px;font-size:10.5px;color:var(--chalk-dim);line-height:1.3;background:rgba(255,206,84,.05);}
+  table.products td .term{display:block;font-size:10px;color:var(--chalk-dim);}
+  table.products td .prod{display:block;font-family:'Kalam',cursive;font-size:14px;color:var(--amber);}
 
   .filter-toggle{display:flex;justify-content:center;gap:10px;margin-bottom:16px;}
   .filter-toggle button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer;}
@@ -33,6 +36,18 @@
 
   .calc-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin:14px 0 4px;min-height:20px;}
   .calc-line .hi{color:var(--chalk);font-family:'Kalam',cursive;font-size:15px;}
+
+  .math-caption{text-align:center;font-family:'Kalam',cursive;font-size:14px;color:var(--chalk);margin:16px 0 8px;}
+  table.mathsteps{border-collapse:collapse;margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:13px;}
+  table.mathsteps td{padding:5px 10px;color:var(--chalk-dim);white-space:nowrap;}
+  table.mathsteps td.rowlabel{color:var(--chalk-dim);font-size:11.5px;text-align:right;}
+  table.mathsteps td.eq{color:var(--chalk-dim);text-align:center;}
+  table.mathsteps td.terms{color:var(--chalk);}
+  table.mathsteps td.products{color:var(--coral);}
+  table.mathsteps td.rowsum{color:var(--green);font-family:'Kalam',cursive;font-size:14px;text-align:left;}
+  table.mathsteps tr.total td{border-top:1px dashed var(--border);padding-top:9px;}
+  table.mathsteps tr.total td.rowlabel{color:var(--amber);}
+  table.mathsteps tr.total td.rowsum{color:var(--amber);font-size:16px;}
 
   .notebook{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;max-height:200px;overflow-y:auto;}
   .notebook .entry{padding:8px 0;border-bottom:1px dashed var(--border);opacity:.45;}
@@ -71,12 +86,19 @@
         <table class="grid kernel" id="kernelGrid"></table>
       </div>
       <div class="grid-block">
+        <div class="grid-title">elementwise products</div>
+        <table class="grid products" id="productsGrid"></table>
+      </div>
+      <div class="grid-block">
         <div class="grid-title">feature map (output)</div>
         <table class="grid" id="outputGrid"></table>
       </div>
     </div>
 
     <div class="calc-line" id="calcLine"></div>
+
+    <div class="math-caption">Part 3's recipe, worked out: multiply each pair, then sum every product</div>
+    <table class="mathsteps" id="mathTable"></table>
   </div>
 
   <div class="panel"><div class="notebook" id="notebook"></div></div>
@@ -144,6 +166,19 @@ function buildKernelGrid(){
     t.appendChild(tr);
   }
 }
+function buildProductsGrid(){
+  const t = document.getElementById('productsGrid');
+  t.innerHTML = '';
+  for(let i=0;i<K;i++){
+    const tr = document.createElement('tr');
+    for(let j=0;j<K;j++){
+      const td = document.createElement('td');
+      td.id = 'prod_' + i + '_' + j;
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
+  }
+}
 function buildOutputGrid(){
   const t = document.getElementById('outputGrid');
   t.innerHTML = '';
@@ -159,7 +194,7 @@ function buildOutputGrid(){
   }
 }
 
-buildImageGrid(); buildKernelGrid(); buildOutputGrid();
+buildImageGrid(); buildKernelGrid(); buildProductsGrid(); buildOutputGrid();
 
 const positions = [];
 for(let i=0;i<OH;i++) for(let j=0;j<OW;j++) positions.push([i,j]);
@@ -177,6 +212,71 @@ function computeAt(i,j){
   let s = 0;
   for(let ki=0;ki<K;ki++) for(let kj=0;kj<K;kj++) s += image[i+ki][j+kj]*k[ki][kj];
   return Math.round(s*1000)/1000;
+}
+
+function isNinth(v){ return Math.abs(v-1/9)<1e-6; }
+function fmtKernelTerm(v){ return isNinth(v) ? '1/9' : (v<0 ? '('+v+')' : String(v)); }
+function fmtProduct(pixel, kv){
+  if (isNinth(kv)) return pixel + '/9';
+  const p = pixel*kv;
+  return (p<0 ? '('+p+')' : String(p));
+}
+function productValue(pixel, kv){ return pixel*kv; }
+function fmtNum(v){
+  const r = Math.round(v*1000)/1000;
+  return (Number.isInteger(r) ? String(r) : r.toFixed(3)) ;
+}
+
+// Returns {rows: [{terms, products, sum}], total}, one entry per kernel row,
+// exactly Part 3's "multiply each pair, then sum every product" recipe, broken open.
+function computeMathSteps(i,j){
+  const k = filters[currentFilter].k;
+  const rows = [];
+  let total = 0;
+  for(let ki=0;ki<K;ki++){
+    const pixels = [], kernelRow = [];
+    for(let kj=0;kj<K;kj++){ pixels.push(image[i+ki][j+kj]); kernelRow.push(k[ki][kj]); }
+    const terms = pixels.map((p,idx)=> p + '×' + fmtKernelTerm(kernelRow[idx])).join(' + ');
+    const products = pixels.map((p,idx)=> fmtProduct(p, kernelRow[idx])).join(' + ');
+    const rowSum = pixels.reduce((acc,p,idx)=> acc + productValue(p, kernelRow[idx]), 0);
+    rows.push({terms, products, sum: fmtNum(rowSum), sumRaw: rowSum});
+    total += rowSum;
+  }
+  return {rows, total: fmtNum(total)};
+}
+
+function renderProductsGrid(i,j){
+  const k = filters[currentFilter].k;
+  for(let ki=0;ki<K;ki++) for(let kj=0;kj<K;kj++){
+    const pixel = image[i+ki][j+kj], kv = k[ki][kj];
+    const cell = document.getElementById('prod_'+ki+'_'+kj);
+    cell.innerHTML = '<span class="term">'+pixel+'×'+fmtKernelTerm(kv)+'</span><span class="prod">'+fmtProduct(pixel,kv)+'</span>';
+  }
+}
+
+function renderMathTable(i,j){
+  const {rows, total} = computeMathSteps(i,j);
+  const t = document.getElementById('mathTable');
+  t.innerHTML = '';
+  rows.forEach((r, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="rowlabel">kernel row '+idx+':</td>'+
+      '<td class="terms">'+r.terms+'</td>'+
+      '<td class="eq">=</td>'+
+      '<td class="products">'+r.products+'</td>'+
+      '<td class="eq">=</td>'+
+      '<td class="rowsum">'+r.sum+'</td>';
+    t.appendChild(tr);
+  });
+  const totalTr = document.createElement('tr');
+  totalTr.className = 'total';
+  totalTr.innerHTML =
+    '<td class="rowlabel">total:</td>'+
+    '<td class="terms" colspan="3">'+rows.map(r=>r.sum).join(' + ')+'</td>'+
+    '<td class="eq">=</td>'+
+    '<td class="rowsum">'+total+'</td>';
+  t.appendChild(totalTr);
 }
 
 function render(){
@@ -200,6 +300,8 @@ function render(){
   const val = computeAt(i,j);
   document.getElementById('calcLine').innerHTML =
     `window at row ${i}, col ${j} → weighted sum = <span class="hi">${val}</span>`;
+  renderProductsGrid(i,j);
+  renderMathTable(i,j);
 
   document.getElementById('stepIndicator').textContent = 'Position ' + (current+1) + ' of ' + positions.length;
   document.getElementById('btnPrev').disabled = current === 0;

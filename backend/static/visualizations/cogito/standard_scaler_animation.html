@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Feature Scaling: fit(), transform(), and why it helps the model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1060px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:180px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:40px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .cols{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+  .col-title{text-align:center;font-family:'Kalam',cursive;font-size:14px;margin-bottom:4px;}
+
+  .metric-row{display:flex;justify-content:center;gap:22px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  table.leak{border-collapse:collapse;margin:14px auto;width:100%;max-width:520px;}
+  table.leak th, table.leak td{border:1px solid var(--border);padding:8px 10px;text-align:center;font-size:12.5px;}
+  table.leak th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:14px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Feature Scaling: fit(), transform(), and why it helps</h1>
+  <p class="sub">Three tabs, one underlying rule: measure a ruler from training data only, then use that exact ruler everywhere.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="fit">Fit &amp; Transform</button>
+    <button class="tabbtn" data-tab="leak">Data Leakage</button>
+    <button class="tabbtn" data-tab="model">Why It Helps the Model</button>
+  </div>
+
+  <!-- ============ TAB 1: FIT & TRANSFORM ============ -->
+  <div class="tabpanel active" id="tab-fit">
+    <div class="panel">
+      <h2>Same data, two views: raw units vs. standardized</h2>
+      <p class="sub">Left: concavity and area in their own original units. Right: both features re-expressed as "how many standard deviations from the training mean" — using the training-only ruler, applied to both train and test.</p>
+      <div class="row">
+        <button class="op active" id="btnShowTest">Test points: shown</button>
+      </div>
+      <div class="cols">
+        <div>
+          <div class="col-title">Raw units</div>
+          <svg id="rawSvg" width="300" height="300" viewBox="0 0 300 300"></svg>
+        </div>
+        <div>
+          <div class="col-title">Standardized (z-scores)</div>
+          <svg id="stdSvg" width="300" height="300" viewBox="0 0 300 300"></svg>
+        </div>
+      </div>
+      <div class="plot-caption">blue = train (fit here) &nbsp;·&nbsp; coral = test (transform only, using train's ruler) &nbsp;·&nbsp; x = concavity, y = area</div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">train mean (x, y)</div><div class="num" id="mTrainMean">-</div></div>
+        <div class="metric blue"><div class="lbl">train std (x, y)</div><div class="num" id="mTrainStd">-</div></div>
+        <div class="metric coral"><div class="lbl">test mean (x, y)</div><div class="num" id="mTestMean">-</div></div>
+        <div class="metric coral"><div class="lbl">test std (x, y)</div><div class="num" id="mTestStd">-</div></div>
+      </div>
+      <div class="story-line" id="fitStory">On the right: train's mean/std land on exactly (0,0) and (1,1) — by construction. Test's don't — that's expected, not a bug.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: DATA LEAKAGE ============ -->
+  <div class="tabpanel" id="tab-leak">
+    <div class="panel">
+      <h2>Fit on train only, or fit on everything — does it matter?</h2>
+      <p class="sub">One feature ("area"), plotted on a number line. Toggle how the scaler was fit and watch the mean-marker — and every test point's scaled value — shift by a small but very real amount.</p>
+      <div class="row">
+        <button class="op active" id="btnFitTrain">Fit on train only (correct)</button>
+        <button class="op" id="btnFitLeaky">Fit on train + test (leaky)</button>
+      </div>
+      <svg id="leakSvg" width="600" height="140" viewBox="0 0 600 140"></svg>
+      <div class="plot-caption">blue ticks = train &nbsp;·&nbsp; coral ticks = test &nbsp;·&nbsp; amber line = the fitted mean &nbsp;·&nbsp; shaded band = ±1 std</div>
+      <table class="leak">
+        <tr><th>test value</th><th>scaled (current mode)</th><th>scaled (other mode)</th><th>difference</th></tr>
+        <tbody id="leakTableBody"></tbody>
+      </table>
+      <div class="story-line" id="leakStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: WHY IT HELPS THE MODEL ============ -->
+  <div class="tabpanel" id="tab-model">
+    <div class="panel">
+      <h2>The loss surface's shape, and a live gradient-descent race</h2>
+      <p class="sub">Two genuinely unrelated (uncorrelated) features, one scale-mismatch dial. Drag it and watch the loss contour stretch from a circle into a needle — and watch how many steps gradient descent actually needs to get anywhere near the middle.</p>
+      <div class="row">
+        <label>Feature scale mismatch</label><input type="range" id="ratioSlider" min="1" max="30" step="1" value="10"><span class="readout" id="ratioOut">10×</span>
+      </div>
+      <div class="row">
+        <button class="op" id="btnReplay">▶ Replay descent</button>
+      </div>
+      <svg id="modelSvg" width="420" height="420" viewBox="0 0 420 420"></svg>
+      <div class="plot-caption">contour lines = equal loss &nbsp;·&nbsp; amber dot = gradient descent, starting from the same corner every time</div>
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">condition number</div><div class="num" id="mCond">-</div></div>
+        <div class="metric amber"><div class="lbl">steps to converge</div><div class="num" id="mSteps">-</div></div>
+      </div>
+      <div class="story-line" id="modelStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../feature_scaling_and_leakage_feynman.md">Feature Scaling &amp; Data Leakage</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+  function stdOf(arr, mu){ if(mu===undefined) mu=mean(arr); return Math.sqrt(arr.reduce((a,b)=>a+(b-mu)**2,0)/arr.length); }
+
+  /* ============================================================
+     TAB 1 — FIT & TRANSFORM
+     ============================================================ */
+  const trainConcavity = [0.12,0.25,0.31,0.08,0.19,0.27,0.14,0.22,0.09,0.30];
+  const trainArea      = [600, 1800, 2100, 500, 1200, 1900, 700, 1600, 550, 2000];
+  const testConcavity  = [0.17, 0.29, 0.11, 0.24];
+  const testArea       = [900, 2200, 650, 1500];
+
+  let showTest = true;
+
+  function renderFit(){
+    const muC = mean(trainConcavity), sdC = stdOf(trainConcavity, muC);
+    const muA = mean(trainArea), sdA = stdOf(trainArea, muA);
+    const trainCZ = trainConcavity.map(x => (x-muC)/sdC);
+    const trainAZ = trainArea.map(x => (x-muA)/sdA);
+    const testCZ = testConcavity.map(x => (x-muC)/sdC);
+    const testAZ = testArea.map(x => (x-muA)/sdA);
+
+    document.getElementById("mTrainMean").textContent = `${mean(trainCZ).toFixed(3)}, ${mean(trainAZ).toFixed(3)}`;
+    document.getElementById("mTrainStd").textContent = `${stdOf(trainCZ).toFixed(3)}, ${stdOf(trainAZ).toFixed(3)}`;
+    document.getElementById("mTestMean").textContent = `${mean(testCZ).toFixed(3)}, ${mean(testAZ).toFixed(3)}`;
+    document.getElementById("mTestStd").textContent = `${stdOf(testCZ).toFixed(3)}, ${stdOf(testAZ).toFixed(3)}`;
+
+    function drawPanel(svgId, cxArr, cyArr, tcxArr, tcyArr, xMin, xMax, yMin, yMax){
+      const svg = document.getElementById(svgId);
+      svg.innerHTML = "";
+      const W=300,H=300,pad=34;
+      function X(x){ return pad + (x-xMin)/(xMax-xMin)*(W-2*pad); }
+      function Y(y){ return H-pad - (y-yMin)/(yMax-yMin)*(H-2*pad); }
+      svg.appendChild(el("line",{x1:X(xMin),y1:Y(0),x2:X(xMax),y2:Y(0),stroke:"var(--chalk-dim)","stroke-width":1,opacity:0.5}));
+      svg.appendChild(el("line",{x1:X(0),y1:Y(yMin),x2:X(0),y2:Y(yMax),stroke:"var(--chalk-dim)","stroke-width":1,opacity:0.5}));
+      for(let i=0;i<cxArr.length;i++){
+        svg.appendChild(el("circle",{cx:X(cxArr[i]),cy:Y(cyArr[i]),r:6,fill:"var(--blue)",stroke:"var(--bg)","stroke-width":1.3}));
+      }
+      if (showTest){
+        for(let i=0;i<tcxArr.length;i++){
+          svg.appendChild(el("circle",{cx:X(tcxArr[i]),cy:Y(tcyArr[i]),r:6,fill:"var(--coral)",stroke:"var(--bg)","stroke-width":1.3}));
+        }
+      }
+    }
+
+    drawPanel("rawSvg", trainConcavity, trainArea, testConcavity, testArea, 0, 0.5, 400, 2300);
+    drawPanel("stdSvg", trainCZ, trainAZ, testCZ, testAZ, -2, 2, -2, 2);
+  }
+  document.getElementById("btnShowTest").addEventListener("click", function(){
+    showTest = !showTest;
+    this.textContent = "Test points: " + (showTest ? "shown" : "hidden");
+    this.classList.toggle("active", showTest);
+    renderFit();
+  });
+  renderFit();
+
+  /* ============================================================
+     TAB 2 — DATA LEAKAGE
+     ============================================================ */
+  let fitMode = "train"; // "train" or "leaky"
+
+  function renderLeak(){
+    const muTrain = mean(trainArea), sdTrain = stdOf(trainArea, muTrain);
+    const allArea = trainArea.concat(testArea);
+    const muAll = mean(allArea), sdAll = stdOf(allArea, muAll);
+
+    const activeMu = fitMode === "train" ? muTrain : muAll;
+    const activeSd = fitMode === "train" ? sdTrain : sdAll;
+    const otherMu = fitMode === "train" ? muAll : muTrain;
+    const otherSd = fitMode === "train" ? sdAll : sdTrain;
+
+    const svg = document.getElementById("leakSvg");
+    svg.innerHTML = "";
+    const W=600,H=140,pad=40;
+    const xMin=300, xMax=2400;
+    function X(x){ return pad + (x-xMin)/(xMax-xMin)*(W-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:90,x2:W-pad,y2:90,stroke:"var(--chalk-dim)","stroke-width":1}));
+    // shaded +-1 std band
+    svg.appendChild(el("rect",{x:X(activeMu-activeSd), y:40, width:X(activeMu+activeSd)-X(activeMu-activeSd), height:70, fill:"rgba(255,206,84,0.10)"}));
+    svg.appendChild(el("line",{x1:X(activeMu),y1:35,x2:X(activeMu),y2:110,stroke:"var(--amber)","stroke-width":2.4}));
+    for(const v of trainArea) svg.appendChild(el("circle",{cx:X(v),cy:90,r:6,fill:"var(--blue)",stroke:"var(--bg)","stroke-width":1.2}));
+    for(const v of testArea) svg.appendChild(el("circle",{cx:X(v),cy:90,r:6,fill:"var(--coral)",stroke:"var(--bg)","stroke-width":1.2}));
+
+    const tbody = document.getElementById("leakTableBody");
+    tbody.innerHTML = "";
+    for(const v of testArea){
+      const activeScaled = (v-activeMu)/activeSd;
+      const otherScaled = (v-otherMu)/otherSd;
+      const diff = activeScaled - otherScaled;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${v}</td><td>${activeScaled.toFixed(4)}</td><td>${otherScaled.toFixed(4)}</td><td>${diff.toFixed(4)}</td>`;
+      tbody.appendChild(tr);
+    }
+    const story = document.getElementById("leakStory");
+    story.textContent = fitMode === "train"
+      ? `Correct: mean=${muTrain.toFixed(2)}, std=${sdTrain.toFixed(2)}, computed from the 10 training rows only.`
+      : `Leaky: mean=${muAll.toFixed(2)}, std=${sdAll.toFixed(2)} — shifted because the 4 test rows quietly influenced the "ruler" itself.`;
+  }
+  document.getElementById("btnFitTrain").addEventListener("click", function(){
+    fitMode="train"; this.classList.add("active"); document.getElementById("btnFitLeaky").classList.remove("active"); renderLeak();
+  });
+  document.getElementById("btnFitLeaky").addEventListener("click", function(){
+    fitMode="leaky"; this.classList.add("active"); document.getElementById("btnFitTrain").classList.remove("active"); renderLeak();
+  });
+  renderLeak();
+
+  /* ============================================================
+     TAB 3 — WHY IT HELPS THE MODEL
+     ============================================================ */
+  const g1raw=[0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.12,0.22,0.32];
+  const g2raw=[1.5,0.6,2.0,0.9,1.2,2.1,0.7,1.8,1.1,1.9];
+  function centerNorm(arr){ const m=mean(arr); const c=arr.map(x=>x-m); const s=stdOf(arr,m); return c.map(x=>x/s); }
+  const g1 = centerNorm(g1raw), g2 = centerNorm(g2raw);
+
+  function XtX(a,b){ let Saa=0,Sab=0,Sbb=0; for(let i=0;i<a.length;i++){ Saa+=a[i]*a[i]; Sab+=a[i]*b[i]; Sbb+=b[i]*b[i]; } return [[Saa,Sab],[Sab,Sbb]]; }
+  function eig2(M){ const a=M[0][0],b=M[0][1],d=M[1][1]; const tr=a+d,det=a*d-b*b; const disc=Math.sqrt(Math.max(0,tr*tr/4-det)); return [tr/2+disc, tr/2-disc]; }
+  function eigvec(M, lambda){
+    const a=M[0][0],b=M[0][1];
+    if (Math.abs(b) > 1e-9){
+      const v=[b, lambda-a]; const n=Math.hypot(v[0],v[1]);
+      return [v[0]/n, v[1]/n];
+    }
+    return [1,0];
+  }
+
+  let animFrame = null;
+
+  function computeModelData(ratio){
+    const f2 = g2.map(x=>x*ratio);
+    const A = XtX(g1, f2);
+    const [l1,l2] = eig2(A);
+    const e1 = eigvec(A,l1), e2 = eigvec(A,l2);
+    const lr = 1.8/l1;
+    let w=[3,3];
+    const path=[[3,3]];
+    let steps=0, converged=false;
+    const maxSteps=300;
+    while(steps<maxSteps){
+      const gx=A[0][0]*w[0]+A[0][1]*w[1], gy=A[1][0]*w[0]+A[1][1]*w[1];
+      w=[w[0]-lr*gx, w[1]-lr*gy];
+      steps++;
+      path.push([...w]);
+      if(Math.hypot(w[0],w[1])<0.01){ converged=true; break; }
+    }
+    return {A, l1, l2, e1, e2, path, steps, converged, cond:l1/l2};
+  }
+
+  function renderModel(){
+    if(animFrame) cancelAnimationFrame(animFrame);
+    const ratio = parseFloat(document.getElementById("ratioSlider").value);
+    document.getElementById("ratioOut").textContent = ratio + "×";
+    const data = computeModelData(ratio);
+
+    document.getElementById("mCond").textContent = data.cond.toFixed(1);
+    document.getElementById("mSteps").textContent = data.converged ? data.steps : "300+ (stalled)";
+
+    const svg = document.getElementById("modelSvg");
+    svg.innerHTML = "";
+    const W=420,H=420,pad=40;
+    const bound=3.8;
+    function X(x){ return pad + (x+bound)/(2*bound)*(W-2*pad); }
+    function Y(y){ return H-pad - (y+bound)/(2*bound)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:X(-bound),y1:Y(0),x2:X(bound),y2:Y(0),stroke:"var(--chalk-dim)","stroke-width":1,opacity:0.4}));
+    svg.appendChild(el("line",{x1:X(0),y1:Y(-bound),x2:X(0),y2:Y(bound),stroke:"var(--chalk-dim)","stroke-width":1,opacity:0.4}));
+
+    for(const k of [2,4,6,8]){
+      const R1 = k/Math.sqrt(data.l1), R2 = k/Math.sqrt(data.l2);
+      let d = "";
+      for(let i=0;i<=64;i++){
+        const phi = 2*Math.PI*i/64;
+        const px = R1*Math.cos(phi)*data.e1[0] + R2*Math.sin(phi)*data.e2[0];
+        const py = R1*Math.cos(phi)*data.e1[1] + R2*Math.sin(phi)*data.e2[1];
+        d += (i===0?"M":"L") + X(px) + "," + Y(py) + " ";
+      }
+      svg.appendChild(el("path",{d, fill:"none", stroke:"var(--green)", "stroke-width":1.2, opacity:0.45}));
+    }
+
+    let pathD = "M " + X(data.path[0][0]) + "," + Y(data.path[0][1]) + " ";
+    for(let i=1;i<data.path.length;i++) pathD += "L " + X(data.path[i][0]) + "," + Y(data.path[i][1]) + " ";
+    svg.appendChild(el("path",{d:pathD, fill:"none", stroke:"var(--coral)", "stroke-width":1.6, opacity:0.6}));
+
+    const dot = el("circle",{cx:X(data.path[0][0]), cy:Y(data.path[0][1]), r:7, fill:"var(--amber)", stroke:"var(--bg)", "stroke-width":2});
+    svg.appendChild(dot);
+
+    const story = document.getElementById("modelStory");
+    story.textContent = data.converged
+      ? `At ${ratio}× scale mismatch: condition number ${data.cond.toFixed(1)}, converged in ${data.steps} steps.`
+      : `At ${ratio}× scale mismatch: condition number ${data.cond.toFixed(1)} — still descending after 300 steps, nowhere near converged.`;
+
+    const totalFrames = Math.min(data.path.length, 240);
+    const frameStep = data.path.length / totalFrames;
+    let frame = 0;
+    function tick(){
+      const idx = Math.min(data.path.length-1, Math.floor(frame*frameStep));
+      dot.setAttribute("cx", X(data.path[idx][0]));
+      dot.setAttribute("cy", Y(data.path[idx][1]));
+      frame++;
+      if (frame <= totalFrames){
+        animFrame = requestAnimationFrame(tick);
+      }
+    }
+    animFrame = requestAnimationFrame(tick);
+  }
+  document.getElementById("ratioSlider").addEventListener("input", renderModel);
+  document.getElementById("btnReplay").addEventListener("click", renderModel);
+  renderModel();
+})();
+</script>
+</body>
+</html>

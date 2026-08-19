@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Choosing a Scaler: model first, data shape second</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:190px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .cols{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+  .col-title{text-align:center;font-family:'Kalam',cursive;font-size:14px;margin-bottom:4px;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:20px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:120px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Choosing a Scaler: model first, data shape second</h1>
+  <p class="sub">Three tabs, matching the tutorial's two-question funnel: does your model even care about scale, and — if it does — which scaler survives your data's actual shape?</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="model">Does Your Model Care?</button>
+    <button class="tabbtn" data-tab="shootout">Scaler Shootout</button>
+    <button class="tabbtn" data-tab="skew">Taming Skew</button>
+  </div>
+
+  <!-- ============ TAB 1: DOES YOUR MODEL CARE ============ -->
+  <div class="tabpanel active" id="tab-model">
+    <div class="panel">
+      <h2>Same scale mismatch, two very different reactions</h2>
+      <p class="sub">Feature A genuinely predicts the label. Feature B is pure noise. Drag feature B's scale up and watch: the decision tree never budges, because it only ever asks "bigger or smaller," never "by how much." The nearest-neighbor query does budge — and gets fooled.</p>
+      <div class="row">
+        <label>Feature B's scale multiplier</label><input type="range" id="multSlider" min="1" max="15" step="0.5" value="1"><span class="readout" id="multOut">1×</span>
+      </div>
+      <div class="cols">
+        <div>
+          <div class="col-title">Decision Tree split</div>
+          <svg id="treeSvg" width="300" height="300" viewBox="0 0 300 300"></svg>
+        </div>
+        <div>
+          <div class="col-title">Nearest-Neighbor query</div>
+          <svg id="knnSvg" width="300" height="300" viewBox="0 0 300 300"></svg>
+        </div>
+      </div>
+      <div class="plot-caption">x = feature A (informative) &nbsp;·&nbsp; y = feature B (pure noise, being scaled) &nbsp;·&nbsp; blue = label 0 &nbsp;·&nbsp; coral = label 1</div>
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">tree's chosen split</div><div class="num" id="mTreeSplit">-</div></div>
+        <div class="metric amber"><div class="lbl">nearest neighbor picked</div><div class="num" id="mNN">-</div></div>
+      </div>
+      <div class="story-line" id="modelStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: SCALER SHOOTOUT ============ -->
+  <div class="tabpanel" id="tab-shootout">
+    <div class="panel">
+      <h2>One outlier, three scalers, one survivor</h2>
+      <p class="sub">Eight ordinary values (9 through 13) plus one outlier. Drag the outlier bigger and watch what happens to the eight ordinary points under each scaler.</p>
+      <div class="row">
+        <label>Outlier value</label><input type="range" id="outlierSlider" min="15" max="500" step="1" value="20"><span class="readout" id="outlierOut">20</span>
+      </div>
+      <svg id="shootoutSvg" width="640" height="280" viewBox="0 0 640 280"></svg>
+      <div class="plot-caption">blue = the 8 ordinary points &nbsp;·&nbsp; coral = the outlier &nbsp;·&nbsp; each row rescaled independently by its own scaler</div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">StandardScaler: ordinary-point spread</div><div class="num" id="mStdSpread">-</div></div>
+        <div class="metric blue"><div class="lbl">MinMaxScaler: ordinary-point spread</div><div class="num" id="mMMSpread">-</div></div>
+        <div class="metric green"><div class="lbl">RobustScaler: ordinary-point spread</div><div class="num" id="mRobSpread">-</div></div>
+      </div>
+      <div class="story-line" id="shootoutStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: TAMING SKEW ============ -->
+  <div class="tabpanel" id="tab-skew">
+    <div class="panel">
+      <h2>Repositioning a lopsided shape doesn't fix the lopsidedness</h2>
+      <p class="sub">Income-like data: mostly modest values, a long tail of high earners. Toggle a log transform and watch the shape itself — not just its position — respond.</p>
+      <div class="row">
+        <button class="op active" id="btnRawShape">Raw</button>
+        <button class="op" id="btnLogShape">Log-transformed</button>
+      </div>
+      <svg id="skewSvg" width="560" height="280" viewBox="0 0 560 280"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">skewness</div><div class="num" id="mSkew">-</div></div>
+        <div class="metric blue"><div class="lbl">mean vs. median</div><div class="num" id="mMeanMedian">-</div></div>
+      </div>
+      <div class="story-line" id="skewStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../choosing_a_scaler_feynman.md">Choosing a Scaler</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function mean(a){ return a.reduce((x,y)=>x+y,0)/a.length; }
+  function stdOf(a,m){ if(m===undefined) m=mean(a); return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length); }
+  function median(a){ const s=[...a].sort((x,y)=>x-y); const n=s.length; return n%2 ? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2; }
+  function quantile(a,q){
+    const s=[...a].sort((x,y)=>x-y);
+    const pos=(s.length-1)*q, base=Math.floor(pos), rest=pos-base;
+    return s[base+1]!==undefined ? s[base]+rest*(s[base+1]-s[base]) : s[base];
+  }
+  function iqr(a){ return quantile(a,0.75)-quantile(a,0.25); }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     TAB 1 — DOES YOUR MODEL CARE?
+     ============================================================ */
+  const points = [
+    {A:1, B:5, y:0}, {A:2, B:2, y:0}, {A:3, B:8, y:0}, {A:4, B:3, y:0},
+    {A:7, B:6, y:1}, {A:8, B:1, y:1}, {A:9, B:9, y:1}, {A:10, B:4, y:1}
+  ];
+  const query = {A:5.5, B:5};
+  const P1 = {A:5, B:9, y:0, label:"P1"};
+  const P2 = {A:1, B:5, y:1, label:"P2"};
+
+  function gini(labels){ if(!labels.length) return 0; const p1=labels.filter(l=>l===1).length/labels.length; const p0=1-p1; return 1-p0*p0-p1*p1; }
+  function bestSplit(pts, mult){
+    const withScaled = pts.map(p=>({...p, Bs:p.B*mult}));
+    let best=null, bestScore=Infinity;
+    for(const feat of ["A","Bs"]){
+      const sorted = [...withScaled].sort((a,b)=>a[feat]-b[feat]);
+      for(let i=0;i<sorted.length-1;i++){
+        const thresh = (sorted[i][feat]+sorted[i+1][feat])/2;
+        const left = withScaled.filter(p=>p[feat]<=thresh).map(p=>p.y);
+        const right = withScaled.filter(p=>p[feat]>thresh).map(p=>p.y);
+        const score = (left.length*gini(left)+right.length*gini(right))/withScaled.length;
+        if(score < bestScore - 1e-12){ bestScore=score; best={feat, thresh, score}; }
+      }
+    }
+    return best;
+  }
+  function dist(p,q,mult){ const dA=p.A-q.A; const dB=(p.B*mult)-(q.B*mult); return Math.hypot(dA,dB); }
+
+  function renderModelTab(){
+    const mult = parseFloat(document.getElementById("multSlider").value);
+    document.getElementById("multOut").textContent = mult + "×";
+    const best = bestSplit(points, mult);
+    document.getElementById("mTreeSplit").textContent = (best.feat==="A"?"A > ":"B > ") + (best.feat==="A"?best.thresh.toFixed(2):(best.thresh/mult).toFixed(2));
+
+    const d1 = dist(P1, query, mult), d2 = dist(P2, query, mult);
+    const nearest = d1 < d2 ? P1 : P2;
+    document.getElementById("mNN").textContent = `${nearest.label} (label ${nearest.y})`;
+
+    // tree panel: draw points + vertical/horizontal split line on feature A/B axes (raw, unscaled display -- the split is invariant so always show it at its RAW-equivalent position)
+    function drawPanel(svgId, showQuery, splitLine){
+      const svg = document.getElementById(svgId);
+      svg.innerHTML = "";
+      const W=300,H=300,pad=36;
+      const xMin=0,xMax=11,yMin=0,yMax=10;
+      function X(x){ return pad + (x-xMin)/(xMax-xMin)*(W-2*pad); }
+      function Y(y){ return H-pad - (y-yMin)/(yMax-yMin)*(H-2*pad); }
+      svg.appendChild(el("line",{x1:X(xMin),y1:Y(yMin),x2:X(xMax),y2:Y(yMin),stroke:"var(--chalk-dim)","stroke-width":1}));
+      svg.appendChild(el("line",{x1:X(xMin),y1:Y(yMin),x2:X(xMin),y2:Y(yMax),stroke:"var(--chalk-dim)","stroke-width":1}));
+      if (splitLine){
+        if (best.feat==="A"){
+          svg.appendChild(el("line",{x1:X(best.thresh),y1:Y(yMin),x2:X(best.thresh),y2:Y(yMax),stroke:"var(--green)","stroke-width":2.4,"stroke-dasharray":"6 4"}));
+        } else {
+          const rawThresh = best.thresh/mult;
+          svg.appendChild(el("line",{x1:X(xMin),y1:Y(rawThresh),x2:X(xMax),y2:Y(rawThresh),stroke:"var(--green)","stroke-width":2.4,"stroke-dasharray":"6 4"}));
+        }
+      }
+      for(const p of points){
+        svg.appendChild(el("circle",{cx:X(p.A), cy:Y(p.B), r:7, fill:p.y===0?"var(--blue)":"var(--coral)", stroke:"var(--bg)","stroke-width":1.4}));
+      }
+      if (showQuery){
+        svg.appendChild(el("circle",{cx:X(P1.A), cy:Y(P1.B), r:8, fill:"none", stroke:"var(--blue)","stroke-width":2}));
+        svg.appendChild(el("circle",{cx:X(P2.A), cy:Y(P2.B), r:8, fill:"none", stroke:"var(--coral)","stroke-width":2}));
+        svg.appendChild(el("circle",{cx:X(query.A), cy:Y(query.B), r:7, fill:"var(--amber)", stroke:"var(--bg)","stroke-width":1.6}));
+        svg.appendChild(el("line",{x1:X(query.A),y1:Y(query.B),x2:X(nearest.A),y2:Y(nearest.B),stroke:"var(--amber)","stroke-width":2,"stroke-dasharray":"4 3"}));
+      }
+    }
+    drawPanel("treeSvg", false, true);
+    drawPanel("knnSvg", true, false);
+
+    const story = document.getElementById("modelStory");
+    story.textContent = mult <= 1.01
+      ? "At 1×: the tree splits on A (correctly), and the nearest neighbor is P1 — also correct, since A is the meaningful feature."
+      : (nearest.y===0
+        ? "The tree still splits on A. The nearest-neighbor query still (barely) gets it right too — keep dragging."
+        : `The tree still splits on A, unchanged. But the nearest neighbor has flipped to ${nearest.label} — fooled by B's inflated, meaningless scale.`);
+  }
+  document.getElementById("multSlider").addEventListener("input", renderModelTab);
+  renderModelTab();
+
+  /* ============================================================
+     TAB 2 — SCALER SHOOTOUT
+     ============================================================ */
+  const normalPts = [9,10,11,12,13,10,11,12];
+
+  function renderShootout(){
+    const outlier = parseFloat(document.getElementById("outlierSlider").value);
+    document.getElementById("outlierOut").textContent = outlier;
+    const data = normalPts.concat([outlier]);
+    const mu=mean(data), sd=stdOf(data,mu);
+    const mn=Math.min(...data), mx=Math.max(...data);
+    const med=median(data), iq=iqr(data);
+
+    const standardScaled = data.map(x=>(x-mu)/sd);
+    const minmaxScaled = data.map(x=>(x-mn)/(mx-mn));
+    const robustScaled = data.map(x=>(x-med)/iq);
+
+    function spread(arr){ const norm = arr.slice(0,8); return Math.max(...norm)-Math.min(...norm); }
+    document.getElementById("mStdSpread").textContent = spread(standardScaled).toFixed(3);
+    document.getElementById("mMMSpread").textContent = spread(minmaxScaled).toFixed(3);
+    document.getElementById("mRobSpread").textContent = spread(robustScaled).toFixed(3);
+
+    const svg = document.getElementById("shootoutSvg");
+    svg.innerHTML = "";
+    const W=640,H=280,pad=50;
+    const rows = [
+      {label:"Raw", values:data, xMin:Math.min(...data)-5, xMax:Math.max(...data)+5},
+      {label:"StandardScaler", values:standardScaled, xMin:-2, xMax:Math.max(2, Math.max(...standardScaled)+0.3)},
+      {label:"MinMaxScaler", values:minmaxScaled, xMin:-0.1, xMax:1.1},
+      {label:"RobustScaler", values:robustScaled, xMin:-2, xMax:Math.max(2, Math.max(...robustScaled)+0.3)},
+    ];
+    const rowH = (H-2*pad)/rows.length;
+    rows.forEach((row, ri) => {
+      const y0 = pad + ri*rowH + rowH/2;
+      function X(x){ return pad + (x-row.xMin)/(row.xMax-row.xMin)*(W-2*pad); }
+      svg.appendChild(el("line",{x1:pad,y1:y0,x2:W-pad,y2:y0,stroke:"var(--chalk-dim)","stroke-width":1}));
+      const label = el("text",{x:pad, y:y0-14, "font-family":"Kalam, cursive","font-size":13, fill:"var(--chalk)"});
+      label.textContent = row.label;
+      svg.appendChild(label);
+      row.values.forEach((v,i) => {
+        const isOutlier = i===8;
+        svg.appendChild(el("circle",{cx:X(v), cy:y0, r: isOutlier?7:6, fill: isOutlier?"var(--coral)":"var(--blue)", stroke:"var(--bg)","stroke-width":1.3, opacity: isOutlier?0.95:0.85}));
+      });
+    });
+
+    const story = document.getElementById("shootoutStory");
+    story.textContent = `Outlier = ${outlier}: RobustScaler's 8 ordinary points keep a spread of exactly ${spread(robustScaled).toFixed(2)} no matter what — StandardScaler's shrinks to ${spread(standardScaled).toFixed(3)}, MinMaxScaler's to ${spread(minmaxScaled).toFixed(3)}.`;
+  }
+  document.getElementById("outlierSlider").addEventListener("input", renderShootout);
+  renderShootout();
+
+  /* ============================================================
+     TAB 3 — TAMING SKEW
+     ============================================================ */
+  const income = [32,35,38,40,41,45,48,50,55,60,65,72,80,95,120,180,300];
+  function skewness(a){
+    const m=mean(a), sd=stdOf(a,m), n=a.length;
+    return a.reduce((s,x)=>s+((x-m)/sd)**3,0)/n;
+  }
+  let skewMode = "raw";
+
+  function renderSkew(){
+    const data = skewMode==="raw" ? income : income.map(x=>Math.log(x));
+    const sk = skewness(data);
+    document.getElementById("mSkew").textContent = sk.toFixed(3);
+    const m = mean(data), med = median(data);
+    document.getElementById("mMeanMedian").textContent = `${m.toFixed(skewMode==='raw'?1:3)} vs ${med.toFixed(skewMode==='raw'?1:3)}`;
+
+    const svg = document.getElementById("skewSvg");
+    svg.innerHTML = "";
+    const W=560,H=280,pad=40;
+    const dataMin = Math.min(...data), dataMax = Math.max(...data);
+    const range = dataMax-dataMin;
+    const binCount = 9;
+    const binW = range/binCount;
+    const counts = new Array(binCount).fill(0);
+    for(const v of data){
+      let idx = Math.floor((v-dataMin)/binW);
+      if (idx>=binCount) idx=binCount-1;
+      counts[idx]++;
+    }
+    const maxCount = Math.max(...counts);
+    function X(x){ return pad + (x-dataMin)/(range)*(W-2*pad); }
+    function Y(c){ return H-pad - (c/maxCount)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    for(let i=0;i<binCount;i++){
+      const x0 = dataMin+i*binW, x1 = dataMin+(i+1)*binW;
+      svg.appendChild(el("rect",{x:X(x0), y:Y(counts[i]), width: X(x1)-X(x0)-2, height: (H-pad)-Y(counts[i]), fill:"var(--coral)", opacity:0.6}));
+    }
+    // mean and median markers
+    svg.appendChild(el("line",{x1:X(m),y1:pad*0.4,x2:X(m),y2:H-pad,stroke:"var(--blue)","stroke-width":2}));
+    svg.appendChild(el("line",{x1:X(med),y1:pad*0.4,x2:X(med),y2:H-pad,stroke:"var(--green)","stroke-width":2,"stroke-dasharray":"5 4"}));
+
+    const story = document.getElementById("skewStory");
+    story.textContent = skewMode==="raw"
+      ? "Raw income: a long right tail of high earners drags the mean (solid blue) well above the median (dashed green) — classic right skew."
+      : "After a log transform: the shape is visibly more symmetric, mean and median have moved much closer together, and the skewness number has dropped substantially — the distribution's shape actually changed, not just its position.";
+  }
+  document.getElementById("btnRawShape").addEventListener("click", function(){
+    skewMode="raw"; this.classList.add("active"); document.getElementById("btnLogShape").classList.remove("active"); renderSkew();
+  });
+  document.getElementById("btnLogShape").addEventListener("click", function(){
+    skewMode="log"; this.classList.add("active"); document.getElementById("btnRawShape").classList.remove("active"); renderSkew();
+  });
+  renderSkew();
+})();
+</script>
+</body>
+</html>

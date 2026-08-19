@@ -711,6 +711,300 @@
       ],
       "viz": "backprop_visualizer.html",
       "source": "05-machine-learning-bridges.md"
+    },
+    {
+      "id": "abstract_algebra_real_analysis",
+      "name": "Abstract Algebra & Real Analysis",
+      "keywords": [
+        "abstract algebra",
+        "real analysis",
+        "group ring field",
+        "completeness of the reals"
+      ],
+      "related": [
+        "mathematical_logic",
+        "sequence"
+      ],
+      "viz": "abstract_algebra_and_real_analysis_visualizer.html",
+      "source": "abstract-algebra-and-real-analysis.md"
+    },
+    {
+      "id": "continuity_and_extrema",
+      "name": "Continuity and Extrema",
+      "keywords": [
+        "extreme value theorem",
+        "epsilon delta",
+        "function extrema",
+        "continuity and extrema"
+      ],
+      "related": [
+        "fundamental_theorem_calculus"
+      ],
+      "viz": "continuity_and_extrema_visualizer.html",
+      "source": "continuity-and-extrema.md"
+    },
+    {
+      "id": "bias_variance_tradeoff",
+      "name": "Bias-Variance Tradeoff",
+      "keywords": [
+        "bias variance tradeoff",
+        "bias-variance decomposition",
+        "overfitting underfitting"
+      ],
+      "related": [
+        "empirical_risk_vs_risk",
+        "sample_complexity_pac_learning"
+      ],
+      "viz": "bias_variance_visualizer.html",
+      "source": "bias_variance_tradeoff_feynman.md"
+    },
+    {
+      "id": "empirical_risk_vs_risk",
+      "name": "Empirical Risk vs. True Risk",
+      "keywords": [
+        "empirical risk",
+        "true risk",
+        "generalization error",
+        "risk minimization"
+      ],
+      "related": [
+        "bias_variance_tradeoff",
+        "sample_complexity_pac_learning"
+      ],
+      "viz": "empirical_risk_visualizer.html",
+      "source": "empirical_risk_vs_risk_feynman.md"
+    },
+    {
+      "id": "sample_complexity_pac_learning",
+      "name": "Sample Complexity & PAC Learning",
+      "keywords": [
+        "sample complexity",
+        "pac learning",
+        "probably approximately correct"
+      ],
+      "related": [
+        "empirical_risk_vs_risk",
+        "bias_variance_tradeoff"
+      ],
+      "viz": "sample_complexity_visualizer.html",
+      "source": "sample_complexity_and_pac_learning_feynman.md"
+    },
+    {
+      "id": "resampling_and_shrinkage",
+      "name": "Resampling and Shrinkage (Bootstrap)",
+      "keywords": [
+        "bootstrap resampling",
+        "resampling and shrinkage",
+        "shrinkage estimator"
+      ],
+      "related": [
+        "cross_validation_strategies",
+        "regularization_l1_l2_elasticnet"
+      ],
+      "viz": "resampling_and_shrinkage_visualizer.html",
+      "source": "resampling_and_shrinkage_feynman.md"
+    },
+    {
+      "id": "regularization_l1_l2_elasticnet",
+      "name": "Regularization: L1, L2, Elastic Net",
+      "keywords": [
+        "l1 regularization",
+        "lasso regression",
+        "elastic net regularization"
+      ],
+      "related": [
+        "l2_regularization",
+        "bias_variance_tradeoff"
+      ],
+      "viz": "regularization_visualizer.html",
+      "source": "regularization_l1_l2_elasticnet_feynman.md"
+    },
+    {
+      "id": "cross_validation_strategies",
+      "name": "Cross-Validation Strategies",
+      "keywords": [
+        "cross validation",
+        "k-fold cross validation",
+        "stratified k-fold",
+        "time series split"
+      ],
+      "related": [
+        "resampling_and_shrinkage",
+        "bias_variance_tradeoff"
+      ],
+      "viz": "cross_validation_visualizer.html",
+      "source": "cross_validation_strategies_feynman.md"
+    },
+    {
+      "id": "choosing_a_scaler",
+      "name": "Choosing a Scaler",
+      "keywords": [
+        "choosing a scaler",
+        "standardscaler minmaxscaler robustscaler"
+      ],
+      "related": [
+        "feature_scaling_and_leakage"
+      ],
+      "viz": "choosing_a_scaler_visualizer.html",
+      "source": "choosing_a_scaler_feynman.md"
+    },
+    {
+      "id": "feature_scaling_and_leakage",
+      "name": "Feature Scaling and Data Leakage",
+      "keywords": [
+        "feature scaling",
+        "data leakage",
+        "fit and transform"
+      ],
+      "related": [
+        "choosing_a_scaler"
+      ],
+      "viz": "standard_scaler_animation.html",
+      "source": "feature_scaling_and_leakage_feynman.md"
+    },
+    {
+      "id": "frequentist_vs_bayesian",
+      "name": "Frequentist vs. Bayesian Statistics",
+      "keywords": [
+        "frequentist vs bayesian",
+        "bayesian statistics",
+        "frequentist statistics"
+      ],
+      "related": [
+        "probability",
+        "statistics"
+      ],
+      "viz": "frequentist_vs_bayesian_visualizer.html",
+      "source": "frequentist_vs_bayesian_feynman.md"
+    },
+    {
+      "id": "discriminant_analysis",
+      "name": "Discriminant Analysis",
+      "keywords": [
+        "linear discriminant analysis",
+        "discriminant analysis",
+        "lda classifier"
+      ],
+      "related": [
+        "k_nearest_neighbors"
+      ],
+      "viz": "discriminant_analysis_animation.html",
+      "source": "discriminant_analysis_feynman.md"
+    },
+    {
+      "id": "k_nearest_neighbors",
+      "name": "K-Nearest Neighbors",
+      "keywords": [
+        "k nearest neighbors",
+        "knn classifier",
+        "knn decision boundary"
+      ],
+      "related": [
+        "discriminant_analysis"
+      ],
+      "viz": "knn_decision_boundary_animation.html",
+      "source": "k_nearest_neighbors_feynman.md"
+    },
+    {
+      "id": "roc_auc_curve",
+      "name": "ROC Curve and AUC",
+      "keywords": [
+        "roc curve",
+        "auc score",
+        "receiver operating characteristic"
+      ],
+      "related": [
+        "precision_recall"
+      ],
+      "viz": "roc_auc_construction_animation.html",
+      "source": "model_evaluation_metrics_feynman.md"
+    },
+    {
+      "id": "anscombes_quartet",
+      "name": "Anscombe's Quartet",
+      "keywords": [
+        "anscombe's quartet",
+        "anscombes quartet"
+      ],
+      "related": [
+        "outlier_robustness",
+        "simpsons_paradox"
+      ],
+      "viz": "anscombes_quartet_animation.html",
+      "source": "eda_feynman_tutorial.md"
+    },
+    {
+      "id": "memorylessness",
+      "name": "Memorylessness",
+      "keywords": [
+        "memoryless property",
+        "exponential distribution memorylessness"
+      ],
+      "related": [
+        "markov_chains",
+        "probability"
+      ],
+      "viz": "memorylessness_animation.html",
+      "source": "eda_feynman_tutorial.md"
+    },
+    {
+      "id": "llm_roadmap",
+      "name": "The LLM Engineering Roadmap",
+      "keywords": [
+        "llm engineering roadmap",
+        "fine-tuning vs prompting vs rag"
+      ],
+      "related": [
+        "attention",
+        "kv_cache"
+      ],
+      "viz": "llm_roadmap_ladder.html",
+      "source": "llm_engineering_roadmap_2026_feynman.md"
+    },
+    {
+      "id": "react_agent_loop",
+      "name": "The ReAct Agent Loop",
+      "keywords": [
+        "react agent loop",
+        "reasoning and acting agent",
+        "thought action observation"
+      ],
+      "related": [
+        "kv_cache",
+        "attention"
+      ],
+      "viz": "react_agent_loop.html",
+      "source": "llm_agentic_graph_interview_prep_feynman.md"
+    },
+    {
+      "id": "eigenvalues",
+      "name": "Eigenvalues and Eigenvectors",
+      "keywords": [
+        "eigenvalues and eigenvectors",
+        "eigenvector",
+        "eigenvalue",
+        "characteristic equation"
+      ],
+      "related": [
+        "three_motions"
+      ],
+      "viz": "eigenvalues_and_eigenvectors_visualizer.html",
+      "source": "eigenvalues-and-eigenvectors.md"
+    },
+    {
+      "id": "central_limit_theorem",
+      "name": "The Galton Board",
+      "keywords": [
+        "galton board",
+        "bean machine",
+        "central limit theorem demo"
+      ],
+      "related": [
+        "probability",
+        "statistics"
+      ],
+      "viz": "galton_board_animation.html",
+      "source": "eda_feynman_tutorial.md"
     }
   ]
 }

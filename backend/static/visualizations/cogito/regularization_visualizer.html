@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Regularization: L1, L2, and Elastic Net, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  table.coord{border-collapse:collapse;margin:14px auto;width:100%;max-width:500px;}
+  table.coord th, table.coord td{border:1px solid var(--border);padding:8px 10px;text-align:center;font-size:12.5px;}
+  table.coord th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Regularization: L1, L2, and Elastic Net, live</h1>
+  <p class="sub">Three tabs, matching the tutorial's three verified demonstrations.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="soft">Soft-Thresholding</button>
+    <button class="tabbtn" data-tab="geometry">The Diamond and the Circle</button>
+    <button class="tabbtn" data-tab="correlated">Correlated Features</button>
+  </div>
+
+  <!-- ============ TAB 1: SOFT-THRESHOLDING ============ -->
+  <div class="tabpanel active" id="tab-soft">
+    <div class="panel">
+      <h2>The Dead Zone Where L1 Snaps to Zero</h2>
+      <p class="sub">z is what a weight "wants" to be before any penalty. Drag z and λ and watch the L1 and L2 solutions diverge.</p>
+      <div class="row"><label>z (unpenalized target)</label><input type="range" id="softZ" min="-5" max="5" step="0.05" value="1.5"><span class="readout" id="softZOut">1.50</span></div>
+      <div class="row"><label>λ (penalty strength)</label><input type="range" id="softLambda" min="0" max="3" step="0.05" value="1"><span class="readout" id="softLambdaOut">1.00</span></div>
+      <svg id="softSvg" width="640" height="180" viewBox="0 0 640 180"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">L1 solution w*</div><div class="num" id="softL1">-</div></div>
+        <div class="metric blue"><div class="lbl">L2 solution w*</div><div class="num" id="softL2">-</div></div>
+      </div>
+      <div class="story-line" id="softStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: THE DIAMOND AND THE CIRCLE ============ -->
+  <div class="tabpanel" id="tab-geometry">
+    <div class="panel">
+      <h2>Where a Constrained Optimum Actually Lands</h2>
+      <p class="sub">The amber point is where the data "wants" the weights, unconstrained. Drag it and watch where the L1 diamond and L2 circle each pull the closest allowed point.</p>
+      <div class="row"><label>target w₁</label><input type="range" id="geomZ1" min="-4" max="4" step="0.1" value="3"><span class="readout" id="geomZ1Out">3.0</span></div>
+      <div class="row"><label>target w₂</label><input type="range" id="geomZ2" min="-4" max="4" step="0.1" value="0.3"><span class="readout" id="geomZ2Out">0.3</span></div>
+      <div class="row"><label>budget t</label><input type="range" id="geomT" min="0.5" max="3" step="0.1" value="2"><span class="readout" id="geomTOut">2.0</span></div>
+      <svg id="geomSvg" width="400" height="400" viewBox="0 0 400 400"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">L1 optimum</div><div class="num" id="geomL1">-</div></div>
+        <div class="metric blue"><div class="lbl">L2 optimum</div><div class="num" id="geomL2">-</div></div>
+      </div>
+      <div class="story-line" id="geomStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: CORRELATED FEATURES ============ -->
+  <div class="tabpanel" id="tab-correlated">
+    <div class="panel">
+      <h2>Two Nearly-Identical Features, Three Methods</h2>
+      <p class="sub">x₁ and x₂ are 99.7%-correlated noisy copies of the same underlying signal. Redraw the noise and watch LASSO's split jump while Ridge and Elastic Net hold steady.</p>
+      <div class="row">
+        <button class="op primary" id="btnRedraw">Redraw the noise</button>
+      </div>
+      <table class="coord" id="corrTable"></table>
+      <svg id="corrSvg" width="500" height="140" viewBox="0 0 500 140"></svg>
+      <div class="story-line" id="corrStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../regularization_l1_l2_elasticnet_feynman.md">Regularization: L1, L2, and Elastic Net</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function makeLCG(seed){ let s = seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function boxMuller(rand){ const u1=Math.max(rand(),1e-12), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     TAB 1 — SOFT-THRESHOLDING
+     ============================================================ */
+  function softThreshold(z, lambda){ return Math.sign(z)*Math.max(Math.abs(z)-lambda, 0); }
+  function ridgeShrink(z, lambda){ return z/(1+2*lambda); }
+
+  function renderSoft(){
+    const z = parseFloat(document.getElementById("softZ").value);
+    const lambda = parseFloat(document.getElementById("softLambda").value);
+    document.getElementById("softZOut").textContent = z.toFixed(2);
+    document.getElementById("softLambdaOut").textContent = lambda.toFixed(2);
+    const wL1 = softThreshold(z, lambda);
+    const wL2 = ridgeShrink(z, lambda);
+    document.getElementById("softL1").textContent = wL1.toFixed(3);
+    document.getElementById("softL2").textContent = wL2.toFixed(3);
+
+    const svg = document.getElementById("softSvg");
+    svg.innerHTML = "";
+    const W=640,H=180,pad=50;
+    const xMin=-5,xMax=5;
+    function X(x){ return pad + (x-xMin)/(xMax-xMin)*(W-2*pad); }
+    const midY = 90;
+    svg.appendChild(el("line",{x1:pad,y1:midY,x2:W-pad,y2:midY,stroke:"var(--chalk-dim)","stroke-width":1}));
+    // dead zone shading
+    svg.appendChild(el("rect",{x:X(-lambda), y:midY-40, width:X(lambda)-X(-lambda), height:80, fill:"rgba(255,130,102,0.12)"}));
+    const deadLabel = el("text",{x:X(0), y:midY-48, "text-anchor":"middle","font-family":"JetBrains Mono, monospace","font-size":11,fill:"var(--coral)"});
+    deadLabel.textContent = "L1 dead zone: |z| ≤ λ";
+    svg.appendChild(deadLabel);
+    // z marker
+    svg.appendChild(el("line",{x1:X(z),y1:midY-55,x2:X(z),y2:midY+55,stroke:"var(--amber)","stroke-width":1.6,"stroke-dasharray":"4 3"}));
+    svg.appendChild(el("text",{x:X(z),y:midY-60,"text-anchor":"middle","font-family":"JetBrains Mono, monospace","font-size":11,fill:"var(--amber)"})).textContent = "z";
+    // L1 and L2 solution markers
+    svg.appendChild(el("circle",{cx:X(wL1),cy:midY-15,r:7,fill:"var(--coral)",stroke:"var(--bg)","stroke-width":1.5}));
+    svg.appendChild(el("text",{x:X(wL1),y:midY-28,"text-anchor":"middle","font-family":"JetBrains Mono, monospace","font-size":11,fill:"var(--coral)"})).textContent = "L1";
+    svg.appendChild(el("circle",{cx:X(wL2),cy:midY+15,r:7,fill:"var(--blue)",stroke:"var(--bg)","stroke-width":1.5}));
+    svg.appendChild(el("text",{x:X(wL2),y:midY+30,"text-anchor":"middle","font-family":"JetBrains Mono, monospace","font-size":11,fill:"var(--blue)"})).textContent = "L2";
+
+    const story = document.getElementById("softStory");
+    story.textContent = Math.abs(z) <= lambda
+      ? "z is inside the dead zone — L1's solution is exactly zero, while L2's is merely small."
+      : `z is outside the dead zone — L1 shrinks by exactly λ (to ${wL1.toFixed(3)}); L2 shrinks proportionally, further from zero at this z but never landing exactly on it.`;
+  }
+  ["softZ","softLambda"].forEach(id => document.getElementById(id).addEventListener("input", renderSoft));
+  renderSoft();
+
+  /* ============================================================
+     TAB 2 — THE DIAMOND AND THE CIRCLE
+     ============================================================ */
+  function ellipseLoss(w1,w2,z1,z2){ return (w1-z1)**2 + (w2-z2)**2; }
+  function findConstrainedMinL1(z1,z2,t,steps){
+    let best=null, bestVal=Infinity;
+    for(let i=0;i<=steps;i++){
+      const w1 = -t + (2*t*i)/steps;
+      const w2mag = t - Math.abs(w1);
+      for (const w2 of [w2mag, -w2mag]){
+        const v = ellipseLoss(w1,w2,z1,z2);
+        if (v<bestVal){ bestVal=v; best=[w1,w2]; }
+      }
+    }
+    return best;
+  }
+  function findConstrainedMinL2(z1,z2,t,steps){
+    let best=null, bestVal=Infinity;
+    const r = Math.sqrt(t);
+    for(let i=0;i<=steps;i++){
+      const theta = 2*Math.PI*i/steps;
+      const w1=r*Math.cos(theta), w2=r*Math.sin(theta);
+      const v = ellipseLoss(w1,w2,z1,z2);
+      if (v<bestVal){ bestVal=v; best=[w1,w2]; }
+    }
+    return best;
+  }
+  function renderGeometry(){
+    const z1 = parseFloat(document.getElementById("geomZ1").value);
+    const z2 = parseFloat(document.getElementById("geomZ2").value);
+    const t = parseFloat(document.getElementById("geomT").value);
+    document.getElementById("geomZ1Out").textContent = z1.toFixed(1);
+    document.getElementById("geomZ2Out").textContent = z2.toFixed(1);
+    document.getElementById("geomTOut").textContent = t.toFixed(1);
+
+    const l1opt = findConstrainedMinL1(z1,z2,t,3000);
+    const l2opt = findConstrainedMinL2(z1,z2,t,3000);
+    document.getElementById("geomL1").textContent = `(${l1opt[0].toFixed(2)}, ${l1opt[1].toFixed(2)})`;
+    document.getElementById("geomL2").textContent = `(${l2opt[0].toFixed(2)}, ${l2opt[1].toFixed(2)})`;
+
+    const svg = document.getElementById("geomSvg");
+    svg.innerHTML = "";
+    const W=400,H=400,pad=40,cx=W/2,cy=H/2,scale=40;
+    function X(w1){ return cx + w1*scale; }
+    function Y(w2){ return cy - w2*scale; }
+    svg.appendChild(el("line",{x1:pad,y1:cy,x2:W-pad,y2:cy,stroke:"var(--chalk-dim)","stroke-width":1}));
+    svg.appendChild(el("line",{x1:cx,y1:pad,x2:cx,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    // L2 circle
+    svg.appendChild(el("circle",{cx,cy,r:Math.sqrt(t)*scale,fill:"none",stroke:"var(--blue)","stroke-width":1.8}));
+    // L1 diamond
+    const r = t*scale;
+    svg.appendChild(el("polygon",{points:`${cx+r},${cy} ${cx},${cy-r} ${cx-r},${cy} ${cx},${cy+r}`, fill:"none", stroke:"var(--coral)", "stroke-width":1.8}));
+    // target point
+    svg.appendChild(el("circle",{cx:X(z1),cy:Y(z2),r:6,fill:"var(--amber)",stroke:"var(--bg)","stroke-width":1.5}));
+    svg.appendChild(el("text",{x:X(z1)+10,y:Y(z2)-8,"font-family":"JetBrains Mono, monospace","font-size":11,fill:"var(--amber)"})).textContent = "target (unconstrained)";
+    // optimum points
+    svg.appendChild(el("line",{x1:X(z1),y1:Y(z2),x2:X(l1opt[0]),y2:Y(l1opt[1]),stroke:"var(--coral)","stroke-width":1.2,"stroke-dasharray":"3 3"}));
+    svg.appendChild(el("circle",{cx:X(l1opt[0]),cy:Y(l1opt[1]),r:7,fill:"var(--coral)",stroke:"var(--bg)","stroke-width":1.5}));
+    svg.appendChild(el("line",{x1:X(z1),y1:Y(z2),x2:X(l2opt[0]),y2:Y(l2opt[1]),stroke:"var(--blue)","stroke-width":1.2,"stroke-dasharray":"3 3"}));
+    svg.appendChild(el("circle",{cx:X(l2opt[0]),cy:Y(l2opt[1]),r:7,fill:"var(--blue)",stroke:"var(--bg)","stroke-width":1.5}));
+
+    const onAxis = Math.abs(l1opt[0])<1e-6 || Math.abs(l1opt[1])<1e-6;
+    document.getElementById("geomStory").textContent = onAxis
+      ? "L1's optimum landed exactly on an axis — one weight is exactly zero. This is what a corner does."
+      : "At this target, even L1's optimum isn't on an axis — sparsity isn't forced artificially when the underlying signal genuinely favors both directions.";
+  }
+  ["geomZ1","geomZ2","geomT"].forEach(id => document.getElementById(id).addEventListener("input", renderGeometry));
+  renderGeometry();
+
+  /* ============================================================
+     TAB 3 — CORRELATED FEATURES
+     ============================================================ */
+  function standardize(a){
+    const m = a.reduce((s,v)=>s+v,0)/a.length;
+    const sd = Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length);
+    return a.map(v => (v-m)/sd);
+  }
+  function fitElasticNet(x1,x2,y,lambda,alpha,iters){
+    let b1=0,b2=0; const n=y.length;
+    for(let it=0;it<iters;it++){
+      let r1=0,xx1=0;
+      for(let i=0;i<n;i++){ const partial=y[i]-b2*x2[i]; r1+=x1[i]*partial; xx1+=x1[i]*x1[i]; }
+      b1 = softThreshold(r1/n, lambda*alpha) / (xx1/n + lambda*(1-alpha));
+      let r2=0,xx2=0;
+      for(let i=0;i<n;i++){ const partial=y[i]-b1*x1[i]; r2+=x2[i]*partial; xx2+=x2[i]*x2[i]; }
+      b2 = softThreshold(r2/n, lambda*alpha) / (xx2/n + lambda*(1-alpha));
+    }
+    return {b1,b2};
+  }
+  let corrSeed = 1;
+  function runCorrelated(){
+    const n = 100;
+    const rand = makeLCG(corrSeed);
+    const z = Array.from({length:n}, () => boxMuller(rand));
+    const x1 = z.map(v => v + 0.05*boxMuller(rand));
+    const x2 = z.map(v => v + 0.05*boxMuller(rand));
+    const y  = z.map(v => 3*v + 0.5*boxMuller(rand));
+    const x1s = standardize(x1), x2s = standardize(x2), ys = standardize(y);
+
+    const lambda = 0.3;
+    const lasso = fitElasticNet(x1s, x2s, ys, lambda, 1.0, 300);
+    const ridge = fitElasticNet(x1s, x2s, ys, lambda, 0.0, 300);
+    const enet  = fitElasticNet(x1s, x2s, ys, lambda, 0.5, 300);
+
+    const table = document.getElementById("corrTable");
+    table.innerHTML = `<tr><th>method</th><th>w₁</th><th>w₂</th></tr>
+      <tr><td>LASSO (α=1)</td><td>${lasso.b1.toFixed(3)}</td><td>${lasso.b2.toFixed(3)}</td></tr>
+      <tr><td>Ridge (α=0)</td><td>${ridge.b1.toFixed(3)}</td><td>${ridge.b2.toFixed(3)}</td></tr>
+      <tr><td>Elastic Net (α=0.5)</td><td>${enet.b1.toFixed(3)}</td><td>${enet.b2.toFixed(3)}</td></tr>`;
+
+    const svg = document.getElementById("corrSvg");
+    svg.innerHTML = "";
+    const W=500,H=140,pad=40;
+    const maxW = 1.0;
+    function X(w){ return pad + (w/maxW)*(W-2*pad)/2 + (W-2*pad)/2; }
+    const rows = [{label:"LASSO", w1:lasso.b1, w2:lasso.b2, y:30, color:"var(--coral)"},
+                  {label:"Ridge", w1:ridge.b1, w2:ridge.b2, y:70, color:"var(--blue)"},
+                  {label:"Elastic Net", w1:enet.b1, w2:enet.b2, y:110, color:"var(--green)"}];
+    svg.appendChild(el("line",{x1:X(0),y1:10,x2:X(0),y2:130,stroke:"var(--chalk-dim)","stroke-width":1}));
+    for (const row of rows){
+      svg.appendChild(el("circle",{cx:X(row.w1),cy:row.y,r:6,fill:row.color,stroke:"var(--bg)","stroke-width":1.4}));
+      svg.appendChild(el("circle",{cx:X(row.w2),cy:row.y,r:6,fill:row.color,stroke:"var(--bg)","stroke-width":1.4,opacity:0.5}));
+      svg.appendChild(el("line",{x1:X(row.w1),y1:row.y,x2:X(row.w2),y2:row.y,stroke:row.color,"stroke-width":1.4,opacity:0.4}));
+      const lbl = el("text",{x:12,y:row.y+4,"font-family":"JetBrains Mono, monospace","font-size":11,fill:row.color});
+      lbl.textContent = row.label;
+      svg.appendChild(lbl);
+    }
+
+    const gap = Math.abs(lasso.b1-lasso.b2);
+    document.getElementById("corrStory").textContent =
+      `LASSO's two weights differ by ${gap.toFixed(3)} this draw — solid dot (w₁) vs. faded dot (w₂). Ridge and Elastic Net stay close together no matter the noise.`;
+  }
+  document.getElementById("btnRedraw").addEventListener("click", () => { corrSeed = Math.floor(Math.random()*100000)+1; runCorrelated(); });
+  runCorrelated();
+})();
+</script>
+</body>
+</html>

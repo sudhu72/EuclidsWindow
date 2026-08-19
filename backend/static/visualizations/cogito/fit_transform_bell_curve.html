@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Watch fit() and transform() reshape a bell curve</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:800px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+
+  .legend-row{display:flex;justify-content:center;gap:18px;margin-bottom:14px;font-size:12px;color:var(--chalk-dim);flex-wrap:wrap;}
+  .legend-row span{display:flex;align-items:center;gap:6px;}
+  .swatch{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swline{width:16px;height:2px;display:inline-block;}
+
+  .stage-row{display:flex;justify-content:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:20px;padding:8px 16px;cursor:pointer;}
+  button.op.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.play{background:var(--blue);color:#0c1a23;border-color:var(--blue);font-weight:700;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;justify-content:center;}
+  input[type=range]{width:70%;accent-color:var(--amber);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:18px;margin:16px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:130px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+
+  .stage-label{text-align:center;font-family:'Kalam',cursive;font-size:19px;margin:6px 0 10px;color:var(--amber);min-height:26px;}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:10px;min-height:36px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Watch fit() and transform() reshape a bell curve</h1>
+  <p class="sub">200 training exam scores and 40 test scores, both roughly bell-shaped. Scrub the slider (or press play) and watch the whole distribution slide as the mean is subtracted, then narrow — and grow taller, to keep the same total area — as the standard deviation is divided out, converging exactly onto the standard normal curve.</p>
+
+  <div class="panel">
+    <div class="legend-row">
+      <span><i class="swatch" style="background:var(--blue);opacity:0.55;"></i>train histogram (the fit)</span>
+      <span><i class="swatch" style="background:var(--coral);opacity:0.55;"></i>test histogram (transform only)</span>
+      <span><i class="swline" style="background:var(--blue);"></i>train's theoretical curve</span>
+      <span><i class="swline" style="background:var(--green);border-top:2px dashed var(--green);background:none;"></i>the standard normal, N(0,1)</span>
+    </div>
+
+    <div class="stage-row">
+      <button class="op active" id="btnStage0">① Raw</button>
+      <button class="op" id="btnStage1">② Subtract mean</button>
+      <button class="op" id="btnStage2">③ Divide by std</button>
+      <button class="op play" id="btnPlay">▶ Play both steps</button>
+    </div>
+
+    <div class="stage-label" id="stageLabel">Raw exam scores</div>
+
+    <div class="row">
+      <input type="range" id="tSlider" min="0" max="200" step="1" value="0">
+    </div>
+
+    <svg id="plotSvg" width="640" height="360" viewBox="0 0 640 360"></svg>
+    <div class="plot-caption">x = exam score (then z-score) &nbsp;·&nbsp; y = density (area under every curve always sums to 1)</div>
+
+    <div class="metric-row">
+      <div class="metric blue"><div class="lbl">train mean, std</div><div class="num" id="mTrain">-</div></div>
+      <div class="metric coral"><div class="lbl">test mean, std (own)</div><div class="num" id="mTestOwn">-</div></div>
+      <div class="metric coral"><div class="lbl">test mean, std (via train's ruler)</div><div class="num" id="mTestRuler">-</div></div>
+    </div>
+    <div class="story-line" id="storyLine"></div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../feature_scaling_and_leakage_feynman.md">Feature Scaling &amp; Data Leakage</a>, the <a href="fit_transform_movement.html">scatter-point version</a> of this same idea, and the <a href="../../math/statistics-toolkit.md">Statistics Toolkit</a>'s bell-curve section.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+  function stdOf(arr, mu){ if(mu===undefined) mu=mean(arr); return Math.sqrt(arr.reduce((a,b)=>a+(b-mu)**2,0)/arr.length); }
+  function lerp(a,b,t){ return a+(b-a)*t; }
+
+  // Deterministic seeded generator, so the same "random-looking" bell curve appears every time this page loads.
+  function makeLCG(seed){
+    let s = seed >>> 0;
+    return function(){ s = (s*1664525 + 1013904223) >>> 0; return s/4294967296; };
+  }
+  function boxMuller(rand){
+    const u1 = Math.max(rand(), 1e-12), u2 = rand();
+    return Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+  }
+  function genScores(n, m, sd, seed){
+    const rand = makeLCG(seed);
+    const out = [];
+    for(let i=0;i<n;i++) out.push(m + sd*boxMuller(rand));
+    return out;
+  }
+
+  const train = genScores(200, 70, 10, 12345);
+  const test  = genScores(40, 70, 10, 999);
+
+  const muTrain = mean(train), sdTrain = stdOf(train, muTrain);
+  const muTestOwn = mean(test), sdTestOwn = stdOf(test, muTestOwn);
+  const testViaRuler = test.map(v => (v-muTrain)/sdTrain);
+
+  document.getElementById("mTrain").textContent = `${muTrain.toFixed(2)}, ${sdTrain.toFixed(2)}`;
+  document.getElementById("mTestOwn").textContent = `${muTestOwn.toFixed(2)}, ${sdTestOwn.toFixed(2)}`;
+  document.getElementById("mTestRuler").textContent = `${mean(testViaRuler).toFixed(3)}, ${stdOf(testViaRuler).toFixed(3)}`;
+
+  // Fixed bin edges in RAW units, built once, then transformed per stage (never re-binned).
+  const binEdgesRaw = [];
+  for(let e=25; e<=110; e+=5) binEdgesRaw.push(e);
+  function histCounts(data){
+    const counts = new Array(binEdgesRaw.length-1).fill(0);
+    for(const v of data){
+      for(let i=0;i<binEdgesRaw.length-1;i++){
+        if (v >= binEdgesRaw[i] && v < binEdgesRaw[i+1]){ counts[i]++; break; }
+      }
+    }
+    return counts;
+  }
+  const trainCounts = histCounts(train);
+  const testCounts = histCounts(test);
+
+  // Per-point position lerp, identical scheme to the scatter-point companion visualizer.
+  function stageValue(v, stage){
+    if (stage==="raw") return v;
+    if (stage==="cent") return v - muTrain;
+    return (v - muTrain) / sdTrain; // "std"
+  }
+  function displayedAt(v, t){
+    if (t <= 1) return lerp(stageValue(v,"raw"), stageValue(v,"cent"), t);
+    return lerp(stageValue(v,"cent"), stageValue(v,"std"), t-1);
+  }
+  // Exact closed-form local scale factor: displayed(v2,t)-displayed(v1,t) = (v2-v1)*scaleFactor(t)
+  function scaleFactor(t){
+    if (t <= 1) return 1;
+    return (2-t) + (t-1)/sdTrain;
+  }
+
+  function gaussianPDF(x, mu, sd){
+    return Math.exp(-((x-mu)**2)/(2*sd*sd)) / (sd*Math.sqrt(2*Math.PI));
+  }
+
+  // Axis bounds per stage, interpolated the same way as the data itself.
+  const bounds = {
+    raw:  {xMin:22, xMax:110, yMax:0.06},
+    cent: {xMin:22-muTrain, xMax:110-muTrain, yMax:0.06},
+    std:  {xMin:-4.6, xMax:4.6, yMax:0.46},
+  };
+  function boundsAt(t){
+    if (t<=1) return {
+      xMin: lerp(bounds.raw.xMin, bounds.cent.xMin, t),
+      xMax: lerp(bounds.raw.xMax, bounds.cent.xMax, t),
+      yMax: lerp(bounds.raw.yMax, bounds.cent.yMax, t),
+    };
+    return {
+      xMin: lerp(bounds.cent.xMin, bounds.std.xMin, t-1),
+      xMax: lerp(bounds.cent.xMax, bounds.std.xMax, t-1),
+      yMax: lerp(bounds.cent.yMax, bounds.std.yMax, t-1),
+    };
+  }
+
+  const svg = document.getElementById("plotSvg");
+  const stageLabel = document.getElementById("stageLabel");
+  const storyLine = document.getElementById("storyLine");
+
+  function drawHist(svg, X, Y, counts, n, sf, color){
+    for(let i=0;i<counts.length;i++){
+      const e0 = displayedAt(binEdgesRaw[i], currentT);
+      const e1 = displayedAt(binEdgesRaw[i+1], currentT);
+      const width = Math.abs(e1-e0);
+      const density = counts[i] / (n * width);
+      const x0 = Math.min(e0,e1), x1 = Math.max(e0,e1);
+      svg.appendChild(el("rect",{
+        x:X(x0), y:Y(density), width: Math.max(0.5, X(x1)-X(x0)), height: Y(0)-Y(density),
+        fill:color, opacity:0.5
+      }));
+    }
+  }
+
+  let currentT = 0;
+
+  function render(t){
+    currentT = t;
+    const b = boundsAt(t);
+    svg.innerHTML = "";
+    const W=640,H=360,pad=44;
+    function X(x){ return pad + (x-b.xMin)/(b.xMax-b.xMin)*(W-2*pad); }
+    function Y(y){ return H-pad - (y/b.yMax)*(H-2*pad); }
+
+    // zero line (meaningful once centered)
+    if (b.xMin < 0 && b.xMax > 0) svg.appendChild(el("line",{x1:X(0),y1:pad*0.3,x2:X(0),y2:H-pad*0.3,stroke:"var(--chalk-dim)","stroke-width":1,opacity:0.35}));
+    svg.appendChild(el("line",{x1:pad,y1:Y(0),x2:W-pad,y2:Y(0),stroke:"var(--chalk-dim)","stroke-width":1,opacity:0.5}));
+
+    drawHist(svg, X, Y, trainCounts, train.length, scaleFactor(t), "var(--blue)");
+    drawHist(svg, X, Y, testCounts, test.length, scaleFactor(t), "var(--coral)");
+
+    // Train's theoretical curve, exact via the closed-form scale factor.
+    const sf = scaleFactor(t);
+    let curveD = "";
+    const steps = 140;
+    for(let i=0;i<=steps;i++){
+      const vRaw = muTrain + (i/steps - 0.5)*8*sdTrain; // mean +- 4 std, raw units
+      const xNow = displayedAt(vRaw, t);
+      const density = gaussianPDF(vRaw, muTrain, sdTrain) / sf;
+      curveD += (i===0 ? "M" : "L") + X(xNow) + "," + Y(density) + " ";
+    }
+    svg.appendChild(el("path",{d:curveD, fill:"none", stroke:"var(--blue)", "stroke-width":2.4}));
+
+    // Reference standard normal, fades in as t approaches 2.
+    const refOpacity = Math.max(0, (t-1));
+    if (refOpacity > 0.01){
+      let refD = "";
+      for(let i=0;i<=steps;i++){
+        const z = (i/steps - 0.5)*9;
+        const density = Math.exp(-(z*z)/2)/Math.sqrt(2*Math.PI);
+        refD += (i===0?"M":"L") + X(z) + "," + Y(density) + " ";
+      }
+      svg.appendChild(el("path",{d:refD, fill:"none", stroke:"var(--green)", "stroke-width":2, "stroke-dasharray":"7 5", opacity:refOpacity}));
+    }
+
+    const stageName = t < 0.02 ? "Raw exam scores" : (Math.abs(t-1) < 0.02 ? "Centered — mean subtracted" : (t > 1.98 ? "Standardized — this IS the standard normal now" : (t < 1 ? "Sliding the whole curve toward zero..." : "Narrowing and growing taller, area held constant...")));
+    stageLabel.textContent = stageName;
+
+    if (t < 0.02){
+      storyLine.textContent = `Train's curve is centered at ${muTrain.toFixed(1)} with a spread of ${sdTrain.toFixed(1)} points — an ordinary bell curve, in raw exam-score units.`;
+    } else if (Math.abs(t-1) < 0.02){
+      storyLine.textContent = "The curve's shape hasn't changed at all — only its location. Subtracting the mean is a pure slide, not a resize.";
+    } else if (t > 1.98){
+      storyLine.textContent = "Train's curve now sits exactly on top of the dashed standard normal reference. Test's histogram (via train's ruler) is close, but not perfectly aligned — the same honest sampling gap the scatter-point version shows.";
+    } else {
+      storyLine.textContent = "";
+    }
+  }
+
+  const tSlider = document.getElementById("tSlider");
+  function setT(t){ tSlider.value = Math.round(t*100); render(t); }
+  tSlider.addEventListener("input", () => {
+    render(parseInt(tSlider.value,10)/100);
+    document.querySelectorAll(".stage-row .op").forEach(b=>b.classList.remove("active"));
+  });
+
+  document.getElementById("btnStage0").addEventListener("click", function(){ setStageActive(this); setT(0); });
+  document.getElementById("btnStage1").addEventListener("click", function(){ setStageActive(this); setT(1); });
+  document.getElementById("btnStage2").addEventListener("click", function(){ setStageActive(this); setT(2); });
+  function setStageActive(btn){
+    document.querySelectorAll(".stage-row .op").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+  }
+
+  let playFrame = null;
+  document.getElementById("btnPlay").addEventListener("click", function(){
+    if (playFrame) cancelAnimationFrame(playFrame);
+    document.querySelectorAll(".stage-row .op").forEach(b=>b.classList.remove("active"));
+    const durationMs = 4500;
+    const start = performance.now();
+    function tick(now){
+      const elapsed = now - start;
+      const t = Math.min(2, (elapsed/durationMs)*2);
+      setT(t);
+      if (t < 2){
+        playFrame = requestAnimationFrame(tick);
+      } else {
+        document.getElementById("btnStage2").classList.add("active");
+      }
+    }
+    playFrame = requestAnimationFrame(tick);
+  });
+
+  setStageActive(document.getElementById("btnStage0"));
+  setT(0);
+})();
+</script>
+</body>
+</html>

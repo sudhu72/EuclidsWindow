@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Tower and the Gap — Abstract Algebra &amp; Real Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95; --c4:#D9636B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:150px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; }
+
+  .checklist{ display:flex; flex-direction:column; gap:8px; margin:14px 0; }
+  .cl-item{ display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; background:#F5F4F0; font-family:"IBM Plex Mono",monospace; font-size:13px; }
+  .cl-item .dot{ width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+  .cl-item.pass .dot{ background:var(--c1); } .cl-item.fail .dot{ background:var(--c4); }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:12px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:20px; font-weight:700; }
+
+  .bitgrid{ display:flex; flex-wrap:wrap; gap:6px; margin:14px 0; }
+  .bit{ width:34px; height:44px; border-radius:6px; border:2px solid var(--line); background:#F5F4F0; display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:15px; cursor:pointer; transition:all .15s; }
+  .bit:hover{ border-color:var(--accent); }
+  .codewordrow{ display:flex; gap:8px; margin:6px 0; align-items:center; font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .cwbtn{ border:1px solid var(--line); background:#fff; border-radius:6px; padding:4px 8px; cursor:pointer; font-family:"IBM Plex Mono",monospace; font-size:12px; }
+  .cwbtn.selected{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .cwbtn.match{ border-color:var(--c1); box-shadow:0 0 0 2px var(--accent-soft); }
+  .cwgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:10px 0; }
+
+  table.mono{ border-collapse:collapse; width:100%; font-family:"IBM Plex Mono",monospace; font-size:12.5px; margin-top:10px; }
+  table.mono th, table.mono td{ text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); }
+  table.mono th{ color:var(--ink-soft); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Abstract Algebra &amp; Real Analysis</div>
+    <h1>The Tower and the Gap</h1>
+    <p>Which axioms a system actually satisfies, a real error-correcting code built from a two-element field, the exact hole in the rational number line, and convergence proven without ever knowing the destination.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="tower">Tower of Structures</button>
+    <button class="tab" data-tab="hamming">Hamming Code</button>
+    <button class="tab" data-tab="gap">The Rational Gap</button>
+    <button class="tab" data-tab="cauchy">Cauchy Convergence</button>
+  </div>
+
+  <!-- ============ TAB 1: TOWER OF STRUCTURES ============ -->
+  <div class="panel active" id="panel-tower">
+    <div class="card">
+      <h2>Group, Ring, or Field? Check the Axioms Live</h2>
+      <p class="sub"><b>What's happening:</b> pick a modulus N and an operation. The checklist below tests closure, identity, inverses, and commutativity by actually trying every element — not asserting the answer.</p>
+      <div class="row"><label>modulus N</label><input type="range" id="towerN" min="2" max="12" step="1" value="6"><span class="readout" id="towerNOut">6</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="towerAdd">+ mod N (all elements 0..N-1)</button>
+        <button class="op" id="towerMul">× mod N (nonzero elements 1..N-1)</button>
+      </div>
+      <div class="checklist" id="towerChecklist"></div>
+      <div class="verdict" id="towerVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is exactly <a href="../10-number-theory.md">Number Theory</a> §13.2's "does modular division work" question, reframed as a live classification — prime moduli under multiplication are fields; composite moduli aren't even closed.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: HAMMING CODE ============ -->
+  <div class="panel" id="panel-hamming">
+    <div class="card">
+      <h2>16 Codewords, One Vector Space Over GF(2)</h2>
+      <p class="sub"><b>What's happening:</b> every 7-bit string satisfying <span class="formula">H·c = 0 (mod 2)</span> is a valid codeword — 16 of them exist. Pick one, flip a bit to simulate corruption, and watch the nearest-codeword search correct it back.</p>
+      <div class="cwgrid" id="cwGrid"></div>
+      <p class="sub" style="margin:14px 0 4px;"><b>Selected codeword — click any bit to flip it (simulate a corrupted transmission):</b></p>
+      <div class="bitgrid" id="bitGrid"></div>
+      <div class="verdict" id="hammingVerdict"></div>
+      <div class="row" style="margin-top:10px;">
+        <button class="op" id="btnXorDemo">XOR two random codewords — verify closure</button>
+      </div>
+      <div class="caption" id="xorCaption"></div>
+      <div class="caption"><b>Why it matters:</b> minimum distance 3 between any two codewords means a single flipped bit always lands strictly closer to its original codeword than to any other — that gap is what makes correction (not just detection) possible.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: THE RATIONAL GAP ============ -->
+  <div class="panel" id="panel-gap">
+    <div class="card">
+      <h2>The Hole Exactly Where √2 Should Be</h2>
+      <p class="sub"><b>What's happening:</b> drag the zoom level and watch truncated decimal approximations of √2 climb — each one a genuine rational, each one's square still under 2, with no last, largest member of the climb.</p>
+      <div class="row"><label>decimal digits of precision</label><input type="range" id="gapDigits" min="0" max="10" step="1" value="3"><span class="readout" id="gapDigitsOut">3</span></div>
+      <svg viewBox="0 0 900 140" id="gapSvg"></svg>
+      <table class="mono" id="gapTable"></table>
+      <div class="verdict" id="gapVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every row is a rational number legitimately inside <span class="formula">{x ∈ ℚ : x² &lt; 2}</span>; no rational is ever the set's least upper bound — that missing bound is exactly what the completeness axiom asserts ℝ supplies.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: CAUCHY CONVERGENCE ============ -->
+  <div class="panel" id="panel-cauchy">
+    <div class="card">
+      <h2>Converging, Verified From the Sequence Alone</h2>
+      <p class="sub"><b>What's happening:</b> Newton's method for √2 — repeat <span class="formula">x' = (x + 2/x)/2</span> — starting from any positive number you choose. Watch the gap between consecutive terms shrink toward zero, the Cauchy criterion, with no target value assumed anywhere in the check.</p>
+      <div class="row"><label>starting value x₀</label><input type="range" id="cauchyStart" min="1" max="100" step="1" value="10"><span class="readout" id="cauchyStartOut">1.0</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="btnCauchyStep">Next step</button>
+        <button class="op" id="btnCauchyReset">Reset</button>
+      </div>
+      <table class="mono" id="cauchyTable"></table>
+      <div class="verdict" id="cauchyVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the "gap shrinking" column is checkable directly from the sequence's own numbers — no reference to √2's value anywhere — and only once that's established does asking "converges to what" become meaningful at all.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../abstract-algebra-and-real-analysis.md">Abstract Algebra and Real Analysis</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* =========================================================
+     TAB 1 — TOWER OF STRUCTURES
+     ========================================================= */
+  const towerN = document.getElementById("towerN");
+  let towerOp = "add";
+
+  function gcd(a,b){ while(b){ [a,b]=[b,a%b]; } return a; }
+
+  function renderTower(){
+    const n = parseInt(towerN.value,10);
+    document.getElementById("towerNOut").textContent = n;
+    const elements = towerOp === "add" ? Array.from({length:n},(_,i)=>i) : Array.from({length:n-1},(_,i)=>i+1);
+    const combine = (a,b) => towerOp === "add" ? (a+b)%n : (a*b)%n;
+
+    // closure: does combine(a,b) always land back in `elements`?
+    let closureOk = true, closureExample = null;
+    for (const a of elements){ for (const b of elements){
+      const r = combine(a,b);
+      if (!elements.includes(r)){ closureOk = false; closureExample = [a,b,r]; break; }
+    } if (!closureOk) break; }
+
+    // identity: element e such that combine(e,x)=x for all x
+    let identity = null;
+    for (const e of elements){ if (elements.every(x => combine(e,x)===x && combine(x,e)===x)){ identity = e; break; } }
+
+    // inverses: only meaningful if closure and identity both hold
+    let allHaveInverses = true, missingInverse = null;
+    if (closureOk && identity !== null){
+      for (const a of elements){
+        const hasInv = elements.some(b => combine(a,b)===identity);
+        if (!hasInv){ allHaveInverses = false; missingInverse = a; break; }
+      }
+    } else { allHaveInverses = false; }
+
+    // commutativity
+    let commutative = true;
+    for (const a of elements){ for (const b of elements){ if (combine(a,b)!==combine(b,a)){ commutative=false; break; } } if(!commutative) break; }
+
+    const checklist = document.getElementById("towerChecklist");
+    checklist.innerHTML = "";
+    function item(label, pass, detail){
+      const div = document.createElement("div");
+      div.className = "cl-item " + (pass?"pass":"fail");
+      div.innerHTML = `<span class="dot"></span><span>${label}${detail?" — "+detail:""}</span>`;
+      checklist.appendChild(div);
+    }
+    item("Closure", closureOk, closureOk ? "every combination stays in the set" : `${closureExample[0]}${towerOp==="add"?"+":"×"}${closureExample[1]} = ${closureExample[2]} mod ${n}, outside {${elements.join(",")}}`);
+    item("Identity element", identity!==null, identity!==null ? `e = ${identity}` : "none found");
+    item("Every element has an inverse", allHaveInverses, allHaveInverses ? "checked for all "+elements.length+" elements" : (missingInverse!==null ? `${missingInverse} has no inverse` : "can't check — closure or identity already failed"));
+    item("Commutative (a∘b = b∘a)", commutative, null);
+
+    const verdict = document.getElementById("towerVerdict");
+    let classification;
+    if (!closureOk) classification = "Not even closed — this operation doesn't stay inside the set, so it can't be classified as any standard structure here.";
+    else if (identity===null || !allHaveInverses) classification = "A <b>ring</b> (or less) — multiplication distributes fine, but not every element has an inverse, so this can't be a field.";
+    else classification = (towerOp==="mul") ? "Every nonzero element has an inverse — combined with addition mod "+n+", this makes ℤ" + n + " a <b>field</b> (which only happens because "+n+" is prime)." : "A <b>group</b> under addition — this is always true for addition mod N, for any N.";
+    verdict.innerHTML = `N = ${n}, operation = ${towerOp==="add"?"+ mod N":"× mod N"}. <br>${classification}`;
+  }
+  document.getElementById("towerAdd").addEventListener("click", function(){ towerOp="add"; this.classList.add("active"); document.getElementById("towerMul").classList.remove("active"); renderTower(); });
+  document.getElementById("towerMul").addEventListener("click", function(){ towerOp="mul"; this.classList.add("active"); document.getElementById("towerAdd").classList.remove("active"); renderTower(); });
+  towerN.addEventListener("input", renderTower);
+  renderTower();
+
+  /* =========================================================
+     TAB 2 — HAMMING CODE
+     ========================================================= */
+  const H = [[0,0,0,1,1,1,1],[0,1,1,0,0,1,1],[1,0,1,0,1,0,1]];
+  function toBits(num, len){ const b=[]; for(let i=len-1;i>=0;i--) b.push((num>>i)&1); return b; }
+  const codewords = [];
+  for (let num=0; num<128; num++){
+    const c = toBits(num,7);
+    let ok = true;
+    for (let row=0; row<3; row++){ let s=0; for (let j=0;j<7;j++) s ^= (H[row][j] & c[j]); if (s!==0){ ok=false; break; } }
+    if (ok) codewords.push(c);
+  }
+  let selectedIdx = 0;
+  let workingBits = codewords[0].slice();
+
+  function distance(a,b){ return a.reduce((s,v,i)=>s+(v!==b[i]?1:0),0); }
+
+  function renderCwGrid(){
+    const grid = document.getElementById("cwGrid");
+    grid.innerHTML = "";
+    codewords.forEach((cw,i) => {
+      const btn = document.createElement("button");
+      btn.className = "cwbtn" + (i===selectedIdx ? " selected" : "");
+      btn.textContent = cw.join("");
+      btn.addEventListener("click", () => { selectedIdx = i; workingBits = codewords[i].slice(); renderAll(); });
+      grid.appendChild(btn);
+    });
+  }
+  function renderBitGrid(){
+    const grid = document.getElementById("bitGrid");
+    grid.innerHTML = "";
+    workingBits.forEach((b,i) => {
+      const d = document.createElement("div");
+      d.className = "bit";
+      d.textContent = b;
+      d.addEventListener("click", () => { workingBits[i] ^= 1; renderAll(); });
+      grid.appendChild(d);
+    });
+  }
+  function renderHammingVerdict(){
+    const original = codewords[selectedIdx];
+    const isCorrupted = !original.every((v,i)=>v===workingBits[i]);
+    let best=null, bestDist=Infinity, bestIdx=-1;
+    codewords.forEach((cw,i) => { const d = distance(cw, workingBits); if (d<bestDist){ bestDist=d; best=cw; bestIdx=i; } });
+    const v = document.getElementById("hammingVerdict");
+    v.innerHTML = `original codeword: <b>${original.join("")}</b><br>`+
+      `current (possibly corrupted): <b>${workingBits.join("")}</b> ${isCorrupted ? "— "+distance(original,workingBits)+" bit(s) flipped" : "— unchanged"}<br>`+
+      `nearest codeword found: <b>${best.join("")}</b> (distance ${bestDist}) ${bestIdx===selectedIdx ? '<span style="color:var(--c1)">✓ corrected back to the original</span>' : '<span style="color:var(--c4)">✗ landed on a different codeword — too many bits flipped for this code to fix</span>'}`;
+    renderCwGrid();
+    document.querySelectorAll(".cwbtn").forEach((btn,i) => btn.classList.toggle("match", i===bestIdx));
+  }
+  function renderAll(){ renderBitGrid(); renderHammingVerdict(); }
+  document.getElementById("btnXorDemo").addEventListener("click", () => {
+    const i = Math.floor(Math.random()*codewords.length), j = Math.floor(Math.random()*codewords.length);
+    const a = codewords[i], b = codewords[j];
+    const xor = a.map((v,k)=>v^b[k]);
+    const isMember = codewords.some(cw => cw.every((v,k)=>v===xor[k]));
+    document.getElementById("xorCaption").innerHTML =
+      `${a.join("")} XOR ${b.join("")} = <b>${xor.join("")}</b> — ${isMember ? '<span style="color:var(--c1)">is itself a valid codeword ✓ (closure holds)</span>' : '<span style="color:var(--c4)">NOT a valid codeword — this should never happen</span>'}`;
+  });
+  renderAll();
+
+  /* =========================================================
+     TAB 3 — THE RATIONAL GAP
+     ========================================================= */
+  const gapDigits = document.getElementById("gapDigits");
+  function renderGap(){
+    const d = parseInt(gapDigits.value,10);
+    document.getElementById("gapDigitsOut").textContent = d;
+    const sqrt2 = Math.sqrt(2);
+    const truncated = Math.floor(sqrt2 * Math.pow(10,d)) / Math.pow(10,d);
+    const rows = [];
+    for (let k=0; k<=d; k++){
+      const t = Math.floor(sqrt2 * Math.pow(10,k)) / Math.pow(10,k);
+      rows.push({digits:k, value:t, sq:t*t});
+    }
+    const table = document.getElementById("gapTable");
+    let html = "<tr><th>digits</th><th>rational value</th><th>its square</th><th>still in S = {x² &lt; 2}?</th></tr>";
+    rows.forEach(r => { html += `<tr><td>${r.digits}</td><td>${r.value.toFixed(Math.max(r.digits,1))}</td><td>${r.sq.toFixed(6)}</td><td>${r.sq<2 ? '<span style="color:var(--c1)">yes</span>' : '<span style="color:var(--c4)">no</span>'}</td></tr>`; });
+    table.innerHTML = html;
+
+    // svg number line zoomed near sqrt2
+    const svg = document.getElementById("gapSvg");
+    svg.innerHTML = "";
+    const lo = 1.35, hi = 1.45;
+    const pad = 40, w = 900-2*pad;
+    function xOf(v){ return pad + (v-lo)/(hi-lo)*w; }
+    svg.appendChild(el("line",{x1:pad,y1:80,x2:900-pad,y2:80,stroke:"var(--line)","stroke-width":2}));
+    [1.35,1.38,1.41,1.4142,1.4145].forEach(v=>{
+      if (v>=lo && v<=hi){
+        svg.appendChild(el("line",{x1:xOf(v),y1:74,x2:xOf(v),y2:86,stroke:"var(--ink-soft)"}));
+        const t = el("text",{x:xOf(v),y:100,"text-anchor":"middle","font-size":"10","font-family":"IBM Plex Mono, monospace",fill:"var(--ink-soft)"});
+        t.textContent = v; svg.appendChild(t);
+      }
+    });
+    // sqrt2 marker (the gap)
+    if (sqrt2>=lo && sqrt2<=hi){
+      svg.appendChild(el("line",{x1:xOf(sqrt2),y1:50,x2:xOf(sqrt2),y2:110,stroke:"var(--c4)","stroke-width":2,"stroke-dasharray":"4,3"}));
+      const t = el("text",{x:xOf(sqrt2),y:40,"text-anchor":"middle","font-size":"12","font-family":"IBM Plex Mono, monospace",fill:"var(--c4)","font-weight":"700"});
+      t.textContent = "√2 (the gap)"; svg.appendChild(t);
+    }
+    // truncated approximation marker, climbing
+    if (truncated>=lo && truncated<=hi){
+      svg.appendChild(el("circle",{cx:xOf(truncated),cy:80,r:6,fill:"var(--accent)"}));
+    }
+    document.getElementById("gapVerdict").innerHTML =
+      `At ${d} decimal digits: the rational <b>${truncated}</b> squares to <b>${(truncated*truncated).toFixed(6)}</b>, still under 2 — one more digit always produces a bigger rational, still under 2, forever. No rational number is ever the exact least upper bound of this set.`;
+  }
+  gapDigits.addEventListener("input", renderGap);
+  renderGap();
+
+  /* =========================================================
+     TAB 4 — CAUCHY CONVERGENCE
+     ========================================================= */
+  const cauchyStart = document.getElementById("cauchyStart");
+  let cauchySeq = [];
+  function resetCauchy(){
+    const x0 = parseFloat(cauchyStart.value)/10;
+    document.getElementById("cauchyStartOut").textContent = x0.toFixed(1);
+    cauchySeq = [x0];
+    renderCauchy();
+  }
+  function stepCauchy(){
+    const x = cauchySeq[cauchySeq.length-1];
+    const next = (x + 2/x)/2;
+    cauchySeq.push(next);
+    renderCauchy();
+  }
+  function renderCauchy(){
+    const table = document.getElementById("cauchyTable");
+    let html = "<tr><th>step</th><th>xₙ</th><th>|xₙ − xₙ₋₁|</th></tr>";
+    cauchySeq.forEach((x,i) => {
+      const diff = i===0 ? "—" : Math.abs(x-cauchySeq[i-1]).toExponential(3);
+      html += `<tr><td>${i}</td><td>${x.toFixed(10)}</td><td>${diff}</td></tr>`;
+    });
+    table.innerHTML = html;
+    const last = cauchySeq[cauchySeq.length-1];
+    const lastDiff = cauchySeq.length>1 ? Math.abs(last-cauchySeq[cauchySeq.length-2]) : NaN;
+    document.getElementById("cauchyVerdict").innerHTML =
+      cauchySeq.length>1
+      ? `After ${cauchySeq.length-1} step(s): consecutive gap = <b>${lastDiff.toExponential(3)}</b> ${lastDiff<1e-10 ? '<span style="color:var(--c1)">— effectively zero; this sequence is Cauchy</span>' : "— keep stepping and watch it shrink toward zero"}. Current value ≈ <b>${last.toFixed(10)}</b> (compare: √2 = 1.4142135624).`
+      : `Click "Next step" to begin iterating.`;
+  }
+  document.getElementById("btnCauchyStep").addEventListener("click", stepCauchy);
+  document.getElementById("btnCauchyReset").addEventListener("click", resetCauchy);
+  cauchyStart.addEventListener("input", resetCauchy);
+  resetCauchy();
+
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 39 self-contained interactive visualizations
+// Cogito Gallery manifest — 61 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -139,6 +139,24 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Symmetry & Invariance",
         "one": "Tile a mutilated chessboard, sweep equal areas in an orbit, and roll a ball off the Mexican hat.",
         "prompt": "Explain symmetry and invariance as the master concept: how an invariant like parity proves the mutilated chessboard cannot be tiled, why Noether's theorem ties every conservation law to a symmetry, and what spontaneous symmetry breaking means."
+      },
+      {
+        "file": "abstract_algebra_and_real_analysis_visualizer.html",
+        "title": "The Tower and the Gap — Abstract Algebra & Real Analysis",
+        "one": "Groups, rings, and fields build up structure from an operation and its rules; real analysis asks what happens in the gaps between rational numbers.",
+        "prompt": "Explain abstract algebra (groups, rings, fields) and real analysis (limits, continuity, completeness) from first principles: what structure survives when you strip a number system down to just its operations, and what it means for the real numbers to have no gaps."
+      },
+      {
+        "file": "continuity_and_extrema_visualizer.html",
+        "title": "Continuity and Extrema — Where Functions Behave, and Where They Peak",
+        "one": "What it actually means for a function to have no jumps, and why every continuous function on a closed interval must hit a highest and lowest point.",
+        "prompt": "Explain continuity (the epsilon-delta idea, intuitively) and the extreme value theorem: why a continuous function on a closed interval is guaranteed to reach a maximum and minimum."
+      },
+      {
+        "file": "eigenvalues_and_eigenvectors_visualizer.html",
+        "title": "Eigenvalues and Eigenvectors — The Directions a Transformation Can't Rotate Away From",
+        "one": "Most vectors get pushed off their line by a transformation; eigenvectors are the special directions that only get stretched.",
+        "prompt": "Explain eigenvalues and eigenvectors from first principles: what makes a direction special enough that a linear transformation only scales it instead of rotating it, and why that matters."
       }
     ]
   },
@@ -236,6 +254,120 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Titanic — Survival by Group",
         "one": "Survival rates broken down by sex and class — a first EDA in one chart.",
         "prompt": "Explain how to read survival rates by group (sex, passenger class) in the Titanic dataset as exploratory data analysis."
+      },
+      {
+        "file": "bias_variance_visualizer.html",
+        "title": "Bias and Variance: watch the decomposition happen live",
+        "one": "Split a model's total error into the part from being too simple and the part from being too sensitive to the training data.",
+        "prompt": "Explain the bias-variance tradeoff: why total prediction error decomposes into bias, variance, and irreducible noise, and how model complexity trades one against the other."
+      },
+      {
+        "file": "empirical_risk_visualizer.html",
+        "title": "Empirical Risk vs. Risk: watch generalization theory happen live",
+        "one": "The error you measure on your training set is a guess at the error you'll never be able to measure directly — the true risk.",
+        "prompt": "Explain the difference between empirical risk (measured on a finite sample) and true risk (the theoretical expectation over the whole distribution), and why minimizing one doesn't guarantee minimizing the other."
+      },
+      {
+        "file": "sample_complexity_visualizer.html",
+        "title": "Sample Complexity and PAC Learning: how much data is enough?",
+        "one": "Probably Approximately Correct learning answers a very practical question with real math: how many examples before you can trust the model?",
+        "prompt": "Explain sample complexity and PAC (Probably Approximately Correct) learning theory: how many training examples are needed to guarantee, with high probability, a model that's approximately correct."
+      },
+      {
+        "file": "resampling_and_shrinkage_visualizer.html",
+        "title": "Resampling and Shrinkage: the Bootstrap, live",
+        "one": "Resample your own data with replacement to estimate how uncertain your estimate really is — no new data required.",
+        "prompt": "Explain the bootstrap: how resampling a dataset with replacement estimates the variability of a statistic, and what shrinkage estimators borrow from that idea."
+      },
+      {
+        "file": "regularization_visualizer.html",
+        "title": "Regularization: L1, L2, and Elastic Net, live",
+        "one": "Penalize large weights and a model stops memorizing noise — L1 zeroes out features entirely, L2 just shrinks them, Elastic Net does both.",
+        "prompt": "Explain L1 (Lasso), L2 (Ridge), and Elastic Net regularization: what penalty each one adds to the loss function, and why L1 produces sparse (zeroed-out) weights while L2 does not."
+      },
+      {
+        "file": "cross_validation_visualizer.html",
+        "title": "Cross-Validation Strategies, live",
+        "one": "K-fold, stratified, and time-series splits — why the right way to fake unseen data depends on what your data actually looks like.",
+        "prompt": "Explain cross-validation strategies: k-fold, stratified k-fold, and time-series splits, and why choosing the wrong one silently leaks information."
+      },
+      {
+        "file": "choosing_a_scaler_visualizer.html",
+        "title": "Choosing a Scaler: model first, data shape second",
+        "one": "StandardScaler, MinMaxScaler, or RobustScaler — which one to reach for depends on your model and your outliers, not habit.",
+        "prompt": "Explain how to choose between StandardScaler, MinMaxScaler, and RobustScaler based on the model being used and whether the data has outliers."
+      },
+      {
+        "file": "standard_scaler_animation.html",
+        "title": "Feature Scaling: fit(), transform(), and why it helps the model",
+        "one": "fit() learns the mean and spread from training data; transform() applies it — mixing the two up is how data leakage happens.",
+        "prompt": "Explain feature scaling and data leakage: what fit() and transform() each actually do, why you must fit only on training data, and how scaling before splitting leaks test information into training."
+      },
+      {
+        "file": "fit_transform_bell_curve.html",
+        "title": "Watch fit() and transform() reshape a bell curve",
+        "one": "A second look at scaling, this time watching a full distribution — not just individual points — get re-centered and re-scaled.",
+        "prompt": "Explain what StandardScaler's fit() and transform() do to an entire distribution of data, not just individual points — why the shape of a bell curve is preserved while its scale changes."
+      },
+      {
+        "file": "fit_transform_movement.html",
+        "title": "Watch fit() and transform() move the data",
+        "one": "Every point shifts and stretches together when a scaler transforms a dataset — the relationships between points never change, only their coordinates.",
+        "prompt": "Explain what actually happens, point by point, when a fitted scaler's transform() is applied to a dataset — why the relative distances between points are preserved even though the coordinates change."
+      },
+      {
+        "file": "frequentist_vs_bayesian_visualizer.html",
+        "title": "Frequentist vs. Bayesian: procedures vs. beliefs, made live",
+        "one": "Two entirely different answers to \"what does probability mean\" — long-run frequency of a procedure, or a degree of belief that updates with evidence.",
+        "prompt": "Explain the difference between frequentist and Bayesian statistics: what each school means by 'probability,' and how a Bayesian updates a belief using Bayes' theorem as new data arrives."
+      },
+      {
+        "file": "discriminant_analysis_animation.html",
+        "title": "Discriminant Analysis: the best direction, and the shape of each class",
+        "one": "Instead of a decision boundary that just separates classes, find the single direction that separates them best.",
+        "prompt": "Explain linear discriminant analysis (LDA): how it finds the projection direction that best separates classes by maximizing between-class variance relative to within-class variance."
+      },
+      {
+        "file": "knn_decision_boundary_animation.html",
+        "title": "K-Nearest Neighbors: drag the query point, watch the vote",
+        "one": "No training, no formula — just ask the k closest labeled points what they think and go with the majority.",
+        "prompt": "Explain k-nearest neighbors classification: why it has no training phase, how the choice of k changes the decision boundary, and why it struggles in high dimensions."
+      },
+      {
+        "file": "roc_auc_construction_animation.html",
+        "title": "Building a ROC curve, one threshold at a time",
+        "one": "Slide the classification threshold from 0 to 1 and watch the true-positive/false-positive tradeoff trace out the ROC curve, and its area.",
+        "prompt": "Explain how a ROC curve is built by sweeping the classification threshold, what the area under it (AUC) measures, and why it's threshold-independent."
+      },
+      {
+        "file": "anscombes_quartet_animation.html",
+        "title": "Anscombe's Quartet — same stats, different realities",
+        "one": "Four datasets with identical mean, variance, correlation, and regression line — and four wildly different scatter plots.",
+        "prompt": "Explain Anscombe's quartet: how four datasets can share identical summary statistics (mean, variance, correlation, regression line) while looking completely different when plotted, and why that's an argument for always visualizing data."
+      },
+      {
+        "file": "galton_board_animation.html",
+        "title": "The Galton Board — watching the bell curve assemble itself",
+        "one": "Drop balls through a grid of pegs, each bounce a coin flip, and watch the normal distribution emerge from pure chance.",
+        "prompt": "Explain the Galton board and why it produces a normal distribution: how a sum of many independent random left/right bounces converges to a bell curve, connecting to the central limit theorem."
+      },
+      {
+        "file": "memorylessness_animation.html",
+        "title": "Memorylessness — the bus that never learns",
+        "one": "If a process is memoryless, how long you've already waited tells you nothing about how much longer you'll wait.",
+        "prompt": "Explain the memoryless property of the exponential distribution: why waiting 10 minutes for a bus that hasn't come tells you nothing about how much longer you'll wait, and how this connects to Markov chains."
+      },
+      {
+        "file": "llm_roadmap_ladder.html",
+        "title": "The 2026 LLM Engineering Roadmap — the ladder of levers",
+        "one": "From prompting to fine-tuning to building your own architecture — a ladder of increasingly powerful (and expensive) levers for shaping an LLM's behavior.",
+        "prompt": "Explain the ladder of techniques for shaping an LLM's behavior, from cheapest to most expensive: prompting, retrieval-augmented generation, fine-tuning, and pretraining — and when each one is the right tool."
+      },
+      {
+        "file": "react_agent_loop.html",
+        "title": "The ReAct Agent Loop — Thought → Action → Observation",
+        "one": "An LLM agent that interleaves reasoning with acting: think, take an action, observe the result, and repeat.",
+        "prompt": "Explain the ReAct (Reasoning + Acting) agent pattern: how interleaving a Thought step with an Action and an Observation lets an LLM use tools and correct course mid-task."
       }
     ]
   },

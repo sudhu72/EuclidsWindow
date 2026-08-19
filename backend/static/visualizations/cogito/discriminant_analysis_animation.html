@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Discriminant Analysis: the best direction, and the shape of each class</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:160px;}
+  input[type=range]{flex:1;min-width:160px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:40px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .cols{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+
+  .metric-row{display:flex;justify-content:center;gap:26px;margin:16px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:130px;}
+  .metric .lbl{font-size:11px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:20px;margin-top:4px;}
+  .metric.naive .num{color:var(--coral);}
+  .metric.fisher .num{color:var(--green);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:14px;min-height:20px;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Discriminant Analysis: direction, and shape</h1>
+  <p class="sub">Two tabs, two questions Fisher's original idea and its descendants actually answer: which direction best separates two classes, and what happens to the boundary once each class is allowed its own shape.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="fisher">Fisher Projection</button>
+    <button class="tabbtn" data-tab="ldaqda">LDA vs. QDA</button>
+  </div>
+
+  <!-- ============ TAB 1: FISHER PROJECTION ============ -->
+  <div class="tabpanel active" id="tab-fisher">
+    <div class="panel">
+      <h2>Which direction actually separates these two classes?</h2>
+      <p class="sub">The coral line just connects the two class means. The green line is Fisher's corrected direction — accounting for each class's own shape. Drag the sliders and watch both directions, and their separation scores, respond.</p>
+      <div class="row"><label>Separation between means</label><input type="range" id="fSep" min="2" max="8" step="0.2" value="4"><span class="readout" id="fSepOut">4.0</span></div>
+      <div class="row"><label>Class elongation (correlation)</label><input type="range" id="fElong" min="0" max="1" step="0.05" value="1"><span class="readout" id="fElongOut">1.00</span></div>
+
+      <div class="cols">
+        <svg id="fisherSvg" width="420" height="360" viewBox="0 0 420 360"></svg>
+      </div>
+      <div class="plot-caption">blue = class 0 &nbsp;·&nbsp; coral dots = class 1 &nbsp;·&nbsp; coral line = naive (mean-to-mean) direction &nbsp;·&nbsp; green line = Fisher's direction</div>
+
+      <div class="metric-row">
+        <div class="metric naive"><div class="lbl">Naive direction score</div><div class="num" id="mNaive">-</div></div>
+        <div class="metric fisher"><div class="lbl">Fisher direction score</div><div class="num" id="mFisher">-</div></div>
+      </div>
+      <div class="story-line" id="fisherStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: LDA VS QDA ============ -->
+  <div class="tabpanel" id="tab-ldaqda">
+    <div class="panel">
+      <h2>What changes when each class gets its own covariance?</h2>
+      <p class="sub">Pick a scenario, then flip the covariance mode on the <em>same</em> data and watch the decision region change shape.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnScenA">Different means, same shape</button>
+        <button class="op" id="btnScenB">Same mean, different shape</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnModeLDA">Shared covariance (LDA)</button>
+        <button class="op" id="btnModeQDA">Per-class covariance (QDA)</button>
+      </div>
+      <div class="row" id="rowSpread"><label>Class-1 spread multiplier</label><input type="range" id="spreadMult" min="2" max="12" step="0.5" value="9"><span class="readout" id="spreadOut">9.0</span></div>
+
+      <div class="cols">
+        <svg id="ldaqdaSvg" width="420" height="360" viewBox="0 0 420 360"></svg>
+      </div>
+      <div class="plot-caption">shaded region = which class the model would predict there &nbsp;·&nbsp; blue = class 0 (tight) &nbsp;·&nbsp; coral = class 1</div>
+      <div class="story-line" id="ldaqdaStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../discriminant_analysis_feynman.md">Discriminant Analysis</a>, Parts 1–3.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ---------- shared linear-algebra helpers, mirroring the tutorial's verified formulas ---------- */
+  function mean(pts){ const n=pts.length; let sx=0,sy=0; for(const [x,y] of pts){sx+=x;sy+=y;} return [sx/n, sy/n]; }
+  function scatterSum(pts, mu){
+    let Sxx=0,Sxy=0,Syy=0;
+    for(const [x,y] of pts){ const dx=x-mu[0], dy=y-mu[1]; Sxx+=dx*dx; Sxy+=dx*dy; Syy+=dy*dy; }
+    return [[Sxx,Sxy],[Sxy,Syy]];
+  }
+  function covOf(pts, mu, n){ const S = scatterSum(pts, mu); return [[S[0][0]/n, S[0][1]/n],[S[1][0]/n, S[1][1]/n]]; }
+  function inv2(M){
+    const a=M[0][0], b=M[0][1], c=M[1][0], d=M[1][1];
+    const det = a*d-b*c;
+    if (Math.abs(det) < 1e-9) return null;
+    return {inv:[[d/det, -b/det],[-c/det, a/det]], det};
+  }
+  function matVec(M, v){ return [M[0][0]*v[0]+M[0][1]*v[1], M[1][0]*v[0]+M[1][1]*v[1]]; }
+
+  /* ============================================================
+     TAB 1 — FISHER PROJECTION
+     ============================================================ */
+  const roundTemplate0 = [[0,0],[1,0],[0,1],[-1,0],[0,-1],[0.5,0.5]];
+  const diagTemplate0  = [[0,0],[1,1],[2,2],[-1,-1],[0.5,1.5],[1.5,0.5]];
+  function lerpPts(a,b,t){ return a.map((p,i)=>[p[0]*(1-t)+b[i][0]*t, p[1]*(1-t)+b[i][1]*t]); }
+
+  function fisherData(){
+    const sep = parseFloat(document.getElementById("fSep").value);
+    const t = parseFloat(document.getElementById("fElong").value);
+    const class0 = lerpPts(roundTemplate0, diagTemplate0, t);
+    const class1 = class0.map(([x,y]) => [x+sep, y]);
+    return {class0, class1};
+  }
+
+  function fisherScore(class0, class1, dir){
+    function proj(p){ return p[0]*dir[0]+p[1]*dir[1]; }
+    const p0 = class0.map(proj), p1 = class1.map(proj);
+    const m0 = p0.reduce((a,b)=>a+b,0)/p0.length, m1 = p1.reduce((a,b)=>a+b,0)/p1.length;
+    const v0 = p0.reduce((a,b)=>a+(b-m0)**2,0), v1 = p1.reduce((a,b)=>a+(b-m1)**2,0);
+    return (m1-m0)**2/(v0+v1);
+  }
+
+  function renderFisher(){
+    document.getElementById("fSepOut").textContent = parseFloat(document.getElementById("fSep").value).toFixed(1);
+    document.getElementById("fElongOut").textContent = parseFloat(document.getElementById("fElong").value).toFixed(2);
+    const {class0, class1} = fisherData();
+    const mu0 = mean(class0), mu1 = mean(class1);
+    const S0 = scatterSum(class0, mu0), S1 = scatterSum(class1, mu1);
+    const Sw = [[S0[0][0]+S1[0][0], S0[0][1]+S1[0][1]],[S0[1][0]+S1[1][0], S0[1][1]+S1[1][1]]];
+    const invRes = inv2(Sw);
+    const diff = [mu1[0]-mu0[0], mu1[1]-mu0[1]];
+    const diffLen = Math.hypot(diff[0], diff[1]) || 1;
+    const naiveDir = [diff[0]/diffLen, diff[1]/diffLen];
+    let fisherDir = naiveDir;
+    if (invRes){
+      const w = matVec(invRes.inv, diff);
+      const wl = Math.hypot(w[0],w[1]) || 1;
+      fisherDir = [w[0]/wl, w[1]/wl];
+    }
+    const naiveScore = fisherScore(class0, class1, naiveDir);
+    const fisherScoreVal = fisherScore(class0, class1, fisherDir);
+    document.getElementById("mNaive").textContent = naiveScore.toFixed(3);
+    document.getElementById("mFisher").textContent = fisherScoreVal.toFixed(3);
+
+    const svg = document.getElementById("fisherSvg");
+    svg.innerHTML = "";
+    const W=420,H=360, pad=40;
+    const allPts = class0.concat(class1);
+    const xs = allPts.map(p=>p[0]), ys = allPts.map(p=>p[1]);
+    const minX=Math.min(...xs)-1, maxX=Math.max(...xs)+1, minY=Math.min(...ys)-1.5, maxY=Math.max(...ys)+1.5;
+    function X(x){ return pad + (x-minX)/(maxX-minX)*(W-2*pad); }
+    function Y(y){ return H-pad - (y-minY)/(maxY-minY)*(H-2*pad); }
+
+    function drawLine(dir, color, dash){
+      const cx = (mu0[0]+mu1[0])/2, cy=(mu0[1]+mu1[1])/2;
+      const L = 6;
+      const x1=cx-dir[0]*L, y1=cy-dir[1]*L, x2=cx+dir[0]*L, y2=cy+dir[1]*L;
+      const attrs = {x1:X(x1),y1:Y(y1),x2:X(x2),y2:Y(y2),stroke:color,"stroke-width":2.4};
+      if(dash) attrs["stroke-dasharray"]="6 4";
+      svg.appendChild(el("line", attrs));
+    }
+    drawLine(naiveDir, "var(--coral)", true);
+    drawLine(fisherDir, "var(--green)", false);
+
+    for(const [x,y] of class0) svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:6,fill:"var(--blue)",stroke:"var(--bg)","stroke-width":1.5}));
+    for(const [x,y] of class1) svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:6,fill:"var(--coral)",stroke:"var(--bg)","stroke-width":1.5}));
+    svg.appendChild(el("circle",{cx:X(mu0[0]),cy:Y(mu0[1]),r:4,fill:"none",stroke:"var(--chalk)","stroke-width":2}));
+    svg.appendChild(el("circle",{cx:X(mu1[0]),cy:Y(mu1[1]),r:4,fill:"none",stroke:"var(--chalk)","stroke-width":2}));
+
+    const story = document.getElementById("fisherStory");
+    const ratio = (fisherScoreVal/Math.max(naiveScore,1e-6));
+    if (ratio > 1.05) story.textContent = `Fisher's direction separates ${ratio.toFixed(1)}× better than the naive mean-to-mean line at this elongation.`;
+    else story.textContent = `At low elongation both directions nearly agree — the correction only matters once a class is stretched off-axis.`;
+  }
+  ["fSep","fElong"].forEach(id => document.getElementById(id).addEventListener("input", renderFisher));
+  renderFisher();
+
+  /* ============================================================
+     TAB 2 — LDA vs QDA
+     ============================================================ */
+  let scenario = "A"; // A = different means same shape, B = same mean different shape
+  let covMode = "LDA"; // LDA = shared, QDA = per-class
+
+  function ldaqdaData(){
+    if (scenario === "A"){
+      const class0 = [[-3,-1],[-2,0],[-2,1],[-3,1],[-1,0],[-2,-2]];
+      const class1 = class0.map(([x,y])=>[x+6, y]);
+      return {class0, class1};
+    } else {
+      const mult = parseFloat(document.getElementById("spreadMult").value);
+      const s = Math.sqrt(mult);
+      const class0 = [[0,0],[1,0],[0,1],[-1,0],[0,-1],[0.6,0.6],[-0.6,-0.6]];
+      const class1 = class0.map(([x,y])=>[x*s, y*s]);
+      return {class0, class1};
+    }
+  }
+
+  function discriminant(x, mu, cov, priorLog){
+    const invRes = inv2(cov);
+    if(!invRes) return -1e9;
+    const dx=x[0]-mu[0], dy=x[1]-mu[1];
+    const iv = invRes.inv;
+    const quad = dx*(iv[0][0]*dx+iv[0][1]*dy) + dy*(iv[1][0]*dx+iv[1][1]*dy);
+    return -0.5*Math.log(Math.abs(invRes.det)) - 0.5*quad + priorLog;
+  }
+
+  function renderLdaQda(){
+    document.getElementById("rowSpread").style.display = scenario==="B" ? "" : "none";
+    document.getElementById("spreadOut").textContent = parseFloat(document.getElementById("spreadMult").value).toFixed(1);
+    const {class0, class1} = ldaqdaData();
+    const mu0 = mean(class0), mu1 = mean(class1);
+    const cov0 = covOf(class0, mu0, class0.length);
+    const cov1 = covOf(class1, mu1, class1.length);
+    const S0 = scatterSum(class0, mu0), S1 = scatterSum(class1, mu1);
+    const n = class0.length + class1.length;
+    const covShared = [[(S0[0][0]+S1[0][0])/n, (S0[0][1]+S1[0][1])/n],[(S0[1][0]+S1[1][0])/n, (S0[1][1]+S1[1][1])/n]];
+    const priorLog = Math.log(0.5);
+
+    const svg = document.getElementById("ldaqdaSvg");
+    svg.innerHTML = "";
+    const W=420,H=360, pad=40;
+    const allPts = class0.concat(class1);
+    const xs = allPts.map(p=>p[0]), ys = allPts.map(p=>p[1]);
+    const minX=Math.min(...xs)-2, maxX=Math.max(...xs)+2, minY=Math.min(...ys)-2, maxY=Math.max(...ys)+2;
+    function X(x){ return pad + (x-minX)/(maxX-minX)*(W-2*pad); }
+    function Y(y){ return H-pad - (y-minY)/(maxY-minY)*(H-2*pad); }
+    function dataX(px){ return minX + (px-pad)/(W-2*pad)*(maxX-minX); }
+    function dataY(py){ return minY + (H-pad-py)/(H-2*pad)*(maxY-minY); }
+
+    // degenerate LDA case: means coincide (scenario B) -> shared-cov direction has ~0 signal
+    const diff = [mu1[0]-mu0[0], mu1[1]-mu0[1]];
+    const meansCoincide = Math.hypot(diff[0],diff[1]) < 1e-6;
+    const degenerate = (covMode === "LDA" && meansCoincide);
+
+    if (!degenerate){
+      const cellsX=48, cellsY=42;
+      for(let i=0;i<cellsX;i++){
+        for(let j=0;j<cellsY;j++){
+          const px = pad + (i+0.5)/cellsX*(W-2*pad);
+          const py = pad + (j+0.5)/cellsY*(H-2*pad);
+          const x = [dataX(px), dataY(py)];
+          const cov0use = covMode==="LDA" ? covShared : cov0;
+          const cov1use = covMode==="LDA" ? covShared : cov1;
+          const d0 = discriminant(x, mu0, cov0use, priorLog);
+          const d1 = discriminant(x, mu1, cov1use, priorLog);
+          const color = d0 >= d1 ? "rgba(127,179,213,0.16)" : "rgba(255,130,102,0.16)";
+          svg.appendChild(el("rect",{x:px-(W-2*pad)/cellsX/2, y:py-(H-2*pad)/cellsY/2, width:(W-2*pad)/cellsX+0.5, height:(H-2*pad)/cellsY+0.5, fill:color}));
+        }
+      }
+    }
+
+    for(const [x,y] of class0) svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:6,fill:"var(--blue)",stroke:"var(--bg)","stroke-width":1.5}));
+    for(const [x,y] of class1) svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:6,fill:"var(--coral)",stroke:"var(--bg)","stroke-width":1.5}));
+
+    const story = document.getElementById("ldaqdaStory");
+    if (degenerate){
+      story.textContent = "LDA has no signal here at all — the two class means coincide exactly, so Σ⁻¹(μ₁−μ₀) is the zero vector. No shaded region is drawn because LDA genuinely cannot separate this case.";
+    } else if (scenario === "B" && covMode === "QDA"){
+      story.textContent = "QDA's bullseye: points near the shared center are judged the tight class; points farther out are judged the wide class — a boundary no straight line could ever produce.";
+    } else if (scenario === "A"){
+      story.textContent = covMode==="LDA"
+        ? "Different means, similar shape: LDA's straight boundary sits right where you'd expect."
+        : "Same data, per-class covariance now — since both classes are similarly shaped here, QDA's boundary looks almost identical to LDA's. QDA only pays off once the shapes genuinely differ.";
+    } else {
+      story.textContent = "";
+    }
+  }
+
+  document.getElementById("btnScenA").addEventListener("click", function(){
+    scenario="A"; this.classList.add("active"); document.getElementById("btnScenB").classList.remove("active"); renderLdaQda();
+  });
+  document.getElementById("btnScenB").addEventListener("click", function(){
+    scenario="B"; this.classList.add("active"); document.getElementById("btnScenA").classList.remove("active"); renderLdaQda();
+  });
+  document.getElementById("btnModeLDA").addEventListener("click", function(){
+    covMode="LDA"; this.classList.add("active"); document.getElementById("btnModeQDA").classList.remove("active"); renderLdaQda();
+  });
+  document.getElementById("btnModeQDA").addEventListener("click", function(){
+    covMode="QDA"; this.classList.add("active"); document.getElementById("btnModeLDA").classList.remove("active"); renderLdaQda();
+  });
+  document.getElementById("spreadMult").addEventListener("input", renderLdaQda);
+  renderLdaQda();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Frequentist vs. Bayesian: procedures vs. beliefs, made live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:18px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:120px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:36px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Frequentist vs. Bayesian: procedures vs. beliefs, made live</h1>
+  <p class="sub">Three tabs, matching the tutorial's three verified demonstrations.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="posterior">Posterior Updating</button>
+    <button class="tabbtn" data-tab="coverage">Confidence vs. Credible</button>
+    <button class="tabbtn" data-tab="peeking">The Peeking Problem</button>
+  </div>
+
+  <!-- ============ TAB 1: POSTERIOR UPDATING ============ -->
+  <div class="tabpanel active" id="tab-posterior">
+    <div class="panel">
+      <h2>Watch a belief update, one coin flip at a time</h2>
+      <p class="sub">A fixed, real sequence of flips from a coin whose true bias is hidden from you. The dashed curve is the prior; the solid curve is the current posterior. Watch it reshape and narrow as evidence accumulates.</p>
+      <div class="row">
+        <button class="op primary" id="btnFlip1">Flip once</button>
+        <button class="op" id="btnFlip10">Flip 10 more</button>
+        <button class="op" id="btnJump">Jump to 1000 flips</button>
+        <button class="op" id="btnResetPost">Reset</button>
+      </div>
+      <svg id="postSvg" width="640" height="300" viewBox="0 0 640 300"></svg>
+      <div class="plot-caption">x = candidate value of p &nbsp;·&nbsp; y = density &nbsp;·&nbsp; amber marker = frequentist MLE (heads/flips)</div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">flips so far</div><div class="num" id="mFlips">0</div></div>
+        <div class="metric coral"><div class="lbl">heads</div><div class="num" id="mHeads">0</div></div>
+        <div class="metric amber"><div class="lbl">frequentist MLE</div><div class="num" id="mMLE">-</div></div>
+        <div class="metric green"><div class="lbl">posterior mean</div><div class="num" id="mPostMean">-</div></div>
+        <div class="metric green"><div class="lbl">95% credible interval</div><div class="num" id="mCrI">-</div></div>
+      </div>
+      <div class="story-line" id="postStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: CONFIDENCE VS CREDIBLE ============ -->
+  <div class="tabpanel" id="tab-coverage">
+    <div class="panel">
+      <h2>What a confidence interval's "95%" actually promises</h2>
+      <p class="sub">True coin bias p = 0.6 (hidden from the procedure, known only to this simulation). Each run draws 40 fresh flips and builds a 95% confidence interval. Green = captured the true value. Red = missed it. Watch the running coverage rate.</p>
+      <div class="row">
+        <button class="op primary" id="btnRun30">Run 30 more experiments</button>
+        <button class="op" id="btnResetCov">Reset</button>
+      </div>
+      <svg id="covSvg" width="640" height="300" viewBox="0 0 640 300"></svg>
+      <div class="plot-caption">each row = one independent 40-flip experiment's 95% confidence interval &nbsp;·&nbsp; dashed line = the true p = 0.6</div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">experiments run</div><div class="num" id="mExpCount">0</div></div>
+        <div class="metric green"><div class="lbl">captured true value</div><div class="num" id="mCaptured">0</div></div>
+        <div class="metric amber"><div class="lbl">running coverage</div><div class="num" id="mCoverage">-</div></div>
+      </div>
+      <div class="story-line" id="covStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: THE PEEKING PROBLEM ============ -->
+  <div class="tabpanel" id="tab-peeking">
+    <div class="panel">
+      <h2>Continuous monitoring breaks the 5% guarantee</h2>
+      <p class="sub">A/B test with NO real difference (both variants truly 50/50). Watch the p-value wander as visitors arrive. The shaded zone below the line is where a peeking team would falsely declare "significant."</p>
+      <div class="row">
+        <button class="op primary" id="btnRunOneAB">Run one live experiment</button>
+        <button class="op" id="btnRunManyAB">Run 200 experiments (tally only)</button>
+        <button class="op" id="btnResetAB">Reset tally</button>
+      </div>
+      <svg id="abSvg" width="640" height="280" viewBox="0 0 640 280"></svg>
+      <div class="plot-caption">y = two-sided p-value over time &nbsp;·&nbsp; dashed line = the 0.05 threshold</div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">experiments simulated</div><div class="num" id="mABCount">0</div></div>
+        <div class="metric coral"><div class="lbl">false positives if peeking</div><div class="num" id="mPeekFP">-</div></div>
+        <div class="metric green"><div class="lbl">false positives if fixed sample</div><div class="num" id="mFixedFP">-</div></div>
+      </div>
+      <div class="story-line" id="abStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../frequentist_vs_bayesian_feynman.md">Frequentist vs. Bayesian Statistics</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function makeLCG(seed){ let s=seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+
+  function betaDensityGrid(a, b, gridN){
+    const density = new Array(gridN+1);
+    const dx = 1/gridN;
+    let total = 0;
+    for(let i=0;i<=gridN;i++){
+      const x = i*dx;
+      const xx = Math.max(x, 1e-12), yy = Math.max(1-x, 1e-12);
+      density[i] = Math.pow(xx, a-1) * Math.pow(yy, b-1);
+      total += density[i]*dx;
+    }
+    for(let i=0;i<=gridN;i++) density[i] /= total;
+    return {density, dx};
+  }
+  function betaStats(a, b, gridN){
+    gridN = gridN || 2000;
+    const {density, dx} = betaDensityGrid(a,b,gridN);
+    let mean=0;
+    for(let i=0;i<=gridN;i++) mean += (i*dx)*density[i]*dx;
+    let cum=0, lo=null, hi=null;
+    for(let i=0;i<=gridN;i++){
+      cum += density[i]*dx;
+      if (lo===null && cum>=0.025) lo = i*dx;
+      if (hi===null && cum>=0.975) hi = i*dx;
+    }
+    return {mean, lo, hi, density, dx};
+  }
+
+  /* ============================================================
+     TAB 1 — POSTERIOR UPDATING
+     ============================================================ */
+  const seededRand = makeLCG(2024);
+  const TRUE_P = 0.7;
+  const allFlips = [];
+  for(let i=0;i<1000;i++) allFlips.push(seededRand() < TRUE_P ? 1 : 0);
+
+  let flipCount = 0;
+
+  function renderPosterior(){
+    let heads = 0;
+    for(let i=0;i<flipCount;i++) heads += allFlips[i];
+    const tails = flipCount - heads;
+    document.getElementById("mFlips").textContent = flipCount;
+    document.getElementById("mHeads").textContent = heads;
+    const mle = flipCount>0 ? (heads/flipCount) : null;
+    document.getElementById("mMLE").textContent = mle!==null ? mle.toFixed(3) : "-";
+
+    const gridN = 400;
+    const prior = betaDensityGrid(1,1,gridN);
+    const postDisplay = betaStats(1+heads, 1+tails, gridN);
+    const post = betaStats(1+heads, 1+tails, 5000); // finer grid for the displayed numbers' precision
+    post.density = postDisplay.density; // reuse the coarse curve for drawing
+    document.getElementById("mPostMean").textContent = post.mean.toFixed(3);
+    document.getElementById("mCrI").textContent = `[${post.lo.toFixed(3)}, ${post.hi.toFixed(3)}]`;
+
+    const svg = document.getElementById("postSvg");
+    svg.innerHTML = "";
+    const W=640,H=300,pad=40;
+    const maxDensity = Math.max(1.2, Math.max(...post.density)*1.1);
+    function X(x){ return pad + x*(W-2*pad); }
+    function Y(y){ return H-pad - (y/maxDensity)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+
+    let priorD = "";
+    for(let i=0;i<=gridN;i++){ const x=i/gridN; priorD += (i===0?"M":"L")+X(x)+","+Y(prior.density[i])+" "; }
+    svg.appendChild(el("path",{d:priorD, fill:"none", stroke:"var(--chalk-dim)", "stroke-width":2, "stroke-dasharray":"6 5"}));
+
+    let postD = "";
+    for(let i=0;i<=gridN;i++){ const x=i/gridN; postD += (i===0?"M":"L")+X(x)+","+Y(post.density[i])+" "; }
+    svg.appendChild(el("path",{d:postD, fill:"none", stroke:"var(--green)", "stroke-width":2.6}));
+
+    if (mle!==null){
+      svg.appendChild(el("line",{x1:X(mle), y1:H-pad, x2:X(mle), y2:pad*0.5, stroke:"var(--amber)","stroke-width":2, "stroke-dasharray":"4 3"}));
+    }
+
+    const story = document.getElementById("postStory");
+    if (flipCount===0) story.textContent = "No evidence yet: the posterior is exactly the flat prior — every value of p equally plausible.";
+    else if (flipCount<=5) story.textContent = "With only a handful of flips, the posterior is wide and the prior still has real influence.";
+    else if (flipCount<100) story.textContent = "The posterior is narrowing and pulling away from the flat prior toward what the data actually suggests.";
+    else story.textContent = "With hundreds of flips, the posterior has collapsed into a narrow peak — and the frequentist MLE (amber line) and the posterior mean now agree almost exactly.";
+  }
+  document.getElementById("btnFlip1").addEventListener("click", () => { if(flipCount<1000){ flipCount++; renderPosterior(); } });
+  document.getElementById("btnFlip10").addEventListener("click", () => { flipCount = Math.min(1000, flipCount+10); renderPosterior(); });
+  document.getElementById("btnJump").addEventListener("click", () => { flipCount = 1000; renderPosterior(); });
+  document.getElementById("btnResetPost").addEventListener("click", () => { flipCount = 0; renderPosterior(); });
+  renderPosterior();
+
+  /* ============================================================
+     TAB 2 — CONFIDENCE VS CREDIBLE
+     ============================================================ */
+  const TRUE_P_COV = 0.6;
+  const N_COV = 40;
+  let covExperiments = [];
+
+  function walCI(heads, n){
+    const phat = heads/n;
+    const se = Math.sqrt(phat*(1-phat)/n);
+    return [Math.max(0,phat-1.96*se), Math.min(1,phat+1.96*se)];
+  }
+  function runCovBatch(count){
+    for(let k=0;k<count;k++){
+      let heads=0;
+      for(let i=0;i<N_COV;i++) if (Math.random()<TRUE_P_COV) heads++;
+      const [lo,hi] = walCI(heads, N_COV);
+      const captured = TRUE_P_COV>=lo && TRUE_P_COV<=hi;
+      covExperiments.push({lo,hi,captured});
+    }
+  }
+  function renderCoverage(){
+    const svg = document.getElementById("covSvg");
+    svg.innerHTML = "";
+    const W=640,H=300,pad=40;
+    function X(x){ return pad + x*(W-2*pad); }
+    svg.appendChild(el("line",{x1:X(TRUE_P_COV),y1:8,x2:X(TRUE_P_COV),y2:H-8,stroke:"var(--amber)","stroke-width":1.6,"stroke-dasharray":"5 4"}));
+    const visible = covExperiments.slice(-40);
+    const rowH = (H-16)/Math.max(1,visible.length);
+    visible.forEach((e,i) => {
+      const y = 8 + i*rowH + rowH/2;
+      const color = e.captured ? "var(--green)" : "var(--coral)";
+      svg.appendChild(el("line",{x1:X(e.lo),y1:y,x2:X(e.hi),y2:y,stroke:color,"stroke-width":Math.max(1.5, Math.min(4,rowH*0.6))}));
+    });
+    const total = covExperiments.length;
+    const captured = covExperiments.filter(e=>e.captured).length;
+    document.getElementById("mExpCount").textContent = total;
+    document.getElementById("mCaptured").textContent = captured;
+    document.getElementById("mCoverage").textContent = total>0 ? (100*captured/total).toFixed(1)+"%" : "-";
+    const story = document.getElementById("covStory");
+    story.textContent = total===0 ? "Click to run experiments and watch the coverage rate settle near 95%." :
+      `Out of ${total} independent 40-flip experiments, ${captured} of the resulting intervals contained the true p=0.6 — ${(100*captured/total).toFixed(1)}%, closing in on the promised 95% as more experiments run.`;
+  }
+  document.getElementById("btnRun30").addEventListener("click", () => { runCovBatch(30); renderCoverage(); });
+  document.getElementById("btnResetCov").addEventListener("click", () => { covExperiments = []; renderCoverage(); });
+  renderCoverage();
+
+  /* ============================================================
+     TAB 3 — THE PEEKING PROBLEM
+     ============================================================ */
+  function erf(x){
+    const sign = x<0?-1:1; x=Math.abs(x);
+    const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+    const t=1/(1+p*x);
+    const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+    return sign*y;
+  }
+  function normCDF(x){ return 0.5*(1+erf(x/Math.sqrt(2))); }
+  function pValueTwoProp(x1,n1,x2,n2){
+    if(n1===0||n2===0) return 1;
+    const p1=x1/n1, p2=x2/n2;
+    const pooled = (x1+x2)/(n1+n2);
+    if (pooled===0 || pooled===1) return 1;
+    const se = Math.sqrt(pooled*(1-pooled)*(1/n1+1/n2));
+    if (se===0) return 1;
+    const z = (p1-p2)/se;
+    return 2*(1-normCDF(Math.abs(z)));
+  }
+
+  let abCount = 0, peekFP = 0, fixedFP = 0;
+  const MAX_N_AB = 400;
+
+  function runOneABLive(){
+    const trajectory = [];
+    let x1=0,x2=0, peeked=false, peekN=null;
+    for(let n=1;n<=MAX_N_AB;n++){
+      if (Math.random()<0.5) x1++;
+      if (Math.random()<0.5) x2++;
+      const p = pValueTwoProp(x1,n,x2,n);
+      trajectory.push(p);
+      if (!peeked && n>=10 && p<0.05){ peeked=true; peekN=n; }
+    }
+    const fixedP = trajectory[MAX_N_AB-1];
+    abCount++;
+    if (peeked) peekFP++;
+    if (fixedP<0.05) fixedFP++;
+    drawTrajectory(trajectory, peekN);
+    updateABMetrics();
+  }
+  function runManyABTally(count){
+    for(let k=0;k<count;k++){
+      let x1=0,x2=0, peeked=false;
+      let finalP = 1;
+      for(let n=1;n<=MAX_N_AB;n++){
+        if (Math.random()<0.5) x1++;
+        if (Math.random()<0.5) x2++;
+        const p = pValueTwoProp(x1,n,x2,n);
+        finalP = p;
+        if (!peeked && n>=10 && p<0.05) peeked=true;
+      }
+      abCount++;
+      if (peeked) peekFP++;
+      if (finalP<0.05) fixedFP++;
+    }
+    updateABMetrics();
+  }
+  function drawTrajectory(trajectory, peekN){
+    const svg = document.getElementById("abSvg");
+    svg.innerHTML = "";
+    const W=640,H=280,pad=40;
+    function X(n){ return pad + (n/MAX_N_AB)*(W-2*pad); }
+    function Y(p){ return H-pad - Math.min(1,p)*(H-2*pad); }
+    svg.appendChild(el("rect",{x:pad,y:Y(0.05),width:W-2*pad,height:Y(0)-Y(0.05)>0?Y(0)-Y(0.05):0, fill:"rgba(255,130,102,0.10)"}));
+    svg.appendChild(el("line",{x1:pad,y1:Y(0.05),x2:W-pad,y2:Y(0.05),stroke:"var(--coral)","stroke-width":1.6,"stroke-dasharray":"5 4"}));
+    let d = "";
+    trajectory.forEach((p,i) => { d += (i===0?"M":"L")+X(i+1)+","+Y(p)+" "; });
+    svg.appendChild(el("path",{d, fill:"none", stroke:"var(--blue)", "stroke-width":1.8}));
+    if (peekN){
+      svg.appendChild(el("circle",{cx:X(peekN), cy:Y(trajectory[peekN-1]), r:6, fill:"var(--coral)", stroke:"var(--bg)","stroke-width":1.5}));
+    }
+  }
+  function updateABMetrics(){
+    document.getElementById("mABCount").textContent = abCount;
+    document.getElementById("mPeekFP").textContent = abCount>0 ? `${peekFP}/${abCount} (${(100*peekFP/abCount).toFixed(1)}%)` : "-";
+    document.getElementById("mFixedFP").textContent = abCount>0 ? `${fixedFP}/${abCount} (${(100*fixedFP/abCount).toFixed(1)}%)` : "-";
+    const story = document.getElementById("abStory");
+    story.textContent = abCount===0 ? "Run experiments to see how often each strategy falsely declares 'significant' when nothing real is happening." :
+      `So far: peeking continuously falsely declares victory ${(100*peekFP/abCount).toFixed(1)}% of the time; waiting for one fixed checkpoint stays close to the intended 5% (currently ${(100*fixedFP/abCount).toFixed(1)}%).`;
+  }
+  document.getElementById("btnRunOneAB").addEventListener("click", runOneABLive);
+  document.getElementById("btnRunManyAB").addEventListener("click", () => runManyABTally(200));
+  document.getElementById("btnResetAB").addEventListener("click", () => {
+    abCount=0; peekFP=0; fixedFP=0;
+    document.getElementById("abSvg").innerHTML = "";
+    updateABMetrics();
+  });
+  updateABMetrics();
+})();
+</script>
+</body>
+</html>

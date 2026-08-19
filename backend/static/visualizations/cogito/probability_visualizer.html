@@ -40,6 +40,15 @@
   button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
   button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
   button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op.primary:hover{ background:var(--accent); opacity:.9; }
+  .doorwrap{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .door{ width:38px; height:52px; border-radius:6px; border:2px solid var(--line); background:#F5F4F0; display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-soft); transition:all .2s ease; }
+  .door.opened{ background:#EDEAE3; color:var(--ink-soft); opacity:.55; }
+  .door.pick{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); color:var(--accent); font-weight:700; }
+  .door.survivor{ border-color:var(--pB); box-shadow:0 0 0 2px rgba(217,166,46,0.25); color:var(--pB); font-weight:700; }
+  .door.reveal-car{ background:var(--good); color:#fff; border-color:var(--good); opacity:1; }
+  .door.reveal-goat{ background:#fff; }
   .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
   .row label{ font-size:12.5px; color:var(--ink-soft); min-width:120px; }
   input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
@@ -74,6 +83,8 @@
 
   <div class="tabs">
     <button class="tab active" data-tab="tree">AND / OR Tree</button>
+    <button class="tab" data-tab="monty">Monty Hall</button>
+    <button class="tab" data-tab="birthday">Birthday Paradox</button>
     <button class="tab" data-tab="xent">Cross-Entropy Grader</button>
     <button class="tab" data-tab="lln">Law of Large Numbers</button>
   </div>
@@ -100,6 +111,58 @@
       </div>
       <div class="verdict" id="treeVerdict"></div>
       <div class="caption"><b>Why it matters:</b> every probability formula you'll meet is one of these two moves — multiply down a single path (AND, an independent-events "for every" scaling), or add across several non-overlapping paths (OR) — occasionally with a double-counted overlap subtracted back out once.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: MONTY HALL ============ -->
+  <div class="panel" id="panel-monty">
+    <div class="card">
+      <h2>Should You Switch?</h2>
+      <p class="sub"><b>What's happening:</b> you always pick door 1. The host — who knows where the car is — opens every other door except one, leaving your pick and exactly one "survivor" door closed. The doors below show one live round; the tally underneath comes from repeating it thousands of times, for both the "always stay" and "always switch" strategies.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> run a batch of rounds at 3 doors and watch switching settle near 2/3. Then drag the door count up toward 100 and run another batch — watch "always switch" climb toward a near-certain win, the scaled-up gut check from the tutorial, live.</p>
+      <div class="row"><label>number of doors</label><input type="range" id="montyN" min="3" max="100" step="1" value="3"><span class="readout" id="montyNOut">3</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="montyRound">Run 1 round</button>
+        <button class="op" id="montyBatch">Run 2,000 rounds</button>
+        <button class="op" id="montyReset">Reset tally</button>
+      </div>
+      <div class="doorwrap" id="montyDoors"></div>
+      <div class="caption" id="montyRoundCaption" style="margin-top:8px;"></div>
+      <div class="cols" style="margin-top:14px;">
+        <div class="col">
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Always STAY — win rate</div>
+          <div class="bar" id="montyStayBar"></div>
+        </div>
+        <div class="col">
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Always SWITCH — win rate</div>
+          <div class="bar" id="montySwitchBar"></div>
+        </div>
+      </div>
+      <div class="verdict" id="montyVerdict"></div>
+      <table class="surptable" style="margin-top:16px;">
+        <tr><th>where the car actually is (3-door case)</th><th>probability</th><th>host's opened door(s)</th><th>stay</th><th>switch</th></tr>
+        <tr><td>door 1 (your pick)</td><td>1/3</td><td>either 2 or 3 — a real choice</td><td>win</td><td>lose</td></tr>
+        <tr><td>door 2</td><td>1/3</td><td>door 3 only — forced</td><td>lose</td><td>win</td></tr>
+        <tr><td>door 3</td><td>1/3</td><td>door 2 only — forced</td><td>lose</td><td>win</td></tr>
+      </table>
+      <div class="caption"><b>Why it matters:</b> the host's reveal is never a coin flip — it's forced in two of the three worlds above — and that forced move is exactly where switching's extra 1/3 of winning odds comes from.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BIRTHDAY PARADOX ============ -->
+  <div class="panel" id="panel-birthday">
+    <div class="card">
+      <h2>How Few People Does It Take?</h2>
+      <p class="sub"><b>What's happening:</b> drag the room size and watch the <em>exact</em> probability that at least two people share a birthday — computed the honest way, one person at a time, not by the "count the pairs" shortcut. The simulation alongside confirms the formula by actually rolling thousands of random rooms.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set the room to 23 and run a batch of simulated rooms — watch the empirical match rate land right on the formula's 50.7%. Then compare 10 people against 50: the curve climbs far faster than "365 days in a year" makes it feel like it should.</p>
+      <div class="row"><label>people in the room</label><input type="range" id="bdayN" min="2" max="100" step="1" value="23"><span class="readout" id="bdayNOut">23</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="bdaySim">Simulate 3,000 random rooms at this size</button>
+      </div>
+      <canvas id="bdayCanvas" width="720" height="240"></canvas>
+      <div class="verdict" id="bdayVerdict"></div>
+      <div class="caption" id="bdayFormula" style="font-family:'IBM Plex Mono',monospace; font-size:12px;"></div>
+      <div class="caption"><b>Why it matters:</b> the number of <em>pairs</em> of people grows quadratically as the room fills, while any one pair's own match chance stays fixed at a tiny 1/365 — quadratic growth against a fixed small chance is what makes "surprisingly few people" actually check out.</div>
     </div>
   </div>
 
@@ -257,6 +320,186 @@
   document.getElementById("btnClearHi").addEventListener("click", () => { highlight=null; drawTree(); });
   [trPA,trPB,trPBgA,trPBgNA].forEach(inp => inp.addEventListener("input", drawTree));
   drawTree();
+
+  /* =========================================================
+     TAB — MONTY HALL
+     ========================================================= */
+  const montyNSlider = document.getElementById("montyN");
+  let montyN = 3, montyStay = 0, montySwitch = 0, montyTotal = 0, montyLastRound = null;
+
+  function montyRunOneRound(N){
+    const pick = 0;
+    const car = Math.floor(Math.random()*N);
+    let survivor;
+    if (car === pick){
+      const others = []; for (let i=0;i<N;i++) if (i!==pick) others.push(i);
+      survivor = others[Math.floor(Math.random()*others.length)];
+    } else {
+      survivor = car;
+    }
+    return {N, pick, car, survivor};
+  }
+
+  function montyRenderDoors(round){
+    const wrap = document.getElementById("montyDoors");
+    wrap.innerHTML = "";
+    for (let i=0; i<round.N; i++){
+      const d = document.createElement("div");
+      const classes = ["door"];
+      if (i === round.pick) classes.push("pick");
+      else if (i === round.survivor) classes.push("survivor");
+      else classes.push("opened");
+      if (i === round.car) classes.push("reveal-car");
+      d.className = classes.join(" ");
+      d.textContent = String(i+1);
+      wrap.appendChild(d);
+    }
+    const stayWon = round.car === round.pick;
+    const switchWon = round.car === round.survivor;
+    document.getElementById("montyRoundCaption").innerHTML =
+      `Door <b>${round.pick+1}</b> = your pick &nbsp;·&nbsp; door <b>${round.survivor+1}</b> = the survivor (host opened all other ${round.N-2} goat doors) &nbsp;·&nbsp; car is actually behind door <b>${round.car+1}</b>. `+
+      `<span style="color:${stayWon?'var(--good)':'var(--bad)'}">Staying ${stayWon?"wins":"loses"}.</span> `+
+      `<span style="color:${switchWon?'var(--good)':'var(--bad)'}">Switching ${switchWon?"wins":"loses"}.</span>`;
+  }
+
+  function montyRenderTally(){
+    const stayPct = montyTotal ? (montyStay/montyTotal*100) : 0;
+    const switchPct = montyTotal ? (montySwitch/montyTotal*100) : 0;
+    document.getElementById("montyStayBar").innerHTML =
+      `<div style="background:var(--good); width:${stayPct}%">${stayPct>10?stayPct.toFixed(1)+"%":""}</div>`+
+      `<div style="background:rgba(217,99,107,0.35); width:${100-stayPct}%"></div>`;
+    document.getElementById("montySwitchBar").innerHTML =
+      `<div style="background:var(--good); width:${switchPct}%">${switchPct>10?switchPct.toFixed(1)+"%":""}</div>`+
+      `<div style="background:rgba(217,99,107,0.35); width:${100-switchPct}%"></div>`;
+    const theory = ((montyN-1)/montyN*100).toFixed(1);
+    document.getElementById("montyVerdict").innerHTML =
+      `Across <b>${montyTotal}</b> tallied round${montyTotal===1?"":"s"} at ${montyN} doors: stay wins <b>${stayPct.toFixed(1)}%</b>, switch wins <b>${switchPct.toFixed(1)}%</b> `+
+      `&nbsp;·&nbsp; theory says stay → <b>${(100/montyN).toFixed(1)}%</b>, switch → <b>${theory}%</b> (= (N−1)/N).`;
+  }
+
+  function montyRunRound(){
+    const round = montyRunOneRound(montyN);
+    montyLastRound = round;
+    montyTotal++;
+    if (round.car === round.pick) montyStay++;
+    if (round.car === round.survivor) montySwitch++;
+    montyRenderDoors(round);
+    montyRenderTally();
+  }
+  function montyRunBatch(){
+    let batchStay=0, batchSwitch=0;
+    for (let i=0;i<2000;i++){
+      const round = montyRunOneRound(montyN);
+      if (round.car === round.pick) batchStay++;
+      if (round.car === round.survivor) batchSwitch++;
+    }
+    montyStay += batchStay; montySwitch += batchSwitch; montyTotal += 2000;
+    montyRenderTally();
+  }
+  function montyResetTally(){
+    montyStay=0; montySwitch=0; montyTotal=0; montyRenderTally();
+  }
+  montyNSlider.addEventListener("input", () => {
+    montyN = parseInt(montyNSlider.value,10);
+    document.getElementById("montyNOut").textContent = montyN;
+    montyResetTally();
+    document.getElementById("montyDoors").innerHTML = "";
+    document.getElementById("montyRoundCaption").textContent = "Run a round to see doors 1.."+montyN+" in action.";
+  });
+  document.getElementById("montyRound").addEventListener("click", montyRunRound);
+  document.getElementById("montyBatch").addEventListener("click", montyRunBatch);
+  document.getElementById("montyReset").addEventListener("click", montyResetTally);
+  montyRenderTally();
+  document.getElementById("montyRoundCaption").textContent = "Run a round to see doors 1..3 in action.";
+
+  /* =========================================================
+     TAB — BIRTHDAY PARADOX
+     ========================================================= */
+  const bdayNSlider = document.getElementById("bdayN");
+  const bdayCanvas = document.getElementById("bdayCanvas"), bctx = bdayCanvas.getContext("2d");
+  const BW = bdayCanvas.width, BH = bdayCanvas.height;
+  let bdaySimResult = null; // {n, empirical}
+
+  function bdayExactProb(n){
+    let noMatch = 1;
+    for (let i=0;i<n;i++) noMatch *= (365-i)/365;
+    return 1-noMatch;
+  }
+  function bdaySimulate(n, trials){
+    let matches = 0;
+    for (let t=0;t<trials;t++){
+      const seen = new Set();
+      let hasMatch = false;
+      for (let p=0;p<n;p++){
+        const bday = Math.floor(Math.random()*365);
+        if (seen.has(bday)){ hasMatch = true; break; }
+        seen.add(bday);
+      }
+      if (hasMatch) matches++;
+    }
+    return matches/trials;
+  }
+  function bdayDraw(){
+    bctx.clearRect(0,0,BW,BH);
+    const pad = 40;
+    function px(n){ return pad + (n/100)*(BW-2*pad); }
+    function py(p){ return BH-pad - p*(BH-2*pad); }
+    // gridlines at 0,25,50,75,100%
+    bctx.strokeStyle = "rgba(27,36,48,0.10)"; bctx.lineWidth = 1;
+    bctx.font = '11px "IBM Plex Mono",monospace'; bctx.fillStyle = "var(--ink-soft)";
+    [0,0.25,0.5,0.75,1].forEach(p => {
+      bctx.beginPath(); bctx.moveTo(pad,py(p)); bctx.lineTo(BW-pad,py(p)); bctx.stroke();
+      bctx.fillText((p*100).toFixed(0)+"%", 4, py(p)+4);
+    });
+    // exact curve
+    bctx.beginPath(); bctx.strokeStyle = "var(--pred)"; bctx.lineWidth = 2.2;
+    for (let n=1;n<=100;n++){
+      const X = px(n), Y = py(bdayExactProb(n));
+      if (n===1) bctx.moveTo(X,Y); else bctx.lineTo(X,Y);
+    }
+    bctx.stroke();
+    // 50% dashed line
+    bctx.strokeStyle = "var(--accent)"; bctx.setLineDash([5,4]); bctx.lineWidth = 1.4;
+    bctx.beginPath(); bctx.moveTo(pad,py(0.5)); bctx.lineTo(BW-pad,py(0.5)); bctx.stroke(); bctx.setLineDash([]);
+    // current-N marker
+    const n = parseInt(bdayNSlider.value,10);
+    const exact = bdayExactProb(n);
+    bctx.beginPath(); bctx.arc(px(n), py(exact), 5, 0, 7); bctx.fillStyle = "var(--pred)"; bctx.fill();
+    bctx.strokeStyle="#fff"; bctx.lineWidth=1.5; bctx.stroke();
+    // simulated marker, if available for this n
+    if (bdaySimResult && bdaySimResult.n === n){
+      bctx.beginPath(); bctx.arc(px(n), py(bdaySimResult.empirical), 5, 0, 7);
+      bctx.fillStyle = "var(--pB)"; bctx.fill(); bctx.strokeStyle="#fff"; bctx.lineWidth=1.5; bctx.stroke();
+    }
+    bctx.fillStyle = "var(--ink-soft)"; bctx.font = '11px "IBM Plex Mono",monospace';
+    bctx.fillText("people in the room →", BW-pad-118, BH-10);
+
+    document.getElementById("bdayVerdict").innerHTML =
+      `At <b>${n}</b> people: exact P(at least one shared birthday) = <span class="big">${(exact*100).toFixed(1)}%</span>`+
+      (bdaySimResult && bdaySimResult.n===n ? ` &nbsp;·&nbsp; simulated (3,000 rooms): <b>${(bdaySimResult.empirical*100).toFixed(1)}%</b>` : "");
+    let formulaStr = "";
+    if (n>1){
+      const shownHead = Math.min(n-1, 4); // i = 1..shownHead shown explicitly
+      const terms = []; for (let i=1;i<=shownHead;i++) terms.push(`${365-i}/365`);
+      const needsEllipsis = n-1 > shownHead+1; // there's a real gap between the head and the last term
+      const lastTerm = `${365-(n-1)}/365`;
+      let tail = "";
+      if (needsEllipsis) tail = ` × ... × ${lastTerm}`;
+      else if (n-1 === shownHead+1) tail = ` × ${lastTerm}`; // exactly one more term, show it plainly
+      formulaStr = `P(no match) = (365/365) × ${terms.join(" × ")}${tail} = ${(1-exact).toFixed(4)}`;
+    }
+    document.getElementById("bdayFormula").textContent = formulaStr;
+  }
+  bdayNSlider.addEventListener("input", () => {
+    document.getElementById("bdayNOut").textContent = bdayNSlider.value;
+    bdayDraw();
+  });
+  document.getElementById("bdaySim").addEventListener("click", () => {
+    const n = parseInt(bdayNSlider.value,10);
+    bdaySimResult = {n, empirical: bdaySimulate(n, 3000)};
+    bdayDraw();
+  });
+  bdayDraw();
 
   /* =========================================================
      TAB 2 — CROSS-ENTROPY GRADER

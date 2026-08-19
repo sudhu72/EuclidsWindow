@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cross-Validation Strategies, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 16px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+  button.op:disabled{opacity:.4;cursor:default;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  table.coord{border-collapse:collapse;margin:14px auto;width:100%;max-width:680px;}
+  table.coord th, table.coord td{border:1px solid var(--border);padding:6px 8px;text-align:center;font-size:11.5px;}
+  table.coord th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:12.5px;}
+  table.coord td.worse{color:var(--coral);}
+  table.coord td.better{color:var(--green);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cross-Validation Strategies, live</h1>
+  <p class="sub">Six tabs, one per Part of the companion tutorial. Every default matches the tutorial's cited numbers.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="mech">1. K-Fold Mechanics</button>
+    <button class="tabbtn" data-tab="chooseK">2. Choosing K</button>
+    <button class="tabbtn" data-tab="loocv">3. LOOCV Shortcut</button>
+    <button class="tabbtn" data-tab="leak">4. Time &amp; Group Leakage</button>
+    <button class="tabbtn" data-tab="strat">5. Stratified vs Standard</button>
+    <button class="tabbtn" data-tab="nested">6. Nested CV</button>
+  </div>
+
+  <!-- ============ TAB 1: K-FOLD MECHANICS ============ -->
+  <div class="tabpanel active" id="tab-mech">
+    <div class="panel">
+      <h2>Watch the Fold Rotation, One Round at a Time</h2>
+      <p class="sub">12 points, split into folds. Each round, one fold plays "test" (coral) while the rest train (blue); the model refits from scratch every round.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="mechK3">K = 3</button>
+        <button class="op" id="mechK4">K = 4</button>
+        <button class="op" id="mechK6">K = 6</button>
+        <button class="op" id="mechK12">K = 12 (LOOCV)</button>
+      </div>
+      <svg id="mechSvg" width="680" height="150" viewBox="0 0 680 150"></svg>
+      <div class="row">
+        <button class="op primary" id="mechNext">Next round &rarr;</button>
+        <button class="op" id="mechReset">Reset</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">round</div><div class="num" id="mechRound">0 / 0</div></div>
+        <div class="metric coral"><div class="lbl">this round's fold error</div><div class="num" id="mechFoldErr">-</div></div>
+        <div class="metric green"><div class="lbl">running CV average</div><div class="num" id="mechAvg">-</div></div>
+      </div>
+      <div class="story-line" id="mechStory">Click "Next round" to begin.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: CHOOSING K ============ -->
+  <div class="tabpanel" id="tab-chooseK">
+    <div class="panel">
+      <h2>K Is Its Own Bias-Variance Knob</h2>
+      <p class="sub">n=30 points, OLS regression, y=2x+1+noise. Drag K and watch the CV-estimate variance (measured across many independently redrawn 30-point datasets) and the naive within-run standard-error's undershoot.</p>
+      <div class="row"><label>number of folds K</label><input type="range" id="kSlider" min="2" max="30" step="1" value="10"><span class="readout" id="kSliderOut">10</span></div>
+      <div class="row">
+        <button class="op primary" id="kRun">Run 800 independent 30-point datasets at this K</button>
+      </div>
+      <svg id="kChartSvg" width="680" height="220" viewBox="0 0 680 220"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">true SE (across datasets)</div><div class="num" id="kTrueSE">-</div></div>
+        <div class="metric coral"><div class="lbl">naive SE (within one run)</div><div class="num" id="kNaiveSE">-</div></div>
+        <div class="metric amber"><div class="lbl">naive ÷ true</div><div class="num" id="kRatio">-</div></div>
+        <div class="metric green"><div class="lbl">compute cost (refits)</div><div class="num" id="kCost">-</div></div>
+      </div>
+      <div class="story-line" id="kStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: LOOCV SHORTCUT ============ -->
+  <div class="tabpanel" id="tab-loocv">
+    <div class="panel">
+      <h2>One Fit, One Correction Factor — No Refitting</h2>
+      <p class="sub">12 points, OLS. Compare brute-force leave-one-out (12 refits) against the leverage-corrected shortcut (1 fit).</p>
+      <div class="row">
+        <button class="op primary" id="loocvRun">Run brute-force LOOCV (12 refits) + shortcut (1 fit)</button>
+      </div>
+      <table class="coord" id="loocvTable"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">brute-force LOOCV MSE</div><div class="num" id="loocvBrute">-</div></div>
+        <div class="metric green"><div class="lbl">shortcut LOOCV MSE</div><div class="num" id="loocvShort">-</div></div>
+        <div class="metric amber"><div class="lbl">max residual diff</div><div class="num" id="loocvDiff">-</div></div>
+      </div>
+      <div class="story-line" id="loocvStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: TIME & GROUP LEAKAGE ============ -->
+  <div class="tabpanel" id="tab-leak">
+    <div class="panel">
+      <h2>When the Shuffle Itself Is the Bug</h2>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="leakTimeBtn">Time Series (random walk)</button>
+        <button class="op" id="leakGroupBtn">Grouped Data (patients)</button>
+      </div>
+
+      <div id="leakTimePanel">
+        <p class="sub">A pure random walk, 200 steps — genuinely unpredictable beyond the most recent point. Model: "average of the 2 nearest-in-time training points."</p>
+        <svg id="leakTimeSvg" width="680" height="180" viewBox="0 0 680 180"></svg>
+        <div class="row">
+          <button class="op primary" id="leakTimeRun">Evaluate both ways</button>
+        </div>
+        <div class="metric-row">
+          <div class="metric coral"><div class="lbl">standard shuffled 5-fold</div><div class="num" id="leakTimeStd">-</div></div>
+          <div class="metric green"><div class="lbl">walk-forward (blocked) CV</div><div class="num" id="leakTimeHonest">-</div></div>
+          <div class="metric blue"><div class="lbl">"no change" baseline</div><div class="num" id="leakTimeBase">-</div></div>
+        </div>
+      </div>
+
+      <div id="leakGroupPanel" style="display:none;">
+        <p class="sub">20 patients, 10 measurements each. Each point's x is a per-patient "fingerprint" (incidental, not real signal); y is the patient's true baseline plus small noise. Model: 1-nearest-neighbor by x.</p>
+        <svg id="leakGroupSvg" width="680" height="220" viewBox="0 0 680 220"></svg>
+        <div class="row">
+          <button class="op primary" id="leakGroupRun">Evaluate both ways</button>
+        </div>
+        <div class="metric-row">
+          <div class="metric coral"><div class="lbl">standard (leaky) 5-fold</div><div class="num" id="leakGroupStd">-</div></div>
+          <div class="metric green"><div class="lbl">GroupKFold (honest)</div><div class="num" id="leakGroupHonest">-</div></div>
+          <div class="metric blue"><div class="lbl">grand-mean baseline</div><div class="num" id="leakGroupBase">-</div></div>
+        </div>
+      </div>
+      <div class="story-line" id="leakStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: STRATIFIED VS STANDARD ============ -->
+  <div class="tabpanel" id="tab-strat">
+    <div class="panel">
+      <h2>Keeping Class Balance Honest Across Folds</h2>
+      <p class="sub">100 rows, adjustable minority-class rate. Run many random 5-fold splits and see how often standard k-fold produces a fold with zero minority examples.</p>
+      <div class="row"><label>minority class rate</label><input type="range" id="stratRate" min="5" max="30" step="1" value="10"><span class="readout" id="stratRateOut">10%</span></div>
+      <div class="row">
+        <button class="op primary" id="stratRun">Run 2,000 random 5-fold splits</button>
+      </div>
+      <table class="coord" id="stratExampleTable"></table>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">standard: % splits w/ an empty-minority fold</div><div class="num" id="stratStdPct">-</div></div>
+        <div class="metric green"><div class="lbl">stratified: % splits w/ an empty-minority fold</div><div class="num" id="stratStratPct">-</div></div>
+      </div>
+      <div class="story-line" id="stratStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: NESTED CV ============ -->
+  <div class="tabpanel" id="tab-nested">
+    <div class="panel">
+      <h2>Twenty Coin-Flippers, One of Them Crowned a Genius</h2>
+      <p class="sub">Every candidate below has a true accuracy of exactly 50% — pure chance. Watch what happens when the same score both picks the winner and reports on it.</p>
+      <div class="row"><label>number of candidates</label><input type="range" id="nestedN" min="5" max="40" step="1" value="20"><span class="readout" id="nestedNOut">20</span></div>
+      <div class="row">
+        <button class="op primary" id="nestedRun">Run 300 independent repeats</button>
+      </div>
+      <svg id="nestedSvg" width="680" height="160" viewBox="0 0 680 160"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">true accuracy (all candidates)</div><div class="num">0.500</div></div>
+        <div class="metric coral"><div class="lbl">naive: best-of-N, self-reported</div><div class="num" id="nestedNaive">-</div></div>
+        <div class="metric amber"><div class="lbl">mean CV across all candidates</div><div class="num" id="nestedMean">-</div></div>
+        <div class="metric green"><div class="lbl">nested CV: honest outer score</div><div class="num" id="nestedHonest">-</div></div>
+      </div>
+      <div class="story-line" id="nestedStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../cross_validation_strategies_feynman.md">Cross-Validation Strategies</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x, y, s, attrs){
+    const t = el("text", Object.assign({x:x, y:y}, attrs||{}));
+    t.textContent = s;
+    return t;
+  }
+  function clear(svg){ while (svg.firstChild) svg.removeChild(svg.firstChild); }
+  function fmt(v, d){ return (typeof v === "number" && isFinite(v)) ? v.toFixed(d===undefined?4:d) : "-"; }
+
+  function makeLCG(seed){ let s=seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function boxMuller(rand){ const u1=Math.max(rand(),1e-12), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+
+  function fitOLS(xs, ys){
+    const n = xs.length;
+    const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+    let num=0, den=0;
+    for (let i=0;i<n;i++){ num += (xs[i]-mx)*(ys[i]-my); den += (xs[i]-mx)**2; }
+    const slope = den>1e-12 ? num/den : 0, intercept = my - slope*mx;
+    return {slope, intercept, predict: x => slope*x + intercept};
+  }
+
+  function tabClick(name){
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.toggle("active", p.id==="tab-"+name));
+  }
+  document.querySelectorAll(".tabbtn").forEach(b=>b.addEventListener("click", ()=>tabClick(b.dataset.tab)));
+
+  // ============================================================
+  // TAB 1: K-FOLD MECHANICS
+  // ============================================================
+  (function(){
+    const n = 12;
+    const rand0 = makeLCG(4);
+    const xs = Array.from({length:n}, ()=> rand0()*4-2);
+    const trueF = x => 2*x+1;
+    const ys = xs.map(x => trueF(x) + boxMuller(rand0)*1.0);
+
+    let K = 3, round = 0, order = [], foldOf = [], scores = [];
+    const svg = document.getElementById("mechSvg");
+    const roundOut = document.getElementById("mechRound");
+    const foldErrOut = document.getElementById("mechFoldErr");
+    const avgOut = document.getElementById("mechAvg");
+    const story = document.getElementById("mechStory");
+
+    function assignFolds(){
+      order = Array.from({length:n},(_,i)=>i);
+      const r = makeLCG(77);
+      for (let i=order.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+      foldOf = new Array(n);
+      const foldSize = Math.floor(n/K);
+      for (let f=0; f<K; f++){
+        const start=f*foldSize, end=(f===K-1)?n:start+foldSize;
+        for (let i=start;i<end;i++) foldOf[order[i]] = f;
+      }
+    }
+    function reset(){ round = 0; scores = []; assignFolds(); draw(-1); roundOut.textContent = "0 / "+K; foldErrOut.textContent="-"; avgOut.textContent="-"; story.textContent = "Click \"Next round\" to begin."; }
+
+    function draw(activeFold){
+      clear(svg);
+      const pad=30, w=680-2*pad;
+      for (let i=0;i<n;i++){
+        const cx = pad + (i+0.5)*(w/n);
+        const isTest = foldOf[i]===activeFold;
+        const isDone = activeFold>=0 && foldOf[i] < activeFold + 1 && (round>0);
+        let color = "var(--chalk-dim)";
+        if (activeFold>=0){ color = isTest ? "var(--coral)" : "var(--blue)"; }
+        svg.appendChild(el("circle", {cx:cx, cy:70, r:14, fill: isTest? "#ff8266" : (activeFold>=0 ? "#7fb3d5" : "#3a4a41"), stroke:"var(--border)"}));
+        svg.appendChild(txt(cx, 74, "F"+foldOf[i], {"text-anchor":"middle","font-size":"10","fill":"#16221c","font-family":"JetBrains Mono, monospace","font-weight":"700"}));
+        svg.appendChild(txt(cx, 100, "x="+xs[i].toFixed(1), {"text-anchor":"middle","font-size":"9.5","fill":"var(--chalk-dim)"}));
+      }
+      svg.appendChild(txt(340, 20, activeFold<0 ? "not started" : ("round "+(activeFold+1)+": fold "+activeFold+" = TEST (coral), rest = TRAIN (blue)"), {"text-anchor":"middle","font-size":"12","fill":"var(--chalk)"}));
+    }
+
+    function nextRound(){
+      if (round >= K) return;
+      const testIdx = [], trainIdx = [];
+      for (let i=0;i<n;i++) (foldOf[i]===round ? testIdx : trainIdx).push(i);
+      const model = fitOLS(trainIdx.map(i=>xs[i]), trainIdx.map(i=>ys[i]));
+      let sq=0; for (const i of testIdx){ const e = ys[i]-model.predict(xs[i]); sq+=e*e; }
+      const foldScore = sq/testIdx.length;
+      scores.push(foldScore);
+      draw(round);
+      round++;
+      roundOut.textContent = round+" / "+K;
+      foldErrOut.textContent = fmt(foldScore,3);
+      const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+      avgOut.textContent = fmt(avg,3);
+      story.textContent = round<K ? "Round "+round+" done. "+(K-round)+" to go." : "All "+K+" rounds complete — this average is the K-fold CV estimate.";
+    }
+
+    document.getElementById("mechNext").addEventListener("click", nextRound);
+    document.getElementById("mechReset").addEventListener("click", reset);
+    [["mechK3",3],["mechK4",4],["mechK6",6],["mechK12",12]].forEach(([id,k])=>{
+      document.getElementById(id).addEventListener("click", ()=>{
+        document.querySelectorAll("#tab-mech .row .op").forEach(b=>b.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+        K = k; reset();
+      });
+    });
+    reset();
+  })();
+
+  // ============================================================
+  // TAB 2: CHOOSING K
+  // ============================================================
+  (function(){
+    const n = 30, sigma = 1.0;
+    const trueF = x => 2*x+1;
+    const visited = []; // {K, trueSE, naiveSE}
+
+    function kFoldFoldMeans(xs, ys, k){
+      const nn = xs.length;
+      const foldSize = Math.floor(nn/k);
+      const foldMeans = [];
+      for (let f=0; f<k; f++){
+        const start=f*foldSize, end=(f===k-1)?nn:start+foldSize;
+        const testX=[], testY=[], trainX=[], trainY=[];
+        for (let i=0;i<nn;i++){
+          if (i>=start && i<end){ testX.push(xs[i]); testY.push(ys[i]); }
+          else { trainX.push(xs[i]); trainY.push(ys[i]); }
+        }
+        const model = fitOLS(trainX, trainY);
+        let sq=0; for (let j=0;j<testX.length;j++){ const e=testY[j]-model.predict(testX[j]); sq+=e*e; }
+        foldMeans.push(sq/testX.length);
+      }
+      return foldMeans;
+    }
+
+    function run(K, outer){
+      const cvEstimates = [], naiveSEs = [];
+      for (let o=0;o<outer;o++){
+        const rand = makeLCG(o*7919+13);
+        const xs = Array.from({length:n}, ()=>rand()*4-2);
+        const ys = xs.map(x=>trueF(x)+sigma*boxMuller(rand));
+        // shuffle rows once per dataset (fixed order used consistently across the K partition)
+        const idx = Array.from({length:n},(_,i)=>i);
+        const rand2 = makeLCG(o*131+K);
+        for (let i=idx.length-1;i>0;i--){ const j=Math.floor(rand2()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+        const sx = idx.map(i=>xs[i]), sy = idx.map(i=>ys[i]);
+        const foldMeans = kFoldFoldMeans(sx, sy, K);
+        const m = foldMeans.reduce((a,b)=>a+b,0)/K;
+        cvEstimates.push(m);
+        if (K>1){
+          const varAcross = foldMeans.reduce((a,b)=>a+(b-m)**2,0)/(K-1);
+          naiveSEs.push(Math.sqrt(varAcross/K));
+        }
+      }
+      const meanCV = cvEstimates.reduce((a,b)=>a+b,0)/outer;
+      const trueVar = cvEstimates.reduce((a,b)=>a+(b-meanCV)**2,0)/outer;
+      const trueSE = Math.sqrt(trueVar);
+      const meanNaiveSE = naiveSEs.length ? naiveSEs.reduce((a,b)=>a+b,0)/naiveSEs.length : NaN;
+      return {trueSE, naiveSE: meanNaiveSE};
+    }
+
+    const svg = document.getElementById("kChartSvg");
+    const slider = document.getElementById("kSlider");
+    const sliderOut = document.getElementById("kSliderOut");
+    const trueSEOut = document.getElementById("kTrueSE");
+    const naiveSEOut = document.getElementById("kNaiveSE");
+    const ratioOut = document.getElementById("kRatio");
+    const costOut = document.getElementById("kCost");
+    const story = document.getElementById("kStory");
+
+    function drawChart(){
+      clear(svg);
+      const pad=44, w=680-2*pad, h=220-2*pad-10;
+      svg.appendChild(el("line",{x1:pad,y1:220-pad,x2:680-pad,y2:220-pad,stroke:"var(--border)"}));
+      svg.appendChild(el("line",{x1:pad,y1:10,x2:pad,y2:220-pad,stroke:"var(--border)"}));
+      svg.appendChild(txt(680/2, 218, "K (number of folds, n=30)", {"text-anchor":"middle","font-size":"11","fill":"var(--chalk-dim)"}));
+      svg.appendChild(txt(14, 115, "SE", {"text-anchor":"middle","font-size":"11","fill":"var(--chalk-dim)", "transform":"rotate(-90 14 115)"}));
+      if (visited.length===0) return;
+      const maxSE = Math.max(...visited.map(v=>v.trueSE), 0.4);
+      function xOf(k){ return pad + (k-2)/(30-2)*w; }
+      function yOf(se){ return (220-pad) - (se/maxSE)*h; }
+      const sorted = visited.slice().sort((a,b)=>a.K-b.K);
+      let pathTrue = "", pathNaive = "";
+      sorted.forEach((v,i)=>{
+        const x=xOf(v.K), yT=yOf(v.trueSE), yN=isFinite(v.naiveSE)?yOf(v.naiveSE):yT;
+        pathTrue += (i===0?"M":"L")+x+","+yT+" ";
+        pathNaive += (i===0?"M":"L")+x+","+yN+" ";
+      });
+      svg.appendChild(el("path",{d:pathTrue, fill:"none", stroke:"var(--blue)", "stroke-width":"2"}));
+      svg.appendChild(el("path",{d:pathNaive, fill:"none", stroke:"var(--coral)", "stroke-width":"2", "stroke-dasharray":"4,3"}));
+      sorted.forEach(v=>{
+        svg.appendChild(el("circle",{cx:xOf(v.K), cy:yOf(v.trueSE), r:4, fill:"var(--blue)"}));
+        if (isFinite(v.naiveSE)) svg.appendChild(el("circle",{cx:xOf(v.K), cy:yOf(v.naiveSE), r:4, fill:"var(--coral)"}));
+      });
+      svg.appendChild(txt(680-pad-4, 24, "— true SE (blue)", {"text-anchor":"end","font-size":"10.5","fill":"var(--blue)"}));
+      svg.appendChild(txt(680-pad-4, 38, "- - naive SE (coral)", {"text-anchor":"end","font-size":"10.5","fill":"var(--coral)"}));
+    }
+
+    function runAt(K){
+      const outer = 800;
+      const res = run(K, outer);
+      const existingIdx = visited.findIndex(v=>v.K===K);
+      const entry = {K, trueSE: res.trueSE, naiveSE: res.naiveSE};
+      if (existingIdx>=0) visited[existingIdx]=entry; else visited.push(entry);
+      trueSEOut.textContent = fmt(res.trueSE,4);
+      naiveSEOut.textContent = fmt(res.naiveSE,4);
+      ratioOut.textContent = fmt(res.naiveSE/res.trueSE,3);
+      costOut.textContent = K+" fits";
+      drawChart();
+      story.textContent = "K="+K+": variance of the CV estimate itself keeps settling as K grows; the naive within-run SE formula underestimates the true SE by about "+((1-res.naiveSE/res.trueSE)*100).toFixed(0)+"%.";
+    }
+
+    slider.addEventListener("input", ()=>{ sliderOut.textContent = slider.value; });
+    document.getElementById("kRun").addEventListener("click", ()=> runAt(parseInt(slider.value,10)));
+    // seed the chart with the tutorial's exact cited K values on load
+    [2,5,10,15,30].forEach(K=>runAt(K));
+    slider.value = 10; sliderOut.textContent = "10";
+  })();
+
+  // ============================================================
+  // TAB 3: LOOCV SHORTCUT
+  // ============================================================
+  (function(){
+    const n = 12, sigma = 1.0;
+    const rand = makeLCG(99);
+    const xs = Array.from({length:n}, ()=>rand()*4-2);
+    const trueF = x => 2*x+1;
+    const ys = xs.map(x => trueF(x) + sigma*boxMuller(rand));
+
+    function run(){
+      const bruteResid = [];
+      let bruteSq = 0;
+      for (let i=0;i<n;i++){
+        const trainX = xs.filter((_,j)=>j!==i), trainY = ys.filter((_,j)=>j!==i);
+        const m = fitOLS(trainX, trainY);
+        const r = ys[i]-m.predict(xs[i]);
+        bruteResid.push(r); bruteSq += r*r;
+      }
+      const full = fitOLS(xs, ys);
+      const mx = xs.reduce((a,b)=>a+b,0)/n;
+      const Sxx = xs.reduce((a,b)=>a+(b-mx)**2,0);
+      const leverage = [], shortcutResid = [];
+      let shortcutSq = 0;
+      for (let i=0;i<n;i++){
+        const h = 1/n + (xs[i]-mx)**2/Sxx;
+        leverage.push(h);
+        const ordResid = ys[i]-full.predict(xs[i]);
+        const loo = ordResid/(1-h);
+        shortcutResid.push(loo); shortcutSq += loo*loo;
+      }
+      const maxDiff = Math.max(...bruteResid.map((r,i)=>Math.abs(r-shortcutResid[i])));
+
+      const table = document.getElementById("loocvTable");
+      let html = "<tr><th>i</th><th>x</th><th>y</th><th>leverage h_ii</th><th>brute LOO resid</th><th>shortcut LOO resid</th></tr>";
+      for (let i=0;i<n;i++){
+        html += "<tr><td>"+i+"</td><td>"+xs[i].toFixed(2)+"</td><td>"+ys[i].toFixed(2)+"</td><td>"+leverage[i].toFixed(3)+"</td><td>"+bruteResid[i].toFixed(4)+"</td><td>"+shortcutResid[i].toFixed(4)+"</td></tr>";
+      }
+      table.innerHTML = html;
+      document.getElementById("loocvBrute").textContent = fmt(bruteSq/n, 6);
+      document.getElementById("loocvShort").textContent = fmt(shortcutSq/n, 6);
+      document.getElementById("loocvDiff").textContent = maxDiff.toExponential(2);
+      document.getElementById("loocvStory").textContent = "12 refits and 1 fit-plus-correction land on the identical MSE, to floating-point precision.";
+    }
+    document.getElementById("loocvRun").addEventListener("click", run);
+    run();
+  })();
+
+  // ============================================================
+  // TAB 4: TIME & GROUP LEAKAGE
+  // ============================================================
+  (function(){
+    // --- time series data ---
+    const nT = 200;
+    const randT = makeLCG(2024);
+    const y = [0];
+    for (let t=1;t<nT;t++) y.push(y[t-1] + boxMuller(randT)*1.0);
+
+    function predictNN2(trainIdx, trainVal, queryIdx){
+      let d0=Infinity, d1=Infinity, v0=0, v1=0;
+      for (let k=0;k<trainIdx.length;k++){
+        const d = Math.abs(trainIdx[k]-queryIdx);
+        if (d<d0){ d1=d0; v1=v0; d0=d; v0=trainVal[k]; }
+        else if (d<d1){ d1=d; v1=trainVal[k]; }
+      }
+      return (v0+v1)/2;
+    }
+    function shuffledKFoldTime(k){
+      const idx = Array.from({length:nT},(_,i)=>i);
+      const r2 = makeLCG(555);
+      for (let i=idx.length-1;i>0;i--){ const j=Math.floor(r2()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+      const foldSize = Math.floor(nT/k);
+      let sq=0,count=0;
+      for (let f=0; f<k; f++){
+        const start=f*foldSize, end=(f===k-1)?nT:start+foldSize;
+        const testIdxArr = idx.slice(start,end);
+        const testSet = new Set(testIdxArr);
+        const trainIdxArr = idx.filter(i=>!testSet.has(i));
+        const tv = trainIdxArr.map(i=>y[i]);
+        for (const qi of testIdxArr){ const pred = predictNN2(trainIdxArr, tv, qi); const e=y[qi]-pred; sq+=e*e; count++; }
+      }
+      return sq/count;
+    }
+    function walkForwardCV(k){
+      const blockSize = Math.floor(nT/(k+1));
+      let sq=0, count=0;
+      for (let f=1; f<=k; f++){
+        const trainEnd = f*blockSize;
+        const testStart = trainEnd, testEnd = Math.min(nT, trainEnd+blockSize);
+        const trainIdxArr = Array.from({length:trainEnd},(_,i)=>i);
+        const tv = trainIdxArr.map(i=>y[i]);
+        for (let qi=testStart; qi<testEnd; qi++){ const pred=predictNN2(trainIdxArr, tv, qi); const e=y[qi]-pred; sq+=e*e; count++; }
+      }
+      return sq/count;
+    }
+    function walkForwardBaseline(k){
+      const blockSize = Math.floor(nT/(k+1));
+      let sq=0,count=0;
+      for (let f=1; f<=k; f++){
+        const trainEnd = f*blockSize;
+        const testStart = trainEnd, testEnd = Math.min(nT, trainEnd+blockSize);
+        for (let qi=testStart; qi<testEnd; qi++){ const pred=y[trainEnd-1]; const e=y[qi]-pred; sq+=e*e; count++; }
+      }
+      return sq/count;
+    }
+
+    function drawTimeSeries(){
+      const svg = document.getElementById("leakTimeSvg");
+      clear(svg);
+      const pad=30, w=680-2*pad, h=180-2*pad;
+      const minY = Math.min(...y), maxY = Math.max(...y);
+      function xOf(t){ return pad + t/(nT-1)*w; }
+      function yOf(v){ return pad + (1-(v-minY)/(maxY-minY))*h; }
+      let path = "";
+      y.forEach((v,t)=>{ path += (t===0?"M":"L")+xOf(t)+","+yOf(v)+" "; });
+      svg.appendChild(el("path",{d:path, fill:"none", stroke:"var(--blue)", "stroke-width":"1.5"}));
+      svg.appendChild(txt(340, 16, "a pure random walk — no real structure beyond the last known value", {"text-anchor":"middle","font-size":"11","fill":"var(--chalk-dim)"}));
+    }
+    drawTimeSeries();
+
+    document.getElementById("leakTimeRun").addEventListener("click", ()=>{
+      document.getElementById("leakTimeStd").textContent = fmt(shuffledKFoldTime(5),3);
+      document.getElementById("leakTimeHonest").textContent = fmt(walkForwardCV(5),3);
+      document.getElementById("leakTimeBase").textContent = fmt(walkForwardBaseline(5),3);
+      document.getElementById("leakStory").textContent = "Standard shuffling lets future points leak into training, making a genuinely unpredictable series look forecastable — walk-forward CV reveals the truth.";
+    });
+
+    // --- grouped data ---
+    const nPatients = 20, perPatient = 10;
+    const randG = makeLCG(4242);
+    const rows = [];
+    for (let p=0; p<nPatients; p++){
+      const offset = boxMuller(randG)*10;
+      const anchor = randG()*100;
+      for (let m=0; m<perPatient; m++){
+        const x = anchor + boxMuller(randG)*0.3;
+        const yy = offset + boxMuller(randG)*0.5;
+        rows.push({patient:p, x, y:yy, anchor});
+      }
+    }
+    const nG = rows.length;
+    function oneNNPredict(trainRows, queryX){
+      let best=null, bestD=Infinity;
+      for (const r of trainRows){ const d=Math.abs(r.x-queryX); if (d<bestD){bestD=d; best=r;} }
+      return best.y;
+    }
+    function standardKFoldGroup(k){
+      const idx = Array.from({length:nG},(_,i)=>i);
+      const r2 = makeLCG(9001);
+      for (let i=idx.length-1;i>0;i--){ const j=Math.floor(r2()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+      const foldSize = Math.floor(nG/k);
+      let sq=0,count=0;
+      for (let f=0; f<k; f++){
+        const start=f*foldSize, end=(f===k-1)?nG:start+foldSize;
+        const testIdxArr = idx.slice(start,end);
+        const testSet = new Set(testIdxArr);
+        const trainRows = idx.filter(i=>!testSet.has(i)).map(i=>rows[i]);
+        for (const qi of testIdxArr){ const pred=oneNNPredict(trainRows, rows[qi].x); const e=rows[qi].y-pred; sq+=e*e; count++; }
+      }
+      return sq/count;
+    }
+    function groupKFold(k){
+      const patientIdx = Array.from({length:nPatients},(_,i)=>i);
+      const r2 = makeLCG(9002);
+      for (let i=patientIdx.length-1;i>0;i--){ const j=Math.floor(r2()*(i+1)); [patientIdx[i],patientIdx[j]]=[patientIdx[j],patientIdx[i]]; }
+      const foldSize = Math.floor(nPatients/k);
+      let sq=0,count=0;
+      for (let f=0; f<k; f++){
+        const start=f*foldSize, end=(f===k-1)?nPatients:start+foldSize;
+        const testPatients = new Set(patientIdx.slice(start,end));
+        const trainRows = rows.filter(r=>!testPatients.has(r.patient));
+        const testRowsArr = rows.filter(r=>testPatients.has(r.patient));
+        for (const r of testRowsArr){ const pred=oneNNPredict(trainRows, r.x); const e=r.y-pred; sq+=e*e; count++; }
+      }
+      return sq/count;
+    }
+    function drawGroups(){
+      const svg = document.getElementById("leakGroupSvg");
+      clear(svg);
+      const pad=36, w=680-2*pad, h=220-2*pad;
+      const minX=Math.min(...rows.map(r=>r.x)), maxX=Math.max(...rows.map(r=>r.x));
+      const minY=Math.min(...rows.map(r=>r.y)), maxY=Math.max(...rows.map(r=>r.y));
+      function xOf(v){ return pad + (v-minX)/(maxX-minX)*w; }
+      function yOf(v){ return pad + (1-(v-minY)/(maxY-minY))*h; }
+      rows.forEach(r=>{
+        const hue = (r.patient*47)%360;
+        svg.appendChild(el("circle",{cx:xOf(r.x), cy:yOf(r.y), r:3.5, fill:"hsl("+hue+",65%,60%)", opacity:"0.85"}));
+      });
+      svg.appendChild(txt(340, 16, "20 patients (colors), each clustered by an incidental x-fingerprint", {"text-anchor":"middle","font-size":"11","fill":"var(--chalk-dim)"}));
+    }
+    drawGroups();
+
+    document.getElementById("leakGroupRun").addEventListener("click", ()=>{
+      const grandMean = rows.reduce((a,r)=>a+r.y,0)/nG;
+      const baseline = rows.reduce((a,r)=>a+(r.y-grandMean)**2,0)/nG;
+      document.getElementById("leakGroupStd").textContent = fmt(standardKFoldGroup(5),3);
+      document.getElementById("leakGroupHonest").textContent = fmt(groupKFold(5),3);
+      document.getElementById("leakGroupBase").textContent = fmt(baseline,3);
+      document.getElementById("leakStory").textContent = "Standard k-fold lets the model partially recognize a patient it already saw; GroupKFold reveals it has no real predictive skill on genuinely new patients.";
+    });
+
+    document.getElementById("leakTimeBtn").addEventListener("click", ()=>{
+      document.getElementById("leakTimeBtn").classList.add("active");
+      document.getElementById("leakGroupBtn").classList.remove("active");
+      document.getElementById("leakTimePanel").style.display = "";
+      document.getElementById("leakGroupPanel").style.display = "none";
+    });
+    document.getElementById("leakGroupBtn").addEventListener("click", ()=>{
+      document.getElementById("leakGroupBtn").classList.add("active");
+      document.getElementById("leakTimeBtn").classList.remove("active");
+      document.getElementById("leakGroupPanel").style.display = "";
+      document.getElementById("leakTimePanel").style.display = "none";
+    });
+  })();
+
+  // ============================================================
+  // TAB 5: STRATIFIED VS STANDARD
+  // ============================================================
+  (function(){
+    const n = 100;
+    function buildLabels(minorityPct, seed){
+      const nPos = Math.round(n*minorityPct/100), nNeg = n-nPos;
+      const labels = [];
+      for (let i=0;i<nNeg;i++) labels.push(0);
+      for (let i=0;i<nPos;i++) labels.push(1);
+      const r = makeLCG(seed);
+      for (let i=labels.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); [labels[i],labels[j]]=[labels[j],labels[i]]; }
+      return labels;
+    }
+    function standardFoldBalance(labels, k, seed){
+      const idx = Array.from({length:n},(_,i)=>i);
+      const r2 = makeLCG(seed);
+      for (let i=idx.length-1;i>0;i--){ const j=Math.floor(r2()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+      const foldSize = Math.floor(n/k);
+      const rates = [];
+      let anyEmpty = false;
+      for (let f=0; f<k; f++){
+        const start=f*foldSize, end=(f===k-1)?n:start+foldSize;
+        const foldIdx = idx.slice(start,end);
+        const posCount = foldIdx.filter(i=>labels[i]===1).length;
+        rates.push(posCount/foldIdx.length);
+        if (posCount===0) anyEmpty = true;
+      }
+      return {rates, anyEmpty};
+    }
+    function stratifiedFoldBalance(labels, k, seed){
+      const posIdx=[], negIdx=[];
+      labels.forEach((l,i)=>(l===1?posIdx:negIdx).push(i));
+      const r2 = makeLCG(seed);
+      [posIdx,negIdx].forEach(arr=>{ for (let i=arr.length-1;i>0;i--){ const j=Math.floor(r2()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } });
+      const buckets = Array.from({length:k},()=>[]);
+      posIdx.forEach((idx,i)=>buckets[i%k].push(idx));
+      negIdx.forEach((idx,i)=>buckets[i%k].push(idx));
+      const rates = buckets.map(b=>b.filter(i=>labels[i]===1).length/b.length);
+      return {rates, anyEmpty: rates.some(r=>r===0)};
+    }
+
+    function run(){
+      const pct = parseInt(document.getElementById("stratRate").value,10);
+      const labels = buildLabels(pct, 31337);
+      const std = standardFoldBalance(labels, 5, 2222);
+      const strat = stratifiedFoldBalance(labels, 5, 3333);
+      const table = document.getElementById("stratExampleTable");
+      let html = "<tr><th>fold</th>"+std.rates.map((_,i)=>"<th>F"+i+"</th>").join("")+"</tr>";
+      html += "<tr><td>standard</td>"+std.rates.map(r=>"<td"+(Math.abs(r-pct/100)>0.03?' class="worse"':'')+">"+(r*100).toFixed(1)+"%</td>").join("")+"</tr>";
+      html += "<tr><td>stratified</td>"+strat.rates.map(r=>'<td class="better">'+(r*100).toFixed(1)+"%</td>").join("")+"</tr>";
+      table.innerHTML = html;
+
+      const TRIALS = 2000;
+      let stdEmpty=0, stratEmpty=0;
+      for (let t=0;t<TRIALS;t++){
+        const s1 = standardFoldBalance(labels, 5, t*13+7);
+        if (s1.anyEmpty) stdEmpty++;
+        const s2 = stratifiedFoldBalance(labels, 5, t*17+11);
+        if (s2.anyEmpty) stratEmpty++;
+      }
+      document.getElementById("stratStdPct").textContent = ((stdEmpty/TRIALS)*100).toFixed(1)+"%";
+      document.getElementById("stratStratPct").textContent = ((stratEmpty/TRIALS)*100).toFixed(1)+"%";
+      document.getElementById("stratStory").textContent = "At "+pct+"% minority rate, standard k-fold leaves at least one fold with zero minority examples in "+((stdEmpty/TRIALS)*100).toFixed(1)+"% of random splits; stratification guarantees it never happens.";
+    }
+    document.getElementById("stratRate").addEventListener("input", ()=>{ document.getElementById("stratRateOut").textContent = document.getElementById("stratRate").value+"%"; });
+    document.getElementById("stratRun").addEventListener("click", run);
+    run();
+  })();
+
+  // ============================================================
+  // TAB 6: NESTED CV
+  // ============================================================
+  (function(){
+    function accuracyKFold(matches, n, k, seed){
+      const shuffled = Array.from({length:n},(_,i)=>i);
+      const r2 = makeLCG(seed);
+      for (let i=shuffled.length-1;i>0;i--){ const j=Math.floor(r2()*(i+1)); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]; }
+      const foldSize = Math.floor(n/k);
+      let sum=0;
+      for (let f=0; f<k; f++){
+        const start=f*foldSize, end=(f===k-1)?n:start+foldSize;
+        const foldIdx = shuffled.slice(start,end);
+        sum += foldIdx.reduce((a,i)=>a+matches[i],0)/foldIdx.length;
+      }
+      return sum/k;
+    }
+
+    function run(){
+      const nCandidates = parseInt(document.getElementById("nestedN").value,10);
+      const n = 60;
+      const REPEATS = 300;
+      let naiveSum=0, avgAllSum=0, nestedSum=0;
+      for (let r=0;r<REPEATS;r++){
+        const rand = makeLCG(70000+r*211);
+        const allMatches = Array.from({length:nCandidates}, ()=>Array.from({length:n}, ()=>(rand()<0.5?1:0)));
+        const scores = allMatches.map((m,c)=>accuracyKFold(m, n, 5, 1000+c+r*37));
+        naiveSum += Math.max(...scores);
+        avgAllSum += scores.reduce((a,b)=>a+b,0)/nCandidates;
+
+        const shuffledO = Array.from({length:n},(_,i)=>i);
+        const rr = makeLCG(2000+r*53);
+        for (let i=shuffledO.length-1;i>0;i--){ const j=Math.floor(rr()*(i+1)); [shuffledO[i],shuffledO[j]]=[shuffledO[j],shuffledO[i]]; }
+        const foldSizeO = Math.floor(n/5);
+        let sumOuter=0;
+        for (let f=0; f<5; f++){
+          const start=f*foldSizeO, end=(f===4)?n:start+foldSizeO;
+          const outerTestIdx = shuffledO.slice(start,end);
+          const outerTestSet = new Set(outerTestIdx);
+          const outerTrainIdx = shuffledO.filter(i=>!outerTestSet.has(i));
+          let bestC=0, bestInner=-Infinity;
+          for (let c=0;c<nCandidates;c++){
+            const m = allMatches[c];
+            const shuffledI = outerTrainIdx.slice();
+            const rrI = makeLCG(5000+c+r*71);
+            for (let i=shuffledI.length-1;i>0;i--){ const j=Math.floor(rrI()*(i+1)); [shuffledI[i],shuffledI[j]]=[shuffledI[j],shuffledI[i]]; }
+            const kIn=4, fsI=Math.floor(shuffledI.length/kIn);
+            let sumIn=0;
+            for (let fi=0; fi<kIn; fi++){
+              const stI=fi*fsI, enI=(fi===kIn-1)?shuffledI.length:stI+fsI;
+              const foldIdxI = shuffledI.slice(stI,enI);
+              sumIn += foldIdxI.reduce((a,i)=>a+m[i],0)/foldIdxI.length;
+            }
+            const innerScore = sumIn/kIn;
+            if (innerScore>bestInner){ bestInner=innerScore; bestC=c; }
+          }
+          const m = allMatches[bestC];
+          const outerAcc = outerTestIdx.reduce((a,i)=>a+m[i],0)/outerTestIdx.length;
+          sumOuter += outerAcc;
+        }
+        nestedSum += sumOuter/5;
+      }
+      const naive = naiveSum/REPEATS, avgAll = avgAllSum/REPEATS, nested = nestedSum/REPEATS;
+      document.getElementById("nestedNaive").textContent = fmt(naive,4);
+      document.getElementById("nestedMean").textContent = fmt(avgAll,4);
+      document.getElementById("nestedHonest").textContent = fmt(nested,4);
+
+      const svg = document.getElementById("nestedSvg");
+      clear(svg);
+      const pad=40, w=680-2*pad;
+      const items = [["true (0.5)",0.5,"var(--chalk-dim)"],["naive",naive,"var(--coral)"],["mean-all",avgAll,"var(--amber)"],["nested",nested,"var(--green)"]];
+      function xOf(v){ return pad + v*w; }
+      svg.appendChild(el("line",{x1:xOf(0.5),y1:20,x2:xOf(0.5),y2:140,stroke:"var(--border)","stroke-dasharray":"3,3"}));
+      items.forEach((it,i)=>{
+        const y = 35+i*28;
+        svg.appendChild(el("line",{x1:pad,y1:y,x2:xOf(Math.min(Math.max(it[1],0),1)),y2:y,stroke:it[2],"stroke-width":"8","stroke-linecap":"round"}));
+        svg.appendChild(txt(pad-6, y+4, it[0], {"text-anchor":"end","font-size":"11","fill":"var(--chalk-dim)"}));
+        svg.appendChild(txt(xOf(Math.min(Math.max(it[1],0),1))+8, y+4, it[1].toFixed(3), {"font-size":"11","fill":"var(--chalk)"}));
+      });
+
+      document.getElementById("nestedStory").textContent = "With "+nCandidates+" pure-chance candidates, naive reuse reports "+(naive*100).toFixed(1)+"% \"accuracy\" — nested CV correctly lands near 50%.";
+    }
+    document.getElementById("nestedN").addEventListener("input", ()=>{ document.getElementById("nestedNOut").textContent = document.getElementById("nestedN").value; });
+    document.getElementById("nestedRun").addEventListener("click", run);
+    run();
+  })();
+
+})();
+</script>
+</body>
+</html>
