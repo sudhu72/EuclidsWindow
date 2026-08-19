@@ -62,7 +62,7 @@ _TOPIC_KEYWORDS: list[Tuple[list[str], str]] = [
     (["limit", "lim ", "approach", "epsilon delta"], "limit"),
 ]
 
-MAX_RETRIES = 2
+MAX_RETRIES = 3
 
 # Modules LLM-generated scenes may import; anything else is rejected
 # before we pay for a Manim render.
@@ -102,6 +102,15 @@ RULES — follow every one:
     `self.play(Transform(old_title, new_title))` first. The same rule
     applies to any other mobject a later beat replaces: fade or remove it,
     don't just add the new one on top.
+14. Before finishing, re-check that every opening parenthesis and bracket
+    you wrote has a matching close — a `VGroup` built from a list
+    comprehension or a long chain of `.to_edge()`/`.next_to()` calls is the
+    most common place a closing bracket gets silently dropped.
+15. Keep any sentence-length text (more than a few words) horizontally
+    centered or anchored to a fixed screen position (e.g. `.to_edge(DOWN)`)
+    — never `.next_to()` a specific shape/label for a long sentence, since
+    if that shape sits near an edge the text will run off-frame with it.
+    `.next_to()` is fine for short labels (a number, a single word).
 
 CREATIVE STANDARDS (from 3Blue1Brown):
 - Geometry before algebra: show the shape first, the equation second.
@@ -145,6 +154,8 @@ Requirements:
 - Build shapes from Manim primitives only — never SVGMobject/ImageMobject
 - Fade or remove any heading/element before a later beat replaces it — never
   stack a new title on top of one still on screen
+- Double-check every bracket you open is closed before finishing
+- Anchor sentence-length text to a fixed position, not .next_to() a shape
 
 Output the complete Python script (class GeneratedScene(Scene)).
 """)
@@ -188,6 +199,12 @@ Output the JSON plan now.
 
 FIX_PROMPT_TEMPLATE = textwrap.dedent("""\
 The following Manim code failed to render.  Fix it.
+
+Before returning, re-check every opening ``(``, ``[``, and ``{{`` in the
+whole file has a matching close — nested calls (a VGroup built from a list
+comprehension, a chain of .to_edge()/.next_to() calls) are the most common
+place a closing bracket gets dropped. Return the COMPLETE corrected file,
+not just the changed lines.
 
 CODE:
 ```python
@@ -445,17 +462,29 @@ class AnimationPipeline:
         return None
 
     def _llm_fix(self, code: str, error: str) -> Optional[str]:
-        """Ask the LLM (codegen model) to fix broken Manim code."""
+        """Ask the LLM (codegen model) to fix broken Manim code.
+
+        ``code[:2000]`` characters used to be shown here, but codegen's
+        num_predict=2000 budget is in *tokens* — realistically 6000-8000+
+        characters of Python — so a multi-beat scene routinely got truncated
+        to roughly its first third before the model ever saw the error.
+        Asking it to "fix and return the corrected code" from a prefix
+        missing its own closing statements explains a repeat failure mode:
+        each fix attempt reported a new unclosed-paren error at a *later*
+        line than the last (68 -> 100 -> 121 in one observed run) — the
+        model was reconstructing the unseen tail from scratch each time,
+        introducing a fresh mistake in it, rather than actually fixing one.
+        """
         raw = self._llm.chat(
             [
                 {
                     "role": "user",
-                    "content": FIX_PROMPT_TEMPLATE.format(code=code[:2000], error=error[-500:]),
+                    "content": FIX_PROMPT_TEMPLATE.format(code=code[:8000], error=error[-500:]),
                 }
             ],
             task="codegen",
             timeout_seconds=60,
-            num_predict=2000,
+            num_predict=2500,
             temperature=0.2,
         )
         if not raw:
@@ -550,6 +579,45 @@ class AnimationPipeline:
         overlap_error = AnimationPipeline._validate_title_overlap(tree)
         if overlap_error:
             return overlap_error
+        anchor_error = AnimationPipeline._validate_text_anchor(tree)
+        if anchor_error:
+            return anchor_error
+        return None
+
+    @staticmethod
+    def _validate_text_anchor(tree: ast.AST) -> Optional[str]:
+        """Catch a long sentence tethered to another mobject via .next_to().
+
+        Observed failure: a short-ish explanatory sentence positioned via
+        ``.next_to(some_shape, ...)`` where ``some_shape`` sits near the edge
+        of frame — the text isn't long enough to trip the title-width check,
+        but inherits the shape's edge-adjacent position and runs off-frame
+        with it. A short label (a number, a single word) via ``.next_to()``
+        is completely normal and not flagged — only a longer, sentence-like
+        string chained with a ``.next_to(`` call is.
+        """
+        LIMIT = 25
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            base = node
+            has_next_to, has_long_text = False, False
+            while isinstance(base, ast.Call):
+                func = base.func
+                if isinstance(func, ast.Attribute) and func.attr == "next_to":
+                    has_next_to = True
+                if isinstance(func, ast.Name) and func.id in ("Text", "Tex", "MathTex"):
+                    for arg in base.args:
+                        if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and len(arg.value) > LIMIT:
+                            has_long_text = True
+                base = func.value if isinstance(func, ast.Attribute) else None
+            if has_next_to and has_long_text:
+                return (
+                    "A sentence-length Text/MathTex is positioned with .next_to(...) "
+                    "on another mobject — if that mobject sits near an edge, the text "
+                    "runs off-frame with it. Anchor long text to a fixed position "
+                    "instead (e.g. .to_edge(DOWN)), reserving .next_to() for short labels."
+                )
         return None
 
     @staticmethod

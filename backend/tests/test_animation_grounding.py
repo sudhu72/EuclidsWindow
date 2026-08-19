@@ -182,6 +182,43 @@ def test_validate_code_allows_a_single_top_heading():
     assert AnimationPipeline._validate_code(code) is None
 
 
+def test_validate_code_rejects_long_text_next_to_shape():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        hole = Square()\n"
+        "        note = Text('Some hole MUST get 2 or more items').next_to(hole, DOWN)\n"
+        "        self.play(Write(note))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+    assert "next_to" in error.lower()
+
+
+def test_validate_code_allows_short_label_next_to_shape():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        hole = Square()\n"
+        "        label = Text('6').next_to(hole, DOWN)\n"
+        "        self.play(Write(label))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
+def test_validate_code_allows_long_text_at_fixed_position():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        note = Text('Some hole MUST get 2 or more items').to_edge(DOWN)\n"
+        "        self.play(Write(note))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
 def test_heuristic_phase_unaffected_by_graph_context(monkeypatch):
     # Phase 1's template keyword match must not see the graph's related-concept
     # words — only the caller-supplied topic/context, unchanged from before.
