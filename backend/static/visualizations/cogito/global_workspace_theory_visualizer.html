@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>A Global Workspace, Illustrated</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  .disclaimer{background:rgba(255,206,84,.08);border:1px solid rgba(255,206,84,.3);border-radius:8px;padding:12px 16px;font-size:12.5px;color:var(--amber);margin-bottom:18px;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 16px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>A Global Workspace, Illustrated</h1>
+  <p class="sub">Two illustrative diagrams — not a reproduction of Claude's real internals or the paper's actual data.</p>
+  <div class="disclaimer">⚠ This visualizer is a conceptual illustration of Global Workspace Theory and the intervention idea described in the paper. It uses toy shapes and toy labels to build intuition — it is not real model activation data, and does not reproduce any of the paper's actual experiments.</div>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="diagram">Global Workspace, Illustrated</button>
+    <button class="tabbtn" data-tab="swap">Illustrative Concept Swap</button>
+  </div>
+
+  <!-- ============ TAB 1: DIAGRAM ============ -->
+  <div class="tabpanel active" id="tab-diagram">
+    <div class="panel">
+      <h2 style="font-family:'Kalam',cursive;font-size:18px;">Specialists, a Shared Blackboard, and Two Kinds of Processing</h2>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnModeAuto">Highlight: automatic processing</button>
+        <button class="op" id="btnModeDeliberate">Highlight: deliberate reasoning</button>
+      </div>
+      <svg viewBox="0 0 720 380" id="diagramSvg" width="720" height="380"></svg>
+      <div class="story-line" id="diagramStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: CONCEPT SWAP ============ -->
+  <div class="tabpanel" id="tab-swap">
+    <div class="panel">
+      <h2 style="font-family:'Kalam',cursive;font-size:18px;">The Intervention Idea, Made Simple</h2>
+      <p class="sub">The paper's real experiment swapped "soccer" for "rugby" and watched Claude's reported answer change. This is a toy stand-in for that idea, not the real data.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-pair="sport">soccer ↔ rugby</button>
+        <button class="op" data-pair="country">Spain ↔ France</button>
+      </div>
+      <svg viewBox="0 0 720 260" id="swapSvg" width="720" height="260"></svg>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="btnSwap">Swap the workspace pattern</button>
+        <button class="op" id="btnSwapReset">Reset</button>
+      </div>
+      <div class="story-line" id="swapStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../global_workspace_theory_feynman.md">A Global Workspace in Language Models</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x,y,s,attrs){ const t = el("text", Object.assign({x,y}, attrs||{})); t.textContent = s; return t; }
+  function clear(svg){ while (svg.firstChild) svg.removeChild(svg.firstChild); }
+
+  function tabClick(name){
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.toggle("active", p.id==="tab-"+name));
+  }
+  document.querySelectorAll(".tabbtn").forEach(b=>b.addEventListener("click", ()=>tabClick(b.dataset.tab)));
+
+  /* =========================================================
+     TAB 1: GLOBAL WORKSPACE DIAGRAM
+     ========================================================= */
+  (function(){
+    const specialists = [
+      {name:"vision-like\nfeatures", x:100, y:80},
+      {name:"syntax /\ngrammar", x:100, y:180},
+      {name:"fact\nretrieval", x:100, y:280},
+      {name:"fluent text\ncontinuation", x:600, y:80},
+      {name:"verbal\nreport", x:600, y:180},
+      {name:"multi-step\nreasoning", x:600, y:280},
+    ];
+    const workspace = {x:360, y:180};
+    let mode = "auto";
+
+    function render(){
+      const svg = document.getElementById("diagramSvg");
+      clear(svg);
+      // workspace hub
+      svg.appendChild(el("circle",{cx:workspace.x, cy:workspace.y, r:60, fill:"rgba(255,206,84,0.12)", stroke:"var(--amber)", "stroke-width":2}));
+      svg.appendChild(txt(workspace.x, workspace.y-4, "J-SPACE", {"text-anchor":"middle","font-family":"Kalam, cursive","font-size":"15","fill":"var(--amber)","font-weight":"700"}));
+      svg.appendChild(txt(workspace.x, workspace.y+16, "(the workspace)", {"text-anchor":"middle","font-size":"10","fill":"var(--chalk-dim)"}));
+
+      specialists.forEach(s=>{
+        const isLeft = s.x < 360;
+        const isAutoPath = (s.name.includes("fluent") || s.name.includes("vision") || s.name.includes("syntax"));
+        const active = mode==="auto" ? isAutoPath : !isAutoPath;
+        const color = active ? "var(--green)" : "var(--chalk-dim)";
+        // connection line
+        if (isLeft){
+          svg.appendChild(el("line",{x1:s.x+55, y1:s.y, x2:workspace.x-60, y2:workspace.y, stroke:color, "stroke-width": active?3:1, opacity: active?0.9:0.25}));
+        } else {
+          svg.appendChild(el("line",{x1:workspace.x+60, y1:workspace.y, x2:s.x-55, y2:s.y, stroke:color, "stroke-width": active?3:1, opacity: active?0.9:0.25}));
+        }
+        const box = el("rect",{x:s.x-55, y:s.y-28, width:110, height:56, rx:8, fill: active?"rgba(143,209,158,0.12)":"rgba(244,241,232,0.03)", stroke: active?"var(--green)":"var(--border)", "stroke-width":1.5});
+        svg.appendChild(box);
+        s.name.split("\n").forEach((line,i)=>{
+          svg.appendChild(txt(s.x, s.y-4+i*13, line, {"text-anchor":"middle","font-size":"11","fill": active?"var(--chalk)":"var(--chalk-dim)"}));
+        });
+      });
+      // direct bypass arcs for automatic processing (vision -> fluent text, syntax -> fluent text) skipping the workspace entirely
+      if (mode==="auto"){
+        svg.appendChild(el("path",{d:"M 155,80 C 300,20 420,20 545,80", fill:"none", stroke:"var(--green)","stroke-width":2,"stroke-dasharray":"4,3",opacity:0.7}));
+        svg.appendChild(txt(360,25,"most automatic processing bypasses the workspace entirely",{"text-anchor":"middle","font-size":"11","fill":"var(--green)"}));
+      } else {
+        svg.appendChild(txt(360,25,"deliberate reasoning routes through the shared workspace",{"text-anchor":"middle","font-size":"11","fill":"var(--amber)"}));
+      }
+    }
+    document.getElementById("btnModeAuto").addEventListener("click", function(){ mode="auto"; this.classList.add("active"); document.getElementById("btnModeDeliberate").classList.remove("active"); render();
+      document.getElementById("diagramStory").textContent = "Vision-like features and syntax feed fluent text continuation directly — fast, automatic, and (per the paper) almost never touching J-space at all.";
+    });
+    document.getElementById("btnModeDeliberate").addEventListener("click", function(){ mode="deliberate"; this.classList.add("active"); document.getElementById("btnModeAuto").classList.remove("active"); render();
+      document.getElementById("diagramStory").textContent = "Fact retrieval and multi-step reasoning route through J-space — broadcast widely enough to support verbal report and flexible reuse across tasks.";
+    });
+    render();
+    document.getElementById("diagramStory").textContent = "Vision-like features and syntax feed fluent text continuation directly — fast, automatic, and (per the paper) almost never touching J-space at all.";
+  })();
+
+  /* =========================================================
+     TAB 2: ILLUSTRATIVE CONCEPT SWAP
+     ========================================================= */
+  (function(){
+    const pairs = {
+      sport: {a:"soccer", b:"rugby", prompt:"\"Name a sport with a round ball.\"", reportA:"Claude reports: soccer", reportB:"Claude reports: rugby"},
+      country: {a:"Spain", b:"France", prompt:"\"What language do they speak there?\"", reportA:"Claude reports: Spanish", reportB:"Claude reports: French"}
+    };
+    let pairKey = "sport", swapped = false;
+    function render(){
+      const p = pairs[pairKey];
+      const svg = document.getElementById("swapSvg");
+      clear(svg);
+      svg.appendChild(txt(360,30,p.prompt,{"text-anchor":"middle","font-size":"13","fill":"var(--chalk-dim)"}));
+      // workspace box showing current pattern
+      svg.appendChild(el("rect",{x:260,y:90,width:200,height:70,rx:10,fill:"rgba(255,206,84,0.12)",stroke:"var(--amber)","stroke-width":2}));
+      svg.appendChild(txt(360,120,"J-space pattern:",{"text-anchor":"middle","font-size":"11","fill":"var(--chalk-dim)"}));
+      svg.appendChild(txt(360,145,swapped?p.b:p.a,{"text-anchor":"middle","font-size":"18","fill":"var(--amber)","font-family":"Kalam, cursive","font-weight":"700"}));
+      // output box
+      svg.appendChild(el("rect",{x:260,y:200,width:200,height:50,rx:10,fill:"rgba(143,209,158,0.1)",stroke:"var(--green)","stroke-width":1.5}));
+      svg.appendChild(txt(360,230,swapped?p.reportB:p.reportA,{"text-anchor":"middle","font-size":"13","fill":"var(--green)"}));
+      svg.appendChild(el("line",{x1:360,y1:160,x2:360,y2:198,stroke:"var(--chalk-dim)","stroke-width":1.5,"marker-end":"url(#arrow)"}));
+      // marker def
+      const defs = el("defs",{});
+      const marker = el("marker",{id:"arrow",markerWidth:8,markerHeight:8,refX:4,refY:4,orient:"auto"});
+      const arrowPath = el("path",{d:"M0,0 L8,4 L0,8 Z", fill:"var(--chalk-dim)"});
+      marker.appendChild(arrowPath); defs.appendChild(marker); svg.appendChild(defs);
+    }
+    document.querySelectorAll("#tab-swap [data-pair]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll("#tab-swap [data-pair]").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        pairKey = btn.dataset.pair; swapped=false; render();
+        document.getElementById("swapStory").textContent = "";
+      });
+    });
+    document.getElementById("btnSwap").addEventListener("click", ()=>{
+      swapped = !swapped; render();
+      document.getElementById("swapStory").textContent = "The output changed to match the swapped pattern — exactly the causal test the paper actually ran (with real activations, not this toy diagram): patch the pattern, and the reported answer follows it.";
+    });
+    document.getElementById("btnSwapReset").addEventListener("click", ()=>{ swapped=false; render(); document.getElementById("swapStory").textContent=""; });
+    render();
+  })();
+
+})();
+</script>
+</body>
+</html>

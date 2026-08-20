@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Correlation Matrix, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 16px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:160px;accent-color:var(--amber);}
+  input[type=number]{width:64px;padding:5px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg-panel);color:var(--chalk);font-family:'JetBrains Mono',monospace;text-align:center;}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:60px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  table.datatable{border-collapse:collapse;margin:10px auto;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:4px 6px;text-align:center;}
+  table.datatable input{width:56px;background:var(--bg-panel);color:var(--chalk);border:1px solid var(--border);border-radius:4px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;}
+
+  table.heat{border-collapse:collapse;margin:14px auto;}
+  table.heat th, table.heat td{padding:8px 12px;text-align:center;font-size:12.5px;min-width:60px;}
+  table.heat th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:120px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The Correlation Matrix, live</h1>
+  <p class="sub">Three tabs, matching the tutorial's three verified demonstrations.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="build">Build the Matrix</button>
+    <button class="tabbtn" data-tab="pca">PCA: Covariance vs. Correlation</button>
+    <button class="tabbtn" data-tab="portfolio">Portfolio Diversification</button>
+  </div>
+
+  <!-- ============ TAB 1: BUILD THE MATRIX ============ -->
+  <div class="tabpanel active" id="tab-build">
+    <div class="panel">
+      <h2>Four Variables, Every Kind of Relationship at Once</h2>
+      <p class="sub">Edit any value below and watch both matrices update live. X1/X2 move together; X3 mirrors X1 exactly; X4 is unrelated to all three.</p>
+      <table class="datatable" id="dataTable"></table>
+      <div style="display:flex; gap:30px; justify-content:center; flex-wrap:wrap; margin-top:14px;">
+        <div><div class="sub" style="text-align:center;">covariance matrix</div><table class="heat" id="covHeat"></table></div>
+        <div><div class="sub" style="text-align:center;">correlation matrix</div><table class="heat" id="corrHeat"></table></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">eigenvalues (correlation matrix)</div><div class="num" id="eigOut">-</div></div>
+      </div>
+      <div class="story-line" id="buildStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: PCA COVARIANCE VS CORRELATION ============ -->
+  <div class="tabpanel" id="tab-pca">
+    <div class="panel">
+      <h2>Which Matrix You Hand PCA Changes the Answer</h2>
+      <p class="sub">Age (years) and income (dollars), genuinely related (correlation ≈ 0.9955). Drag income's scale down and watch the covariance-matrix result swing wildly while the correlation-matrix result never moves.</p>
+      <div class="row"><label>income scale factor</label><input type="range" id="pcaScale" min="0" max="30" step="1" value="30"><span class="readout" id="pcaScaleOut">1.0</span></div>
+      <svg viewBox="0 0 640 200" id="pcaSvg" width="640" height="200"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">covariance-PCA weights (age, income)</div><div class="num" id="pcaCovOut">-</div></div>
+        <div class="metric green"><div class="lbl">correlation-PCA weights (age, income)</div><div class="num" id="pcaCorrOut">-</div></div>
+      </div>
+      <div class="story-line" id="pcaStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: PORTFOLIO DIVERSIFICATION ============ -->
+  <div class="tabpanel" id="tab-portfolio">
+    <div class="panel">
+      <h2>A Portfolio Safer Than Either of Its Parts</h2>
+      <p class="sub">Two assets, individual volatility fixed at their real historical values. Drag the correlation between them and watch the blended portfolio's risk respond.</p>
+      <div class="row"><label>correlation between assets</label><input type="range" id="portCorr" min="-1000" max="1000" step="1" value="-974"><span class="readout" id="portCorrOut">-0.974</span></div>
+      <div class="row"><label>weight on Asset A</label><input type="range" id="portWeight" min="0" max="100" step="1" value="50"><span class="readout" id="portWeightOut">50%</span></div>
+      <svg viewBox="0 0 640 200" id="portSvg" width="640" height="200"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">std(A)</div><div class="num">4.57%</div></div>
+        <div class="metric blue"><div class="lbl">std(B)</div><div class="num">4.21%</div></div>
+        <div class="metric amber"><div class="lbl">portfolio std</div><div class="num" id="portStdOut">-</div></div>
+      </div>
+      <div class="story-line" id="portStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../correlation_matrix_feynman.md">The Correlation Matrix</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function fmt(v,d){ return (typeof v==="number"&&isFinite(v)) ? v.toFixed(d===undefined?4:d) : "-"; }
+  function clear(svg){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+
+  function tabClick(name){
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.toggle("active", p.id==="tab-"+name));
+  }
+  document.querySelectorAll(".tabbtn").forEach(b=>b.addEventListener("click", ()=>tabClick(b.dataset.tab)));
+
+  function mean(a){ return a.reduce((s,x)=>s+x,0)/a.length; }
+  function cov(a,b){ const ma=mean(a),mb=mean(b); let s=0; for(let i=0;i<a.length;i++) s+=(a[i]-ma)*(b[i]-mb); return s/(a.length-1); }
+  function std(a){ return Math.sqrt(cov(a,a)); }
+  function corr(a,b){ return cov(a,b)/(std(a)*std(b)); }
+  function heatColor(v){
+    // diverging: coral for negative, green for positive, intensity by |v|
+    const t = Math.min(1, Math.abs(v));
+    if (v>=0) return "rgba(143,209,158,"+ (0.08+t*0.55) +")";
+    return "rgba(255,130,102,"+ (0.08+t*0.55) +")";
+  }
+
+  /* =========================================================
+     TAB 1: BUILD THE MATRIX
+     ========================================================= */
+  (function(){
+    const varNames = ["X1","X2","X3","X4"];
+    let data = {
+      X1: [2, 4, 5, 7, 8, 10],
+      X2: [1, 3, 5, 6, 9, 11],
+      X3: [10, 8, 7, 5, 4, 2],
+      X4: [5, 2, 8, 1, 9, 3]
+    };
+    function buildTable(){
+      const t = document.getElementById("dataTable");
+      t.innerHTML = "";
+      const header = document.createElement("tr");
+      header.appendChild(document.createElement("th"));
+      for (let i=0;i<6;i++){ const th=document.createElement("th"); th.textContent="pt "+(i+1); header.appendChild(th); }
+      t.appendChild(header);
+      varNames.forEach(v=>{
+        const tr = document.createElement("tr");
+        const th = document.createElement("th"); th.textContent=v; tr.appendChild(th);
+        data[v].forEach((val,i)=>{
+          const td = document.createElement("td");
+          const inp = document.createElement("input");
+          inp.type="number"; inp.value=val; inp.step="0.5";
+          inp.addEventListener("input", ()=>{ data[v][i]=parseFloat(inp.value)||0; render(); });
+          td.appendChild(inp); tr.appendChild(td);
+        });
+        t.appendChild(tr);
+      });
+    }
+    function eigSym4(A){
+      // power iteration with deflation for a symmetric 4x4
+      function matVec(M,v){ return M.map(row=>row.reduce((s,x,i)=>s+x*v[i],0)); }
+      function norm(v){ return Math.hypot(...v); }
+      function outerSub(M,v,lam){ return M.map((row,i)=>row.map((x,j)=>x-lam*v[i]*v[j])); }
+      let cur = A.map(r=>r.slice());
+      const out=[];
+      for (let c=0;c<4;c++){
+        let v = [0.31,0.52,0.71,0.11].map(x=>x+c*0.05);
+        for (let it=0; it<300; it++){ const w=matVec(cur,v); const n=norm(w)||1; v=w.map(x=>x/n); }
+        const w = matVec(cur,v);
+        const lam = v.reduce((s,x,i)=>s+x*w[i],0);
+        out.push(lam);
+        cur = outerSub(cur,v,lam);
+      }
+      return out;
+    }
+    function render(){
+      const covM = varNames.map(vi=>varNames.map(vj=>cov(data[vi],data[vj])));
+      const corrM = varNames.map(vi=>varNames.map(vj=>corr(data[vi],data[vj])));
+      function renderHeat(id, M, decimals, normalize){
+        const t = document.getElementById(id);
+        const scaleFactor = normalize ? Math.max(...M.flat().map(Math.abs), 1e-9) : 1;
+        let html = "<tr><th></th>"+varNames.map(v=>"<th>"+v+"</th>").join("")+"</tr>";
+        M.forEach((row,i)=>{
+          html += "<tr><th>"+varNames[i]+"</th>"+row.map(v=>'<td style="background:'+heatColor(v/scaleFactor)+'">'+v.toFixed(decimals)+"</td>").join("")+"</tr>";
+        });
+        t.innerHTML = html;
+      }
+      renderHeat("covHeat", covM, 2, true);
+      renderHeat("corrHeat", corrM, 4, false);
+      const eigs = eigSym4(corrM);
+      document.getElementById("eigOut").textContent = eigs.map(x=>fmt(x,4)).join(", ");
+      const nearZero = eigs.some(x=>Math.abs(x)<0.05);
+      document.getElementById("buildStory").innerHTML = nearZero
+        ? "<b style=\"color:var(--coral)\">A near-zero eigenvalue detected</b> — some combination of these variables carries almost no independent information (X1 and X3 are near-perfect mirrors)."
+        : "All eigenvalues comfortably positive — no strong hidden linear dependency among these variables right now.";
+    }
+    buildTable();
+    render();
+  })();
+
+  /* =========================================================
+     TAB 2: PCA COVARIANCE VS CORRELATION
+     ========================================================= */
+  (function(){
+    function makeLCG(seed){ let s=seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+    const rand = makeLCG(7);
+    const n = 50;
+    const age = [], incomeRaw = [];
+    for (let i=0;i<n;i++){
+      const a = 20 + rand()*50;
+      const inc = 30000 + a*500 + (rand()-0.5)*2000;
+      age.push(a); incomeRaw.push(inc);
+    }
+    function eig2x2Weights(A){
+      const a=A[0][0], b=A[0][1], d=A[1][1];
+      const tr=a+d, det=a*d-b*b;
+      const disc=Math.sqrt(Math.max(0,tr*tr-4*det));
+      const lam1=(tr+disc)/2;
+      let v; if (Math.abs(b)>1e-9) v=[lam1-d,b]; else v=[1,0];
+      const nn=Math.hypot(v[0],v[1])||1;
+      return [Math.abs(v[0]/nn), Math.abs(v[1]/nn)];
+    }
+    function render(){
+      const sliderVal = parseInt(document.getElementById("pcaScale").value,10);
+      const scale = Math.pow(10, (sliderVal-30)/10); // 30 -> 1.0, 0 -> 0.001
+      document.getElementById("pcaScaleOut").textContent = scale.toFixed(scale<0.01?4:(scale<1?3:1));
+      const income = incomeRaw.map(x=>x*scale);
+      const covM = [[cov(age,age), cov(age,income)],[cov(age,income), cov(income,income)]];
+      const corrM = [[1, corr(age,income)],[corr(age,income), 1]];
+      const wCov = eig2x2Weights(covM);
+      const wCorr = eig2x2Weights(corrM);
+      document.getElementById("pcaCovOut").textContent = wCov.map(x=>fmt(x,4)).join(", ");
+      document.getElementById("pcaCorrOut").textContent = wCorr.map(x=>fmt(x,4)).join(", ");
+
+      const svg = document.getElementById("pcaSvg");
+      clear(svg);
+      // two bar groups: covariance weights, correlation weights
+      function bar(x0, w, color, label){
+        svg.appendChild(el("rect",{x:x0, y:170-w*140, width:60, height:w*140, fill:color}));
+        svg.appendChild(el("text",{x:x0+30,y:185,"text-anchor":"middle","font-size":"11",fill:"var(--chalk-dim)"})).textContent = label;
+      }
+      bar(60, wCov[0], "var(--coral)", "cov: age");
+      bar(140, wCov[1], "var(--coral)", "cov: income");
+      bar(280, wCorr[0], "var(--green)", "corr: age");
+      bar(360, wCorr[1], "var(--green)", "corr: income");
+      svg.appendChild(el("line",{x1:20,y1:170,x2:620,y2:170,stroke:"var(--border)"}));
+      document.getElementById("pcaStory").textContent =
+        wCov[0] < 0.1 ? "At this scale, covariance-PCA is almost entirely hijacked by income's bigger raw numbers — age's real, strong relationship is invisible to it." :
+        wCov[0] > 0.6 ? "Scales are now comparable — covariance-PCA and correlation-PCA roughly agree." :
+        "Covariance-PCA is drifting as the scale changes; correlation-PCA hasn't moved at all.";
+    }
+    document.getElementById("pcaScale").addEventListener("input", render);
+    render();
+  })();
+
+  /* =========================================================
+     TAB 3: PORTFOLIO DIVERSIFICATION
+     ========================================================= */
+  (function(){
+    const stdA = 0.0457, stdB = 0.0421; // from the tutorial's verified real returns
+    function render(){
+      const rho = parseInt(document.getElementById("portCorr").value,10)/1000;
+      document.getElementById("portCorrOut").textContent = rho.toFixed(3);
+      const w = parseInt(document.getElementById("portWeight").value,10)/100;
+      document.getElementById("portWeightOut").textContent = (w*100).toFixed(0)+"%";
+      const varA = stdA*stdA, varB = stdB*stdB, covAB = rho*stdA*stdB;
+      const portVar = w*w*varA + (1-w)*(1-w)*varB + 2*w*(1-w)*covAB;
+      const portStd = Math.sqrt(Math.max(0,portVar));
+      document.getElementById("portStdOut").textContent = (portStd*100).toFixed(2)+"%";
+
+      const svg = document.getElementById("portSvg");
+      clear(svg);
+      const maxStd = Math.max(stdA,stdB,portStd,0.01)*1.15;
+      function bar(x0, val, color, label){
+        const h = (val/maxStd)*140;
+        svg.appendChild(el("rect",{x:x0,y:170-h,width:70,height:h,fill:color}));
+        svg.appendChild(el("text",{x:x0+35,y:185,"text-anchor":"middle","font-size":"11",fill:"var(--chalk-dim)"})).textContent = label;
+        svg.appendChild(el("text",{x:x0+35,y:165-h,"text-anchor":"middle","font-size":"11",fill:"var(--chalk)"})).textContent = (val*100).toFixed(2)+"%";
+      }
+      bar(80, stdA, "var(--blue)", "Asset A");
+      bar(220, stdB, "var(--blue)", "Asset B");
+      bar(360, portStd, portStd < Math.min(stdA,stdB) ? "var(--green)" : "var(--amber)", "Portfolio");
+      svg.appendChild(el("line",{x1:20,y1:170,x2:620,y2:170,stroke:"var(--border)"}));
+
+      document.getElementById("portStory").textContent =
+        portStd < Math.min(stdA,stdB) ? "The portfolio is safer than either individual asset — negative/low correlation is doing real diversification work." :
+        "At this correlation, blending no longer reduces risk below both individual assets — diversification's benefit has run out.";
+    }
+    document.getElementById("portCorr").addEventListener("input", render);
+    document.getElementById("portWeight").addEventListener("input", render);
+    render();
+  })();
+
+})();
+</script>
+</body>
+</html>

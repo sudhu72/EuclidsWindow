@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 63 self-contained interactive visualizations
+// Cogito Gallery manifest — 66 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -163,6 +163,12 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Collections, Counted Two Ways — Set Theory",
         "one": "Union, intersection, and subset aren't just Venn-diagram shading — they're the grammar every other branch of math quietly assumes.",
         "prompt": "Explain set theory from first principles: what a set actually is, what union/intersection/subset mean, why the empty set matters, and how these few rules end up underneath the rest of mathematics."
+      },
+      {
+        "file": "jacobian_and_svd_visualizer.html",
+        "title": "Rotate, Stretch, Rotate — Jacobians & SVD",
+        "one": "Every matrix, however complicated, is secretly just a rotation, a stretch along perpendicular axes, and another rotation.",
+        "prompt": "Explain the Jacobian matrix and singular value decomposition from first principles: what a Jacobian captures about a transformation locally, and why SVD says any matrix decomposes into rotate-stretch-rotate."
       }
     ]
   },
@@ -380,6 +386,18 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Reinforcement Learning, live",
         "one": "An agent that learns by trial, error, and reward — no labeled examples, just a policy that gets better every episode.",
         "prompt": "Explain reinforcement learning from first principles: what a policy, a reward signal, and a Markov decision process are, and how an agent improves its policy purely from trial and error."
+      },
+      {
+        "file": "correlation_matrix_visualizer.html",
+        "title": "The Correlation Matrix, live",
+        "one": "One grid, every pair of variables at once — how strongly, and in which direction, each one moves with every other.",
+        "prompt": "Explain the correlation matrix from first principles: what the Pearson correlation coefficient actually measures, why it's bounded between -1 and 1, and what a full matrix of pairwise correlations reveals that looking at variables one at a time misses."
+      },
+      {
+        "file": "global_workspace_theory_visualizer.html",
+        "title": "A Global Workspace, Illustrated",
+        "one": "Many specialized processes compete for a shared spotlight; whatever wins gets broadcast everywhere at once.",
+        "prompt": "Explain Global Workspace Theory from first principles: what the 'global workspace' metaphor for consciousness/attention proposes, and why broadcasting one winning signal to many specialized modules is a useful way to think about it."
       }
     ]
   },

@@ -1031,6 +1031,48 @@
       ],
       "viz": "reinforcement_learning_visualizer.html",
       "source": "reinforcement_learning_feynman.md"
+    },
+    {
+      "id": "jacobian",
+      "name": "The Jacobian Matrix",
+      "keywords": [
+        "jacobian matrix",
+        "jacobian determinant",
+        "local linearization",
+        "j-space"
+      ],
+      "related": [
+        "svd",
+        "derivative"
+      ],
+      "viz": "jacobian_and_svd_visualizer.html",
+      "source": "jacobian-and-j-space.md"
+    },
+    {
+      "id": "correlation_matrix",
+      "name": "The Correlation Matrix",
+      "keywords": [
+        "correlation matrix",
+        "pearson correlation",
+        "correlation coefficient"
+      ],
+      "related": [
+        "statistics"
+      ],
+      "viz": "correlation_matrix_visualizer.html",
+      "source": "correlation_matrix_feynman.md"
+    },
+    {
+      "id": "global_workspace_theory",
+      "name": "Global Workspace Theory",
+      "keywords": [
+        "global workspace theory",
+        "global workspace",
+        "consciousness theory"
+      ],
+      "related": [],
+      "viz": "global_workspace_theory_visualizer.html",
+      "source": "global_workspace_theory_feynman.md"
     }
   ]
 }
