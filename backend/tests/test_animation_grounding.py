@@ -219,6 +219,46 @@ def test_validate_code_allows_long_text_at_fixed_position():
     assert AnimationPipeline._validate_code(code) is None
 
 
+def test_validate_code_rejects_two_uncleared_matrix_calls():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        grid = Matrix([[1, 2], [3, 4]])\n"
+        "        self.play(Create(grid))\n"
+        "        bracket = MathTex(r'\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}')\n"
+        "        self.play(Write(bracket))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+    assert "matrix" in error.lower()
+
+
+def test_validate_code_allows_second_matrix_after_fadeout():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        grid = Matrix([[1, 2], [3, 4]])\n"
+        "        self.play(Create(grid))\n"
+        "        self.play(FadeOut(grid))\n"
+        "        bracket = MathTex(r'\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}')\n"
+        "        self.play(Write(bracket))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
+def test_validate_code_allows_a_single_matrix():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        grid = Matrix([[1, 2], [3, 4]])\n"
+        "        self.play(Create(grid))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
 def test_heuristic_phase_unaffected_by_graph_context(monkeypatch):
     # Phase 1's template keyword match must not see the graph's related-concept
     # words — only the caller-supplied topic/context, unchanged from before.

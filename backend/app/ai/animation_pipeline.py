@@ -111,6 +111,14 @@ RULES — follow every one:
     — never `.next_to()` a specific shape/label for a long sentence, since
     if that shape sits near an edge the text will run off-frame with it.
     `.next_to()` is fine for short labels (a number, a single word).
+16. Show at most ONE representation of a matrix at a time — a `Matrix(...)`
+    mobject or a bracket-notation `MathTex` is a self-contained visual;
+    never draw a second matrix (bracket notation, a grid of labeled
+    entries, anything else) in the same region while the first is still on
+    screen. Fade out or remove the first before showing the second, or
+    `Transform` one into the other — the same rule as headings above,
+    applied to matrices specifically since they're dense enough that two
+    overlapping ones become unreadable immediately.
 
 CREATIVE STANDARDS (from 3Blue1Brown):
 - Geometry before algebra: show the shape first, the equation second.
@@ -166,6 +174,8 @@ Requirements:
   stack a new title on top of one still on screen
 - Double-check every bracket you open is closed before finishing
 - Anchor sentence-length text to a fixed position, not .next_to() a shape
+- Only one matrix representation on screen at a time — fade/remove or
+  Transform the first before showing a second
 
 Output the complete Python script (class GeneratedScene(Scene)).
 """)
@@ -626,6 +636,9 @@ class AnimationPipeline:
         anchor_error = AnimationPipeline._validate_text_anchor(tree)
         if anchor_error:
             return anchor_error
+        matrix_error = AnimationPipeline._validate_matrix_overlap(tree)
+        if matrix_error:
+            return matrix_error
         return None
 
     @staticmethod
@@ -744,6 +757,79 @@ class AnimationPipeline:
                             f"'{new_name}' (line {stmt.lineno}) is a second top-anchored "
                             f"heading while '{uncleared}' is still on screen — they'll "
                             f"overlap. FadeOut or remove the old one first."
+                        )
+                    for target in stmt.targets:
+                        if isinstance(target, ast.Name):
+                            on_screen[target.id] = stmt.lineno
+        return None
+
+    @staticmethod
+    def _validate_matrix_overlap(tree: ast.AST) -> Optional[str]:
+        """Catch a second matrix rendering while an earlier one is uncleared.
+
+        Observed failure: a scene shows a matrix as a labeled entry grid,
+        then later a *second* representation of the same matrix — a bracket-
+        notation ``Matrix(...)`` or a ``MathTex`` with a
+        ``\\begin{bmatrix}``/``\\begin{pmatrix}`` environment — without fading
+        the first, and the two dense, overlapping renderings become
+        unreadable together. Same walk-construct()-in-source-order pattern
+        as ``_validate_title_overlap``, applied to matrix-shaped mobjects
+        instead of top-anchored headings.
+        """
+        MATRIX_ENV_RE = re.compile(r"\\begin\{[bpvB]?matrix\}")
+        construct = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "construct":
+                construct = node
+                break
+        if construct is None:
+            return None
+
+        def is_matrix_call(call: ast.AST) -> bool:
+            node = call
+            while isinstance(node, ast.Call):
+                func = node.func
+                if isinstance(func, ast.Name):
+                    if func.id == "Matrix":
+                        return True
+                    if func.id in ("MathTex", "Tex"):
+                        for arg in node.args:
+                            if (
+                                isinstance(arg, ast.Constant)
+                                and isinstance(arg.value, str)
+                                and MATRIX_ENV_RE.search(arg.value)
+                            ):
+                                return True
+                node = func.value if isinstance(func, ast.Attribute) else None
+            return False
+
+        def referenced_names(node: ast.AST) -> set:
+            return {n.id for n in ast.walk(node) if isinstance(n, ast.Name)}
+
+        on_screen: dict = {}
+        for stmt in construct.body:
+            for sub in ast.walk(stmt):
+                if not isinstance(sub, ast.Call):
+                    continue
+                func = sub.func
+                is_fadeout = isinstance(func, ast.Name) and func.id == "FadeOut"
+                is_remove = isinstance(func, ast.Attribute) and func.attr == "remove"
+                if is_fadeout or is_remove:
+                    for name in referenced_names(sub):
+                        on_screen.pop(name, None)
+
+            if isinstance(stmt, ast.Assign) and isinstance(stmt.value, ast.Call):
+                if is_matrix_call(stmt.value):
+                    if on_screen:
+                        uncleared = ", ".join(on_screen)
+                        new_name = next(
+                            (t.id for t in stmt.targets if isinstance(t, ast.Name)), "it"
+                        )
+                        return (
+                            f"'{new_name}' (line {stmt.lineno}) is a second matrix "
+                            f"representation while '{uncleared}' is still on screen — "
+                            f"they'll overlap into an unreadable mess. FadeOut or remove "
+                            f"the first matrix before showing the second."
                         )
                     for target in stmt.targets:
                         if isinstance(target, ast.Name):
