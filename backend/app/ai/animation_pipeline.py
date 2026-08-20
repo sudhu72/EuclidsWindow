@@ -124,15 +124,25 @@ CREATIVE STANDARDS (from 3Blue1Brown):
   are all fair game — reach for whatever shape actually represents the idea,
   even if it takes some invention for an abstract topic.
 
-WORKED EXAMPLE — this is the Pythagorean theorem, shown ONLY so you can see
-the STYLE conventions to follow: code structure, self.camera setup, color
-constants, opacity layering, pacing (self.wait after each beat), and the
-geometry-before-equation ordering. It is NOT a template for what to draw.
-Do not reuse this triangle, these squares, or the labels a/b/c — draw
-whatever shape actually represents YOUR topic instead, even if that means
-inventing a new kind of diagram this example doesn't show:
+TWO WORKED EXAMPLES — the Pythagorean theorem (static polygon geometry) and
+a derivative (an animated coordinate-plane curve). They are shown ONLY so
+you can see the STYLE conventions to follow: code structure, self.camera
+setup, color constants, opacity layering, pacing (self.wait after each
+beat), and geometry-before-equation ordering. Notice they draw completely
+different kinds of shapes for completely different topics — that's the
+point: NEITHER is a template for what to draw. Do not reuse this triangle,
+these squares, the labels a/b/c, this coordinate axes, or this curve —
+draw whatever shape actually represents YOUR topic instead, even if that
+means inventing a new kind of diagram neither example shows.
+
+Example 1 — Pythagorean theorem:
 ```python
 {fewshot_example}
+```
+
+Example 2 — a derivative:
+```python
+{fewshot_example_2}
 ```
 """)
 
@@ -217,13 +227,26 @@ ERROR:
 Output ONLY the corrected Python code.  No commentary.
 """)
 
-# A real, already-verified scene (the "pythagorean" template, fully filled)
-# used as a concrete style anchor in the codegen prompt rather than hand-authored
-# prompt-only prose — few-shot grounding in the Manimator sense, but the example
-# is exactly the production code this app already renders, so there's nothing
+# Two real, already-verified scenes (fully filled templates) used as concrete
+# style anchors in the codegen prompt rather than hand-authored prompt-only
+# prose — few-shot grounding in the Manimator sense, but the examples are
+# exactly the production code this app already renders, so there's nothing
 # new to keep correct.
+#
+# Deliberately TWO, structurally unrelated examples (static polygon geometry
+# vs. an animated coordinate-plane curve), not one: a single example was
+# observed being copied wholesale onto unrelated topics with no obvious
+# shape of their own (a right triangle with a/b/c labels, rendered for a
+# question about the Jacobian matrix) — no amount of "this is style, not
+# content" prose reliably stopped that on a small model. Two contrasting
+# examples make the style/content distinction something the model can see
+# rather than just be told, since neither one's literal shapes could
+# possibly be "the" answer for a third, different topic.
 _FEWSHOT_TEMPLATE_NAME, _FEWSHOT_PARAMS = TOPIC_TEMPLATE_MAP["pythagorean"]
 FEWSHOT_EXAMPLE = fill_template(_FEWSHOT_TEMPLATE_NAME, _FEWSHOT_PARAMS).strip()
+
+_FEWSHOT_TEMPLATE_NAME_2, _FEWSHOT_PARAMS_2 = TOPIC_TEMPLATE_MAP["derivative"]
+FEWSHOT_EXAMPLE_2 = fill_template(_FEWSHOT_TEMPLATE_NAME_2, _FEWSHOT_PARAMS_2).strip()
 
 
 class AnimationPipeline:
@@ -332,6 +355,14 @@ class AnimationPipeline:
         (timeout, malformed JSON, an obviously broken shape) just means
         codegen proceeds without a plan — exactly the old behavior. Never
         raises, never blocks the pipeline on a slow/weak model.
+
+        num_predict=800 (was 400): the same max_tokens-caps-thinking issue
+        fixed in _llm_generate applies here too — an abstract topic can burn
+        this smaller budget on Claude's default thinking with nothing left
+        for the actual JSON, silently discarding the plan more often than
+        intended on exactly the topics it would help most. Kept well below
+        codegen's budget on purpose — this stays the cheap, best-effort call
+        it's designed to be, not a second full generation.
         """
         level_instruction = LEVEL_INSTRUCTIONS.get(learner_level, LEVEL_INSTRUCTIONS["teen"])
         try:
@@ -346,8 +377,8 @@ class AnimationPipeline:
                     },
                 ],
                 task="codegen",
-                timeout_seconds=35,
-                num_predict=400,
+                timeout_seconds=45,
+                num_predict=800,
                 temperature=0.4,
                 json_format=True,
             )
@@ -425,12 +456,23 @@ class AnimationPipeline:
         here fell straight through to the generic fallback with no second
         try. Retries once at a lower temperature before giving up, the same
         pattern used elsewhere in the pipeline (lesson.py, discovery.py).
+
+        num_predict=3500 (was 2000): current Claude models think by default,
+        and num_predict caps that thinking on this app's Anthropic path (see
+        providers.py's _anthropic_chat) — for a topic with no obvious simple
+        shape (e.g. the Jacobian matrix), Claude has been observed spending
+        the *entire* 2000-token budget thinking and returning zero text,
+        which silently falls back to local Ollama and its weaker output.
+        Same fix as discovery.py's reasoning-model budget bump, applied here
+        for the same reason.
         """
         level_instruction = LEVEL_INSTRUCTIONS.get(learner_level, LEVEL_INSTRUCTIONS["teen"])
         messages = [
             {
                 "role": "system",
-                "content": CODEGEN_SYSTEM_PROMPT.format(fewshot_example=FEWSHOT_EXAMPLE),
+                "content": CODEGEN_SYSTEM_PROMPT.format(
+                    fewshot_example=FEWSHOT_EXAMPLE, fewshot_example_2=FEWSHOT_EXAMPLE_2
+                ),
             },
             {
                 "role": "user",
@@ -446,8 +488,9 @@ class AnimationPipeline:
             raw = self._llm.chat(
                 messages,
                 task="codegen",
-                timeout_seconds=90,
-                num_predict=2000,
+                timeout_seconds=120,
+                num_predict=3500,
+                num_ctx=8192,  # two fewshot examples + instructions need headroom
                 temperature=0.3 if attempt == 0 else 0.15,
             )
             if not raw:
@@ -485,6 +528,7 @@ class AnimationPipeline:
             task="codegen",
             timeout_seconds=60,
             num_predict=2500,
+            num_ctx=8192,  # up to 8000 chars of visible code needs headroom
             temperature=0.2,
         )
         if not raw:
