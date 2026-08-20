@@ -259,6 +259,48 @@ def test_validate_code_allows_a_single_matrix():
     assert AnimationPipeline._validate_code(code) is None
 
 
+def test_validate_code_rejects_matrix_next_to_label():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        caption = Text('Jacobian Matrix').to_edge(DOWN)\n"
+        "        self.play(Write(caption))\n"
+        "        grid = Matrix([[1, 2], [3, 4]]).next_to(caption, DOWN)\n"
+        "        self.play(Create(grid))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+    assert "matrix" in error.lower()
+    assert "next_to" in error.lower()
+
+
+def test_validate_code_rejects_bracket_matrix_next_to_label():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        caption = Text('Jacobian Matrix').to_edge(DOWN)\n"
+        "        self.play(Write(caption))\n"
+        "        bracket = MathTex(r'\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}').next_to(caption, DOWN)\n"
+        "        self.play(Create(bracket))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+    assert "matrix" in error.lower()
+
+
+def test_validate_code_allows_matrix_at_fixed_position():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        grid = Matrix([[1, 2], [3, 4]]).move_to(ORIGIN)\n"
+        "        self.play(Create(grid))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
 def test_heuristic_phase_unaffected_by_graph_context(monkeypatch):
     # Phase 1's template keyword match must not see the graph's related-concept
     # words — only the caller-supplied topic/context, unchanged from before.

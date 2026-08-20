@@ -68,6 +68,10 @@ MAX_RETRIES = 3
 # before we pay for a Manim render.
 ALLOWED_IMPORT_ROOTS = {"manim", "numpy", "math", "random"}
 
+# Shared between _validate_matrix_overlap and the matrix branch of
+# _validate_text_anchor — a LaTeX matrix environment, however it's used.
+MATRIX_ENV_RE = re.compile(r"\\begin\{[bpvB]?matrix\}")
+
 
 CODEGEN_SYSTEM_PROMPT = textwrap.dedent("""\
 You are an expert Manim CE (Community Edition) developer who creates
@@ -118,7 +122,12 @@ RULES — follow every one:
     screen. Fade out or remove the first before showing the second, or
     `Transform` one into the other — the same rule as headings above,
     applied to matrices specifically since they're dense enough that two
-    overlapping ones become unreadable immediately.
+    overlapping ones become unreadable immediately. Also never position a
+    matrix with `.next_to(some_label, DOWN)` — if that label is already
+    near an edge (e.g. placed with `.to_edge(DOWN)`), the matrix inherits
+    that position and runs off-frame. Anchor a matrix directly instead:
+    `.move_to(ORIGIN)`, or `.to_edge(DOWN)` on the matrix itself, never
+    relative to another mobject's position.
 
 CREATIVE STANDARDS (from 3Blue1Brown):
 - Geometry before algebra: show the shape first, the equation second.
@@ -176,6 +185,7 @@ Requirements:
 - Anchor sentence-length text to a fixed position, not .next_to() a shape
 - Only one matrix representation on screen at a time — fade/remove or
   Transform the first before showing a second
+- Anchor a matrix to a fixed position directly, not .next_to() a label
 
 Output the complete Python script (class GeneratedScene(Scene)).
 """)
@@ -643,31 +653,53 @@ class AnimationPipeline:
 
     @staticmethod
     def _validate_text_anchor(tree: ast.AST) -> Optional[str]:
-        """Catch a long sentence tethered to another mobject via .next_to().
+        """Catch a long sentence or a matrix tethered via .next_to().
 
-        Observed failure: a short-ish explanatory sentence positioned via
-        ``.next_to(some_shape, ...)`` where ``some_shape`` sits near the edge
-        of frame — the text isn't long enough to trip the title-width check,
-        but inherits the shape's edge-adjacent position and runs off-frame
-        with it. A short label (a number, a single word) via ``.next_to()``
-        is completely normal and not flagged — only a longer, sentence-like
-        string chained with a ``.next_to(`` call is.
+        Observed failure (text): a short-ish explanatory sentence positioned
+        via ``.next_to(some_shape, ...)`` where ``some_shape`` sits near the
+        edge of frame — the text isn't long enough to trip the title-width
+        check, but inherits the shape's edge-adjacent position and runs
+        off-frame with it. A short label (a number, a single word) via
+        ``.next_to()`` is completely normal and not flagged — only a longer,
+        sentence-like string chained with a ``.next_to(`` call is.
+
+        Observed failure (matrix): the same thing happens to a
+        ``Matrix(...)``/bracket-notation matrix positioned via
+        ``.next_to(caption, DOWN)`` where ``caption`` was itself already
+        near the bottom edge (e.g. a label placed with ``.to_edge(DOWN)``)
+        — the matrix inherits that position and runs off the bottom of the
+        frame. Matrices are always flagged when chained with ``.next_to()``
+        regardless of size, since even a small one is too dense to safely
+        guess a position for relative to an arbitrary other mobject.
         """
         LIMIT = 25
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
             base = node
-            has_next_to, has_long_text = False, False
+            has_next_to, has_long_text, has_matrix = False, False, False
             while isinstance(base, ast.Call):
                 func = base.func
                 if isinstance(func, ast.Attribute) and func.attr == "next_to":
                     has_next_to = True
+                if isinstance(func, ast.Name) and func.id == "Matrix":
+                    has_matrix = True
                 if isinstance(func, ast.Name) and func.id in ("Text", "Tex", "MathTex"):
                     for arg in base.args:
-                        if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and len(arg.value) > LIMIT:
-                            has_long_text = True
+                        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                            if len(arg.value) > LIMIT:
+                                has_long_text = True
+                            if MATRIX_ENV_RE.search(arg.value):
+                                has_matrix = True
                 base = func.value if isinstance(func, ast.Attribute) else None
+            if has_next_to and has_matrix:
+                return (
+                    "A matrix (Matrix(...) or bracket-notation MathTex) is positioned "
+                    "with .next_to(...) on another mobject — if that mobject sits near "
+                    "an edge, the matrix inherits that position and runs off-frame. "
+                    "Anchor matrices to a fixed position instead (e.g. .move_to(ORIGIN) "
+                    "or .to_edge(DOWN) directly, not relative to another mobject)."
+                )
             if has_next_to and has_long_text:
                 return (
                     "A sentence-length Text/MathTex is positioned with .next_to(...) "
@@ -776,7 +808,6 @@ class AnimationPipeline:
         as ``_validate_title_overlap``, applied to matrix-shaped mobjects
         instead of top-anchored headings.
         """
-        MATRIX_ENV_RE = re.compile(r"\\begin\{[bpvB]?matrix\}")
         construct = None
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name == "construct":
