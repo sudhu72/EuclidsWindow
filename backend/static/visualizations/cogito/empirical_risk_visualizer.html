@@ -74,7 +74,14 @@
     <div class="panel">
       <h2>One Fixed Rule, Growing Sample Size</h2>
       <p class="sub">Rule: predict 1 when x &gt; 0.6, with 20% label noise on the true x &gt; 0.5 boundary. True risk = 0.26, computed exactly from the population. Drag n and watch empirical risk settle toward it.</p>
-      <div class="row"><label>training sample size n</label><input type="range" id="llnN" min="5" max="2000" step="1" value="20"><span class="readout" id="llnNOut">20</span></div>
+      <div class="row"><label>training sample size n</label><input type="range" id="llnN" min="5" max="10000" step="1" value="20"><span class="readout" id="llnNOut">20</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnN5">n=5</button>
+        <button class="op" id="btnN20">n=20</button>
+        <button class="op" id="btnN100">n=100</button>
+        <button class="op" id="btnN1000">n=1,000</button>
+        <button class="op" id="btnN10000">n=10,000</button>
+      </div>
       <svg id="llnSvg" width="640" height="280" viewBox="0 0 640 280"></svg>
       <div class="metric-row">
         <div class="metric blue"><div class="lbl">true risk R(f)</div><div class="num">0.260</div></div>
@@ -191,6 +198,12 @@
       : (n < 500 ? "Growing n: the gap is visibly shrinking." : "Large n: empirical risk has settled in tight around the true risk, exactly as promised.");
   }
   document.getElementById("llnN").addEventListener("input", renderLLN);
+  [["btnN5",5],["btnN20",20],["btnN100",100],["btnN1000",1000],["btnN10000",10000]].forEach(([id,n]) => {
+    document.getElementById(id).addEventListener("click", () => {
+      document.getElementById("llnN").value = n;
+      renderLLN();
+    });
+  });
   renderLLN();
 
   /* ============================================================

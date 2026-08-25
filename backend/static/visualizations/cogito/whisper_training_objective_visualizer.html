@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Whisper's Multitask Objective, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  .seq{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:16px 0;}
+  .tok{border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;text-align:center;min-width:70px;}
+  .tok.special{background:var(--blue);color:#0c1a23;font-weight:700;}
+  .tok.lang{background:var(--amber);color:#0c1a23;font-weight:700;}
+  .tok.task{background:var(--coral);color:#0c1a23;font-weight:700;}
+  .tok.text{background:var(--green);color:#0c1a23;font-weight:700;}
+
+  table.datatable{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Whisper's Multitask Objective, live</h1>
+  <p class="sub">The identical French audio, two different teacher-forced target sequences. Toggle the task token and watch the whole downstream sequence — and the per-step cross-entropy — follow it.</p>
+
+  <div class="panel">
+    <h2>Target Sequence</h2>
+    <div class="row">
+      <button class="op active" id="btnTranscribe">Task: transcribe</button>
+      <button class="op" id="btnTranslate">Task: translate</button>
+    </div>
+    <div class="seq" id="seqDisplay"></div>
+    <div class="story-line" id="seqStory"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Per-Step Cross-Entropy (Teacher-Forced)</h2>
+    <p class="sub">Each row: the decoder's softmax probability for the TRUE next token in this sequence, and the resulting cross-entropy for that step.</p>
+    <table class="datatable" id="ceTable"></table>
+    <div class="metric-row">
+      <div class="metric green"><div class="lbl">Average cross-entropy</div><div class="num" id="avgCE">-</div></div>
+    </div>
+    <div class="story-line" id="ceStory"></div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../whisper_training_objective_feynman.md">Whisper's Training Objective</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  function softmax(scores){
+    const exps = scores.map(Math.exp);
+    const sum = exps.reduce((a,b)=>a+b,0);
+    return exps.map(e=>e/sum);
+  }
+
+  const VOCAB = ["<|startoftranscript|>","<|fr|>","<|en|>","<|transcribe|>","<|translate|>","<|notimestamps|>","Bonjour","Hello","world","<|endoftext|>"];
+  const CLASS = ["special","lang","lang","task","task","special","text","text","text","special"];
+
+  const TASKS = {
+    transcribe: {
+      seq: [0,1,3,5,6,9],
+      steps: [
+        { trueIdx: 1, scores: [0.5, 3.0, 1.0, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1] },
+        { trueIdx: 3, scores: [0.1, 0.1, 0.1, 2.8, 0.3, 0.2, 0.1, 0.1, 0.1, 0.1] },
+        { trueIdx: 5, scores: [0.1, 0.1, 0.1, 0.1, 0.1, 2.9, 0.2, 0.1, 0.1, 0.2] },
+        { trueIdx: 6, scores: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 3.2, 0.4, 0.3, 0.1] },
+        { trueIdx: 9, scores: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 3.0] },
+      ],
+    },
+    translate: {
+      seq: [0,1,4,5,7,9],
+      steps: [
+        { trueIdx: 1, scores: [0.5, 3.0, 1.0, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1] },
+        { trueIdx: 4, scores: [0.1, 0.1, 0.1, 0.3, 2.8, 0.2, 0.1, 0.1, 0.1, 0.1] },
+        { trueIdx: 5, scores: [0.1, 0.1, 0.1, 0.1, 0.1, 2.9, 0.2, 0.1, 0.1, 0.2] },
+        { trueIdx: 7, scores: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.3, 3.1, 0.4, 0.1] },
+        { trueIdx: 9, scores: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 3.0] },
+      ],
+    },
+  };
+
+  let current = "transcribe";
+
+  function renderSeq(){
+    const disp = document.getElementById("seqDisplay");
+    const seq = TASKS[current].seq;
+    disp.innerHTML = seq.map(idx => `<div class="tok ${CLASS[idx]}">${VOCAB[idx]}</div>`).join("");
+    document.getElementById("seqStory").textContent = current === "transcribe"
+      ? "Task token is <|transcribe|>: the text tokens that follow are French — the same language as the audio."
+      : "Task token is <|translate|>: the text tokens that follow are English, even though the audio is French. Everything upstream of that one token is unchanged.";
+  }
+
+  function renderCE(){
+    const steps = TASKS[current].steps;
+    const table = document.getElementById("ceTable");
+    let html = "<tr><th>Step</th><th>Predicting</th><th>P(true token)</th><th>Cross-entropy</th></tr>";
+    let total = 0;
+    steps.forEach((s,i) => {
+      const q = softmax(s.scores);
+      const p = q[s.trueIdx];
+      const ce = -Math.log(p);
+      total += ce;
+      html += `<tr><td>${i+1}</td><td>${VOCAB[s.trueIdx]}</td><td>${p.toFixed(4)}</td><td>${ce.toFixed(4)}</td></tr>`;
+    });
+    table.innerHTML = html;
+    document.getElementById("avgCE").textContent = (total/steps.length).toFixed(4);
+    document.getElementById("ceStory").textContent =
+      "Every step uses the identical cross-entropy formula - only which target sequence got teacher-forced in changes between the two tasks.";
+  }
+
+  function update(){
+    renderSeq();
+    renderCE();
+  }
+
+  document.getElementById("btnTranscribe").addEventListener("click", (e) => {
+    current = "transcribe";
+    document.getElementById("btnTranscribe").classList.add("active");
+    document.getElementById("btnTranslate").classList.remove("active");
+    update();
+  });
+  document.getElementById("btnTranslate").addEventListener("click", (e) => {
+    current = "translate";
+    document.getElementById("btnTranslate").classList.add("active");
+    document.getElementById("btnTranscribe").classList.remove("active");
+    update();
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>

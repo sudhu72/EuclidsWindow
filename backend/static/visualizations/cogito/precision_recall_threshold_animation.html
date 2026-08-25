@@ -79,6 +79,19 @@
 
     <div class="email-row" id="emailRow"></div>
 
+    <div class="row" style="display:flex;justify-content:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+      <button id="btnLoadTutorialEmails">Load tutorial's exact 10 emails (A-J)</button>
+      <button id="btnLoadOriginalEmails">Original 10-email set</button>
+    </div>
+    <div class="row" id="thresholdPresets" style="display:none;justify-content:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <button id="btnThresh090">threshold=0.90</button>
+      <button id="btnThresh080">threshold=0.80</button>
+      <button id="btnThresh070">threshold=0.70</button>
+      <button id="btnThresh055">threshold=0.55</button>
+      <button id="btnThresh040">threshold=0.40</button>
+      <button id="btnThresh010">threshold=0.10</button>
+    </div>
+
     <div class="slider-wrap">
       <input type="range" id="thresholdSlider" min="0" max="1" step="0.01" value="0.5">
     </div>
@@ -111,7 +124,7 @@
 </div>
 
 <script>
-const emails = [
+const ORIGINAL_EMAILS = [
   {id:1, truth:1, p:0.92},
   {id:2, truth:1, p:0.81},
   {id:3, truth:1, p:0.55},
@@ -123,14 +136,31 @@ const emails = [
   {id:9, truth:0, p:0.05},
   {id:10, truth:1, p:0.35}
 ];
+const TUTORIAL_EMAILS = [
+  {id:'A', truth:1, p:0.95},
+  {id:'B', truth:1, p:0.90},
+  {id:'C', truth:0, p:0.85},
+  {id:'D', truth:1, p:0.80},
+  {id:'E', truth:1, p:0.70},
+  {id:'F', truth:0, p:0.60},
+  {id:'G', truth:0, p:0.55},
+  {id:'H', truth:1, p:0.40},
+  {id:'I', truth:0, p:0.30},
+  {id:'J', truth:0, p:0.10}
+];
+let emails = ORIGINAL_EMAILS;
 
-const row = document.getElementById('emailRow');
-emails.forEach(e => {
-  const div = document.createElement('div');
-  div.id = 'email_' + e.id;
-  div.innerHTML = `<div class="p">${e.p.toFixed(2)}</div><div class="lab">email ${e.id}</div><div class="tag" id="tag_${e.id}"></div>`;
-  row.appendChild(div);
-});
+function renderEmailRow(){
+  const row = document.getElementById('emailRow');
+  row.innerHTML = '';
+  emails.forEach(e => {
+    const div = document.createElement('div');
+    div.id = 'email_' + e.id;
+    div.innerHTML = `<div class="p">${e.p.toFixed(2)}</div><div class="lab">email ${e.id}</div><div class="tag" id="tag_${e.id}"></div>`;
+    row.appendChild(div);
+  });
+}
+renderEmailRow();
 
 function update(threshold){
   document.getElementById('thresholdVal').textContent = threshold.toFixed(2);
@@ -174,6 +204,25 @@ function update(threshold){
 const slider = document.getElementById('thresholdSlider');
 slider.addEventListener('input', () => update(parseFloat(slider.value)));
 update(parseFloat(slider.value));
+
+document.getElementById('btnLoadTutorialEmails').addEventListener('click', () => {
+  emails = TUTORIAL_EMAILS;
+  renderEmailRow();
+  document.getElementById('thresholdPresets').style.display = 'flex';
+  update(parseFloat(slider.value));
+});
+document.getElementById('btnLoadOriginalEmails').addEventListener('click', () => {
+  emails = ORIGINAL_EMAILS;
+  renderEmailRow();
+  document.getElementById('thresholdPresets').style.display = 'none';
+  update(parseFloat(slider.value));
+});
+[["btnThresh090",0.90],["btnThresh080",0.80],["btnThresh070",0.70],["btnThresh055",0.55],["btnThresh040",0.40],["btnThresh010",0.10]].forEach(([id,t]) => {
+  document.getElementById(id).addEventListener('click', () => {
+    slider.value = t;
+    update(t);
+  });
+});
 
 document.getElementById('btnFaq').addEventListener('click', () => {
   const c = document.getElementById('faqContent');

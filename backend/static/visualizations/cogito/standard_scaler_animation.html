@@ -121,7 +121,14 @@
       <h2>The loss surface's shape, and a live gradient-descent race</h2>
       <p class="sub">Two genuinely unrelated (uncorrelated) features, one scale-mismatch dial. Drag it and watch the loss contour stretch from a circle into a needle — and watch how many steps gradient descent actually needs to get anywhere near the middle.</p>
       <div class="row">
-        <label>Feature scale mismatch</label><input type="range" id="ratioSlider" min="1" max="30" step="1" value="10"><span class="readout" id="ratioOut">10×</span>
+        <label>Feature scale mismatch</label><input type="range" id="ratioSlider" min="1" max="50" step="1" value="10"><span class="readout" id="ratioOut">10×</span>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnRatio1">1×</button>
+        <button class="op" id="btnRatio2">2×</button>
+        <button class="op" id="btnRatio5">5×</button>
+        <button class="op" id="btnRatio10">10×</button>
+        <button class="op" id="btnRatio50">50×</button>
       </div>
       <div class="row">
         <button class="op" id="btnReplay">▶ Replay descent</button>
@@ -359,6 +366,12 @@
     animFrame = requestAnimationFrame(tick);
   }
   document.getElementById("ratioSlider").addEventListener("input", renderModel);
+  [["btnRatio1",1],["btnRatio2",2],["btnRatio5",5],["btnRatio10",10],["btnRatio50",50]].forEach(([id,r]) => {
+    document.getElementById(id).addEventListener("click", () => {
+      document.getElementById("ratioSlider").value = r;
+      renderModel();
+    });
+  });
   document.getElementById("btnReplay").addEventListener("click", renderModel);
   renderModel();
 })();

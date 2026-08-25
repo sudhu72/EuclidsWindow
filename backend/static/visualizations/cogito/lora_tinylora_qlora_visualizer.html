@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LoRA, TinyLoRA &amp; QLoRA, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:190px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:90px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  table.datatable{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>LoRA, TinyLoRA &amp; QLoRA, live</h1>
+  <p class="sub">Three companion demos: rank vs. parameter count, density-matched vs. uniform quantization, and a full-fine-tune/LoRA/QLoRA memory calculator.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="rank">Rank &amp; Parameters</button>
+    <button class="tab-btn" data-tab="nf4">NF4 vs. Uniform</button>
+    <button class="tab-btn" data-tab="memory">Memory Calculator</button>
+  </div>
+
+  <div class="tabpage active" id="tab-rank">
+    <div class="panel">
+      <h2>How Rank Controls Parameter Count</h2>
+      <div class="slider-row">
+        <label for="dSlider">Hidden dimension d</label>
+        <input type="range" id="dSlider" min="256" max="8192" step="256" value="4096">
+        <output id="dOut">4096</output>
+      </div>
+      <div class="slider-row">
+        <label for="rSlider">Rank r</label>
+        <input type="range" id="rSlider" min="1" max="64" step="1" value="8">
+        <output id="rOut">8</output>
+      </div>
+      <div class="row">
+        <button class="op" id="btnR16">r=16 (table row)</button>
+        <button class="op" id="btnR8">r=8 (table row)</button>
+        <button class="op" id="btnR4">r=4 (table row)</button>
+        <button class="op" id="btnR2">r=2 (table row)</button>
+        <button class="op" id="btnR1">r=1 (VeRA-matching, table row)</button>
+      </div>
+      <svg id="rankSvg" width="640" height="220" viewBox="0 0 640 220"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">Full matrix params</div><div class="num" id="fullParamsOut">-</div></div>
+        <div class="metric green"><div class="lbl">LoRA params</div><div class="num" id="loraParamsOut">-</div></div>
+        <div class="metric amber"><div class="lbl">Reduction</div><div class="num" id="reductionOut">-</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Toy 4x4 Example, Rank r=1 — Verified</h2>
+      <p class="sub">B is a 4x1 column, A is a 1x4 row. ΔW = B·A. Every 2x2 sub-block of ΔW should have a determinant of effectively zero — proof this matrix genuinely has rank 1.</p>
+      <table class="datatable" id="toyMatrixTable"></table>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">Max |determinant| across all 2x2 sub-blocks</div><div class="num" id="toyMaxDet">-</div></div>
+      </div>
+      <div class="story-line" id="toyStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-nf4">
+    <div class="panel">
+      <h2>Density-Matched vs. Uniform Quantization Levels</h2>
+      <p class="sub">The same 16 toy weight values (a dense cluster near zero plus 4 outliers), quantized to 4 levels two different ways.</p>
+      <svg id="nf4Svg" width="640" height="220" viewBox="0 0 640 220"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">Typical-value error, uniform</div><div class="num" id="typUniform">-</div></div>
+        <div class="metric green"><div class="lbl">Typical-value error, density-matched</div><div class="num" id="typDensity">-</div></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">Outlier error, uniform</div><div class="num" id="outUniform">-</div></div>
+        <div class="metric coral"><div class="lbl">Outlier error, density-matched</div><div class="num" id="outDensity">-</div></div>
+      </div>
+      <div class="story-line" id="nf4Story"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-memory">
+    <div class="panel">
+      <h2>Memory Calculator: Full Fine-Tuning vs. LoRA vs. QLoRA</h2>
+      <div class="slider-row">
+        <label for="paramsSlider">Model size (billions of params)</label>
+        <input type="range" id="paramsSlider" min="1" max="70" step="1" value="7">
+        <output id="paramsOut">7B</output>
+      </div>
+      <svg id="memSvg" width="640" height="240" viewBox="0 0 640 240"></svg>
+      <table class="datatable" id="memTable"></table>
+      <div class="story-line">Simplified, order-of-magnitude estimate (weights + gradients + Adam optimizer states only; real deployments also need activation memory).</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../lora_tinylora_qlora_feynman.md">LoRA, TinyLoRA, and QLoRA</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ==================== TAB 1: Rank & Parameters ====================
+  function drawRank(d, r, fullParams, loraParams){
+    const svg = document.getElementById("rankSvg");
+    svg.innerHTML = "";
+    const W=640,H=220,pad=50;
+    const maxLog = Math.log10(fullParams*1.2);
+    const barGap = 200, barW = 100;
+    const x1 = W/2 - barGap/2 - barW/2, x2 = W/2 + barGap/2 - barW/2;
+
+    function barHeight(v){ return v>0 ? (Math.log10(v)/maxLog)*(H-2*pad) : 0; }
+    const h1 = barHeight(fullParams), h2 = barHeight(loraParams);
+
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("rect",{x:x1,y:H-pad-h1,width:barW,height:h1,fill:"var(--blue)",opacity:0.85}));
+    svg.appendChild(el("rect",{x:x2,y:H-pad-h2,width:barW,height:h2,fill:"var(--green)",opacity:0.85}));
+    svg.appendChild(el("text",{x:x1+barW/2,y:H-pad-h1-10,"text-anchor":"middle","font-size":12,fill:"var(--chalk)"}, fullParams.toLocaleString()));
+    svg.appendChild(el("text",{x:x2+barW/2,y:H-pad-h2-10,"text-anchor":"middle","font-size":12,fill:"var(--chalk)"}, loraParams.toLocaleString()));
+    svg.appendChild(el("text",{x:x1+barW/2,y:H-pad+18,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"}, "full d x d"));
+    svg.appendChild(el("text",{x:x2+barW/2,y:H-pad+18,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"}, "LoRA r(d+d)"));
+    svg.appendChild(el("text",{x:W/2,y:20,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"parameter count (log scale)"));
+  }
+
+  function updateRank(){
+    const d = parseInt(document.getElementById("dSlider").value,10);
+    const r = parseInt(document.getElementById("rSlider").value,10);
+    document.getElementById("dOut").textContent = d;
+    document.getElementById("rOut").textContent = r;
+    const fullParams = d*d;
+    const loraParams = r*(d+d);
+    document.getElementById("fullParamsOut").textContent = fullParams.toLocaleString();
+    document.getElementById("loraParamsOut").textContent = loraParams.toLocaleString();
+    document.getElementById("reductionOut").textContent = (fullParams/loraParams).toFixed(1) + "x fewer";
+    drawRank(d, r, fullParams, loraParams);
+  }
+  document.getElementById("dSlider").addEventListener("input", updateRank);
+  document.getElementById("rSlider").addEventListener("input", updateRank);
+  [["btnR16",16],["btnR8",8],["btnR4",4],["btnR2",2],["btnR1",1]].forEach(([id,r]) => {
+    document.getElementById(id).addEventListener("click", () => {
+      document.getElementById("dSlider").value = 4096;
+      document.getElementById("rSlider").value = r;
+      updateRank();
+    });
+  });
+  updateRank();
+
+  // ==================== Toy 4x4 rank-1 example ====================
+  function det2x2(m, r1, r2, c1, c2){
+    return m[r1][c1]*m[r2][c2] - m[r1][c2]*m[r2][c1];
+  }
+  function updateToyExample(){
+    const B = [0.5, -0.2, 0.1, 0.3];
+    const A = [0.4, -0.6, 0.2, 0.9];
+    const dW = B.map(b => A.map(a => b*a));
+    const table = document.getElementById("toyMatrixTable");
+    let html = "<tr><th></th>" + A.map((_,j)=>`<th>col ${j}</th>`).join("") + "</tr>";
+    dW.forEach((row, i) => {
+      html += `<tr><th>row ${i}</th>` + row.map(v => `<td>${v.toFixed(4)}</td>`).join("") + "</tr>";
+    });
+    table.innerHTML = html;
+
+    let maxDet = 0;
+    for (let r1=0; r1<4; r1++) for (let r2=r1+1; r2<4; r2++)
+      for (let c1=0; c1<4; c1++) for (let c2=c1+1; c2<4; c2++){
+        const d = Math.abs(det2x2(dW, r1, r2, c1, c2));
+        if (d > maxDet) maxDet = d;
+      }
+    document.getElementById("toyMaxDet").textContent = maxDet.toExponential(2);
+    document.getElementById("toyStory").textContent =
+      "Every 2x2 sub-determinant is effectively zero (floating-point rounding, not a real nonzero value) — the outer product of any column and any row is always exactly rank 1.";
+  }
+  updateToyExample();
+
+  // ==================== TAB 2: NF4 vs Uniform ====================
+  const toyWeights = [-3.0,-2.0,-0.3,-0.25,-0.2,-0.15,-0.1,-0.05,0.05,0.1,0.15,0.2,0.25,0.3,2.0,3.0];
+  const min = Math.min(...toyWeights), max = Math.max(...toyWeights);
+  const K = 4;
+  const uniformLevels = Array.from({length:K}, (_,k) => min + (k+0.5)*(max-min)/K);
+  function groupMeans(sorted, k){
+    const n = sorted.length, groupSize = n/k;
+    const means = [];
+    for(let i=0;i<k;i++){
+      const group = sorted.slice(i*groupSize, (i+1)*groupSize);
+      means.push(group.reduce((a,b)=>a+b,0)/group.length);
+    }
+    return means;
+  }
+  const quantileLevels = groupMeans(toyWeights, K);
+  function nearestLevel(v, levels){
+    let best = levels[0], bestDist = Math.abs(v-levels[0]);
+    for(const l of levels){ const dd=Math.abs(v-l); if(dd<bestDist){bestDist=dd;best=l;} }
+    return best;
+  }
+
+  function drawNF4(){
+    const svg = document.getElementById("nf4Svg");
+    svg.innerHTML = "";
+    const W=640,H=220,pad=44;
+    const scaleX = v => pad + (v-min)/(max-min)*(W-2*pad);
+    svg.appendChild(el("line",{x1:pad,y1:H/2,x2:W-pad,y2:H/2,stroke:"var(--chalk-dim)"}));
+    toyWeights.forEach(v => {
+      svg.appendChild(el("circle",{cx:scaleX(v), cy:H/2, r:4, fill:"var(--chalk)", opacity:0.8}));
+    });
+    uniformLevels.forEach(l => {
+      svg.appendChild(el("line",{x1:scaleX(l),y1:H/2-50,x2:scaleX(l),y2:H/2-10,stroke:"var(--blue)","stroke-width":2}));
+      svg.appendChild(el("text",{x:scaleX(l),y:H/2-56,"text-anchor":"middle","font-size":10,fill:"var(--blue)"}, l.toFixed(2)));
+    });
+    quantileLevels.forEach(l => {
+      svg.appendChild(el("line",{x1:scaleX(l),y1:H/2+10,x2:scaleX(l),y2:H/2+50,stroke:"var(--green)","stroke-width":2}));
+      svg.appendChild(el("text",{x:scaleX(l),y:H/2+62,"text-anchor":"middle","font-size":10,fill:"var(--green)"}, l.toFixed(2)));
+    });
+    svg.appendChild(el("text",{x:W/2,y:20,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"toy weight values (dots), uniform levels (blue, above), density-matched levels (green, below)"));
+  }
+
+  function updateNF4(){
+    drawNF4();
+    const dense = toyWeights.filter(v => Math.abs(v) <= 0.3);
+    const outliers = toyWeights.filter(v => Math.abs(v) > 0.3);
+    function sqErr(vals, levels){ return vals.reduce((s,v)=>s+(v-nearestLevel(v,levels))**2,0); }
+    document.getElementById("typUniform").textContent = sqErr(dense, uniformLevels).toFixed(4);
+    document.getElementById("typDensity").textContent = sqErr(dense, quantileLevels).toFixed(4);
+    document.getElementById("outUniform").textContent = sqErr(outliers, uniformLevels).toFixed(4);
+    document.getElementById("outDensity").textContent = sqErr(outliers, quantileLevels).toFixed(4);
+    document.getElementById("nf4Story").textContent =
+      "Density-matched levels are far more accurate on the typical (dense-cluster) values, at the cost of worse accuracy on rare outliers - exactly NF4's deliberate trade-off.";
+  }
+  updateNF4();
+
+  // ==================== TAB 3: Memory Calculator ====================
+  function drawMemory(fullGB, loraGB, qloraGB){
+    const svg = document.getElementById("memSvg");
+    svg.innerHTML = "";
+    const W=640,H=240,pad=50;
+    const maxVal = Math.max(fullGB, loraGB, qloraGB, 1);
+    const bars = [
+      {label:"Full fine-tune", val: fullGB, color: "var(--coral)"},
+      {label:"LoRA", val: loraGB, color: "var(--blue)"},
+      {label:"QLoRA", val: qloraGB, color: "var(--green)"},
+    ];
+    const gap = (W-2*pad)/bars.length;
+    const bw = gap*0.5;
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    bars.forEach((b,i) => {
+      const x = pad + i*gap + (gap-bw)/2;
+      const h = (b.val/maxVal)*(H-2*pad);
+      svg.appendChild(el("rect",{x, y:H-pad-h, width:bw, height:h, fill:b.color, opacity:0.85}));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad-h-10, "text-anchor":"middle","font-size":12, fill:"var(--chalk)"}, b.val.toFixed(2)+" GB"));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad+18, "text-anchor":"middle","font-size":11, fill:"var(--chalk-dim)"}, b.label));
+    });
+  }
+
+  function updateMemory(){
+    const Nbil = parseFloat(document.getElementById("paramsSlider").value);
+    document.getElementById("paramsOut").textContent = Nbil + "B";
+    const N = Nbil*1e9;
+    const fullBytesPerParam = 2+2+4+4; // fp16 w + fp16 grad + fp32 adam m + fp32 adam v
+    const fullGB = N*fullBytesPerParam/1e9;
+
+    const d = 4096, r = 8, layers = 32, matricesPerLayer = 2;
+    const loraTrainable = layers*matricesPerLayer*(r*(d+d));
+    const loraOverheadGB = loraTrainable*fullBytesPerParam/1e9;
+    const loraBaseGB = N*2/1e9;
+    const loraTotalGB = loraBaseGB + loraOverheadGB;
+
+    const qloraBaseGB = N*0.5/1e9;
+    const qloraTotalGB = qloraBaseGB + loraOverheadGB;
+
+    drawMemory(fullGB, loraTotalGB, qloraTotalGB);
+
+    const table = document.getElementById("memTable");
+    table.innerHTML = `<tr><th>Approach</th><th>Base storage</th><th>Trainable overhead</th><th>Total</th><th>vs. full fine-tune</th></tr>
+      <tr><td>Full fine-tuning</td><td>-</td><td>-</td><td>${fullGB.toFixed(2)} GB</td><td>1.0x</td></tr>
+      <tr><td>LoRA (FP16 base)</td><td>${loraBaseGB.toFixed(2)} GB</td><td>${loraOverheadGB.toFixed(4)} GB</td><td>${loraTotalGB.toFixed(2)} GB</td><td>${(fullGB/loraTotalGB).toFixed(1)}x less</td></tr>
+      <tr><td>QLoRA (4-bit base)</td><td>${qloraBaseGB.toFixed(2)} GB</td><td>${loraOverheadGB.toFixed(4)} GB</td><td>${qloraTotalGB.toFixed(2)} GB</td><td>${(fullGB/qloraTotalGB).toFixed(1)}x less</td></tr>`;
+  }
+  document.getElementById("paramsSlider").addEventListener("input", updateMemory);
+  updateMemory();
+})();
+</script>
+</body>
+</html>

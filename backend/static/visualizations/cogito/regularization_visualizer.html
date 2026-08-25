@@ -64,6 +64,7 @@
     <button class="tabbtn active" data-tab="soft">Soft-Thresholding</button>
     <button class="tabbtn" data-tab="geometry">The Diamond and the Circle</button>
     <button class="tabbtn" data-tab="correlated">Correlated Features</button>
+    <button class="tabbtn" data-tab="lasso5">LASSO Feature Selection</button>
   </div>
 
   <!-- ============ TAB 1: SOFT-THRESHOLDING ============ -->
@@ -73,6 +74,11 @@
       <p class="sub">z is what a weight "wants" to be before any penalty. Drag z and λ and watch the L1 and L2 solutions diverge.</p>
       <div class="row"><label>z (unpenalized target)</label><input type="range" id="softZ" min="-5" max="5" step="0.05" value="1.5"><span class="readout" id="softZOut">1.50</span></div>
       <div class="row"><label>λ (penalty strength)</label><input type="range" id="softLambda" min="0" max="3" step="0.05" value="1"><span class="readout" id="softLambdaOut">1.00</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnSoftEx1">Example 1: z=0.5, λ=1</button>
+        <button class="op" id="btnSoftEx2">Example 2: z=1.5, λ=2</button>
+        <button class="op" id="btnSoftEx3">Example 3: z=3, λ=1</button>
+      </div>
       <svg id="softSvg" width="640" height="180" viewBox="0 0 640 180"></svg>
       <div class="metric-row">
         <div class="metric coral"><div class="lbl">L1 solution w*</div><div class="num" id="softL1">-</div></div>
@@ -110,6 +116,23 @@
       <table class="coord" id="corrTable"></table>
       <svg id="corrSvg" width="500" height="140" viewBox="0 0 500 140"></svg>
       <div class="story-line" id="corrStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: LASSO FEATURE SELECTION ============ -->
+  <div class="tabpanel" id="tab-lasso5">
+    <div class="panel">
+      <h2>5 Features, 3 Real, 2 Noise — LASSO Finds the Support</h2>
+      <p class="sub">Three features genuinely drive the outcome (true weights 3, 2, 1); two are pure noise (true weight 0). Drag λ and watch LASSO zero out the noise features automatically — and watch it happen again on a freshly redrawn dataset.</p>
+      <div class="row"><label>λ (penalty strength)</label><input type="range" id="lasso5Lambda" min="0.01" max="1.5" step="0.01" value="0.10"><span class="readout" id="lasso5LambdaOut">0.10</span></div>
+      <div class="row">
+        <button class="op primary" id="btnLasso5Redraw">Redraw the noise</button>
+      </div>
+      <table class="coord" id="lasso5Table"></table>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">Nonzero count</div><div class="num" id="lasso5NonzeroOut">-</div></div>
+      </div>
+      <div class="story-line" id="lasso5Story"></div>
     </div>
   </div>
 
@@ -179,6 +202,13 @@
       : `z is outside the dead zone — L1 shrinks by exactly λ (to ${wL1.toFixed(3)}); L2 shrinks proportionally, further from zero at this z but never landing exactly on it.`;
   }
   ["softZ","softLambda"].forEach(id => document.getElementById(id).addEventListener("input", renderSoft));
+  [["btnSoftEx1",0.5,1],["btnSoftEx2",1.5,2],["btnSoftEx3",3,1]].forEach(([id,z,lam]) => {
+    document.getElementById(id).addEventListener("click", () => {
+      document.getElementById("softZ").value = z;
+      document.getElementById("softLambda").value = lam;
+      renderSoft();
+    });
+  });
   renderSoft();
 
   /* ============================================================
@@ -315,6 +345,64 @@
   }
   document.getElementById("btnRedraw").addEventListener("click", () => { corrSeed = Math.floor(Math.random()*100000)+1; runCorrelated(); });
   runCorrelated();
+
+  /* ============================================================
+     TAB 4 — LASSO FEATURE SELECTION (5 features, k-way coordinate descent)
+     ============================================================ */
+  const LASSO5_TRUE_WEIGHTS = [3, 2, 1, 0, 0];
+  function fitLassoK(X, y, lambda, iters){
+    const k = X.length, n = y.length;
+    const b = new Array(k).fill(0);
+    const xx = X.map(col => col.reduce((s,v)=>s+v*v,0));
+    for (let it=0; it<iters; it++){
+      for (let j=0; j<k; j++){
+        let rho = 0;
+        for (let i=0; i<n; i++){
+          let pred = 0;
+          for (let jj=0; jj<k; jj++){ if (jj!==j) pred += b[jj]*X[jj][i]; }
+          rho += X[j][i]*(y[i]-pred);
+        }
+        b[j] = softThreshold(rho, lambda*n) / xx[j];
+      }
+    }
+    return b;
+  }
+  function genLasso5Data(seed){
+    const n = 200;
+    const rand = makeLCG(seed);
+    const cols = Array.from({length:5}, () => Array.from({length:n}, () => boxMuller(rand)));
+    const y = Array.from({length:n}, (_,i) =>
+      LASSO5_TRUE_WEIGHTS[0]*cols[0][i] + LASSO5_TRUE_WEIGHTS[1]*cols[1][i] + LASSO5_TRUE_WEIGHTS[2]*cols[2][i]
+      + 0.5*boxMuller(rand));
+    return { X: cols.map(standardize), y: standardize(y) };
+  }
+  let lasso5Seed = 1;
+  let lasso5Data = genLasso5Data(lasso5Seed);
+  function updateLasso5(){
+    const lambda = parseFloat(document.getElementById("lasso5Lambda").value);
+    document.getElementById("lasso5LambdaOut").textContent = lambda.toFixed(2);
+    const b = fitLassoK(lasso5Data.X, lasso5Data.y, lambda, 300);
+    const table = document.getElementById("lasso5Table");
+    let html = "<tr><th>feature</th><th>true weight</th><th>fitted weight</th></tr>";
+    b.forEach((w, i) => {
+      html += `<tr><td>x${i+1}</td><td>${LASSO5_TRUE_WEIGHTS[i]}</td><td>${Math.abs(w)<1e-3 ? "0.000" : w.toFixed(3)}</td></tr>`;
+    });
+    table.innerHTML = html;
+    const nonzero = b.filter(w => Math.abs(w) > 1e-3).length;
+    document.getElementById("lasso5NonzeroOut").textContent = nonzero;
+    document.getElementById("lasso5Story").textContent = nonzero === 3
+      ? "Exactly 3 nonzero — LASSO has landed on precisely the true support, with no feature-selection step performed by hand."
+      : nonzero > 3
+      ? `${nonzero} nonzero — λ is still too small to fully suppress the noise features; raise it.`
+      : `${nonzero} nonzero — λ is now large enough to also suppress a real feature, past the ideal sparsity point.`;
+  }
+  document.getElementById("lasso5Lambda").addEventListener("input", updateLasso5);
+  document.getElementById("btnLasso5Redraw").addEventListener("click", () => {
+    lasso5Seed = Math.floor(Math.random()*100000)+1;
+    lasso5Data = genLasso5Data(lasso5Seed);
+    updateLasso5();
+  });
+  updateLasso5();
 })();
 </script>
 </body>

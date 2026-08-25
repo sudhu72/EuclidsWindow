@@ -48,6 +48,9 @@
   .metric.amber .num{color:var(--amber);}
 
   .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  table.coord{border-collapse:collapse;margin:14px auto;width:100%;max-width:500px;}
+  table.coord th, table.coord td{border:1px solid var(--border);padding:8px 10px;text-align:center;font-size:12.5px;}
+  table.coord th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
   footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
   footer a{color:var(--blue);}
 </style>
@@ -71,12 +74,23 @@
       <div class="row"><label>sample size n</label><input type="range" id="hbN" min="10" max="400" step="5" value="200"><span class="readout" id="hbNOut">200</span></div>
       <div class="row"><label>tolerance ε</label><input type="range" id="hbEps" min="0.05" max="0.3" step="0.01" value="0.15"><span class="readout" id="hbEpsOut">0.15</span></div>
       <div class="row"><label>number of functions m</label><input type="range" id="hbM" min="1" max="8" step="1" value="5"><span class="readout" id="hbMOut">5</span></div>
+      <div class="row">
+        <button class="op" id="btnHbScenario1">Verified: n=50, ε=0.15, m=1 (single function)</button>
+        <button class="op" id="btnHbScenario2">Verified: n=200, ε=0.15, m=5 (five functions)</button>
+      </div>
       <svg id="hbSvg" width="640" height="260" viewBox="0 0 640 260"></svg>
       <div class="metric-row">
         <div class="metric coral"><div class="lbl">empirical violation rate</div><div class="num" id="hbEmp">-</div></div>
         <div class="metric blue"><div class="lbl">union bound m·2exp(-2nε²)</div><div class="num" id="hbBound">-</div></div>
       </div>
       <div class="story-line" id="hbStory"></div>
+    </div>
+
+    <div class="panel">
+      <h2>The Bound Alone, Swept Out to m=5,000 — Verified</h2>
+      <p class="sub">Holding n and ε at whatever the sliders above are set to, the union bound grows exactly linearly with m — no simulation needed to see it turn vacuous.</p>
+      <table class="coord" id="hbSweepTable"></table>
+      <div class="story-line" id="hbSweepStory"></div>
     </div>
   </div>
 
@@ -141,17 +155,33 @@
      ============================================================ */
   const TRUE_PS_ALL = [0.30, 0.40, 0.50, 0.20, 0.60, 0.35, 0.45, 0.55];
 
-  function renderHoeffding(){
+  function renderHoeffdingSweep(n, eps){
+    const table = document.getElementById("hbSweepTable");
+    let html = "<tr><th>m</th><th>union bound m·2exp(-2nε²)</th></tr>";
+    let anyVacuous = false;
+    [5, 50, 500, 5000].forEach(mm => {
+      const b = mm * 2*Math.exp(-2*n*eps*eps);
+      if (b >= 1) anyVacuous = true;
+      html += `<tr><td>${mm.toLocaleString()}</td><td>${b >= 1000 ? b.toExponential(3) : b.toFixed(4)}</td></tr>`;
+    });
+    table.innerHTML = html;
+    document.getElementById("hbSweepStory").textContent = anyVacuous
+      ? "By m=5,000 the bound has already blown past 1 — a probability bound greater than 1 is true but says nothing useful."
+      : "Still under 1 across this whole sweep at the current n and ε — try a smaller n or ε to see it break sooner.";
+  }
+
+  function renderHoeffding(trialsOverride){
     const n = parseInt(document.getElementById("hbN").value, 10);
     const eps = parseFloat(document.getElementById("hbEps").value);
     const m = parseInt(document.getElementById("hbM").value, 10);
     document.getElementById("hbNOut").textContent = n;
     document.getElementById("hbEpsOut").textContent = eps.toFixed(2);
     document.getElementById("hbMOut").textContent = m;
+    renderHoeffdingSweep(n, eps);
 
     const truePs = TRUE_PS_ALL.slice(0, m);
     const rand = makeLCG(777);
-    const numTrials = 20000;
+    const numTrials = trialsOverride || 20000;
     let violations = 0;
     for (let t=0;t<numTrials;t++){
       let any = false;
@@ -193,7 +223,19 @@
       ? "This union bound has already crossed 1 — it's mathematically true but tells you nothing useful anymore."
       : `Bound still meaningful: at most a ${(bound*100).toFixed(2)}% chance any of the ${m} functions strays by more than ε — and the real rate (${(empRate*100).toFixed(3)}%) is comfortably lower still.`;
   }
-  ["hbN","hbEps","hbM"].forEach(id => document.getElementById(id).addEventListener("input", renderHoeffding));
+  ["hbN","hbEps","hbM"].forEach(id => document.getElementById(id).addEventListener("input", () => renderHoeffding()));
+  document.getElementById("btnHbScenario1").addEventListener("click", () => {
+    document.getElementById("hbN").value = 50;
+    document.getElementById("hbEps").value = 0.15;
+    document.getElementById("hbM").value = 1;
+    renderHoeffding(200000);
+  });
+  document.getElementById("btnHbScenario2").addEventListener("click", () => {
+    document.getElementById("hbN").value = 200;
+    document.getElementById("hbEps").value = 0.15;
+    document.getElementById("hbM").value = 5;
+    renderHoeffding(200000);
+  });
   renderHoeffding();
 
   /* ============================================================

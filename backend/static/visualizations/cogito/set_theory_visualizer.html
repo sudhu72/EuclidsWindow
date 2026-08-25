@@ -119,6 +119,16 @@
       <div class="verdict" id="hotelVerdict"></div>
     </div>
     <div class="card">
+      <h2>|ℤ| = |ℕ|: Zig-Zagging Through the Integers</h2>
+      <p class="sub">f(n) = n/2 if n is even, −(n+1)/2 if n is odd — every natural number lands on a distinct integer, positive and negative alike.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="btnZigStep">Next natural number</button>
+        <button class="op" id="btnZigReset">Reset</button>
+      </div>
+      <div class="verdict" id="zigList" style="min-height:50px;"></div>
+      <div class="caption"><b>Why it matters:</b> ℤ looks twice the size of ℕ at a glance — this bijection is the exact proof that it isn't.</div>
+    </div>
+    <div class="card">
       <h2>Enumerating the Rationals, One Diagonal at a Time</h2>
       <p class="sub">Every positive fraction p/q, arranged in a grid, walked along diagonals of constant p+q — skipping any fraction not already in lowest terms.</p>
       <div class="row" style="gap:6px;">
@@ -334,6 +344,27 @@
       render();
     });
     document.getElementById("btnRatReset").addEventListener("click", reset);
+    reset();
+  })();
+
+  /* =========================================================
+     TAB: |Z| = |N| ZIG-ZAG
+     ========================================================= */
+  (function(){
+    function zigF(n){ return n%2===0 ? n/2 : -(n+1)/2; }
+    let shown = [];
+    function reset(){ shown = []; render(); }
+    function render(){
+      document.getElementById("zigList").innerHTML = shown.length
+        ? shown.map(n => '<span class="formula">f('+n+')='+zigF(n)+'</span>').join('&nbsp;&nbsp;·&nbsp;&nbsp;') +
+          (shown.length>1 ? '<br>Integers hit so far: {' + shown.map(zigF).sort((a,b)=>a-b).join(',') + '}' : '')
+        : "Click \"Next natural number\" to begin.";
+    }
+    document.getElementById("btnZigStep").addEventListener("click", ()=>{
+      shown.push(shown.length);
+      render();
+    });
+    document.getElementById("btnZigReset").addEventListener("click", reset);
     reset();
   })();
 

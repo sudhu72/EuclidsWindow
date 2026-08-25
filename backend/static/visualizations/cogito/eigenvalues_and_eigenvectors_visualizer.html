@@ -83,6 +83,7 @@
         <button class="op active" id="matA">A = [[4,1],[2,3]]</button>
         <button class="op" id="matB">A = [[2,0],[0,2]] (repeated)</button>
         <button class="op" id="matC">A = [[3,1],[0,3]] (defective)</button>
+        <button class="op" id="matD">A = [[2.25,1.9],[1.9,2.56]] (symmetric/covariance)</button>
       </div>
       <svg id="ceSvg" viewBox="0 0 700 90"></svg>
       <div class="steplog" id="ceSteps"></div>
@@ -206,6 +207,7 @@
     A: [[4,1],[2,3]],
     B: [[2,0],[0,2]],
     C: [[3,1],[0,3]],
+    D: [[2.25,1.9],[1.9,2.56]],
   };
   let currentMat = "A";
   function renderCharEq(){
@@ -234,13 +236,20 @@
       function matVec(M,v){ return [M[0][0]*v[0]+M[0][1]*v[1], M[1][0]*v[0]+M[1][1]*v[1]]; }
       const Av1 = matVec(M,v1), Av2 = matVec(M,v2);
       html += `check: A·(${fmt(v1[0])},${fmt(v1[1])}) = (${fmt(Av1[0])},${fmt(Av1[1])}) = ${fmt(e.l1)}×(${fmt(v1[0])},${fmt(v1[1])}) ✓ &nbsp;·&nbsp; A·(${fmt(v2[0])},${fmt(v2[1])}) = (${fmt(Av2[0])},${fmt(Av2[1])}) = ${fmt(e.l2)}×(${fmt(v2[0])},${fmt(v2[1])}) ✓`;
+      const isSymmetric = Math.abs(M[0][1]-M[1][0]) < 1e-9;
+      if (isSymmetric){
+        const n1 = Math.hypot(v1[0],v1[1]), n2 = Math.hypot(v2[0],v2[1]);
+        const dot = (v1[0]/n1)*(v2[0]/n2) + (v1[1]/n1)*(v2[1]/n2);
+        html += `<br>A is symmetric → eigenvectors' dot product (normalized) = <b>${dot.toFixed(6)}</b> ${Math.abs(dot)<1e-6 ? "— genuinely orthogonal" : ""}`;
+      }
     }
     steps.innerHTML = html;
   }
   document.getElementById("matA").addEventListener("click", function(){ currentMat="A"; setActive(this); renderCharEq(); });
   document.getElementById("matB").addEventListener("click", function(){ currentMat="B"; setActive(this); renderCharEq(); });
   document.getElementById("matC").addEventListener("click", function(){ currentMat="C"; setActive(this); renderCharEq(); });
-  function setActive(btn){ ["matA","matB","matC"].forEach(id=>document.getElementById(id).classList.remove("active")); btn.classList.add("active"); }
+  document.getElementById("matD").addEventListener("click", function(){ currentMat="D"; setActive(this); renderCharEq(); });
+  function setActive(btn){ ["matA","matB","matC","matD"].forEach(id=>document.getElementById(id).classList.remove("active")); btn.classList.add("active"); }
   renderCharEq();
 
   /* =========================================================

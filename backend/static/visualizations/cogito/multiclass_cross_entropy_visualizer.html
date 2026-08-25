@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Multi-Class Cross-Entropy, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  table.datatable{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  table.datatable input{width:70px;background:var(--bg);border:1px solid var(--border);color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:4px 6px;}
+  table.datatable td.zero{color:var(--chalk-dim);}
+  table.datatable td.active{color:var(--green);font-weight:700;}
+  table.datatable label{display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .sum-line{font-size:13px;text-align:center;margin:14px 0;line-height:1.7;}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Multi-Class Cross-Entropy, live</h1>
+  <p class="sub">Edit the raw scores for each class, pick which class is actually true, and watch softmax, the full K-term sum, and the one-hot collapse update together.</p>
+
+  <div class="panel">
+    <h2>Raw Scores → Softmax</h2>
+    <table class="datatable" id="scoresTable"></table>
+    <div class="row">
+      <button class="op" id="preset3">3-class preset (cat/dog/bird)</button>
+      <button class="op" id="preset4">4-class preset</button>
+      <button class="op" id="btnBinaryEquiv">K=2 binary-equivalence example (Part 4)</button>
+      <button class="op" id="addClass">+ Add a class</button>
+      <button class="op" id="removeClass">- Remove last class</button>
+    </div>
+    <svg id="softmaxSvg" width="640" height="220" viewBox="0 0 640 220"></svg>
+  </div>
+
+  <div class="panel">
+    <h2>The Full Sum, and Why It Collapses</h2>
+    <p class="sub">Click a row's radio button above to set which class is actually true, then watch every other term go to zero here.</p>
+    <div class="sum-line" id="sumLine"></div>
+    <div class="metric-row">
+      <div class="metric coral"><div class="lbl">Cross-entropy (full sum)</div><div class="num" id="ceFull">-</div></div>
+      <div class="metric green"><div class="lbl">-log(q of true class)</div><div class="num" id="ceCollapsed">-</div></div>
+    </div>
+    <div class="story-line" id="story"></div>
+    <div class="story-line" id="binaryEquiv" style="display:none;"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Batch Average (Part 3)</h2>
+    <p class="sub">A training loop never watches one example's loss — it watches the average across a batch. Load the tutorial's exact 3-example batch and watch a confidently-correct case and a confidently-wrong case combine into one number.</p>
+    <div class="row">
+      <button class="op" id="btnLoadBatch">Load 3-example batch</button>
+    </div>
+    <table class="datatable" id="batchTable" style="display:none;"></table>
+    <div class="metric-row" id="batchAvgRow" style="display:none;">
+      <div class="metric amber"><div class="lbl">Average cross-entropy over the batch</div><div class="num" id="batchAvg">-</div></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../multiclass_cross_entropy_feynman.md">Multi-Class Cross-Entropy</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  const PRESET3 = { labels: ["cat", "dog", "bird"], scores: [2.0, 1.0, 0.1], trueIdx: 0 };
+  const PRESET4 = { labels: ["class 0", "class 1", "class 2", "class 3"], scores: [1.0, 3.0, 0.5, -1.0], trueIdx: 1 };
+  const PRESET_BINARY = { labels: ["a", "b"], scores: [2.0, 1.0], trueIdx: 0 };
+  const BATCH = [
+    { q: [0.659, 0.242, 0.099], trueIdx: 0, ce: 0.4170 },
+    { q: [0.083, 0.091, 0.826], trueIdx: 2, ce: 0.1915 },
+    { q: [0.339, 0.559, 0.102], trueIdx: 0, ce: 1.0818 },
+  ];
+
+  let state = { labels: [...PRESET3.labels], scores: [...PRESET3.scores], trueIdx: PRESET3.trueIdx };
+
+  function softmax(scores){
+    const exps = scores.map(Math.exp);
+    const sum = exps.reduce((a,b)=>a+b, 0);
+    return exps.map(e => e/sum);
+  }
+
+  function renderScoresTable(){
+    const table = document.getElementById("scoresTable");
+    let html = "<tr><th>Class</th><th>Raw score</th><th>Softmax q</th><th>True class?</th></tr>";
+    const q = softmax(state.scores);
+    state.labels.forEach((lbl, i) => {
+      html += `<tr>
+        <td>${lbl}</td>
+        <td><input type="number" step="0.1" data-idx="${i}" value="${state.scores[i]}"></td>
+        <td>${q[i].toFixed(3)}</td>
+        <td><label><input type="radio" name="trueClass" data-idx="${i}" ${state.trueIdx===i?"checked":""}></label></td>
+      </tr>`;
+    });
+    table.innerHTML = html;
+    table.querySelectorAll("input[type=number]").forEach(inp => inp.addEventListener("input", (e) => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      state.scores[idx] = parseFloat(e.target.value) || 0;
+      update();
+    }));
+    table.querySelectorAll("input[type=radio]").forEach(r => r.addEventListener("change", (e) => {
+      state.trueIdx = parseInt(e.target.dataset.idx, 10);
+      update();
+    }));
+  }
+
+  function drawSoftmax(){
+    const svg = document.getElementById("softmaxSvg");
+    svg.innerHTML = "";
+    const W=640,H=220,pad=44;
+    const q = softmax(state.scores);
+    const n = q.length;
+    const barGroupW = (W-2*pad)/n;
+    const barW = Math.min(60, barGroupW*0.5);
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    q.forEach((v, i) => {
+      const x = pad + i*barGroupW + (barGroupW-barW)/2;
+      const barH = v*(H-2*pad);
+      const isTrue = i === state.trueIdx;
+      svg.appendChild(el("rect",{x, y:H-pad-barH, width:barW, height:barH, fill: isTrue ? "var(--green)" : "var(--blue)", opacity:0.85}));
+      svg.appendChild(el("text",{x:x+barW/2, y:H-pad-barH-8, "text-anchor":"middle", "font-size":11.5, fill:"var(--chalk)"}, v.toFixed(3)));
+      svg.appendChild(el("text",{x:x+barW/2, y:H-pad+16, "text-anchor":"middle", "font-size":10.5, fill:"var(--chalk-dim)"}, state.labels[i]));
+    });
+    svg.appendChild(el("rect",{x:pad,y:10,width:14,height:14,fill:"var(--green)"}));
+    svg.appendChild(el("text",{x:pad+20,y:21,"font-size":11,fill:"var(--chalk-dim)"},"true class"));
+    svg.appendChild(el("rect",{x:pad+120,y:10,width:14,height:14,fill:"var(--blue)"}));
+    svg.appendChild(el("text",{x:pad+140,y:21,"font-size":11,fill:"var(--chalk-dim)"},"other classes"));
+  }
+
+  function update(){
+    renderScoresTable();
+    drawSoftmax();
+    const q = softmax(state.scores);
+    const n = q.length;
+    let terms = [];
+    let ceFull = 0;
+    for (let k=0;k<n;k++){
+      const y = (k === state.trueIdx) ? 1 : 0;
+      const term = y * Math.log(q[k]);
+      ceFull -= term;
+      terms.push(`${y}·log(${q[k].toFixed(3)})`);
+    }
+    const collapsed = -Math.log(q[state.trueIdx]);
+    document.getElementById("sumLine").innerHTML =
+      `-Σyₖ·log(qₖ) = -( ${terms.join(" + ")} ) = <b>${ceFull.toFixed(4)}</b>`;
+    document.getElementById("ceFull").textContent = ceFull.toFixed(4);
+    document.getElementById("ceCollapsed").textContent = collapsed.toFixed(4);
+    document.getElementById("story").textContent =
+      "Every term except the true class's is multiplied by y=0, so it vanishes — the full sum and the one-term shortcut always match exactly, no matter how many classes there are.";
+
+    const binaryEl = document.getElementById("binaryEquiv");
+    if (n === 2){
+      const sig = 1/(1+Math.exp(-(state.scores[0]-state.scores[1])));
+      const p = q[0];
+      const y1 = state.trueIdx === 0 ? 1 : 0;
+      const binaryLogLoss = -(y1*Math.log(p) + (1-y1)*Math.log(1-p));
+      binaryEl.style.display = "";
+      binaryEl.innerHTML =
+        `sigmoid(a-b) = sigmoid(${(state.scores[0]-state.scores[1]).toFixed(4)}) = <b>${sig.toFixed(4)}</b> — matches softmax's first output q₀=${p.toFixed(4)} exactly.<br>` +
+        `Binary log loss (p=${p.toFixed(4)}, y=${y1}) = ${binaryLogLoss.toFixed(4)} — matches this K=2 cross-entropy (${ceFull.toFixed(4)}) exactly.`;
+    } else {
+      binaryEl.style.display = "none";
+    }
+  }
+
+  function renderBatch(){
+    const table = document.getElementById("batchTable");
+    const avgRow = document.getElementById("batchAvgRow");
+    table.style.display = "";
+    avgRow.style.display = "";
+    let html = "<tr><th>Example</th><th>Softmax output</th><th>True class</th><th>Cross-entropy</th></tr>";
+    let total = 0;
+    BATCH.forEach((ex, i) => {
+      const ce = ex.ce;
+      total += ce;
+      html += `<tr>
+        <td>${i+1}</td>
+        <td>{${ex.q.map(v=>v.toFixed(3)).join(", ")}}</td>
+        <td>class ${ex.trueIdx}</td>
+        <td>${ce.toFixed(4)}</td>
+      </tr>`;
+    });
+    table.innerHTML = html;
+    document.getElementById("batchAvg").textContent = (total/BATCH.length).toFixed(4);
+  }
+
+  document.getElementById("preset3").addEventListener("click", () => {
+    state = { labels: [...PRESET3.labels], scores: [...PRESET3.scores], trueIdx: PRESET3.trueIdx };
+    update();
+  });
+  document.getElementById("preset4").addEventListener("click", () => {
+    state = { labels: [...PRESET4.labels], scores: [...PRESET4.scores], trueIdx: PRESET4.trueIdx };
+    update();
+  });
+  document.getElementById("btnBinaryEquiv").addEventListener("click", () => {
+    state = { labels: [...PRESET_BINARY.labels], scores: [...PRESET_BINARY.scores], trueIdx: PRESET_BINARY.trueIdx };
+    update();
+  });
+  document.getElementById("btnLoadBatch").addEventListener("click", renderBatch);
+  document.getElementById("addClass").addEventListener("click", () => {
+    state.labels.push("class " + state.labels.length);
+    state.scores.push(0);
+    update();
+  });
+  document.getElementById("removeClass").addEventListener("click", () => {
+    if (state.labels.length <= 2) return;
+    state.labels.pop();
+    state.scores.pop();
+    if (state.trueIdx >= state.labels.length) state.trueIdx = state.labels.length - 1;
+    update();
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>

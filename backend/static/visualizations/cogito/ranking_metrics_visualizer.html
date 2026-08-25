@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ranking Metrics, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  .list{display:flex;flex-direction:column;gap:8px;max-width:520px;margin:14px auto;}
+  .item{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:8px;padding:10px 14px;background:var(--bg);}
+  .item .rank{font-family:'Kalam',cursive;color:var(--chalk-dim);min-width:20px;}
+  .item .chip{flex:1;text-align:center;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer;user-select:none;}
+  .item .chip.relevant{background:var(--green);color:#0c2119;}
+  .item .chip.irrelevant{background:rgba(244,241,232,.08);color:var(--chalk-dim);}
+  .item .term{font-size:11px;color:var(--amber);min-width:70px;text-align:right;}
+  .item .arrows{display:flex;flex-direction:column;gap:2px;}
+  .item .arrows button{font-size:10px;padding:2px 6px;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ranking Metrics, live</h1>
+  <p class="sub">The same 5-item ranked list from the tutorial. Click any item to toggle relevant/not, or use the arrows to reorder — watch which metrics move and which don't.</p>
+
+  <div class="panel">
+    <h2>The Ranked List</h2>
+    <div class="row" style="gap:6px;">
+      <button class="op active" id="presetX">Load List X (relevant early)</button>
+      <button class="op" id="presetY">Load List Y (relevant late)</button>
+    </div>
+    <div class="list" id="listContainer"></div>
+    <div class="row"><label>K (how many positions to score)</label><input type="range" id="kSlider" min="1" max="5" step="1" value="5"><span class="readout" id="kOut">5</span></div>
+  </div>
+
+  <div class="panel">
+    <h2>What Each Metric Says About This Exact List</h2>
+    <div class="metric-row">
+      <div class="metric blue"><div class="lbl">Precision@K</div><div class="num" id="precOut">-</div></div>
+      <div class="metric blue"><div class="lbl">Recall@K</div><div class="num" id="recallOut">-</div></div>
+      <div class="metric green"><div class="lbl">DCG@K</div><div class="num" id="dcgOut">-</div></div>
+      <div class="metric green"><div class="lbl">NDCG@K</div><div class="num" id="ndcgOut">-</div></div>
+      <div class="metric amber"><div class="lbl">Average Precision</div><div class="num" id="apOut">-</div></div>
+    </div>
+    <div class="story-line" id="story"></div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../ranking_metrics_feynman.md">Precision@K, Recall@K, NDCG, and MAP</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  let items = [1,0,1,0,1]; // List X default: 1 = relevant, 0 = not
+
+  function totalRelevant(){ return items.filter(x=>x===1).length; }
+
+  function precisionAtK(k){
+    const topK = items.slice(0,k);
+    return topK.filter(x=>x===1).length / k;
+  }
+  function recallAtK(k){
+    const R = totalRelevant();
+    if (R === 0) return NaN;
+    const topK = items.slice(0,k);
+    return topK.filter(x=>x===1).length / R;
+  }
+  function dcgAtK(list, k){
+    let s = 0;
+    for (let i=0;i<k;i++){
+      const rank = i+1;
+      s += list[i] / Math.log2(rank+1);
+    }
+    return s;
+  }
+  function ndcgAtK(k){
+    const dcgVal = dcgAtK(items, k);
+    const ideal = [...items].sort((a,b)=>b-a);
+    const idcgVal = dcgAtK(ideal, k);
+    return { dcgVal, idcgVal, ndcg: idcgVal===0 ? NaN : dcgVal/idcgVal };
+  }
+  function averagePrecision(){
+    const R = totalRelevant();
+    if (R === 0) return NaN;
+    let sum = 0;
+    for (let k=1; k<=items.length; k++){
+      if (items[k-1] === 1) sum += precisionAtK(k);
+    }
+    return sum / R;
+  }
+
+  function renderList(){
+    const container = document.getElementById("listContainer");
+    container.innerHTML = "";
+    items.forEach((val, idx) => {
+      const rank = idx+1;
+      const row = document.createElement("div");
+      row.className = "item";
+      const discount = Math.log2(rank+1);
+      row.innerHTML = `
+        <span class="rank">#${rank}</span>
+        <div class="chip ${val===1?'relevant':'irrelevant'}" data-idx="${idx}">${val===1?'RELEVANT':'not relevant'}</div>
+        <span class="term">÷log₂(${rank}+1)=${discount.toFixed(2)}</span>
+        <div class="arrows">
+          <button class="op" data-move="up" data-idx="${idx}" ${idx===0?'disabled':''}>▲</button>
+          <button class="op" data-move="down" data-idx="${idx}" ${idx===items.length-1?'disabled':''}>▼</button>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+    container.querySelectorAll(".chip").forEach(chip => chip.addEventListener("click", (e) => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      items[idx] = items[idx] === 1 ? 0 : 1;
+      renderList();
+      updateMetrics();
+    }));
+    container.querySelectorAll("[data-move]").forEach(btn => btn.addEventListener("click", (e) => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      const dir = e.target.dataset.move;
+      const swapWith = dir === "up" ? idx-1 : idx+1;
+      if (swapWith < 0 || swapWith >= items.length) return;
+      [items[idx], items[swapWith]] = [items[swapWith], items[idx]];
+      renderList();
+      updateMetrics();
+    }));
+  }
+
+  function updateMetrics(){
+    const k = parseInt(document.getElementById("kSlider").value, 10);
+    document.getElementById("kOut").textContent = k;
+    const prec = precisionAtK(k);
+    const rec = recallAtK(k);
+    const {dcgVal, ndcg} = ndcgAtK(k);
+    const ap = averagePrecision();
+    document.getElementById("precOut").textContent = prec.toFixed(3);
+    document.getElementById("recallOut").textContent = isNaN(rec) ? "-" : rec.toFixed(3);
+    document.getElementById("dcgOut").textContent = dcgVal.toFixed(4);
+    document.getElementById("ndcgOut").textContent = isNaN(ndcg) ? "-" : ndcg.toFixed(4);
+    document.getElementById("apOut").textContent = isNaN(ap) ? "-" : ap.toFixed(4);
+
+    document.getElementById("story").textContent =
+      "Reorder the relevant (green) items toward the top and watch DCG, NDCG, and Average Precision climb — " +
+      "while Precision@K and Recall@K stay exactly the same the whole time, since they only ever count, never look at position.";
+  }
+
+  document.getElementById("kSlider").addEventListener("input", updateMetrics);
+  document.getElementById("presetX").addEventListener("click", () => {
+    items = [1,0,1,0,1];
+    document.getElementById("presetX").classList.add("active");
+    document.getElementById("presetY").classList.remove("active");
+    renderList(); updateMetrics();
+  });
+  document.getElementById("presetY").addEventListener("click", () => {
+    items = [0,0,1,1,1];
+    document.getElementById("presetY").classList.add("active");
+    document.getElementById("presetX").classList.remove("active");
+    renderList(); updateMetrics();
+  });
+
+  renderList();
+  updateMetrics();
+})();
+</script>
+</body>
+</html>

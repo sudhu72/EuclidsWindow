@@ -83,6 +83,11 @@
       <div class="row"><label>Angle θ</label><input type="range" id="triTheta" min="5" max="85" step="1" value="35"><span class="readout" id="triThetaOut">35°</span></div>
       <svg id="triSvg" viewBox="0 0 400 260"></svg>
       <div class="verdict" id="triVerdict"></div>
+      <h2 style="margin-top:20px;">The Surveyor's Problem</h2>
+      <p class="sub">Stand a known distance from a tower's base, measure the angle of elevation to its top, and find the height — no climbing required.</p>
+      <div class="row"><label>Distance from base (m)</label><input type="range" id="surveyDist" min="5" max="200" step="1" value="50"><span class="readout" id="surveyDistOut">50</span></div>
+      <div class="row"><label>Elevation angle θ</label><input type="range" id="surveyAngle" min="5" max="85" step="1" value="38"><span class="readout" id="surveyAngleOut">38°</span></div>
+      <div class="verdict" id="surveyVerdict"></div>
       <div class="caption"><b>Why it matters:</b> this fixed-ratio fact is only possible because every right triangle sharing this angle is similar — same shape, any size.</div>
     </div>
   </div>
@@ -198,6 +203,20 @@
      TAB 1 — RIGHT TRIANGLE RATIOS
      ========================================================= */
   const triTheta = document.getElementById("triTheta");
+  const triThetaOut = document.getElementById("triThetaOut");
+  const surveyDist = document.getElementById("surveyDist"), surveyAngle = document.getElementById("surveyAngle");
+  const surveyDistOut = document.getElementById("surveyDistOut"), surveyAngleOut = document.getElementById("surveyAngleOut");
+  function renderSurvey(){
+    const dist = parseFloat(surveyDist.value), deg = parseFloat(surveyAngle.value), rad = deg*Math.PI/180;
+    surveyDistOut.textContent = dist;
+    surveyAngleOut.textContent = deg+"°";
+    const height = dist * Math.tan(rad);
+    document.getElementById("surveyVerdict").innerHTML =
+      `h = distance × tan(θ) = ${dist} × tan(${deg}°) = ${dist} × ${Math.tan(rad).toFixed(4)} = <b>${height.toFixed(2)} m</b>`;
+  }
+  surveyDist.addEventListener("input", renderSurvey);
+  surveyAngle.addEventListener("input", renderSurvey);
+  renderSurvey();
   function renderTriangle(){
     const deg = parseFloat(triTheta.value), rad = deg*Math.PI/180;
     triThetaOut.textContent = deg+"°";

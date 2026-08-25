@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 66 self-contained interactive visualizations
+// Cogito Gallery manifest — 85 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -169,6 +169,42 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Rotate, Stretch, Rotate — Jacobians & SVD",
         "one": "Every matrix, however complicated, is secretly just a rotation, a stretch along perpendicular axes, and another rotation.",
         "prompt": "Explain the Jacobian matrix and singular value decomposition from first principles: what a Jacobian captures about a transformation locally, and why SVD says any matrix decomposes into rotate-stretch-rotate."
+      },
+      {
+        "file": "graph_theory_visualizer.html",
+        "title": "Graph Theory, Made Visible",
+        "one": "Dots and the lines between them turn out to be enough machinery to describe road maps, social networks, and the Königsberg bridge problem alike.",
+        "prompt": "Explain graph theory from first principles: what a graph (vertices and edges) actually represents, how the Königsberg bridge problem started the field, and what a spanning tree or shortest path means."
+      },
+      {
+        "file": "compression_and_hashing_visualizer.html",
+        "title": "Compression & Hashing, Made Visible",
+        "one": "Huffman coding squeezes out redundancy; a hash function throws away almost everything on purpose — two very different ways of turning data into fewer bits.",
+        "prompt": "Explain data compression and hashing from first principles: how Huffman coding and LZ77 shrink data without losing it, what a hash function guarantees (and doesn't), and why a tiny input change causes an avalanche of output change."
+      },
+      {
+        "file": "mutual_information_visualizer.html",
+        "title": "How Much Does Y Tell You About X? — Mutual Information",
+        "one": "Knowing one variable can shrink your uncertainty about another — mutual information measures exactly how much.",
+        "prompt": "Explain mutual information from first principles: what it means for one random variable to reduce uncertainty about another, and how mutual information quantifies that shared information in bits."
+      },
+      {
+        "file": "notation_rosetta_stone_visualizer.html",
+        "title": "Notation Rosetta Stone, Drawn Live",
+        "one": "The same handful of symbols — sums, products, quantifiers, set-builder brackets — keep reappearing across every branch of math, once you learn to read them.",
+        "prompt": "Walk me through the most common pieces of mathematical notation (sums, products, quantifiers, set-builder notation) and what each one is really shorthand for."
+      },
+      {
+        "file": "pdf_cdf_visualizer.html",
+        "title": "PDFs and CDFs, Made Visible",
+        "one": "A probability density function is a shape you integrate; a cumulative distribution function is the running total as you sweep across it.",
+        "prompt": "Explain probability density functions and cumulative distribution functions from first principles: why a PDF's height isn't a probability by itself, and how the CDF is built by accumulating area under the PDF."
+      },
+      {
+        "file": "proof_and_axiomatic_method_visualizer.html",
+        "title": "Layered Towers — Proof & the Axiomatic Method",
+        "one": "Every theorem is a tower built on axioms and earlier theorems — the axiomatic method is just being honest about which floor you're standing on.",
+        "prompt": "Explain the axiomatic method and mathematical proof from first principles: what an axiom is, how theorems build on axioms and prior theorems, and why that layered structure is what makes a proof a proof."
       }
     ]
   },
@@ -398,6 +434,84 @@ export const GALLERY: GalleryCategory[] = [
         "title": "A Global Workspace, Illustrated",
         "one": "Many specialized processes compete for a shared spotlight; whatever wins gets broadcast everywhere at once.",
         "prompt": "Explain Global Workspace Theory from first principles: what the 'global workspace' metaphor for consciousness/attention proposes, and why broadcasting one winning signal to many specialized modules is a useful way to think about it."
+      },
+      {
+        "file": "calibration_metrics_visualizer.html",
+        "title": "Calibration Metrics, live",
+        "one": "A model that says '70% confident' should be right about 70% of the time — calibration is what actually checks that promise.",
+        "prompt": "Explain model calibration from first principles: what it means for a predicted probability to be calibrated, how a reliability diagram checks it, and why an accurate model can still be badly calibrated."
+      },
+      {
+        "file": "how_to_measure_everything_visualizer.html",
+        "title": "How to Measure Everything, live",
+        "one": "Almost anything you think is 'unmeasurable' turns out to have a clever, cheap way to put a number on it.",
+        "prompt": "Explain the core idea behind 'how to measure anything': how to turn a vague, seemingly unmeasurable quantity into a concrete estimate with a defensible range."
+      },
+      {
+        "file": "latent_dirichlet_allocation_visualizer.html",
+        "title": "Latent Dirichlet Allocation, made visible",
+        "one": "Every document is a mix of hidden topics, and every topic is a mix of words — LDA works backward from the words to guess both.",
+        "prompt": "Explain Latent Dirichlet Allocation from first principles: what a 'topic' means as a probability distribution over words, and how LDA infers a document's mixture of topics purely from the words it contains."
+      },
+      {
+        "file": "log_loss_visualizer.html",
+        "title": "Log Loss vs. Brier Score, live",
+        "one": "Two different ways to grade a probability forecast — one punishes confident wrong answers brutally, the other more gently.",
+        "prompt": "Explain log loss and the Brier score from first principles: what a 'proper scoring rule' is, why log loss punishes a confident wrong prediction so much more harshly than the Brier score does, and when you'd prefer one over the other."
+      },
+      {
+        "file": "lora_tinylora_qlora_visualizer.html",
+        "title": "LoRA, TinyLoRA & QLoRA, live",
+        "one": "Instead of retraining a giant model's weights, freeze them and learn a tiny low-rank patch on top — three flavors of the same trick.",
+        "prompt": "Explain LoRA, TinyLoRA, and QLoRA from first principles: why fine-tuning by adding a small low-rank update instead of touching the original weights saves so much memory, and what changes between the three variants."
+      },
+      {
+        "file": "model_quantization_and_compression_visualizer.html",
+        "title": "Model Quantization & Compression, live",
+        "one": "Most of a neural network's precision is wasted — round its numbers to fewer bits and it barely notices, but your GPU memory certainly does.",
+        "prompt": "Explain model quantization from first principles: why storing weights in fewer bits (like int8 instead of float32) usually costs little accuracy, and how that trades off against model size and inference speed."
+      },
+      {
+        "file": "multiclass_cross_entropy_visualizer.html",
+        "title": "Multi-Class Cross-Entropy, live",
+        "one": "Binary cross-entropy asks 'how wrong about yes/no'; multi-class cross-entropy asks the same question across every possible category at once.",
+        "prompt": "Explain multi-class cross-entropy from first principles: how softmax turns raw scores into a probability distribution over classes, and how cross-entropy then measures how wrong that distribution is."
+      },
+      {
+        "file": "ranking_metrics_visualizer.html",
+        "title": "Ranking Metrics, live",
+        "one": "Getting the right answer isn't enough for a search engine or recommender — it has to put the right answer near the TOP.",
+        "prompt": "Explain ranking metrics from first principles: why accuracy alone doesn't capture ranking quality, and what mean average precision and NDCG actually reward."
+      },
+      {
+        "file": "tree_based_methods_visualizer.html",
+        "title": "Tree-Based Methods, live",
+        "one": "A decision tree asks one good yes/no question at a time; forests and boosting are just clever ways to combine many imperfect trees into one good answer.",
+        "prompt": "Explain tree-based methods from first principles: how a single decision tree splits data, why one tree tends to overfit, and how bagging (random forests) and boosting (gradient boosted trees) each fix that in a different way."
+      },
+      {
+        "file": "voice_and_speech_recognition_visualizer.html",
+        "title": "Voice & Speech Recognition, live",
+        "one": "Turning a sound wave into words means bridging raw audio, learned acoustic representations, and language all at once.",
+        "prompt": "Explain automatic speech recognition from first principles: how a raw audio waveform becomes text, and what problem modern speech models are actually solving at each stage."
+      },
+      {
+        "file": "wape_and_forecast_bias_visualizer.html",
+        "title": "WAPE and Forecast Bias, live",
+        "one": "Average percentage error can look great while consistently forecasting too high or too low — WAPE and bias catch different mistakes.",
+        "prompt": "Explain WAPE (weighted absolute percentage error) and forecast bias from first principles: how each one scores a forecast differently, and why a forecast can have low error but still be systematically biased."
+      },
+      {
+        "file": "wav2vec_self_supervised_visualizer.html",
+        "title": "wav2vec 2.0, live",
+        "one": "Instead of needing transcribed speech to learn from, wav2vec 2.0 learns to predict masked chunks of raw audio from context — self-supervision, for sound.",
+        "prompt": "Explain wav2vec 2.0 from first principles: what self-supervised pretraining means for audio, and how predicting masked audio segments teaches the model useful speech representations without any transcripts."
+      },
+      {
+        "file": "whisper_training_objective_visualizer.html",
+        "title": "Whisper's Multitask Objective, live",
+        "one": "Whisper doesn't just transcribe — one training objective teaches it to transcribe, translate, detect language, and time-stamp, all at once.",
+        "prompt": "Explain Whisper's multitask training objective from first principles: how a single sequence-to-sequence model is trained to handle transcription, translation, and language identification together."
       }
     ]
   },

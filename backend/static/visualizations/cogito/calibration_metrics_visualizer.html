@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Calibration Metrics, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  table.datatable{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  table.datatable input{width:60px;background:var(--bg);border:1px solid var(--border);color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:4px 6px;}
+  table.datatable td.warn{color:var(--coral);font-weight:700;}
+  table.datatable td.ok{color:var(--green);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Calibration Metrics, live</h1>
+  <p class="sub">The same five-bin model from the tutorial. Edit any cell, or apply isotonic recalibration, and watch every metric update.</p>
+
+  <div class="panel">
+    <h2>Reliability Diagram</h2>
+    <p class="sub">Bars: stated confidence (amber) vs. actual positive rate (green), per bin. A perfectly calibrated bin has matching bar heights.</p>
+    <table class="datatable" id="binsTable"></table>
+    <svg id="reliabilitySvg" width="600" height="260" viewBox="0 0 600 260"></svg>
+    <div class="row">
+      <button class="op" id="recalibrateBtn">Apply isotonic recalibration</button>
+      <button class="op" id="resetBtn">Reset to original</button>
+    </div>
+    <div class="row">
+      <button class="op" id="btnOverconfident">Load: overconfident (20 preds, 14 positives, says 90%)</button>
+      <button class="op" id="btnHonest">Load: honest (20 preds, 14 positives, says 70%)</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Brier Score, ECE, and Murphy's Decomposition</h2>
+    <div class="metric-row">
+      <div class="metric coral"><div class="lbl">Brier Score</div><div class="num" id="brierOut">-</div></div>
+      <div class="metric coral"><div class="lbl">ECE</div><div class="num" id="eceOut">-</div></div>
+    </div>
+    <div class="metric-row">
+      <div class="metric blue"><div class="lbl">Uncertainty</div><div class="num" id="uncertaintyOut">-</div></div>
+      <div class="metric green"><div class="lbl">Resolution</div><div class="num" id="resolutionOut">-</div></div>
+      <div class="metric amber"><div class="lbl">Reliability</div><div class="num" id="reliabilityOut">-</div></div>
+    </div>
+    <div class="story-line" id="story"></div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../calibration_metrics_feynman.md">Calibration Metrics</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  const ORIGINAL_BINS = [
+    { label: "50-60%", conf: 0.55, n: 30, positives: 12 },
+    { label: "60-70%", conf: 0.65, n: 25, positives: 15 },
+    { label: "70-80%", conf: 0.75, n: 20, positives: 16 },
+    { label: "80-90%", conf: 0.85, n: 15, positives: 9 },
+    { label: "90-100%", conf: 0.95, n: 10, positives: 6 },
+  ];
+  let bins = ORIGINAL_BINS.map(b => ({...b}));
+
+  function renderTable(){
+    const table = document.getElementById("binsTable");
+    let html = "<tr><th>Bin</th><th>Stated confidence</th><th>Count</th><th>Positives</th><th>Empirical rate</th><th>|gap|</th></tr>";
+    bins.forEach((b, i) => {
+      const rate = b.positives / b.n;
+      const gap = Math.abs(b.conf - rate);
+      const cls = gap < 0.02 ? "ok" : (gap > 0.1 ? "warn" : "");
+      html += `<tr>
+        <td>${b.label}</td>
+        <td><input type="number" step="0.01" min="0" max="1" data-idx="${i}" data-field="conf" value="${b.conf.toFixed(2)}"></td>
+        <td><input type="number" step="1" min="1" data-idx="${i}" data-field="n" value="${b.n}"></td>
+        <td><input type="number" step="1" min="0" data-idx="${i}" data-field="positives" value="${b.positives}"></td>
+        <td>${rate.toFixed(3)}</td>
+        <td class="${cls}">${gap.toFixed(3)}</td>
+      </tr>`;
+    });
+    table.innerHTML = html;
+    table.querySelectorAll("input").forEach(inp => inp.addEventListener("input", (e) => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      const field = e.target.dataset.field;
+      bins[idx][field] = parseFloat(e.target.value) || 0;
+      if (bins[idx].positives > bins[idx].n) bins[idx].positives = bins[idx].n;
+      renderTable();
+      update();
+    }));
+  }
+
+  function drawReliability(){
+    const svg = document.getElementById("reliabilitySvg");
+    svg.innerHTML = "";
+    const W=600,H=260,pad=50;
+    const barGroupW = (W-2*pad)/bins.length;
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    bins.forEach((b, i) => {
+      const rate = b.positives / b.n;
+      const x = pad + i*barGroupW;
+      const confH = b.conf * (H-2*pad);
+      const rateH = rate * (H-2*pad);
+      svg.appendChild(el("rect",{x:x+8, y:H-pad-confH, width:22, height:confH, fill:"var(--amber)", opacity:0.85}));
+      svg.appendChild(el("rect",{x:x+36, y:H-pad-rateH, width:22, height:rateH, fill:"var(--green)", opacity:0.85}));
+      svg.appendChild(el("text",{x:x+barGroupW/2, y:H-pad+16, "text-anchor":"middle", "font-size":10.5, fill:"var(--chalk-dim)"}, b.label));
+    });
+    svg.appendChild(el("rect",{x:pad,y:10,width:14,height:14,fill:"var(--amber)"}));
+    svg.appendChild(el("text",{x:pad+20,y:21,"font-size":11,fill:"var(--chalk-dim)"},"stated confidence"));
+    svg.appendChild(el("rect",{x:pad+170,y:10,width:14,height:14,fill:"var(--green)"}));
+    svg.appendChild(el("text",{x:pad+190,y:21,"font-size":11,fill:"var(--chalk-dim)"},"actual positive rate"));
+  }
+
+  function computeAll(){
+    let N = 0, sqErrSum = 0, gapSum = 0;
+    let totalPositive = 0;
+    bins.forEach(b => { N += b.n; totalPositive += b.positives; });
+    const oBar = totalPositive / N;
+    const uncertainty = oBar * (1 - oBar);
+
+    let resolution = 0, reliability = 0;
+    bins.forEach(b => {
+      const ok = b.positives / b.n;
+      resolution += b.n * (ok - oBar) ** 2;
+      reliability += b.n * (b.conf - ok) ** 2;
+      sqErrSum += b.positives * (b.conf - 1) ** 2 + (b.n - b.positives) * (b.conf - 0) ** 2;
+      gapSum += b.n * Math.abs(b.conf - ok);
+    });
+    resolution /= N;
+    reliability /= N;
+    const brier = sqErrSum / N;
+    const ece = gapSum / N;
+    return { N, oBar, uncertainty, resolution, reliability, brier, ece };
+  }
+
+  function update(){
+    renderTable();
+    drawReliability();
+    const { uncertainty, resolution, reliability, brier, ece } = computeAll();
+    document.getElementById("brierOut").textContent = brier.toFixed(4);
+    document.getElementById("eceOut").textContent = ece.toFixed(4);
+    document.getElementById("uncertaintyOut").textContent = uncertainty.toFixed(4);
+    document.getElementById("resolutionOut").textContent = resolution.toFixed(4);
+    document.getElementById("reliabilityOut").textContent = reliability.toFixed(4);
+    document.getElementById("story").textContent = ece < 0.01
+      ? "ECE is near zero: this model's stated confidence matches reality closely, bin by bin."
+      : "ECE is well above zero: somewhere in this table, stated confidence and actual outcomes disagree. Check which bin has the largest |gap|.";
+  }
+
+  document.getElementById("recalibrateBtn").addEventListener("click", () => {
+    bins = bins.map(b => ({...b, conf: b.positives / b.n}));
+    update();
+  });
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    bins = ORIGINAL_BINS.map(b => ({...b}));
+    update();
+  });
+  document.getElementById("btnOverconfident").addEventListener("click", () => {
+    bins = [{ label: "90-100%", conf: 0.9, n: 20, positives: 14 }];
+    update();
+  });
+  document.getElementById("btnHonest").addEventListener("click", () => {
+    bins = [{ label: "60-70%", conf: 0.7, n: 20, positives: 14 }];
+    update();
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>

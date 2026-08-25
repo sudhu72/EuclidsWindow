@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Theory, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --good:#0F8B8D; --warn:#D9636B; --pB:#D9A62E;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:110px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  table.dt{ border-collapse:collapse; margin:14px auto; font-family:"IBM Plex Mono",monospace; font-size:13px; }
+  table.dt th, table.dt td{ border:1px solid var(--line); padding:6px 10px; text-align:center; }
+  table.dt th{ background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.8; word-break:break-word; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  svg{ width:100%; max-width:480px; height:auto; display:block; margin:10px auto; background:#F5F4F0; border-radius:10px; }
+  .colorpicker{ display:flex; gap:6px; margin:10px 0; justify-content:center; }
+  .swatch{ width:32px; height:32px; border-radius:8px; border:2px solid var(--line); cursor:pointer; }
+  .swatch.active{ border-color:var(--ink); }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Graph Theory</div>
+    <h1>Graph Theory, Made Visible</h1>
+    <p>Five verified demos on the same "bowtie" graph and the real Königsberg bridges: classify a walk as you build it, watch Euler's degree-parity theorem decide a 300-year-old puzzle live, assemble a valid spanning tree, color a graph without conflicts, and watch a matrix quietly count walks.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="walk">Walk Classifier</button>
+    <button class="tab" data-tab="konigsberg">Königsberg Bridges</button>
+    <button class="tab" data-tab="spanning">Spanning Tree Builder</button>
+    <button class="tab" data-tab="coloring">Graph Coloring</button>
+    <button class="tab" data-tab="matrix">Adjacency Matrix &amp; Walks</button>
+  </div>
+
+  <!-- ============ TAB: WALK CLASSIFIER ============ -->
+  <div class="panel active" id="panel-walk">
+    <div class="card">
+      <h2>Click Vertices to Build a Sequence</h2>
+      <p class="sub"><b>What's happening:</b> click vertices, in order, on the "bowtie" graph (two triangles sharing vertex C). Every click extends the sequence; the live verdict below classifies it as a walk, trail, path, circuit, or cycle, exactly by the Part 2 rules.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click A → B → A → C and watch it register as "walk only" (edge A-B reused). Reset, then click A → B → C → D → E → C → A and watch it register as a circuit that happens to use every edge — an Eulerian circuit, live.</p>
+      <svg id="walkSvg" viewBox="0 0 400 240"></svg>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op" id="walkReset">Reset sequence</button>
+      </div>
+      <div class="verdict" id="walkVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> all five words describe the same kind of thing — a sequence of real edges — and differ only in what's allowed to repeat. Watching one sequence get built click by click is the fastest way to stop blurring them together.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: KONIGSBERG BRIDGES ============ -->
+  <div class="panel" id="panel-konigsberg">
+    <div class="card">
+      <h2>The Actual 1736 Puzzle, With a Live Verdict</h2>
+      <p class="sub"><b>What's happening:</b> four landmasses, seven bridges, drawn both as a map and as the graph Euler reduced it to. Toggle any bridge off and watch the degree sequence — and the Eulerian verdict — update live.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> with all 7 bridges present, confirm the verdict is "impossible" (4 odd-degree vertices). Now click to remove just one bridge between A and B — watch the odd-vertex count drop to 2, and the verdict flip to "an Eulerian path now exists."</p>
+      <svg id="konigsbergSvg" viewBox="0 0 400 260"></svg>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op" id="konigsbergReset">Restore all 7 bridges</button>
+      </div>
+      <table class="dt" id="konigsbergDegTable"></table>
+      <div class="verdict" id="konigsbergVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is the literal 1736 puzzle, not a simplified stand-in — click any bridge to see the exact theorem that proved the walk impossible, and exactly how many bridges would need removing to make it solvable.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: SPANNING TREE BUILDER ============ -->
+  <div class="panel" id="panel-spanning">
+    <div class="card">
+      <h2>Select Edges Until You've Built a Valid Spanning Tree</h2>
+      <p class="sub"><b>What's happening:</b> click edges of the bowtie graph to select or deselect them. The live check confirms whether your current selection is a valid spanning tree — exactly 4 edges, touching all 5 vertices, connected, with no cycle.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> select all 6 edges and watch it fail ("too many edges, contains a cycle"). Drop the A-C edge and the C-D edge (one from each triangle) and watch it turn valid. There are exactly 9 such valid selections in this graph — try finding a second one.</p>
+      <svg id="spanningSvg" viewBox="0 0 400 240"></svg>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op" id="spanningReset">Deselect all</button>
+        <button class="op" id="spanningShowNext">Show a valid spanning tree ▶</button>
+        <button class="op" id="spanningShowExtraEdge">Load tree + one extra edge (name the cycle)</button>
+      </div>
+      <div class="verdict" id="spanningVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> a spanning tree is "just enough edges to stay connected, no more" — the "Show a valid spanning tree" button cycles through all 9 that exist in this graph, confirming the tutorial's verified count directly.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: GRAPH COLORING ============ -->
+  <div class="panel" id="panel-coloring">
+    <div class="card">
+      <h2>Color Every Vertex So No Edge Connects Two of the Same Color</h2>
+      <p class="sub"><b>What's happening:</b> pick a preset graph, click a vertex, then click a color swatch to assign it. Any edge connecting two same-colored vertices turns red — a conflict.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> pick the "5-cycle" preset and try to 2-color it — you'll always end up with exactly one conflicting edge, no matter how you alternate. Switch to "4-cycle" and 2-coloring works perfectly, confirming Part 6's even-vs-odd cycle rule live.</p>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op active" data-graphpreset="triangle">Triangle</button>
+        <button class="op" data-graphpreset="c4">4-Cycle</button>
+        <button class="op" data-graphpreset="c5">5-Cycle</button>
+        <button class="op" data-graphpreset="bowtie">Bowtie</button>
+        <button class="op" data-graphpreset="k4">K4 (complete)</button>
+        <button class="op" data-graphpreset="star">Star</button>
+      </div>
+      <svg id="coloringSvg" viewBox="0 0 400 260"></svg>
+      <div class="colorpicker" id="colorPicker"></div>
+      <div class="verdict" id="coloringVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the chromatic number isn't guessed — it's whatever the smallest color count is that produces zero red edges, checked live, the same way exam timetables and CPU register allocators are solved for real.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: ADJACENCY MATRIX & WALKS ============ -->
+  <div class="panel" id="panel-matrix">
+    <div class="card">
+      <h2>A Matrix, Quietly Counting Walks</h2>
+      <p class="sub"><b>What's happening:</b> the bowtie graph's adjacency matrix, raised to a power k. Click any two vertices to highlight that matrix entry and read off exactly how many length-k walks connect them.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set k=2, click A twice (A to A) and confirm the entry reads 2 — matching A's own degree exactly. Then click A then D and confirm it reads 1 — the single walk A→C→D.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnMatrixBowtie">Bowtie graph</button>
+        <button class="op" id="btnMatrixHandshake">Part 1's Handshake Lemma graph</button>
+      </div>
+      <div class="row"><label>Power k</label><input type="range" id="matrixK" min="1" max="4" step="1" value="2"><span class="readout" id="matrixKOut">2</span></div>
+      <div class="row" style="justify-content:center; gap:16px;">
+        <div><label style="display:block; text-align:center; margin-bottom:4px;">From</label><div class="colorpicker" id="matrixFromPicker"></div></div>
+        <div><label style="display:block; text-align:center; margin-bottom:4px;">To</label><div class="colorpicker" id="matrixToPicker"></div></div>
+      </div>
+      <table class="dt" id="matrixTable"></table>
+      <div class="verdict" id="matrixVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> matrix multiplication was invented for entirely different reasons, yet raising an adjacency matrix to the k-th power always, automatically, counts every walk of length k between every pair of vertices.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../graph-theory.md">Graph Theory</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  function edgeKey(u,v){ return [u,v].sort().join("-"); }
+
+  // ===== Shared bowtie layout =====
+  const BOWTIE_POS = { A:[80,60], B:[80,180], C:[200,120], D:[320,60], E:[320,180] };
+  const BOWTIE_EDGES = [["A","B"],["B","C"],["C","A"],["C","D"],["D","E"],["E","C"]];
+
+  function drawGraph(svg, pos, edges, opts){
+    opts = opts || {};
+    svg.innerHTML = "";
+    edges.forEach(([u,v]) => {
+      const key = edgeKey(u,v);
+      const color = (opts.edgeColor && opts.edgeColor(key,u,v)) || "var(--ink-soft)";
+      const width = (opts.edgeWidth && opts.edgeWidth(key,u,v)) || 2;
+      const line = el("line",{x1:pos[u][0],y1:pos[u][1],x2:pos[v][0],y2:pos[v][1],stroke:color,["stroke-width"]:width, ["stroke-linecap"]:"round"});
+      if (opts.onEdgeClick) { line.style.cursor="pointer"; line.addEventListener("click", ()=>opts.onEdgeClick(key,u,v)); }
+      svg.appendChild(line);
+      // wider invisible hit area for easier clicking
+      if (opts.onEdgeClick) {
+        const hit = el("line",{x1:pos[u][0],y1:pos[u][1],x2:pos[v][0],y2:pos[v][1],stroke:"transparent",["stroke-width"]:14});
+        hit.style.cursor="pointer";
+        hit.addEventListener("click", ()=>opts.onEdgeClick(key,u,v));
+        svg.appendChild(hit);
+      }
+    });
+    Object.entries(pos).forEach(([v,[x,y]]) => {
+      const fill = (opts.vertexColor && opts.vertexColor(v)) || "var(--accent)";
+      const circle = el("circle",{cx:x,cy:y,r:20,fill,stroke:"#fff",["stroke-width"]:2});
+      if (opts.onVertexClick) { circle.style.cursor="pointer"; circle.addEventListener("click", ()=>opts.onVertexClick(v)); }
+      svg.appendChild(circle);
+      const label = el("text",{x,y:y+5,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":14,fill:"#fff","font-weight":"700"}, v);
+      label.style.pointerEvents = "none";
+      svg.appendChild(label);
+    });
+  }
+
+  /* =========================================================
+     TAB: WALK CLASSIFIER
+     ========================================================= */
+  let walkSeq = [];
+  function classifyWalk(seq, edgeSet){
+    if (seq.length < 2) return { label: "Click a second vertex to start a walk.", edgesUsed: [] };
+    const n = seq.length;
+    const edgesUsed = [];
+    for (let i=0;i<n-1;i++){
+      const key = edgeKey(seq[i],seq[i+1]);
+      if (!edgeSet.has(key)) return { label: `INVALID — ${seq[i]}-${seq[i+1]} is not an edge in this graph.`, edgesUsed };
+      edgesUsed.push(key);
+    }
+    const isClosed = seq[0]===seq[n-1];
+    const ec = {}; edgesUsed.forEach(e=>ec[e]=(ec[e]||0)+1);
+    const edgesRepeat = Object.values(ec).some(c=>c>1);
+    const inner = isClosed ? seq.slice(0,-1) : seq;
+    const vc = {}; inner.forEach(v=>vc[v]=(vc[v]||0)+1);
+    const vertsRepeat = Object.values(vc).some(c=>c>1);
+    let label;
+    if (edgesRepeat) label = "WALK only — an edge got reused.";
+    else if (vertsRepeat) label = isClosed ? "CIRCUIT — closed, no repeated edge, but an internal vertex repeats." : "TRAIL only — no repeated edge, but a vertex repeats and it's not closed.";
+    else label = isClosed ? "CYCLE — closed, and the only repeated vertex is the start/end." : "PATH — no repeated vertex, no repeated edge.";
+    const allEdgesUsedOnce = new Set(edgesUsed).size === edgeSet.size && !edgesRepeat;
+    if (isClosed && !edgesRepeat && allEdgesUsedOnce) label += " (This also happens to be an Eulerian circuit — every edge, exactly once!)";
+    return { label, edgesUsed };
+  }
+  function renderWalk(){
+    const edgeSet = new Set(BOWTIE_EDGES.map(([u,v])=>edgeKey(u,v)));
+    const result = classifyWalk(walkSeq, edgeSet);
+    const usedCounts = {};
+    result.edgesUsed.forEach(e => usedCounts[e]=(usedCounts[e]||0)+1);
+    drawGraph(document.getElementById("walkSvg"), BOWTIE_POS, BOWTIE_EDGES, {
+      onVertexClick: (v) => { walkSeq.push(v); renderWalk(); },
+      edgeColor: (key) => usedCounts[key] ? (usedCounts[key]>1 ? "var(--warn)" : "var(--good)") : "var(--ink-soft)",
+      edgeWidth: (key) => usedCounts[key] ? 4 : 2,
+    });
+    document.getElementById("walkVerdict").innerHTML =
+      `Sequence: <b>${walkSeq.join(" → ") || "(click a vertex to start)"}</b><br>${result.label}`;
+  }
+  document.getElementById("walkReset").addEventListener("click", () => { walkSeq=[]; renderWalk(); });
+  renderWalk();
+
+  /* =========================================================
+     TAB: KONIGSBERG BRIDGES
+     ========================================================= */
+  const KONIGSBERG_POS = { A:[200,60], B:[80,150], C:[320,150], D:[200,230] };
+  // 7 bridges, with ids so individual parallel bridges can be toggled independently
+  const ALL_BRIDGES = [
+    {id:"AB1", u:"A", v:"B"}, {id:"AB2", u:"A", v:"B"},
+    {id:"AC1", u:"A", v:"C"}, {id:"AC2", u:"A", v:"C"},
+    {id:"AD1", u:"A", v:"D"},
+    {id:"BD1", u:"B", v:"D"},
+    {id:"CD1", u:"C", v:"D"},
+  ];
+  let bridgeOn = {}; ALL_BRIDGES.forEach(b => bridgeOn[b.id]=true);
+
+  function renderKonigsberg(){
+    const active = ALL_BRIDGES.filter(b => bridgeOn[b.id]);
+    const degree = {A:0,B:0,C:0,D:0};
+    active.forEach(b => { degree[b.u]++; degree[b.v]++; });
+
+    const svg = document.getElementById("konigsbergSvg");
+    svg.innerHTML = "";
+    // draw each bridge as its own curved/offset line so parallel bridges are visible and individually clickable
+    const offsetTracker = {};
+    ALL_BRIDGES.forEach(b => {
+      const key = edgeKey(b.u,b.v);
+      offsetTracker[key] = (offsetTracker[key]||0);
+      const idx = offsetTracker[key]++;
+      const [x1,y1] = KONIGSBERG_POS[b.u], [x2,y2] = KONIGSBERG_POS[b.v];
+      const mx=(x1+x2)/2, my=(y1+y2)/2;
+      const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1;
+      const nx=-dy/len, ny=dx/len;
+      const spread = (idx - 0.5) * 16;
+      const cx = mx + nx*spread, cy = my + ny*spread;
+      const on = bridgeOn[b.id];
+      const path = el("path",{d:`M${x1},${y1} Q${cx},${cy} ${x2},${y2}`, fill:"none", stroke: on ? "var(--pB)" : "var(--line)", ["stroke-width"]:on?3:2, ["stroke-dasharray"]: on?"none":"4,4"});
+      path.style.cursor="pointer";
+      path.addEventListener("click", () => { bridgeOn[b.id] = !bridgeOn[b.id]; renderKonigsberg(); });
+      svg.appendChild(path);
+      const hit = el("path",{d:`M${x1},${y1} Q${cx},${cy} ${x2},${y2}`, fill:"none", stroke:"transparent", ["stroke-width"]:14});
+      hit.style.cursor="pointer";
+      hit.addEventListener("click", () => { bridgeOn[b.id] = !bridgeOn[b.id]; renderKonigsberg(); });
+      svg.appendChild(hit);
+    });
+    Object.entries(KONIGSBERG_POS).forEach(([v,[x,y]]) => {
+      svg.appendChild(el("circle",{cx:x,cy:y,r:22,fill:"var(--accent)",stroke:"#fff",["stroke-width"]:2}));
+      svg.appendChild(el("text",{x,y:y+5,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":14,fill:"#fff","font-weight":"700"}, v));
+    });
+
+    const table = document.getElementById("konigsbergDegTable");
+    table.innerHTML = "<tr><th>Landmass</th><th>A</th><th>B</th><th>C</th><th>D</th></tr>" +
+      "<tr><td>degree</td>" + ["A","B","C","D"].map(v=>`<td>${degree[v]}</td>`).join("") + "</tr>";
+
+    const oddCount = Object.values(degree).filter(d=>d%2!==0).length;
+    const activeBridgeCount = active.length;
+    let verdict;
+    if (oddCount === 0) verdict = `<b style="color:var(--good)">Eulerian circuit exists</b> — every landmass has even degree, so a walk crossing every remaining bridge exactly once, returning to start, is guaranteed.`;
+    else if (oddCount === 2) verdict = `<b style="color:var(--pB)">Eulerian path exists (but not a circuit)</b> — exactly 2 odd-degree landmasses; a walk using every bridge exactly once is possible if you start at one of them and end at the other.`;
+    else verdict = `<b style="color:var(--warn)">Impossible</b> — ${oddCount} landmasses have odd degree (need exactly 0 or 2). No walk can cross every remaining bridge exactly once.`;
+    document.getElementById("konigsbergVerdict").innerHTML =
+      `Active bridges: <b>${activeBridgeCount}</b> of 7 &nbsp;·&nbsp; odd-degree landmasses: <b>${oddCount}</b><br>${verdict}`;
+  }
+  document.getElementById("konigsbergReset").addEventListener("click", () => {
+    ALL_BRIDGES.forEach(b => bridgeOn[b.id]=true);
+    renderKonigsberg();
+  });
+  renderKonigsberg();
+
+  /* =========================================================
+     TAB: SPANNING TREE BUILDER
+     ========================================================= */
+  let selectedEdges = new Set();
+  const SPANNING_TREE_PRESETS = [
+    ["A-B","B-C","C-D","D-E"], ["A-B","B-C","C-D","C-E"], ["A-B","B-C","D-E","C-E"],
+    ["A-C","B-C","C-D","D-E"], ["A-C","B-C","C-D","C-E"], ["A-C","B-C","D-E","C-E"],
+    ["A-B","A-C","C-D","D-E"], ["A-B","A-C","C-D","C-E"], ["A-B","A-C","D-E","C-E"],
+  ];
+  let presetIdx = -1;
+
+  function checkSpanningTree(edgeKeys){
+    const edges = [...edgeKeys].map(k => k.split("-"));
+    if (edges.length !== 4) {
+      if (edges.length === 5){
+        // exactly one edge too many -- find the culprit and name its exact cycle
+        const adj = {}; ["A","B","C","D","E"].forEach(v=>adj[v]=[]);
+        const treeEdges = [];
+        const parent = {}; ["A","B","C","D","E"].forEach(v=>parent[v]=v);
+        function find(x){ while(parent[x]!==x) x=parent[x]; return x; }
+        let culprit = null;
+        for (const [u,v] of edges){
+          const ru=find(u), rv=find(v);
+          if (ru===rv && !culprit) { culprit = [u,v]; continue; }
+          parent[ru]=rv;
+          adj[u].push(v); adj[v].push(u);
+          treeEdges.push([u,v]);
+        }
+        if (culprit){
+          const [u,v] = culprit;
+          const prevNode = {}; const visited = new Set([u]);
+          const queue = [u];
+          while (queue.length){
+            const cur = queue.shift();
+            if (cur === v) break;
+            for (const nb of adj[cur]) if (!visited.has(nb)) { visited.add(nb); prevNode[nb]=cur; queue.push(nb); }
+          }
+          const path = [v]; let cur = v;
+          while (cur !== u) { cur = prevNode[cur]; path.push(cur); }
+          return { valid:false, reason: `too many edges — contains the cycle ${path.join(" → ")} → ${v}` };
+        }
+      }
+      return { valid:false, reason: edges.length<4 ? "not enough edges yet" : "too many edges — a tree on 5 vertices needs exactly 4" };
+    }
+    const parent = {}; ["A","B","C","D","E"].forEach(v=>parent[v]=v);
+    function find(x){ while(parent[x]!==x) x=parent[x]; return x; }
+    for (const [u,v] of edges){
+      const ru=find(u), rv=find(v);
+      if (ru===rv) return { valid:false, reason: "contains a cycle" };
+      parent[ru]=rv;
+    }
+    const roots = new Set(["A","B","C","D","E"].map(find));
+    if (roots.size !== 1) return { valid:false, reason: "not connected — some vertex is unreachable" };
+    return { valid:true, reason: "exactly 4 edges, connected, no cycle" };
+  }
+  function renderSpanning(){
+    const svg = document.getElementById("spanningSvg");
+    drawGraph(svg, BOWTIE_POS, BOWTIE_EDGES, {
+      onEdgeClick: (key) => { if (selectedEdges.has(key)) selectedEdges.delete(key); else selectedEdges.add(key); renderSpanning(); },
+      edgeColor: (key) => selectedEdges.has(key) ? "var(--accent)" : "var(--line)",
+      edgeWidth: (key) => selectedEdges.has(key) ? 4 : 2,
+    });
+    const check = checkSpanningTree(selectedEdges);
+    document.getElementById("spanningVerdict").innerHTML =
+      `Selected edges (${selectedEdges.size}): <b>${[...selectedEdges].join(", ") || "none"}</b><br>` +
+      (check.valid
+        ? `<b style="color:var(--good)">Valid spanning tree</b> — ${check.reason}.`
+        : `<b style="color:var(--warn)">Not yet a spanning tree</b> — ${check.reason}.`);
+  }
+  document.getElementById("spanningReset").addEventListener("click", () => { selectedEdges=new Set(); presetIdx=-1; renderSpanning(); });
+  document.getElementById("spanningShowExtraEdge").addEventListener("click", () => {
+    presetIdx = -1;
+    selectedEdges = new Set(["A-B","A-C","C-D","C-E","D-E"]);
+    renderSpanning();
+  });
+  document.getElementById("spanningShowNext").addEventListener("click", () => {
+    presetIdx = (presetIdx+1) % SPANNING_TREE_PRESETS.length;
+    selectedEdges = new Set(SPANNING_TREE_PRESETS[presetIdx]);
+    renderSpanning();
+  });
+  renderSpanning();
+
+  /* =========================================================
+     TAB: GRAPH COLORING
+     ========================================================= */
+  const COLOR_PALETTE = ["#463A73","#0F8B8D","#D9A62E","#D9636B","#5B4B95"];
+  const GRAPH_PRESETS = {
+    triangle: { pos:{A:[200,50],B:[100,200],C:[300,200]}, edges:[["A","B"],["B","C"],["C","A"]] },
+    c4: { pos:{A:[130,60],B:[270,60],C:[270,200],D:[130,200]}, edges:[["A","B"],["B","C"],["C","D"],["D","A"]] },
+    c5: { pos:{A:[200,40],B:[330,140],C:[280,270],D:[120,270],E:[70,140]}, edges:[["A","B"],["B","C"],["C","D"],["D","E"],["E","A"]] },
+    bowtie: { pos: BOWTIE_POS, edges: BOWTIE_EDGES },
+    k4: { pos:{A:[200,40],B:[350,150],C:[260,260],D:[140,260]}, edges:[["A","B"],["A","C"],["A","D"],["B","C"],["B","D"],["C","D"]] },
+    star: { pos:{A:[200,150],B:[200,40],C:[330,150],D:[200,260],E:[70,150]}, edges:[["A","B"],["A","C"],["A","D"],["A","E"]] },
+  };
+  let currentGraphPreset = "triangle";
+  let vertexColors = {};
+  let selectedVertexForColor = null;
+
+  function renderColoring(){
+    const g = GRAPH_PRESETS[currentGraphPreset];
+    const svg = document.getElementById("coloringSvg");
+    drawGraph(svg, g.pos, g.edges, {
+      onVertexClick: (v) => { selectedVertexForColor = v; renderColoring(); },
+      vertexColor: (v) => vertexColors[v] || "var(--ink-soft)",
+      edgeColor: (key,u,v) => (vertexColors[u] && vertexColors[u]===vertexColors[v]) ? "var(--warn)" : "var(--line)",
+      edgeWidth: (key,u,v) => (vertexColors[u] && vertexColors[u]===vertexColors[v]) ? 4 : 2,
+    });
+    // highlight selected vertex with a ring
+    if (selectedVertexForColor && g.pos[selectedVertexForColor]) {
+      const [x,y] = g.pos[selectedVertexForColor];
+      svg.appendChild(el("circle",{cx:x,cy:y,r:26,fill:"none",stroke:"var(--ink)",["stroke-width"]:2,["stroke-dasharray"]:"3,3"}));
+    }
+    const picker = document.getElementById("colorPicker");
+    picker.innerHTML = "";
+    COLOR_PALETTE.forEach(c => {
+      const sw = document.createElement("div");
+      sw.className = "swatch";
+      sw.style.background = c;
+      sw.addEventListener("click", () => {
+        if (selectedVertexForColor) { vertexColors[selectedVertexForColor] = c; renderColoring(); }
+      });
+      picker.appendChild(sw);
+    });
+    const conflicts = g.edges.filter(([u,v]) => vertexColors[u] && vertexColors[u]===vertexColors[v]).length;
+    const colorsUsed = new Set(Object.values(vertexColors)).size;
+    document.getElementById("coloringVerdict").innerHTML =
+      `Click a vertex, then a color. Colors used: <b>${colorsUsed}</b> &nbsp;·&nbsp; Conflicting edges: <b style="color:${conflicts?'var(--warn)':'var(--good)'}">${conflicts}</b>` +
+      (conflicts===0 && colorsUsed>0 ? " — no conflicts with this many colors!" : "");
+  }
+  document.querySelectorAll("[data-graphpreset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-graphpreset]").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      currentGraphPreset = btn.dataset.graphpreset;
+      vertexColors = {}; selectedVertexForColor = null;
+      renderColoring();
+    });
+  });
+  renderColoring();
+
+  /* =========================================================
+     TAB: ADJACENCY MATRIX & WALKS
+     ========================================================= */
+  const MATRIX_VERTICES = ["A","B","C","D","E"];
+  const HANDSHAKE_EDGES = [["A","B"],["A","C"],["B","C"],["B","D"],["C","D"],["D","E"]];
+  let matrixGraph = "bowtie";
+  const matrixK = document.getElementById("matrixK");
+  const matrixKOut = document.getElementById("matrixKOut");
+  let matrixFrom = "A", matrixTo = "A";
+
+  function buildAdjMatrix(){
+    const n = MATRIX_VERTICES.length;
+    const idx = {}; MATRIX_VERTICES.forEach((v,i)=>idx[v]=i);
+    const M = Array.from({length:n}, ()=>new Array(n).fill(0));
+    const edges = matrixGraph === "bowtie" ? BOWTIE_EDGES : HANDSHAKE_EDGES;
+    edges.forEach(([u,v]) => { M[idx[u]][idx[v]]=1; M[idx[v]][idx[u]]=1; });
+    return M;
+  }
+  function matPow(M, k){
+    const n = M.length;
+    let R = Array.from({length:n}, (_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
+    for (let p=0;p<k;p++){
+      const N = Array.from({length:n}, ()=>new Array(n).fill(0));
+      for (let i=0;i<n;i++) for (let j=0;j<n;j++) for (let l=0;l<n;l++) N[i][j] += R[i][l]*M[l][j];
+      R = N;
+    }
+    return R;
+  }
+  function renderMatrixPickers(){
+    ["matrixFromPicker","matrixToPicker"].forEach((id,pickerIdx) => {
+      const picker = document.getElementById(id);
+      picker.innerHTML = "";
+      MATRIX_VERTICES.forEach(v => {
+        const sw = document.createElement("div");
+        sw.className = "swatch";
+        sw.style.background = "#fff";
+        sw.style.display="flex"; sw.style.alignItems="center"; sw.style.justifyContent="center";
+        sw.style.fontFamily="'IBM Plex Mono',monospace"; sw.style.fontWeight="700"; sw.style.color="var(--ink)";
+        sw.textContent = v;
+        const isActive = pickerIdx===0 ? v===matrixFrom : v===matrixTo;
+        if (isActive) { sw.style.background="var(--accent)"; sw.style.color="#fff"; sw.classList.add("active"); }
+        sw.addEventListener("click", () => { if(pickerIdx===0) matrixFrom=v; else matrixTo=v; renderMatrix(); });
+        picker.appendChild(sw);
+      });
+    });
+  }
+  function renderMatrix(){
+    const k = parseInt(matrixK.value,10);
+    matrixKOut.textContent = k;
+    const M = buildAdjMatrix();
+    const Mk = matPow(M, k);
+    const idx = {}; MATRIX_VERTICES.forEach((v,i)=>idx[v]=i);
+    const table = document.getElementById("matrixTable");
+    let html = "<tr><th>A^"+k+"</th>" + MATRIX_VERTICES.map(v=>`<th>${v}</th>`).join("") + "</tr>";
+    MATRIX_VERTICES.forEach((rv,i) => {
+      html += `<tr><th>${rv}</th>` + MATRIX_VERTICES.map((cv,j) => {
+        const highlight = (rv===matrixFrom && cv===matrixTo);
+        return `<td style="${highlight?'background:var(--accent-soft);font-weight:700;color:var(--accent);':''}">${Mk[i][j]}</td>`;
+      }).join("") + "</tr>";
+    });
+    table.innerHTML = html;
+    renderMatrixPickers();
+    let verdictHtml = `Number of length-${k} walks from <b>${matrixFrom}</b> to <b>${matrixTo}</b>: <span class="big">${Mk[idx[matrixFrom]][idx[matrixTo]]}</span>`;
+    if (matrixGraph === "handshake" && k === 1){
+      const rowSums = M.map(row => row.reduce((a,c)=>a+c,0));
+      verdictHtml += `<br>Handshake Lemma check — each row sum equals that vertex's own degree: ` +
+        MATRIX_VERTICES.map((v,i)=>`degree(${v})=${rowSums[i]}`).join(", ") +
+        ` &nbsp;·&nbsp; sum = ${rowSums.reduce((a,c)=>a+c,0)} = 2×${HANDSHAKE_EDGES.length} edges`;
+    }
+    document.getElementById("matrixVerdict").innerHTML = verdictHtml;
+  }
+  matrixK.addEventListener("input", renderMatrix);
+  document.getElementById("btnMatrixBowtie").addEventListener("click", function(){
+    matrixGraph = "bowtie"; this.classList.add("active");
+    document.getElementById("btnMatrixHandshake").classList.remove("active");
+    renderMatrix();
+  });
+  document.getElementById("btnMatrixHandshake").addEventListener("click", function(){
+    matrixGraph = "handshake"; this.classList.add("active");
+    document.getElementById("btnMatrixBowtie").classList.remove("active");
+    matrixK.value = 1;
+    renderMatrix();
+  });
+  renderMatrix();
+})();
+</script>
+</body>
+</html>

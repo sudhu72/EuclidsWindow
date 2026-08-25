@@ -63,6 +63,10 @@
       <label>k =</label><input type="range" id="kSlider" min="1" max="9" step="1" value="1"><span class="readout" id="kOut">1</span>
     </div>
     <div class="row">
+      <button class="op active" id="btnDataExtended">Extended dataset (13 points)</button>
+      <button class="op" id="btnDataExact">Tutorial's exact dataset (7 points)</button>
+    </div>
+    <div class="row">
       <button class="op active" id="btnHeatOff">Just this query</button>
       <button class="op" id="btnHeatOn">Show full decision boundary for this k</button>
     </div>
@@ -93,13 +97,20 @@
   }
 
   // Same-flavor dataset as the tutorial's worked example, extended for a richer boundary.
-  const points = [
+  const EXTENDED_POINTS = [
     {x:1, y:2, label:"cat"}, {x:2, y:1, label:"cat"}, {x:2, y:3, label:"cat"},
     {x:1, y:3.5, label:"cat"}, {x:2.5, y:2, label:"cat"}, {x:0.5, y:1, label:"cat"},
     {x:6, y:6, label:"dog"}, {x:7, y:5, label:"dog"}, {x:6, y:7, label:"dog"},
     {x:7, y:7, label:"dog"}, {x:8, y:6, label:"dog"}, {x:6.5, y:5.5, label:"dog"},
     {x:4, y:4, label:"dog"} // the deliberately awkward, borderline point from the tutorial
   ];
+  // Exactly the tutorial's own 7-point worked example -- no extras.
+  const EXACT_POINTS = [
+    {x:1, y:2, label:"cat"}, {x:2, y:1, label:"cat"}, {x:2, y:3, label:"cat"},
+    {x:6, y:6, label:"dog"}, {x:7, y:5, label:"dog"}, {x:6, y:7, label:"dog"},
+    {x:4, y:4, label:"dog"}
+  ];
+  let points = EXTENDED_POINTS;
 
   const pad = 36, W=440, H=380, minX=-1, maxX=9, minY=-1, maxY=8.5;
   function X(x){ return pad + (x-minX)/(maxX-minX)*(W-2*pad); }
@@ -216,6 +227,12 @@
   });
   document.getElementById("btnHeatOn").addEventListener("click", function(){
     heatOn = true; this.classList.add("active"); document.getElementById("btnHeatOff").classList.remove("active"); render();
+  });
+  document.getElementById("btnDataExtended").addEventListener("click", function(){
+    points = EXTENDED_POINTS; this.classList.add("active"); document.getElementById("btnDataExact").classList.remove("active"); render();
+  });
+  document.getElementById("btnDataExact").addEventListener("click", function(){
+    points = EXACT_POINTS; this.classList.add("active"); document.getElementById("btnDataExtended").classList.remove("active"); render();
   });
 
   render();

@@ -46,6 +46,9 @@
   .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
   svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
   .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.7; }
+  table.dt{ border-collapse:collapse; margin:14px auto; font-family:"IBM Plex Mono",monospace; font-size:13px; width:100%; }
+  table.dt th, table.dt td{ border:1px solid var(--line); padding:6px 10px; text-align:center; }
+  table.dt th{ background:var(--accent-soft); font-weight:600; }
   .verdict.pass{ background:#E4F3EC; }
   .verdict.fail{ background:#FBEAEA; }
   .cols{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
@@ -92,14 +95,24 @@
       <svg id="ctSvg" viewBox="0 0 700 320"></svg>
       <div class="verdict" id="ctVerdict"></div>
       <div class="caption"><b>Why it matters:</b> if <em>no</em> δ ever works, no matter how small, the function is discontinuous exactly there — the Intermediate and Extreme Value Theorems both stop applying at that point.</div>
+      <h2 style="margin-top:22px;">Continuous Everywhere, Differentiable Nowhere</h2>
+      <p class="sub">Comparing sin(x)'s difference quotient at x=0.3 against a genuine Weierstrass-type function's, as the step size h shrinks toward zero.</p>
+      <button class="op" id="btnWeierstrassStep">Shrink h (next step)</button>
+      <button class="op" id="btnWeierstrassReset">Reset</button>
+      <table class="dt" id="weierstrassTable"></table>
+      <div class="caption"><b>Why it matters:</b> sin(x)'s quotient settles smoothly onto cos(0.3)=0.955336 — an ordinary derivative. The Weierstrass-type function's quotient never settles at all, swinging wider every time h shrinks — genuinely continuous, yet nowhere differentiable.</div>
     </div>
   </div>
 
   <!-- ============ TAB 2: LOCAL VS GLOBAL ============ -->
   <div class="panel" id="panel-extrema">
     <div class="card">
-      <h2>f(x) = x³ − 3x — Local Peaks, and the Actual Global Winner</h2>
+      <h2 id="exHeading">f(x) = x³ − 3x — Local Peaks, and the Actual Global Winner</h2>
       <p class="sub"><b>What's happening:</b> drag the interval's endpoints. Every candidate for the global extremum — interior critical points <em>and</em> both endpoints — lights up, with the true global max/min highlighted live.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnCubicMinus3x">f(x) = x³ − 3x (has local max/min)</button>
+        <button class="op" id="btnCubicPlain">f(x) = x³ (inflection only — no extrema at all)</button>
+      </div>
       <div class="row"><label>left endpoint a</label><input type="range" id="exA" min="-3" max="0" step="0.05" value="-2"><span class="readout" id="exAOut">-2.00</span></div>
       <div class="row"><label>right endpoint b</label><input type="range" id="exB" min="0" max="3" step="0.05" value="2"><span class="readout" id="exBOut">2.00</span></div>
       <svg id="exSvg" viewBox="0 0 700 380"></svg>
@@ -226,6 +239,35 @@
     delta.min = span*0.002; delta.max = span*0.15; delta.step = span*0.002; delta.value = span*0.03;
   }
 
+  /* ---- Weierstrass-type difference quotient stepper ---- */
+  const WEIERSTRASS_HS = [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001];
+  let weierstrassStep = 0;
+  function weierstrassW(x){
+    const a = 0.5, b = 13, N = 30;
+    let s = 0;
+    for (let n=0; n<=N; n++) s += Math.pow(a,n) * Math.cos(Math.pow(b,n) * Math.PI * x);
+    return s;
+  }
+  function renderWeierstrass(){
+    const x0 = 0.3;
+    const rows = WEIERSTRASS_HS.slice(0, weierstrassStep+1).map(h => {
+      const sinDq = (Math.sin(x0+h) - Math.sin(x0)) / h;
+      const wDq = (weierstrassW(x0+h) - weierstrassW(x0)) / h;
+      return {h, sinDq, wDq};
+    });
+    let html = "<tr><th>step size h</th><th>sin(x)'s difference quotient</th><th>Weierstrass-type function's difference quotient</th></tr>";
+    rows.forEach(r => {
+      html += `<tr><td>${r.h}</td><td>${r.sinDq.toFixed(6)}</td><td>${r.wDq.toFixed(3)}</td></tr>`;
+    });
+    document.getElementById("weierstrassTable").innerHTML = html;
+  }
+  document.getElementById("btnWeierstrassStep").addEventListener("click", () => {
+    weierstrassStep = Math.min(weierstrassStep+1, WEIERSTRASS_HS.length-1);
+    renderWeierstrass();
+  });
+  document.getElementById("btnWeierstrassReset").addEventListener("click", () => { weierstrassStep = 0; renderWeierstrass(); });
+  renderWeierstrass();
+
   function renderContinuity(){
     const cfg = fns[currentFn];
     const a = parseFloat(document.getElementById("ctA").value);
@@ -299,8 +341,9 @@
   /* =========================================================
      TAB 2 — LOCAL VS GLOBAL
      ========================================================= */
-  function cubicF(x){ return x*x*x - 3*x; }
-  function cubicFp(x){ return 3*x*x - 3; }
+  let cubicMode = "minus3x";
+  function cubicF(x){ return cubicMode==="minus3x" ? (x*x*x - 3*x) : (x*x*x); }
+  function cubicFp(x){ return cubicMode==="minus3x" ? (3*x*x - 3) : (3*x*x); }
   function cubicFpp(x){ return 6*x; }
 
   function renderExtrema(){
@@ -327,7 +370,8 @@
 
     // candidates: critical points within [a,b], plus endpoints
     const candidates = [{x:a, label:"a (endpoint)"}, {x:b, label:"b (endpoint)"}];
-    for (const cx of [-1,1]) if (cx>=a && cx<=b) candidates.push({x:cx, label: cubicFpp(cx)>0?"critical (local min)":"critical (local max)"});
+    const criticalXs = cubicMode==="minus3x" ? [-1,1] : [0];
+    for (const cx of criticalXs) if (cx>=a && cx<=b) candidates.push({x:cx, label: cubicMode==="minus3x" ? (cubicFpp(cx)>0?"critical (local min)":"critical (local max)") : "critical (inflection — not an extremum)"});
     const withF = candidates.map(c => ({...c, f: cubicF(c.x)}));
     const globalMaxVal = Math.max(...withF.map(c=>c.f));
     const globalMinVal = Math.min(...withF.map(c=>c.f));
@@ -340,9 +384,21 @@
       svg.appendChild(el("circle",{cx:X(c.x),cy:Y(c.f),r: (isMax||isMin) ? 8:6, fill:color, stroke:"#fff", ["stroke-width"]:1.6}));
       svg.appendChild(txt(X(c.x), Y(c.f) - 14, c.label + (isMax?" ★ GLOBAL MAX":(isMin?" ★ GLOBAL MIN":"")), color, 10.5, "middle", "600"));
     }
-    svg.appendChild(txt(X(0), 24, "f(x) = x³ − 3x", "var(--ink-soft)", 12, "middle", "600"));
+    svg.appendChild(txt(X(0), 24, cubicMode==="minus3x" ? "f(x) = x³ − 3x" : "f(x) = x³", "var(--ink-soft)", 12, "middle", "600"));
   }
   ["exA","exB"].forEach(id => document.getElementById(id).addEventListener("input", renderExtrema));
+  document.getElementById("btnCubicMinus3x").addEventListener("click", function(){
+    cubicMode = "minus3x"; this.classList.add("active");
+    document.getElementById("btnCubicPlain").classList.remove("active");
+    document.getElementById("exHeading").textContent = "f(x) = x³ − 3x — Local Peaks, and the Actual Global Winner";
+    renderExtrema();
+  });
+  document.getElementById("btnCubicPlain").addEventListener("click", function(){
+    cubicMode = "plain"; this.classList.add("active");
+    document.getElementById("btnCubicMinus3x").classList.remove("active");
+    document.getElementById("exHeading").textContent = "f(x) = x³ — a Critical Point That Isn't a Peak or Valley";
+    renderExtrema();
+  });
   renderExtrema();
 
   /* =========================================================

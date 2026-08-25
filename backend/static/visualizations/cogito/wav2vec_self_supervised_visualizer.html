@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>wav2vec 2.0, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  table.datatable{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  table.datatable input{width:64px;background:var(--bg);border:1px solid var(--border);color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:4px 6px;}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:170px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:70px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:140px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>wav2vec 2.0, live</h1>
+  <p class="sub">Three companion demos: the encoder's downsampling and masking, the contrastive loss's lineup, and the diversity loss's codebook-usage entropy.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="encoder">Encoder &amp; Masking</button>
+    <button class="tab-btn" data-tab="contrastive">Contrastive Loss</button>
+    <button class="tab-btn" data-tab="diversity">Diversity Loss</button>
+  </div>
+
+  <div class="tabpage active" id="tab-encoder">
+    <div class="panel">
+      <h2>Feature-Encoder Downsampling</h2>
+      <p class="sub">Edit any stride to see how the total downsampling and resulting frame rate change.</p>
+      <table class="datatable" id="strideTable"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">Total stride</div><div class="num" id="totalStride">-</div></div>
+        <div class="metric green"><div class="lbl">Frame rate</div><div class="num" id="frameRate">-</div></div>
+        <div class="metric amber"><div class="lbl">ms per frame</div><div class="num" id="msPerFrame">-</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Masking Coverage</h2>
+      <div class="slider-row">
+        <label for="pSlider">Span-start probability p</label>
+        <input type="range" id="pSlider" min="0.01" max="0.2" step="0.005" value="0.065">
+        <output id="pOut">0.065</output>
+      </div>
+      <div class="slider-row">
+        <label for="mSlider">Span length M</label>
+        <input type="range" id="mSlider" min="1" max="30" step="1" value="10">
+        <output id="mOut">10</output>
+      </div>
+      <svg id="maskSvg" width="640" height="100" viewBox="0 0 640 100"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">Approx. fraction masked</div><div class="num" id="maskFrac">-</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-contrastive">
+    <div class="panel">
+      <h2>Contrastive Loss: Pick the True Target Out of a Lineup</h2>
+      <p class="sub">Edit any vector's 3 coordinates. Row 1 is the true target; the rest are decoys. Temperature kappa sharpens the softmax.</p>
+      <table class="datatable" id="contrastTable"></table>
+      <div class="row">
+        <button class="op" id="presetEarly">Early-training preset</button>
+        <button class="op" id="presetLate">Late-training preset</button>
+      </div>
+      <div class="slider-row">
+        <label for="kappaSlider">Temperature kappa</label>
+        <input type="range" id="kappaSlider" min="0.02" max="1" step="0.01" value="0.1">
+        <output id="kappaOut">0.10</output>
+      </div>
+      <svg id="contrastSvg" width="640" height="200" viewBox="0 0 640 200"></svg>
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">P(true target)</div><div class="num" id="pTrue">-</div></div>
+        <div class="metric coral"><div class="lbl">Contrastive loss</div><div class="num" id="lossM">-</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-diversity">
+    <div class="panel">
+      <h2>Diversity Loss: Codebook Usage Entropy</h2>
+      <p class="sub">Edit how often each of 4 codebook entries gets used (renormalized to sum to 1 automatically).</p>
+      <table class="datatable" id="diversityTable"></table>
+      <div class="row">
+        <button class="op" id="presetSkewed">Skewed usage</button>
+        <button class="op" id="presetUniform">Uniform usage</button>
+      </div>
+      <svg id="diversitySvg" width="480" height="200" viewBox="0 0 480 200"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">Entropy H (nats)</div><div class="num" id="entropyOut">-</div></div>
+        <div class="metric amber"><div class="lbl">ln(4), max possible</div><div class="num">1.3863</div></div>
+        <div class="metric coral"><div class="lbl">Diversity loss L_d</div><div class="num" id="ldOut">-</div></div>
+      </div>
+      <div class="story-line" id="divStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../wav2vec_self_supervised_feynman.md">wav2vec 2.0: Self-Supervised Speech Representations</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ==================== TAB 1: Encoder & Masking ====================
+  let strides = [5,2,2,2,2,2,2];
+  function renderStrideTable(){
+    const table = document.getElementById("strideTable");
+    let html = "<tr><th>Layer</th>" + strides.map((_,i)=>`<th>${i+1}</th>`).join("") + "</tr>";
+    html += "<tr><td>Stride</td>" + strides.map((s,i)=>`<td><input type="number" min="1" step="1" data-idx="${i}" value="${s}"></td>`).join("") + "</tr>";
+    table.innerHTML = html;
+    table.querySelectorAll("input").forEach(inp => inp.addEventListener("input", e => {
+      const idx = parseInt(e.target.dataset.idx,10);
+      strides[idx] = Math.max(1, parseInt(e.target.value,10) || 1);
+      updateEncoder();
+    }));
+  }
+  function updateEncoder(){
+    renderStrideTable();
+    const total = strides.reduce((a,b)=>a*b,1);
+    const rate = 16000/total;
+    document.getElementById("totalStride").textContent = total;
+    document.getElementById("frameRate").textContent = rate.toFixed(1) + " Hz";
+    document.getElementById("msPerFrame").textContent = (total/16000*1000).toFixed(2) + " ms";
+  }
+  updateEncoder();
+
+  const pSlider = document.getElementById("pSlider"), mSlider = document.getElementById("mSlider");
+  function drawMask(p, M){
+    const svg = document.getElementById("maskSvg");
+    svg.innerHTML = "";
+    const W=640,H=100,pad=20, T=60;
+    const cw = (W-2*pad)/T;
+    // deterministic-looking pseudo-mask using a simple hash so it's stable per (p,M), not truly random
+    let seed = Math.round(p*10000) + M*7919;
+    function rnd(){ seed = (seed*9301+49297)%233280; return seed/233280; }
+    const masked = new Array(T).fill(false);
+    for (let i=0;i<T;i++){
+      if (rnd() < p){
+        for (let j=i;j<Math.min(T,i+M);j++) masked[j]=true;
+      }
+    }
+    let countMasked = masked.filter(Boolean).length;
+    for (let i=0;i<T;i++){
+      svg.appendChild(el("rect",{x:pad+i*cw, y:30, width:cw-1, height:40,
+        fill: masked[i] ? "var(--coral)" : "var(--blue)", opacity:0.85}));
+    }
+    svg.appendChild(el("text",{x:W/2,y:20,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"latent time steps (one illustrative random draw)"));
+    svg.appendChild(el("text",{x:W/2,y:86,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"}, `${countMasked}/${T} steps masked in this draw`));
+  }
+  function updateMask(){
+    const p = parseFloat(pSlider.value), M = parseInt(mSlider.value,10);
+    document.getElementById("pOut").textContent = p.toFixed(3);
+    document.getElementById("mOut").textContent = M;
+    const frac = 1 - Math.pow(1-p, M);
+    document.getElementById("maskFrac").textContent = (frac*100).toFixed(2) + "%";
+    drawMask(p, M);
+  }
+  pSlider.addEventListener("input", updateMask);
+  mSlider.addEventListener("input", updateMask);
+  updateMask();
+
+  // ==================== TAB 2: Contrastive Loss ====================
+  function dot(a,b){ return a.reduce((s,v,i)=>s+v*b[i],0); }
+  function norm(a){ return Math.sqrt(dot(a,a)); }
+  function cosine(a,b){ return dot(a,b)/(norm(a)*norm(b)); }
+
+  const PRESET_EARLY = [
+    { label: "true target", v: [0.385,0.295,0.145] },
+    { label: "decoy 1", v: [0.32,0.30,0.05] },
+    { label: "decoy 2", v: [0.0,0.9,0.1] },
+    { label: "decoy 3", v: [-0.2,0.1,0.8] },
+  ];
+  const CONTEXT_EARLY = [0.30,0.30,0.10];
+  const PRESET_LATE = [
+    { label: "true target", v: [0.95,0.05,0.02] },
+    { label: "decoy 1", v: [0,1,0] },
+    { label: "decoy 2", v: [0,0,1] },
+    { label: "decoy 3", v: [-0.5,0.4,0.6] },
+  ];
+  const CONTEXT_LATE = [1,0,0];
+
+  let contextVec = [...CONTEXT_EARLY];
+  let candidates = PRESET_EARLY.map(c => ({...c, v:[...c.v]}));
+
+  function renderContrastTable(){
+    const table = document.getElementById("contrastTable");
+    let html = "<tr><th>Vector</th><th>x</th><th>y</th><th>z</th></tr>";
+    html += `<tr><td>context c_t</td>` + contextVec.map((v,i)=>`<td><input type="number" step="0.01" data-ctx="${i}" value="${v}"></td>`).join("") + "</tr>";
+    candidates.forEach((c,ci) => {
+      html += `<tr><td>${c.label}</td>` + c.v.map((v,i)=>`<td><input type="number" step="0.01" data-cand="${ci}" data-i="${i}" value="${v}"></td>`).join("") + "</tr>";
+    });
+    table.innerHTML = html;
+    table.querySelectorAll("input[data-ctx]").forEach(inp => inp.addEventListener("input", e => {
+      contextVec[parseInt(e.target.dataset.ctx,10)] = parseFloat(e.target.value)||0;
+      updateContrastive();
+    }));
+    table.querySelectorAll("input[data-cand]").forEach(inp => inp.addEventListener("input", e => {
+      candidates[parseInt(e.target.dataset.cand,10)].v[parseInt(e.target.dataset.i,10)] = parseFloat(e.target.value)||0;
+      updateContrastive();
+    }));
+  }
+
+  function drawContrastive(sims, probs){
+    const svg = document.getElementById("contrastSvg");
+    svg.innerHTML = "";
+    const W=640,H=200,pad=50;
+    const n = probs.length;
+    const bw = (W-2*pad)/n*0.6;
+    const gap = (W-2*pad)/n;
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    probs.forEach((p,i) => {
+      const x = pad + i*gap + (gap-bw)/2;
+      const h = p*(H-2*pad);
+      svg.appendChild(el("rect",{x, y:H-pad-h, width:bw, height:h, fill: i===0?"var(--green)":"var(--coral)", opacity:0.85}));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad-h-8, "text-anchor":"middle","font-size":11, fill:"var(--chalk)"}, p.toFixed(4)));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad+16, "text-anchor":"middle","font-size":10, fill:"var(--chalk-dim)"}, i===0?"true":"decoy "+i));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad+30, "text-anchor":"middle","font-size":9.5, fill:"var(--chalk-dim)"}, "cos="+sims[i].toFixed(3)));
+    });
+  }
+
+  function updateContrastive(){
+    renderContrastTable();
+    const kappa = parseFloat(document.getElementById("kappaSlider").value);
+    const sims = candidates.map(c => cosine(contextVec, c.v));
+    const scaled = sims.map(s => s/kappa);
+    const expScaled = scaled.map(Math.exp);
+    const sumExp = expScaled.reduce((a,b)=>a+b,0);
+    const probs = expScaled.map(e => e/sumExp);
+    drawContrastive(sims, probs);
+    document.getElementById("pTrue").textContent = probs[0].toFixed(4);
+    document.getElementById("lossM").textContent = (-Math.log(probs[0])).toFixed(4);
+  }
+
+  document.getElementById("kappaSlider").addEventListener("input", (e) => {
+    document.getElementById("kappaOut").textContent = parseFloat(e.target.value).toFixed(2);
+    updateContrastive();
+  });
+  document.getElementById("presetEarly").addEventListener("click", () => {
+    contextVec = [...CONTEXT_EARLY];
+    candidates = PRESET_EARLY.map(c => ({...c, v:[...c.v]}));
+    updateContrastive();
+  });
+  document.getElementById("presetLate").addEventListener("click", () => {
+    contextVec = [...CONTEXT_LATE];
+    candidates = PRESET_LATE.map(c => ({...c, v:[...c.v]}));
+    updateContrastive();
+  });
+  updateContrastive();
+
+  // ==================== TAB 3: Diversity Loss ====================
+  const SKEWED = [0.85,0.05,0.05,0.05];
+  const UNIFORM = [0.25,0.25,0.25,0.25];
+  let usage = [...SKEWED];
+
+  function renderDiversityTable(){
+    const table = document.getElementById("diversityTable");
+    const sum = usage.reduce((a,b)=>a+b,0) || 1;
+    const norm = usage.map(v=>v/sum);
+    let html = "<tr><th>Entry</th>" + usage.map((_,i)=>`<th>${i}</th>`).join("") + "</tr>";
+    html += "<tr><td>Raw weight</td>" + usage.map((v,i)=>`<td><input type="number" step="0.01" min="0" data-idx="${i}" value="${v}"></td>`).join("") + "</tr>";
+    html += "<tr><td>Normalized p</td>" + norm.map(v=>`<td>${v.toFixed(4)}</td>`).join("") + "</tr>";
+    table.innerHTML = html;
+    table.querySelectorAll("input").forEach(inp => inp.addEventListener("input", e => {
+      usage[parseInt(e.target.dataset.idx,10)] = Math.max(0, parseFloat(e.target.value)||0);
+      updateDiversity();
+    }));
+  }
+
+  function entropy(p){ return -p.reduce((s,v)=> v>0 ? s + v*Math.log(v) : s, 0); }
+
+  function drawDiversity(p){
+    const svg = document.getElementById("diversitySvg");
+    svg.innerHTML = "";
+    const W=480,H=200,pad=40;
+    const n = p.length;
+    const gap = (W-2*pad)/n;
+    const bw = gap*0.6;
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    p.forEach((v,i) => {
+      const x = pad + i*gap + (gap-bw)/2;
+      const h = v*(H-2*pad)*2;
+      svg.appendChild(el("rect",{x, y:H-pad-h, width:bw, height:h, fill:"var(--amber)", opacity:0.85}));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad-h-8, "text-anchor":"middle","font-size":11, fill:"var(--chalk)"}, v.toFixed(3)));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad+16, "text-anchor":"middle","font-size":10, fill:"var(--chalk-dim)"}, "entry "+i));
+    });
+  }
+
+  function updateDiversity(){
+    renderDiversityTable();
+    const sum = usage.reduce((a,b)=>a+b,0) || 1;
+    const norm = usage.map(v=>v/sum);
+    drawDiversity(norm);
+    const H = entropy(norm);
+    const V = norm.length;
+    const Ld = -H/V;
+    document.getElementById("entropyOut").textContent = H.toFixed(4);
+    document.getElementById("ldOut").textContent = Ld.toFixed(4);
+    document.getElementById("divStory").textContent = H > 1.3
+      ? "Near-uniform usage: entropy is close to its maximum, ln(4) - this is the direction the diversity loss pushes training toward."
+      : "Skewed usage: entropy is well below its maximum - the diversity loss penalizes the quantizer for collapsing onto a few favorite codebook entries.";
+  }
+  document.getElementById("presetSkewed").addEventListener("click", () => { usage = [...SKEWED]; updateDiversity(); });
+  document.getElementById("presetUniform").addEventListener("click", () => { usage = [...UNIFORM]; updateDiversity(); });
+  updateDiversity();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Latent Dirichlet Allocation, made visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:180px;}
+  input[type=range]{flex:1;min-width:160px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:10px auto;max-width:100%;}
+  table.dt{border-collapse:collapse;margin:14px auto;font-family:'JetBrains Mono',monospace;font-size:13px;}
+  table.dt th,table.dt td{border:1px solid var(--border);padding:6px 10px;text-align:center;}
+  table.dt th{background:rgba(244,241,232,.06);color:var(--amber);}
+
+  .verdict{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(244,241,232,.06);border-radius:8px;padding:14px 16px;margin-top:14px;line-height:1.8;word-break:break-word;}
+  .verdict b{color:var(--amber);}
+  .caption{font-size:12px;color:var(--chalk-dim);margin-top:10px;}
+  .doc-words{font-family:'Kalam',cursive;font-size:16px;text-align:center;margin:10px 0;line-height:1.9;}
+  .word-cooking{color:var(--coral);} .word-sports{color:var(--blue);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Latent Dirichlet Allocation, made visible</h1>
+  <p class="sub">Four tabs, all reproducing the tutorial's verified numbers: sample random topic mixtures from a Dirichlet distribution, generate a document word by word from a topic mixture, watch one collapsed-Gibbs-sampling resample happen live, and watch a Dirichlet posterior update from nothing but adding counts.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="simplex">Dirichlet Simplex Sampler</button>
+    <button class="tabbtn" data-tab="generate">Generate a Document</button>
+    <button class="tabbtn" data-tab="gibbs">Collapsed Gibbs Sampling</button>
+    <button class="tabbtn" data-tab="conjugacy">Dirichlet-Multinomial Conjugacy</button>
+  </div>
+
+  <!-- ============ TAB: DIRICHLET SIMPLEX SAMPLER ============ -->
+  <div class="tabpanel active" id="tab-simplex">
+    <div class="panel">
+      <h2>Sample Random Topic Mixtures, 3 Topics at a Time</h2>
+      <p class="sub">Each dot is one draw from a Dirichlet distribution over 3 categories, plotted on the triangle of all possible 3-way splits (one corner per category). Drag concentration α and watch the scatter shift from corner-hugging to center-hugging.</p>
+      <div class="row"><label>Concentration α (symmetric)</label><input type="range" id="simplexAlpha" min="0.1" max="10" step="0.1" value="1"><span class="readout" id="simplexAlphaOut">1.0</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnAlpha03">α=0.3 (sparse)</button>
+        <button class="op" id="btnAlpha1">α=1 (uniform)</button>
+        <button class="op" id="btnAlpha5">α=5 (concentrated)</button>
+        <button class="op" id="btnAlphaAsym">Asymmetric α=(8,2,2)</button>
+        <button class="op" id="simplexResample">Draw 300 fresh samples</button>
+      </div>
+      <svg id="simplexSvg" viewBox="0 0 420 380"></svg>
+      <div class="verdict" id="simplexVerdict"></div>
+      <div class="caption">Why it matters: this is the exact mechanism behind every document's random topic mixture θ in Part 3 — the shape of this scatter is the shape of "what topic mixtures the model considers plausible before seeing any words."</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: GENERATE A DOCUMENT ============ -->
+  <div class="tabpanel" id="tab-generate">
+    <div class="panel">
+      <h2>Run the Generative Story Forward</h2>
+      <p class="sub">Draw a topic mixture θ, then draw 8 words one at a time from the toy cooking/sports vocabulary, exactly following Part 3's recipe.</p>
+      <div class="row"><label>Concentration α (symmetric)</label><input type="range" id="genAlpha" min="0.1" max="10" step="0.1" value="1"><span class="readout" id="genAlphaOut">1.0</span></div>
+      <button class="op" id="genNewDoc">Generate a new document</button>
+      <button class="op" id="genLoadTutorial">Load tutorial's exact 3 documents ▶</button>
+      <div class="verdict" id="genThetaVerdict"></div>
+      <div class="doc-words" id="genWords"></div>
+      <svg id="genSvg" viewBox="0 0 420 60"></svg>
+      <div class="caption">Why it matters: this is the exact process verified in Part 3 producing documents 0, 1, and 2 — set α low and regenerate a few times to watch documents swing between near-pure-cooking and near-pure-sports.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: COLLAPSED GIBBS SAMPLING ============ -->
+  <div class="tabpanel" id="tab-gibbs">
+    <div class="panel">
+      <h2>Resample One Word's Topic, Live</h2>
+      <p class="sub">Drag the document-level topic counts and the word "bake"'s corpus-wide topic counts, and watch the resample probability update live via Part 4's formula.</p>
+      <div class="row"><label>Doc count, topic 0 (cooking)</label><input type="range" id="gibbsDocK0" min="0" max="10" step="1" value="3"><span class="readout" id="gibbsDocK0Out">3</span></div>
+      <div class="row"><label>Doc count, topic 1 (sports)</label><input type="range" id="gibbsDocK1" min="0" max="10" step="1" value="3"><span class="readout" id="gibbsDocK1Out">3</span></div>
+      <div class="row"><label>"bake" corpus count, topic 0</label><input type="range" id="gibbsWordK0" min="0" max="10" step="1" value="5"><span class="readout" id="gibbsWordK0Out">5</span></div>
+      <div class="row"><label>"bake" corpus count, topic 1</label><input type="range" id="gibbsWordK1" min="0" max="10" step="1" value="0"><span class="readout" id="gibbsWordK1Out">0</span></div>
+      <svg id="gibbsSvg" viewBox="0 0 420 140"></svg>
+      <div class="verdict" id="gibbsVerdict"></div>
+      <div class="caption">Why it matters: at the default settings this reproduces the tutorial's exact verified 91.67% / 8.33% split — the word's own corpus-wide history overriding a tied document-level vote.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: DIRICHLET-MULTINOMIAL CONJUGACY ============ -->
+  <div class="tabpanel" id="tab-conjugacy">
+    <div class="panel">
+      <h2>Update a Dirichlet Prior — By Just Adding Counts</h2>
+      <p class="sub">Set a prior α and a set of observed topic-assignment counts, and watch the posterior α — and its mean — update live via the simplest possible rule.</p>
+      <div class="row"><label>Prior α (topic 0, topic 1)</label>
+        <input type="range" id="conjAlpha0" min="0.5" max="10" step="0.5" value="1"><span class="readout" id="conjAlpha0Out">1.0</span>
+        <input type="range" id="conjAlpha1" min="0.5" max="10" step="0.5" value="1"><span class="readout" id="conjAlpha1Out">1.0</span>
+      </div>
+      <div class="row"><label>Observed counts (topic 0, topic 1)</label>
+        <input type="range" id="conjCount0" min="0" max="20" step="1" value="6"><span class="readout" id="conjCount0Out">6</span>
+        <input type="range" id="conjCount1" min="0" max="20" step="1" value="2"><span class="readout" id="conjCount1Out">2</span>
+      </div>
+      <svg id="conjSvg" viewBox="0 0 420 60"></svg>
+      <div class="verdict" id="conjVerdict"></div>
+      <div class="caption">Why it matters: at the default settings this reproduces the tutorial's exact verified posterior α=(7,3), mean=0.7 — the entire Bayesian update collapses into one addition, precisely because Dirichlet and categorical/multinomial are a conjugate pair.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../latent_dirichlet_allocation_feynman.md">Latent Dirichlet Allocation</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, text){
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  const tabs = document.querySelectorAll(".tabbtn");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p => p.classList.remove("active"));
+    document.getElementById("tab-" + t.dataset.tab).classList.add("active");
+  }));
+
+  // ---- shared RNG + gamma/Dirichlet sampler (Marsaglia-Tsang + boost trick) ----
+  function mulberry32(seed){
+    let s = seed;
+    return function(){
+      s |= 0; s = (s + 0x6D2B79F5) | 0;
+      let t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function randNormal(rand){
+    const u1 = Math.max(rand(), 1e-12), u2 = rand();
+    return Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+  }
+  function sampleGamma(rand, shape){
+    if (shape < 1){
+      const u = rand();
+      return sampleGamma(rand, shape+1) * Math.pow(u, 1/shape);
+    }
+    const d = shape - 1/3;
+    const c = 1/Math.sqrt(9*d);
+    while (true){
+      let x, v;
+      do { x = randNormal(rand); v = 1 + c*x; } while (v <= 0);
+      v = v*v*v;
+      const u = rand();
+      if (u < 1 - 0.0331*Math.pow(x,4)) return d*v;
+      if (Math.log(u) < 0.5*x*x + d*(1-v+Math.log(v))) return d*v;
+    }
+  }
+  function sampleDirichlet(rand, alpha){
+    const gammas = alpha.map(a => sampleGamma(rand, a));
+    const sum = gammas.reduce((a,c)=>a+c,0);
+    return gammas.map(g => g/sum);
+  }
+  function sampleCategorical(rand, probs){
+    const u = rand();
+    let cum = 0;
+    for (let i=0;i<probs.length;i++){ cum += probs[i]; if (u<cum) return i; }
+    return probs.length-1;
+  }
+
+  /* =========================================================
+     TAB: DIRICHLET SIMPLEX SAMPLER
+     ========================================================= */
+  const simplexAlpha = document.getElementById("simplexAlpha");
+  const simplexAlphaOut = document.getElementById("simplexAlphaOut");
+  let simplexSeed = 1;
+  let simplexAsymAlpha = null; // when set (e.g. [8,2,2]), overrides the symmetric slider
+  // triangle corners for a 3-category simplex (barycentric -> cartesian)
+  const CORNERS = [[210,20],[30,340],[390,340]];
+  function baryToXY(p){
+    return [
+      p[0]*CORNERS[0][0] + p[1]*CORNERS[1][0] + p[2]*CORNERS[2][0],
+      p[0]*CORNERS[0][1] + p[1]*CORNERS[1][1] + p[2]*CORNERS[2][1],
+    ];
+  }
+  function renderSimplex(){
+    const symAlpha = parseFloat(simplexAlpha.value);
+    simplexAlphaOut.textContent = symAlpha.toFixed(1);
+    const alphaVec = simplexAsymAlpha || [symAlpha, symAlpha, symAlpha];
+    const alpha0 = alphaVec[0] + alphaVec[1] + alphaVec[2];
+    // analytic Dirichlet variance for component 0: alpha_0i(alpha0 - alpha_0i) / (alpha0^2 (alpha0+1))
+    const analyticVar0 = alphaVec[0]*(alpha0-alphaVec[0]) / (alpha0*alpha0*(alpha0+1));
+    const svg = document.getElementById("simplexSvg");
+    svg.innerHTML = "";
+    // triangle outline
+    svg.appendChild(el("polygon",{points:CORNERS.map(c=>c.join(",")).join(" "), fill:"none", stroke:"var(--border)", ["stroke-width"]:1.5}));
+    ["topic 0","topic 1","topic 2"].forEach((lbl,i) => {
+      const [x,y] = CORNERS[i];
+      svg.appendChild(el("text",{x, y: y + (i===0?-10:22), "text-anchor":"middle","font-family":"JetBrains Mono, monospace","font-size":12,fill:"var(--chalk-dim)"}, lbl));
+    });
+    const rand = mulberry32(1000 + simplexSeed);
+    const N = 300;
+    let sum = [0,0,0], sumSq0 = 0;
+    for (let i=0;i<N;i++){
+      const p = sampleDirichlet(rand, alphaVec);
+      const [x,y] = baryToXY(p);
+      svg.appendChild(el("circle",{cx:x,cy:y,r:2.6,fill:"var(--amber)",opacity:0.65}));
+      sum[0]+=p[0]; sum[1]+=p[1]; sum[2]+=p[2];
+      sumSq0 += p[0]*p[0];
+    }
+    const mean = sum.map(v=>v/N);
+    const varComp0 = sumSq0/N - mean[0]*mean[0];
+    document.getElementById("simplexVerdict").innerHTML =
+      `α=(${alphaVec.map(a=>a.toFixed(1)).join(",")}): empirical mean = (${mean.map(v=>v.toFixed(3)).join(", ")}) &nbsp;·&nbsp; empirical variance of component 0 = <b>${varComp0.toFixed(4)}</b> &nbsp;·&nbsp; analytic variance = <b>${analyticVar0.toFixed(4)}</b><br>` +
+      (simplexAsymAlpha ? `Asymmetric α: mean matches α's own proportions exactly — (${(alphaVec[0]/alpha0).toFixed(3)}, ${(alphaVec[1]/alpha0).toFixed(3)}, ${(alphaVec[2]/alpha0).toFixed(3)}).` :
+       symAlpha < 0.6 ? "Small α: draws cluster near the corners — sparse, lopsided topic mixtures." :
+       symAlpha > 3 ? "Large α: draws cluster near the center — safely uniform topic mixtures." :
+       "α near 1: every possible split is roughly equally likely.");
+  }
+  simplexAlpha.addEventListener("input", () => { simplexAsymAlpha = null; renderSimplex(); });
+  document.getElementById("simplexResample").addEventListener("click", () => { simplexSeed++; renderSimplex(); });
+  document.getElementById("btnAlpha03").addEventListener("click", () => { simplexAsymAlpha=null; simplexAlpha.value=0.3; renderSimplex(); });
+  document.getElementById("btnAlpha1").addEventListener("click", () => { simplexAsymAlpha=null; simplexAlpha.value=1; renderSimplex(); });
+  document.getElementById("btnAlpha5").addEventListener("click", () => { simplexAsymAlpha=null; simplexAlpha.value=5; renderSimplex(); });
+  document.getElementById("btnAlphaAsym").addEventListener("click", () => { simplexAsymAlpha=[8,2,2]; renderSimplex(); });
+  renderSimplex();
+
+  /* =========================================================
+     TAB: GENERATE A DOCUMENT
+     ========================================================= */
+  const VOCAB = ["bake","oven","recipe","goal","score","team"];
+  const IS_COOKING_WORD = [true,true,true,false,false,false];
+  const PHI_COOKING = [0.30,0.30,0.30,0.03,0.03,0.04];
+  const PHI_SPORTS  = [0.03,0.03,0.04,0.30,0.30,0.30];
+  const genAlpha = document.getElementById("genAlpha");
+  const genAlphaOut = document.getElementById("genAlphaOut");
+  let genSeed = 1;
+  function renderGenerate(){
+    genAlphaOut.textContent = parseFloat(genAlpha.value).toFixed(1);
+  }
+  function generateDocument(){
+    const alpha = parseFloat(genAlpha.value);
+    const rand = mulberry32(2000 + genSeed);
+    const theta = sampleDirichlet(rand, [alpha, alpha]);
+    const phi = [PHI_COOKING, PHI_SPORTS];
+    const words = [];
+    const topics = [];
+    for (let i=0;i<8;i++){
+      const z = sampleCategorical(rand, theta);
+      const w = sampleCategorical(rand, phi[z]);
+      words.push(w); topics.push(z);
+    }
+    document.getElementById("genThetaVerdict").innerHTML =
+      `θ = (<b>${theta[0].toFixed(3)}</b> cooking, <b>${theta[1].toFixed(3)}</b> sports)`;
+    document.getElementById("genWords").innerHTML = words.map((w,i) =>
+      `<span class="${topics[i]===0?'word-cooking':'word-sports'}">${VOCAB[w]}</span>`
+    ).join(", ");
+    const svg = document.getElementById("genSvg");
+    svg.innerHTML = "";
+    let x = 10;
+    words.forEach((w,i) => {
+      const color = topics[i]===0 ? "var(--coral)" : "var(--blue)";
+      svg.appendChild(el("rect",{x, y:15, width:42, height:20, rx:4, fill:color, opacity:0.75}));
+      x += 50;
+    });
+  }
+  genAlpha.addEventListener("input", renderGenerate);
+  document.getElementById("genNewDoc").addEventListener("click", () => { genSeed++; generateDocument(); });
+
+  // The tutorial's own 3 exact documents (Part 3), hardcoded verbatim -- this visualizer's RNG
+  // differs from the Python RNG that originally produced them, so an exact match needs fixed data,
+  // not a seed search.
+  const VOCAB_INDEX = {bake:0, oven:1, recipe:2, goal:3, score:4, team:5};
+  const TUTORIAL_DOCS = [
+    { theta: [0.41, 0.59], words: ["goal","bake","bake","score","oven","score","team","team"] },
+    { theta: [0.81, 0.19], words: ["oven","oven","bake","bake","bake","recipe","goal","oven"] },
+    { theta: [0.01, 0.99], words: ["score","score","team","goal","score","oven","goal","goal"] },
+  ];
+  let tutorialDocIdx = -1;
+  function renderHardcodedDoc(doc){
+    const theta = doc.theta;
+    document.getElementById("genThetaVerdict").innerHTML =
+      `θ = (<b>${theta[0].toFixed(3)}</b> cooking, <b>${theta[1].toFixed(3)}</b> sports)`;
+    document.getElementById("genWords").innerHTML = doc.words.map(w => {
+      const isCooking = IS_COOKING_WORD[VOCAB_INDEX[w]];
+      return `<span class="${isCooking?'word-cooking':'word-sports'}">${w}</span>`;
+    }).join(", ");
+    const svg = document.getElementById("genSvg");
+    svg.innerHTML = "";
+    let x = 10;
+    doc.words.forEach(w => {
+      const isCooking = IS_COOKING_WORD[VOCAB_INDEX[w]];
+      svg.appendChild(el("rect",{x, y:15, width:42, height:20, rx:4, fill:isCooking?"var(--coral)":"var(--blue)", opacity:0.75}));
+      x += 50;
+    });
+  }
+  document.getElementById("genLoadTutorial").addEventListener("click", () => {
+    tutorialDocIdx = (tutorialDocIdx+1) % TUTORIAL_DOCS.length;
+    renderHardcodedDoc(TUTORIAL_DOCS[tutorialDocIdx]);
+  });
+  renderGenerate();
+  generateDocument();
+
+  /* =========================================================
+     TAB: COLLAPSED GIBBS SAMPLING
+     ========================================================= */
+  const gibbsDocK0 = document.getElementById("gibbsDocK0"), gibbsDocK1 = document.getElementById("gibbsDocK1");
+  const gibbsWordK0 = document.getElementById("gibbsWordK0"), gibbsWordK1 = document.getElementById("gibbsWordK1");
+  const gibbsDocK0Out = document.getElementById("gibbsDocK0Out"), gibbsDocK1Out = document.getElementById("gibbsDocK1Out");
+  const gibbsWordK0Out = document.getElementById("gibbsWordK0Out"), gibbsWordK1Out = document.getElementById("gibbsWordK1Out");
+  const V = 6, BETA = 0.5, K_TOTAL = [20,20]; // total corpus-wide word counts per topic, held fixed for this demo
+  function renderGibbs(){
+    const nDk = [parseInt(gibbsDocK0.value,10), parseInt(gibbsDocK1.value,10)];
+    const nKw = [parseInt(gibbsWordK0.value,10), parseInt(gibbsWordK1.value,10)];
+    gibbsDocK0Out.textContent = nDk[0]; gibbsDocK1Out.textContent = nDk[1];
+    gibbsWordK0Out.textContent = nKw[0]; gibbsWordK1Out.textContent = nKw[1];
+    const alpha = [1,1];
+    const raw = [0,1].map(k => (nDk[k]+alpha[k]) * ((nKw[k]+BETA) / (K_TOTAL[k]+V*BETA)));
+    const sum = raw[0]+raw[1];
+    const probs = raw.map(r=>r/sum);
+
+    const svg = document.getElementById("gibbsSvg");
+    svg.innerHTML = "";
+    const barW = 340, barH = 36, x0 = 40;
+    svg.appendChild(el("rect",{x:x0,y:20,width:barW*probs[0],height:barH,fill:"var(--coral)"}));
+    svg.appendChild(el("rect",{x:x0+barW*probs[0],y:20,width:barW*probs[1],height:barH,fill:"var(--blue)"}));
+    svg.appendChild(el("text",{x:x0+barW*probs[0]/2,y:44,"text-anchor":"middle","font-family":"JetBrains Mono, monospace","font-size":13,fill:"#1b120c","font-weight":"700"}, (probs[0]*100).toFixed(1)+"%"));
+    svg.appendChild(el("text",{x:x0+barW*probs[0]+barW*probs[1]/2,y:44,"text-anchor":"middle","font-family":"JetBrains Mono, monospace","font-size":13,fill:"#0c1a23","font-weight":"700"}, (probs[1]*100).toFixed(1)+"%"));
+    svg.appendChild(el("text",{x:x0,y:80,"font-family":"JetBrains Mono, monospace","font-size":12,fill:"var(--coral)"}, "topic 0 (cooking)"));
+    svg.appendChild(el("text",{x:x0+barW-90,y:80,"font-family":"JetBrains Mono, monospace","font-size":12,fill:"var(--blue)"}, "topic 1 (sports)"));
+
+    document.getElementById("gibbsVerdict").innerHTML =
+      `P(topic 0 | rest) = <b>${probs[0].toFixed(4)}</b> &nbsp;·&nbsp; P(topic 1 | rest) = <b>${probs[1].toFixed(4)}</b>`;
+  }
+  [gibbsDocK0,gibbsDocK1,gibbsWordK0,gibbsWordK1].forEach(inp => inp.addEventListener("input", renderGibbs));
+  renderGibbs();
+
+  /* =========================================================
+     TAB: DIRICHLET-MULTINOMIAL CONJUGACY
+     ========================================================= */
+  const conjAlpha0 = document.getElementById("conjAlpha0"), conjAlpha1 = document.getElementById("conjAlpha1");
+  const conjCount0 = document.getElementById("conjCount0"), conjCount1 = document.getElementById("conjCount1");
+  const conjAlpha0Out = document.getElementById("conjAlpha0Out"), conjAlpha1Out = document.getElementById("conjAlpha1Out");
+  const conjCount0Out = document.getElementById("conjCount0Out"), conjCount1Out = document.getElementById("conjCount1Out");
+  function renderConjugacy(){
+    const a0 = parseFloat(conjAlpha0.value), a1 = parseFloat(conjAlpha1.value);
+    const c0 = parseInt(conjCount0.value,10), c1 = parseInt(conjCount1.value,10);
+    conjAlpha0Out.textContent = a0.toFixed(1); conjAlpha1Out.textContent = a1.toFixed(1);
+    conjCount0Out.textContent = c0; conjCount1Out.textContent = c1;
+    const post0 = a0+c0, post1 = a1+c1;
+    const mean0 = post0/(post0+post1);
+
+    const svg = document.getElementById("conjSvg");
+    svg.innerHTML = "";
+    const barW = 340, x0 = 40;
+    svg.appendChild(el("rect",{x:x0,y:15,width:barW*mean0,height:20,rx:4,fill:"var(--coral)"}));
+    svg.appendChild(el("rect",{x:x0+barW*mean0,y:15,width:barW*(1-mean0),height:20,rx:4,fill:"var(--blue)"}));
+
+    document.getElementById("conjVerdict").innerHTML =
+      `Prior α = (${a0.toFixed(1)}, ${a1.toFixed(1)}) + observed counts (${c0}, ${c1}) = posterior α = <b>(${post0.toFixed(1)}, ${post1.toFixed(1)})</b><br>` +
+      `Posterior mean θ = <b>(${mean0.toFixed(3)}, ${(1-mean0).toFixed(3)})</b>`;
+  }
+  [conjAlpha0,conjAlpha1,conjCount0,conjCount1].forEach(inp => inp.addEventListener("input", renderConjugacy));
+  renderConjugacy();
+})();
+</script>
+</body>
+</html>

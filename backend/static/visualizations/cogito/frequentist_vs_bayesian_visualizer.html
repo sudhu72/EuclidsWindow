@@ -68,6 +68,7 @@
         <button class="op primary" id="btnFlip1">Flip once</button>
         <button class="op" id="btnFlip10">Flip 10 more</button>
         <button class="op" id="btnJump">Jump to 1000 flips</button>
+        <button class="op" id="btnThreeHeads">Load tutorial's exact example (3 flips, 3 heads)</button>
         <button class="op" id="btnResetPost">Reset</button>
       </div>
       <svg id="postSvg" width="640" height="300" viewBox="0 0 640 300"></svg>
@@ -175,10 +176,12 @@
   for(let i=0;i<1000;i++) allFlips.push(seededRand() < TRUE_P ? 1 : 0);
 
   let flipCount = 0;
+  let demoOverride = null; // when set, a small fixed array overrides allFlips (e.g. the "3 heads in 3 flips" example)
 
   function renderPosterior(){
+    const source = demoOverride || allFlips;
     let heads = 0;
-    for(let i=0;i<flipCount;i++) heads += allFlips[i];
+    for(let i=0;i<flipCount;i++) heads += source[i];
     const tails = flipCount - heads;
     document.getElementById("mFlips").textContent = flipCount;
     document.getElementById("mHeads").textContent = heads;
@@ -219,10 +222,11 @@
     else if (flipCount<100) story.textContent = "The posterior is narrowing and pulling away from the flat prior toward what the data actually suggests.";
     else story.textContent = "With hundreds of flips, the posterior has collapsed into a narrow peak — and the frequentist MLE (amber line) and the posterior mean now agree almost exactly.";
   }
-  document.getElementById("btnFlip1").addEventListener("click", () => { if(flipCount<1000){ flipCount++; renderPosterior(); } });
-  document.getElementById("btnFlip10").addEventListener("click", () => { flipCount = Math.min(1000, flipCount+10); renderPosterior(); });
-  document.getElementById("btnJump").addEventListener("click", () => { flipCount = 1000; renderPosterior(); });
-  document.getElementById("btnResetPost").addEventListener("click", () => { flipCount = 0; renderPosterior(); });
+  document.getElementById("btnFlip1").addEventListener("click", () => { demoOverride=null; if(flipCount<1000){ flipCount++; renderPosterior(); } });
+  document.getElementById("btnFlip10").addEventListener("click", () => { demoOverride=null; flipCount = Math.min(1000, flipCount+10); renderPosterior(); });
+  document.getElementById("btnJump").addEventListener("click", () => { demoOverride=null; flipCount = 1000; renderPosterior(); });
+  document.getElementById("btnThreeHeads").addEventListener("click", () => { demoOverride=[1,1,1]; flipCount = 3; renderPosterior(); });
+  document.getElementById("btnResetPost").addEventListener("click", () => { demoOverride=null; flipCount = 0; renderPosterior(); });
   renderPosterior();
 
   /* ============================================================

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>How to Measure Everything, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:8px 15px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:120px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>How to Measure Everything, live</h1>
+  <p class="sub">Five tabs, matching the tutorial's five most novel verified demonstrations.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="minkowski">1 · Minkowski Distance Family</button>
+    <button class="tabbtn" data-tab="averages">2 · Averages as Optimizers</button>
+    <button class="tabbtn" data-tab="mad">3 · MAD vs. Std Dev</button>
+    <button class="tabbtn" data-tab="mahalanobis">4 · Mahalanobis vs. Euclidean</button>
+    <button class="tabbtn" data-tab="divergence">5 · KL vs. Jensen-Shannon</button>
+  </div>
+
+  <!-- TAB 1: MINKOWSKI -->
+  <div class="tabpanel active" id="tab-minkowski">
+    <div class="panel">
+      <h2>One Formula, Every Famous Distance</h2>
+      <p class="sub">Points A=(1,2) and B=(4,6). Drag p and watch the distance — and the shape of every point "1 unit away" — morph from a diamond (Manhattan) to a circle (Euclidean) to a square (Chebyshev).</p>
+      <div class="row"><label>p</label><input type="range" id="mkP" min="1" max="60" step="0.5" value="1"><span class="readout" id="mkPOut">1</span></div>
+      <svg id="mkSvg" width="440" height="280" viewBox="0 0 440 280"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">d_p(A,B)</div><div class="num" id="mkDist">7.00</div></div>
+        <div class="metric blue"><div class="lbl">named distance</div><div class="num" id="mkName">Manhattan</div></div>
+      </div>
+      <div class="story-line" id="mkStory"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: AVERAGES AS OPTIMIZERS -->
+  <div class="tabpanel" id="tab-averages">
+    <div class="panel">
+      <h2>Every Average Minimizes a Different Penalty</h2>
+      <p class="sub">Data: [2, 4, 4, 4, 5, 7, 9]. Drag your guess c: the top picture shows squared distance as literal square area, one per point; the bottom two show the total penalty as a curve, with c's position marked live on each.</p>
+      <div class="row"><label>your guess, c</label><input type="range" id="avgC" min="0" max="10" step="0.1" value="5"><span class="readout" id="avgCOut">5.0</span></div>
+      <svg id="avgSvg" width="640" height="460" viewBox="0 0 640 460"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">Σ(x−c)² &nbsp;(minimized by the mean)</div><div class="num" id="avgSq">-</div></div>
+        <div class="metric blue"><div class="lbl">Σ|x−c| &nbsp;(minimized by the median)</div><div class="num" id="avgAbs">-</div></div>
+        <div class="metric green"><div class="lbl">count mismatches &nbsp;(minimized by the mode)</div><div class="num" id="avgMode">-</div></div>
+      </div>
+      <div class="story-line" id="avgStory"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: MAD VS STD -->
+  <div class="tabpanel" id="tab-mad">
+    <div class="panel">
+      <h2>An Outlier's Effect on Two Different "Spread" Measures</h2>
+      <p class="sub">8 mildly-varying points. Toggle one point into a wild outlier and watch what happens to standard deviation vs. MAD.</p>
+      <div class="row">
+        <button class="op active" id="madClean">Clean data</button>
+        <button class="op" id="madOutlier">Replace last point with 200</button>
+      </div>
+      <svg id="madSvg" width="440" height="140" viewBox="0 0 440 140"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">standard deviation</div><div class="num" id="madStd">-</div></div>
+        <div class="metric green"><div class="lbl">MAD</div><div class="num" id="madMad">-</div></div>
+      </div>
+      <div class="story-line" id="madStory"></div>
+    </div>
+  </div>
+
+  <!-- TAB 4: MAHALANOBIS VS EUCLIDEAN -->
+  <div class="tabpanel" id="tab-mahalanobis">
+    <div class="panel">
+      <h2>Same Ruler Distance, Very Different Verdicts</h2>
+      <p class="sub">300 points with x and y strongly correlated. Point A follows the natural trend; Point B violates it — both sit at the exact same Euclidean distance from the center.</p>
+      <svg id="mhSvg" width="440" height="280" viewBox="0 0 440 280"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">A: Euclidean / Mahalanobis</div><div class="num" id="mhA">-</div></div>
+        <div class="metric coral"><div class="lbl">B: Euclidean / Mahalanobis</div><div class="num" id="mhB">-</div></div>
+      </div>
+      <div class="story-line" id="mhStory"></div>
+    </div>
+  </div>
+
+  <!-- TAB 5: KL VS JS DIVERGENCE -->
+  <div class="tabpanel" id="tab-divergence">
+    <div class="panel">
+      <h2>Comparing Two Distributions — Symmetrically or Not</h2>
+      <p class="sub">Two-outcome distributions p and q. Drag both and watch KL divergence (asymmetric) vs. Jensen-Shannon divergence (symmetric) disagree about that.</p>
+      <div class="row"><label>p = (p₁, 1−p₁)</label><input type="range" id="divP" min="1" max="99" step="1" value="90"><span class="readout" id="divPOut">0.90</span></div>
+      <div class="row"><label>q = (q₁, 1−q₁)</label><input type="range" id="divQ" min="1" max="99" step="1" value="60"><span class="readout" id="divQOut">0.60</span></div>
+      <svg id="divSvg" width="440" height="140" viewBox="0 0 440 140"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">KL(p‖q)</div><div class="num" id="divKLpq">-</div></div>
+        <div class="metric coral"><div class="lbl">KL(q‖p)</div><div class="num" id="divKLqp">-</div></div>
+        <div class="metric green"><div class="lbl">JS(p,q)</div><div class="num" id="divJSpq">-</div></div>
+        <div class="metric green"><div class="lbl">JS(q,p)</div><div class="num" id="divJSqp">-</div></div>
+      </div>
+      <div class="story-line" id="divStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../how_to_measure_everything_feynman.md">How to Measure Everything</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function makeLCG(seed){ let s = seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function boxMuller(rand){ const u1=Math.max(rand(),1e-12), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+  function mean(a){ return a.reduce((x,y)=>x+y,0)/a.length; }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     TAB 1 — MINKOWSKI DISTANCE FAMILY
+     ============================================================ */
+  const A = [1,2], B = [4,6];
+  function minkowski(a,b,p){
+    if (p >= 50) return Math.max(...a.map((x,i)=>Math.abs(x-b[i])));
+    return a.reduce((s,x,i)=>s+Math.abs(x-b[i])**p, 0)**(1/p);
+  }
+  function renderMinkowski(){
+    const p = parseFloat(document.getElementById("mkP").value);
+    document.getElementById("mkPOut").textContent = p;
+    const svg = document.getElementById("mkSvg");
+    svg.innerHTML = "";
+    const cx=140, cy=140, scale=70;
+    // draw axes
+    svg.appendChild(el("line",{x1:20,y1:cy,x2:260,y2:cy,stroke:"var(--border)"}));
+    svg.appendChild(el("line",{x1:cx,y1:20,x2:cx,y2:260,stroke:"var(--border)"}));
+    // draw unit "ball" for this p: r(theta) such that |r cos|^p + |r sin|^p = 1
+    let pts = "";
+    for (let deg=0; deg<=360; deg+=3){
+      const th = deg*Math.PI/180;
+      const c = Math.abs(Math.cos(th)), s = Math.abs(Math.sin(th));
+      const denom = p >= 50 ? Math.max(c,s) : (c**p+s**p)**(1/p);
+      const r = denom>1e-9 ? 1/denom : 0;
+      pts += `${cx+r*scale*Math.cos(th)},${cy-r*scale*Math.sin(th)} `;
+    }
+    svg.appendChild(el("polygon",{points:pts, fill:"var(--amber)", opacity:0.18, stroke:"var(--amber)", "stroke-width":2}));
+    // draw points A and B on a separate, offset mini-plot to the right, scaled to fit
+    const ox = 320, oy = 60, s2 = 22;
+    svg.appendChild(el("line",{x1:ox-10,y1:oy+100,x2:ox+90,y2:oy+100,stroke:"var(--border)"}));
+    svg.appendChild(el("line",{x1:ox-10,y1:oy,x2:ox-10,y2:oy+150,stroke:"var(--border)"}));
+    const ax = ox+A[0]*s2, ay = oy+150-A[1]*s2;
+    const bx = ox+B[0]*s2, by = oy+150-B[1]*s2;
+    svg.appendChild(el("line",{x1:ax,y1:ay,x2:bx,y2:ay,stroke:"var(--blue)","stroke-width":2,"stroke-dasharray":"4,3"}));
+    svg.appendChild(el("line",{x1:bx,y1:ay,x2:bx,y2:by,stroke:"var(--blue)","stroke-width":2,"stroke-dasharray":"4,3"}));
+    svg.appendChild(el("line",{x1:ax,y1:ay,x2:bx,y2:by,stroke:"var(--coral)","stroke-width":2.5}));
+    svg.appendChild(el("circle",{cx:ax,cy:ay,r:5,fill:"var(--green)"}));
+    svg.appendChild(el("circle",{cx:bx,cy:by,r:5,fill:"var(--green)"}));
+    const dist = minkowski(A,B,p);
+    document.getElementById("mkDist").textContent = dist.toFixed(2);
+    let name = p===1 ? "Manhattan" : p===2 ? "Euclidean" : p>=50 ? "Chebyshev" : "(no common name)";
+    document.getElementById("mkName").textContent = name;
+    document.getElementById("mkStory").textContent = `The gold shape is every point exactly "1 unit" from the origin, under this p. At p=1 it's a diamond (Manhattan); p=2 a circle (Euclidean); by p≈50 it's already a square (Chebyshev) — the max coordinate difference, |4-1|=3 vs |6-2|=4, so 4.00.`;
+  }
+  document.getElementById("mkP").addEventListener("input", renderMinkowski);
+  renderMinkowski();
+
+  /* ============================================================
+     TAB 2 — AVERAGES AS OPTIMIZERS
+     ============================================================ */
+  const AVG_DATA = [2,4,4,4,5,7,9];
+  function sumSq(c){ return AVG_DATA.reduce((s,x)=>s+(x-c)**2,0); }
+  function sumAbs(c){ return AVG_DATA.reduce((s,x)=>s+Math.abs(x-c),0); }
+  function countMismatch(c){ return AVG_DATA.reduce((s,x)=>s+(Math.abs(x-c)<0.05?0:1),0); }
+
+  function renderAverages(){
+    const c = parseFloat(document.getElementById("avgC").value);
+    document.getElementById("avgCOut").textContent = c.toFixed(1);
+    document.getElementById("avgSq").textContent = sumSq(c).toFixed(2);
+    document.getElementById("avgAbs").textContent = sumAbs(c).toFixed(2);
+    document.getElementById("avgMode").textContent = countMismatch(c);
+    const svg = document.getElementById("avgSvg");
+    svg.innerHTML = "";
+
+    // ---------- Picture 1: the number line, and a literal square per point ----------
+    // Squared distance, made literal: for each point, draw a real square whose side
+    // is the gap |x-c| -- its area IS (x-c)^2, the exact quantity being summed.
+    const W = 640, pad = 40, axisScale = (W - 2*pad) / 10;
+    const baselineY = 130;
+    const sqScale = 9; // a smaller, separate pixel-per-unit scale just for square height,
+                        // so a gap of up to ~9 units draws a square that still fits on screen
+
+    svg.appendChild(el("text",{x:pad,y:16,"font-size":12,fill:"var(--chalk-dim)"},"Picture 1 — squared distance as literal square area (one square per point)"));
+    svg.appendChild(el("line",{x1:pad,y1:baselineY,x2:W-pad,y2:baselineY,stroke:"var(--border)"}));
+    for (let t=0;t<=10;t++){
+      svg.appendChild(el("line",{x1:pad+t*axisScale,y1:baselineY-4,x2:pad+t*axisScale,y2:baselineY+4,stroke:"var(--chalk-dim)"}));
+      if (t%2===0) svg.appendChild(el("text",{x:pad+t*axisScale,y:baselineY+18,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)"},t));
+    }
+
+    // jitter identical x-values apart horizontally so overlapping squares stay visible
+    const counts = {};
+    const jittered = AVG_DATA.map(x => {
+      counts[x] = (counts[x]||0);
+      const idx = counts[x]++;
+      return {x, idx};
+    });
+    const groupSizes = {};
+    AVG_DATA.forEach(x => groupSizes[x] = (groupSizes[x]||0) + 1);
+
+    jittered.forEach(({x, idx}) => {
+      const n = groupSizes[x];
+      const jitter = (idx - (n-1)/2) * 15;
+      const side = Math.abs(x - c);
+      const sqPx = Math.max(side * sqScale, 1);
+      const cx = pad + x*axisScale + jitter;
+      const color = x < c ? "var(--blue)" : (x > c ? "var(--coral)" : "var(--chalk-dim)");
+      svg.appendChild(el("rect",{
+        x: cx - sqPx/2, y: baselineY - sqPx, width: sqPx, height: sqPx,
+        fill: color, opacity: 0.32, stroke: color, "stroke-width": 1.5
+      }));
+      if (sqPx > 16) {
+        svg.appendChild(el("text",{x:cx, y: baselineY - sqPx/2 + 4, "text-anchor":"middle", "font-size":10, fill:"var(--chalk)"}, (side*side).toFixed(1)));
+      }
+      svg.appendChild(el("circle",{cx, cy:baselineY, r:5, fill:"var(--amber)"}));
+    });
+    svg.appendChild(el("line",{x1:pad+c*axisScale,y1:24,x2:pad+c*axisScale,y2:baselineY+4,stroke:"var(--green)","stroke-width":2,"stroke-dasharray":"4,3"}));
+    svg.appendChild(el("text",{x:pad+c*axisScale, y:baselineY+34, "text-anchor":"middle","font-size":11,fill:"var(--green)"},"c="+c.toFixed(1)));
+
+    // ---------- Picture 2: the two penalty curves -- a parabola and a "V" ----------
+    // Sweep c across the same range and plot the running total: the mean sits at the
+    // bottom of the smooth parabola bowl; the median sits at the sharp corner of the "V".
+    const chartY = 190, chartH = 170, chartW = 270, gap = 30;
+    const leftX = pad, rightX = pad + chartW + gap;
+    svg.appendChild(el("text",{x:leftX,y:chartY-10,"font-size":12,fill:"var(--chalk-dim)"},"Picture 2 — Σ(x−c)²: a parabola, minimized at the mean"));
+    svg.appendChild(el("text",{x:rightX,y:chartY-10,"font-size":12,fill:"var(--chalk-dim)"},"Σ|x−c|: a “V”, minimized at the median"));
+
+    function drawPenaltyChart(originX, penaltyFn, minAtX, curveColor, dotColor){
+      const samples = [];
+      for (let cc=0; cc<=10; cc+=0.1) samples.push([cc, penaltyFn(cc)]);
+      const maxY = Math.max(...samples.map(s=>s[1]));
+      function X(cc){ return originX + (cc/10)*chartW; }
+      function Y(v){ return chartY + chartH - (v/maxY)*chartH; }
+      svg.appendChild(el("line",{x1:originX,y1:chartY+chartH,x2:originX+chartW,y2:chartY+chartH,stroke:"var(--border)"}));
+      svg.appendChild(el("line",{x1:originX,y1:chartY,x2:originX,y2:chartY+chartH,stroke:"var(--border)"}));
+      const pts = samples.map(([cc,v])=>`${X(cc)},${Y(v)}`).join(" ");
+      svg.appendChild(el("polyline",{points:pts, fill:"none", stroke:curveColor, "stroke-width":2.5}));
+      // mark the true minimum
+      svg.appendChild(el("circle",{cx:X(minAtX), cy:Y(penaltyFn(minAtX)), r:4, fill:"var(--chalk)"}));
+      svg.appendChild(el("text",{x:X(minAtX), y:chartY+chartH+16, "text-anchor":"middle", "font-size":10, fill:"var(--chalk-dim)"}, "min at c="+minAtX));
+      // mark the current slider position, live
+      svg.appendChild(el("line",{x1:X(c),y1:chartY,x2:X(c),y2:chartY+chartH, stroke:"var(--green)","stroke-width":1.5,"stroke-dasharray":"3,3"}));
+      svg.appendChild(el("circle",{cx:X(c), cy:Y(penaltyFn(c)), r:6, fill:dotColor, stroke:"var(--chalk)","stroke-width":1.5}));
+    }
+    drawPenaltyChart(leftX, sumSq, 5, "var(--coral)", "var(--coral)");
+    drawPenaltyChart(rightX, sumAbs, 4, "var(--blue)", "var(--blue)");
+
+    document.getElementById("avgStory").textContent = Math.abs(c-5)<0.06
+      ? "c=5.0 exactly minimizes Σ(x−c)² — this is the mean. Notice the parabola's dot is sitting right at its lowest point."
+      : Math.abs(c-4)<0.06
+      ? "c=4.0 exactly minimizes Σ|x−c| — this is the median (and mode). Notice the “V”'s dot is sitting right at its sharp corner."
+      : "Drag c to exactly 5.0 or 4.0 and watch one curve's dot settle at its lowest point — and watch the squares above shrink toward zero for whichever points c is closest to.";
+  }
+  document.getElementById("avgC").addEventListener("input", renderAverages);
+  renderAverages();
+
+  /* ============================================================
+     TAB 3 — MAD VS STD
+     ============================================================ */
+  const MAD_CLEAN = [10,12,11,13,12,11,10,13];
+  let madUseOutlier = false;
+  function variance(a){ const m=mean(a); return a.reduce((s,x)=>s+(x-m)**2,0)/a.length; }
+  function madOf(a){
+    const sorted=[...a].sort((x,y)=>x-y);
+    const med = sorted[Math.floor(sorted.length/2)];
+    const devs = a.map(x=>Math.abs(x-med)).sort((x,y)=>x-y);
+    return devs[Math.floor(devs.length/2)];
+  }
+  function renderMad(){
+    const data = madUseOutlier ? [...MAD_CLEAN.slice(0,-1), 200] : MAD_CLEAN;
+    const std = Math.sqrt(variance(data));
+    const mad = madOf(data);
+    document.getElementById("madStd").textContent = std.toFixed(2);
+    document.getElementById("madMad").textContent = mad.toFixed(2);
+    const svg = document.getElementById("madSvg");
+    svg.innerHTML = "";
+    const W=440, pad=30;
+    const displayData = data.map(x=>Math.min(x,30)); // clip outlier visually so the other points stay legible
+    svg.appendChild(el("line",{x1:pad,y1:70,x2:W-pad,y2:70,stroke:"var(--border)"}));
+    displayData.forEach((x,i) => {
+      const isOutlier = madUseOutlier && i===data.length-1;
+      svg.appendChild(el("circle",{cx:pad+x*12,cy:70,r:7,fill: isOutlier?"var(--coral)":"var(--blue)"}));
+    });
+    document.getElementById("madStory").textContent = madUseOutlier
+      ? "One point replaced with 200 (clipped in this view so the rest stay visible): std exploded, MAD barely moved."
+      : "Clean data: std and MAD are close, as expected when nothing unusual is happening.";
+  }
+  document.getElementById("madClean").addEventListener("click", () => {
+    madUseOutlier = false;
+    document.getElementById("madClean").classList.add("active");
+    document.getElementById("madOutlier").classList.remove("active");
+    renderMad();
+  });
+  document.getElementById("madOutlier").addEventListener("click", () => {
+    madUseOutlier = true;
+    document.getElementById("madOutlier").classList.add("active");
+    document.getElementById("madClean").classList.remove("active");
+    renderMad();
+  });
+  renderMad();
+
+  /* ============================================================
+     TAB 4 — MAHALANOBIS VS EUCLIDEAN
+     ============================================================ */
+  function renderMahalanobis(){
+    const rand = makeLCG(42);
+    const n=300, pts=[];
+    for (let i=0;i<n;i++){ const x=boxMuller(rand)*3; const y=x*0.9+boxMuller(rand)*1; pts.push([x,y]); }
+    const mx = mean(pts.map(p=>p[0])), my = mean(pts.map(p=>p[1]));
+    let varX=0,varY=0,covXY=0;
+    for (const [x,y] of pts){ varX+=(x-mx)**2; varY+=(y-my)**2; covXY+=(x-mx)*(y-my); }
+    varX/=n; varY/=n; covXY/=n;
+    const det = varX*varY-covXY*covXY;
+    const invCov = [[varY/det, -covXY/det],[-covXY/det, varX/det]];
+    function euclid(p){ return Math.sqrt((p[0]-mx)**2+(p[1]-my)**2); }
+    function mahal(p){
+      const d=[p[0]-mx, p[1]-my];
+      const t0=d[0]*invCov[0][0]+d[1]*invCov[1][0], t1=d[0]*invCov[0][1]+d[1]*invCov[1][1];
+      return Math.sqrt(t0*d[0]+t1*d[1]);
+    }
+    const ptA = [mx+6, my+6*0.9], ptB = [mx+6, my-6*0.9];
+    const svg = document.getElementById("mhSvg");
+    svg.innerHTML = "";
+    const cx=220, cy=140, scale=14;
+    function X(x){ return cx+x*scale; } function Y(y){ return cy-y*scale; }
+    pts.forEach(([x,y]) => svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:2.2,fill:"var(--blue)",opacity:0.45})));
+    svg.appendChild(el("circle",{cx:X(mx),cy:Y(my),r:5,fill:"var(--chalk)"}));
+    svg.appendChild(el("circle",{cx:X(ptA[0]),cy:Y(ptA[1]),r:7,fill:"var(--green)"}));
+    svg.appendChild(el("circle",{cx:X(ptB[0]),cy:Y(ptB[1]),r:7,fill:"var(--coral)"}));
+    svg.appendChild(el("line",{x1:X(mx),y1:Y(my),x2:X(ptA[0]),y2:Y(ptA[1]),stroke:"var(--green)","stroke-width":1.5,"stroke-dasharray":"3,3"}));
+    svg.appendChild(el("line",{x1:X(mx),y1:Y(my),x2:X(ptB[0]),y2:Y(ptB[1]),stroke:"var(--coral)","stroke-width":1.5,"stroke-dasharray":"3,3"}));
+    document.getElementById("mhA").textContent = euclid(ptA).toFixed(2) + " / " + mahal(ptA).toFixed(2);
+    document.getElementById("mhB").textContent = euclid(ptB).toFixed(2) + " / " + mahal(ptB).toFixed(2);
+    document.getElementById("mhStory").textContent = "Both points sit at nearly the identical Euclidean distance from the center (white dot) — but B (coral) cuts against the data's natural correlation, so Mahalanobis distance correctly flags it as far more unusual than A (green).";
+  }
+  renderMahalanobis();
+
+  /* ============================================================
+     TAB 5 — KL VS JENSEN-SHANNON DIVERGENCE
+     ============================================================ */
+  function kl(p,q){ return p.reduce((s,pi,i)=> pi===0?s:s+pi*Math.log(pi/q[i]), 0); }
+  function jsDiv(p,q){ const m=p.map((pi,i)=>(pi+q[i])/2); return 0.5*kl(p,m)+0.5*kl(q,m); }
+  function renderDivergence(){
+    const p1 = parseInt(document.getElementById("divP").value,10)/100;
+    const q1 = parseInt(document.getElementById("divQ").value,10)/100;
+    document.getElementById("divPOut").textContent = p1.toFixed(2);
+    document.getElementById("divQOut").textContent = q1.toFixed(2);
+    const p = [p1, 1-p1], q = [q1, 1-q1];
+    document.getElementById("divKLpq").textContent = kl(p,q).toFixed(4);
+    document.getElementById("divKLqp").textContent = kl(q,p).toFixed(4);
+    document.getElementById("divJSpq").textContent = jsDiv(p,q).toFixed(4);
+    document.getElementById("divJSqp").textContent = jsDiv(q,p).toFixed(4);
+    const svg = document.getElementById("divSvg");
+    svg.innerHTML = "";
+    const barW=140;
+    [{label:"p",vals:p,x:40},{label:"q",vals:q,x:240}].forEach(group => {
+      svg.appendChild(el("rect",{x:group.x,y:100-group.vals[0]*80,width:barW/2-4,height:group.vals[0]*80,fill:"var(--blue)"}));
+      svg.appendChild(el("rect",{x:group.x+barW/2,y:100-group.vals[1]*80,width:barW/2-4,height:group.vals[1]*80,fill:"var(--coral)"}));
+    });
+    document.getElementById("divStory").textContent = kl(p,q).toFixed(4)===kl(q,p).toFixed(4)
+      ? "p and q are identical right now, so of course everything matches — try dragging one slider."
+      : "Notice KL(p‖q) ≠ KL(q‖p) (asymmetric), while JS(p,q) = JS(q,p) always (symmetric), no matter how you drag the sliders.";
+  }
+  document.getElementById("divP").addEventListener("input", renderDivergence);
+  document.getElementById("divQ").addEventListener("input", renderDivergence);
+  renderDivergence();
+})();
+</script>
+</body>
+</html>

@@ -68,6 +68,7 @@
   <div class="tabs">
     <button class="tab active" data-tab="linalg">Linear Transformations</button>
     <button class="tab" data-tab="span">Span Builder</button>
+    <button class="tab" data-tab="basis">Change of Basis</button>
     <button class="tab" data-tab="calc">Tangent Line &amp; Riemann Sum</button>
     <button class="tab" data-tab="ode">Direction Fields</button>
     <button class="tab" data-tab="osc">Oscillator</button>
@@ -114,6 +115,29 @@
         <div class="stat" id="spanStat">w = c₁u + c₂v = —</div>
       </div>
       <p class="caption"><b>Why it matters:</b> teal = u, gold = v, purple = w = c₁u+c₂v. Faint dots are the sweep's trail. Independent vectors' span is the whole plane — the machinery behind "these two vectors form a basis." Dependent vectors' span collapses to one line through the origin, exactly when <span class="formula">det(u,v) = 0</span>.</p>
+    </div>
+  </div>
+
+  <!-- ============ CHANGE OF BASIS ============ -->
+  <div class="panel" id="panel-basis">
+    <div class="card">
+      <h2>Same Point, Different Ruler</h2>
+      <p class="sub"><b>What's happening:</b> a fixed target point <span class="formula">w</span> never moves. Drag a new basis (<span class="formula">b₁</span>, <span class="formula">b₂</span>) into existence, and watch <span class="formula">w</span>'s <em>coordinates</em> — the two numbers that describe it relative to that basis — update live, along with the parallelogram construction <span class="formula">c₁b₁ + c₂b₂</span> that rebuilds it.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Rotated orthonormal</em> and confirm the readout matches the tutorial's verified 4.9497 / 0.7071 — then compare the "solve properly" coordinates against the "dot-product shortcut" row directly below: they agree exactly. Now press <em>Skewed (non-orthogonal)</em> and watch that same shortcut row diverge to the wrong answer, while the properly-solved coordinates still reconstruct <span class="formula">w</span> exactly.</p>
+      <div class="presetbar">
+        <button class="op" data-basispreset="standard">Standard basis</button>
+        <button class="op" data-basispreset="rotated">Rotated orthonormal</button>
+        <button class="op" data-basispreset="skewed">Skewed (non-orthogonal)</button>
+      </div>
+      <div class="row"><label>w = (</label><input type="number" id="cbWx" value="3" step="0.5" style="width:52px;"><span>,</span><input type="number" id="cbWy" value="4" step="0.5" style="width:52px;"><span>)</span></div>
+      <div class="row"><label>b₁ = (</label><input type="number" id="cbB1x" value="0.7071" step="0.01" style="width:60px;"><span>,</span><input type="number" id="cbB1y" value="0.7071" step="0.01" style="width:60px;"><span>)</span></div>
+      <div class="row"><label>b₂ = (</label><input type="number" id="cbB2x" value="-0.7071" step="0.01" style="width:60px;"><span>,</span><input type="number" id="cbB2y" value="0.7071" step="0.01" style="width:60px;"><span>)</span></div>
+      <svg id="basisSvg" viewBox="-160 -160 320 320"></svg>
+      <div class="statrow">
+        <div class="stat" id="basisStatSolve">solved coordinates: —</div>
+        <div class="stat" id="basisStatDot">dot-product shortcut: —</div>
+      </div>
+      <p class="caption"><b>Why it matters:</b> teal = b₁, gold = b₂, purple = w (fixed). The properly-solved coordinates always reconstruct w exactly, no matter what basis you drag into existence — the dot-product shortcut only agrees with them when b₁ and b₂ are orthonormal (mutually perpendicular, each length 1), and silently gives the wrong answer the moment they aren't.</p>
     </div>
   </div>
 
@@ -479,6 +503,70 @@
   document.getElementById("btnClearSweep").addEventListener("click", () => { sweepDots=[]; renderSpan(); });
   [spUx,spUy,spVx,spVy,spC1,spC2].forEach(inp => inp.addEventListener("input", renderSpan));
   renderSpan();
+
+  // ================= CHANGE OF BASIS =================
+  const cbWx=document.getElementById("cbWx"), cbWy=document.getElementById("cbWy"),
+        cbB1x=document.getElementById("cbB1x"), cbB1y=document.getElementById("cbB1y"),
+        cbB2x=document.getElementById("cbB2x"), cbB2y=document.getElementById("cbB2y");
+  const basisSvg = document.getElementById("basisSvg");
+
+  function renderBasis(){
+    const wx=parseFloat(cbWx.value)||0, wy=parseFloat(cbWy.value)||0;
+    const b1x=parseFloat(cbB1x.value)||0, b1y=parseFloat(cbB1y.value)||0;
+    const b2x=parseFloat(cbB2x.value)||0, b2y=parseFloat(cbB2y.value)||0;
+    const det = b1x*b2y - b1y*b2x;
+    const validBasis = Math.abs(det) > 1e-6;
+
+    basisSvg.innerHTML = "";
+    basisSvg.appendChild(el("line",{x1:-160,y1:0,x2:160,y2:0,stroke:"var(--line)",["stroke-width"]:1}));
+    basisSvg.appendChild(el("line",{x1:0,y1:-160,x2:0,y2:160,stroke:"var(--line)",["stroke-width"]:1}));
+    function arrow(x2,y2,color,w){
+      basisSvg.appendChild(el("line",{x1:0,y1:0,x2,y2,stroke:color,["stroke-width"]:w||3}));
+      basisSvg.appendChild(el("circle",{cx:x2,cy:y2,r:4,fill:color}));
+    }
+    arrow(b1x*SCALE, -b1y*SCALE, "var(--c1)");
+    arrow(b2x*SCALE, -b2y*SCALE, "var(--c2)");
+    arrow(wx*SCALE, -wy*SCALE, "var(--accent)", 3.4);
+
+    if (!validBasis) {
+      document.getElementById("basisStatSolve").innerHTML = `<b style="color:var(--c2)">not a valid basis — b₁ and b₂ are parallel (det=0), nothing spans the plane</b>`;
+      document.getElementById("basisStatDot").innerHTML = "—";
+      return;
+    }
+    // solve c1*b1 + c2*b2 = w via Cramer's rule
+    const c1 = (wx*b2y - wy*b2x)/det;
+    const c2 = (b1x*wy - b1y*wx)/det;
+    // parallelogram construction: draw the c1*b1 leg, then c2*b2 from there
+    const p1x=c1*b1x*SCALE, p1y=-c1*b1y*SCALE;
+    basisSvg.appendChild(el("line",{x1:0,y1:0,x2:p1x,y2:p1y,stroke:"var(--c1)",["stroke-width"]:1.5,["stroke-dasharray"]:"4,3"}));
+    basisSvg.appendChild(el("line",{x1:p1x,y1:p1y,x2:wx*SCALE,y2:-wy*SCALE,stroke:"var(--c2)",["stroke-width"]:1.5,["stroke-dasharray"]:"4,3"}));
+
+    const dotC1 = wx*b1x+wy*b1y, dotC2 = wx*b2x+wy*b2y;
+    const isOrthonormal = Math.abs(b1x*b2x+b1y*b2y) < 1e-4 && Math.abs(b1x*b1x+b1y*b1y-1) < 1e-4 && Math.abs(b2x*b2x+b2y*b2y-1) < 1e-4;
+
+    document.getElementById("basisStatSolve").innerHTML =
+      `solved: c₁=${c1.toFixed(4)}, c₂=${c2.toFixed(4)} &nbsp;·&nbsp; reconstruct: (${(c1*b1x+c2*b2x).toFixed(2)}, ${(c1*b1y+c2*b2y).toFixed(2)}) <b style="color:var(--c1)">always matches w</b>`;
+    document.getElementById("basisStatDot").innerHTML =
+      `dot shortcut: c₁=w·b₁=${dotC1.toFixed(4)}, c₂=w·b₂=${dotC2.toFixed(4)} &nbsp;·&nbsp; ` +
+      (isOrthonormal
+        ? `<b style="color:var(--c1)">basis is orthonormal — matches the solved coordinates exactly</b>`
+        : `<b style="color:var(--bad)">basis is NOT orthonormal — this shortcut is wrong, ignore it</b>`);
+  }
+  const BASIS_PRESETS = {
+    standard: {b1:[1,0], b2:[0,1]},
+    rotated: {b1:[0.7071,0.7071], b2:[-0.7071,0.7071]},
+    skewed: {b1:[1,0], b2:[1,1]},
+  };
+  document.querySelectorAll("[data-basispreset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const p = BASIS_PRESETS[btn.dataset.basispreset];
+      cbB1x.value = p.b1[0]; cbB1y.value = p.b1[1];
+      cbB2x.value = p.b2[0]; cbB2y.value = p.b2[1];
+      renderBasis();
+    });
+  });
+  [cbWx,cbWy,cbB1x,cbB1y,cbB2x,cbB2y].forEach(inp => inp.addEventListener("input", renderBasis));
+  renderBasis();
 
   // ================= OSCILLATOR =================
   const oscSvg = document.getElementById("oscSvg");

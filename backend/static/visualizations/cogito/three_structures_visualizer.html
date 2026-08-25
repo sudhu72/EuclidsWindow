@@ -154,6 +154,11 @@
       </div>
       <div class="nrresult" id="nrResult"></div>
       <p class="caption">Combinations = Permutations ÷ r! — dividing out exactly how many times each unordered group got counted.</p>
+
+      <h2 style="margin-top:32px;">The Poker Full-House Count, Staged</h2>
+      <p class="sub">C(52,5) is too large for the calculator above's n≤12 cap — this walks the actual multi-stage construction from the tutorial's Polya example instead.</p>
+      <button class="op" id="btnPokerDemo">Walk the full-house count</button>
+      <div class="nrresult" id="pokerResult"></div>
     </div>
   </div>
 
@@ -307,6 +312,24 @@
   nInput.addEventListener("input", renderNR);
   rInput.addEventListener("input", renderNR);
   renderNR();
+
+  function safeNCr(n,r){
+    // avoids factorial(52)'s precision loss by multiplying/dividing incrementally
+    let result = 1;
+    for (let i=0;i<r;i++) result = result * (n-i) / (i+1);
+    return Math.round(result);
+  }
+  document.getElementById("btnPokerDemo").addEventListener("click", () => {
+    const totalHands = safeNCr(52,5);
+    const tripleSuits = safeNCr(4,3);
+    const pairSuits = safeNCr(4,2);
+    const fullHouses = 13 * tripleSuits * 12 * pairSuits;
+    const prob = fullHouses/totalHands;
+    document.getElementById("pokerResult").innerHTML =
+      `Total 5-card hands: C(52,5) = <b>${totalHands.toLocaleString()}</b><br>`+
+      `Full houses: 13 (triple's rank) × C(4,3)=${tripleSuits} (triple's suits) × 12 (pair's rank) × C(4,2)=${pairSuits} (pair's suits) = <b>${fullHouses.toLocaleString()}</b><br>`+
+      `Probability: ${fullHouses.toLocaleString()} / ${totalHands.toLocaleString()} ≈ <b>${prob.toFixed(5)}</b> — roughly 1 in ${Math.round(1/prob)}`;
+  });
 
   // ================= GROUP THEORY =================
   let state = [0,1,2,3]; // labels at corners: top-left, top-right, bottom-right, bottom-left

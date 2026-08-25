@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notation Rosetta Stone, Drawn Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95; --bad:#B03A3A;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:24px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 10px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:13.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:8px 16px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 14px; }
+  .symrow{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  button.sym{ font-family:"IBM Plex Mono", monospace; font-size:15px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 13px; cursor:pointer; }
+  button.sym:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.sym.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .stage{ display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start; }
+  @media (max-width:760px){ .stage{ grid-template-columns:1fr; } }
+  svg.diagram{ background:#FCFCFB; border:1px solid var(--line); border-radius:10px; display:block; width:100%; height:auto; }
+  .infobox{ font-size:13.5px; }
+  .infobox .sentence{ font-style:italic; color:var(--ink); margin-bottom:10px; }
+  .infobox .picture{ color:var(--ink-soft); margin-bottom:12px; }
+  .controls{ margin-top:6px; }
+  .field{ margin-bottom:12px; }
+  .field label{ display:flex; justify-content:space-between; font-size:12px; color:var(--ink-soft); margin-bottom:5px; }
+  .field label .val{ font-family:"IBM Plex Mono", monospace; color:var(--accent); font-weight:600; }
+  input[type=range]{ width:100%; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:8px; padding:9px 11px; margin-top:6px; }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:16px; margin-top:10px; }
+  footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to "The Notation Rosetta Stone"</div>
+    <h1>Symbols, Drawn Live</h1>
+    <p>Pick a branch, pick a symbol, and watch the geometric picture behind it get drawn — including a draggable gradient arrow, an adjustable dot-product projection, and a live area-scaling determinant demo.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="arith">Arithmetic &amp; Algebra</button>
+    <button class="tab" data-tab="sets">Sets &amp; Logic</button>
+    <button class="tab" data-tab="calc">Calculus</button>
+    <button class="tab" data-tab="linalg">Linear Algebra</button>
+    <button class="tab" data-tab="prob">Probability</button>
+  </div>
+
+  <div class="panel active" id="panel-arith">
+    <div class="card">
+      <h2 id="arith-title">Pick a symbol</h2>
+      <p class="sub" id="arith-sub"></p>
+      <div class="symrow" id="arith-syms"></div>
+      <div class="stage">
+        <svg class="diagram" id="arith-svg" viewBox="0 0 480 280"></svg>
+        <div class="infobox">
+          <div class="sentence" id="arith-sentence"></div>
+          <div class="picture" id="arith-picture"></div>
+          <div class="controls" id="arith-controls"></div>
+          <div class="readout" id="arith-readout"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-sets">
+    <div class="card">
+      <h2 id="sets-title">Pick a symbol</h2>
+      <p class="sub" id="sets-sub"></p>
+      <div class="symrow" id="sets-syms"></div>
+      <div class="stage">
+        <svg class="diagram" id="sets-svg" viewBox="0 0 480 260"></svg>
+        <div class="infobox">
+          <div class="sentence" id="sets-sentence"></div>
+          <div class="picture" id="sets-picture"></div>
+          <div class="controls" id="sets-controls"></div>
+          <div class="readout" id="sets-readout"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-calc">
+    <div class="card">
+      <h2 id="calc-title">Pick a symbol</h2>
+      <p class="sub" id="calc-sub"></p>
+      <div class="symrow" id="calc-syms"></div>
+      <div class="stage">
+        <svg class="diagram" id="calc-svg" viewBox="0 0 480 300"></svg>
+        <div class="infobox">
+          <div class="sentence" id="calc-sentence"></div>
+          <div class="picture" id="calc-picture"></div>
+          <div class="controls" id="calc-controls"></div>
+          <div class="readout" id="calc-readout"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-linalg">
+    <div class="card">
+      <h2 id="linalg-title">Pick a symbol</h2>
+      <p class="sub" id="linalg-sub"></p>
+      <div class="symrow" id="linalg-syms"></div>
+      <div class="stage">
+        <svg class="diagram" id="linalg-svg" viewBox="0 0 480 300"></svg>
+        <div class="infobox">
+          <div class="sentence" id="linalg-sentence"></div>
+          <div class="picture" id="linalg-picture"></div>
+          <div class="controls" id="linalg-controls"></div>
+          <div class="readout" id="linalg-readout"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-prob">
+    <div class="card">
+      <h2 id="prob-title">Pick a symbol</h2>
+      <p class="sub" id="prob-sub"></p>
+      <div class="symrow" id="prob-syms"></div>
+      <div class="stage">
+        <svg class="diagram" id="prob-svg" viewBox="0 0 480 260"></svg>
+        <div class="infobox">
+          <div class="sentence" id="prob-sentence"></div>
+          <div class="picture" id="prob-picture"></div>
+          <div class="controls" id="prob-controls"></div>
+          <div class="readout" id="prob-readout"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Where this connects:</b> every picture here matches an entry in <a href="../notation-rosetta-stone.md">the full tutorial</a>, which also links each symbol to wherever this repo builds its underlying concept from scratch. Notice how many entries under "Sets &amp; Logic" reuse the exact same Venn-diagram picture — that repetition is the point, not an accident.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function makeLCG(seed){ let s=seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+
+  function setupTab(tabId, symbols){
+    const symRow = document.getElementById(tabId+"-syms");
+    const svg = document.getElementById(tabId+"-svg");
+    const sentenceEl = document.getElementById(tabId+"-sentence");
+    const pictureEl = document.getElementById(tabId+"-picture");
+    const controlsEl = document.getElementById(tabId+"-controls");
+    const readoutEl = document.getElementById(tabId+"-readout");
+    const titleEl = document.getElementById(tabId+"-title");
+    const subEl = document.getElementById(tabId+"-sub");
+    let current = symbols[0];
+    let state = {};
+
+    function selectSymbol(sym){
+      current = sym;
+      state = Object.assign({}, sym.defaults || {});
+      document.querySelectorAll("#"+tabId+"-syms button").forEach(b => b.classList.toggle("active", b.dataset.id === sym.id));
+      titleEl.textContent = sym.label + " — " + sym.name;
+      sentenceEl.textContent = "“" + sym.sentence + "”";
+      pictureEl.textContent = sym.picture;
+      buildControls(sym);
+      redraw();
+    }
+    function buildControls(sym){
+      controlsEl.innerHTML = "";
+      if (sym.presets && sym.presets.length){
+        const presetRow = document.createElement("div");
+        presetRow.className = "field";
+        sym.presets.forEach(p => {
+          const btn = document.createElement("button");
+          btn.className = "sym"; btn.textContent = p.label;
+          btn.style.marginRight = "6px"; btn.style.fontSize = "13px"; btn.style.padding = "5px 10px";
+          btn.addEventListener("click", () => {
+            Object.assign(state, p.state);
+            buildControls(sym);
+            redraw();
+          });
+          presetRow.appendChild(btn);
+        });
+        controlsEl.appendChild(presetRow);
+      }
+      (sym.controls || []).forEach(c => {
+        const field = document.createElement("div");
+        field.className = "field";
+        field.innerHTML = `<label>${c.label} <span class="val" id="${tabId}-ctl-${c.id}-val">${state[c.id]}</span></label><input type="range" id="${tabId}-ctl-${c.id}" min="${c.min}" max="${c.max}" step="${c.step}" value="${state[c.id]}">`;
+        controlsEl.appendChild(field);
+        document.getElementById(`${tabId}-ctl-${c.id}`).addEventListener("input", (e) => {
+          state[c.id] = parseFloat(e.target.value);
+          document.getElementById(`${tabId}-ctl-${c.id}-val`).textContent = state[c.id];
+          redraw();
+        });
+      });
+    }
+    function redraw(){
+      svg.innerHTML = "";
+      const readout = current.render(svg, state, el);
+      readoutEl.textContent = readout || "";
+    }
+    symbols.forEach(sym => {
+      const btn = document.createElement("button");
+      btn.className = "sym"; btn.dataset.id = sym.id; btn.textContent = sym.label;
+      btn.addEventListener("click", () => selectSymbol(sym));
+      symRow.appendChild(btn);
+    });
+    subEl.textContent = "Click a symbol to see its picture.";
+    selectSymbol(symbols[0]);
+  }
+
+  document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("panel-"+tab.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     SHARED VENN-DIAGRAM RENDERER — 13 symbols, one picture
+     ============================================================ */
+  function vennRender(op, svg, elFn){
+    const W=480,H=260;
+    const cx1=180, cx2=280, cy=130, r=90;
+    function circle(cx, fill, opacity){ return elFn("circle",{cx,cy,r,fill,opacity,stroke:"var(--ink)","stroke-width":1.5}); }
+    function label(x,y,t){ return elFn("text",{x,y,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":15,fill:"var(--ink)"},t); }
+    if (op==="in" || op==="notin"){
+      svg.appendChild(circle(cx1,"var(--accent-soft)",1));
+      svg.appendChild(label(cx1,60,"A"));
+      const dot = op==="in" ? {x:cx1, y:cy} : {x:cx1+140, y:cy};
+      svg.appendChild(elFn("circle",{cx:dot.x,cy:dot.y,r:6,fill:"var(--bad)"}));
+      svg.appendChild(label(dot.x,dot.y+22,"x"));
+      return op==="in" ? "x ∈ A: the dot sits inside the circle." : "x ∉ A: the dot sits outside the circle.";
+    }
+    if (op==="empty"){
+      svg.appendChild(circle(cx1,"#fff",1));
+      svg.appendChild(label(cx1,60,"∅"));
+      return "A circle drawn with nothing inside it.";
+    }
+    if (op==="subset"){
+      svg.appendChild(elFn("circle",{cx:230,cy,r:95,fill:"var(--accent-soft)","stroke":"var(--ink)","stroke-width":1.5}));
+      svg.appendChild(elFn("circle",{cx:230,cy,r:45,fill:"#fff","stroke":"var(--accent)","stroke-width":2}));
+      svg.appendChild(label(230,cy-20,"A (or P)"));
+      svg.appendChild(label(230,60,"B (or Q)"));
+      return "A's circle sits entirely inside B's — same picture for A⊆B, P→Q, and Γ⊨φ.";
+    }
+    if (op==="union" || op==="or"){
+      svg.appendChild(circle(cx1,"var(--c1)",0.45));
+      svg.appendChild(circle(cx2,"var(--c1)",0.45));
+      svg.appendChild(label(cx1-40,60,"A / P"));
+      svg.appendChild(label(cx2+40,60,"B / Q"));
+      return "Everything shaded across both circles — A∪B, or P∨Q.";
+    }
+    if (op==="intersect" || op==="and"){
+      svg.appendChild(circle(cx1,"none",1));
+      svg.appendChild(circle(cx2,"none",1));
+      const clipId = "clip"+Math.random().toString(36).slice(2);
+      const clip = elFn("clipPath",{id:clipId});
+      clip.appendChild(elFn("circle",{cx:cx1,cy,r}));
+      svg.appendChild(clip);
+      const lens = elFn("circle",{cx:cx2,cy,r,fill:"var(--c2)",opacity:0.55,"clip-path":"url(#"+clipId+")"});
+      svg.appendChild(lens);
+      svg.appendChild(label(cx1-40,60,"A / P"));
+      svg.appendChild(label(cx2+40,60,"B / Q"));
+      return "Only the lens-shaped overlap — A∩B, or P∧Q.";
+    }
+    if (op==="not"){
+      svg.appendChild(elFn("rect",{x:0,y:0,width:W,height:H,fill:"var(--c2)",opacity:0.3}));
+      svg.appendChild(circle(230,"#fff",1));
+      svg.appendChild(label(230,60,"P"));
+      return "¬P: everything shaded is outside P's circle.";
+    }
+    if (op==="difference"){
+      svg.appendChild(circle(cx1,"var(--c1)",0.6));
+      svg.appendChild(circle(cx2,"#fff",1));
+      svg.appendChild(label(cx1-40,60,"A"));
+      svg.appendChild(label(cx2+40,60,"B"));
+      return "A\\B: A's circle, with the overlap (shared with B) removed.";
+    }
+    if (op==="prob"){
+      svg.appendChild(elFn("rect",{x:40,y:20,width:400,height:220,fill:"#fff",stroke:"var(--ink)","stroke-width":1.5}));
+      svg.appendChild(label(240,45,"whole sample space"));
+      svg.appendChild(circle(240,"var(--c1)",0.5));
+      svg.appendChild(label(240,cy,"A"));
+      return "P(A): the shaded area of A, relative to the whole rectangle's area.";
+    }
+    if (op==="cond"){
+      svg.appendChild(elFn("rect",{x:20,y:20,width:440,height:220,fill:"#F5F4F0"}));
+      svg.appendChild(circle(230,"var(--c1)",0.35));
+      svg.appendChild(circle(280,"var(--c2)",0.5));
+      svg.appendChild(label(230-40,60,"A"));
+      svg.appendChild(label(280+40,60,"B — zoom in here"));
+      svg.appendChild(elFn("rect",{x:190,y:40,width:180,height:180,fill:"none",stroke:"var(--bad)","stroke-width":2,"stroke-dasharray":"6,4"}));
+      return "P(A|B): pretend only B's circle exists, then ask what fraction of it is also in A.";
+    }
+    return "";
+  }
+
+  /* ============================================================
+     ARITHMETIC & ALGEBRA
+     ============================================================ */
+  setupTab("arith", [
+    { id:"mod", label:"a mod n", name:"remainder / clock", sentence:"the remainder when a is divided by n",
+      picture:"A clock face with n hours. Walk a steps clockwise from 0, wrapping around every time you pass n.",
+      controls:[{id:"a",label:"a",min:0,max:23,step:1},{id:"n",label:"n (hours on the clock)",min:2,max:12,step:1}],
+      defaults:{a:14,n:7},
+      render(svg, s, elFn){
+        const cx=240,cy=140,r=100;
+        svg.appendChild(elFn("circle",{cx,cy,r,fill:"#fff",stroke:"var(--ink)","stroke-width":1.5}));
+        for (let i=0;i<s.n;i++){
+          const ang = (i/s.n)*2*Math.PI - Math.PI/2;
+          const x = cx+r*Math.cos(ang), y = cy+r*Math.sin(ang);
+          svg.appendChild(elFn("text",{x,y:y+5,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":13,fill:"var(--ink-soft)"}, i));
+        }
+        const result = s.a % s.n;
+        const ang = (result/s.n)*2*Math.PI - Math.PI/2;
+        const x = cx+r*0.75*Math.cos(ang), y = cy+r*0.75*Math.sin(ang);
+        svg.appendChild(elFn("circle",{cx:x,cy:y,r:8,fill:"var(--bad)"}));
+        return `${s.a} mod ${s.n} = ${result} — walked ${s.a} steps clockwise, wrapping around ${Math.floor(s.a/s.n)} time(s), landing on ${result}.`;
+      }
+    },
+    { id:"fact", label:"n!", name:"factorial", sentence:"the number of ways to arrange n distinct things in a line",
+      picture:"A branching tree of choices, narrowing by one at each level.",
+      controls:[{id:"n",label:"n",min:1,max:5,step:1}], defaults:{n:4},
+      render(svg, s, elFn){
+        const n = Math.round(s.n);
+        let total = 1; for (let i=1;i<=n;i++) total *= i;
+        const levels = n;
+        const W=460, H=260;
+        function drawNode(x,y,level,branches){
+          if (level > levels) return;
+          const spread = W/(Math.pow(branches,level)+1);
+          const childCount = n-level+1;
+          for (let c=0;c<Math.min(childCount,4);c++){
+            const nx = x + (c-(Math.min(childCount,4)-1)/2)*(180/Math.pow(1.8,level));
+            const ny = y + 45;
+            svg.appendChild(elFn("line",{x1:x,y1:y,x2:nx,y2:ny,stroke:"var(--ink-soft)","stroke-width":1}));
+            svg.appendChild(elFn("circle",{cx:nx,cy:ny,r:4,fill:"var(--accent)"}));
+            if (level < Math.min(levels,3)) drawNode(nx,ny,level+1,branches);
+          }
+        }
+        svg.appendChild(elFn("circle",{cx:230,cy:30,r:5,fill:"var(--ink)"}));
+        drawNode(230,30,1,n);
+        return `${n}! = ${total} — ${n} choices for slot 1, ${n-1} for slot 2 (one's used), and so on down to 1. (Tree pruned to 3 levels for legibility.)`;
+      }
+    },
+    { id:"sqrt", label:"√x", name:"square root", sentence:"the number that, squared, gives x",
+      picture:"The side length of a square whose area is x.",
+      controls:[{id:"x",label:"x (area)",min:1,max:36,step:1}], defaults:{x:16},
+      render(svg, s, elFn){
+        const side = Math.sqrt(s.x);
+        const scale = 140/6;
+        const px = side*scale;
+        svg.appendChild(elFn("rect",{x:170,y:60,width:px,height:px,fill:"var(--accent-soft)",stroke:"var(--accent)","stroke-width":2}));
+        svg.appendChild(elFn("text",{x:170+px/2,y:50,"text-anchor":"middle","font-size":13,fill:"var(--ink-soft)"},"side = √"+s.x+" = "+side.toFixed(2)));
+        svg.appendChild(elFn("text",{x:170+px/2,y:60+px/2+5,"text-anchor":"middle","font-size":13,fill:"var(--ink)"},"area = "+s.x));
+        return `√${s.x} = ${side.toFixed(3)} — the side of a square with area ${s.x}.`;
+      }
+    },
+    { id:"floor", label:"⌊x⌋ / ⌈x⌉", name:"floor / ceiling", sentence:"round x down / up to the nearest whole number",
+      picture:"A staircase function with flat steps and vertical jumps at every integer.",
+      controls:[{id:"x10",label:"x (×10)",min:0,max:100,step:1}], defaults:{x10:37},
+      render(svg, s, elFn){
+        const x = s.x10/10;
+        const W=440,H=240,pad=30;
+        function X(v){ return pad + v/10*(W-2*pad); }
+        function Y(v){ return H-pad - v/10*(H-2*pad); }
+        svg.appendChild(elFn("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--ink-soft)"}));
+        for (let i=0;i<10;i++){
+          svg.appendChild(elFn("line",{x1:X(i),y1:Y(i),x2:X(i+1),y2:Y(i),stroke:"var(--accent)","stroke-width":3}));
+        }
+        svg.appendChild(elFn("line",{x1:X(x),y1:20,x2:X(x),y2:H-pad,stroke:"var(--bad)","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+        svg.appendChild(elFn("circle",{cx:X(x),cy:Y(Math.floor(x)),r:5,fill:"var(--c1)"}));
+        svg.appendChild(elFn("circle",{cx:X(x),cy:Y(Math.ceil(x)),r:5,fill:"var(--c2)"}));
+        return `x=${x.toFixed(1)}: ⌊x⌋=${Math.floor(x)} (teal, the step below), ⌈x⌉=${Math.ceil(x)} (gold, the step above).`;
+      }
+    },
+    { id:"log", label:"log_b(x)", name:"logarithm", sentence:"the power you'd raise b to, to get x",
+      picture:"The inverse of the exponential curve — reflect it across the diagonal y=x.",
+      controls:[{id:"b",label:"base b",min:2,max:5,step:1}], defaults:{b:2},
+      render(svg, s, elFn){
+        const W=440,H=260,pad=30;
+        function X(v){ return pad + v/5*(W-2*pad); }
+        function Y(v){ return H-pad - v/25*(H-2*pad); }
+        let expPts = "", logPts = "";
+        for (let t=0;t<=5;t+=0.1){
+          expPts += `${X(t)},${Y(Math.pow(s.b,t))} `;
+          if (Math.pow(s.b,t) <= 25) logPts += `${X(Math.pow(s.b,t))},${Y(t)} `;
+        }
+        svg.appendChild(elFn("line",{x1:pad,y1:H-pad,x2:X(5),y2:Y(0),stroke:"var(--ink-soft)"}));
+        svg.appendChild(elFn("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--ink-soft)"}));
+        svg.appendChild(elFn("line",{x1:X(0),y1:Y(0),x2:X(5),y2:Y(5),stroke:"var(--line)","stroke-width":1,"stroke-dasharray":"3,3"}));
+        svg.appendChild(elFn("polyline",{points:expPts,fill:"none",stroke:"var(--accent)","stroke-width":2}));
+        svg.appendChild(elFn("polyline",{points:logPts,fill:"none",stroke:"var(--c1)","stroke-width":2}));
+        svg.appendChild(elFn("text",{x:X(4),y:Y(Math.pow(s.b,4))-8,"font-size":11,fill:"var(--accent)"},"b^x"));
+        svg.appendChild(elFn("text",{x:X(20)+10,y:Y(Math.log(20)/Math.log(s.b)),"font-size":11,fill:"var(--c1)"},"log_b(x)"));
+        return `Base b=${s.b}. The gold curve (log) is the purple curve (exponential) mirrored across the dashed diagonal.`;
+      }
+    },
+    { id:"prop", label:"a ∝ b", name:"proportional to", sentence:"a equals some constant times b",
+      picture:"A straight line through the origin — the constant of proportionality is the slope.",
+      controls:[{id:"k10",label:"constant k (×10)",min:-30,max:30,step:1}], defaults:{k10:15},
+      render(svg, s, elFn){
+        const k = s.k10/10;
+        const W=440,H=260,cx=220,cy=130;
+        function X(v){ return cx+v*30; } function Y(v){ return cy-v*k*30; }
+        svg.appendChild(elFn("line",{x1:20,y1:cy,x2:W,y2:cy,stroke:"var(--ink-soft)"}));
+        svg.appendChild(elFn("line",{x1:cx,y1:20,x2:cx,y2:H-10,stroke:"var(--ink-soft)"}));
+        svg.appendChild(elFn("line",{x1:X(-6),y1:Y(-6),x2:X(6),y2:Y(6),stroke:"var(--accent)","stroke-width":2.5}));
+        svg.appendChild(elFn("circle",{cx,cy,r:4,fill:"var(--bad)"}));
+        return `k=${k.toFixed(1)}. Every (a,b) pair with b=${k.toFixed(1)}·a lands exactly on this one line through the origin.`;
+      }
+    }
+  ]);
+
+  /* ============================================================
+     SETS & LOGIC
+     ============================================================ */
+  setupTab("sets", [
+    { id:"in", label:"x ∈ A", name:"membership", sentence:"x is a member of A", picture:"A dot inside a drawn circle.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("in",svg,elFn); } },
+    { id:"notin", label:"x ∉ A", name:"non-membership", sentence:"x is not a member of A", picture:"A dot outside the circle.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("notin",svg,elFn); } },
+    { id:"subset", label:"A ⊆ B / P→Q / ⊨", name:"subset, implication, entailment", sentence:"A's circle sits entirely inside B's", picture:"One circle nested inside another — the same drawing for ⊆, →, and ⊨.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("subset",svg,elFn); } },
+    { id:"union", label:"A ∪ B / P∨Q", name:"union / or", sentence:"everything in A, or B, or both", picture:"Two overlapping circles, shaded everywhere across both.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("union",svg,elFn); } },
+    { id:"intersect", label:"A ∩ B / P∧Q", name:"intersection / and", sentence:"only what's in both A and B", picture:"Only the lens-shaped overlap of two circles.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("intersect",svg,elFn); } },
+    { id:"not", label:"¬P", name:"negation", sentence:"everywhere P is false", picture:"Everything on the page outside P's circle.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("not",svg,elFn); } },
+    { id:"diff", label:"A \\ B", name:"set difference", sentence:"everything in A that's not also in B", picture:"A's circle with the shared overlap bitten out.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("difference",svg,elFn); } },
+    { id:"empty", label:"∅", name:"empty set", sentence:"the set with nothing in it", picture:"A circle drawn with nothing inside.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("empty",svg,elFn); } },
+    { id:"card", label:"|A|", name:"cardinality", sentence:"how many elements A has", picture:"Count the dots inside the circle.", controls:[{id:"n",label:"number of elements",min:0,max:8,step:1}], defaults:{n:5},
+      render(svg,s,elFn){
+        svg.appendChild(elFn("circle",{cx:240,cy:130,r:90,fill:"var(--accent-soft)",stroke:"var(--ink)","stroke-width":1.5}));
+        const n = Math.round(s.n);
+        for (let i=0;i<n;i++){
+          const ang = (i/Math.max(n,1))*2*Math.PI;
+          svg.appendChild(elFn("circle",{cx:240+50*Math.cos(ang),cy:130+50*Math.sin(ang),r:6,fill:"var(--bad)"}));
+        }
+        return `|A| = ${n} — count every dot inside the circle.`;
+      }
+    },
+    { id:"powerset", label:"𝒫(A)", name:"power set", sentence:"every possible subset of A, all at once", picture:"Every corner of a hypercube, one axis per element (in/out).", controls:[{id:"n",label:"|A| (elements)",min:1,max:3,step:1}], defaults:{n:2},
+      render(svg,s,elFn){
+        const n = Math.round(s.n);
+        const total = Math.pow(2,n);
+        const cx=240,cy=140;
+        for (let i=0;i<total;i++){
+          const bits = i.toString(2).padStart(n,"0");
+          const ang = (i/total)*2*Math.PI - Math.PI/2;
+          const x = cx+90*Math.cos(ang), y=cy+90*Math.sin(ang);
+          svg.appendChild(elFn("circle",{cx:x,cy:y,r:16,fill:"var(--accent-soft)",stroke:"var(--accent)"}));
+          svg.appendChild(elFn("text",{x,y:y+4,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":10,fill:"var(--ink)"}, "{"+bits+"}"));
+        }
+        return `|A|=${n} elements → 𝒫(A) has 2^${n} = ${total} corners, one per in/out combination.`;
+      }
+    },
+    { id:"forall", label:"∀x", name:"universal quantifier", sentence:"for every x, this holds", picture:"A spotlight sweeping every point — one dark spot fails it.", controls:[{id:"fail",label:"make one fail",min:0,max:1,step:1}], defaults:{fail:0},
+      render(svg,s,elFn){
+        const n=8; let allPass = s.fail===0;
+        for (let i=0;i<n;i++){
+          const x = 60+i*48;
+          const bad = !allPass && i===5;
+          svg.appendChild(elFn("circle",{cx:x,cy:130,r:14,fill: bad?"var(--bad)":"var(--c1)"}));
+        }
+        return allPass ? "∀x holds: every single dot lit up green — no exceptions anywhere." : "∀x fails: one red dot is enough to break the universal claim entirely.";
+      }
+    },
+    { id:"exists", label:"∃x", name:"existential quantifier", sentence:"there is at least one x for which this holds", picture:"A metal-detector search that stops the instant it finds a hit.", controls:[{id:"hit",label:"is there a hit?",min:0,max:1,step:1}], defaults:{hit:1},
+      render(svg,s,elFn){
+        const n=8;
+        for (let i=0;i<n;i++){
+          const x = 60+i*48;
+          const isHit = s.hit===1 && i===3;
+          svg.appendChild(elFn("circle",{cx:x,cy:130,r:14,fill: isHit?"var(--c1)":"var(--c0)",opacity: (s.hit===1 && i>3) ? 0.3 : 1}));
+        }
+        return s.hit===1 ? "∃x holds: the search found one hit (green) at position 4 and stopped — everything after didn't need checking." : "∃x fails: the search exhausted every dot and never found a hit.";
+      }
+    },
+    { id:"prob", label:"P(A)", name:"probability", sentence:"the likelihood of event A", picture:"The area of A relative to the whole sample space.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("prob",svg,elFn); } },
+    { id:"cond", label:"P(A|B)", name:"conditional probability", sentence:"the probability of A, once B is already known", picture:"Zoom into B's circle alone, then ask what fraction is also in A.", controls:[], defaults:{},
+      render(svg,s,elFn){ return vennRender("cond",svg,elFn); } }
+  ]);
+
+  /* ============================================================
+     CALCULUS
+     ============================================================ */
+  function fxy(x,y){ return x*x+y*y; }
+  setupTab("calc", [
+    { id:"deriv", label:"f'(x)", name:"derivative", sentence:"the instantaneous rate of change of f at x", picture:"The slope of the tangent line touching the curve at exactly x.",
+      controls:[{id:"x10",label:"x (×10)",min:-30,max:30,step:1}], defaults:{x10:10},
+      render(svg,s,elFn){
+        const x = s.x10/10;
+        function f(t){ return t*t; }
+        function fp(t){ return 2*t; }
+        const W=460,H=280,cx=230,cy=230,scale=25;
+        function X(t){ return cx+t*scale; } function Y(v){ return cy-v*scale/3; }
+        let pts=""; for (let t=-4;t<=4;t+=0.1) pts += `${X(t)},${Y(f(t))} `;
+        svg.appendChild(elFn("polyline",{points:pts,fill:"none",stroke:"var(--accent)","stroke-width":2}));
+        const slope = fp(x);
+        svg.appendChild(elFn("line",{x1:X(x-1.5),y1:Y(f(x)-1.5*slope),x2:X(x+1.5),y2:Y(f(x)+1.5*slope),stroke:"var(--bad)","stroke-width":2}));
+        svg.appendChild(elFn("circle",{cx:X(x),cy:Y(f(x)),r:5,fill:"var(--bad)"}));
+        return `f(x)=x², at x=${x.toFixed(1)}: slope = f'(x) = 2x = ${slope.toFixed(1)} — the red line's steepness.`;
+      }
+    },
+    { id:"partial", label:"∂f/∂x", name:"partial derivative", sentence:"the rate of change of f w.r.t. x, freezing y", picture:"Slice a surface with a plane in one direction and look at that one slice's slope.",
+      controls:[{id:"y10",label:"frozen y (×10)",min:-20,max:20,step:5},{id:"x10",label:"x (×10)",min:-30,max:30,step:1}], defaults:{y10:10,x10:5},
+      render(svg,s,elFn){
+        const yFrozen = s.y10/10, x = s.x10/10;
+        function slice(t){ return fxy(t,yFrozen); }
+        const W=460,H=280,cx=230,cy=250,scale=25;
+        function X(t){ return cx+t*scale; } function Y(v){ return cy-v*scale/8; }
+        let pts=""; for (let t=-4;t<=4;t+=0.1) pts += `${X(t)},${Y(slice(t))} `;
+        svg.appendChild(elFn("text",{x:20,y:20,"font-size":12,fill:"var(--ink-soft)"},`y frozen at ${yFrozen.toFixed(1)} — this is f(x, ${yFrozen.toFixed(1)}) only`));
+        svg.appendChild(elFn("polyline",{points:pts,fill:"none",stroke:"var(--accent)","stroke-width":2}));
+        const slope = 2*x;
+        svg.appendChild(elFn("circle",{cx:X(x),cy:Y(slice(x)),r:5,fill:"var(--bad)"}));
+        svg.appendChild(elFn("line",{x1:X(x-1.2),y1:Y(slice(x)-1.2*slope),x2:X(x+1.2),y2:Y(slice(x)+1.2*slope),stroke:"var(--bad)","stroke-width":2}));
+        return `∂f/∂x at (${x.toFixed(1)}, ${yFrozen.toFixed(1)}) = 2x = ${slope.toFixed(1)} — only x moves; y stays frozen at ${yFrozen.toFixed(1)}.`;
+      }
+    },
+    { id:"grad", label:"∇f", name:"gradient", sentence:"the vector of all partials, pointing uphill", picture:"An arrow on a contour map pointing in the steepest-uphill direction.",
+      controls:[{id:"x10",label:"x (×10)",min:-30,max:30,step:5},{id:"y10",label:"y (×10)",min:-30,max:30,step:5}], defaults:{x10:10,y10:20},
+      render(svg,s,elFn){
+        const x=s.x10/10, y=s.y10/10;
+        const cx=230,cy=140,scale=22;
+        function X(px){ return cx+px*scale; } function Y(py){ return cy-py*scale; }
+        for (let r=1;r<=5;r++) svg.appendChild(elFn("circle",{cx,cy,r:r*22,fill:"none",stroke:"var(--line)","stroke-width":1}));
+        const gx = 2*x, gy = 2*y;
+        const mag = Math.sqrt(gx*gx+gy*gy);
+        const ux = mag>0?gx/mag:0, uy = mag>0?gy/mag:0;
+        svg.appendChild(elFn("circle",{cx:X(x),cy:Y(y),r:5,fill:"var(--bad)"}));
+        svg.appendChild(elFn("line",{x1:X(x),y1:Y(y),x2:X(x)+ux*50,y2:Y(y)-uy*50,stroke:"var(--accent)","stroke-width":3,"marker-end":"url(#arrowhead)"}));
+        const marker = elFn("marker",{id:"arrowhead",markerWidth:10,markerHeight:10,refX:6,refY:3,orient:"auto"});
+        marker.appendChild(elFn("path",{d:"M0,0 L6,3 L0,6 Z",fill:"var(--accent)"}));
+        const defs = elFn("defs",{}); defs.appendChild(marker); svg.appendChild(defs);
+        const angleDeg = Math.atan2(gy,gx)*180/Math.PI;
+        return `f(x,y)=x²+y² at (${x.toFixed(1)},${y.toFixed(1)}): ∇f=(${gx.toFixed(1)},${gy.toFixed(1)}), pointing at ${angleDeg.toFixed(1)}° — the tutorial's Part 4 sweeps every other direction at (1,2) and confirms this is exactly the one that increases f fastest.`;
+      }
+    },
+    { id:"integral", label:"∫f(x)dx", name:"integral", sentence:"the accumulated area under the curve", picture:"Infinitely many infinitely-thin vertical strips, summed.",
+      controls:[{id:"b10",label:"upper bound (×10)",min:0,max:40,step:2}], defaults:{b10:20},
+      render(svg,s,elFn){
+        const b = s.b10/10;
+        function f(t){ return 0.3*t*t+1; }
+        const cx=60,cy=250,scale=90;
+        function X(t){ return cx+t*scale; } function Y(v){ return cy-v*18; }
+        for (let t=0;t<b;t+=0.08){
+          svg.appendChild(elFn("rect",{x:X(t),y:Y(f(t)),width:X(t+0.08)-X(t),height:cy-Y(f(t)),fill:"var(--c1)",opacity:0.5}));
+        }
+        let pts=""; for (let t=0;t<=4;t+=0.05) pts += `${X(t)},${Y(f(t))} `;
+        svg.appendChild(elFn("polyline",{points:pts,fill:"none",stroke:"var(--accent)","stroke-width":2}));
+        const area = 0.1*b*b*b+b;
+        return `∫₀^${b.toFixed(1)} (0.3x²+1) dx ≈ ${area.toFixed(2)} — the shaded area, built from many thin strips.`;
+      }
+    },
+    { id:"sum", label:"Σ", name:"summation", sentence:"add up every term in the list", picture:"Σ is ∫'s discrete cousin — a bar chart, stacked and totaled.",
+      controls:[{id:"n",label:"n terms",min:2,max:8,step:1}], defaults:{n:5},
+      render(svg,s,elFn){
+        const n = Math.round(s.n);
+        let total=0; const vals=[];
+        for (let i=1;i<=n;i++){ vals.push(i*i); total += i*i; }
+        const maxV = Math.max(...vals);
+        vals.forEach((v,i)=>{
+          const h = v/maxV*180;
+          svg.appendChild(elFn("rect",{x:40+i*50,y:230-h,width:36,height:h,fill:"var(--accent)",opacity:0.8}));
+          svg.appendChild(elFn("text",{x:58+i*50,y:245,"text-anchor":"middle","font-size":11,fill:"var(--ink-soft)"},"i="+(i+1)));
+        });
+        return `Σ_{i=1}^{${n}} i² = ${total} — the total height if every bar were stacked into one.`;
+      }
+    },
+    { id:"prod", label:"∏", name:"product", sentence:"multiply every term in the list", picture:"Repeated scaling — like compound interest, chained.",
+      controls:[{id:"years",label:"years compounding",min:1,max:8,step:1}], defaults:{years:4},
+      render(svg,s,elFn){
+        const years = Math.round(s.years);
+        const rate = 1.1;
+        let balance = 100;
+        let w = 40;
+        for (let y=0;y<years;y++){
+          const newBalance = balance*rate;
+          const h = Math.min(newBalance,220);
+          svg.appendChild(elFn("rect",{x:40+y*52,y:250-h,width:w,height:h,fill:"var(--c2)",opacity:0.8}));
+          svg.appendChild(elFn("text",{x:40+y*52+w/2,y:262,"text-anchor":"middle","font-size":10,fill:"var(--ink-soft)"},"yr "+(y+1)));
+          balance = newBalance;
+        }
+        return `∏_{y=1}^{${years}} 1.1 → balance grows to ${balance.toFixed(1)} from a start of 100 — each bar is the previous one, rescaled.`;
+      }
+    },
+    { id:"lim", label:"lim", name:"limit", sentence:"what value this settles down to", picture:"Zooming a camera in on where a sequence converges.",
+      controls:[{id:"steps",label:"terms shown",min:2,max:12,step:1}], defaults:{steps:6},
+      render(svg,s,elFn){
+        const steps = Math.round(s.steps);
+        const target = 3;
+        const cx=60,cy=230,scale=32;
+        svg.appendChild(elFn("line",{x1:cx+target*scale,y1:20,x2:cx+target*scale,y2:240,stroke:"var(--bad)","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+        for (let n=1;n<=steps;n++){
+          const val = target - 3/n;
+          svg.appendChild(elFn("circle",{cx:cx+val*scale,cy:230-n*15,r:5,fill:"var(--accent)"}));
+        }
+        return `Sequence aₙ = 3 − 3/n approaches 3 (dashed line) as n grows — each dot lands closer than the last.`;
+      }
+    },
+    { id:"inf", label:"∞", name:"infinity", sentence:"without bound, never terminating", picture:"A boundary you walk toward forever without arriving.",
+      controls:[], defaults:{},
+      render(svg,s,elFn){
+        const cx=40,cy=230,scale=1;
+        let pts=""; for (let t=0;t<=400;t+=4) pts += `${cx+t},${cy-200*(1-Math.exp(-t/80))} `;
+        svg.appendChild(elFn("line",{x1:20,y1:30,x2:440,y2:30,stroke:"var(--bad)","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+        svg.appendChild(elFn("polyline",{points:pts,fill:"none",stroke:"var(--accent)","stroke-width":2}));
+        return "The curve keeps climbing toward the dashed asymptote, getting closer forever without ever touching it.";
+      }
+    }
+  ]);
+
+  /* ============================================================
+     LINEAR ALGEBRA
+     ============================================================ */
+  setupTab("linalg", [
+    { id:"vec", label:"v, ‖v‖", name:"vector & norm", sentence:"an arrow, and its length", picture:"An arrow from the origin; its norm is its length, measured with a ruler.",
+      controls:[{id:"x",label:"x",min:-8,max:8,step:1},{id:"y",label:"y",min:-8,max:8,step:1}], defaults:{x:4,y:3},
+      render(svg,s,elFn){
+        const cx=230,cy=150,scale=22;
+        svg.appendChild(elFn("line",{x1:20,y1:cy,x2:440,y2:cy,stroke:"var(--line)"}));
+        svg.appendChild(elFn("line",{x1:cx,y1:20,x2:cx,y2:280,stroke:"var(--line)"}));
+        svg.appendChild(elFn("line",{x1:cx,y1:cy,x2:cx+s.x*scale,y2:cy-s.y*scale,stroke:"var(--accent)","stroke-width":3}));
+        svg.appendChild(elFn("circle",{cx:cx+s.x*scale,cy:cy-s.y*scale,r:5,fill:"var(--accent)"}));
+        const norm = Math.sqrt(s.x*s.x+s.y*s.y);
+        return `v=(${s.x},${s.y}), ‖v‖ = √(${s.x}²+${s.y}²) = ${norm.toFixed(3)} — the arrow's own length.`;
+      }
+    },
+    { id:"dot", label:"u · v", name:"dot product", sentence:"how much u points along v — a shadow cast", picture:"Project one arrow's shadow onto the other's direction.",
+      controls:[{id:"ux",label:"u.x",min:-50,max:50,step:0.1},{id:"uy",label:"u.y",min:-50,max:50,step:0.1},{id:"vx",label:"v.x",min:-50,max:50,step:0.1},{id:"vy",label:"v.y",min:-50,max:50,step:0.1}], defaults:{ux:3,uy:4,vx:6,vy:0},
+      presets:[
+        {label:"Tutorial default (u=3,4 · v=6,0)", state:{ux:3,uy:4,vx:6,vy:0}},
+        {label:"Orthogonality check (x=2,3 · y=3,-2)", state:{ux:2,uy:3,vx:3,vy:-2}},
+        {label:"Sled/work example (F≈43.3,25 · d=10,0)", state:{ux:43.30,uy:25.00,vx:10,vy:0}},
+      ],
+      render(svg,s,elFn){
+        const cx=230,cy=150;
+        const maxMag = Math.max(Math.abs(s.ux),Math.abs(s.uy),Math.abs(s.vx),Math.abs(s.vy),1);
+        const scale = Math.min(22, 180/maxMag);
+        const bx=s.vx, by=s.vy;
+        svg.appendChild(elFn("line",{x1:20,y1:cy,x2:440,y2:cy,stroke:"var(--line)"}));
+        svg.appendChild(elFn("line",{x1:cx,y1:20,x2:cx,y2:280,stroke:"var(--line)"}));
+        svg.appendChild(elFn("line",{x1:cx,y1:cy,x2:cx+bx*scale,y2:cy-by*scale,stroke:"var(--c2)","stroke-width":3}));
+        svg.appendChild(elFn("line",{x1:cx,y1:cy,x2:cx+s.ux*scale,y2:cy-s.uy*scale,stroke:"var(--accent)","stroke-width":3}));
+        const dot = s.ux*bx+s.uy*by, magB = Math.sqrt(bx*bx+by*by) || 1;
+        const projLen = dot/magB;
+        const ux2 = bx/magB, uy2 = by/magB;
+        svg.appendChild(elFn("line",{x1:cx,y1:cy,x2:cx+ux2*projLen*scale,y2:cy-uy2*projLen*scale,stroke:"var(--bad)","stroke-width":4}));
+        svg.appendChild(elFn("line",{x1:cx+s.ux*scale,y1:cy-s.uy*scale,x2:cx+ux2*projLen*scale,y2:cy-uy2*projLen*scale,stroke:"var(--ink-soft)","stroke-width":1,"stroke-dasharray":"3,3"}));
+        const orthoNote = Math.abs(dot) < 1e-6 ? " — exactly zero: u and v are orthogonal (perpendicular)." : "";
+        return `u=(${s.ux.toFixed(2)},${s.uy.toFixed(2)}), v=(${s.vx.toFixed(2)},${s.vy.toFixed(2)}). u·v=${dot.toFixed(3)}${orthoNote} Shadow length on v: ${projLen.toFixed(2)}.`;
+      }
+    },
+    { id:"cross", label:"u × v", name:"cross product (3D)", sentence:"perpendicular vector; length = parallelogram area", picture:"Two arrows as edges of a tilted parallelogram; the cross product points straight out of it.",
+      controls:[], defaults:{},
+      render(svg,s,elFn){
+        const cx=230,cy=180;
+        svg.appendChild(elFn("line",{x1:cx,y1:cy,x2:cx+120,y2:cy,stroke:"var(--accent)","stroke-width":3}));
+        svg.appendChild(elFn("line",{x1:cx,y1:cy,x2:cx+40,y2:cy-90,stroke:"var(--c2)","stroke-width":3}));
+        svg.appendChild(elFn("polygon",{points:`${cx},${cy} ${cx+120},${cy} ${cx+160},${cy-90} ${cx+40},${cy-90}`,fill:"var(--accent-soft)",opacity:0.6}));
+        svg.appendChild(elFn("circle",{cx,cy,r:5,fill:"var(--bad)"}));
+        svg.appendChild(elFn("text",{x:cx,y:cy+30,"font-size":11,fill:"var(--ink-soft)","text-anchor":"middle"},"u×v points straight out of this shaded parallelogram"));
+        return "The shaded area IS ‖u×v‖; the direction (out of the page, by the right-hand rule) is u×v itself.";
+      }
+    },
+    { id:"matrix", label:"A, Aᵀ, A⁻¹, det(A), λ", name:"matrix as transform", sentence:"a rule that warps the whole grid of space", picture:"Graph paper, stretched/rotated/sheared by A; det(A) is how much a unit square's area changes.",
+      controls:[{id:"a",label:"A[0][0]",min:-2,max:2,step:0.5},{id:"b",label:"A[0][1]",min:-2,max:2,step:0.5},{id:"c",label:"A[1][0]",min:-2,max:2,step:0.5},{id:"d",label:"A[1][1]",min:-2,max:2,step:0.5}], defaults:{a:1.5,b:0.5,c:0,d:1},
+      render(svg,s,elFn){
+        const cx=230,cy=150,scale=40;
+        function T(px,py){ return [s.a*px+s.b*py, s.c*px+s.d*py]; }
+        for (let gx=-3;gx<=3;gx++){
+          const p1 = T(gx,-3), p2 = T(gx,3);
+          svg.appendChild(elFn("line",{x1:cx+p1[0]*scale,y1:cy-p1[1]*scale,x2:cx+p2[0]*scale,y2:cy-p2[1]*scale,stroke:"var(--line)","stroke-width":1}));
+        }
+        for (let gy=-3;gy<=3;gy++){
+          const p1 = T(-3,gy), p2 = T(3,gy);
+          svg.appendChild(elFn("line",{x1:cx+p1[0]*scale,y1:cy-p1[1]*scale,x2:cx+p2[0]*scale,y2:cy-p2[1]*scale,stroke:"var(--line)","stroke-width":1}));
+        }
+        const sq = [[0,0],[1,0],[1,1],[0,1]].map(([px,py])=>T(px,py));
+        svg.appendChild(elFn("polygon",{points:sq.map(p=>`${cx+p[0]*scale},${cy-p[1]*scale}`).join(" "),fill:"var(--accent)",opacity:0.35,stroke:"var(--accent)","stroke-width":2}));
+        const det = s.a*s.d-s.b*s.c;
+        return `det(A) = ${s.a}×${s.d} − ${s.b}×${s.c} = ${det.toFixed(2)} — the shaded warped unit square's area (started at 1×1). Aᵀ swaps b and c; A⁻¹ un-warps this exact picture back to plain graph paper.`;
+      }
+    },
+    { id:"outer", label:"u ⊗ v", name:"outer product", sentence:"a full grid of every u_i × v_j pairing", picture:"A multiplication table built from two arbitrary lists of numbers.",
+      controls:[{id:"u1",label:"u₁",min:1,max:5,step:1},{id:"u2",label:"u₂",min:1,max:5,step:1},{id:"u3",label:"u₃",min:1,max:5,step:1},{id:"v1",label:"v₁",min:1,max:5,step:1},{id:"v2",label:"v₂",min:1,max:5,step:1}], defaults:{u1:1,u2:2,u3:3,v1:4,v2:5},
+      render(svg,s,elFn){
+        const u=[s.u1,s.u2,s.u3], v=[s.v1,s.v2];
+        const cellW=70,cellH=50,ox=150,oy=40;
+        u.forEach((ui,i)=>v.forEach((vj,j)=>{
+          const val = ui*vj;
+          svg.appendChild(elFn("rect",{x:ox+j*cellW,y:oy+i*cellH,width:cellW-4,height:cellH-4,fill:"var(--accent-soft)",stroke:"var(--accent)"}));
+          svg.appendChild(elFn("text",{x:ox+j*cellW+cellW/2-2,y:oy+i*cellH+cellH/2+22,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":14,fill:"var(--ink)"},val));
+        }));
+        return `u=(${u.join(",")}), v=(${v.join(",")}). Every row is a scaled copy of the first row — the signature of a rank-1 matrix.`;
+      }
+    }
+  ]);
+
+  /* ============================================================
+     PROBABILITY & STATISTICS
+     ============================================================ */
+  setupTab("prob", [
+    { id:"expect", label:"E[X], μ", name:"expectation / mean", sentence:"the balance point of the distribution", picture:"A see-saw; E[X] is where the fulcrum must sit to balance every weighted outcome.",
+      controls:[{id:"w1",label:"weight at x=0",min:0,max:10,step:1},{id:"w2",label:"weight at x=10",min:0,max:10,step:1}], defaults:{w1:7,w2:3},
+      render(svg,s,elFn){
+        const total = s.w1+s.w2;
+        const mean = total>0 ? (0*s.w1+10*s.w2)/total : 5;
+        const cx=60,scale=32,baseY=180;
+        svg.appendChild(elFn("polygon",{points:`${cx+mean*scale-14},${baseY+30} ${cx+mean*scale+14},${baseY+30} ${cx+mean*scale},${baseY+8}`,fill:"var(--ink-soft)"}));
+        svg.appendChild(elFn("line",{x1:cx,y1:baseY,x2:cx+10*scale,y2:baseY,stroke:"var(--accent)","stroke-width":4}));
+        svg.appendChild(elFn("circle",{cx,cy:baseY-8-s.w1*3,r:8+s.w1,fill:"var(--c1)"}));
+        svg.appendChild(elFn("circle",{cx:cx+10*scale,cy:baseY-8-s.w2*3,r:8+s.w2,fill:"var(--c2)"}));
+        return `Weights ${s.w1} at x=0 and ${s.w2} at x=10 balance at E[X]=μ=${mean.toFixed(2)} — the fulcrum position.`;
+      }
+    },
+    { id:"var", label:"σ, Var(X)", name:"variance / spread", sentence:"the average squared distance from the mean", picture:"A tight cluster gives small σ; a wide scattered cloud gives large σ.",
+      controls:[{id:"spread10",label:"σ (×10)",min:5,max:40,step:5}], defaults:{spread10:15},
+      render(svg,s,elFn){
+        const sigma = s.spread10/10;
+        const rand = makeLCG(7);
+        function gaussian(){ const u1=Math.max(rand(),1e-9), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+        const cy=150;
+        for (let i=0;i<60;i++){
+          const x = 230+gaussian()*sigma*20;
+          svg.appendChild(elFn("circle",{cx:x,cy:cy+(i%6)*4-12,r:5,fill:"var(--accent)",opacity:0.65}));
+        }
+        svg.appendChild(elFn("line",{x1:230,y1:40,x2:230,y2:260,stroke:"var(--bad)","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+        return `σ=${sigma.toFixed(1)}: points scattered around the mean (dashed line) by roughly this much on average.`;
+      }
+    },
+    { id:"corr", label:"ρ", name:"correlation", sentence:"how tightly two variables move together, -1 to +1", picture:"How tightly a scatter plot's cloud hugs a single straight line.",
+      controls:[{id:"rho100",label:"target ρ (×100)",min:-99,max:99,step:1}], defaults:{rho100:70},
+      presets:[{label:"ρ=0.1",state:{rho100:10}},{label:"ρ=0.5",state:{rho100:50}},{label:"ρ=0.9",state:{rho100:90}},{label:"ρ=0.99",state:{rho100:99}}],
+      render(svg,s,elFn){
+        const rho = s.rho100/100;
+        const rand = makeLCG(5);
+        function gaussian(){ const u1=Math.max(rand(),1e-9), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+        const cx=230,cy=150,scale=18;
+        svg.appendChild(elFn("line",{x1:cx-180,y1:cy,x2:cx+180,y2:cy,stroke:"var(--line)"}));
+        svg.appendChild(elFn("line",{x1:cx,y1:cy-100,x2:cx,y2:cy+100,stroke:"var(--line)"}));
+        let sxx=0,syy=0,sxy=0,n=80;
+        const pts=[];
+        for (let i=0;i<n;i++){
+          const x = gaussian();
+          const y = rho*x + Math.sqrt(1-rho*rho)*gaussian();
+          pts.push([x,y]); sxx+=x*x; syy+=y*y; sxy+=x*y;
+        }
+        const measured = sxy/Math.sqrt(sxx*syy);
+        pts.forEach(([x,y])=>svg.appendChild(elFn("circle",{cx:cx+x*scale,cy:cy-y*scale,r:4,fill:"var(--accent)",opacity:0.7})));
+        return `Target ρ=${rho.toFixed(2)}, measured on this sample: ${measured.toFixed(2)} — watch the cloud tighten around a line as |ρ| climbs toward 1.`;
+      }
+    },
+    { id:"argmax", label:"argmax / argmin", name:"arg-max / arg-min", sentence:"WHERE the peak is, not how high it is", picture:"Find the peak of a curve, then read off its x-position only.",
+      controls:[{id:"peak10",label:"peak location (×10)",min:-30,max:30,step:2}], defaults:{peak10:10},
+      render(svg,s,elFn){
+        const peak = s.peak10/10;
+        function f(t){ return 100-((t-peak)*(t-peak))*15; }
+        const cx=230,cy=230,scale=25;
+        function X(t){ return cx+t*scale; } function Y(v){ return cy-v/1.3; }
+        let pts=""; for (let t=-4;t<=4;t+=0.1) pts += `${X(t)},${Y(Math.max(f(t),-20))} `;
+        svg.appendChild(elFn("polyline",{points:pts,fill:"none",stroke:"var(--accent)","stroke-width":2}));
+        svg.appendChild(elFn("line",{x1:X(peak),y1:20,x2:X(peak),y2:cy,stroke:"var(--bad)","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+        svg.appendChild(elFn("circle",{cx:X(peak),cy:Y(f(peak)),r:6,fill:"var(--bad)"}));
+        return `argmax f = ${peak.toFixed(1)} (the dashed line's x-position) — NOT ${f(peak).toFixed(0)} (the peak's height, which is max f).`;
+      }
+    },
+    { id:"dist", label:"X ~ D", name:"distributed as", sentence:"X is a random draw shaped like D", picture:"A histogram-shaped stencil the random draws are more likely to land under.",
+      controls:[], defaults:{},
+      render(svg,s,elFn){
+        const rand = makeLCG(3);
+        function gaussian(){ const u1=Math.max(rand(),1e-9), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+        const bins = new Array(20).fill(0);
+        for (let i=0;i<2000;i++){
+          const v = gaussian();
+          const idx = Math.max(0,Math.min(19,Math.round((v+4)/8*19)));
+          bins[idx]++;
+        }
+        const maxB = Math.max(...bins);
+        bins.forEach((b,i)=>{
+          const h = b/maxB*180;
+          svg.appendChild(elFn("rect",{x:30+i*21,y:230-h,width:18,height:h,fill:"var(--accent)",opacity:0.75}));
+        });
+        return "2,000 draws from X ~ Normal(0,1), binned — the stencil shape (bell curve) is exactly what emerges from repeated random draws.";
+      }
+    }
+  ]);
+})();
+</script>
+</body>
+</html>

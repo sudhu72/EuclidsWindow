@@ -112,8 +112,10 @@
       <p class="sub" style="margin:14px 0 4px;"><b>Selected codeword — click any bit to flip it (simulate a corrupted transmission):</b></p>
       <div class="bitgrid" id="bitGrid"></div>
       <div class="verdict" id="hammingVerdict"></div>
-      <div class="row" style="margin-top:10px;">
+      <div class="row" style="margin-top:10px; gap:6px;">
+        <button class="op" id="btnHammingExample">Load tutorial's exact example (0111100, flip bit 3)</button>
         <button class="op" id="btnXorDemo">XOR two random codewords — verify closure</button>
+        <button class="op" id="btnXorAll">Verify all 16×16=256 pairs exhaustively</button>
       </div>
       <div class="caption" id="xorCaption"></div>
       <div class="caption"><b>Why it matters:</b> minimum distance 3 between any two codewords means a single flipped bit always lands strictly closer to its original codeword than to any other — that gap is what makes correction (not just detection) possible.</div>
@@ -285,6 +287,27 @@
     document.querySelectorAll(".cwbtn").forEach((btn,i) => btn.classList.toggle("match", i===bestIdx));
   }
   function renderAll(){ renderBitGrid(); renderHammingVerdict(); }
+  document.getElementById("btnHammingExample").addEventListener("click", () => {
+    const idx = codewords.findIndex(cw => cw.join("")==="0111100");
+    selectedIdx = idx;
+    workingBits = codewords[idx].slice();
+    workingBits[3] ^= 1;
+    renderAll();
+  });
+  document.getElementById("btnXorAll").addEventListener("click", () => {
+    let allOk = true, checked = 0, firstFail = null;
+    for (let i=0;i<codewords.length;i++){
+      for (let j=0;j<codewords.length;j++){
+        const xor = codewords[i].map((v,k)=>v^codewords[j][k]);
+        const isMember = codewords.some(cw => cw.every((v,k)=>v===xor[k]));
+        checked++;
+        if (!isMember && !firstFail) { allOk = false; firstFail = [codewords[i],codewords[j],xor]; }
+      }
+    }
+    document.getElementById("xorCaption").innerHTML = allOk
+      ? `Checked all <b>${checked}</b> pairs (16×16) — every single XOR result landed back on a valid codeword. <span style="color:var(--c1)">Closure verified exhaustively, not just sampled.</span>`
+      : `Checked ${checked} pairs — found a failure: ${firstFail[0].join("")} XOR ${firstFail[1].join("")} = ${firstFail[2].join("")}, not a valid codeword.`;
+  });
   document.getElementById("btnXorDemo").addEventListener("click", () => {
     const i = Math.floor(Math.random()*codewords.length), j = Math.floor(Math.random()*codewords.length);
     const a = codewords[i], b = codewords[j];

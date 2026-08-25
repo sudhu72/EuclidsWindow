@@ -167,10 +167,11 @@
       </div>
       <div class="row" id="rowFnQuad" style="display:none;">
         <label>a</label><input type="range" id="fnQa" min="-2" max="2" step="0.25" value="1"><span class="readout" id="fnQaOut">1</span>
-        <label>b</label><input type="range" id="fnQb" min="-6" max="6" step="0.5" value="-2"><span class="readout" id="fnQbOut">-2</span>
+        <label>b</label><input type="range" id="fnQb" min="-100" max="100" step="0.5" value="-2"><span class="readout" id="fnQbOut">-2</span>
         <label>c</label><input type="range" id="fnQc" min="-5" max="5" step="0.5" value="-1"><span class="readout" id="fnQcOut">-1</span>
       </div>
       <div class="row"><label>Input x</label><input type="range" id="fnX" min="-5" max="5" step="0.1" value="-5"><span class="readout" id="fnXOut">-5.0</span></div>
+      <div class="row"><button class="op" id="btnFarmerPen">Load "farmer's pen" example (100 m fencing)</button></div>
       <svg id="functionSvg" viewBox="0 0 380 260"></svg>
       <div class="verdict" id="functionVerdict"></div>
       <div class="caption"><b>Why it matters:</b> every straight-line pricing plan and every projectile's height-over-time curve is one of these two machines, just with different labels on the dials.</div>
@@ -298,6 +299,7 @@
      TAB 2 — DISTRIBUTIVE PROPERTY
      ========================================================= */
   const dpA=document.getElementById("dpA"), dpB=document.getElementById("dpB"), dpC=document.getElementById("dpC");
+  const dpAOut=document.getElementById("dpAOut"), dpBOut=document.getElementById("dpBOut"), dpCOut=document.getElementById("dpCOut");
   function renderDistrib(){
     const a=parseInt(dpA.value,10), b=parseInt(dpB.value,10), c=parseInt(dpC.value,10);
     dpAOut.textContent=a; dpBOut.textContent=b; dpCOut.textContent=c;
@@ -323,6 +325,7 @@
      TAB 3 — COMPLETING THE SQUARE
      ========================================================= */
   const csX=document.getElementById("csX"), csB=document.getElementById("csB");
+  const csXOut=document.getElementById("csXOut"), csBOut=document.getElementById("csBOut");
   let squareCompleted = false;
   function renderSquare(){
     const x=parseFloat(csX.value), b=parseFloat(csB.value);
@@ -362,6 +365,7 @@
      TAB 4 — FACTORING PUZZLE
      ========================================================= */
   const facP=document.getElementById("facP"), facQ=document.getElementById("facQ");
+  const facPOut=document.getElementById("facPOut"), facQOut=document.getElementById("facQOut");
   let targetB=5, targetC=6;
   function renderFactor(){
     const p=parseInt(facP.value,10), q=parseInt(facQ.value,10);
@@ -395,13 +399,17 @@
   const fnM=document.getElementById("fnM"), fnB=document.getElementById("fnB"),
         fnQa=document.getElementById("fnQa"), fnQb=document.getElementById("fnQb"), fnQc=document.getElementById("fnQc"),
         fnX=document.getElementById("fnX");
+  const fnMOut=document.getElementById("fnMOut"), fnBOut=document.getElementById("fnBOut"),
+        fnQaOut=document.getElementById("fnQaOut"), fnQbOut=document.getElementById("fnQbOut"), fnQcOut=document.getElementById("fnQcOut"),
+        fnXOut=document.getElementById("fnXOut");
   let fnTrail = [];
   function fnValue(x){
     if(fnMode==="linear") return parseFloat(fnM.value)*x + parseFloat(fnB.value);
     return parseFloat(fnQa.value)*x*x + parseFloat(fnQb.value)*x + parseFloat(fnQc.value);
   }
-  function fmapX(x){ return 190 + x*30; }
-  function fmapY(y){ return 220 - y*18; }
+  let axisOriginX = 190, axisScaleX = 30, axisOriginY = 220, axisScaleY = 18, axisRangeX = 5;
+  function fmapX(x){ return axisOriginX + x*axisScaleX; }
+  function fmapY(y){ return axisOriginY - y*axisScaleY; }
   function renderFunction(){
     fnMOut.textContent=fnM.value; fnBOut.textContent=fnB.value;
     fnQaOut.textContent=fnQa.value; fnQbOut.textContent=fnQb.value; fnQcOut.textContent=fnQc.value;
@@ -415,7 +423,7 @@
     svg.appendChild(el("line",{x1:190,y1:10,x2:190,y2:250,stroke:"var(--line)",["stroke-width"]:1.4}));
     // curve
     let d = "";
-    for(let px=-5;px<=5;px+=0.1){
+    for(let px=-axisRangeX;px<=axisRangeX;px+=axisRangeX/50){
       const py = fnValue(px);
       const X=fmapX(px), Y=fmapY(py);
       if(Y<5||Y>255) { d += ""; continue; }
@@ -452,6 +460,17 @@
     renderFunction();
   });
   [fnM,fnB,fnQa,fnQb,fnQc,fnX].forEach(inp => inp.addEventListener("input", renderFunction));
+  document.getElementById("btnFarmerPen").addEventListener("click", () => {
+    fnMode = "quad";
+    document.getElementById("btnFnQuad").classList.add("active");
+    document.getElementById("btnFnLinear").classList.remove("active");
+    document.getElementById("rowFnLinear").style.display = "none";
+    document.getElementById("rowFnQuad").style.display = "";
+    fnQa.value = -2; fnQb.value = 100; fnQc.value = 0;
+    fnX.min = 0; fnX.max = 50; fnX.step = 0.5; fnX.value = 25;
+    axisOriginX = 40; axisScaleX = 6; axisOriginY = 245; axisScaleY = 0.16; axisRangeX = 50;
+    renderFunction();
+  });
   renderFunction();
 })();
 </script>

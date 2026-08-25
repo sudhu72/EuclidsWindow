@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Model Quantization &amp; Compression, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:170px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:80px;text-align:right;}
+  input[type="range"]{width:100%;}
+  input[type="number"]{background:var(--bg);border:1px solid var(--border);color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:4px 6px;width:110px;}
+
+  table.datatable{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  table.datatable input{width:64px;background:var(--bg);border:1px solid var(--border);color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:4px 6px;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Model Quantization &amp; Compression, live</h1>
+  <p class="sub">Three companion demos: floating-point/integer precision, weight pruning, and temperature-scaled distillation.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="precision">Bits &amp; Precision</button>
+    <button class="tab-btn" data-tab="pruning">Pruning</button>
+    <button class="tab-btn" data-tab="distill">Distillation</button>
+  </div>
+
+  <div class="tabpage active" id="tab-precision">
+    <div class="panel">
+      <h2>FP32 vs. FP16 vs. INT8</h2>
+      <div class="slider-row">
+        <label for="numInput">Value to encode</label>
+        <input type="number" id="numInput" step="0.00000001" value="3.14159265">
+      </div>
+      <div class="slider-row">
+        <label for="rangeMin">INT8 range min</label>
+        <input type="number" id="rangeMin" step="1" value="-4">
+        <label for="rangeMax" style="min-width:100px;">max</label>
+        <input type="number" id="rangeMax" step="1" value="4">
+      </div>
+      <table class="datatable" id="precisionTable"></table>
+      <svg id="bitsSvg" width="640" height="180" viewBox="0 0 640 180"></svg>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-pruning">
+    <div class="panel">
+      <h2>Magnitude Pruning</h2>
+      <p class="sub">Edit any weight. Drag the sparsity slider and watch which weights zero out and how the output (dot product with an all-ones input) changes.</p>
+      <table class="datatable" id="weightsTable"></table>
+      <div class="slider-row">
+        <label for="sparsitySlider">Sparsity (fraction zeroed)</label>
+        <input type="range" id="sparsitySlider" min="0" max="0.9" step="0.1" value="0.4">
+        <output id="sparsityOut">0.4</output>
+      </div>
+      <svg id="pruneSvg" width="640" height="200" viewBox="0 0 640 200"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">Full-precision output</div><div class="num" id="fullOut">-</div></div>
+        <div class="metric coral"><div class="lbl">Pruned output</div><div class="num" id="prunedOut">-</div></div>
+        <div class="metric green"><div class="lbl">Nonzero weights</div><div class="num" id="nonzeroOut">-</div></div>
+      </div>
+      <div class="story-line" id="pruneStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-distill">
+    <div class="panel">
+      <h2>Temperature-Scaled Soft Labels</h2>
+      <table class="datatable" id="logitsTable"></table>
+      <div class="slider-row">
+        <label for="tempSlider">Temperature T</label>
+        <input type="range" id="tempSlider" min="1" max="10" step="0.5" value="2">
+        <output id="tempOut">2.0</output>
+      </div>
+      <svg id="softSvg" width="480" height="180" viewBox="0 0 480 180"></svg>
+    </div>
+    <div class="panel">
+      <h2>Hard Label vs. Soft Label: Two Students</h2>
+      <table class="datatable" id="studentTable"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">CE(A, hard)</div><div class="num" id="ceAHard">-</div></div>
+        <div class="metric blue"><div class="lbl">CE(B, hard)</div><div class="num" id="ceBHard">-</div></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">CE(A, soft)</div><div class="num" id="ceASoft">-</div></div>
+        <div class="metric coral"><div class="lbl">CE(B, soft)</div><div class="num" id="ceBSoft">-</div></div>
+      </div>
+      <div class="story-line" id="distillStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../model_quantization_and_compression_feynman.md">Model Quantization and Compression</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ==================== TAB 1: Bits & Precision ====================
+  function toFP16(val){
+    const sign = val < 0 ? 1 : 0;
+    val = Math.abs(val);
+    if (val === 0) return { decoded: 0 };
+    let exp = Math.floor(Math.log2(val));
+    let mant = val / Math.pow(2, exp) - 1;
+    let expStored = exp + 15;
+    let mantBits = Math.round(mant * 1024);
+    if (mantBits === 1024) { mantBits = 0; expStored += 1; }
+    const decoded = (sign?-1:1) * (1 + mantBits/1024) * Math.pow(2, expStored - 15);
+    return { decoded };
+  }
+  function quantizeInt(val, min, max, levels){
+    const scale = (max-min)/levels;
+    const level = Math.round((val-min)/scale);
+    const clipped = Math.min(levels, Math.max(0, level));
+    const dequant = min + clipped*scale;
+    return { level: clipped, scale, dequant };
+  }
+
+  function updatePrecision(){
+    const x = parseFloat(document.getElementById("numInput").value) || 0;
+    const rmin = parseFloat(document.getElementById("rangeMin").value) || -4;
+    const rmax = parseFloat(document.getElementById("rangeMax").value) || 4;
+    const fp32 = new Float32Array([x])[0];
+    const fp16 = toFP16(x).decoded;
+    const int8 = quantizeInt(x, rmin, rmax, 255);
+
+    const table = document.getElementById("precisionTable");
+    table.innerHTML = `<tr><th>Format</th><th>Bits</th><th>Stored value</th><th>Absolute error</th></tr>
+      <tr><td>true value</td><td>-</td><td>${x}</td><td>-</td></tr>
+      <tr><td>FP32</td><td>32</td><td>${fp32}</td><td>${Math.abs(fp32-x).toExponential(4)}</td></tr>
+      <tr><td>FP16</td><td>16</td><td>${fp16}</td><td>${Math.abs(fp16-x).toExponential(4)}</td></tr>
+      <tr><td>INT8 (range ${rmin} to ${rmax})</td><td>8</td><td>${int8.dequant.toFixed(6)} (level ${int8.level}/255)</td><td>${Math.abs(int8.dequant-x).toExponential(4)}</td></tr>`;
+
+    const svg = document.getElementById("bitsSvg");
+    svg.innerHTML = "";
+    const W=640,H=180,pad=44;
+    const bits = [32,16,8,4];
+    const maxLog = Math.log2(Math.pow(2,32));
+    const barGap = (W-2*pad)/bits.length;
+    const barW = barGap*0.5;
+    bits.forEach((b,i) => {
+      const val = Math.pow(2,b);
+      const h = (Math.log2(val)/maxLog)*(H-2*pad);
+      const x0 = pad + i*barGap + (barGap-barW)/2;
+      svg.appendChild(el("rect",{x:x0, y:H-pad-h, width:barW, height:h, fill:"var(--blue)", opacity:0.85}));
+      svg.appendChild(el("text",{x:x0+barW/2, y:H-pad-h-8, "text-anchor":"middle","font-size":10.5, fill:"var(--chalk)"}, "2^"+b));
+      svg.appendChild(el("text",{x:x0+barW/2, y:H-pad+16, "text-anchor":"middle","font-size":10.5, fill:"var(--chalk-dim)"}, b+"-bit"));
+    });
+    svg.appendChild(el("text",{x:W/2,y:16,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"distinct representable values (log scale)"));
+  }
+  document.getElementById("numInput").addEventListener("input", updatePrecision);
+  document.getElementById("rangeMin").addEventListener("input", updatePrecision);
+  document.getElementById("rangeMax").addEventListener("input", updatePrecision);
+  updatePrecision();
+
+  // ==================== TAB 2: Pruning ====================
+  const DEFAULT_WEIGHTS = [0.91, -0.03, 0.44, 0.02, -0.77, 0.01, 0.58, -0.05, 0.12, -0.66];
+  let weights = [...DEFAULT_WEIGHTS];
+
+  function renderWeightsTable(){
+    const table = document.getElementById("weightsTable");
+    let html = "<tr><th>Index</th>" + weights.map((_,i)=>`<th>${i}</th>`).join("") + "</tr>";
+    html += "<tr><td>Weight</td>" + weights.map((w,i)=>`<td><input type="number" step="0.01" data-idx="${i}" value="${w}"></td>`).join("") + "</tr>";
+    table.innerHTML = html;
+    table.querySelectorAll("input").forEach(inp => inp.addEventListener("input", e => {
+      weights[parseInt(e.target.dataset.idx,10)] = parseFloat(e.target.value)||0;
+      updatePruning();
+    }));
+  }
+
+  function dot(a,b){ return a.reduce((s,v,i)=>s+v*b[i],0); }
+
+  function pruneSmallest(w, sparsity){
+    const n = w.length;
+    const k = Math.round(n*sparsity);
+    const sorted = w.map((v,i)=>({v:Math.abs(v),i})).sort((a,b)=>a.v-b.v);
+    const zeroIdx = new Set(sorted.slice(0,k).map(o=>o.i));
+    return w.map((v,i)=> zeroIdx.has(i) ? 0 : v);
+  }
+
+  function drawPruning(w, pruned){
+    const svg = document.getElementById("pruneSvg");
+    svg.innerHTML = "";
+    const W=640,H=200,pad=40;
+    const n = w.length;
+    const gap = (W-2*pad)/n;
+    const bw = gap*0.6;
+    const maxAbs = Math.max(...w.map(Math.abs), 1);
+    const midY = H/2;
+    const scale = (H/2-30)/maxAbs;
+    svg.appendChild(el("line",{x1:pad,y1:midY,x2:W-pad,y2:midY,stroke:"var(--chalk-dim)"}));
+    w.forEach((v,i) => {
+      const x = pad + i*gap + (gap-bw)/2;
+      const h = Math.abs(v)*scale;
+      const isZeroed = pruned[i] === 0 && v !== 0;
+      svg.appendChild(el("rect",{x, y: v>=0? midY-h: midY, width:bw, height:h,
+        fill: isZeroed ? "var(--coral)" : "var(--green)", opacity: isZeroed ? 0.35 : 0.9}));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-10, "text-anchor":"middle","font-size":10, fill:"var(--chalk-dim)"}, "w"+i));
+    });
+    svg.appendChild(el("rect",{x:pad,y:8,width:12,height:12,fill:"var(--green)"}));
+    svg.appendChild(el("text",{x:pad+18,y:18,"font-size":10.5,fill:"var(--chalk-dim)"},"kept"));
+    svg.appendChild(el("rect",{x:pad+80,y:8,width:12,height:12,fill:"var(--coral)",opacity:0.35}));
+    svg.appendChild(el("text",{x:pad+98,y:18,"font-size":10.5,fill:"var(--chalk-dim)"},"pruned to zero"));
+  }
+
+  function updatePruning(){
+    renderWeightsTable();
+    const sparsity = parseFloat(document.getElementById("sparsitySlider").value);
+    const ones = weights.map(()=>1);
+    const fullOut = dot(weights, ones);
+    const pruned = pruneSmallest(weights, sparsity);
+    const prunedOut = dot(pruned, ones);
+    drawPruning(weights, pruned);
+    document.getElementById("fullOut").textContent = fullOut.toFixed(4);
+    document.getElementById("prunedOut").textContent = prunedOut.toFixed(4);
+    document.getElementById("nonzeroOut").textContent = pruned.filter(w=>w!==0).length + "/" + weights.length;
+    document.getElementById("pruneStory").textContent =
+      "Error isn't always monotonic in sparsity - which specific weights survive matters more than how many do, especially with cancelling positive/negative weights.";
+  }
+  document.getElementById("sparsitySlider").addEventListener("input", (e) => {
+    document.getElementById("sparsityOut").textContent = parseFloat(e.target.value).toFixed(1);
+    updatePruning();
+  });
+  updatePruning();
+
+  // ==================== TAB 3: Distillation ====================
+  function softmaxT(logits, T){
+    const scaled = logits.map(l=>l/T);
+    const exps = scaled.map(Math.exp);
+    const sum = exps.reduce((a,b)=>a+b,0);
+    return exps.map(e=>e/sum);
+  }
+  function crossEntropy(y, q){ return -y.reduce((s,yk,k)=> yk>0 ? s+yk*Math.log(q[k]) : s, 0); }
+
+  let teacherLogits = [3.0, 1.0, 0.2];
+  const studentA = [0.70, 0.20, 0.10];
+  const studentB = [0.70, 0.10, 0.20];
+  const hardLabel = [1,0,0];
+
+  function renderLogitsTable(){
+    const table = document.getElementById("logitsTable");
+    let html = "<tr><th>Class</th><th>0</th><th>1</th><th>2</th></tr>";
+    html += "<tr><td>Teacher raw logit</td>" + teacherLogits.map((v,i)=>`<td><input type="number" step="0.1" data-idx="${i}" value="${v}"></td>`).join("") + "</tr>";
+    table.innerHTML = html;
+    table.querySelectorAll("input").forEach(inp => inp.addEventListener("input", e => {
+      teacherLogits[parseInt(e.target.dataset.idx,10)] = parseFloat(e.target.value)||0;
+      updateDistill();
+    }));
+  }
+
+  function drawSoft(p){
+    const svg = document.getElementById("softSvg");
+    svg.innerHTML = "";
+    const W=480,H=180,pad=40;
+    const gap = (W-2*pad)/p.length;
+    const bw = gap*0.6;
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    p.forEach((v,i) => {
+      const x = pad + i*gap + (gap-bw)/2;
+      const h = v*(H-2*pad);
+      svg.appendChild(el("rect",{x, y:H-pad-h, width:bw, height:h, fill:"var(--amber)", opacity:0.85}));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad-h-8, "text-anchor":"middle","font-size":11, fill:"var(--chalk)"}, v.toFixed(4)));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad+16, "text-anchor":"middle","font-size":10, fill:"var(--chalk-dim)"}, "class "+i));
+    });
+  }
+
+  function updateDistill(){
+    renderLogitsTable();
+    const T = parseFloat(document.getElementById("tempSlider").value);
+    const soft = softmaxT(teacherLogits, T);
+    drawSoft(soft);
+
+    const table = document.getElementById("studentTable");
+    table.innerHTML = `<tr><th>Student</th><th>class 0</th><th>class 1</th><th>class 2</th></tr>
+      <tr><td>A</td>${studentA.map(v=>`<td>${v.toFixed(2)}</td>`).join("")}</tr>
+      <tr><td>B</td>${studentB.map(v=>`<td>${v.toFixed(2)}</td>`).join("")}</tr>`;
+
+    document.getElementById("ceAHard").textContent = crossEntropy(hardLabel, studentA).toFixed(4);
+    document.getElementById("ceBHard").textContent = crossEntropy(hardLabel, studentB).toFixed(4);
+    document.getElementById("ceASoft").textContent = crossEntropy(soft, studentA).toFixed(4);
+    document.getElementById("ceBSoft").textContent = crossEntropy(soft, studentB).toFixed(4);
+    document.getElementById("distillStory").textContent =
+      "Against the hard label, A and B score identically - both got the top class right. Against the teacher's soft label, they diverge: whichever student matches the teacher's ranking of the WRONG classes scores lower (better).";
+  }
+  document.getElementById("tempSlider").addEventListener("input", (e) => {
+    document.getElementById("tempOut").textContent = parseFloat(e.target.value).toFixed(1);
+    updateDistill();
+  });
+  updateDistill();
+})();
+</script>
+</body>
+</html>

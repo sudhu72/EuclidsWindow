@@ -78,6 +78,7 @@
     <button class="tab active" data-tab="pemdas">Order of Operations</button>
     <button class="tab" data-tab="signs">Sign Rules</button>
     <button class="tab" data-tab="fractions">Fractions</button>
+    <button class="tab" data-tab="percentages">Percentages &amp; Ratios</button>
     <button class="tab" data-tab="exponents">Exponent Laws</button>
     <button class="tab" data-tab="logs">Logarithms</button>
   </div>
@@ -152,6 +153,32 @@
       <svg id="fracDivSvg" viewBox="0 0 480 100"></svg>
       <div class="verdict" id="fracDivVerdict"></div>
       <div class="caption"><b>Why it matters:</b> "flip and multiply" is never a separate rule — it's multiplying by a disguised 1 (a fraction's reciprocal times itself), legal at any time, for any number.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3.5: PERCENTAGES & RATIOS ============ -->
+  <div class="panel" id="panel-percentages">
+    <div class="card">
+      <h2>Scaling a Recipe: the Ratio Never Moves, Only the Numbers Do</h2>
+      <p class="sub"><b>What's happening:</b> a recipe's ingredients are all locked to the same fixed ratio, relative to how many people it serves. Drag the serving count and watch every ingredient scale by the identical factor — a proportion in action.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set servings to 10 and confirm rice lands on exactly 5 cups (from the tutorial's `2/4 = x/10` proportion) — then drag servings down to 2 and watch every ingredient shrink by the same factor, never independently.</p>
+      <div class="row"><label>Base recipe serves</label><input type="range" id="pctBaseServings" min="1" max="12" step="1" value="4"><span class="readout" id="pctBaseServingsOut">4</span></div>
+      <div class="row"><label>Scale to servings</label><input type="range" id="pctTargetServings" min="1" max="20" step="1" value="10"><span class="readout" id="pctTargetServingsOut">10</span></div>
+      <table class="patttable" id="pctRecipeTable"></table>
+      <div class="verdict" id="pctRecipeVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> a proportion is a promise that one ratio holds no matter how far you scale — the moment any single ingredient stops tracking that same factor, it's not the same recipe anymore.</div>
+    </div>
+    <div class="card">
+      <h2>Stacked Discounts: Why Sequential Percentages Don't Add</h2>
+      <p class="sub"><b>What's happening:</b> each discount is taken off whatever price is currently left — not off the original price — so the second discount is always smaller in absolute dollars than the same percentage would have been the first time.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> keep the defaults (30% then 10%) and confirm the final price lands on exactly $63 — a 37% total discount, not the naive 40% sum. Then try two 50% discounts in a row and see how far short of "100% off" it actually lands.</p>
+      <div class="row"><label>Starting price</label><input type="range" id="pctPrice" min="10" max="500" step="10" value="100"><span class="readout" id="pctPriceOut">$100</span></div>
+      <div class="row"><label>First change</label><input type="range" id="pctDisc1" min="-90" max="90" step="5" value="30"><span class="readout" id="pctDisc1Out">30%</span></div>
+      <div class="row"><label>Second change</label><input type="range" id="pctDisc2" min="-90" max="90" step="5" value="10"><span class="readout" id="pctDisc2Out">10%</span></div>
+      <button class="op" id="btnMarkupExample">Load Practice Gallery example (40% markup, then 25% off)</button>
+      <table class="patttable" id="pctDiscountTable"></table>
+      <div class="verdict" id="pctDiscountVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> "30% off, then another 10% off" and "40% off" are genuinely different offers — the gap is exactly what you're paying for not noticing which number the second percentage was taken from.</div>
     </div>
   </div>
 
@@ -429,6 +456,8 @@
      ========================================================= */
   const fmNumA=document.getElementById("fmNumA"), fmDenA=document.getElementById("fmDenA"),
         fmNumB=document.getElementById("fmNumB"), fmDenB=document.getElementById("fmDenB");
+  const fmNumAOut=document.getElementById("fmNumAOut"), fmDenAOut=document.getElementById("fmDenAOut"),
+        fmNumBOut=document.getElementById("fmNumBOut"), fmDenBOut=document.getElementById("fmDenBOut");
   function renderFracMul(){
     const nA=parseInt(fmNumA.value,10), dA=parseInt(fmDenA.value,10);
     const nB=parseInt(fmNumB.value,10), dB=parseInt(fmDenB.value,10);
@@ -457,6 +486,7 @@
   renderFracMul();
 
   const fdA=document.getElementById("fdA"), fdB=document.getElementById("fdB"), fdC=document.getElementById("fdC");
+  const fdAOut=document.getElementById("fdAOut"), fdBOut=document.getElementById("fdBOut"), fdCOut=document.getElementById("fdCOut");
   function renderFracDiv(){
     const a=parseInt(fdA.value,10), b=parseInt(fdB.value,10), c=parseInt(fdC.value,10);
     fdAOut.textContent=a; fdBOut.textContent=b; fdCOut.textContent=c;
@@ -489,9 +519,65 @@
   renderFracDiv();
 
   /* =========================================================
+     TAB 3.5 — PERCENTAGES & RATIOS
+     ========================================================= */
+  const RECIPE = [
+    { name: "flour", unit: "cups", base: 3 },
+    { name: "rice", unit: "cups", base: 2 },
+    { name: "eggs", unit: "", base: 1 },
+    { name: "milk", unit: "cups", base: 1.5 },
+  ];
+  const pctBaseServings = document.getElementById("pctBaseServings"), pctTargetServings = document.getElementById("pctTargetServings");
+  const pctBaseServingsOut = document.getElementById("pctBaseServingsOut"), pctTargetServingsOut = document.getElementById("pctTargetServingsOut");
+  function renderRecipe(){
+    const baseS = parseInt(pctBaseServings.value,10), targetS = parseInt(pctTargetServings.value,10);
+    pctBaseServingsOut.textContent = baseS; pctTargetServingsOut.textContent = targetS;
+    const factor = targetS / baseS;
+    let html = "<tr><th>Ingredient</th><th>At "+baseS+" servings</th><th>At "+targetS+" servings</th><th>Ratio to base</th></tr>";
+    RECIPE.forEach(ing => {
+      const scaled = ing.base * factor;
+      html += `<tr><td>${ing.name}</td><td>${fmtFrac(ing.base)} ${ing.unit}</td><td>${fmtFrac(scaled)} ${ing.unit}</td><td>${factor.toFixed(3)}x</td></tr>`;
+    });
+    document.getElementById("pctRecipeTable").innerHTML = html;
+    const rice = RECIPE.find(r=>r.name==="rice");
+    document.getElementById("pctRecipeVerdict").innerHTML =
+      `Proportion: ${rice.base}/${baseS} = x/${targetS} → x = ${rice.base}×${targetS}/${baseS} = <span class="big">${fmtFrac(rice.base*factor)}</span> cups of rice<br>`+
+      `Every ingredient scales by the identical factor, <b>${factor.toFixed(3)}x</b> — never independently.`;
+  }
+  [pctBaseServings, pctTargetServings].forEach(inp => inp.addEventListener("input", renderRecipe));
+  renderRecipe();
+
+  const pctPrice = document.getElementById("pctPrice"), pctDisc1 = document.getElementById("pctDisc1"), pctDisc2 = document.getElementById("pctDisc2");
+  const pctPriceOut = document.getElementById("pctPriceOut"), pctDisc1Out = document.getElementById("pctDisc1Out"), pctDisc2Out = document.getElementById("pctDisc2Out");
+  function pctLabel(d){ return d>=0 ? `${d}% off` : `${Math.abs(d)}% markup`; }
+  function renderDiscounts(){
+    const price = parseInt(pctPrice.value,10), d1 = parseInt(pctDisc1.value,10), d2 = parseInt(pctDisc2.value,10);
+    pctPriceOut.textContent = "$"+price; pctDisc1Out.textContent = pctLabel(d1); pctDisc2Out.textContent = pctLabel(d2);
+    const after1 = price * (1 - d1/100);
+    const after2 = after1 * (1 - d2/100);
+    const off1 = price - after1, off2 = after1 - after2;
+    const totalOffPct = (price - after2) / price * 100;
+    const naiveSum = d1 + d2;
+    document.getElementById("pctDiscountTable").innerHTML =
+      `<tr><th>Step</th><th>Price before</th><th>Change</th><th>Amount</th><th>Price after</th></tr>`+
+      `<tr><td>1st change</td><td>$${price.toFixed(2)}</td><td>${pctLabel(d1)}</td><td>$${off1.toFixed(2)}</td><td>$${after1.toFixed(2)}</td></tr>`+
+      `<tr><td>2nd change</td><td>$${after1.toFixed(2)}</td><td>${pctLabel(d2)}</td><td>$${off2.toFixed(2)}</td><td>$${after2.toFixed(2)}</td></tr>`;
+    document.getElementById("pctDiscountVerdict").innerHTML =
+      `Final price: <span class="big">$${after2.toFixed(2)}</span> &nbsp;·&nbsp; Actual total change: <b>${totalOffPct.toFixed(1)}%</b><br>`+
+      `Naive sum (${d1}% + ${d2}%): <b>${naiveSum}%</b> — <span class="${Math.abs(totalOffPct-naiveSum)>0.01 ? 'good-t' : ''}">${Math.abs(totalOffPct-naiveSum)>0.01 ? "genuinely different from the actual total" : "coincidentally equal only when one change is 0%"}</span>`;
+  }
+  [pctPrice, pctDisc1, pctDisc2].forEach(inp => inp.addEventListener("input", renderDiscounts));
+  document.getElementById("btnMarkupExample").addEventListener("click", () => {
+    pctPrice.value = 60; pctDisc1.value = -40; pctDisc2.value = 25;
+    renderDiscounts();
+  });
+  renderDiscounts();
+
+  /* =========================================================
      TAB 4 — EXPONENT LAWS
      ========================================================= */
   const exA=document.getElementById("exA"), exU=document.getElementById("exU"), exV=document.getElementById("exV");
+  const exAOut=document.getElementById("exAOut"), exUOut=document.getElementById("exUOut"), exVOut=document.getElementById("exVOut");
   function renderExponentChain(){
     const a=parseInt(exA.value,10), u=parseInt(exU.value,10), v=parseInt(exV.value,10);
     exAOut.textContent=a; exUOut.textContent=u; exVOut.textContent=v;
@@ -536,6 +622,7 @@
      TAB 5 — LOGARITHMS (a working log-scaled slide rule)
      ========================================================= */
   const srX1=document.getElementById("srX1"), srX2=document.getElementById("srX2");
+  const srX1Out=document.getElementById("srX1Out"), srX2Out=document.getElementById("srX2Out");
   const RULE_X0=40, RULE_W=640, RULE_Y=70;
   function rulePos(v){ return RULE_X0 + (Math.log10(v)/2)*RULE_W; } // v in [1,100]
   function fmtLog(v){ return Math.abs(v-Math.round(v))<1e-9 ? String(Math.round(v)) : v.toFixed(3); }
@@ -579,6 +666,7 @@
   renderSlideRule();
 
   const logA=document.getElementById("logA"), logB=document.getElementById("logB");
+  const logAOut=document.getElementById("logAOut"), logBOut=document.getElementById("logBOut");
   function renderLogLaw(){
     const a=parseInt(logA.value,10), b=parseInt(logB.value,10);
     logAOut.textContent=a; logBOut.textContent=b;

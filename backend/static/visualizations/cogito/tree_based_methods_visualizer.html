@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tree-Based Methods, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:8px 15px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+  button.op:disabled{opacity:0.4;cursor:default;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  table.coord{border-collapse:collapse;margin:14px auto;width:100%;max-width:640px;}
+  table.coord th, table.coord td{border:1px solid var(--border);padding:6px 8px;text-align:center;font-size:11.5px;}
+  table.coord th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:12.5px;}
+  table.coord td.worse{color:var(--coral);}
+  table.coord td.better{color:var(--green);}
+  table.coord td.winner{color:var(--amber);font-weight:700;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tree-Based Methods, live</h1>
+  <p class="sub">Nine tabs, matching the tutorial's nine verified demonstrations, from a single regression tree up through pruning, bagging, forests, boosting, and ensemble interpretation.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="regtree">1 · Regression Tree</button>
+    <button class="tabbtn" data-tab="prune">2 · Pruning</button>
+    <button class="tabbtn" data-tab="impurity">3 · Classification Impurity</button>
+    <button class="tabbtn" data-tab="bagging">4 · Bagging &amp; OOB</button>
+    <button class="tabbtn" data-tab="forest">5 · Random Forest</button>
+    <button class="tabbtn" data-tab="adaboost">6 · AdaBoost</button>
+    <button class="tabbtn" data-tab="gbm">7 · Gradient Boosting</button>
+    <button class="tabbtn" data-tab="interpret">8 · PDP &amp; SHAP</button>
+    <button class="tabbtn" data-tab="overfit">9 · GBM Overfitting</button>
+  </div>
+
+  <!-- TAB 1: REGRESSION TREE -->
+  <div class="tabpanel active" id="tab-regtree">
+    <div class="panel">
+      <h2>Recursive Binary Splitting, One Step at a Time</h2>
+      <p class="sub">10 points (years of experience → salary, $k). Each click makes the single best next split — greedy, top-down, exactly as Part 1 describes.</p>
+      <svg id="regSvg" width="640" height="260" viewBox="0 0 640 260"></svg>
+      <div class="row">
+        <button class="op primary" id="regStep">Make the next best split</button>
+        <button class="op" id="regReset">Reset</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">total RSS</div><div class="num" id="regRSS">5202.00</div></div>
+        <div class="metric blue"><div class="lbl">leaves</div><div class="num" id="regLeaves">1</div></div>
+      </div>
+      <div class="story-line" id="regStory">No splits yet — every point predicted by the overall mean.</div>
+    </div>
+  </div>
+
+  <!-- TAB 2: PRUNING -->
+  <div class="tabpanel" id="tab-prune">
+    <div class="panel">
+      <h2>Cost-Complexity Pruning: RSS(T) + α·|T|</h2>
+      <p class="sub">The same tree from Tab 1, fully grown (4 leaves). Drag α and watch which subtree actually minimizes the cost-complexity score.</p>
+      <div class="row"><label>α (cost per extra leaf)</label><input type="range" id="alphaSlider" min="0" max="5000" step="1" value="0"><span class="readout" id="alphaOut">0</span></div>
+      <table class="coord" id="pruneTable"></table>
+      <svg id="pruneSvg" width="640" height="160" viewBox="0 0 640 160"></svg>
+      <div class="story-line" id="pruneStory"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: CLASSIFICATION IMPURITY -->
+  <div class="tabpanel" id="tab-impurity">
+    <div class="panel">
+      <h2>Gini, Entropy, and Classification Error — Do They Agree?</h2>
+      <p class="sub">12 points, two classes, two deliberately mislabeled near the boundary. Drag the split threshold and compare all three impurity measures live.</p>
+      <svg id="impuritySvg" width="640" height="120" viewBox="0 0 640 120"></svg>
+      <div class="row"><label>split threshold (x ≥ ...)</label><input type="range" id="impThreshold" min="15" max="115" step="10" value="65"><span class="readout" id="impOut">6.5</span></div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">Gini (weighted)</div><div class="num" id="impGini">-</div></div>
+        <div class="metric green"><div class="lbl">Entropy (weighted)</div><div class="num" id="impEntropy">-</div></div>
+        <div class="metric coral"><div class="lbl">Classification error</div><div class="num" id="impErr">-</div></div>
+      </div>
+      <div class="story-line" id="impStory"></div>
+      <table class="coord" id="impAllTable" style="margin-top:16px;"></table>
+    </div>
+  </div>
+
+  <!-- TAB 4: BAGGING & OOB -->
+  <div class="tabpanel" id="tab-bagging">
+    <div class="panel">
+      <h2>One Bootstrap Sample, and What Gets Left Out</h2>
+      <p class="sub">The same 10 points. Draw one bootstrap sample (with replacement) and see which points this tree would train on — and which it never sees.</p>
+      <svg id="bagSvg" width="640" height="120" viewBox="0 0 640 120"></svg>
+      <div class="row">
+        <button class="op primary" id="bagDraw">Draw a bootstrap sample</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">points used (in-bag)</div><div class="num" id="bagIn">-</div></div>
+        <div class="metric coral"><div class="lbl">points left out (OOB)</div><div class="num" id="bagOut">-</div></div>
+      </div>
+      <h2 style="margin-top:22px;">OOB Fraction, as n Grows</h2>
+      <p class="sub">Simulated average fraction of the data left out of a bootstrap sample, converging to 1/e ≈ 36.8%.</p>
+      <table class="coord" id="oobTable"></table>
+
+      <h2 style="margin-top:22px;">Variable Importance — Which Predictor Does the Tree Actually Use?</h2>
+      <p class="sub">40 points where y genuinely depends only on x1 (threshold at x1=5, plus noise); x2 is pure, uncorrelated noise. Growing a small tree and summing RSS-decrease by predictor:</p>
+      <div class="row"><button class="op primary" id="btnVarImportance">Grow the tree and compute variable importance</button></div>
+      <table class="coord" id="varImportanceTable"></table>
+      <div class="story-line" id="varImportanceStory"></div>
+    </div>
+  </div>
+
+  <!-- TAB 5: RANDOM FOREST DECORRELATION -->
+  <div class="tabpanel" id="tab-forest">
+    <div class="panel">
+      <h2>Var(average) = ρσ² + (1−ρ)σ²/M</h2>
+      <p class="sub">Drag the correlation between trees (ρ) and the ensemble size (M) and watch how little averaging helps once trees are highly correlated.</p>
+      <div class="row"><label>ρ — correlation between trees</label><input type="range" id="rhoSlider" min="0" max="100" step="5" value="0"><span class="readout" id="rhoOut">0.00</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-m="1">M = 1</button>
+        <button class="op" data-m="10">M = 10</button>
+        <button class="op" data-m="100">M = 100</button>
+      </div>
+      <svg id="forestSvg" width="640" height="140" viewBox="0 0 640 140"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">Var(average of M trees)</div><div class="num" id="forestVar">1.00</div></div>
+      </div>
+      <div class="story-line" id="forestStory"></div>
+      <table class="coord" id="forestGridTable" style="margin-top:16px;"></table>
+    </div>
+  </div>
+
+  <!-- TAB 6: ADABOOST -->
+  <div class="tabpanel" id="tab-adaboost">
+    <div class="panel">
+      <h2>AdaBoost: Reweighting What You Got Wrong</h2>
+      <p class="sub">10 points, two classes. Each round: find the best single-split stump given the current weights, then boost the weight of every point it got wrong.</p>
+      <svg id="adaSvg" width="640" height="180" viewBox="0 0 640 180"></svg>
+      <div class="row">
+        <button class="op primary" id="adaStep">Run next round</button>
+        <button class="op" id="adaReset">Reset</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">round</div><div class="num" id="adaRound">0</div></div>
+        <div class="metric coral"><div class="lbl">this stump's weighted error</div><div class="num" id="adaErr">-</div></div>
+        <div class="metric green"><div class="lbl">this stump's vote weight α</div><div class="num" id="adaAlpha">-</div></div>
+        <div class="metric amber"><div class="lbl">ensemble accuracy so far</div><div class="num" id="adaAcc">-</div></div>
+      </div>
+      <div class="story-line" id="adaStory">Click "Run next round" to fit the first stump.</div>
+    </div>
+  </div>
+
+  <!-- TAB 7: GRADIENT BOOSTING -->
+  <div class="tabpanel" id="tab-gbm">
+    <div class="panel">
+      <h2>Gradient Boosting: Fitting the Residuals, Shrunk</h2>
+      <p class="sub">8 regression points. Each round fits a shallow tree to the current residuals and adds it back in, scaled by shrinkage λ = 0.3.</p>
+      <svg id="gbmSvg" width="640" height="200" viewBox="0 0 640 200"></svg>
+      <div class="row">
+        <button class="op primary" id="gbmStep">Run next round</button>
+        <button class="op" id="gbmReset">Reset</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">round</div><div class="num" id="gbmRound">0</div></div>
+        <div class="metric coral"><div class="lbl">total RSS</div><div class="num" id="gbmRSS">188.79</div></div>
+      </div>
+      <div class="story-line" id="gbmStory">Click "Run next round" to add the first tree.</div>
+    </div>
+  </div>
+
+  <!-- TAB 8: PDP & SHAP -->
+  <div class="tabpanel" id="tab-interpret">
+    <div class="panel">
+      <h2>Partial Dependence: the Shape Variable Importance Can't Show</h2>
+      <p class="sub">Same x1/x2 dataset as Tab 4's variable-importance example. x1 is genuinely informative (threshold at ~5); x2 is pure noise.</p>
+      <svg id="pdpSvg" width="640" height="180" viewBox="0 0 640 180"></svg>
+      <div class="story-line">x1's PDP steps cleanly from 10.03 to 30.00 right at the tree's threshold. x2's PDP is dead flat at 19.51 — forcing x2 to any value changes the average prediction by exactly zero.</div>
+    </div>
+    <div class="panel">
+      <h2>SHAP: Why This One Prediction, Exactly</h2>
+      <p class="sub">One loan applicant. Baseline population approval rate is 40%; this applicant's actual prediction is 85%. Each bar is that feature's exact contribution to the gap.</p>
+      <svg id="shapSvg" width="640" height="160" viewBox="0 0 640 160"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">φ_income</div><div class="num">+20</div></div>
+        <div class="metric coral"><div class="lbl">φ_credit</div><div class="num">+25</div></div>
+        <div class="metric amber"><div class="lbl">sum vs. actual gap</div><div class="num">45 = 45 ✓</div></div>
+      </div>
+      <div class="story-line">The two contributions add up exactly to 85% − 40% = 45 points — no leftover, no double-counting. That exact-sum guarantee is what "additive" means in SHAP's name.</div>
+    </div>
+  </div>
+
+  <!-- TAB 9: GBM OVERFITTING -->
+  <div class="tabpanel" id="tab-overfit">
+    <div class="panel">
+      <h2>Watching Gradient Boosting Actually Overfit</h2>
+      <p class="sub">60 points, 40 train / 20 held-out test. Toggle shrinkage λ and watch train vs. test RSS diverge — or not — over 60 rounds.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-lambda="1.0">λ = 1.0 (aggressive)</button>
+        <button class="op" data-lambda="0.1">λ = 0.1 (conservative)</button>
+      </div>
+      <svg id="overfitSvg" width="640" height="220" viewBox="0 0 640 220"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">best test RSS</div><div class="num" id="overfitBest">16.50</div></div>
+        <div class="metric blue"><div class="lbl">at round</div><div class="num" id="overfitBestRound">9</div></div>
+        <div class="metric amber"><div class="lbl">test RSS at round 60</div><div class="num" id="overfitFinal">20.51</div></div>
+      </div>
+      <div class="story-line" id="overfitStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../tree_based_methods_feynman.md">Tree-Based Methods</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function makeLCG(seed){ let s = seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function rss(vals){ if (vals.length===0) return 0; const m=vals.reduce((a,b)=>a+b,0)/vals.length; return vals.reduce((s,v)=>s+(v-m)**2,0); }
+  function meanOf(vals){ return vals.reduce((a,b)=>a+b,0)/vals.length; }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     SHARED DATASET — the 10-point salary example from Part 1
+     ============================================================ */
+  const SALARY = [
+    {x:1,y:35},{x:2,y:38},{x:3,y:42},{x:4,y:44},{x:5,y:60},
+    {x:6,y:63},{x:7,y:65},{x:8,y:90},{x:9,y:95},{x:10,y:98}
+  ];
+
+  /* ============================================================
+     TAB 1 — REGRESSION TREE
+     ============================================================ */
+  const SPLIT_SEQUENCE = [
+    { region: [1,2,3,4,5,6,7,8,9,10], threshold: 7.5, label: "root: split at x ≥ 7.5" },
+    { region: [1,2,3,4,5,6,7], threshold: 4.5, label: "left region: split at x ≥ 4.5" },
+    { region: [8,9,10], threshold: 8.5, label: "right region: split at x ≥ 8.5" }
+  ];
+  let regStepIdx = 0;
+  let regRegions = [SALARY.map(p=>p.x)]; // list of x-lists, each a current leaf
+
+  function regionsFromSteps(k){
+    let regions = [SALARY.map(p=>p.x)];
+    for (let i=0;i<k;i++){
+      const step = SPLIT_SEQUENCE[i];
+      const newRegions = [];
+      for (const r of regions){
+        if (r.join(",") === step.region.join(",")){
+          newRegions.push(r.filter(x=>x<step.threshold));
+          newRegions.push(r.filter(x=>x>=step.threshold));
+        } else newRegions.push(r);
+      }
+      regions = newRegions;
+    }
+    return regions;
+  }
+
+  function drawRegTree(){
+    const svg = document.getElementById("regSvg");
+    svg.innerHTML = "";
+    const W=640,H=260,pad=44;
+    const xMin=0, xMax=11, yMin=30, yMax=105;
+    function X(x){ return pad + (x-xMin)/(xMax-xMin)*(W-2*pad); }
+    function Y(y){ return H-pad - (y-yMin)/(yMax-yMin)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    const regions = regionsFromSteps(regStepIdx);
+    const colors = ["var(--blue)","var(--coral)","var(--green)","var(--amber)"];
+    regions.forEach((region, i) => {
+      const rowsY = SALARY.filter(p=>region.includes(p.x)).map(p=>p.y);
+      const leafMean = meanOf(rowsY);
+      const xs = region.slice().sort((a,b)=>a-b);
+      svg.appendChild(el("line",{x1:X(xs[0]-0.5),y1:Y(leafMean),x2:X(xs[xs.length-1]+0.5),y2:Y(leafMean),stroke:colors[i%4],"stroke-width":2,"stroke-dasharray":"5,3",opacity:0.8}));
+    });
+    for (const p of SALARY){
+      const regionIdx = regions.findIndex(r=>r.includes(p.x));
+      svg.appendChild(el("circle",{cx:X(p.x),cy:Y(p.y),r:6,fill:colors[regionIdx%4],stroke:"var(--bg)","stroke-width":1.5}));
+      svg.appendChild(el("text",{x:X(p.x),y:Y(p.y)-11,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)","font-family":"JetBrains Mono, monospace"}, p.x));
+    }
+    for (let x=1;x<=10;x+=1) svg.appendChild(el("text",{x:X(x),y:H-pad+16,"text-anchor":"middle","font-size":9,fill:"var(--chalk-dim)"}, x));
+    svg.appendChild(el("text",{x:20,y:20,"font-size":11,fill:"var(--chalk-dim)"}, "salary ($k)"));
+    svg.appendChild(el("text",{x:W-90,y:H-14,"font-size":11,fill:"var(--chalk-dim)"}, "years of experience"));
+  }
+
+  function updateRegMetrics(){
+    const regions = regionsFromSteps(regStepIdx);
+    const totalRSS = regions.reduce((s,r)=>s+rss(SALARY.filter(p=>r.includes(p.x)).map(p=>p.y)), 0);
+    document.getElementById("regRSS").textContent = totalRSS.toFixed(2);
+    document.getElementById("regLeaves").textContent = regions.length;
+    document.getElementById("regStory").textContent = regStepIdx===0
+      ? "No splits yet — every point predicted by the overall mean."
+      : (regStepIdx < SPLIT_SEQUENCE.length
+        ? `After step ${regStepIdx}: ${SPLIT_SEQUENCE[regStepIdx-1].label}. RSS dropped to ${totalRSS.toFixed(2)}.`
+        : `Full tree: 4 leaves, RSS = ${totalRSS.toFixed(2)} — a 98.7% reduction from the no-split baseline of 5202.00.`);
+    document.getElementById("regStep").disabled = regStepIdx >= SPLIT_SEQUENCE.length;
+  }
+  document.getElementById("regStep").addEventListener("click", () => {
+    if (regStepIdx < SPLIT_SEQUENCE.length){ regStepIdx++; drawRegTree(); updateRegMetrics(); }
+  });
+  document.getElementById("regReset").addEventListener("click", () => { regStepIdx = 0; drawRegTree(); updateRegMetrics(); });
+  drawRegTree(); updateRegMetrics();
+
+  /* ============================================================
+     TAB 2 — COST-COMPLEXITY PRUNING
+     ============================================================ */
+  const LEAVES_A = SALARY.filter(p=>p.x<=4).map(p=>p.y);
+  const LEAVES_B = SALARY.filter(p=>p.x>4 && p.x<7.5).map(p=>p.y);
+  const LEAVES_C = SALARY.filter(p=>p.x===8).map(p=>p.y);
+  const LEAVES_D = SALARY.filter(p=>p.x>=9).map(p=>p.y);
+  const rssA=rss(LEAVES_A), rssB=rss(LEAVES_B), rssC=rss(LEAVES_C), rssD=rss(LEAVES_D);
+  const rssAB = rss([...LEAVES_A,...LEAVES_B]);
+  const rssCD = rss([...LEAVES_C,...LEAVES_D]);
+  const rssAll = rss(SALARY.map(p=>p.y));
+  const SUBTREES = [
+    { name:"T4 (4 leaves)", leaves:4, rssVal: rssA+rssB+rssC+rssD },
+    { name:"T3 (3 leaves: merge {8}+{9-10})", leaves:3, rssVal: rssA+rssB+rssCD },
+    { name:"T2 (2 leaves: also merge {1-4}+{5-7})", leaves:2, rssVal: rssAB+rssCD },
+    { name:"T1 (1 leaf: root)", leaves:1, rssVal: rssAll }
+  ];
+  function renderPruneTable(alpha){
+    const scores = SUBTREES.map(t => ({...t, score: t.rssVal + alpha*t.leaves}));
+    const winner = scores.reduce((a,b)=> b.score<a.score ? b : a);
+    let html = "<tr><th>Subtree</th><th>RSS(T)</th><th>+ α·|T|</th><th>Cost-complexity score</th></tr>";
+    for (const s of scores){
+      const cls = s.name===winner.name ? "winner" : "";
+      html += `<tr><td>${s.name}</td><td>${s.rssVal.toFixed(2)}</td><td>${(alpha*s.leaves).toFixed(2)}</td><td class="${cls}">${s.score.toFixed(2)}${s.name===winner.name?" ← winner":""}</td></tr>`;
+    }
+    document.getElementById("pruneTable").innerHTML = html;
+    return winner;
+  }
+  function drawPruneBars(alpha){
+    const svg = document.getElementById("pruneSvg");
+    svg.innerHTML = "";
+    const W=640,H=160,pad=50;
+    const scores = SUBTREES.map(t => t.rssVal + alpha*t.leaves);
+    const maxScore = Math.max(...scores, 1);
+    const barW = 100;
+    scores.forEach((s,i) => {
+      const x = pad + i*140;
+      const h = (s/maxScore)*(H-2*pad);
+      svg.appendChild(el("rect",{x, y:H-pad-h, width:barW, height:h, fill: i===0?"var(--blue)":i===1?"var(--green)":i===2?"var(--amber)":"var(--coral)", opacity:0.85}));
+      svg.appendChild(el("text",{x:x+barW/2, y:H-pad-h-8, "text-anchor":"middle", "font-size":11, fill:"var(--chalk)"}, s.toFixed(0)));
+      svg.appendChild(el("text",{x:x+barW/2, y:H-pad+16, "text-anchor":"middle", "font-size":10, fill:"var(--chalk-dim)"}, SUBTREES[i].leaves+" leaves"));
+    });
+  }
+  function updatePrune(){
+    const alpha = parseFloat(document.getElementById("alphaSlider").value);
+    document.getElementById("alphaOut").textContent = alpha;
+    const winner = renderPruneTable(alpha);
+    drawPruneBars(alpha);
+    document.getElementById("pruneStory").textContent = `At α = ${alpha}, the best subtree is ${winner.name}. Crossovers happen at exactly α = 28.17 (T4→T3), α = 900.30 (T3→T2), and α = 4207.62 (T2→T1).`;
+  }
+  document.getElementById("alphaSlider").addEventListener("input", updatePrune);
+  updatePrune();
+
+  /* ============================================================
+     TAB 3 — CLASSIFICATION IMPURITY
+     ============================================================ */
+  const CLASS_POINTS = [
+    {x:1,y:0},{x:2,y:0},{x:3,y:0},{x:4,y:0},{x:5,y:1},
+    {x:6,y:0},{x:7,y:1},{x:8,y:1},{x:9,y:1},{x:10,y:1},{x:11,y:1},{x:12,y:1}
+  ];
+  function gini(counts){ const n=counts.reduce((a,b)=>a+b,0); if(n===0) return 0; return 1-counts.reduce((s,c)=>s+(c/n)**2,0); }
+  function entropyOf(counts){ const n=counts.reduce((a,b)=>a+b,0); if(n===0) return 0; return -counts.reduce((s,c)=>{ if(c===0) return s; const p=c/n; return s+p*Math.log2(p); },0); }
+  function classErr(counts){ const n=counts.reduce((a,b)=>a+b,0); if(n===0) return 0; return 1-Math.max(...counts)/n; }
+  function splitCounts(threshold){
+    const left = CLASS_POINTS.filter(p=>p.x<threshold), right = CLASS_POINTS.filter(p=>p.x>=threshold);
+    return {
+      left, right,
+      leftCounts:[left.filter(p=>p.y===0).length, left.filter(p=>p.y===1).length],
+      rightCounts:[right.filter(p=>p.y===0).length, right.filter(p=>p.y===1).length]
+    };
+  }
+  function weightedImpurity(fn, threshold){
+    const {left,right,leftCounts,rightCounts} = splitCounts(threshold);
+    const n = CLASS_POINTS.length;
+    return (left.length/n)*fn(leftCounts) + (right.length/n)*fn(rightCounts);
+  }
+  function drawImpurityPoints(threshold){
+    const svg = document.getElementById("impuritySvg");
+    svg.innerHTML = "";
+    const W=640,H=120,pad=40;
+    function X(x){ return pad + (x-0.5)/12*(W-2*pad); }
+    const splitX = X(threshold);
+    svg.appendChild(el("line",{x1:splitX,y1:20,x2:splitX,y2:H-30,stroke:"var(--amber)","stroke-width":2,"stroke-dasharray":"4,3"}));
+    for (const p of CLASS_POINTS){
+      svg.appendChild(el("circle",{cx:X(p.x),cy:60,r:9,fill:p.y===0?"var(--blue)":"var(--coral)",stroke:"var(--bg)","stroke-width":1.5}));
+      svg.appendChild(el("text",{x:X(p.x),y:H-10,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)"}, p.x));
+    }
+  }
+  function updateImpurity(){
+    const threshold = parseFloat(document.getElementById("impThreshold").value)/10;
+    document.getElementById("impOut").textContent = threshold.toFixed(1);
+    drawImpurityPoints(threshold);
+    const g = weightedImpurity(gini, threshold), e = weightedImpurity(entropyOf, threshold), c = weightedImpurity(classErr, threshold);
+    document.getElementById("impGini").textContent = g.toFixed(4);
+    document.getElementById("impEntropy").textContent = e.toFixed(4);
+    document.getElementById("impErr").textContent = c.toFixed(4);
+    let story = `Split at x ≥ ${threshold.toFixed(1)}.`;
+    if (Math.abs(threshold-4.5)<0.01) story += " Classification error here (0.0833) ties EXACTLY with x ≥ 6.5's error (0.0833) — but Gini and entropy both clearly prefer 6.5. Try dragging to 6.5 to compare.";
+    if (Math.abs(threshold-6.5)<0.01) story += " This is the best split by all three measures — and its classification error (0.0833) ties exactly with x ≥ 4.5's, even though Gini/entropy rank 6.5 clearly better.";
+    document.getElementById("impStory").textContent = story;
+
+    const table = document.getElementById("impAllTable");
+    let html = "<tr><th>Threshold</th><th>Gini</th><th>Entropy</th><th>Classification error</th></tr>";
+    [3.5, 4.5, 5.5, 6.5, 7.5].forEach(th => {
+      const isBest = th === 6.5;
+      const g2 = weightedImpurity(gini, th), e2 = weightedImpurity(entropyOf, th), c2 = weightedImpurity(classErr, th);
+      const cls = isBest ? ' class="winner"' : "";
+      html += `<tr><td${cls}>x ≥ ${th}</td><td${cls}>${g2.toFixed(4)}</td><td${cls}>${e2.toFixed(4)}</td><td${cls}>${c2.toFixed(4)}</td></tr>`;
+    });
+    table.innerHTML = html;
+  }
+  document.getElementById("impThreshold").addEventListener("input", updateImpurity);
+  updateImpurity();
+
+  /* ============================================================
+     TAB 4 — BAGGING & OOB
+     ============================================================ */
+  let bagRand = makeLCG(2024);
+  function drawBagPoints(counts){
+    const svg = document.getElementById("bagSvg");
+    svg.innerHTML = "";
+    const W=640,H=120,pad=40;
+    function X(x){ return pad + (x-1)/9*(W-2*pad); }
+    for (let i=0;i<SALARY.length;i++){
+      const p = SALARY[i];
+      const c = counts ? counts[i] : 0;
+      const inBag = c > 0;
+      svg.appendChild(el("circle",{cx:X(p.x),cy:60,r: 9 + (inBag ? Math.min(c,4)*2 : 0), fill: inBag?"var(--green)":"var(--coral)", opacity: inBag?0.9:0.35, stroke:"var(--bg)","stroke-width":1.5}));
+      svg.appendChild(el("text",{x:X(p.x),y:H-10,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)"}, p.x + (c>1?" ×"+c:"")));
+    }
+  }
+  function drawBootstrap(){
+    const counts = new Array(SALARY.length).fill(0);
+    for (let i=0;i<SALARY.length;i++) counts[Math.floor(bagRand()*SALARY.length)]++;
+    drawBagPoints(counts);
+    const inBag = counts.filter(c=>c>0).length;
+    document.getElementById("bagIn").textContent = inBag + " / 10";
+    document.getElementById("bagOut").textContent = (10-inBag) + " / 10";
+  }
+  document.getElementById("bagDraw").addEventListener("click", drawBootstrap);
+  drawBagPoints(null);
+
+  function oobFraction(n, trials, seed){
+    const rand = makeLCG(seed);
+    let total = 0;
+    for (let t=0;t<trials;t++){
+      const selected = new Array(n).fill(false);
+      for (let i=0;i<n;i++) selected[Math.floor(rand()*n)] = true;
+      total += selected.filter(s=>!s).length/n;
+    }
+    return total/trials;
+  }
+  function renderOOBTable(){
+    let html = "<tr><th>n</th><th>Simulated OOB fraction</th><th>(1 − 1/n)ⁿ theory</th></tr>";
+    for (const n of [10,100,1000]){
+      const sim = oobFraction(n, 5000, 3);
+      const theory = Math.pow(1-1/n, n);
+      html += `<tr><td>${n}</td><td>${(sim*100).toFixed(2)}%</td><td>${(theory*100).toFixed(2)}%</td></tr>`;
+    }
+    html += `<tr><td>→ ∞</td><td colspan="2">converges to 1/e ≈ 36.79%</td></tr>`;
+    document.getElementById("oobTable").innerHTML = html;
+  }
+  renderOOBTable();
+
+  function boxMuller(rand){ const u1=Math.max(rand(),1e-12), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+  function genImportanceData(seed, noiseSd){
+    const rand = makeLCG(seed);
+    const pts = [];
+    for (let i=0;i<40;i++){
+      const x1 = rand()*10, x2 = rand()*10;
+      const yTrue = x1 >= 5 ? 30 : 10;
+      pts.push({x1, x2, y: yTrue + noiseSd*boxMuller(rand)});
+    }
+    return pts;
+  }
+  function rssOf(points){
+    if (points.length===0) return 0;
+    const mean = points.reduce((s,p)=>s+p.y,0)/points.length;
+    return points.reduce((s,p)=>s+(p.y-mean)**2,0);
+  }
+  function bestImportanceSplit(points, predictors){
+    let best = null;
+    for (const pred of predictors){
+      const vals = Array.from(new Set(points.map(p=>p[pred]))).sort((a,b)=>a-b);
+      for (let i=0;i<vals.length-1;i++){
+        const t = (vals[i]+vals[i+1])/2;
+        const left = points.filter(p=>p[pred]<t), right = points.filter(p=>p[pred]>=t);
+        if (left.length<2 || right.length<2) continue;
+        const decrease = rssOf(points) - rssOf(left) - rssOf(right);
+        if (!best || decrease > best.decrease) best = {pred, t, decrease, left, right};
+      }
+    }
+    return best;
+  }
+  function growImportanceTree(points, predictors, maxDepth, importance, depth){
+    if (depth>=maxDepth || points.length<4) return;
+    const split = bestImportanceSplit(points, predictors);
+    if (!split || split.decrease<=0) return;
+    importance[split.pred] = (importance[split.pred]||0) + split.decrease;
+    growImportanceTree(split.left, predictors, maxDepth, importance, depth+1);
+    growImportanceTree(split.right, predictors, maxDepth, importance, depth+1);
+  }
+  function runVariableImportance(){
+    const pts = genImportanceData(1, 1);
+    const importance = {x1:0, x2:0};
+    growImportanceTree(pts, ["x1","x2"], 4, importance, 0);
+    const total = importance.x1 + importance.x2;
+    const table = document.getElementById("varImportanceTable");
+    table.innerHTML = `<tr><th>Predictor</th><th>Total RSS decrease attributed to it</th><th>Share of total</th></tr>
+      <tr><td>x1 (genuinely informative)</td><td>${importance.x1.toFixed(2)}</td><td>${(100*importance.x1/total).toFixed(1)}%</td></tr>
+      <tr><td>x2 (pure noise)</td><td>${importance.x2.toFixed(2)}</td><td>${(100*importance.x2/total).toFixed(1)}%</td></tr>`;
+    document.getElementById("varImportanceStory").textContent =
+      `The tree correctly, automatically identifies x1 as essentially the entire story (${(100*importance.x1/total).toFixed(1)}%) and x2 as essentially irrelevant (${(100*importance.x2/total).toFixed(1)}%) — without being told in advance which was which. Live run on a fixed synthetic dataset; the tutorial's own run of this same experiment landed on 99.9% / 0.1%.`;
+  }
+  document.getElementById("btnVarImportance").addEventListener("click", runVariableImportance);
+
+  /* ============================================================
+     TAB 5 — RANDOM FOREST DECORRELATION
+     ============================================================ */
+  let currentM = 1;
+  document.querySelectorAll("[data-m]").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll("[data-m]").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    currentM = parseInt(btn.dataset.m, 10);
+    updateForest();
+  }));
+  function drawForestBar(variance){
+    const svg = document.getElementById("forestSvg");
+    svg.innerHTML = "";
+    const W=640,H=140,pad=40;
+    const maxV = 1.1;
+    const barH = (variance/maxV)*(H-2*pad);
+    svg.appendChild(el("rect",{x:280,y:H-pad-barH,width:80,height:barH,fill:"var(--amber)",opacity:0.85}));
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    svg.appendChild(el("text",{x:320,y:H-pad-barH-10,"text-anchor":"middle","font-size":12,fill:"var(--chalk)"}, variance.toFixed(3)));
+    svg.appendChild(el("text",{x:320,y:H-14,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)"}, "σ² = 1.0 shown as full bar height"));
+  }
+  function updateForest(){
+    const rho = parseFloat(document.getElementById("rhoSlider").value)/100;
+    document.getElementById("rhoOut").textContent = rho.toFixed(2);
+    const sigma2 = 1.0;
+    const variance = rho*sigma2 + (1-rho)/currentM*sigma2;
+    document.getElementById("forestVar").textContent = variance.toFixed(3);
+    drawForestBar(variance);
+    document.getElementById("forestStory").textContent = rho >= 0.95
+      ? `At ρ ≈ 1 (fully correlated trees), variance stays stuck near σ² no matter how large M gets — averaging buys nothing. This is exactly why Random Forests randomly restrict features per split: to pull ρ down.`
+      : `Var(average) = ${rho.toFixed(2)}×1.0 + ${(1-rho).toFixed(2)}/${currentM}×1.0 = ${variance.toFixed(3)}. Lower ρ means more of the variance is in the "divide by M" term — the part averaging actually kills.`;
+    renderForestGrid();
+  }
+  function renderForestGrid(){
+    const table = document.getElementById("forestGridTable");
+    let html = "<tr><th>ρ</th><th>Var(average), M=1</th><th>Var(average), M=10</th><th>Var(average), M=100</th></tr>";
+    [0.0, 0.3, 0.6, 1.0].forEach(rho => {
+      const isFull = rho === 1.0;
+      const cls = isFull ? ' class="winner"' : "";
+      const cells = [1,10,100].map(M => (rho*1.0 + (1-rho)/M*1.0).toFixed(2));
+      html += `<tr><td${cls}>${rho.toFixed(1)}${isFull?" (fully correlated)":rho===0?" (fully independent)":""}</td>${cells.map(c=>`<td${cls}>${c}</td>`).join("")}</tr>`;
+    });
+    table.innerHTML = html;
+  }
+  document.getElementById("rhoSlider").addEventListener("input", updateForest);
+  updateForest();
+
+  /* ============================================================
+     TAB 6 — ADABOOST
+     ============================================================ */
+  const ADA_POINTS = [
+    {x:1,y:1},{x:2,y:1},{x:3,y:1},{x:4,y:-1},{x:5,y:1},
+    {x:6,y:1},{x:7,y:-1},{x:8,y:-1},{x:9,y:-1},{x:10,y:-1}
+  ];
+  let adaWeights = new Array(10).fill(1/10);
+  let adaEnsemble = [];
+  let adaRound = 0;
+  function bestStump(weights){
+    let best = null;
+    for (let t=0.5; t<10; t++){
+      for (const dir of [1,-1]){
+        let err = 0;
+        const preds = ADA_POINTS.map(p => (p.x < t ? dir : -dir));
+        for (let i=0;i<10;i++) if (preds[i] !== ADA_POINTS[i].y) err += weights[i];
+        if (best===null || err < best.err) best = {t, dir, err, preds};
+      }
+    }
+    return best;
+  }
+  function drawAda(){
+    const svg = document.getElementById("adaSvg");
+    svg.innerHTML = "";
+    const W=640,H=180,pad=40;
+    function X(x){ return pad + (x-1)/9*(W-2*pad); }
+    const maxW = Math.max(...adaWeights);
+    for (let i=0;i<10;i++){
+      const p = ADA_POINTS[i];
+      const barH = (adaWeights[i]/maxW)*80;
+      svg.appendChild(el("rect",{x:X(p.x)-10, y:120-barH, width:20, height:barH, fill: p.y===1?"var(--blue)":"var(--coral)", opacity:0.85}));
+      svg.appendChild(el("text",{x:X(p.x),y:140,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)"}, p.x));
+      svg.appendChild(el("text",{x:X(p.x),y:160,"text-anchor":"middle","font-size":9,fill:"var(--chalk-dim)"}, p.y===1?"+1":"-1"));
+    }
+    svg.appendChild(el("text",{x:20,y:20,"font-size":11,fill:"var(--chalk-dim)"}, "point weight (bar height)"));
+  }
+  function updateAdaMetrics(err, alpha){
+    document.getElementById("adaRound").textContent = adaRound;
+    document.getElementById("adaErr").textContent = err===null ? "-" : err.toFixed(3);
+    document.getElementById("adaAlpha").textContent = alpha===null ? "-" : alpha.toFixed(3);
+    let correct = 0;
+    for (const p of ADA_POINTS){
+      const score = adaEnsemble.reduce((s,e) => s + e.alpha*(p.x<e.t ? e.dir : -e.dir), 0);
+      if (Math.sign(score) === p.y || adaEnsemble.length===0) { if (adaEnsemble.length>0 && Math.sign(score)===p.y) correct++; }
+    }
+    document.getElementById("adaAcc").textContent = adaEnsemble.length===0 ? "-" : `${correct}/10`;
+  }
+  document.getElementById("adaStep").addEventListener("click", () => {
+    if (adaRound >= 3) return;
+    adaRound++;
+    const stump = bestStump(adaWeights);
+    const alpha = 0.5*Math.log((1-stump.err)/stump.err);
+    adaEnsemble.push({alpha, t:stump.t, dir:stump.dir});
+    let newWeights = adaWeights.map((w,i) => w*Math.exp(-alpha*ADA_POINTS[i].y*stump.preds[i]));
+    const Z = newWeights.reduce((a,b)=>a+b,0);
+    newWeights = newWeights.map(w=>w/Z);
+    adaWeights = newWeights;
+    drawAda();
+    updateAdaMetrics(stump.err, alpha);
+    document.getElementById("adaStory").textContent = `Round ${adaRound}: best stump splits at x=${stump.t}, weighted error ${stump.err.toFixed(3)}. Misclassified points just got heavier — watch their bars grow next round.`;
+    document.getElementById("adaStep").disabled = adaRound >= 3;
+  });
+  document.getElementById("adaReset").addEventListener("click", () => {
+    adaWeights = new Array(10).fill(1/10); adaEnsemble = []; adaRound = 0;
+    drawAda(); updateAdaMetrics(null, null);
+    document.getElementById("adaStory").textContent = "Click \"Run next round\" to fit the first stump.";
+    document.getElementById("adaStep").disabled = false;
+  });
+  drawAda(); updateAdaMetrics(null, null);
+
+  /* ============================================================
+     TAB 7 — GRADIENT BOOSTING
+     ============================================================ */
+  const GBM_POINTS = [
+    {x:1,y:2.1},{x:2,y:2.9},{x:3,y:4.2},{x:4,y:8.0},
+    {x:5,y:8.9},{x:6,y:9.5},{x:7,y:15.1},{x:8,y:15.8}
+  ];
+  const LAMBDA = 0.3;
+  let gbmPreds = new Array(8).fill(meanOf(GBM_POINTS.map(p=>p.y)));
+  let gbmRound = 0;
+  function bestStumpRegression(residuals){
+    let best = null;
+    for (let t=1.5; t<8; t++){
+      const left=[], right=[];
+      for (let i=0;i<8;i++) (GBM_POINTS[i].x<t?left:right).push(residuals[i]);
+      if (left.length===0||right.length===0) continue;
+      const meanL = meanOf(left), meanR = meanOf(right);
+      const sse = left.reduce((s,v)=>s+(v-meanL)**2,0) + right.reduce((s,v)=>s+(v-meanR)**2,0);
+      if (best===null || sse<best.sse) best = {t, meanL, meanR, sse};
+    }
+    return best;
+  }
+  function drawGBM(){
+    const svg = document.getElementById("gbmSvg");
+    svg.innerHTML = "";
+    const W=640,H=200,pad=40;
+    const yMin=0, yMax=17;
+    function X(x){ return pad + (x-1)/7*(W-2*pad); }
+    function Y(y){ return H-pad - (y-yMin)/(yMax-yMin)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    for (let i=0;i<8;i++){
+      svg.appendChild(el("line",{x1:X(GBM_POINTS[i].x),y1:Y(GBM_POINTS[i].y),x2:X(GBM_POINTS[i].x),y2:Y(gbmPreds[i]),stroke:"var(--coral)","stroke-width":1.5,opacity:0.6}));
+      svg.appendChild(el("circle",{cx:X(GBM_POINTS[i].x),cy:Y(GBM_POINTS[i].y),r:6,fill:"var(--blue)"}));
+      svg.appendChild(el("circle",{cx:X(GBM_POINTS[i].x),cy:Y(gbmPreds[i]),r:5,fill:"var(--amber)"}));
+    }
+    svg.appendChild(el("text",{x:20,y:20,"font-size":10,fill:"var(--blue)"}, "● true y"));
+    svg.appendChild(el("text",{x:100,y:20,"font-size":10,fill:"var(--amber)"}, "● current prediction"));
+    svg.appendChild(el("text",{x:280,y:20,"font-size":10,fill:"var(--coral)"}, "| residual"));
+  }
+  document.getElementById("gbmStep").addEventListener("click", () => {
+    if (gbmRound >= 5) return;
+    gbmRound++;
+    const residuals = GBM_POINTS.map((d,i) => d.y - gbmPreds[i]);
+    const rssBefore = residuals.reduce((s,r)=>s+r*r,0);
+    const stump = bestStumpRegression(residuals);
+    gbmPreds = GBM_POINTS.map((d,i) => gbmPreds[i] + LAMBDA*(d.x<stump.t ? stump.meanL : stump.meanR));
+    const rssAfter = GBM_POINTS.reduce((s,d,i)=>s+(d.y-gbmPreds[i])**2, 0);
+    drawGBM();
+    document.getElementById("gbmRound").textContent = gbmRound;
+    document.getElementById("gbmRSS").textContent = rssAfter.toFixed(2);
+    document.getElementById("gbmStory").textContent = `Round ${gbmRound}: new tree splits at x=${stump.t}, leaf means (${stump.meanL.toFixed(2)}, ${stump.meanR.toFixed(2)}) added in at 30% strength. RSS: ${rssBefore.toFixed(2)} → ${rssAfter.toFixed(2)}.`;
+    document.getElementById("gbmStep").disabled = gbmRound >= 5;
+  });
+  document.getElementById("gbmReset").addEventListener("click", () => {
+    gbmPreds = new Array(8).fill(meanOf(GBM_POINTS.map(p=>p.y))); gbmRound = 0;
+    drawGBM();
+    document.getElementById("gbmRound").textContent = 0;
+    document.getElementById("gbmRSS").textContent = "188.79";
+    document.getElementById("gbmStory").textContent = "Click \"Run next round\" to add the first tree.";
+    document.getElementById("gbmStep").disabled = false;
+  });
+  drawGBM();
+
+  /* ============================================================
+     TAB 8 — PDP & SHAP
+     ============================================================ */
+  function drawPDP(){
+    const svg = document.getElementById("pdpSvg");
+    svg.innerHTML = "";
+    const x1Grid = [1,2,3,4,4.9,5.1,6,7,8,9];
+    const x1Vals = [10.03,10.03,10.03,10.03,10.03,30.00,30.00,30.00,30.00,30.00];
+    const x2Grid = [1,2,3,4,5,6,7,8,9,10];
+    const x2Vals = new Array(10).fill(19.51);
+    function drawStrip(vals, grid, yOffset, color, label){
+      const pad=50, w=250;
+      svg.appendChild(el("text",{x:pad,y:yOffset-8,"font-size":11,fill:"var(--chalk-dim)"},label));
+      vals.forEach((v,i)=>{
+        const x = pad + i*(w/vals.length);
+        const h = (v/32)*60;
+        svg.appendChild(el("rect",{x, y:yOffset+60-h, width:w/vals.length-2, height:h, fill:color, opacity:0.85}));
+      });
+      svg.appendChild(el("text",{x:pad+w+20,y:yOffset+30,"font-size":10,fill:"var(--chalk-dim)"},"range: "+Math.min(...vals).toFixed(2)+" to "+Math.max(...vals).toFixed(2)));
+    }
+    drawStrip(x1Vals, x1Grid, 30, "var(--amber)", "PDP(x1) — sweeping the informative feature");
+    drawStrip(x2Vals, x2Grid, 130, "var(--green)", "PDP(x2) — sweeping the pure-noise feature");
+  }
+  drawPDP();
+
+  function drawSHAP(){
+    const svg = document.getElementById("shapSvg");
+    svg.innerHTML = "";
+    const steps = [
+      {label:"baseline", value:40, delta:0},
+      {label:"+ income", value:60, delta:20},
+      {label:"+ credit", value:85, delta:25}
+    ];
+    const pad=60, barW=140, scale=1.6;
+    let x = pad;
+    steps.forEach((s,i)=>{
+      const prevVal = i===0 ? 0 : steps[i-1].value;
+      const y0 = 140 - prevVal*scale*0.5, y1 = 140 - s.value*scale*0.5;
+      const color = i===0 ? "var(--chalk-dim)" : (i===1 ? "var(--blue)" : "var(--coral)");
+      svg.appendChild(el("rect",{x, y: Math.min(y0,y1), width:barW, height: Math.max(Math.abs(y1-y0),2), fill:color, opacity:0.85}));
+      svg.appendChild(el("text",{x:x+barW/2, y:Math.min(y0,y1)-8, "text-anchor":"middle", "font-size":12, fill:"var(--chalk)"}, s.value+"%"));
+      svg.appendChild(el("text",{x:x+barW/2, y:155, "text-anchor":"middle", "font-size":10, fill:"var(--chalk-dim)"}, s.label));
+      x += barW + 20;
+    });
+  }
+  drawSHAP();
+
+  /* ============================================================
+     TAB 9 — GBM OVERFITTING (hardcoded, pre-verified curves)
+     ============================================================ */
+  const OVERFIT_DATA = {
+    "1.0": {
+      train: [56.22,37.09,30.78,27.06,25.57,23.11,20.02,18.60,17.66,16.94,16.38,15.95,15.10,14.70,14.19,13.81,13.45,13.10,12.88,12.60,12.37,12.22,11.96,11.79,11.65,11.34,11.12,10.90,10.67,10.47,10.31,10.14,9.96,9.81,9.67,9.54,9.38,9.21,9.03,8.92,8.85,8.77,8.66,8.55,8.44,8.33,8.22,8.11,7.99,7.91,7.85,7.80,7.72,7.65,7.57,7.48,7.38,7.30,7.21,7.12],
+      test: [31.81,28.41,19.96,25.32,23.53,24.47,18.40,20.26,16.50,19.22,18.84,20.91,17.34,19.29,17.28,19.19,17.99,17.94,17.61,18.08,18.61,18.05,18.81,18.21,19.56,17.91,19.58,18.55,19.57,18.57,19.41,18.93,19.24,18.87,19.30,18.53,19.93,18.76,20.26,19.41,20.55,19.42,20.64,19.88,20.54,20.19,20.48,20.26,20.78,20.38,20.82,20.64,20.85,20.63,20.91,20.61,20.97,20.32,21.42,20.51]
+    },
+    "0.1": {
+      train: [78.82,74.53,71.05,68.23,65.95,64.10,62.19,60.54,58.86,57.39,55.90,54.60,53.28,52.12,50.96,49.93,48.90,47.94,47.01,46.14,45.29,44.50,43.74,43.01,42.33,41.66,41.04,40.43,39.87,39.31,38.79,38.28,37.80,37.32,36.88,36.43,36.01,35.60,35.21,34.83,34.47,34.12,33.79,33.46,33.16,32.85,32.56,32.28,32.01,31.75,31.49,31.25,30.99,30.74,30.52,30.27,30.04,29.81,29.59,29.37],
+      test: [59.67,55.77,52.48,49.68,47.30,45.27,44.82,42.97,42.59,40.91,40.59,39.05,38.78,37.37,37.15,35.87,35.69,34.58,34.43,33.40,33.28,32.33,32.23,31.26,31.18,30.35,30.29,29.52,29.48,28.76,28.83,28.15,28.22,27.50,27.49,26.88,26.96,26.38,26.46,25.92,26.00,25.49,25.58,25.03,25.04,24.58,24.67,24.23,24.32,23.90,24.22,23.76,23.85,23.55,23.57,23.18,23.48,23.05,23.14,22.87]
+    }
+  };
+  function drawOverfit(lambdaKey){
+    const data = OVERFIT_DATA[lambdaKey];
+    const svg = document.getElementById("overfitSvg");
+    svg.innerHTML = "";
+    const W=640,H=220,pad=45;
+    const allVals = [...data.train, ...data.test];
+    const maxV = Math.max(...allVals), minV = 0;
+    function X(round){ return pad + (round-1)/59*(W-2*pad); }
+    function Y(v){ return H-pad - (v-minV)/(maxV-minV)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    function poly(arr, color){
+      const pts = arr.map((v,i)=>`${X(i+1)},${Y(v)}`).join(" ");
+      svg.appendChild(el("polyline",{points:pts, fill:"none", stroke:color, "stroke-width":2.5}));
+    }
+    poly(data.train, "var(--blue)");
+    poly(data.test, "var(--coral)");
+    const minTest = Math.min(...data.test);
+    const minRound = data.test.indexOf(minTest)+1;
+    svg.appendChild(el("line",{x1:X(minRound),y1:pad,x2:X(minRound),y2:H-pad,stroke:"var(--amber)","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+    svg.appendChild(el("text",{x:X(minRound),y:pad-6,"text-anchor":"middle","font-size":10,fill:"var(--amber)"},"best round: "+minRound));
+    svg.appendChild(el("text",{x:pad+10,y:pad+14,"font-size":11,fill:"var(--blue)"},"— train RSS"));
+    svg.appendChild(el("text",{x:pad+120,y:pad+14,"font-size":11,fill:"var(--coral)"},"— test RSS"));
+    document.getElementById("overfitBest").textContent = minTest.toFixed(2);
+    document.getElementById("overfitBestRound").textContent = minRound;
+    document.getElementById("overfitFinal").textContent = data.test[59].toFixed(2);
+    document.getElementById("overfitStory").textContent = lambdaKey === "1.0"
+      ? "Train RSS falls the whole time, but test RSS bottoms out at round 9 then climbs back up — this run has overfit. Early stopping at round 9 would have beaten running all 60 rounds."
+      : "At this gentler shrinkage, test RSS is still falling at round 60 — this run hasn't overfit yet within this many rounds, the direct trade-off for needing more rounds to reach the same fit.";
+  }
+  document.querySelectorAll("[data-lambda]").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll("[data-lambda]").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    drawOverfit(btn.dataset.lambda);
+  }));
+  drawOverfit("1.0");
+})();
+</script>
+</body>
+</html>

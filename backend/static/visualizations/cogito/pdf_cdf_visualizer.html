@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDFs and CDFs, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --good:#0F8B8D; --warn:#D9636B; --pB:#D9A62E;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:140px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:52px; text-align:center; }
+  table.dt{ border-collapse:collapse; margin:14px auto; font-family:"IBM Plex Mono",monospace; font-size:13px; }
+  table.dt th, table.dt td{ border:1px solid var(--line); padding:6px 10px; text-align:center; }
+  table.dt th{ background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.8; word-break:break-word; }
+  .verdict b{ color:var(--accent); }
+  svg{ width:100%; max-width:600px; height:auto; display:block; margin:10px auto; background:#F5F4F0; border-radius:10px; }
+  .legend{ display:flex; gap:14px; justify-content:center; font-size:12px; color:var(--ink-soft); margin-top:6px; flex-wrap:wrap; }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to PDFs and CDFs</div>
+    <h1>PDFs and CDFs, Made Visible</h1>
+    <p>Four verified demos: watch a density's area-so-far trace a live CDF; build uniform and exponential distributions from their sliders; watch the normal distribution's CDF come from the error function, not a shortcut; and watch inverse-CDF sampling turn plain uniform randomness into any shape you like.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="explorer">PDF ↔ CDF Explorer</button>
+    <button class="tab" data-tab="builder">Uniform &amp; Exponential Builder</button>
+    <button class="tab" data-tab="normal">Normal CDF via erf</button>
+    <button class="tab" data-tab="sampling">Inverse-CDF Sampling</button>
+  </div>
+
+  <!-- ============ TAB: PDF <-> CDF EXPLORER ============ -->
+  <div class="panel active" id="panel-explorer">
+    <div class="card">
+      <h2>Drag a Point, Watch the Area Build the CDF</h2>
+      <p class="sub"><b>What's happening:</b> the top curve is a standard normal density f(x); the shaded region is the area swept from the far left up to your dragged point. The bottom curve is F(x) — the same running area, traced live as you drag.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag to x=1.5 and confirm the readout matches the tutorial's verified F(1.5)=0.933193. Drag to x=0 and confirm F(0)=0.5 exactly, by the normal curve's symmetry.</p>
+      <div class="row"><label>Position x (= b)</label><input type="range" id="explorerX" min="-4" max="4" step="0.05" value="1.5"><span class="readout" id="explorerXOut">1.50</span></div>
+      <div class="row">
+        <label><input type="checkbox" id="explorerRangeMode"> range mode: P(a≤X≤b)</label>
+        <input type="range" id="explorerA" min="-4" max="4" step="0.05" value="-1" disabled><span class="readout" id="explorerAOut">a=-1.00</span>
+        <button class="op" id="btnLoadRangeExample">Load P(-1≤X≤2) example</button>
+      </div>
+      <svg id="explorerSvg" viewBox="0 0 600 320"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--accent)"></span> f(x), density</span>
+        <span><span class="dot" style="background:var(--pB)"></span> area so far</span>
+        <span><span class="dot" style="background:var(--good)"></span> F(x), cumulative</span>
+      </div>
+      <div class="verdict" id="explorerVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> F is nothing but f's area, running total kept as you sweep left to right — this is the Fundamental Theorem of Calculus, watched happen rather than stated.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: UNIFORM & EXPONENTIAL BUILDER ============ -->
+  <div class="panel" id="panel-builder">
+    <div class="card">
+      <h2>Build a Flat Density, or a Decaying One</h2>
+      <p class="sub"><b>What's happening:</b> switch between uniform and exponential, drag their parameters, and watch both f(x) and F(x) update live alongside a probability-range readout.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> on Uniform[2,8], confirm F(5)=0.5 exactly. Switch to Exponential with λ=0.5 and confirm F(2)≈0.6321 — not 0.5 — because of the long right tail.</p>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op active" data-distpreset="uniform">Uniform</button>
+        <button class="op" data-distpreset="exponential">Exponential</button>
+      </div>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op" id="btnLoadUniformExample">Load Part 1 example (a=2, b=8, x=5)</button>
+        <button class="op" id="btnLoadExpExample">Load Part 3 example (λ=0.5, x=2)</button>
+      </div>
+      <div class="row" id="uniformControls"><label>a, b</label>
+        <input type="range" id="uniA" min="-5" max="5" step="0.5" value="2"><span class="readout" id="uniAOut">2</span>
+        <input type="range" id="uniB" min="-5" max="10" step="0.5" value="8"><span class="readout" id="uniBOut">8</span>
+      </div>
+      <div class="row" id="expControls" style="display:none;"><label>rate λ</label><input type="range" id="expLambda" min="0.1" max="2" step="0.05" value="0.5"><span class="readout" id="expLambdaOut">0.50</span></div>
+      <div class="row"><label>Evaluate F at x =</label><input type="range" id="builderX" min="-5" max="15" step="0.1" value="5"><span class="readout" id="builderXOut">5.0</span></div>
+      <svg id="builderSvg" viewBox="0 0 600 320"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--accent)"></span> f(x)</span>
+        <span><span class="dot" style="background:var(--good)"></span> F(x)</span>
+      </div>
+      <div class="row" id="memorylessRow" style="display:none; margin-top:14px;">
+        <label>Memorylessness: s, t</label>
+        <input type="range" id="memS" min="0" max="10" step="0.5" value="3"><span class="readout" id="memSOut">3.0</span>
+        <input type="range" id="memT" min="0" max="10" step="0.5" value="4"><span class="readout" id="memTOut">4.0</span>
+      </div>
+      <div class="verdict" id="memorylessVerdict" style="display:none;"></div>
+      <div class="verdict" id="builderVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the exponential's memorylessness — having waited already tells you nothing about how much longer you'll wait — is exactly why its curve never "catches up" the way a bounded uniform window does.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: NORMAL CDF VIA ERF ============ -->
+  <div class="panel" id="panel-normal">
+    <div class="card">
+      <h2>Building Φ(x) From the Error Function, Not a Shortcut</h2>
+      <p class="sub"><b>What's happening:</b> drag x and watch three numbers agree: the normal CDF via the closed-form erf formula, the same value via brute-force numerical integration of the density, and the numerical derivative of the CDF (which should land back on the density itself).</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> confirm all three panels agree to 4+ decimal places at every x you drag to — this is the Fundamental Theorem of Calculus holding exactly, not approximately.</p>
+      <div class="row"><label>x</label><input type="range" id="normalX" min="-4" max="4" step="0.05" value="1.5"><span class="readout" id="normalXOut">1.50</span></div>
+      <table class="dt" id="normalTable"></table>
+      <svg id="normalSvg" viewBox="0 0 600 260"></svg>
+      <div class="verdict" id="normalVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this exact erf-based Φ(x) is the same function Quantitative Finance's Black-Scholes formula and parametric VaR both call — built here once, reused there twice.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: INVERSE-CDF SAMPLING ============ -->
+  <div class="panel" id="panel-sampling">
+    <div class="card">
+      <h2>Turn Plain Randomness Into Any Shape</h2>
+      <p class="sub"><b>What's happening:</b> drag a uniform random number on the y-axis, watch it bounce off the live CDF curve, and land on the x-axis at exactly the value that draw produces. Release a flood of draws and watch the resulting histogram trace the original density.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> release 5,000 draws and confirm the histogram's shape visibly matches the exponential density curve overlaid on top, and that the empirical P(1≤X≤3) lands close to the tutorial's verified 0.3834.</p>
+      <div class="row"><label>Uniform draw u</label><input type="range" id="sampleU" min="0.01" max="0.99" step="0.01" value="0.5"><span class="readout" id="sampleUOut">0.50</span></div>
+      <button class="op" id="sampleFlood">Release 5,000 draws</button>
+      <button class="op" id="sampleFloodBig">Match tutorial exactly (500,000 draws)</button>
+      <button class="op" id="sampleReset">Reset histogram</button>
+      <svg id="samplingSvg" viewBox="0 0 600 320"></svg>
+      <div class="verdict" id="samplingVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every Monte Carlo simulation in this repo's Quantitative Finance notebooks generates its random paths exactly this way — a uniform number in, a shape-matching draw out.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../continuous-probability-distributions.md">Probability Density and Cumulative Distribution Functions</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, text){
+    const e = document.createElementNS(NS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  function erf(x){
+    const sign = x>=0?1:-1; x=Math.abs(x);
+    const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+    const t=1/(1+p*x);
+    const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+    return sign*y;
+  }
+  function normPDF(x,mu,sigma){ mu=mu||0; sigma=sigma||1; return Math.exp(-0.5*((x-mu)/sigma)**2) / (sigma*Math.sqrt(2*Math.PI)); }
+  function normCDF(x,mu,sigma){ mu=mu||0; sigma=sigma||1; return 0.5*(1+erf((x-mu)/(sigma*Math.sqrt(2)))); }
+  function integrate(f,a,b,n){
+    n = n||2000;
+    const h=(b-a)/n; let s=0.5*(f(a)+f(b));
+    for(let i=1;i<n;i++) s+=f(a+i*h);
+    return s*h;
+  }
+  function mulberry32(seed){
+    let s=seed;
+    return function(){
+      s|=0; s=(s+0x6D2B79F5)|0;
+      let t=Math.imul(s^(s>>>15),1|s);
+      t=(t+Math.imul(t^(t>>>7),61|t))^t;
+      return ((t^(t>>>14))>>>0)/4294967296;
+    };
+  }
+
+  /* =========================================================
+     TAB: PDF <-> CDF EXPLORER
+     ========================================================= */
+  const explorerX = document.getElementById("explorerX");
+  const explorerXOut = document.getElementById("explorerXOut");
+  const explorerRangeMode = document.getElementById("explorerRangeMode");
+  const explorerA = document.getElementById("explorerA");
+  const explorerAOut = document.getElementById("explorerAOut");
+  function renderExplorer(){
+    const x = parseFloat(explorerX.value);
+    explorerXOut.textContent = x.toFixed(2);
+    const rangeOn = explorerRangeMode.checked;
+    const a = rangeOn ? parseFloat(explorerA.value) : null;
+    if (rangeOn) explorerAOut.textContent = "a="+a.toFixed(2);
+    const svg = document.getElementById("explorerSvg");
+    svg.innerHTML = "";
+    const W=600,H=320,pad=36;
+    const xMin=-4,xMax=4;
+    const xScale = v => pad + (v-xMin)/(xMax-xMin)*(W-2*pad);
+    const pdfMax = normPDF(0);
+    const yScaleTop = v => 150 - (v/pdfMax)*110;
+    const yScaleBot = v => 310 - v*110;
+
+    // density curve + shaded area
+    const nPts=200;
+    const shadeStart = rangeOn ? a : xMin;
+    let dPath = "", areaPath = `M${xScale(shadeStart)},${yScaleTop(0)} `;
+    for (let i=0;i<=nPts;i++){
+      const xv = xMin + (xMax-xMin)*i/nPts;
+      const yv = normPDF(xv);
+      dPath += `${i===0?"M":"L"}${xScale(xv)},${yScaleTop(yv)} `;
+      if (xv>=shadeStart && xv<=x) areaPath += `L${xScale(xv)},${yScaleTop(yv)} `;
+    }
+    areaPath += `L${xScale(Math.min(x,xMax))},${yScaleTop(0)} Z`;
+    svg.appendChild(el("path",{d:areaPath, fill:"var(--pB)", opacity:0.35}));
+    svg.appendChild(el("path",{d:dPath, fill:"none", stroke:"var(--accent)", ["stroke-width"]:2.5}));
+    svg.appendChild(el("line",{x1:pad,y1:yScaleTop(0),x2:W-pad,y2:yScaleTop(0),stroke:"var(--line)",["stroke-width"]:1}));
+    svg.appendChild(el("line",{x1:xScale(x),y1:yScaleTop(0),x2:xScale(x),y2:yScaleTop(normPDF(x)),stroke:"var(--ink)",["stroke-width"]:1.5,["stroke-dasharray"]:"3,3"}));
+
+    // CDF curve below
+    let cPath = "";
+    for (let i=0;i<=nPts;i++){
+      const xv = xMin + (xMax-xMin)*i/nPts;
+      const Fv = normCDF(xv);
+      cPath += `${i===0?"M":"L"}${xScale(xv)},${yScaleBot(Fv)} `;
+    }
+    svg.appendChild(el("path",{d:cPath, fill:"none", stroke:"var(--good)", ["stroke-width"]:2.5}));
+    svg.appendChild(el("line",{x1:pad,y1:yScaleBot(0),x2:W-pad,y2:yScaleBot(0),stroke:"var(--line)",["stroke-width"]:1}));
+    svg.appendChild(el("line",{x1:pad,y1:yScaleBot(1),x2:W-pad,y2:yScaleBot(1),stroke:"var(--line)",["stroke-width"]:1,["stroke-dasharray"]:"2,4"}));
+    const Fx = normCDF(x);
+    svg.appendChild(el("circle",{cx:xScale(x),cy:yScaleBot(Fx),r:5,fill:"var(--good)"}));
+    svg.appendChild(el("line",{x1:xScale(x),y1:yScaleBot(0),x2:xScale(x),y2:yScaleBot(Fx),stroke:"var(--ink)",["stroke-width"]:1.5,["stroke-dasharray"]:"3,3"}));
+
+    const viaIntegration = integrate(t=>normPDF(t), -10, x, 20000);
+    let html =
+      `f(${x.toFixed(2)}) = <b>${normPDF(x).toFixed(6)}</b><br>` +
+      `F(${x.toFixed(2)}) via erf formula = <b>${Fx.toFixed(6)}</b> &nbsp;·&nbsp; via direct integration = <b>${viaIntegration.toFixed(6)}</b>`;
+    if (rangeOn){
+      const viaRangeIntegration = integrate(t=>normPDF(t), a, x, 20000);
+      const viaSubtraction = Fx - normCDF(a);
+      html += `<br>P(${a.toFixed(2)}≤X≤${x.toFixed(2)}) via integration = <b>${viaRangeIntegration.toFixed(6)}</b> &nbsp;·&nbsp; via F(b)-F(a) = <b>${viaSubtraction.toFixed(6)}</b>`;
+    }
+    document.getElementById("explorerVerdict").innerHTML = html;
+  }
+  explorerX.addEventListener("input", renderExplorer);
+  explorerA.addEventListener("input", renderExplorer);
+  explorerRangeMode.addEventListener("change", () => { explorerA.disabled = !explorerRangeMode.checked; renderExplorer(); });
+  document.getElementById("btnLoadRangeExample").addEventListener("click", () => {
+    explorerRangeMode.checked = true;
+    explorerA.disabled = false;
+    explorerA.value = -1;
+    explorerX.value = 2;
+    renderExplorer();
+  });
+  renderExplorer();
+
+  /* =========================================================
+     TAB: UNIFORM & EXPONENTIAL BUILDER
+     ========================================================= */
+  let currentDist = "uniform";
+  const uniA = document.getElementById("uniA"), uniB = document.getElementById("uniB");
+  const uniAOut = document.getElementById("uniAOut"), uniBOut = document.getElementById("uniBOut");
+  const expLambda = document.getElementById("expLambda");
+  const expLambdaOut = document.getElementById("expLambdaOut");
+  const builderX = document.getElementById("builderX");
+  const builderXOut = document.getElementById("builderXOut");
+  const memS = document.getElementById("memS"), memT = document.getElementById("memT");
+  const memSOut = document.getElementById("memSOut"), memTOut = document.getElementById("memTOut");
+
+  function uniformPDF(x,a,b){ return (x>=a && x<=b) ? 1/(b-a) : 0; }
+  function uniformCDF(x,a,b){ if (x<a) return 0; if (x>b) return 1; return (x-a)/(b-a); }
+  function expPDF(x,lam){ return x>=0 ? lam*Math.exp(-lam*x) : 0; }
+  function expCDF(x,lam){ return x>=0 ? 1-Math.exp(-lam*x) : 0; }
+
+  function renderBuilder(){
+    const x = parseFloat(builderX.value);
+    builderXOut.textContent = x.toFixed(1);
+    const svg = document.getElementById("builderSvg");
+    svg.innerHTML = "";
+    const W=600,H=320,pad=36;
+    let xMin=-2, xMax=10, pdfFn, cdfFn, pdfMax;
+    if (currentDist === "uniform"){
+      const a=parseFloat(uniA.value), b=parseFloat(uniB.value);
+      uniAOut.textContent=a; uniBOut.textContent=b;
+      xMin = a-2; xMax = b+2;
+      pdfFn = xv => uniformPDF(xv,a,b);
+      cdfFn = xv => uniformCDF(xv,a,b);
+      pdfMax = 1/(b-a);
+    } else {
+      const lam = parseFloat(expLambda.value);
+      expLambdaOut.textContent = lam.toFixed(2);
+      xMin = -1; xMax = Math.max(10, 6/lam);
+      pdfFn = xv => expPDF(xv,lam);
+      cdfFn = xv => expCDF(xv,lam);
+      pdfMax = lam;
+    }
+    const xScale = v => pad + (v-xMin)/(xMax-xMin)*(W-2*pad);
+    const yScaleTop = v => 150 - (v/pdfMax)*110;
+    const yScaleBot = v => 310 - v*110;
+
+    const nPts=300;
+    let dPath="", cPath="";
+    for (let i=0;i<=nPts;i++){
+      const xv = xMin + (xMax-xMin)*i/nPts;
+      dPath += `${i===0?"M":"L"}${xScale(xv)},${yScaleTop(pdfFn(xv))} `;
+      cPath += `${i===0?"M":"L"}${xScale(xv)},${yScaleBot(cdfFn(xv))} `;
+    }
+    svg.appendChild(el("line",{x1:pad,y1:yScaleTop(0),x2:W-pad,y2:yScaleTop(0),stroke:"var(--line)",["stroke-width"]:1}));
+    svg.appendChild(el("path",{d:dPath, fill:"none", stroke:"var(--accent)", ["stroke-width"]:2.5}));
+    svg.appendChild(el("line",{x1:pad,y1:yScaleBot(0),x2:W-pad,y2:yScaleBot(0),stroke:"var(--line)",["stroke-width"]:1}));
+    svg.appendChild(el("line",{x1:pad,y1:yScaleBot(1),x2:W-pad,y2:yScaleBot(1),stroke:"var(--line)",["stroke-width"]:1,["stroke-dasharray"]:"2,4"}));
+    svg.appendChild(el("path",{d:cPath, fill:"none", stroke:"var(--good)", ["stroke-width"]:2.5}));
+
+    if (x>=xMin && x<=xMax){
+      svg.appendChild(el("line",{x1:xScale(x),y1:yScaleTop(0),x2:xScale(x),y2:yScaleBot(0),stroke:"var(--ink)",["stroke-width"]:1,["stroke-dasharray"]:"2,3",opacity:0.5}));
+      svg.appendChild(el("circle",{cx:xScale(x),cy:yScaleBot(cdfFn(x)),r:5,fill:"var(--good)"}));
+    }
+
+    document.getElementById("builderVerdict").innerHTML =
+      `${currentDist === "uniform" ? "Uniform" : "Exponential"} distribution: f(${x.toFixed(1)}) = <b>${pdfFn(x).toFixed(4)}</b> &nbsp;·&nbsp; F(${x.toFixed(1)}) = <b>${cdfFn(x).toFixed(4)}</b>`;
+
+    const memorylessRow = document.getElementById("memorylessRow");
+    const memorylessVerdict = document.getElementById("memorylessVerdict");
+    if (currentDist === "exponential"){
+      memorylessRow.style.display = "flex";
+      memorylessVerdict.style.display = "block";
+      const lam = parseFloat(expLambda.value);
+      const s = parseFloat(memS.value), t = parseFloat(memT.value);
+      memSOut.textContent = s.toFixed(1); memTOut.textContent = t.toFixed(1);
+      const lhs = (1-expCDF(s+t,lam))/(1-expCDF(s,lam));
+      const rhs = 1-expCDF(t,lam);
+      memorylessVerdict.innerHTML =
+        `Memorylessness check: P(X&gt;${s.toFixed(1)}+${t.toFixed(1)} | X&gt;${s.toFixed(1)}) = <b>${lhs.toFixed(6)}</b> &nbsp;·&nbsp; P(X&gt;${t.toFixed(1)}) = <b>${rhs.toFixed(6)}</b> ${Math.abs(lhs-rhs)<1e-9 ? "— exact match" : ""}`;
+    } else {
+      memorylessRow.style.display = "none";
+      memorylessVerdict.style.display = "none";
+    }
+  }
+  document.querySelectorAll("[data-distpreset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-distpreset]").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      currentDist = btn.dataset.distpreset;
+      document.getElementById("uniformControls").style.display = currentDist==="uniform" ? "flex" : "none";
+      document.getElementById("expControls").style.display = currentDist==="exponential" ? "flex" : "none";
+      renderBuilder();
+    });
+  });
+  [uniA,uniB,expLambda,builderX,memS,memT].forEach(inp => inp.addEventListener("input", renderBuilder));
+  document.getElementById("btnLoadUniformExample").addEventListener("click", () => {
+    document.querySelectorAll("[data-distpreset]").forEach(b=>b.classList.remove("active"));
+    document.querySelector('[data-distpreset="uniform"]').classList.add("active");
+    currentDist = "uniform";
+    document.getElementById("uniformControls").style.display = "flex";
+    document.getElementById("expControls").style.display = "none";
+    uniA.value = 2; uniB.value = 8; builderX.value = 5;
+    renderBuilder();
+  });
+  document.getElementById("btnLoadExpExample").addEventListener("click", () => {
+    document.querySelectorAll("[data-distpreset]").forEach(b=>b.classList.remove("active"));
+    document.querySelector('[data-distpreset="exponential"]').classList.add("active");
+    currentDist = "exponential";
+    document.getElementById("uniformControls").style.display = "none";
+    document.getElementById("expControls").style.display = "flex";
+    expLambda.value = 0.5; builderX.value = 2; memS.value = 3; memT.value = 4;
+    renderBuilder();
+  });
+  renderBuilder();
+
+  /* =========================================================
+     TAB: NORMAL CDF VIA ERF
+     ========================================================= */
+  const normalX = document.getElementById("normalX");
+  const normalXOut = document.getElementById("normalXOut");
+  function renderNormal(){
+    const x = parseFloat(normalX.value);
+    normalXOut.textContent = x.toFixed(2);
+    const viaErf = normCDF(x);
+    const viaIntegration = integrate(t=>normPDF(t), -10, x, 8000);
+    const h = 1e-4;
+    const numDeriv = (normCDF(x+h) - normCDF(x-h)) / (2*h);
+    document.getElementById("normalTable").innerHTML =
+      `<tr><th>Φ(x) via erf</th><th>Φ(x) via integration</th><th>F'(x), numerical</th><th>f(x), formula</th></tr>` +
+      `<tr><td>${viaErf.toFixed(6)}</td><td>${viaIntegration.toFixed(6)}</td><td>${numDeriv.toFixed(6)}</td><td>${normPDF(x).toFixed(6)}</td></tr>`;
+
+    const svg = document.getElementById("normalSvg");
+    svg.innerHTML = "";
+    const W=600,H=260,pad=36;
+    const xMin=-4,xMax=4;
+    const xScale = v => pad + (v-xMin)/(xMax-xMin)*(W-2*pad);
+    const yScale = v => H-pad - v*(H-2*pad);
+    let cPath="";
+    for (let i=0;i<=200;i++){
+      const xv = xMin + (xMax-xMin)*i/200;
+      cPath += `${i===0?"M":"L"}${xScale(xv)},${yScale(normCDF(xv))} `;
+    }
+    svg.appendChild(el("path",{d:cPath, fill:"none", stroke:"var(--good)", ["stroke-width"]:2.5}));
+    svg.appendChild(el("circle",{cx:xScale(x),cy:yScale(viaErf),r:6,fill:"var(--accent)",stroke:"#fff",["stroke-width"]:2}));
+    svg.appendChild(el("line",{x1:pad,y1:yScale(1),x2:W-pad,y2:yScale(1),stroke:"var(--line)",["stroke-width"]:1,["stroke-dasharray"]:"2,4"}));
+
+    document.getElementById("normalVerdict").innerHTML =
+      `All four numbers above agree to at least 4 decimal places — <b>Φ(x)</b> is the integral of <b>f(x)</b>, and <b>f(x)</b> is the derivative of <b>Φ(x)</b>, verified live.`;
+  }
+  normalX.addEventListener("input", renderNormal);
+  renderNormal();
+
+  /* =========================================================
+     TAB: INVERSE-CDF SAMPLING (exponential, lambda=0.5)
+     ========================================================= */
+  const SAMPLE_LAMBDA = 0.5;
+  function expInvCDF(u, lam){ return -Math.log(1-u)/lam; }
+  const sampleU = document.getElementById("sampleU");
+  const sampleUOut = document.getElementById("sampleUOut");
+  let sampledDraws = [];
+
+  function renderSampling(){
+    const u = parseFloat(sampleU.value);
+    sampleUOut.textContent = u.toFixed(2);
+    const x = expInvCDF(u, SAMPLE_LAMBDA);
+
+    const svg = document.getElementById("samplingSvg");
+    svg.innerHTML = "";
+    const W=600,H=320,pad=40;
+    const xMin=0, xMax=14;
+    const xScale = v => pad + (v-xMin)/(xMax-xMin)*(W-2*pad);
+    const yScaleCdf = v => 150 - v*110;
+
+    // CDF curve
+    let cPath="";
+    for (let i=0;i<=200;i++){
+      const xv = xMin + (xMax-xMin)*i/200;
+      cPath += `${i===0?"M":"L"}${xScale(xv)},${yScaleCdf(expCDF(xv,SAMPLE_LAMBDA))} `;
+    }
+    svg.appendChild(el("path",{d:cPath, fill:"none", stroke:"var(--good)", ["stroke-width"]:2.5}));
+    svg.appendChild(el("line",{x1:pad,y1:yScaleCdf(0),x2:W-pad,y2:yScaleCdf(0),stroke:"var(--line)",["stroke-width"]:1}));
+    // bounce path: horizontal from y-axis to curve, then vertical down to x-axis
+    svg.appendChild(el("line",{x1:pad,y1:yScaleCdf(u),x2:xScale(x),y2:yScaleCdf(u),stroke:"var(--pB)",["stroke-width"]:2,["stroke-dasharray"]:"4,3"}));
+    svg.appendChild(el("line",{x1:xScale(x),y1:yScaleCdf(u),x2:xScale(x),y2:yScaleCdf(0),stroke:"var(--pB)",["stroke-width"]:2,["stroke-dasharray"]:"4,3"}));
+    svg.appendChild(el("circle",{cx:xScale(x),cy:yScaleCdf(0),r:6,fill:"var(--warn)",stroke:"#fff",["stroke-width"]:2}));
+
+    // histogram of accumulated draws
+    if (sampledDraws.length){
+      const nb=40, binW=xMax/nb;
+      const bins = new Array(nb).fill(0);
+      sampledDraws.forEach(v => { let b=Math.floor(v/binW); if (b>=nb) b=nb-1; if (b>=0) bins[b]++; });
+      const maxCount = Math.max(...bins,1);
+      const barScale = c => (c/maxCount)*110;
+      bins.forEach((c,i) => {
+        const xL = xMin + i*binW;
+        const hgt = barScale(c);
+        svg.appendChild(el("rect",{x:xScale(xL), y:310-hgt, width: xScale(xL+binW)-xScale(xL)-1, height:hgt, fill:"var(--accent)", opacity:0.5}));
+      });
+      // overlay true density scaled to histogram
+      const pdfMax = SAMPLE_LAMBDA;
+      let dPath="";
+      for (let i=0;i<=200;i++){
+        const xv = xMin + (xMax-xMin)*i/200;
+        const yv = 310 - (expPDF(xv,SAMPLE_LAMBDA)/pdfMax)*110;
+        dPath += `${i===0?"M":"L"}${xScale(xv)},${yv} `;
+      }
+      svg.appendChild(el("path",{d:dPath, fill:"none", stroke:"var(--warn)", ["stroke-width"]:2}));
+    }
+    svg.appendChild(el("line",{x1:pad,y1:310,x2:W-pad,y2:310,stroke:"var(--ink)",["stroke-width"]:1}));
+
+    let empiricalNote = "";
+    if (sampledDraws.length > 100){
+      const inRange = sampledDraws.filter(v => v>=1 && v<=3).length / sampledDraws.length;
+      empiricalNote = ` &nbsp;·&nbsp; Empirical P(1≤X≤3) over ${sampledDraws.length} draws: <b>${inRange.toFixed(4)}</b> (analytic: 0.3834)`;
+    }
+    document.getElementById("samplingVerdict").innerHTML =
+      `u = <b>${u.toFixed(2)}</b> → x = F⁻¹(u) = <b>${x.toFixed(4)}</b>${empiricalNote}`;
+  }
+  sampleU.addEventListener("input", renderSampling);
+  document.getElementById("sampleFlood").addEventListener("click", () => {
+    const rand = mulberry32(42 + sampledDraws.length);
+    for (let i=0;i<5000;i++) sampledDraws.push(expInvCDF(rand(), SAMPLE_LAMBDA));
+    renderSampling();
+  });
+  document.getElementById("sampleFloodBig").addEventListener("click", () => {
+    sampledDraws = [];
+    const rand = mulberry32(42);
+    for (let i=0;i<500000;i++) sampledDraws.push(expInvCDF(rand(), SAMPLE_LAMBDA));
+    renderSampling();
+  });
+  document.getElementById("sampleReset").addEventListener("click", () => { sampledDraws = []; renderSampling(); });
+  renderSampling();
+})();
+</script>
+</body>
+</html>

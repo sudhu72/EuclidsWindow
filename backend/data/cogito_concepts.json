@@ -1073,6 +1073,273 @@
       "related": [],
       "viz": "global_workspace_theory_visualizer.html",
       "source": "global_workspace_theory_feynman.md"
+    },
+    {
+      "id": "graph_theory",
+      "name": "Graph Theory",
+      "keywords": [],
+      "related": [],
+      "viz": "graph_theory_visualizer.html",
+      "source": "graph-theory.md"
+    },
+    {
+      "id": "compression_and_hashing",
+      "name": "Compression & Hashing",
+      "keywords": [
+        "compression and hashing",
+        "huffman coding",
+        "lz77",
+        "run-length encoding",
+        "merkle tree",
+        "avalanche effect"
+      ],
+      "related": [
+        "cryptography"
+      ],
+      "viz": "compression_and_hashing_visualizer.html",
+      "source": "compression-and-hashing.md"
+    },
+    {
+      "id": "mutual_information",
+      "name": "Mutual Information",
+      "keywords": [
+        "mutual information",
+        "information shared between variables"
+      ],
+      "related": [
+        "probability",
+        "statistics"
+      ],
+      "viz": "mutual_information_visualizer.html",
+      "source": "mutual-information.md"
+    },
+    {
+      "id": "notation_rosetta_stone",
+      "name": "Notation Rosetta Stone",
+      "keywords": [
+        "notation rosetta stone",
+        "math notation cheat sheet"
+      ],
+      "related": [
+        "mathematical_logic"
+      ],
+      "viz": "notation_rosetta_stone_visualizer.html",
+      "source": "notation-rosetta-stone.md"
+    },
+    {
+      "id": "pdf_cdf",
+      "name": "PDFs and CDFs",
+      "keywords": [
+        "probability density function",
+        "cumulative distribution function",
+        "pdf and cdf"
+      ],
+      "related": [
+        "probability",
+        "statistics"
+      ],
+      "viz": "pdf_cdf_visualizer.html",
+      "source": "continuous-probability-distributions.md"
+    },
+    {
+      "id": "proof_and_axiomatic_method",
+      "name": "Proof & the Axiomatic Method",
+      "keywords": [
+        "axiomatic method",
+        "mathematical proof method",
+        "proof by construction"
+      ],
+      "related": [
+        "mathematical_logic"
+      ],
+      "viz": "proof_and_axiomatic_method_visualizer.html",
+      "source": "proof-and-axiomatic-method.md"
+    },
+    {
+      "id": "calibration_metrics",
+      "name": "Calibration Metrics",
+      "keywords": [
+        "calibration metrics",
+        "model calibration",
+        "reliability diagram"
+      ],
+      "related": [
+        "precision_recall",
+        "roc_auc_curve"
+      ],
+      "viz": "calibration_metrics_visualizer.html",
+      "source": "calibration_metrics_feynman.md"
+    },
+    {
+      "id": "how_to_measure_everything",
+      "name": "How to Measure Everything",
+      "keywords": [
+        "how to measure everything",
+        "measurement theory"
+      ],
+      "related": [
+        "statistics"
+      ],
+      "viz": "how_to_measure_everything_visualizer.html",
+      "source": "how_to_measure_everything_feynman.md"
+    },
+    {
+      "id": "latent_dirichlet_allocation",
+      "name": "Latent Dirichlet Allocation",
+      "keywords": [
+        "latent dirichlet allocation",
+        "lda topic modeling",
+        "topic modeling"
+      ],
+      "related": [
+        "probability"
+      ],
+      "viz": "latent_dirichlet_allocation_visualizer.html",
+      "source": "latent_dirichlet_allocation_feynman.md"
+    },
+    {
+      "id": "log_loss_vs_brier",
+      "name": "Log Loss vs. Brier Score",
+      "keywords": [
+        "brier score",
+        "proper scoring rule",
+        "log loss vs brier score"
+      ],
+      "related": [
+        "cross_entropy",
+        "calibration_metrics"
+      ],
+      "viz": "log_loss_visualizer.html",
+      "source": "log_loss_feynman.md"
+    },
+    {
+      "id": "lora_tinylora_qlora",
+      "name": "LoRA, TinyLoRA & QLoRA",
+      "keywords": [
+        "lora fine-tuning",
+        "tinylora",
+        "qlora",
+        "low rank adaptation fine-tuning"
+      ],
+      "related": [
+        "lora",
+        "model_quantization"
+      ],
+      "viz": "lora_tinylora_qlora_visualizer.html",
+      "source": "lora_tinylora_qlora_feynman.md"
+    },
+    {
+      "id": "model_quantization",
+      "name": "Model Quantization & Compression",
+      "keywords": [
+        "model quantization",
+        "int8 quantization",
+        "model compression ml"
+      ],
+      "related": [
+        "lora_tinylora_qlora"
+      ],
+      "viz": "model_quantization_and_compression_visualizer.html",
+      "source": "model_quantization_and_compression_feynman.md"
+    },
+    {
+      "id": "multiclass_cross_entropy",
+      "name": "Multi-Class Cross-Entropy",
+      "keywords": [
+        "multiclass cross entropy",
+        "softmax cross entropy",
+        "categorical cross entropy"
+      ],
+      "related": [
+        "cross_entropy"
+      ],
+      "viz": "multiclass_cross_entropy_visualizer.html",
+      "source": "multiclass_cross_entropy_feynman.md"
+    },
+    {
+      "id": "ranking_metrics",
+      "name": "Ranking Metrics",
+      "keywords": [
+        "ranking metrics",
+        "mean average precision",
+        "ndcg"
+      ],
+      "related": [
+        "precision_recall"
+      ],
+      "viz": "ranking_metrics_visualizer.html",
+      "source": "ranking_metrics_feynman.md"
+    },
+    {
+      "id": "tree_based_methods",
+      "name": "Tree-Based Methods",
+      "keywords": [
+        "decision tree",
+        "random forest",
+        "gradient boosted trees",
+        "bagging"
+      ],
+      "related": [
+        "bias_variance_tradeoff"
+      ],
+      "viz": "tree_based_methods_visualizer.html",
+      "source": "tree_based_methods_feynman.md"
+    },
+    {
+      "id": "voice_and_speech_recognition",
+      "name": "Voice & Speech Recognition",
+      "keywords": [
+        "speech recognition",
+        "voice recognition",
+        "automatic speech recognition"
+      ],
+      "related": [
+        "wav2vec",
+        "whisper_training_objective"
+      ],
+      "viz": "voice_and_speech_recognition_visualizer.html",
+      "source": "voice_and_speech_recognition_feynman.md"
+    },
+    {
+      "id": "wape_and_forecast_bias",
+      "name": "WAPE and Forecast Bias",
+      "keywords": [
+        "wape",
+        "forecast bias",
+        "weighted absolute percentage error"
+      ],
+      "related": [
+        "statistics"
+      ],
+      "viz": "wape_and_forecast_bias_visualizer.html",
+      "source": "wape_and_forecast_bias_feynman.md"
+    },
+    {
+      "id": "wav2vec",
+      "name": "wav2vec 2.0",
+      "keywords": [
+        "wav2vec",
+        "self-supervised speech representation"
+      ],
+      "related": [
+        "voice_and_speech_recognition"
+      ],
+      "viz": "wav2vec_self_supervised_visualizer.html",
+      "source": "wav2vec_self_supervised_feynman.md"
+    },
+    {
+      "id": "whisper_training_objective",
+      "name": "Whisper's Multitask Objective",
+      "keywords": [
+        "whisper training objective",
+        "whisper asr",
+        "multitask speech objective"
+      ],
+      "related": [
+        "voice_and_speech_recognition"
+      ],
+      "viz": "whisper_training_objective_visualizer.html",
+      "source": "whisper_training_objective_feynman.md"
     }
   ]
 }

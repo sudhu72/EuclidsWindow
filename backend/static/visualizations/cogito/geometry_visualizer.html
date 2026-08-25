@@ -62,7 +62,7 @@
   <header>
     <div class="eyebrow">Companion to the Feynman Math Tutorial · Geometry</div>
     <h1>Shapes, Rearranged</h1>
-    <p>Five facts everyone learns and almost nobody watches happen: why a transversal stamps the same angle pattern twice, why a triangle's angles are forced to 180°, why the same four triangles prove a²+b²=c² two different ways, why a sliced pizza becomes a rectangle, and why elephants need such thick legs. Each one built from a picture, not asserted.</p>
+    <p>Six facts everyone learns and almost nobody watches happen: why a transversal stamps the same angle pattern twice, why a triangle's angles are forced to 180°, why the same four triangles prove a²+b²=c² two different ways, why a triangle/parallelogram/trapezoid's area formula is really just a rectangle in disguise, why a sliced pizza becomes a rectangle, and why elephants need such thick legs. Each one built from a picture, not asserted.</p>
     <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
   </header>
 
@@ -70,6 +70,7 @@
     <button class="tab active" data-tab="angles">Angle Facts</button>
     <button class="tab" data-tab="triangle">Triangle Proof</button>
     <button class="tab" data-tab="pythagoras">Pythagorean Rearrangement</button>
+    <button class="tab" data-tab="areabuilder">Area Builder</button>
     <button class="tab" data-tab="circle">Circle Unrolling</button>
     <button class="tab" data-tab="scaling">Square-Cube Scaling</button>
   </div>
@@ -110,6 +111,13 @@
       <svg id="similaritySvg" viewBox="0 0 400 260"></svg>
       <div class="verdict" id="similarityVerdict"></div>
       <div class="caption"><b>Why it matters:</b> "same angles, scaled sides" is the entire content of similarity — and it's a free, exact ratio the moment you can guarantee two triangles share their angles, no protractor required in the field.</div>
+
+      <h2 style="margin-top:28px;">Thales's Trick, Run With Real Numbers</h2>
+      <p class="sub">A fence post's own height and shadow set the ratio; that same ratio, applied to a much longer shadow, gives the tall object's height — no climbing required.</p>
+      <div class="row"><label>Fence post height (m)</label><input type="range" id="shadowPostH" min="0.5" max="5" step="0.5" value="2"><span class="readout" id="shadowPostHOut">2</span></div>
+      <div class="row"><label>Fence post shadow (m)</label><input type="range" id="shadowPostS" min="0.5" max="10" step="0.5" value="3"><span class="readout" id="shadowPostSOut">3</span></div>
+      <div class="row"><label>Flagpole shadow (m)</label><input type="range" id="shadowPoleS" min="1" max="30" step="0.5" value="12"><span class="readout" id="shadowPoleSOut">12</span></div>
+      <div class="verdict" id="shadowVerdict"></div>
     </div>
   </div>
 
@@ -128,6 +136,28 @@
       <svg id="pythSvg" viewBox="0 0 340 340"></svg>
       <div class="verdict" id="pythVerdict"></div>
       <div class="caption"><b>Why it matters:</b> this is area conservation doing all the work — nobody had to assume a²+b²=c², it fell out of refusing to let the same square's total area change just because you rearranged what's inside it.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: AREA BUILDER ============ -->
+  <div class="panel" id="panel-areabuilder">
+    <div class="card">
+      <h2>Cut, Rotate, or Slide — the Area Never Changes</h2>
+      <p class="sub"><b>What's happening:</b> pick which rearrangement to watch, then drag the "Rearrange" slider from 0 (the original shape) to 1 (the target shape) — the moving piece is always a rigid copy, just rotated or slid into place, so its own area can never change no matter where it ends up.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag base/height (and, for the trapezoid, the two parallel sides) to any values you like, then sweep "Rearrange" back and forth — the total-area readout never moves, confirming <span class="formula">½×base×height</span>, <span class="formula">base×height</span>, and <span class="formula">½×(a+b)×h</span> aren't rules to memorize, just this same cut-and-slide fact stated three ways.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnAbTri">Triangle → Parallelogram</button>
+        <button class="op" id="btnAbPar">Parallelogram → Rectangle</button>
+        <button class="op" id="btnAbTrap">Trapezoid → Parallelogram</button>
+      </div>
+      <div class="row" id="abRowBase"><label>Base b</label><input type="range" id="abBase" min="2" max="8" step="0.5" value="5"><span class="readout" id="abBaseOut">5</span></div>
+      <div class="row" id="abRowHeight"><label>Height h</label><input type="range" id="abHeight" min="2" max="6" step="0.5" value="3"><span class="readout" id="abHeightOut">3</span></div>
+      <div class="row" id="abRowLean" style="display:none;"><label>Lean s</label><input type="range" id="abLean" min="0" max="4" step="0.5" value="2"><span class="readout" id="abLeanOut">2</span></div>
+      <div class="row" id="abRowTop" style="display:none;"><label>Top side a</label><input type="range" id="abTop" min="1" max="6" step="0.5" value="3"><span class="readout" id="abTopOut">3</span></div>
+      <div class="row"><label>Rearrange</label><input type="range" id="abT" min="0" max="1" step="0.02" value="0"><span class="readout" id="abTOut">0.00</span></div>
+      <svg id="abSvg" viewBox="0 0 380 260"></svg>
+      <div class="verdict" id="abVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every area formula in Part D of the tutorial is proven exactly this way — not derived algebraically, but watched: a rigid piece moves, nothing overlaps, nothing is left over, so the total area before and after has to be the identical number.</div>
     </div>
   </div>
 
@@ -203,6 +233,7 @@
      TAB 1 — ANGLE FACTS
      ========================================================= */
   const angTheta = document.getElementById("angTheta");
+  const angThetaOut = document.getElementById("angThetaOut");
   let relMode = "none";
   const TOP_Y = 100, BOT_Y = 220, MID_X = 250;
   function renderAngles(){
@@ -275,6 +306,7 @@
      TAB 2 — TRIANGLE PROOF + SIMILARITY
      ========================================================= */
   const triAx=document.getElementById("triAx"), triAy=document.getElementById("triAy");
+  const triAxOut=document.getElementById("triAxOut"), triAyOut=document.getElementById("triAyOut");
   const L=[60,220], R=[340,220];
   function angleBetween(p, q1, q2){
     const v1=[q1[0]-p[0], q1[1]-p[1]], v2=[q2[0]-p[0], q2[1]-p[1]];
@@ -316,6 +348,7 @@
   renderTriangle();
 
   const triScale = document.getElementById("triScale");
+  const triScaleOut = document.getElementById("triScaleOut");
   function renderSimilarity(){
     const k = parseFloat(triScale.value);
     triScaleOut.textContent = k.toFixed(2);
@@ -339,10 +372,23 @@
   [triScale,triAx,triAy].forEach(inp => inp.addEventListener("input", renderSimilarity));
   renderSimilarity();
 
+  const shadowPostH = document.getElementById("shadowPostH"), shadowPostS = document.getElementById("shadowPostS"), shadowPoleS = document.getElementById("shadowPoleS");
+  const shadowPostHOut = document.getElementById("shadowPostHOut"), shadowPostSOut = document.getElementById("shadowPostSOut"), shadowPoleSOut = document.getElementById("shadowPoleSOut");
+  function renderShadow(){
+    const postH = parseFloat(shadowPostH.value), postS = parseFloat(shadowPostS.value), poleS = parseFloat(shadowPoleS.value);
+    shadowPostHOut.textContent = postH; shadowPostSOut.textContent = postS; shadowPoleSOut.textContent = poleS;
+    const poleH = postH/postS * poleS;
+    document.getElementById("shadowVerdict").innerHTML =
+      `H / ${poleS} = ${postH} / ${postS} &nbsp;·&nbsp; H = ${poleS} × ${postH}/${postS} = <span class="big">${poleH.toFixed(2)} m</span>`;
+  }
+  [shadowPostH,shadowPostS,shadowPoleS].forEach(inp => inp.addEventListener("input", renderShadow));
+  renderShadow();
+
   /* =========================================================
      TAB 3 — PYTHAGOREAN REARRANGEMENT
      ========================================================= */
   const pytA=document.getElementById("pytA"), pytB=document.getElementById("pytB");
+  const pytAOut=document.getElementById("pytAOut"), pytBOut=document.getElementById("pytBOut");
   let arrMode = "tilted";
   const PYT_SCALE = 28, PYT_ORIGIN = [20,320]; // bottom-left of big square, math coords (y-up), converted below
   function toSvg(pt){ return [PYT_ORIGIN[0]+pt[0]*PYT_SCALE, PYT_ORIGIN[1]-pt[1]*PYT_SCALE]; }
@@ -396,9 +442,97 @@
   renderPyth();
 
   /* =========================================================
+     TAB 3.5 — AREA BUILDER (triangle/parallelogram/trapezoid)
+     ========================================================= */
+  const abBase=document.getElementById("abBase"), abHeight=document.getElementById("abHeight"),
+        abLean=document.getElementById("abLean"), abTop=document.getElementById("abTop"), abT=document.getElementById("abT");
+  const abBaseOut=document.getElementById("abBaseOut"), abHeightOut=document.getElementById("abHeightOut"),
+        abLeanOut=document.getElementById("abLeanOut"), abTopOut=document.getElementById("abTopOut"), abTOut=document.getElementById("abTOut");
+  let abMode = "tri"; // "tri" | "par" | "trap"
+  const AB_PAD_X = 40, AB_PAD_Y = 40, AB_SCALE = 28;
+  function abX(x){ return AB_PAD_X + x*AB_SCALE; }
+  function abY(y){ return 220 - y*AB_SCALE; } // y grows upward on screen
+  function rotatePt(p, pivot, theta){
+    const dx = p[0]-pivot[0], dy = p[1]-pivot[1];
+    const c = Math.cos(theta), s = Math.sin(theta);
+    return [pivot[0] + dx*c - dy*s, pivot[1] + dx*s + dy*c];
+  }
+  function abPoly(pts, fill, opacity){
+    return el("polygon",{points:pts.map(p=>abX(p[0])+","+abY(p[1])).join(" "), fill, opacity: opacity!==undefined?opacity:1,
+      stroke:"var(--ink)", ["stroke-width"]:1.6});
+  }
+  function renderAreaBuilder(){
+    const b = parseFloat(abBase.value), h = parseFloat(abHeight.value);
+    const s = parseFloat(abLean.value), a = parseFloat(abTop.value);
+    const t = parseFloat(abT.value);
+    abBaseOut.textContent = b; abHeightOut.textContent = h; abLeanOut.textContent = s; abTopOut.textContent = a;
+    abTOut.textContent = t.toFixed(2);
+    const svg = document.getElementById("abSvg");
+    svg.innerHTML = "";
+    let verdict = "";
+
+    if (abMode === "tri"){
+      // Triangle P1=apex(p,h), P2=(0,0), P3=(b,0); copy rotates 180*t about midpoint of P1,P3
+      const p = b*0.35;
+      const P1=[p,h], P2=[0,0], P3=[b,0];
+      const M = [(P1[0]+P3[0])/2, (P1[1]+P3[1])/2];
+      const theta = Math.PI*t;
+      const Q1 = rotatePt(P1,M,theta), Q2 = rotatePt(P2,M,theta), Q3 = rotatePt(P3,M,theta);
+      svg.appendChild(abPoly([P1,P2,P3], "var(--c1)", 0.75));
+      svg.appendChild(abPoly([Q1,Q2,Q3], "var(--c2)", 0.55));
+      const area = 0.5*b*h;
+      verdict = `Each triangle: ½×${b}×${h} = <b>${area.toFixed(2)}</b> &nbsp;·&nbsp; combined once rearranged (t=1): base×height = ${b}×${h} = <span class="big">${(2*area).toFixed(2)}</span> — <b class="good-t">same total at every t.</b>`;
+    }
+
+    if (abMode === "par"){
+      // Parallelogram P1=(0,0) P2=(b,0) P3=(b+s,h) P4=(s,h); wedge (P1,Qf,P4) slides by (b*t,0)
+      const P1=[0,0], P2=[b,0], P3=[b+s,h], P4=[s,h], Qf=[s,0];
+      // fixed remaining piece: Qf, P2, P3, P4
+      svg.appendChild(abPoly([Qf,P2,P3,P4], "var(--c1)", 0.75));
+      // moving wedge: P1, Qf, P4  -> translate by (b*t, 0)
+      const dx = b*t;
+      const W1=[P1[0]+dx,P1[1]], W2=[Qf[0]+dx,Qf[1]], W3=[P4[0]+dx,P4[1]];
+      svg.appendChild(abPoly([W1,W2,W3], "var(--c2)", 0.55));
+      const area = b*h;
+      verdict = `Parallelogram area: base×height = ${b}×${h} = <span class="big">${area.toFixed(2)}</span> — unchanged whether the wedge sits at the left (t=0) or has slid flush against the right edge (t=1), landing as an upright rectangle.`;
+    }
+
+    if (abMode === "trap"){
+      // Trapezoid P1=(0,0) P2=(b,0) P3=(q+a,h) P4=(q,h), q=(b-a)/2; copy rotates 180*t about midpoint of P2,P3
+      const q = (b-a)/2;
+      const P1=[0,0], P2=[b,0], P3=[q+a,h], P4=[q,h];
+      const M = [(P2[0]+P3[0])/2, (P2[1]+P3[1])/2];
+      const theta = Math.PI*t;
+      const Q1=rotatePt(P1,M,theta), Q2=rotatePt(P2,M,theta), Q3=rotatePt(P3,M,theta), Q4=rotatePt(P4,M,theta);
+      svg.appendChild(abPoly([P1,P2,P3,P4], "var(--c1)", 0.75));
+      svg.appendChild(abPoly([Q1,Q2,Q3,Q4], "var(--c2)", 0.55));
+      const area = 0.5*(a+b)*h;
+      verdict = `Each trapezoid: ½×(${a}+${b})×${h} = <b>${area.toFixed(2)}</b> &nbsp;·&nbsp; combined once rearranged (t=1): (a+b)×height = ${(a+b)}×${h} = <span class="big">${(2*area).toFixed(2)}</span> — <b class="good-t">same total at every t.</b>`;
+    }
+
+    document.getElementById("abVerdict").innerHTML = verdict;
+  }
+  [abBase,abHeight,abLean,abTop,abT].forEach(inp => inp.addEventListener("input", renderAreaBuilder));
+  function setAbMode(mode){
+    abMode = mode;
+    document.getElementById("btnAbTri").classList.toggle("active", mode==="tri");
+    document.getElementById("btnAbPar").classList.toggle("active", mode==="par");
+    document.getElementById("btnAbTrap").classList.toggle("active", mode==="trap");
+    document.getElementById("abRowLean").style.display = mode==="par" ? "flex" : "none";
+    document.getElementById("abRowTop").style.display = mode==="trap" ? "flex" : "none";
+    abT.value = 0;
+    renderAreaBuilder();
+  }
+  document.getElementById("btnAbTri").addEventListener("click", () => setAbMode("tri"));
+  document.getElementById("btnAbPar").addEventListener("click", () => setAbMode("par"));
+  document.getElementById("btnAbTrap").addEventListener("click", () => setAbMode("trap"));
+  renderAreaBuilder();
+
+  /* =========================================================
      TAB 4 — CIRCLE UNROLLING
      ========================================================= */
   const circN = document.getElementById("circN");
+  const circNOut = document.getElementById("circNOut");
   function renderCircle(){
     const N = parseInt(circN.value,10);
     circNOut.textContent = N;
@@ -447,6 +581,7 @@
      TAB 5 — SQUARE-CUBE SCALING
      ========================================================= */
   const scaleK = document.getElementById("scaleK");
+  const scaleKOut = document.getElementById("scaleKOut");
   function renderScaling(){
     const k = parseFloat(scaleK.value);
     scaleKOut.textContent = k.toFixed(2);

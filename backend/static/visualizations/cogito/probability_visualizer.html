@@ -85,8 +85,11 @@
     <button class="tab active" data-tab="tree">AND / OR Tree</button>
     <button class="tab" data-tab="monty">Monty Hall</button>
     <button class="tab" data-tab="birthday">Birthday Paradox</button>
+    <button class="tab" data-tab="conditional">Conditional Probability</button>
     <button class="tab" data-tab="xent">Cross-Entropy Grader</button>
     <button class="tab" data-tab="lln">Law of Large Numbers</button>
+    <button class="tab" data-tab="baserate">Base-Rate Explorer</button>
+    <button class="tab" data-tab="variance">Variance Comparer</button>
   </div>
 
   <!-- ============ TAB 1: AND/OR TREE ============ -->
@@ -103,7 +106,7 @@
       <div class="row" id="rowIndepB"><label>P(B)</label><input type="range" id="trPB" min="1" max="99" step="1" value="50"><span class="readout" id="trPBOut">50%</span></div>
       <div class="row" id="rowDepB1" style="display:none;"><label>P(B | A)</label><input type="range" id="trPBgA" min="1" max="99" step="1" value="80"><span class="readout" id="trPBgAOut">80%</span></div>
       <div class="row" id="rowDepB2" style="display:none;"><label>P(B | ¬A)</label><input type="range" id="trPBgNA" min="1" max="99" step="1" value="20"><span class="readout" id="trPBgNAOut">20%</span></div>
-      <svg id="treeSvg" viewBox="0 0 760 300" role="img" aria-label="AND/OR probability tree"></svg>
+      <svg id="treeSvg" viewBox="0 0 760 320" role="img" aria-label="AND/OR probability tree"></svg>
       <div class="row" style="gap:6px; margin-top:10px;">
         <button class="op" id="btnShowAnd">Highlight P(A and B)</button>
         <button class="op" id="btnShowOr">Highlight P(A or B)</button>
@@ -164,13 +167,54 @@
       <div class="caption" id="bdayFormula" style="font-family:'IBM Plex Mono',monospace; font-size:12px;"></div>
       <div class="caption"><b>Why it matters:</b> the number of <em>pairs</em> of people grows quadratically as the room fills, while any one pair's own match chance stays fixed at a tiny 1/365 — quadratic growth against a fixed small chance is what makes "surprisingly few people" actually check out.</div>
     </div>
+    <div class="card">
+      <h2>Pairs Explorer — Everyone Paired With Everyone, Two Ways to Count It</h2>
+      <p class="sub"><b>What's happening:</b> is the birthday paradox about one person checked against everyone else, or about every possible two-person pairing? Step people into the room one at a time and watch: each new arrival draws a line to everyone already there (their "checks"), and the running total of lines always lands exactly on the batch handshake count <span class="formula">n×(n−1)/2</span> — the same 253 pairs, discovered one arrival at a time instead of listed all at once.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set the room to 6 people, click "Reset" then "Next arrival" six times, and watch the running total climb 0 → 1 → 3 → 6 → 10 → 15, always matching the batch count shown alongside. Notice the fraction callout below — that's exactly what "364/365" means in the tutorial, recomputed fresh at every arrival.</p>
+      <div class="row"><label>people in the room</label><input type="range" id="pairN" min="3" max="12" step="1" value="6"><span class="readout" id="pairNOut">6</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="pairNext">Next arrival</button>
+        <button class="op" id="pairReset">Reset</button>
+      </div>
+      <svg id="pairSvg" viewBox="0 0 480 380" role="img" aria-label="Dot diagram of people and the pairs between them"></svg>
+      <div class="verdict" id="pairVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the sequential arrival process and the "count all pairs at once" shortcut are never in tension — they're two orderings of the identical set of pairs, which is why both routes to the birthday paradox agree almost exactly on the final answer.</div>
+    </div>
+    <div class="card">
+      <h2>The Birthday Attack — the Same Math, Aimed at a Hash Function</h2>
+      <p class="sub"><b>What's happening:</b> a hash function with an <span class="formula">n</span>-bit output has <span class="formula">2ⁿ</span> possible "fingerprints" — the birthday room's 365 days, generalized. Drag the bit-length and compare two very different attacks: finding <em>any two</em> inputs that collide (the birthday-paradox effect) versus finding <em>one specific</em> input matching a fingerprint you already have.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set bits to 8 and read both attempt counts — collision-finding needs only ~20 tries, specific-matching needs ~178. Now drag bits up toward 24 or 32 and watch the ratio between them explode — that widening gap is exactly why real hash functions double their output length instead of just matching the target security level.</p>
+      <div class="row"><label>Hash length (bits)</label><input type="range" id="hashBits" min="4" max="32" step="1" value="8"><span class="readout" id="hashBitsOut">8</span></div>
+      <div class="verdict" id="hashVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> collision search only ever needs on the order of <span class="formula">√N</span> attempts, while matching one specific target needs on the order of <span class="formula">N</span> attempts — so making collisions as hard to find as a specific match requires squaring <span class="formula">N</span>, i.e. doubling the bit-length, which is exactly why SHA-256 outputs 256 bits rather than the 128 a naive "128-bit security" target would suggest.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: CONDITIONAL PROBABILITY ============ -->
+  <div class="panel" id="panel-conditional">
+    <div class="card">
+      <h2>Shrink the Universe, Then Re-Ask the Question</h2>
+      <p class="sub"><b>What's happening:</b> 100 equally likely outcomes, laid out as a 10×10 grid. Drag how many belong to A, how many belong to B, and how many belong to <em>both</em> — every other quantity, including P(A|B) and P(B|A), recomputes live from the actual counts.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click "Shrink to B" and watch everything outside B fade away — what's left is the exact "new, shrunken universe" the tutorial describes, and the purple squares within it are precisely the numerator of P(A|B). Then check the symmetry panel below: P(A|B)·P(B) and P(B|A)·P(A) always land on the same number, because both are just P(A and B) written two different ways.</p>
+      <div class="row"><label>Squares in A</label><input type="range" id="condA" min="1" max="99" step="1" value="40"><span class="readout" id="condAOut">40</span></div>
+      <div class="row"><label>Squares in B</label><input type="range" id="condB" min="1" max="99" step="1" value="30"><span class="readout" id="condBOut">30</span></div>
+      <div class="row"><label>Squares in both</label><input type="range" id="condOverlap" min="0" max="30" step="1" value="18"><span class="readout" id="condOverlapOut">18</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="condShrinkB">Shrink to B</button>
+        <button class="op active" id="condShowAll">Show everything</button>
+        <button class="op" id="condCardDeck">Load card-deck example (face cards &amp; Kings)</button>
+      </div>
+      <svg id="condSvg" viewBox="0 0 320 320" role="img" aria-label="100-square grid model of two overlapping events"></svg>
+      <div class="verdict" id="condVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> P(A|B) is never a new kind of probability — it's the exact same favorable-over-total recipe, just recomputed after the "total" shrinks down to B's own count.</div>
+    </div>
   </div>
 
   <!-- ============ TAB 2: CROSS-ENTROPY GRADER ============ -->
   <div class="panel" id="panel-xent">
     <div class="card">
       <h2>Grading a Forecaster's Honesty</h2>
-      <p class="sub"><b>What's happening:</b> the true chance of rain is <span class="formula">p</span>; the forecaster's stated belief is <span class="formula">q</span>. Cross-entropy <span class="formula">H(p,q)</span> is the average surprise you'd feel living through many days under the <em>true</em> odds while trusting the forecaster's belief — and it's always at least as large as the best-possible <span class="formula">H(p)</span>, the gap being the KL divergence.</p>
+      <p class="sub"><b>What's happening:</b> the true chance of rain is <span class="formula">p</span>; the forecaster's stated belief is <span class="formula">q</span>. Cross-entropy <span class="formula">H(p,q)</span> is the average surprise you'd feel living through many days under the <em>true</em> odds while trusting the forecaster's belief — and it's always at least as large as the best-possible <span class="formula">H(p)</span>, the surprise you'd feel if the forecaster were perfectly honest (<span class="formula">q=p</span>). The gap between them, <span class="formula">H(p,q) − H(p)</span>, is the <b>KL divergence</b> — literally the extra average surprise you're paying for the forecaster's dishonesty, on top of the surprise you'd pay anyway even with a perfect belief. Read it live in the verdict box below: it reports <span class="formula">H(p,q)</span>, <span class="formula">H(p)</span>, and that gap all at once.</p>
       <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set true rain-chance <span class="formula">p</span> to 90% and slide the forecaster's belief <span class="formula">q</span> down toward 10% — watch <span class="formula">H(p,q)</span> shoot upward while <span class="formula">H(p)</span> stays put. That's the cost of confident wrongness. Now set <span class="formula">q = p</span> exactly and watch the gap collapse to zero.</p>
       <div class="row"><label>True P(rain) = p</label><input type="range" id="xeP" min="1" max="99" step="1" value="90"><span class="readout" id="xePOut">90%</span></div>
       <div class="row"><label>Forecast P(rain) = q</label><input type="range" id="xeQ" min="1" max="99" step="1" value="60"><span class="readout" id="xeQOut">60%</span></div>
@@ -210,6 +254,40 @@
     </div>
   </div>
 
+  <!-- ============ TAB: BASE-RATE EXPLORER ============ -->
+  <div class="panel" id="panel-baserate">
+    <div class="card">
+      <h2>Why "99% Accurate" Doesn't Mean What It Sounds Like</h2>
+      <p class="sub"><b>What's happening:</b> drag the condition's true prevalence, the test's true-positive rate, and its false-positive rate — the population breaks down live into four groups, and P(condition | positive result) updates from the actual counts, the same concrete-population trick from the Practice Gallery's Problems 12–13.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set prevalence to 1% with a 99% true-positive / 1% false-positive test (the disease example) and watch P(condition|positive) land near 50%. Then drag prevalence down to 0.02% (Problem 13's rare test, 1-in-5,000) and watch the same "99% accurate" test's positive results become almost entirely false alarms.</p>
+      <div class="row"><label>Prevalence</label><input type="range" id="brPrev" min="0.02" max="50" step="0.02" value="1"><span class="readout" id="brPrevOut">1%</span></div>
+      <div class="row"><label>True-positive rate</label><input type="range" id="brTPR" min="50" max="100" step="1" value="99"><span class="readout" id="brTPROut">99%</span></div>
+      <div class="row"><label>False-positive rate</label><input type="range" id="brFPR" min="0" max="50" step="1" value="1"><span class="readout" id="brFPROut">1%</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnBrProblem12">Load Problem 12 (spam filter)</button>
+        <button class="op" id="btnBrProblem13">Load Problem 13 (rare genetic test)</button>
+      </div>
+      <svg id="brSvg" viewBox="0 0 640 220" role="img" aria-label="Base-rate population breakdown"></svg>
+      <div class="verdict" id="brVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the false-positive bar's height barely looks like the villain of the story until prevalence gets small — at that point it's the one group large enough to swamp the true positives entirely, no matter how "accurate" the test's own headline numbers claim to be.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: VARIANCE COMPARER ============ -->
+  <div class="panel" id="panel-variance">
+    <div class="card">
+      <h2>Same Average Day, Wildly Different Risk</h2>
+      <p class="sub"><b>What's happening:</b> two machines, three equally likely sales days each, both averaging the identical mean — drag the spread slider and watch each machine's variance (the mean-squared-deviation from Part 3.2) update, confirming variance grows with the <em>square</em> of the spread, not the spread itself.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set Machine B's spread to exactly 10× Machine A's (e.g. ±$5 vs ±$50, the Practice Gallery's Problem 19) and watch B's variance land at exactly 100× A's — never 10×.</p>
+      <div class="row"><label>Mean (both machines)</label><input type="range" id="varMean" min="20" max="80" step="5" value="50"><span class="readout" id="varMeanOut">50</span></div>
+      <div class="row"><label>Machine A spread ±</label><input type="range" id="varSpreadA" min="1" max="30" step="1" value="5"><span class="readout" id="varSpreadAOut">5</span></div>
+      <div class="row"><label>Machine B spread ±</label><input type="range" id="varSpreadB" min="1" max="60" step="1" value="50"><span class="readout" id="varSpreadBOut">50</span></div>
+      <svg id="varSvg" viewBox="0 0 640 200" role="img" aria-label="Variance comparison dot plot"></svg>
+      <div class="verdict" id="varVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> a mean alone can make two genuinely very different situations look identical on paper — variance is the number that actually distinguishes "reliably average" from "wildly unpredictable but averages out."</div>
+    </div>
+  </div>
+
   <footer>
     <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../03-probability.md">Probability &amp; Cross-Entropy</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
   </footer>
@@ -218,9 +296,10 @@
 <script>
 (function(){
   "use strict";
-  function el(tag, attrs){
+  function el(tag, attrs, text){
     const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
     for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
     return e;
   }
   const tabs = document.querySelectorAll(".tab");
@@ -236,6 +315,8 @@
      ========================================================= */
   const trPA=document.getElementById("trPA"), trPB=document.getElementById("trPB"),
         trPBgA=document.getElementById("trPBgA"), trPBgNA=document.getElementById("trPBgNA");
+  const trPAOut=document.getElementById("trPAOut"), trPBOut=document.getElementById("trPBOut"),
+        trPBgAOut=document.getElementById("trPBgAOut"), trPBgNAOut=document.getElementById("trPBgNAOut");
   let treeMode = "indep", highlight = null; // highlight: null | "and" | "or"
 
   function branch(x1,y1,x2,y2,label,color,dim){
@@ -288,10 +369,22 @@
     parts.push(el("circle",{cx:rootX,cy:rootY,r:6,fill:"var(--accent)"}));
     const tA = el("text",{x:l1x,y:70-16,["text-anchor"]:"middle","font-family":"Inter","font-weight":"600","font-size":"12",fill:"var(--pA)"}); tA.textContent="A"; parts.push(tA);
     const tNA = el("text",{x:l1x,y:230+22,["text-anchor"]:"middle","font-family":"Inter","font-weight":"600","font-size":"12",fill:"var(--pA)"}); tNA.textContent="¬A"; parts.push(tNA);
+    // second-layer B/¬B labels, one per branch tip, matching the A/¬A labeling style above
+    function lblB(y, text){
+      const t = el("text",{x:l2x-16,y:y+4,["text-anchor"]:"end","font-family":"Inter","font-weight":"600","font-size":"12",fill:"var(--pB)"});
+      t.textContent = text; return t;
+    }
+    parts.push(lblB(40, "B")); parts.push(lblB(110, "¬B")); parts.push(lblB(190, "B")); parts.push(lblB(260, "¬B"));
     parts = parts.concat(leaf(l2x, 40, "A and B", pAB, activeFor("AB"), "var(--good)"));
     parts = parts.concat(leaf(l2x, 110, "A and ¬B", pANB, activeFor("ANB"), "var(--good)"));
     parts = parts.concat(leaf(l2x, 190, "¬A and B", pNAB, activeFor("NAB"), "var(--good)"));
     parts = parts.concat(leaf(l2x, 260, "¬A and ¬B", pNANB, activeFor("NANB"), "var(--good)"));
+    // color legend explaining the teal (A-layer) vs gold (B-layer) branch coloring
+    const legX = 30, legY = 305;
+    parts.push(el("line",{x1:legX,y1:legY,x2:legX+20,y2:legY,stroke:"var(--pA)",["stroke-width"]:2.4}));
+    const legA = el("text",{x:legX+26,y:legY+4,"font-family":"Inter","font-size":"11.5",fill:"var(--ink-soft)"}); legA.textContent="teal branch = A / ¬A"; parts.push(legA);
+    parts.push(el("line",{x1:legX+180,y1:legY,x2:legX+200,y2:legY,stroke:"var(--pB)",["stroke-width"]:2.4}));
+    const legB = el("text",{x:legX+206,y:legY+4,"font-family":"Inter","font-size":"11.5",fill:"var(--ink-soft)"}); legB.textContent="gold branch = B / ¬B"; parts.push(legB);
     parts.forEach(p => svg.appendChild(p));
 
     const v = document.getElementById("treeVerdict");
@@ -502,9 +595,188 @@
   bdayDraw();
 
   /* =========================================================
+     PAIRS EXPLORER (inside the Birthday Paradox tab)
+     ========================================================= */
+  const pairSvg = document.getElementById("pairSvg");
+  const pairNSlider = document.getElementById("pairN");
+  let pairArrived = 1; // how many people have "walked in" so far (starts at 1: person 1 is already there)
+
+  function pairDraw(){
+    pairSvg.innerHTML = "";
+    const n = parseInt(pairNSlider.value, 10);
+    if (pairArrived > n) pairArrived = n;
+    const cx = 240, cy = 190, radius = 130;
+    const pts = [];
+    for (let i=0;i<n;i++){
+      const angle = -Math.PI/2 + i*(2*Math.PI/n);
+      pts.push({ x: cx + radius*Math.cos(angle), y: cy + radius*Math.sin(angle) });
+    }
+    // settled (already-drawn) pairs: every pair among the first (pairArrived-1) people
+    for (let i=0;i<pairArrived-1;i++){
+      for (let j=i+1;j<pairArrived-1;j++){
+        pairSvg.appendChild(el("line",{x1:pts[i].x,y1:pts[i].y,x2:pts[j].x,y2:pts[j].y,
+          stroke:"var(--line)","stroke-width":1.4}));
+      }
+    }
+    // newest arrival's checks: the just-arrived person (index pairArrived-1) against everyone before them
+    let newChecks = 0;
+    if (pairArrived >= 2){
+      const k = pairArrived - 1; // index of newest arrival
+      for (let i=0;i<k;i++){
+        pairSvg.appendChild(el("line",{x1:pts[i].x,y1:pts[i].y,x2:pts[k].x,y2:pts[k].y,
+          stroke:"var(--accent)","stroke-width":2.4}));
+        newChecks++;
+      }
+    }
+    // dots
+    for (let i=0;i<n;i++){
+      const arrived = i < pairArrived;
+      pairSvg.appendChild(el("circle",{cx:pts[i].x, cy:pts[i].y, r:14,
+        fill: arrived ? (i===pairArrived-1 && pairArrived>=2 ? "var(--accent)" : "var(--pB)") : "#fff",
+        stroke: arrived ? "none" : "var(--line)", "stroke-width":2}));
+      pairSvg.appendChild(el("text",{x:pts[i].x, y:pts[i].y+4, "text-anchor":"middle",
+        "font-size":11,"font-family":"IBM Plex Mono,monospace",
+        fill: arrived ? "#fff" : "var(--ink-soft)"}, String(i+1)));
+    }
+    const cumulative = pairArrived*(pairArrived-1)/2;
+    const batchTotal = n*(n-1)/2;
+    const daysAlreadyClaimed = pairArrived - 1;
+    const daysOpen = 365 - daysAlreadyClaimed;
+    let fractionLine = "";
+    if (pairArrived >= 2){
+      fractionLine = ` &nbsp;·&nbsp; person ${pairArrived}'s own no-clash chance right now: days already claimed = <b>${daysAlreadyClaimed}</b>, days still open = <b>${daysOpen}</b>, so <b>${daysOpen}/365</b>`;
+    }
+    document.getElementById("pairVerdict").innerHTML =
+      (pairArrived < 2
+        ? `Person 1 is in the room. No one to check against yet — <b>0</b> pairs so far.`
+        : `Person <b>${pairArrived}</b> just walked in and checked against the <b>${newChecks}</b> people already there (the highlighted lines) — <b>${newChecks}</b> new pairs this arrival.`)
+      + `<br>Running total of pairs discovered so far: <b>${cumulative}</b> &nbsp;·&nbsp; full-room batch count once all ${n} arrive: <b>${batchTotal}</b> = ${n}×${n-1}/2`
+      + fractionLine;
+  }
+  pairNSlider.addEventListener("input", () => {
+    document.getElementById("pairNOut").textContent = pairNSlider.value;
+    pairArrived = 1;
+    pairDraw();
+  });
+  document.getElementById("pairNext").addEventListener("click", () => {
+    const n = parseInt(pairNSlider.value, 10);
+    if (pairArrived < n) pairArrived++;
+    pairDraw();
+  });
+  document.getElementById("pairReset").addEventListener("click", () => {
+    pairArrived = 1;
+    pairDraw();
+  });
+  pairDraw();
+
+  /* =========================================================
+     HASH COLLISION ATTACK (inside the Birthday Paradox tab)
+     ========================================================= */
+  const hashBitsSlider = document.getElementById("hashBits");
+  function attemptsForCollision50(N){
+    let noMatch = 1, k = 0;
+    while (1 - noMatch < 0.5) {
+      noMatch *= (N - k) / N;
+      k++;
+      if (k > N) break;
+    }
+    return k;
+  }
+  function attemptsForSpecificMatch50(N){
+    return Math.ceil(Math.log(0.5) / Math.log(1 - 1/N));
+  }
+  function drawHash(){
+    const bits = parseInt(hashBitsSlider.value, 10);
+    document.getElementById("hashBitsOut").textContent = bits;
+    const N = Math.pow(2, bits);
+    const kColl = attemptsForCollision50(N);
+    const kSpec = attemptsForSpecificMatch50(N);
+    const ratio = kSpec / kColl;
+    document.getElementById("hashVerdict").innerHTML =
+      `Possible fingerprints: 2^${bits} = <b>${N.toLocaleString()}</b><br>`+
+      `Attempts for a 50% chance of <b>any</b> collision: <span class="big">${kColl.toLocaleString()}</span> (≈1.1774×√N)<br>`+
+      `Attempts for a 50% chance of matching <b>one specific</b> fingerprint: <span class="big">${kSpec.toLocaleString()}</span> (≈0.6931×N)<br>`+
+      `Specific-match search needs <b>${ratio.toFixed(1)}×</b> more attempts than collision search, at this bit-length.`;
+  }
+  hashBitsSlider.addEventListener("input", drawHash);
+  drawHash();
+
+  /* =========================================================
+     CONDITIONAL PROBABILITY — 10x10 GRID MODEL
+     ========================================================= */
+  const condASlider = document.getElementById("condA"), condBSlider = document.getElementById("condB"), condOverlapSlider = document.getElementById("condOverlap");
+  const condAOut = document.getElementById("condAOut"), condBOut = document.getElementById("condBOut"), condOverlapOut = document.getElementById("condOverlapOut");
+  let condShrunk = false;
+  function clampOverlap(){
+    const A = parseInt(condASlider.value,10), B = parseInt(condBSlider.value,10);
+    const maxOverlap = Math.min(A,B);
+    const minOverlap = Math.max(0, A+B-100);
+    condOverlapSlider.max = maxOverlap;
+    let ov = parseInt(condOverlapSlider.value,10);
+    if (ov > maxOverlap) ov = maxOverlap;
+    if (ov < minOverlap) ov = minOverlap;
+    condOverlapSlider.value = ov;
+  }
+  function drawConditional(){
+    clampOverlap();
+    const A = parseInt(condASlider.value,10), B = parseInt(condBSlider.value,10), ov = parseInt(condOverlapSlider.value,10);
+    condAOut.textContent = A; condBOut.textContent = B; condOverlapOut.textContent = ov;
+    const aOnly = A - ov, bOnly = B - ov, neither = 100 - A - bOnly;
+
+    // assign 100 grid cells to regions in fixed order: both, A-only, B-only, neither
+    const regionOf = new Array(100);
+    let idx = 0;
+    for (let i=0;i<ov;i++) regionOf[idx++] = "both";
+    for (let i=0;i<aOnly;i++) regionOf[idx++] = "aOnly";
+    for (let i=0;i<bOnly;i++) regionOf[idx++] = "bOnly";
+    while (idx<100) regionOf[idx++] = "neither";
+
+    const svg = document.getElementById("condSvg");
+    svg.innerHTML = "";
+    const cell = 30, pad = 10;
+    for (let r=0;r<10;r++) for (let c=0;c<10;c++){
+      const i = r*10+c;
+      const region = regionOf[i];
+      let fill = "#F5F4F0", opacity = 1;
+      if (region==="both") fill = "var(--accent)";
+      else if (region==="aOnly") fill = "var(--pA)";
+      else if (region==="bOnly") fill = "var(--pB)";
+      if (condShrunk && region!=="both" && region!=="bOnly") opacity = 0.08;
+      svg.appendChild(el("rect",{x:pad+c*cell, y:pad+r*cell, width:cell-2, height:cell-2, rx:2, fill, opacity}));
+    }
+
+    const pA = A/100, pB = B/100, pAB = ov/100;
+    const pAgivenB = B>0 ? ov/B : 0;
+    const pBgivenA = A>0 ? ov/A : 0;
+    document.getElementById("condVerdict").innerHTML =
+      `P(A) = ${A}/100 = <b>${pA.toFixed(2)}</b> &nbsp;·&nbsp; P(B) = ${B}/100 = <b>${pB.toFixed(2)}</b> &nbsp;·&nbsp; P(A and B) = ${ov}/100 = <b>${pAB.toFixed(2)}</b><br>`+
+      `P(A|B) = ${ov}/${B} = <span class="big">${pAgivenB.toFixed(4)}</span> &nbsp;·&nbsp; P(B|A) = ${ov}/${A} = <span class="big">${pBgivenA.toFixed(4)}</span><br>`+
+      `Symmetry check: P(A|B)×P(B) = ${(pAgivenB*pB).toFixed(4)} &nbsp;=&nbsp; P(B|A)×P(A) = ${(pBgivenA*pA).toFixed(4)} &nbsp;=&nbsp; P(A and B) = ${pAB.toFixed(4)}`;
+  }
+  [condASlider, condBSlider, condOverlapSlider].forEach(inp => inp.addEventListener("input", drawConditional));
+  document.getElementById("condShrinkB").addEventListener("click", function(){
+    condShrunk = true; this.classList.add("active");
+    document.getElementById("condShowAll").classList.remove("active");
+    drawConditional();
+  });
+  document.getElementById("condShowAll").addEventListener("click", function(){
+    condShrunk = false; this.classList.add("active");
+    document.getElementById("condShrinkB").classList.remove("active");
+    drawConditional();
+  });
+  document.getElementById("condCardDeck").addEventListener("click", function(){
+    // A = face cards (12), B = Kings (4), overlap = 4 (every King is a face card) --
+    // P(A|B)=4/4=1 and P(B|A)=4/12=1/3 match the tutorial's exact ratios regardless of grid total.
+    condASlider.value = 12; condBSlider.value = 4; condOverlapSlider.value = 4;
+    drawConditional();
+  });
+  drawConditional();
+
+  /* =========================================================
      TAB 2 — CROSS-ENTROPY GRADER
      ========================================================= */
   const xeP = document.getElementById("xeP"), xeQ = document.getElementById("xeQ");
+  const xePOut = document.getElementById("xePOut"), xeQOut = document.getElementById("xeQOut");
   function renderXent(){
     const p1 = parseFloat(xeP.value)/100, q1 = parseFloat(xeQ.value)/100;
     const p2 = 1-p1, q2 = 1-q1;
@@ -583,6 +855,104 @@
   document.getElementById("llnRollMany").addEventListener("click", () => { for(let i=0;i<1000;i++) llnRoll(); drawLln(); });
   document.getElementById("llnReset").addEventListener("click", () => { llnRolls=0; llnSum=0; llnTrace=[]; drawLln(); });
   drawLln();
+
+  /* =========================================================
+     TAB — BASE-RATE EXPLORER
+     ========================================================= */
+  const brPrev = document.getElementById("brPrev"), brTPR = document.getElementById("brTPR"), brFPR = document.getElementById("brFPR");
+  function drawBaseRate(){
+    const prevPercent = parseFloat(brPrev.value);
+    const prev = prevPercent/100; // fraction
+    const tpr = parseFloat(brTPR.value)/100;
+    const fpr = parseFloat(brFPR.value)/100;
+    document.getElementById("brPrevOut").textContent = (prev*100).toFixed(2)+"%";
+    document.getElementById("brTPROut").textContent = (tpr*100).toFixed(0)+"%";
+    document.getElementById("brFPROut").textContent = (fpr*100).toFixed(0)+"%";
+
+    const N = 1000000; // fixed large population so every count is stable and precise
+    const positive = N*prev, negative = N*(1-prev);
+    const truePos = positive*tpr, falseNeg = positive*(1-tpr);
+    const falsePos = negative*fpr, trueNeg = negative*(1-fpr);
+    const totalFlagged = truePos + falsePos;
+    const ppv = totalFlagged>0 ? truePos/totalFlagged : 0;
+
+    const svg = document.getElementById("brSvg");
+    svg.innerHTML = "";
+    const W=640,H=220,pad=50;
+    const bars = [
+      {label:"True positives", val: truePos, color:"var(--pB)"},
+      {label:"False positives", val: falsePos, color:"var(--bad)"},
+      {label:"False negatives", val: falseNeg, color:"#C9B98A"},
+      {label:"True negatives", val: trueNeg, color:"var(--good)"},
+    ];
+    const maxVal = Math.max(...bars.map(b=>b.val), 1);
+    const gap = (W-2*pad)/bars.length, bw = gap*0.6;
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--line)"}));
+    bars.forEach((b,i) => {
+      const x = pad + i*gap + (gap-bw)/2;
+      const hgt = Math.sqrt(b.val/maxVal)*(H-2*pad); // sqrt scale so small-but-nonzero bars stay visible
+      svg.appendChild(el("rect",{x, y:H-pad-hgt, width:bw, height:hgt, fill:b.color, opacity:0.88}));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad-hgt-8, "text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono,monospace", fill:"var(--ink)"}, Math.round(b.val).toLocaleString()));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad+18, "text-anchor":"middle","font-size":10.5,"font-family":"IBM Plex Mono,monospace", fill:"var(--ink-soft)"}, b.label));
+    });
+
+    document.getElementById("brVerdict").innerHTML =
+      `Out of a population of 1,000,000: <b>${Math.round(positive).toLocaleString()}</b> actually have the condition, <b>${Math.round(negative).toLocaleString()}</b> don't.<br>`+
+      `Flagged positive: <b>${Math.round(truePos).toLocaleString()}</b> true + <b>${Math.round(falsePos).toLocaleString()}</b> false = <b>${Math.round(totalFlagged).toLocaleString()}</b> total.<br>`+
+      `P(condition | positive) = ${Math.round(truePos)}/${Math.round(totalFlagged)} = <span class="big">${(ppv*100).toFixed(2)}%</span>`;
+  }
+  [brPrev,brTPR,brFPR].forEach(inp => inp.addEventListener("input", drawBaseRate));
+  document.getElementById("btnBrProblem12").addEventListener("click", () => {
+    brPrev.value = 20; brTPR.value = 95; brFPR.value = 2;
+    drawBaseRate();
+  });
+  document.getElementById("btnBrProblem13").addEventListener("click", () => {
+    brPrev.value = 0.02; brTPR.value = 98; brFPR.value = 3;
+    drawBaseRate();
+  });
+  drawBaseRate();
+
+  /* =========================================================
+     TAB — VARIANCE COMPARER
+     ========================================================= */
+  const varMean = document.getElementById("varMean"), varSpreadA = document.getElementById("varSpreadA"), varSpreadB = document.getElementById("varSpreadB");
+  const varMeanOut = document.getElementById("varMeanOut"), varSpreadAOut = document.getElementById("varSpreadAOut"), varSpreadBOut = document.getElementById("varSpreadBOut");
+  function variance3(mean, spread){
+    const vals = [mean-spread, mean, mean+spread];
+    return vals.reduce((s,v)=>s+((v-mean)**2),0)/3;
+  }
+  function drawVariance(){
+    const mean = parseFloat(varMean.value), sA = parseFloat(varSpreadA.value), sB = parseFloat(varSpreadB.value);
+    varMeanOut.textContent = mean; varSpreadAOut.textContent = sA; varSpreadBOut.textContent = sB;
+    const vA = variance3(mean, sA), vB = variance3(mean, sB);
+
+    const svg = document.getElementById("varSvg");
+    svg.innerHTML = "";
+    const W=640,H=200,pad=50;
+    const maxSpread = Math.max(sA,sB,1);
+    const axisMin = mean-maxSpread-5, axisMax = mean+maxSpread+5;
+    function px(v){ return pad + (v-axisMin)/(axisMax-axisMin)*(W-2*pad); }
+    const rowA = 70, rowB = 150;
+    svg.appendChild(el("line",{x1:pad,y1:rowA,x2:W-pad,y2:rowA,stroke:"var(--line)"}));
+    svg.appendChild(el("line",{x1:pad,y1:rowB,x2:W-pad,y2:rowB,stroke:"var(--line)"}));
+    svg.appendChild(el("line",{x1:px(mean),y1:30,x2:px(mean),y2:180,stroke:"var(--accent)","stroke-dasharray":"4,4","stroke-width":1.2}));
+    svg.appendChild(el("text",{x:px(mean),y:20,"text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono,monospace",fill:"var(--accent)"}, "mean = "+mean));
+    [[mean-sA,rowA,"var(--pred)"],[mean,rowA,"var(--pred)"],[mean+sA,rowA,"var(--pred)"]].forEach(([v,y,c]) => {
+      svg.appendChild(el("circle",{cx:px(v),cy:y,r:7,fill:c}));
+    });
+    [[mean-sB,rowB,"var(--pB)"],[mean,rowB,"var(--pB)"],[mean+sB,rowB,"var(--pB)"]].forEach(([v,y,c]) => {
+      svg.appendChild(el("circle",{cx:px(v),cy:y,r:7,fill:c}));
+    });
+    svg.appendChild(el("text",{x:pad-8,y:rowA+4,"text-anchor":"end","font-size":11,"font-family":"IBM Plex Mono,monospace",fill:"var(--ink-soft)"}, "A"));
+    svg.appendChild(el("text",{x:pad-8,y:rowB+4,"text-anchor":"end","font-size":11,"font-family":"IBM Plex Mono,monospace",fill:"var(--ink-soft)"}, "B"));
+
+    document.getElementById("varVerdict").innerHTML =
+      `Machine A: values ${mean-sA}, ${mean}, ${mean+sA} &nbsp;·&nbsp; Var(A) = <b>${vA.toFixed(2)}</b><br>`+
+      `Machine B: values ${mean-sB}, ${mean}, ${mean+sB} &nbsp;·&nbsp; Var(B) = <b>${vB.toFixed(2)}</b><br>`+
+      `Spread ratio (B÷A): <b>${(sB/sA).toFixed(2)}×</b> &nbsp;·&nbsp; Variance ratio (B÷A): <span class="big">${(vB/vA).toFixed(2)}×</span>`;
+  }
+  [varMean,varSpreadA,varSpreadB].forEach(inp => inp.addEventListener("input", drawVariance));
+  drawVariance();
 })();
 </script>
 </body>

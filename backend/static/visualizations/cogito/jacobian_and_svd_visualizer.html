@@ -88,9 +88,14 @@
         <button class="op active" id="btnFnPolar">Polar: x=r·cos(θ), y=r·sin(θ)</button>
         <button class="op" id="btnFnTanh">Toy layer: y=tanh(Wx+b)</button>
       </div>
-      <div class="row" id="rowJacPoint"><label>evaluation point</label>
-        <input type="range" id="jacP1" min="-300" max="300" step="1" value="150">
-        <input type="range" id="jacP2" min="-300" max="300" step="1" value="150">
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnLoadExample">Load tutorial's exact example (r=3, θ=π/4)</button>
+      </div>
+      <div class="row" id="rowJacPoint"><label id="jacP1Label">r</label>
+        <input type="range" id="jacP1" min="-300" max="300" step="1" value="150"><span class="readout" id="jacP1Out"></span>
+      </div>
+      <div class="row"><label id="jacP2Label">θ</label>
+        <input type="range" id="jacP2" min="-300" max="300" step="1" value="150"><span class="readout" id="jacP2Out"></span>
       </div>
       <svg viewBox="0 0 600 320" id="jacSvg"></svg>
       <div class="verdict" id="jacVerdict"></div>
@@ -127,7 +132,11 @@
   <div class="panel" id="panel-svd">
     <div class="card">
       <h2>Any Matrix, Decomposed Into Two Rotations and a Stretch</h2>
-      <p class="sub">Edit the 2×2 matrix below and watch a unit circle warp into an ellipse — the ellipse's own semi-axis lengths are the singular values.</p>
+      <p class="sub">Edit the matrix below and watch a unit circle warp into an ellipse — the ellipse's own semi-axis lengths are the singular values. SVD works just as well on non-square matrices, so a 3×2 case is included.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnSvd2x2">2×2 matrix</button>
+        <button class="op" id="btnSvd3x2">3×2 matrix (tutorial's exact example)</button>
+      </div>
       <table class="matrix" id="svdMatrixInputs"></table>
       <svg viewBox="0 0 600 300" id="svdSvg"></svg>
       <div class="verdict" id="svdVerdict"></div>
@@ -193,6 +202,12 @@
       const jf = fnMode==="polar" ? jPolar : jTanh;
       const J = jf(p);
       const f0 = f(p);
+
+      document.getElementById("jacP1Label").textContent = fnMode==="polar" ? "r" : "x0";
+      document.getElementById("jacP2Label").textContent = fnMode==="polar" ? "θ (radians)" : "x1";
+      document.getElementById("jacP1Out").textContent = fmt(p[0], fnMode==="polar" ? 2 : 3);
+      document.getElementById("jacP2Out").textContent = fmt(p[1], fnMode==="polar" ? 4 : 3);
+
       const svg = document.getElementById("jacSvg");
       svg.innerHTML = "";
       const cx=300, cy=160, scale = fnMode==="polar" ? 25 : 120;
@@ -224,6 +239,15 @@
     document.getElementById("btnFnTanh").addEventListener("click", function(){ fnMode="tanh"; this.classList.add("active"); document.getElementById("btnFnPolar").classList.remove("active"); render(); });
     document.getElementById("jacP1").addEventListener("input", render);
     document.getElementById("jacP2").addEventListener("input", render);
+    document.getElementById("btnLoadExample").addEventListener("click", function(){
+      // r=3, theta=pi/4 exactly -- the tutorial's own verified worked example
+      fnMode = "polar";
+      document.getElementById("btnFnPolar").classList.add("active");
+      document.getElementById("btnFnTanh").classList.remove("active");
+      document.getElementById("jacP1").value = 180;  // -> r = 180/60 = 3
+      document.getElementById("jacP2").value = 75;   // -> theta = 75/300*pi = pi/4
+      render();
+    });
     render();
   })();
 
@@ -295,7 +319,7 @@
     function buildInputs(){
       const t = document.getElementById("svdMatrixInputs");
       t.innerHTML = "";
-      for (let i=0;i<2;i++){
+      for (let i=0;i<M.length;i++){
         const tr = document.createElement("tr");
         for (let j=0;j<2;j++){
           const td = document.createElement("td");
@@ -307,9 +331,10 @@
         t.appendChild(tr);
       }
     }
-    function svd2x2(A){
-      // AtA
-      const a=A[0][0]*A[0][0]+A[1][0]*A[1][0], b=A[0][0]*A[0][1]+A[1][0]*A[1][1], d=A[0][1]*A[0][1]+A[1][1]*A[1][1];
+    function svdAny(A){
+      // A is m rows x 2 cols -- AtA is always 2x2 regardless of row count m
+      let a=0,b=0,d=0;
+      for (let i=0;i<A.length;i++){ a += A[i][0]*A[i][0]; b += A[i][0]*A[i][1]; d += A[i][1]*A[i][1]; }
       const tr=a+d, det=a*d-b*b;
       const disc = Math.sqrt(Math.max(0, tr*tr-4*det));
       const lam1=(tr+disc)/2, lam2=(tr-disc)/2;
@@ -318,30 +343,46 @@
       const sigma1=Math.sqrt(Math.max(0,lam1)), sigma2=Math.sqrt(Math.max(0,lam2));
       return {sigma1, sigma2, v1, v2};
     }
-    function matVec(Am,v){ return [Am[0][0]*v[0]+Am[0][1]*v[1], Am[1][0]*v[0]+Am[1][1]*v[1]]; }
+    function matVec(Am,v){ return Am.map(row => row[0]*v[0]+row[1]*v[1]); }
+    // project an output vector of length 2 or 3 down to 2D for drawing (identity when m=2, simple oblique projection when m=3)
+    function project(w){
+      if (w.length===2) return w;
+      return [w[0] - w[2]*0.35, w[1] - w[2]*0.2];
+    }
     function render(){
-      const {sigma1,sigma2,v1,v2} = svd2x2(M);
+      const {sigma1,sigma2,v1,v2} = svdAny(M);
       const svg = document.getElementById("svdSvg");
       svg.innerHTML = "";
       const cx=150, cy=150, scale=30;
       svg.appendChild(el("line",{x1:0,y1:cy,x2:300,y2:cy,stroke:"var(--line)"}));
       svg.appendChild(el("line",{x1:cx,y1:0,x2:cx,y2:300,stroke:"var(--line)"}));
-      // unit circle
+      // unit circle (input space, always 2D since every M here has exactly 2 columns)
       let circ = "M "; for (let i=0;i<=64;i++){ const a=2*Math.PI*i/64; const x=cx+Math.cos(a)*scale, y=cy-Math.sin(a)*scale; circ += (i===0?"":"L ")+x+","+y+" "; } circ+="Z";
       svg.appendChild(el("path",{d:circ, fill:"none", stroke:"var(--line)","stroke-width":1.5,"stroke-dasharray":"3,3"}));
-      // warped ellipse: apply M to points on the unit circle
-      let ell = "M "; for (let i=0;i<=64;i++){ const a=2*Math.PI*i/64; const p=[Math.cos(a),Math.sin(a)]; const w=matVec(M,p); const x=cx+w[0]*scale, y=cy-w[1]*scale; ell += (i===0?"":"L ")+x+","+y+" "; } ell+="Z";
+      // warped ellipse: apply M to points on the unit circle, then project to 2D if output is 3D
+      let ell = "M "; for (let i=0;i<=64;i++){ const a=2*Math.PI*i/64; const p=[Math.cos(a),Math.sin(a)]; const w=project(matVec(M,p)); const x=cx+w[0]*scale, y=cy-w[1]*scale; ell += (i===0?"":"L ")+x+","+y+" "; } ell+="Z";
       svg.appendChild(el("path",{d:ell, fill:"rgba(91,75,149,0.12)", stroke:"var(--accent)","stroke-width":2}));
       // draw singular vectors scaled by singular values (semi-axes of ellipse)
       [[v1,sigma1,"var(--c1)"],[v2,sigma2,"var(--c4)"]].forEach(([v,sig,color])=>{
-        const w = matVec(M, v);
-        const len = Math.hypot(w[0],w[1]);
+        const w = project(matVec(M, v));
         svg.appendChild(el("line",{x1:cx,y1:cy,x2:cx+w[0]*scale,y2:cy-w[1]*scale, stroke:color, "stroke-width":2.5}));
       });
-      svg.appendChild(el("text",{x:320,y:100,"font-family":"IBM Plex Mono, monospace","font-size":"13",fill:"var(--c1)"})).textContent = "σ₁ = "+fmt(sigma1,4);
-      svg.appendChild(el("text",{x:320,y:125,"font-family":"IBM Plex Mono, monospace","font-size":"13",fill:"var(--c4)"})).textContent = "σ₂ = "+fmt(sigma2,4);
-      document.getElementById("svdVerdict").innerHTML = "dashed circle = every possible unit-length input direction &nbsp;·&nbsp; solid ellipse = where M sends them — its own semi-axis lengths are exactly the singular values.";
+      svg.appendChild(el("text",{x:320,y:100,"font-family":"IBM Plex Mono, monospace","font-size":"13",fill:"var(--c1)"})).textContent = "σ₁ = "+fmt(sigma1,6);
+      svg.appendChild(el("text",{x:320,y:125,"font-family":"IBM Plex Mono, monospace","font-size":"13",fill:"var(--c4)"})).textContent = "σ₂ = "+fmt(sigma2,6);
+      svg.appendChild(el("text",{x:320,y:150,"font-family":"IBM Plex Mono, monospace","font-size":"12",fill:"var(--ink-soft)"})).textContent = "v₁=("+fmt(v1[0],4)+","+fmt(v1[1],4)+")";
+      const note = M.length===3 ? " (output lives in 3D here — the ellipse shown is a 2D oblique projection of it, not the literal shape)" : "";
+      document.getElementById("svdVerdict").innerHTML = "dashed circle = every possible unit-length input direction &nbsp;·&nbsp; solid ellipse = where M sends them — its own semi-axis lengths are exactly the singular values."+note;
     }
+    document.getElementById("btnSvd2x2").addEventListener("click", function(){
+      M = [[3,1],[0,2]]; this.classList.add("active");
+      document.getElementById("btnSvd3x2").classList.remove("active");
+      buildInputs(); render();
+    });
+    document.getElementById("btnSvd3x2").addEventListener("click", function(){
+      M = [[3,0],[4,5],[0,4]]; this.classList.add("active");
+      document.getElementById("btnSvd2x2").classList.remove("active");
+      buildInputs(); render();
+    });
     buildInputs(); render();
   })();
 

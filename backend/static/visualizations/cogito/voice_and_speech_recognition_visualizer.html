@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Voice &amp; Speech Recognition, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  table.datatable{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  table.datatable input{width:64px;background:var(--bg);border:1px solid var(--border);color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:4px 6px;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:140px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  .two-col{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;}
+  .two-col > div{flex:1;min-width:280px;}
+  .path-list{font-size:12px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px;}
+  .path-list div{padding:3px 0;border-bottom:1px solid rgba(244,241,232,0.06);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Voice &amp; Speech Recognition, live</h1>
+  <p class="sub">Three companion demos: the two unrelated things called "grams," a step-by-step MFCC pipeline, and a CTC alignment explorer.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="grams">The Two Grams</button>
+    <button class="tab-btn" data-tab="mfcc">Mel Spectrogram → MFCC</button>
+    <button class="tab-btn" data-tab="ctc">CTC Alignment Explorer</button>
+  </div>
+
+  <div class="tabpage active" id="tab-grams">
+    <div class="panel">
+      <h2>Spectrogram vs. N-Gram — Same Suffix, Different Jobs</h2>
+      <p class="sub">Left: a tiny synthetic spectrogram (brightness = energy at that time/frequency cell). Right: a bigram table — probabilities of one word following another, estimated by counting. Neither is a version of the other.</p>
+      <div class="two-col">
+        <div>
+          <h2 style="font-size:14px;">Spectrogram (a picture)</h2>
+          <svg id="specSvg" width="320" height="220" viewBox="0 0 320 220"></svg>
+        </div>
+        <div>
+          <h2 style="font-size:14px;">Bigram table (a count-based rule)</h2>
+          <table class="datatable" id="bigramTable"></table>
+          <div class="story-line">P(w<sub>i</sub> | w<sub>i-1</sub>) = count(w<sub>i-1</sub>, w<sub>i</sub>) / count(w<sub>i-1</sub>) — a Markov chain's transition matrix, estimated from text instead of assumed.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>"I see" vs. "eye sea" — the Language Model Breaks the Tie</h2>
+      <p class="sub">The acoustic evidence is genuinely identical for both candidate transcriptions — the bigram table above is what breaks the tie.</p>
+      <table class="datatable" id="disambigTable"></table>
+      <div class="story-line" id="disambigStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-mfcc">
+    <div class="panel">
+      <h2>From Mel-Band Energies to MFCC</h2>
+      <p class="sub">Edit the 8 Mel-band energies below and watch the log step and the Discrete Cosine Transform update live.</p>
+      <table class="datatable" id="melTable"></table>
+      <svg id="mfccSvg" width="640" height="220" viewBox="0 0 640 220"></svg>
+      <div class="row">
+        <button class="op" id="resetMel">Reset to tutorial's example</button>
+      </div>
+      <div class="story-line" id="mfccStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-ctc">
+    <div class="panel">
+      <h2>CTC: Every Alignment That Collapses to the Right Answer</h2>
+      <p class="sub">Edit the per-frame probabilities for A, B, and blank (–). B is auto-filled so each row sums to 1. Target text is fixed at "AB."</p>
+      <table class="datatable" id="ctcTable"></table>
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">Valid paths → "AB"</div><div class="num" id="ctcCount">-</div></div>
+        <div class="metric coral"><div class="lbl">Total P("AB" | audio)</div><div class="num" id="ctcTotal">-</div></div>
+        <div class="metric blue"><div class="lbl">Sum over ALL labels (sanity check)</div><div class="num" id="ctcSanity">-</div></div>
+      </div>
+      <div class="two-col">
+        <div>
+          <h2 style="font-size:14px;">Top paths collapsing to "AB"</h2>
+          <div class="path-list" id="ctcPaths"></div>
+        </div>
+        <div>
+          <h2 style="font-size:14px;">All reachable output strings</h2>
+          <div class="path-list" id="ctcAllLabels"></div>
+        </div>
+      </div>
+      <div class="story-line" id="ctcStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../voice_and_speech_recognition_feynman.md">Voice Data in Machine Learning</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // ---- Tabs ----
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ==================== TAB 1: The Two Grams ====================
+  function drawSpectrogram(){
+    const svg = document.getElementById("specSvg");
+    svg.innerHTML = "";
+    const W=320,H=220,pad=30, cols=16, rows=10;
+    const cw=(W-2*pad)/cols, ch=(H-2*pad)/rows;
+    // synthetic: a rising "chirp"-like band plus a steady low band
+    for(let c=0;c<cols;c++){
+      for(let r=0;r<rows;r++){
+        const t = c/cols, freqRow = rows-1-r;
+        const chirpCenter = freqRow - t*7;
+        const chirp = Math.exp(-(chirpCenter*chirpCenter)/2);
+        const steady = Math.exp(-((freqRow-1)*(freqRow-1))/1.2) * 0.6;
+        const v = Math.min(1, chirp + steady);
+        const bright = Math.round(v*180+20);
+        svg.appendChild(el("rect",{x:pad+c*cw, y:pad+r*ch, width:cw, height:ch,
+          fill:`rgb(${bright},${bright},${Math.round(bright*0.7)})`, opacity:0.9}));
+      }
+    }
+    svg.appendChild(el("text",{x:W/2,y:H-6,"text-anchor":"middle","font-size":10.5,fill:"var(--chalk-dim)"},"time →"));
+    svg.appendChild(el("text",{x:12,y:H/2,"text-anchor":"middle","font-size":10.5,fill:"var(--chalk-dim)","transform":`rotate(-90 12 ${H/2})`},"frequency →"));
+  }
+
+  // totalCount(w1) = count of w1 followed by ANY word in the corpus (not just see/sea) -
+  // matches the tutorial's exact P(see|I)=0.02 and P(sea|eye)=0.0002 without distorting the ratio.
+  const BIGRAM_ROWS = [
+    { w1: "I",   w2: "see", count: 2000, total: 100000 },
+    { w1: "I",   w2: "sea", count: 20,   total: 100000 },
+    { w1: "eye", w2: "see", count: 25,   total: 5000 },
+    { w1: "eye", w2: "sea", count: 1,    total: 5000 },
+  ];
+  function renderBigramTable(){
+    const table = document.getElementById("bigramTable");
+    let html = "<tr><th>w(i-1)</th><th>w(i)</th><th>count(w(i-1),w(i))</th><th>total count(w(i-1))</th><th>P(w(i)|w(i-1))</th></tr>";
+    BIGRAM_ROWS.forEach(r => {
+      const p = r.count / r.total;
+      html += `<tr><td>${r.w1}</td><td>${r.w2}</td><td>${r.count}</td><td>${r.total}</td><td>${p.toFixed(4)}</td></tr>`;
+    });
+    table.innerHTML = html;
+  }
+
+  drawSpectrogram();
+  renderBigramTable();
+
+  function renderDisambig(){
+    const acousticPrior = 0.5;      // P(I) = P(eye)
+    const acousticLikelihood = 0.9; // acoustic("see") = acoustic("sea")
+    const pSeeGivenI = BIGRAM_ROWS.find(r => r.w1==="I" && r.w2==="see").count / BIGRAM_ROWS.find(r => r.w1==="I" && r.w2==="see").total;
+    const pSeaGivenEye = BIGRAM_ROWS.find(r => r.w1==="eye" && r.w2==="sea").count / BIGRAM_ROWS.find(r => r.w1==="eye" && r.w2==="sea").total;
+    const scoreISee = acousticPrior * acousticLikelihood * pSeeGivenI;
+    const scoreEyeSea = acousticPrior * acousticLikelihood * pSeaGivenEye;
+    const ratio = scoreISee / scoreEyeSea;
+
+    const table = document.getElementById("disambigTable");
+    table.innerHTML = `<tr><th>Candidate</th><th>P(word1) [acoustic prior]</th><th>acoustic(word2)</th><th>P(word2|word1) [bigram]</th><th>Combined score</th></tr>
+      <tr><td>"I see"</td><td>${acousticPrior.toFixed(2)}</td><td>${acousticLikelihood.toFixed(2)}</td><td>${pSeeGivenI.toFixed(4)}</td><td>${scoreISee.toFixed(6)}</td></tr>
+      <tr><td>"eye sea"</td><td>${acousticPrior.toFixed(2)}</td><td>${acousticLikelihood.toFixed(2)}</td><td>${pSeaGivenEye.toFixed(4)}</td><td>${scoreEyeSea.toFixed(6)}</td></tr>`;
+    document.getElementById("disambigStory").textContent =
+      `Acoustic evidence is identical for both (0.5 × 0.9 either way) — only the bigram probability differs. "I see" outscores "eye sea" by a factor of ${ratio.toFixed(0)}-to-1, purely on the language model's contribution.`;
+  }
+  renderDisambig();
+
+  // ==================== TAB 2: Mel Spectrogram -> MFCC ====================
+  const DEFAULT_MEL = [120, 90, 150, 60, 40, 30, 20, 10];
+  let melEnergies = [...DEFAULT_MEL];
+
+  function dctII(x, K){
+    const N = x.length;
+    const out = [];
+    for (let k=0;k<K;k++){
+      let s = 0;
+      for (let n=0;n<N;n++) s += x[n]*Math.cos((Math.PI/N)*(n+0.5)*k);
+      out.push(s);
+    }
+    return out;
+  }
+
+  function renderMelTable(){
+    const table = document.getElementById("melTable");
+    let html = "<tr><th>Mel band</th>" + melEnergies.map((_,i)=>`<th>${i}</th>`).join("") + "</tr>";
+    html += "<tr><td>Energy</td>" + melEnergies.map((e,i)=>`<td><input type="number" step="1" min="1" data-idx="${i}" value="${e}"></td>`).join("") + "</tr>";
+    table.innerHTML = html;
+    table.querySelectorAll("input").forEach(inp => inp.addEventListener("input", e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      melEnergies[idx] = Math.max(1, parseFloat(e.target.value) || 1);
+      updateMfcc();
+    }));
+  }
+
+  function drawMfcc(logE, mfcc){
+    const svg = document.getElementById("mfccSvg");
+    svg.innerHTML = "";
+    const W=640,H=220,pad=44;
+    const n1 = logE.length, n2 = mfcc.length;
+    const maxAbs = Math.max(...logE.map(Math.abs), ...mfcc.map(Math.abs), 1);
+    const midY = H/2;
+    const scale = (H/2-20)/maxAbs;
+
+    svg.appendChild(el("line",{x1:pad,y1:midY,x2:W-pad,y2:midY,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("text",{x:pad,y:16,"font-size":11,fill:"var(--chalk-dim)"},"log-Mel energies (left) vs. MFCC coefficients (right)"));
+
+    const gap = 20;
+    const leftW = (W-2*pad-gap)*0.5, rightW = (W-2*pad-gap)*0.5;
+    const bw1 = leftW/n1, bw2 = rightW/n2;
+
+    logE.forEach((v,i) => {
+      const x = pad + i*bw1;
+      const h = Math.abs(v)*scale;
+      svg.appendChild(el("rect",{x:x+2, y: v>=0? midY-h: midY, width:bw1-4, height:h, fill:"var(--blue)", opacity:0.85}));
+      svg.appendChild(el("text",{x:x+bw1/2, y:midY+ (v>=0? -h-6: h+14), "text-anchor":"middle","font-size":9.5, fill:"var(--chalk-dim)"}, v.toFixed(2)));
+    });
+    logE.forEach((_,i) => svg.appendChild(el("text",{x:pad+i*bw1+bw1/2, y:H-8, "text-anchor":"middle","font-size":9.5, fill:"var(--chalk-dim)"}, "log e"+i)));
+
+    const rightStart = pad+leftW+gap;
+    mfcc.forEach((v,i) => {
+      const x = rightStart + i*bw2;
+      const h = Math.abs(v)*scale;
+      svg.appendChild(el("rect",{x:x+4, y: v>=0? midY-h: midY, width:bw2-8, height:h, fill:"var(--coral)", opacity:0.9}));
+      svg.appendChild(el("text",{x:x+bw2/2, y:midY+ (v>=0? -h-6: h+14), "text-anchor":"middle","font-size":10, fill:"var(--chalk)"}, v.toFixed(3)));
+      svg.appendChild(el("text",{x:x+bw2/2, y:H-8, "text-anchor":"middle","font-size":10, fill:"var(--chalk-dim)"}, "c"+i));
+    });
+  }
+
+  function updateMfcc(){
+    renderMelTable();
+    const logE = melEnergies.map(Math.log);
+    const mfcc = dctII(logE, 4);
+    drawMfcc(logE, mfcc);
+    document.getElementById("mfccStory").textContent =
+      "c0 tracks overall loudness; c1-c2 carry the coarse spectral envelope shape that actually distinguishes phonemes; by c3, coefficients mostly capture fine detail that varies more by speaker than by sound.";
+  }
+  document.getElementById("resetMel").addEventListener("click", () => { melEnergies = [...DEFAULT_MEL]; updateMfcc(); });
+  updateMfcc();
+
+  // ==================== TAB 3: CTC Alignment Explorer ====================
+  const DEFAULT_FRAMES = [
+    { A: 0.60, B: 0.10, "-": 0.30 },
+    { A: 0.50, B: 0.20, "-": 0.30 },
+    { A: 0.10, B: 0.60, "-": 0.30 },
+    { A: 0.05, B: 0.65, "-": 0.30 },
+  ];
+  let frames = DEFAULT_FRAMES.map(f => ({...f}));
+
+  function renderCtcTable(){
+    const table = document.getElementById("ctcTable");
+    let html = "<tr><th>Frame</th><th>P(A)</th><th>P(B)</th><th>P(–) [auto]</th></tr>";
+    frames.forEach((f,i) => {
+      html += `<tr><td>${i+1}</td>
+        <td><input type="number" step="0.01" min="0" max="1" data-idx="${i}" data-field="A" value="${f.A.toFixed(2)}"></td>
+        <td><input type="number" step="0.01" min="0" max="1" data-idx="${i}" data-field="B" value="${f.B.toFixed(2)}"></td>
+        <td>${f["-"].toFixed(2)}</td></tr>`;
+    });
+    table.innerHTML = html;
+    table.querySelectorAll("input").forEach(inp => inp.addEventListener("input", e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      const field = e.target.dataset.field;
+      let v = Math.min(1, Math.max(0, parseFloat(e.target.value) || 0));
+      frames[idx][field] = v;
+      const other = field === "A" ? "B" : "A";
+      if (frames[idx][field] + frames[idx][other] > 1) frames[idx][other] = 1 - v;
+      frames[idx]["-"] = Math.max(0, 1 - frames[idx].A - frames[idx].B);
+      renderCtcTable();
+      updateCtc();
+    }));
+  }
+
+  function collapse(seq){
+    let merged = [];
+    for (const s of seq) if (merged.length===0 || merged[merged.length-1]!==s) merged.push(s);
+    return merged.filter(s => s !== "-").join("");
+  }
+  function allSeqs(T, alphabet){
+    if (T===0) return [[]];
+    const rest = allSeqs(T-1, alphabet);
+    const out = [];
+    for (const r of rest) for (const a of alphabet) out.push([...r,a]);
+    return out;
+  }
+
+  function updateCtc(){
+    const alphabet = ["A","B","-"];
+    const T = frames.length;
+    const seqs = allSeqs(T, alphabet);
+    let totalAB = 0, count = 0;
+    const paths = [];
+    const labelTotals = {};
+    seqs.forEach(seq => {
+      const label = collapse(seq);
+      let p = 1;
+      for (let t=0;t<T;t++) p *= frames[t][seq[t]];
+      labelTotals[label] = (labelTotals[label]||0) + p;
+      if (label === "AB"){ totalAB += p; count++; paths.push({seq:seq.join(""), p}); }
+    });
+    paths.sort((a,b)=>b.p-a.p);
+    document.getElementById("ctcCount").textContent = count;
+    document.getElementById("ctcTotal").textContent = totalAB.toFixed(6);
+    const grand = Object.values(labelTotals).reduce((a,b)=>a+b,0);
+    document.getElementById("ctcSanity").textContent = grand.toFixed(6);
+    document.getElementById("ctcPaths").innerHTML = paths.slice(0,12).map(p => `<div>${p.seq} → ${p.p.toFixed(6)}</div>`).join("");
+    const sortedLabels = Object.entries(labelTotals).sort((a,b)=>b[1]-a[1]);
+    document.getElementById("ctcAllLabels").innerHTML = sortedLabels.map(([k,v]) => `<div>${k===""?"(empty)":k} → ${v.toFixed(4)}</div>`).join("");
+    document.getElementById("ctcStory").textContent =
+      "The grand total across every reachable output string is always 1.0 exactly — CTC just groups an enormous set of frame-level outcomes by which final string they collapse to.";
+  }
+  renderCtcTable();
+  updateCtc();
+})();
+</script>
+</body>
+</html>

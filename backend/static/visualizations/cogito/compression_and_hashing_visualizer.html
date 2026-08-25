@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compression &amp; Hashing, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --good:#0F8B8D; --warn:#D9636B; --pB:#D9A62E;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:120px; }
+  input[type=text], input[type=number]{ font-family:"IBM Plex Mono",monospace; font-size:13px; border:1px solid var(--line); border-radius:8px; padding:7px 10px; flex:1; min-width:160px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  table.dt{ border-collapse:collapse; margin:14px auto; font-family:"IBM Plex Mono",monospace; font-size:13px; width:100%; }
+  table.dt th, table.dt td{ border:1px solid var(--line); padding:6px 9px; text-align:center; }
+  table.dt th{ background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.8; word-break:break-word; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; margin-top:10px; }
+  .tree-node rect{ fill:#fff; stroke:var(--accent); stroke-width:1.4; }
+  .tree-node text{ font-family:"IBM Plex Mono",monospace; font-size:11px; fill:var(--ink); }
+  .bucket-box{ border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:70px; text-align:center; background:#fff; }
+  .bucket-box.collide{ border-color:var(--warn); background:#FBEAEA; }
+  .bucket-grid{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Compression and Hashing</div>
+    <h1>Compression &amp; Hashing, Made Visible</h1>
+    <p>Five verified demos: build a Huffman tree by hand, watch run-length encoding win and lose, find LZ77's repeated substrings, drop keys into hash-table buckets, and watch one changed character scramble a hash completely.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="huffman">Huffman Tree Builder</button>
+    <button class="tab" data-tab="rle">Run-Length Encoder</button>
+    <button class="tab" data-tab="lz77">LZ77 Match Finder</button>
+    <button class="tab" data-tab="hashtable">Hash Table Buckets</button>
+    <button class="tab" data-tab="avalanche">Avalanche Effect</button>
+  </div>
+
+  <!-- ============ TAB: HUFFMAN TREE BUILDER ============ -->
+  <div class="panel active" id="panel-huffman">
+    <div class="card">
+      <h2>Building the Optimal Prefix Code</h2>
+      <p class="sub"><b>What's happening:</b> type any text. Its letter frequencies get counted, a Huffman tree gets built by repeatedly merging the two least-frequent nodes, and the resulting code's average length is compared against the entropy floor and fixed-length encoding.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with the default "ABRACADABRA" and confirm the numbers match the tutorial exactly (23 bits vs. a 22.44-bit entropy floor). Then try a very lopsided text (like "AAAAAAAAAB") and watch the compression ratio climb even higher, since Huffman coding rewards skewed frequencies the most.</p>
+      <div class="row"><label>Text to encode</label><input type="text" id="hufText" value="ABRACADABRA" maxlength="60"></div>
+      <table class="dt" id="hufFreqTable"></table>
+      <svg id="hufTreeSvg" viewBox="0 0 640 260"></svg>
+      <div class="verdict" id="hufVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the tree assigns short codes to frequent letters and long codes to rare ones automatically — nobody has to guess which letters deserve short codes, the merge order forces it.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: RUN-LENGTH ENCODER ============ -->
+  <div class="panel" id="panel-rle">
+    <div class="card">
+      <h2>When Repetition Pays Off — and When It Doesn't</h2>
+      <p class="sub"><b>What's happening:</b> type any text of repeated characters. Each run of the same character becomes one "character + count" pair.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with the default (a 2x win) then clear it and type "ABCDEFGHIJ" — watch the ratio flip below 1.0, proving RLE can make data *larger* when there's nothing to repeat.</p>
+      <div class="row"><label>Text to encode</label><input type="text" id="rleText" value="AAAAABBBCCCCCCCCDDAA" maxlength="60"></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnRleWin">Load win example (2x)</button>
+        <button class="op" id="btnRleLose">Load failure example (ABCDEFGHIJ)</button>
+      </div>
+      <div class="verdict" id="rleVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> RLE makes a bet — that runs exist — and the compression ratio directly measures how good that bet turned out to be for this specific input.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: LZ77 MATCH FINDER ============ -->
+  <div class="panel" id="panel-lz77">
+    <div class="card">
+      <h2>"Haven't I Seen This Before?"</h2>
+      <p class="sub"><b>What's happening:</b> scanning left to right, every position checks whether the upcoming text exactly matches something already seen earlier. A match becomes a (distance, length) token instead of literal characters.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> keep the default "the cat sat on the mat" and confirm two matches are found (matching the tutorial's distance=4/length=3 and distance=15/length=4). Then try a longer text with a repeated phrase to watch the compression ratio improve.</p>
+      <div class="row"><label>Text to encode</label><input type="text" id="lzText" value="the cat sat on the mat" maxlength="80"></div>
+      <div id="lzTokens" class="bucket-grid"></div>
+      <div class="verdict" id="lzVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> Huffman coding alone can never notice a repeated phrase — LZ77 is the piece of a real compressor that specifically hunts for exactly that.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: HASH TABLE BUCKETS ============ -->
+  <div class="panel" id="panel-hashtable">
+    <div class="card">
+      <h2>Modular Arithmetic, Deciding Where Things Live</h2>
+      <p class="sub"><b>What's happening:</b> each key is hashed with <span class="formula">h(x) = x mod (table size)</span> and dropped into its bucket. Buckets with more than one key (highlighted) are collisions, resolved by chaining.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> keep the defaults and confirm bucket 5 collects three keys (12, 5, 19) and bucket 2 collects two (44, 23), exactly as in the tutorial. Then change the table size to a prime like 11 and watch the same keys spread out more evenly.</p>
+      <div class="row"><label>Keys (comma-separated)</label><input type="text" id="htKeys" value="12, 44, 13, 88, 23, 5, 19"></div>
+      <div class="row"><label>Table size</label><input type="range" id="htSize" min="2" max="20" step="1" value="7"><span class="readout" id="htSizeOut">7</span></div>
+      <div class="bucket-grid" id="htBuckets"></div>
+      <div class="verdict" id="htVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> lookup speed in a real hash table depends entirely on collisions staying rare — a bad hash function or table size turns every lookup into a slow scan through one overstuffed bucket.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: AVALANCHE EFFECT ============ -->
+  <div class="panel" id="panel-avalanche">
+    <div class="card">
+      <h2>One Character Changed, Everything Changed</h2>
+      <p class="sub"><b>What's happening:</b> both text boxes are hashed with the identical simple polynomial rolling hash. Edit either one by even a single character and watch the two hash values diverge completely, with no visible relationship between them.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> keep the defaults ("hello" vs. "hollo") and confirm the hashes match the tutorial's 99,162,322 and 99,460,232. Then try changing only the capitalization of one letter and watch the hash change just as completely.</p>
+      <div class="row"><label>String A</label><input type="text" id="avA" value="hello" maxlength="40"></div>
+      <div class="row"><label>String B</label><input type="text" id="avB" value="hollo" maxlength="40"></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnAvDefault">hello vs. hollo</button>
+        <button class="op" id="btnAvCase">hello vs. Hello (capitalization)</button>
+        <button class="op" id="btnAvAppend">hello vs. hello! (one char added)</button>
+      </div>
+      <div class="verdict" id="avVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> if a hash function's output only changed a little for a small input change, an attacker could search for collisions by making small, guided edits — the avalanche effect is precisely what removes that shortcut.</div>
+      <h2 style="margin-top:22px;">The Rolling-Hash Update, Verified</h2>
+      <p class="sub">A 4-character sliding window: "raca" slides forward one character to "acad" — instead of hashing "acad" from scratch, subtract out the leaving "r", shift, and add in the entering "d".</p>
+      <button class="op" id="btnRollingDemo">Show raca → acad rolling update</button>
+      <div class="verdict" id="rollingVerdict"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../compression-and-hashing.md">Compression and Hashing</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* =========================================================
+     TAB: HUFFMAN TREE BUILDER
+     ========================================================= */
+  const hufText = document.getElementById("hufText");
+
+  function buildHuffman(freq){
+    let nodes = Object.entries(freq).map(([sym,f], i) => ({sym, freq:f, left:null, right:null, id:"n"+i}));
+    let counter = nodes.length;
+    if (nodes.length === 1) return nodes[0];
+    while (nodes.length > 1) {
+      nodes.sort((a,b) => a.freq - b.freq);
+      const a = nodes.shift(), b = nodes.shift();
+      nodes.push({sym: a.sym+b.sym, freq: a.freq+b.freq, left:a, right:b, id:"n"+(counter++)});
+    }
+    return nodes[0];
+  }
+  function assignCodes(node, prefix, out){
+    if (!node.left && !node.right) { out[node.sym] = prefix || "0"; return; }
+    if (node.left) assignCodes(node.left, prefix+"0", out);
+    if (node.right) assignCodes(node.right, prefix+"1", out);
+  }
+  function entropyOf(freq, total){
+    return Object.values(freq).reduce((s,f) => { const p=f/total; return p>0 ? s - p*Math.log2(p) : s; }, 0);
+  }
+
+  function drawHuffmanTree(root, codes){
+    const svg = document.getElementById("hufTreeSvg");
+    svg.innerHTML = "";
+    // assign x positions via in-order leaf traversal, y by depth
+    const leaves = [];
+    function collectLeaves(n){
+      if (!n.left && !n.right) { leaves.push(n); return; }
+      if (n.left) collectLeaves(n.left);
+      if (n.right) collectLeaves(n.right);
+    }
+    collectLeaves(root);
+    const W = 640, H = 260, pad = 40;
+    const xStep = leaves.length > 1 ? (W-2*pad)/(leaves.length-1) : 0;
+    const positions = {};
+    leaves.forEach((leaf, i) => { positions[leaf.id] = { x: pad + i*xStep, y: H-30 }; });
+
+    function depth(n){
+      if (!n.left && !n.right) return 0;
+      let d = 0;
+      if (n.left) d = Math.max(d, 1+depth(n.left));
+      if (n.right) d = Math.max(d, 1+depth(n.right));
+      return d;
+    }
+    const maxDepth = depth(root);
+    function layout(n, level){
+      if (positions[n.id] && (!n.left && !n.right)) {
+        positions[n.id].y = pad + level*((H-2*pad)/Math.max(1,maxDepth));
+        return positions[n.id];
+      }
+      const lp = n.left ? layout(n.left, level+1) : null;
+      const rp = n.right ? layout(n.right, level+1) : null;
+      const x = lp && rp ? (lp.x+rp.x)/2 : (lp ? lp.x : rp.x);
+      const y = pad + level*((H-2*pad)/Math.max(1,maxDepth));
+      positions[n.id] = { x, y };
+      return positions[n.id];
+    }
+    layout(root, 0);
+
+    function drawNode(n){
+      const p = positions[n.id];
+      if (n.left) {
+        const cp = positions[n.left.id];
+        svg.appendChild(el("line",{x1:p.x,y1:p.y,x2:cp.x,y2:cp.y,stroke:"var(--ink-soft)","stroke-width":1.4}));
+        svg.appendChild(el("text",{x:(p.x+cp.x)/2-8,y:(p.y+cp.y)/2,"text-anchor":"middle","font-family":"IBM Plex Mono,monospace","font-size":10,fill:"var(--good)","font-weight":"700"}, "0"));
+      }
+      if (n.right) {
+        const cp = positions[n.right.id];
+        svg.appendChild(el("line",{x1:p.x,y1:p.y,x2:cp.x,y2:cp.y,stroke:"var(--ink-soft)","stroke-width":1.4}));
+        svg.appendChild(el("text",{x:(p.x+cp.x)/2+8,y:(p.y+cp.y)/2,"text-anchor":"middle","font-family":"IBM Plex Mono,monospace","font-size":10,fill:"var(--warn)","font-weight":"700"}, "1"));
+      }
+      if (n.left) drawNode(n.left);
+      if (n.right) drawNode(n.right);
+    }
+    drawNode(root);
+    function drawDot(n){
+      const p = positions[n.id];
+      const isLeaf = !n.left && !n.right;
+      svg.appendChild(el("circle",{cx:p.x,cy:p.y,r:isLeaf?16:12,fill:isLeaf?"var(--accent)":"#fff",stroke:"var(--accent)","stroke-width":1.6}));
+      svg.appendChild(el("text",{x:p.x,y:p.y+4,"text-anchor":"middle","font-family":"IBM Plex Mono,monospace","font-size":isLeaf?11:9,fill:isLeaf?"#fff":"var(--ink)"}, isLeaf ? n.sym : String(n.freq)));
+      if (n.left) drawDot(n.left);
+      if (n.right) drawDot(n.right);
+    }
+    drawDot(root);
+  }
+
+  function updateHuffman(){
+    const text = hufText.value || "A";
+    const freq = {};
+    for (const c of text) freq[c] = (freq[c]||0)+1;
+    const total = text.length;
+    const symbols = Object.keys(freq).length;
+
+    const root = buildHuffman(freq);
+    const codes = {};
+    assignCodes(root, "", codes);
+    drawHuffmanTree(root, codes);
+
+    const table = document.getElementById("hufFreqTable");
+    let html = "<tr><th>Symbol</th>" + Object.keys(freq).map(s=>`<th>${s==" "?"(space)":s}</th>`).join("") + "</tr>";
+    html += "<tr><td>Frequency</td>" + Object.values(freq).map(f=>`<td>${f}</td>`).join("") + "</tr>";
+    html += "<tr><td>Code</td>" + Object.keys(freq).map(s=>`<td>${codes[s]}</td>`).join("") + "</tr>";
+    table.innerHTML = html;
+
+    let totalHuffBits = 0;
+    for (const [sym,f] of Object.entries(freq)) totalHuffBits += f * codes[sym].length;
+    const H = entropyOf(freq, total);
+    const entropyBits = H*total;
+    const fixedBits = symbols > 1 ? Math.ceil(Math.log2(symbols)) : 1;
+    const fixedTotal = fixedBits*total;
+
+    document.getElementById("hufVerdict").innerHTML =
+      `Entropy: <b>${H.toFixed(4)}</b> bits/symbol → floor of <b>${entropyBits.toFixed(2)}</b> bits total<br>`+
+      `Huffman: <b>${(totalHuffBits/total).toFixed(4)}</b> bits/symbol → <span class="big">${totalHuffBits}</span> bits total<br>`+
+      `Fixed-length (${fixedBits} bits × ${symbols} symbols): <b>${fixedTotal}</b> bits total<br>`+
+      `Huffman vs. fixed-length compression ratio: <b>${(fixedTotal/totalHuffBits).toFixed(3)}x</b>`;
+  }
+  hufText.addEventListener("input", updateHuffman);
+  updateHuffman();
+
+  /* =========================================================
+     TAB: RUN-LENGTH ENCODER
+     ========================================================= */
+  const rleText = document.getElementById("rleText");
+  function rleEncode(s){
+    let out = [];
+    let i = 0;
+    while (i < s.length) {
+      let j = i;
+      while (j < s.length && s[j]===s[i]) j++;
+      out.push(s[i] + (j-i));
+      i = j;
+    }
+    return out.join("");
+  }
+  function updateRle(){
+    const s = rleText.value || "";
+    if (!s.length) { document.getElementById("rleVerdict").textContent = "Type something above."; return; }
+    const encoded = rleEncode(s);
+    const ratio = s.length / encoded.length;
+    document.getElementById("rleVerdict").innerHTML =
+      `Original: <b>"${s}"</b> (${s.length} characters)<br>`+
+      `Encoded: <b>"${encoded}"</b> (${encoded.length} characters)<br>`+
+      `Compression ratio: <span class="big">${ratio.toFixed(3)}x</span> ${ratio < 1 ? "— this made the data LARGER" : ""}`;
+  }
+  rleText.addEventListener("input", updateRle);
+  document.getElementById("btnRleWin").addEventListener("click", () => { rleText.value = "AAAAABBBCCCCCCCCDDAA"; updateRle(); });
+  document.getElementById("btnRleLose").addEventListener("click", () => { rleText.value = "ABCDEFGHIJ"; updateRle(); });
+  updateRle();
+
+  /* =========================================================
+     TAB: LZ77 MATCH FINDER
+     ========================================================= */
+  const lzText = document.getElementById("lzText");
+  function lz77(s){
+    let out = [];
+    let i = 0;
+    while (i < s.length) {
+      let bestLen = 0, bestDist = 0;
+      for (let start = 0; start < i; start++) {
+        let len = 0;
+        while (i+len < s.length && s[start+len] === s[i+len] && len < (i-start)) len++;
+        if (len > bestLen) { bestLen = len; bestDist = i - start; }
+      }
+      if (bestLen >= 3) {
+        out.push({ type:"match", dist:bestDist, len:bestLen, text: s.substring(i, i+bestLen) });
+        i += bestLen;
+      } else {
+        out.push({ type:"literal", ch: s[i] });
+        i += 1;
+      }
+    }
+    return out;
+  }
+  function updateLz(){
+    const s = lzText.value || "";
+    const tokens = lz77(s);
+    const container = document.getElementById("lzTokens");
+    container.innerHTML = "";
+    tokens.forEach(t => {
+      const box = document.createElement("div");
+      box.className = "bucket-box" + (t.type==="match" ? " collide" : "");
+      box.innerHTML = t.type==="match"
+        ? `<b>(${t.dist},${t.len})</b><br><span style="font-size:11px;color:var(--ink-soft);">"${t.text}"</span>`
+        : `<b>${t.ch===" "?"␣":t.ch}</b>`;
+      container.appendChild(box);
+    });
+    const literals = tokens.filter(t=>t.type==="literal").length;
+    const matches = tokens.filter(t=>t.type==="match").length;
+    const originalBits = s.length*8;
+    const compressedBits = literals*8 + matches*16;
+    document.getElementById("lzVerdict").innerHTML =
+      `Original: <b>${s.length}</b> characters (${originalBits} bits at 8 bits/char)<br>`+
+      `Tokens: <b>${literals}</b> literals + <b>${matches}</b> matches = <b>${tokens.length}</b> total<br>`+
+      `Compressed size (8 bits/literal, 16 bits/match token): <b>${compressedBits}</b> bits<br>`+
+      `Compression ratio: <span class="big">${(originalBits/compressedBits).toFixed(3)}x</span>`;
+  }
+  lzText.addEventListener("input", updateLz);
+  updateLz();
+
+  /* =========================================================
+     TAB: HASH TABLE BUCKETS
+     ========================================================= */
+  const htKeys = document.getElementById("htKeys"), htSize = document.getElementById("htSize");
+  const htSizeOut = document.getElementById("htSizeOut");
+  function updateHashTable(){
+    const size = parseInt(htSize.value, 10);
+    htSizeOut.textContent = size;
+    const keys = htKeys.value.split(",").map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+    const buckets = Array.from({length:size}, () => []);
+    keys.forEach(k => { const idx = ((k % size) + size) % size; buckets[idx].push(k); });
+
+    const container = document.getElementById("htBuckets");
+    container.innerHTML = "";
+    buckets.forEach((bucket, i) => {
+      const box = document.createElement("div");
+      box.className = "bucket-box" + (bucket.length > 1 ? " collide" : "");
+      box.innerHTML = `<b>bucket ${i}</b><br><span style="font-size:12px;">${bucket.length ? bucket.join(", ") : "—"}</span>`;
+      container.appendChild(box);
+    });
+    const collisions = buckets.filter(b => b.length > 1).length;
+    const maxBucket = Math.max(...buckets.map(b=>b.length), 0);
+    document.getElementById("htVerdict").innerHTML =
+      `<b>${keys.length}</b> keys hashed into <b>${size}</b> buckets, h(x) = x mod ${size}<br>`+
+      `Buckets with a collision (2+ keys): <b>${collisions}</b> &nbsp;·&nbsp; largest bucket: <b>${maxBucket}</b> key(s)`;
+  }
+  htKeys.addEventListener("input", updateHashTable);
+  htSize.addEventListener("input", updateHashTable);
+  updateHashTable();
+
+  /* =========================================================
+     TAB: AVALANCHE EFFECT
+     ========================================================= */
+  const avA = document.getElementById("avA"), avB = document.getElementById("avB");
+  function polyHash(s, base, mod){
+    let h = 0;
+    for (let i=0;i<s.length;i++) h = (h*base + s.charCodeAt(i)) % mod;
+    return h;
+  }
+  function updateAvalanche(){
+    const base = 31, mod = 1000000007;
+    const a = avA.value || "", b = avB.value || "";
+    const ha = polyHash(a, base, mod), hb = polyHash(b, base, mod);
+    const same = a === b;
+    document.getElementById("avVerdict").innerHTML =
+      `hash("${a}") = <b>${ha.toLocaleString()}</b><br>`+
+      `hash("${b}") = <b>${hb.toLocaleString()}</b><br>`+
+      (same ? "Identical strings, identical hash — as required." :
+        `These differ by ${Math.abs(a.length-b.length) === 0 ? "character content only" : "length and/or content"}, and the two hash values share no visible pattern.`);
+  }
+  avA.addEventListener("input", updateAvalanche);
+  avB.addEventListener("input", updateAvalanche);
+  document.getElementById("btnAvDefault").addEventListener("click", () => { avA.value = "hello"; avB.value = "hollo"; updateAvalanche(); });
+  document.getElementById("btnAvCase").addEventListener("click", () => { avA.value = "hello"; avB.value = "Hello"; updateAvalanche(); });
+  document.getElementById("btnAvAppend").addEventListener("click", () => { avA.value = "hello"; avB.value = "hello!"; updateAvalanche(); });
+  updateAvalanche();
+
+  document.getElementById("btnRollingDemo").addEventListener("click", () => {
+    const base = 31, mod = 1000000007;
+    const hRaca = polyHash("raca", base, mod);
+    const hAcadFresh = polyHash("acad", base, mod);
+    const n = 4;
+    const basePow = Math.pow(base, n-1);
+    const rCode = "raca".charCodeAt(0), dCode = "acad".charCodeAt(3);
+    let rolled = (hRaca - (rCode*basePow) % mod + mod*10) % mod;
+    rolled = (rolled * base + dCode) % mod;
+    document.getElementById("rollingVerdict").innerHTML =
+      `hash("raca") = <b>${hRaca.toLocaleString()}</b><br>`+
+      `hash("acad"), from scratch = <b>${hAcadFresh.toLocaleString()}</b><br>`+
+      `hash("acad"), via rolling update = <b>${rolled.toLocaleString()}</b> ${rolled===hAcadFresh ? "— exact match" : ""}`;
+  });
+})();
+</script>
+</body>
+</html>

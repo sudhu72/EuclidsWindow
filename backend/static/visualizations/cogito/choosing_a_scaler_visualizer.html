@@ -69,7 +69,13 @@
       <h2>Same scale mismatch, two very different reactions</h2>
       <p class="sub">Feature A genuinely predicts the label. Feature B is pure noise. Drag feature B's scale up and watch: the decision tree never budges, because it only ever asks "bigger or smaller," never "by how much." The nearest-neighbor query does budge — and gets fooled.</p>
       <div class="row">
-        <label>Feature B's scale multiplier</label><input type="range" id="multSlider" min="1" max="15" step="0.5" value="1"><span class="readout" id="multOut">1×</span>
+        <label>Feature B's scale multiplier</label><input type="range" id="multSlider" min="1" max="50" step="0.5" value="1"><span class="readout" id="multOut">1×</span>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnMult1">1×</button>
+        <button class="op" id="btnMult5">5×</button>
+        <button class="op" id="btnMult20">20×</button>
+        <button class="op" id="btnMult50">50×</button>
       </div>
       <div class="cols">
         <div>
@@ -235,6 +241,12 @@
         : `The tree still splits on A, unchanged. But the nearest neighbor has flipped to ${nearest.label} — fooled by B's inflated, meaningless scale.`);
   }
   document.getElementById("multSlider").addEventListener("input", renderModelTab);
+  [["btnMult1",1],["btnMult5",5],["btnMult20",20],["btnMult50",50]].forEach(([id,mult]) => {
+    document.getElementById(id).addEventListener("click", () => {
+      document.getElementById("multSlider").value = mult;
+      renderModelTab();
+    });
+  });
   renderModelTab();
 
   /* ============================================================

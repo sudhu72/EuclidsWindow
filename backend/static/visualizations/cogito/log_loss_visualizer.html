@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Log Loss vs. Brier Score, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  input[type="range"]{width:100%;}
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:140px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:70px;text-align:right;}
+
+  table.datatable{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  table.datatable input{width:60px;background:var(--bg);border:1px solid var(--border);color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:4px 6px;}
+  table.datatable select{background:var(--bg);border:1px solid var(--border);color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:4px 6px;}
+  table.datatable td.warn{color:var(--coral);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:130px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Log Loss vs. Brier Score, live</h1>
+  <p class="sub">One true outcome, y = 1 (a positive case). Drag the slider to change how confident the model's prediction was, and watch the two scorers disagree about how bad the mistake is.</p>
+
+  <div class="panel">
+    <h2>One Prediction, Two Scorers</h2>
+    <div class="slider-row">
+      <label for="pSlider">Predicted probability of y=1</label>
+      <input type="range" id="pSlider" min="0.0001" max="0.99" step="0.0001" value="0.5">
+      <output id="pOut">0.5000</output>
+    </div>
+    <div class="slider-row">
+      <button class="op" id="btnP99">0.99</button>
+      <button class="op" id="btnP90">0.90</button>
+      <button class="op" id="btnP50">0.50</button>
+      <button class="op" id="btnP10">0.10</button>
+      <button class="op" id="btnP01">0.01</button>
+      <button class="op" id="btnP001">0.001</button>
+      <button class="op" id="btnP0001">0.0001</button>
+    </div>
+    <svg id="curveSvg" width="640" height="300" viewBox="0 0 640 300"></svg>
+    <div class="metric-row">
+      <div class="metric coral"><div class="lbl">Log loss at this p</div><div class="num" id="pointLogLoss">-</div></div>
+      <div class="metric blue"><div class="lbl">Brier score at this p</div><div class="num" id="pointBrier">-</div></div>
+    </div>
+    <div class="story-line" id="curveStory"></div>
+  </div>
+
+  <div class="panel">
+    <h2>The Clipping Gotcha</h2>
+    <p class="sub">Set the slider all the way to its minimum (p = 0.0001) to see log loss climb toward the clipped ceiling used by real implementations (eps = 1e-15) instead of the true, unclipped value of infinity.</p>
+    <div class="metric-row">
+      <div class="metric coral"><div class="lbl">Unclipped log loss at p=0</div><div class="num">Infinity</div></div>
+      <div class="metric amber"><div class="lbl">Clipped log loss at p=1e-15</div><div class="num" id="clippedOut">34.5388</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>The "One Bad Apple" Table</h2>
+    <p class="sub">Ten predictions on cases that are all actually positive (y=1). Edit any predicted probability, or use a preset, and watch how much one prediction can move each average.</p>
+    <div class="row">
+      <button class="op" id="presetGood">All excellent (p=0.95)</button>
+      <button class="op" id="presetCatastrophic">9 excellent + 1 catastrophic (p≈0)</button>
+      <button class="op" id="presetMediocre">9 excellent + 1 mediocre (p=0.4)</button>
+    </div>
+    <table class="datatable" id="predTable"></table>
+    <div class="metric-row">
+      <div class="metric coral"><div class="lbl">Average log loss</div><div class="num" id="avgLogLoss">-</div></div>
+      <div class="metric blue"><div class="lbl">Average Brier score</div><div class="num" id="avgBrier">-</div></div>
+    </div>
+    <div class="story-line" id="tableStory"></div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../log_loss_feynman.md">Log Loss as an Evaluation Metric</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  const EPS = 1e-15;
+  function clip(p){ return Math.min(Math.max(p, EPS), 1 - EPS); }
+  function logLoss(p, y){ const c = clip(p); return -(y*Math.log(c) + (1-y)*Math.log(1-c)); }
+  function brier(p, y){ return (p - y) ** 2; }
+
+  // ---- Curve panel ----
+  const pSlider = document.getElementById("pSlider");
+  const pOut = document.getElementById("pOut");
+
+  function drawCurve(currentP){
+    const svg = document.getElementById("curveSvg");
+    svg.innerHTML = "";
+    const W = 640, H = 300, pad = 46;
+    const plotW = W - 2*pad, plotH = H - 2*pad;
+    const yMax = 10; // log loss axis ceiling; Brier is plotted x10 for visibility, noted in legend
+
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("text",{x:W/2,y:H-8,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"predicted probability of the true outcome (p)"));
+    [0, 0.25, 0.5, 0.75, 1].forEach(p => {
+      const x = pad + p*plotW;
+      svg.appendChild(el("text",{x:x,y:H-pad+16,"text-anchor":"middle","font-size":10.5,fill:"var(--chalk-dim)"}, p.toFixed(2)));
+    });
+    [0, 2, 4, 6, 8, 10].forEach(v => {
+      const y = H-pad - (v/yMax)*plotH;
+      svg.appendChild(el("text",{x:pad-8,y:y+4,"text-anchor":"end","font-size":10.5,fill:"var(--chalk-dim)"}, v));
+    });
+
+    function toXY(p, v){ return [pad + p*plotW, H-pad - Math.min(v, yMax)/yMax*plotH]; }
+
+    // log loss curve, y fixed at 1
+    let llPath = "";
+    for(let i=0;i<=200;i++){
+      const p = 0.0001 + (0.9999-0.0001)*i/200;
+      const v = logLoss(p, 1);
+      const [x,y] = toXY(p, v);
+      llPath += (i===0?"M":"L") + x.toFixed(1) + "," + y.toFixed(1) + " ";
+    }
+    svg.appendChild(el("path",{d:llPath, fill:"none", stroke:"var(--coral)", "stroke-width":2.5}));
+
+    // Brier curve, scaled x10 for visibility on the same axis
+    let brPath = "";
+    for(let i=0;i<=200;i++){
+      const p = 0.0001 + (0.9999-0.0001)*i/200;
+      const v = brier(p, 1) * 10;
+      const [x,y] = toXY(p, v);
+      brPath += (i===0?"M":"L") + x.toFixed(1) + "," + y.toFixed(1) + " ";
+    }
+    svg.appendChild(el("path",{d:brPath, fill:"none", stroke:"var(--blue)", "stroke-width":2.5}));
+
+    // current point markers
+    const llNow = logLoss(currentP, 1);
+    const brNow = brier(currentP, 1);
+    const [llx, lly] = toXY(currentP, llNow);
+    const [brx, bry] = toXY(currentP, brNow*10);
+    svg.appendChild(el("circle",{cx:llx, cy:lly, r:5, fill:"var(--coral)"}));
+    svg.appendChild(el("circle",{cx:brx, cy:bry, r:5, fill:"var(--blue)"}));
+    svg.appendChild(el("line",{x1:llx,y1:pad,x2:llx,y2:H-pad, stroke:"var(--chalk-dim)", "stroke-dasharray":"3,4", opacity:0.5}));
+
+    // legend
+    svg.appendChild(el("rect",{x:pad,y:12,width:14,height:4,fill:"var(--coral)"}));
+    svg.appendChild(el("text",{x:pad+20,y:19,"font-size":11,fill:"var(--chalk-dim)"},"log loss"));
+    svg.appendChild(el("rect",{x:pad+110,y:12,width:14,height:4,fill:"var(--blue)"}));
+    svg.appendChild(el("text",{x:pad+130,y:19,"font-size":11,fill:"var(--chalk-dim)"},"Brier score (×10, for visibility on this axis)"));
+  }
+
+  function updateCurve(){
+    const p = parseFloat(pSlider.value);
+    pOut.textContent = p.toFixed(4);
+    drawCurve(p);
+    const ll = logLoss(p, 1);
+    const br = brier(p, 1);
+    document.getElementById("pointLogLoss").textContent = ll.toFixed(4);
+    document.getElementById("pointBrier").textContent = br.toFixed(4);
+    document.getElementById("curveStory").textContent = p < 0.05
+      ? "Near p=0, log loss is rocketing upward while Brier score is nearly flat at its ceiling of 1 — this is the divergence that lets one bad prediction dominate an averaged log-loss score."
+      : (p > 0.9
+        ? "Near p=1, both scorers agree this is a well-calibrated, low-cost prediction."
+        : "Away from the extremes, log loss and Brier score broadly agree on which predictions are better — they diverge sharply only near confident wrongness.");
+  }
+  pSlider.addEventListener("input", updateCurve);
+  [["btnP99",0.99],["btnP90",0.90],["btnP50",0.50],["btnP10",0.10],["btnP01",0.01],["btnP001",0.001],["btnP0001",0.0001]].forEach(([id,p]) => {
+    document.getElementById(id).addEventListener("click", () => { pSlider.value = p; updateCurve(); });
+  });
+
+  document.getElementById("clippedOut").textContent = logLoss(0, 1).toFixed(4);
+
+  // ---- One Bad Apple table ----
+  const GOOD9 = Array.from({length:9}, () => ({ p: 0.95, y: 1 }));
+  const PRESETS = {
+    good: GOOD9.concat([{ p: 0.95, y: 1 }]),
+    catastrophic: GOOD9.concat([{ p: EPS, y: 1 }]),
+    mediocre: GOOD9.concat([{ p: 0.4, y: 1 }]),
+  };
+  let preds = PRESETS.catastrophic.map(r => ({...r}));
+
+  function renderPredTable(){
+    const table = document.getElementById("predTable");
+    let html = "<tr><th>#</th><th>Predicted p</th><th>Actual y</th><th>Log loss</th><th>Brier score</th></tr>";
+    preds.forEach((r, i) => {
+      const ll = logLoss(r.p, r.y);
+      const br = brier(r.p, r.y);
+      const cls = ll > 2 ? "warn" : "";
+      html += `<tr>
+        <td>${i+1}</td>
+        <td><input type="number" step="0.0001" min="0" max="1" data-idx="${i}" value="${r.p}"></td>
+        <td>
+          <select data-idx="${i}">
+            <option value="1" ${r.y===1?"selected":""}>1</option>
+            <option value="0" ${r.y===0?"selected":""}>0</option>
+          </select>
+        </td>
+        <td class="${cls}">${ll.toFixed(4)}</td>
+        <td>${br.toFixed(4)}</td>
+      </tr>`;
+    });
+    table.innerHTML = html;
+    table.querySelectorAll("input").forEach(inp => inp.addEventListener("input", (e) => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      let v = parseFloat(e.target.value);
+      if (isNaN(v)) v = 0;
+      preds[idx].p = Math.min(Math.max(v, 0), 1);
+      renderPredTable();
+      updateTable();
+    }));
+    table.querySelectorAll("select").forEach(sel => sel.addEventListener("change", (e) => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      preds[idx].y = parseInt(e.target.value, 10);
+      renderPredTable();
+      updateTable();
+    }));
+  }
+
+  function updateTable(){
+    renderPredTable();
+    const n = preds.length;
+    const avgLL = preds.reduce((s, r) => s + logLoss(r.p, r.y), 0) / n;
+    const avgBr = preds.reduce((s, r) => s + brier(r.p, r.y), 0) / n;
+    document.getElementById("avgLogLoss").textContent = avgLL.toFixed(4);
+    document.getElementById("avgBrier").textContent = avgBr.toFixed(4);
+    document.getElementById("tableStory").textContent = avgLL > 1
+      ? "One confident, wrong prediction is dominating the average log loss far more than it's dominating the average Brier score — exactly the asymmetry Part 3 of the tutorial verifies."
+      : "With no confidently-wrong predictions in the table, log loss and Brier score tell a broadly similar story.";
+  }
+
+  document.getElementById("presetGood").addEventListener("click", () => { preds = PRESETS.good.map(r=>({...r})); updateTable(); });
+  document.getElementById("presetCatastrophic").addEventListener("click", () => { preds = PRESETS.catastrophic.map(r=>({...r})); updateTable(); });
+  document.getElementById("presetMediocre").addEventListener("click", () => { preds = PRESETS.mediocre.map(r=>({...r})); updateTable(); });
+
+  updateCurve();
+  updateTable();
+})();
+</script>
+</body>
+</html>
