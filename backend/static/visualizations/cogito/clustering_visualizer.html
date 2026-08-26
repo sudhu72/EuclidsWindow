@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Clustering, live</title>
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --violet:#c39bd3; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'Trebuchet MS','Segoe UI',sans-serif;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-weight:700;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  code, .mono{font-family:'Courier New',monospace;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 16px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:120px;}
+  input[type=range]{flex:1;min-width:160px;accent-color:var(--amber);}
+  .readout{font-family:'Courier New',monospace;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:50px;text-align:center;}
+
+  button.op{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op:disabled{opacity:0.4;cursor:default;}
+
+  select{font-family:inherit;font-size:12.5px;background:var(--bg-panel);color:var(--chalk);border:1px solid var(--border);border-radius:8px;padding:7px 10px;}
+
+  table.datatable{border-collapse:collapse;margin:10px auto;font-family:'Courier New',monospace;font-size:12px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:5px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-weight:400;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:110px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Courier New',monospace;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  .legend{display:flex;justify-content:center;gap:18px;margin-top:10px;font-size:12px;color:var(--chalk-dim);flex-wrap:wrap;}
+  .legend span.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Clustering, live</h1>
+  <p class="sub">Four tabs, matching the tutorial's four verified demonstrations. k-means and DBSCAN are computed live, in this page's own JavaScript, on the exact datasets and initial conditions cited in the tutorial.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="kmeans">K-Means Step-Through</button>
+    <button class="tabbtn" data-tab="dendro">Hierarchical Dendrogram</button>
+    <button class="tabbtn" data-tab="dbscan">DBSCAN Noise Detection</button>
+    <button class="tabbtn" data-tab="elbow">Elbow &amp; Silhouette</button>
+  </div>
+
+  <!-- ============ TAB 1: K-MEANS ============ -->
+  <div class="tabpanel active" id="tab-kmeans">
+    <div class="panel">
+      <h2>Move the Fire Stations</h2>
+      <p class="sub">Twelve houses in three neighborhoods. Step through real assignment/update iterations, starting from deliberately bad centroids. Switch to k=2 to see the "wrong k" failure from Part 2.</p>
+      <div class="row">
+        <label>Number of clusters (k)</label>
+        <select id="kmSelect">
+          <option value="3" selected>k = 3 (correct)</option>
+          <option value="2">k = 2 (wrong — Part 2 failure)</option>
+        </select>
+        <button class="op" id="kmReset">Reset</button>
+        <button class="op" id="kmStep">Step (assign → update)</button>
+        <button class="op" id="kmRun">Run to convergence</button>
+      </div>
+      <svg id="kmSvg" width="520" height="420" viewBox="0 0 520 420"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">iteration</div><div class="num" id="kmIter">0</div></div>
+        <div class="metric coral"><div class="lbl">WCSS (inertia)</div><div class="num" id="kmWcss">—</div></div>
+        <div class="metric blue"><div class="lbl">status</div><div class="num" id="kmStatus">ready</div></div>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:#ff8266"></span>cluster 0</span>
+        <span><span class="dot" style="background:#7fb3d5"></span>cluster 1</span>
+        <span><span class="dot" style="background:#8fd19e"></span>cluster 2</span>
+        <span>&#10059; centroid</span>
+      </div>
+      <div class="story-line" id="kmStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: DENDROGRAM ============ -->
+  <div class="tabpanel" id="tab-dendro">
+    <div class="panel">
+      <h2>Merge the Closest Pair, Repeat</h2>
+      <p class="sub">Complete-linkage agglomerative clustering, computed live on the same 12 houses. Drag the cut height to see which grouping it produces.</p>
+      <svg id="dendroSvg" width="720" height="380" viewBox="0 0 720 380"></svg>
+      <div class="row">
+        <label>Cut height</label>
+        <input type="range" id="cutSlider" min="0" max="12" step="0.05" value="2">
+        <span class="readout" id="cutReadout">2.00</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">clusters at this cut</div><div class="num" id="dendroClusters">—</div></div>
+      </div>
+      <div class="story-line" id="dendroStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: DBSCAN ============ -->
+  <div class="tabpanel" id="tab-dbscan">
+    <div class="panel">
+      <h2>Core Points, Border Points, and the Honesty of "Noise"</h2>
+      <p class="sub">The same 12 houses plus one lone house at (5,5). Drag epsilon and min_samples and watch which points get flagged noise.</p>
+      <div class="row">
+        <label>epsilon (eps)</label>
+        <input type="range" id="epsSlider" min="0.3" max="5" step="0.05" value="1.5">
+        <span class="readout" id="epsReadout">1.50</span>
+      </div>
+      <div class="row">
+        <label>min_samples</label>
+        <input type="range" id="minSlider" min="1" max="6" step="1" value="3">
+        <span class="readout" id="minReadout">3</span>
+      </div>
+      <svg id="dbSvg" width="520" height="440" viewBox="0 0 520 440"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">clusters found</div><div class="num" id="dbClusters">—</div></div>
+        <div class="metric coral"><div class="lbl">noise points</div><div class="num" id="dbNoise">—</div></div>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:#ff8266"></span>cluster 0</span>
+        <span><span class="dot" style="background:#7fb3d5"></span>cluster 1</span>
+        <span><span class="dot" style="background:#8fd19e"></span>cluster 2</span>
+        <span><span class="dot" style="background:#f4f1e8"></span>noise (-1)</span>
+      </div>
+      <div class="story-line" id="dbStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: ELBOW & SILHOUETTE ============ -->
+  <div class="tabpanel" id="tab-elbow">
+    <div class="panel">
+      <h2>Choosing k — Two Independent Signals Agreeing</h2>
+      <p class="sub">The tutorial's Part 5 verified numbers, from scikit-learn, on the same 12-house dataset. Not recomputed live here (multi-restart k-means needs a fixed random seed to be reproducible) — this chart simply plots the exact cited values.</p>
+      <svg id="elbowSvg" width="640" height="360" viewBox="0 0 640 360"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:#ff8266"></span>WCSS (elbow method, left axis)</span>
+        <span><span class="dot" style="background:#7fb3d5"></span>mean silhouette score (right axis)</span>
+      </div>
+      <table class="datatable" id="elbowTable"></table>
+      <div class="story-line">Both curves single out <b>k = 3</b>: WCSS's sharp bend, and silhouette's sharp peak.</div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>clustering_feynman.md</code>. Self-contained — no external requests, opens directly from disk.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- shared dataset ----------
+  var PTS12 = [
+    [1,1],[1,2],[2,1],[2,2],       // Neighborhood A: 0-3
+    [8,8],[8,9],[9,8],[9,9],       // Neighborhood B: 4-7
+    [1,8],[1,9],[2,8],[2,9]        // Neighborhood C: 8-11
+  ];
+  var OUTLIER = [5,5];
+  var PTS13 = PTS12.concat([OUTLIER]);
+
+  var PALETTE = ["#ff8266","#7fb3d5","#8fd19e","#c39bd3","#ffce54","#e88fb0"];
+
+  function dist2(a,b){ var dx=a[0]-b[0], dy=a[1]-b[1]; return dx*dx+dy*dy; }
+  function dist(a,b){ return Math.sqrt(dist2(a,b)); }
+
+  // map data coords (0..10ish) to svg pixel coords
+  function mapXY(p, W, H, pad, dataMax){
+    dataMax = dataMax || 10;
+    var x = pad + (p[0]/dataMax) * (W - 2*pad);
+    var y = (H - pad) - (p[1]/dataMax) * (H - 2*pad);
+    return [x,y];
+  }
+
+  function svgEl(tag, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  // ================= TAB 1: K-MEANS =================
+  var kmState = {
+    k: 3,
+    centroids: null,
+    labels: null,
+    iter: 0,
+    converged: false,
+    phase: 'assign' // next action
+  };
+
+  function kmInitCentroids(k){
+    if (k === 3) return [[0,0],[10,0],[0,10]];
+    return [[0,0],[10,10]];
+  }
+
+  function kmAssign(points, centroids){
+    var labels = new Array(points.length);
+    for (var i=0;i<points.length;i++){
+      var best=0, bestD=Infinity;
+      for (var c=0;c<centroids.length;c++){
+        var d = dist2(points[i], centroids[c]);
+        if (d < bestD){ bestD = d; best = c; }
+      }
+      labels[i] = best;
+    }
+    return labels;
+  }
+
+  function kmUpdate(points, labels, k, oldCentroids){
+    var sums = [], counts = [];
+    for (var c=0;c<k;c++){ sums.push([0,0]); counts.push(0); }
+    for (var i=0;i<points.length;i++){
+      var c = labels[i];
+      sums[c][0] += points[i][0];
+      sums[c][1] += points[i][1];
+      counts[c]++;
+    }
+    var out = [];
+    for (var c2=0;c2<k;c2++){
+      if (counts[c2] > 0) out.push([sums[c2][0]/counts[c2], sums[c2][1]/counts[c2]]);
+      else out.push(oldCentroids[c2].slice());
+    }
+    return out;
+  }
+
+  function computeWCSS(points, labels, centroids){
+    var w = 0;
+    for (var i=0;i<points.length;i++) w += dist2(points[i], centroids[labels[i]]);
+    return w;
+  }
+
+  function kmReset(){
+    kmState.k = parseInt(document.getElementById('kmSelect').value, 10);
+    kmState.centroids = kmInitCentroids(kmState.k);
+    kmState.labels = kmAssign(PTS12, kmState.centroids);
+    kmState.iter = 0;
+    kmState.converged = false;
+    kmState.phase = 'assign';
+    document.getElementById('kmStory').textContent = 'Reset. Centroids placed at deliberately bad starting positions. Click "Step" to assign points to nearest centroid, then move centroids to the mean of their points.';
+    renderKM();
+  }
+
+  function kmStep(){
+    if (kmState.converged) return;
+    // one full iteration: assign, then update, matching the tutorial's per-iteration WCSS trace
+    var newLabels = kmAssign(PTS12, kmState.centroids);
+    var changed = JSON.stringify(newLabels) !== JSON.stringify(kmState.labels);
+    kmState.labels = newLabels;
+    var newCentroids = kmUpdate(PTS12, kmState.labels, kmState.k, kmState.centroids);
+    var moved = JSON.stringify(newCentroids) !== JSON.stringify(kmState.centroids);
+    kmState.centroids = newCentroids;
+    kmState.iter++;
+    if (!moved){
+      kmState.converged = true;
+      document.getElementById('kmStory').textContent = 'Converged — no point changes cluster and no centroid moves anymore. WCSS = ' + computeWCSS(PTS12, kmState.labels, kmState.centroids).toFixed(4) + '.';
+    } else {
+      document.getElementById('kmStory').textContent = 'Iteration ' + kmState.iter + ': centroids moved to the mean of their currently-assigned points.';
+    }
+    renderKM();
+  }
+
+  function kmRunToConvergence(){
+    var guard = 0;
+    while (!kmState.converged && guard < 50){ kmStep(); guard++; }
+  }
+
+  function renderKM(){
+    var svg = document.getElementById('kmSvg');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W=520,H=420,pad=40;
+    // axes
+    svg.appendChild(svgEl('rect',{x:0,y:0,width:W,height:H,fill:'none'}));
+    for (var i=0;i<=10;i+=2){
+      var p1 = mapXY([i,0],W,H,pad), p2 = mapXY([i,10],W,H,pad);
+      svg.appendChild(svgEl('line',{x1:p1[0],y1:p1[1],x2:p2[0],y2:p2[1],stroke:'rgba(244,241,232,0.06)'}));
+      var q1 = mapXY([0,i],W,H,pad), q2 = mapXY([10,i],W,H,pad);
+      svg.appendChild(svgEl('line',{x1:q1[0],y1:q1[1],x2:q2[0],y2:q2[1],stroke:'rgba(244,241,232,0.06)'}));
+    }
+    // points
+    for (var i2=0;i2<PTS12.length;i2++){
+      var xy = mapXY(PTS12[i2], W, H, pad);
+      var color = PALETTE[kmState.labels[i2] % PALETTE.length];
+      svg.appendChild(svgEl('circle',{cx:xy[0],cy:xy[1],r:8,fill:color,stroke:'#16221c','stroke-width':1.5}));
+    }
+    // centroids
+    for (var c=0;c<kmState.centroids.length;c++){
+      var cxy = mapXY(kmState.centroids[c], W, H, pad);
+      var col = PALETTE[c % PALETTE.length];
+      var s = 12;
+      svg.appendChild(svgEl('line',{x1:cxy[0]-s,y1:cxy[1]-s,x2:cxy[0]+s,y2:cxy[1]+s,stroke:col,'stroke-width':3}));
+      svg.appendChild(svgEl('line',{x1:cxy[0]-s,y1:cxy[1]+s,x2:cxy[0]+s,y2:cxy[1]-s,stroke:col,'stroke-width':3}));
+      svg.appendChild(svgEl('circle',{cx:cxy[0],cy:cxy[1],r:s+4,fill:'none',stroke:col,'stroke-width':1,'stroke-dasharray':'3,3'}));
+    }
+    document.getElementById('kmIter').textContent = kmState.iter;
+    document.getElementById('kmWcss').textContent = computeWCSS(PTS12, kmState.labels, kmState.centroids).toFixed(4);
+    document.getElementById('kmStatus').textContent = kmState.converged ? 'converged' : 'running';
+    document.getElementById('kmStep').disabled = kmState.converged;
+  }
+
+  document.getElementById('kmReset').addEventListener('click', kmReset);
+  document.getElementById('kmStep').addEventListener('click', kmStep);
+  document.getElementById('kmRun').addEventListener('click', kmRunToConvergence);
+  document.getElementById('kmSelect').addEventListener('change', kmReset);
+
+  // ================= TAB 2: HIERARCHICAL DENDROGRAM =================
+  // complete-linkage agglomerative clustering, computed live, on PTS12
+  var dendroMerges = null; // list of {a, b, height, newId, size}
+  var dendroN = PTS12.length;
+
+  function computeCompleteLinkageDendrogram(points){
+    var n = points.length;
+    var clusterMembers = {}; // id -> array of point indices
+    for (var i=0;i<n;i++) clusterMembers[i] = [i];
+    var activeIds = [];
+    for (var i2=0;i2<n;i2++) activeIds.push(i2);
+    var merges = [];
+    var nextId = n;
+
+    function completeLinkDist(idA, idB){
+      var membersA = clusterMembers[idA], membersB = clusterMembers[idB];
+      var maxD = -Infinity;
+      for (var i=0;i<membersA.length;i++){
+        for (var j=0;j<membersB.length;j++){
+          var d = dist(points[membersA[i]], points[membersB[j]]);
+          if (d > maxD) maxD = d;
+        }
+      }
+      return maxD;
+    }
+
+    while (activeIds.length > 1){
+      var bestI=-1, bestJ=-1, bestD=Infinity;
+      for (var i3=0;i3<activeIds.length;i3++){
+        for (var j3=i3+1;j3<activeIds.length;j3++){
+          var d2 = completeLinkDist(activeIds[i3], activeIds[j3]);
+          if (d2 < bestD){ bestD = d2; bestI = i3; bestJ = j3; }
+        }
+      }
+      var idA = activeIds[bestI], idB = activeIds[bestJ];
+      var newId = nextId++;
+      clusterMembers[newId] = clusterMembers[idA].concat(clusterMembers[idB]);
+      merges.push({a: idA, b: idB, height: bestD, newId: newId, size: clusterMembers[newId].length});
+      // remove idA, idB from activeIds, add newId
+      var newActive = [];
+      for (var k=0;k<activeIds.length;k++){
+        if (activeIds[k] !== idA && activeIds[k] !== idB) newActive.push(activeIds[k]);
+      }
+      newActive.push(newId);
+      activeIds = newActive;
+    }
+    return merges;
+  }
+
+  function dendroLayout(merges, n){
+    // build children map
+    var children = {};
+    for (var i=0;i<merges.length;i++) children[merges[i].newId] = [merges[i].a, merges[i].b];
+    var root = merges[merges.length-1].newId;
+    var leafOrder = [];
+    function dfs(nodeId){
+      if (nodeId < n) { leafOrder.push(nodeId); return; }
+      var ch = children[nodeId];
+      dfs(ch[0]); dfs(ch[1]);
+    }
+    dfs(root);
+    var xPos = {}, heightOf = {};
+    for (var li=0; li<leafOrder.length; li++){ xPos[leafOrder[li]] = li; heightOf[leafOrder[li]] = 0; }
+    for (var m=0;m<merges.length;m++){
+      var mm = merges[m];
+      xPos[mm.newId] = (xPos[mm.a] + xPos[mm.b]) / 2;
+      heightOf[mm.newId] = mm.height;
+    }
+    return {xPos: xPos, heightOf: heightOf, leafOrder: leafOrder, root: root, children: children};
+  }
+
+  function unionFindAtCut(merges, n, cutHeight){
+    var parent = [];
+    for (var i=0;i<n;i++) parent.push(i);
+    function find(x){ while (parent[x]!==x){ x = parent[x]; } return x; }
+    function union(a,b){ var ra=find(a), rb=find(b); if (ra!==rb) parent[rb]=ra; }
+    // map cluster-id -> representative leaf for union purposes: keep a map from clusterId to one representative point
+    var repOf = {};
+    for (var i2=0;i2<n;i2++) repOf[i2] = i2;
+    for (var m=0;m<merges.length;m++){
+      var mm = merges[m];
+      if (mm.height <= cutHeight){
+        union(repOf[mm.a], repOf[mm.b]);
+      }
+      repOf[mm.newId] = repOf[mm.a];
+    }
+    var labels = [];
+    for (var i3=0;i3<n;i3++) labels.push(find(i3));
+    return labels;
+  }
+
+  function renderDendro(){
+    if (!dendroMerges) dendroMerges = computeCompleteLinkageDendrogram(PTS12);
+    var layout = dendroLayout(dendroMerges, dendroN);
+    var svg = document.getElementById('dendroSvg');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W=720,H=380, padL=40, padR=20, padTop=20, padBot=50;
+    var maxHeight = dendroMerges[dendroMerges.length-1].height;
+    var plotW = W - padL - padR, plotH = H - padTop - padBot;
+    var n = dendroN;
+
+    function xOf(pos){ return padL + (n<=1?0.5:pos/(n-1)) * plotW; }
+    function yOf(h){ return padTop + (1 - h/maxHeight) * plotH; }
+
+    var cutHeight = parseFloat(document.getElementById('cutSlider').value);
+    var labels = unionFindAtCut(dendroMerges, n, cutHeight);
+    // assign colors by first-seen root
+    var rootColor = {}, nextColorIdx = 0, colorOf = [];
+    for (var i=0;i<n;i++){
+      var r = labels[i];
+      if (!(r in rootColor)) { rootColor[r] = PALETTE[nextColorIdx % PALETTE.length]; nextColorIdx++; }
+      colorOf[i] = rootColor[r];
+    }
+
+    // draw merges as elbow connectors
+    for (var m=0;m<dendroMerges.length;m++){
+      var mm = dendroMerges[m];
+      var xa = xOf(layout.xPos[mm.a]), ya = yOf(layout.heightOf[mm.a]);
+      var xb = xOf(layout.xPos[mm.b]), yb = yOf(layout.heightOf[mm.b]);
+      var xm = xOf(layout.xPos[mm.newId]), ym = yOf(mm.height);
+      var strokeCol = mm.height <= cutHeight ? 'rgba(244,241,232,0.85)' : 'rgba(244,241,232,0.3)';
+      svg.appendChild(svgEl('line',{x1:xa,y1:ya,x2:xa,y2:ym,stroke:strokeCol,'stroke-width':2}));
+      svg.appendChild(svgEl('line',{x1:xb,y1:yb,x2:xb,y2:ym,stroke:strokeCol,'stroke-width':2}));
+      svg.appendChild(svgEl('line',{x1:xa,y1:ym,x2:xb,y2:ym,stroke:strokeCol,'stroke-width':2}));
+    }
+    // leaves
+    for (var li=0; li<layout.leafOrder.length; li++){
+      var leaf = layout.leafOrder[li];
+      var x = xOf(li), y = yOf(0);
+      svg.appendChild(svgEl('circle',{cx:x,cy:y,r:6,fill:colorOf[leaf],stroke:'#16221c','stroke-width':1}));
+      var lbl = svgEl('text',{x:x, y:H-padBot+18, 'text-anchor':'middle','font-size':'10','fill':'#7f8f83','font-family':'Courier New,monospace'});
+      lbl.textContent = leaf;
+      svg.appendChild(lbl);
+    }
+    // cut line
+    var cy = yOf(cutHeight);
+    svg.appendChild(svgEl('line',{x1:padL,y1:cy,x2:W-padR,y2:cy,stroke:'#ffce54','stroke-width':1.5,'stroke-dasharray':'6,4'}));
+    var cutLbl = svgEl('text',{x:W-padR, y:cy-6, 'text-anchor':'end','font-size':'11','fill':'#ffce54','font-family':'Courier New,monospace'});
+    cutLbl.textContent = 'cut = ' + cutHeight.toFixed(2);
+    svg.appendChild(cutLbl);
+    // y-axis ticks
+    for (var t=0;t<=maxHeight;t+=2){
+      var ty = yOf(t);
+      var tl = svgEl('text',{x:padL-8, y:ty+3, 'text-anchor':'end','font-size':'10','fill':'#7f8f83','font-family':'Courier New,monospace'});
+      tl.textContent = t.toFixed(0);
+      svg.appendChild(tl);
+    }
+
+    var uniqueClusters = {};
+    for (var i4=0;i4<labels.length;i4++) uniqueClusters[labels[i4]] = true;
+    document.getElementById('dendroClusters').textContent = Object.keys(uniqueClusters).length;
+    document.getElementById('cutReadout').textContent = cutHeight.toFixed(2);
+    document.getElementById('dendroStory').textContent =
+      'Merge heights: six merges at 1.0000 (adjacent houses), three at 1.4142 (each neighborhood complete), ' +
+      'then 8.0623 (A+C merge) and 11.3137 (everything). Cutting between 1.4142 and 8.0623 recovers the same 3 neighborhoods k-means found.';
+  }
+
+  document.getElementById('cutSlider').addEventListener('input', renderDendro);
+
+  // ================= TAB 3: DBSCAN =================
+  function regionQuery(points, idx, eps){
+    var neighbors = [];
+    for (var j=0;j<points.length;j++){
+      if (dist(points[idx], points[j]) <= eps) neighbors.push(j);
+    }
+    return neighbors;
+  }
+
+  function dbscan(points, eps, minSamples){
+    var n = points.length;
+    var labels = new Array(n).fill(undefined); // undefined = unvisited/unassigned
+    var visited = new Array(n).fill(false);
+    var clusterId = -1;
+
+    for (var i=0;i<n;i++){
+      if (visited[i]) continue;
+      visited[i] = true;
+      var neighbors = regionQuery(points, i, eps);
+      if (neighbors.length < minSamples){
+        labels[i] = -1; // tentatively noise; may become border later
+        continue;
+      }
+      clusterId++;
+      labels[i] = clusterId;
+      var seedSet = neighbors.slice();
+      var qi = 0;
+      while (qi < seedSet.length){
+        var j = seedSet[qi]; qi++;
+        if (!visited[j]){
+          visited[j] = true;
+          var jNeighbors = regionQuery(points, j, eps);
+          if (jNeighbors.length >= minSamples){
+            for (var k=0;k<jNeighbors.length;k++) seedSet.push(jNeighbors[k]);
+          }
+        }
+        if (labels[j] === undefined || labels[j] === -1){
+          labels[j] = clusterId;
+        }
+      }
+    }
+    return labels;
+  }
+
+  function renderDBSCAN(){
+    var eps = parseFloat(document.getElementById('epsSlider').value);
+    var minSamples = parseInt(document.getElementById('minSlider').value, 10);
+    document.getElementById('epsReadout').textContent = eps.toFixed(2);
+    document.getElementById('minReadout').textContent = minSamples;
+
+    var labels = dbscan(PTS13, eps, minSamples);
+
+    var svg = document.getElementById('dbSvg');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W=520,H=440,pad=40, dataMax=10;
+    for (var i=0;i<=10;i+=2){
+      var p1 = mapXY([i,0],W,H,pad,dataMax), p2 = mapXY([i,10],W,H,pad,dataMax);
+      svg.appendChild(svgEl('line',{x1:p1[0],y1:p1[1],x2:p2[0],y2:p2[1],stroke:'rgba(244,241,232,0.06)'}));
+      var q1 = mapXY([0,i],W,H,pad,dataMax), q2 = mapXY([10,i],W,H,pad,dataMax);
+      svg.appendChild(svgEl('line',{x1:q1[0],y1:q1[1],x2:q2[0],y2:q2[1],stroke:'rgba(244,241,232,0.06)'}));
+    }
+    // eps circle preview around the outlier point, to show why it's isolated (or not)
+    var outXY = mapXY(OUTLIER, W, H, pad, dataMax);
+    var pxPerUnit = (W - 2*pad) / dataMax;
+    svg.appendChild(svgEl('circle',{cx:outXY[0],cy:outXY[1],r:eps*pxPerUnit,fill:'rgba(255,206,84,0.06)',stroke:'rgba(255,206,84,0.4)','stroke-dasharray':'4,3'}));
+
+    var noiseCount = 0;
+    var clusterSet = {};
+    for (var idx=0; idx<PTS13.length; idx++){
+      var xy = mapXY(PTS13[idx], W, H, pad, dataMax);
+      var lab = labels[idx];
+      var color;
+      if (lab === -1){ color = '#f4f1e8'; noiseCount++; }
+      else { color = PALETTE[lab % PALETTE.length]; clusterSet[lab] = true; }
+      var r = (lab === -1) ? 9 : 8;
+      svg.appendChild(svgEl('circle',{cx:xy[0],cy:xy[1],r:r,fill:color,stroke:(lab===-1?'#ff8266':'#16221c'),'stroke-width': (lab===-1?2:1.5)}));
+      if (lab === -1){
+        svg.appendChild(svgEl('line',{x1:xy[0]-5,y1:xy[1]-5,x2:xy[0]+5,y2:xy[1]+5,stroke:'#16221c','stroke-width':1.5}));
+        svg.appendChild(svgEl('line',{x1:xy[0]-5,y1:xy[1]+5,x2:xy[0]+5,y2:xy[1]-5,stroke:'#16221c','stroke-width':1.5}));
+      }
+    }
+    document.getElementById('dbClusters').textContent = Object.keys(clusterSet).length;
+    document.getElementById('dbNoise').textContent = noiseCount;
+    document.getElementById('dbStory').textContent =
+      'eps=' + eps.toFixed(2) + ', min_samples=' + minSamples + ' → ' + Object.keys(clusterSet).length +
+      ' cluster(s) found, ' + noiseCount + ' point(s) labeled noise (-1). Default (eps=1.50, min_samples=3) reproduces the tutorial’s cited labels exactly: the 3 neighborhoods as clean clusters, and the lone house at (5,5) as the only noise point.';
+  }
+
+  document.getElementById('epsSlider').addEventListener('input', renderDBSCAN);
+  document.getElementById('minSlider').addEventListener('input', renderDBSCAN);
+
+  // ================= TAB 4: ELBOW & SILHOUETTE (static, cited numbers) =================
+  var elbowData = [
+    {k:1, wcss:267.3333, sil:null},
+    {k:2, wcss:104.0000, sil:0.5890},
+    {k:3, wcss:6.0000,   sil:0.8355},
+    {k:4, wcss:5.0000,   sil:0.6103},
+    {k:5, wcss:4.0000,   sil:0.3932},
+    {k:6, wcss:3.3333,   sil:null}
+  ];
+
+  function renderElbow(){
+    var svg = document.getElementById('elbowSvg');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W=640,H=360, padL=55, padR=55, padTop=30, padBot=40;
+    var plotW = W-padL-padR, plotH = H-padTop-padBot;
+    var ks = elbowData.map(function(d){return d.k;});
+    var maxWcss = 267.3333;
+    function xOf(k){ return padL + ((k-1)/(ks.length-1)) * plotW; }
+    function yWcss(w){ return padTop + (1 - w/maxWcss) * plotH; }
+    function ySil(s){ return padTop + (1 - s/1.0) * plotH; }
+
+    // axes
+    svg.appendChild(svgEl('line',{x1:padL,y1:padTop,x2:padL,y2:H-padBot,stroke:'rgba(244,241,232,0.3)'}));
+    svg.appendChild(svgEl('line',{x1:W-padR,y1:padTop,x2:W-padR,y2:H-padBot,stroke:'rgba(244,241,232,0.3)'}));
+    svg.appendChild(svgEl('line',{x1:padL,y1:H-padBot,x2:W-padR,y2:H-padBot,stroke:'rgba(244,241,232,0.3)'}));
+
+    // WCSS polyline
+    var wcssPts = elbowData.map(function(d){ return xOf(d.k)+','+yWcss(d.wcss); }).join(' ');
+    svg.appendChild(svgEl('polyline',{points:wcssPts, fill:'none', stroke:'#ff8266','stroke-width':2.5}));
+    elbowData.forEach(function(d){
+      svg.appendChild(svgEl('circle',{cx:xOf(d.k), cy:yWcss(d.wcss), r:5, fill:'#ff8266'}));
+    });
+
+    // silhouette polyline (skip nulls)
+    var silPts = elbowData.filter(function(d){return d.sil!==null;}).map(function(d){ return xOf(d.k)+','+ySil(d.sil); }).join(' ');
+    svg.appendChild(svgEl('polyline',{points:silPts, fill:'none', stroke:'#7fb3d5','stroke-width':2.5}));
+    elbowData.forEach(function(d){
+      if (d.sil!==null) svg.appendChild(svgEl('circle',{cx:xOf(d.k), cy:ySil(d.sil), r:5, fill:'#7fb3d5'}));
+    });
+
+    // x labels
+    elbowData.forEach(function(d){
+      var t = svgEl('text',{x:xOf(d.k), y:H-padBot+18, 'text-anchor':'middle','font-size':'11','fill':'#7f8f83','font-family':'Courier New,monospace'});
+      t.textContent = 'k=' + d.k;
+      svg.appendChild(t);
+    });
+    var lblL = svgEl('text',{x:14, y:padTop+8, 'font-size':'10','fill':'#ff8266','font-family':'Courier New,monospace'});
+    lblL.textContent = 'WCSS';
+    svg.appendChild(lblL);
+    var lblR = svgEl('text',{x:W-46, y:padTop+8, 'font-size':'10','fill':'#7fb3d5','font-family':'Courier New,monospace'});
+    lblR.textContent = 'silhouette';
+    svg.appendChild(lblR);
+
+    // highlight k=3
+    var hx = xOf(3);
+    svg.appendChild(svgEl('line',{x1:hx,y1:padTop,x2:hx,y2:H-padBot,stroke:'#ffce54','stroke-width':1,'stroke-dasharray':'5,4'}));
+
+    // table
+    var table = document.getElementById('elbowTable');
+    var html = '<tr><th>k</th><th>WCSS</th><th>silhouette</th></tr>';
+    elbowData.forEach(function(d){
+      html += '<tr><td>'+d.k+'</td><td>'+d.wcss.toFixed(4)+'</td><td>'+(d.sil===null?'—':d.sil.toFixed(4))+'</td></tr>';
+    });
+    table.innerHTML = html;
+  }
+
+  // ================= TAB SWITCHING =================
+  var tabButtons = document.querySelectorAll('.tabbtn');
+  tabButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabButtons.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.tabpanel').forEach(function(p){ p.classList.remove('active'); });
+      var target = document.getElementById('tab-' + btn.getAttribute('data-tab'));
+      target.classList.add('active');
+    });
+  });
+
+  // ================= INIT =================
+  kmReset();
+  renderDendro();
+  renderDBSCAN();
+  renderElbow();
+})();
+</script>
+</body>
+</html>

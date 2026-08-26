@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 85 self-contained interactive visualizations
+// Cogito Gallery manifest — 90 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -512,6 +512,36 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Whisper's Multitask Objective, live",
         "one": "Whisper doesn't just transcribe — one training objective teaches it to transcribe, translate, detect language, and time-stamp, all at once.",
         "prompt": "Explain Whisper's multitask training objective from first principles: how a single sequence-to-sequence model is trained to handle transcription, translation, and language identification together."
+      },
+      {
+        "file": "naive_bayes_visualizer.html",
+        "title": "Naive Bayes: word by word, and the Gaussian boundary",
+        "one": "Assume every feature is independent (it's usually a lie), multiply their probabilities anyway, and you get a shockingly good classifier.",
+        "prompt": "Explain Naive Bayes from first principles: what the 'naive' conditional-independence assumption actually assumes, why it works well despite being wrong, and how it draws a decision boundary between classes."
+      },
+      {
+        "file": "support_vector_machines_visualizer.html",
+        "title": "Support Vector Machines: the widest street, live-solved",
+        "one": "An SVM doesn't just separate two classes — it finds the widest possible street between them, using only the points closest to the border.",
+        "prompt": "Explain support vector machines from first principles: what it means to maximize the margin between classes, why only the 'support vectors' end up mattering, and what the kernel trick lets you do."
+      },
+      {
+        "file": "clustering_visualizer.html",
+        "title": "Clustering, live",
+        "one": "No labels, no answer key — just group the points that belong together, and let the data reveal its own structure.",
+        "prompt": "Explain clustering from first principles: how k-means, hierarchical clustering, and DBSCAN each decide what counts as a 'group' differently, with no labeled data to learn from."
+      },
+      {
+        "file": "dimensionality_reduction_visualizer.html",
+        "title": "Dimensionality Reduction, live",
+        "one": "Most of a high-dimensional dataset's real structure often lives in just a handful of directions — dimensionality reduction finds them.",
+        "prompt": "Explain dimensionality reduction from first principles: what PCA is really doing when it finds the directions of greatest variance, and how that compares to techniques like t-SNE and UMAP built for visualization instead."
+      },
+      {
+        "file": "time_series_and_forecasting_visualizer.html",
+        "title": "Time Series & Forecasting: decomposition, stationarity, and a live forecast",
+        "one": "Trend, seasonality, and noise are tangled together in every time series — pull them apart first, and forecasting gets much easier.",
+        "prompt": "Explain time series forecasting from first principles: how to decompose a series into trend, seasonality, and residual noise, what 'stationarity' means and why it matters, and how a simple forecasting model uses all of that."
       }
     ]
   },

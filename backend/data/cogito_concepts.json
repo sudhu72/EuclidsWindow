@@ -1340,6 +1340,77 @@
       ],
       "viz": "whisper_training_objective_visualizer.html",
       "source": "whisper_training_objective_feynman.md"
+    },
+    {
+      "id": "naive_bayes",
+      "name": "Naive Bayes",
+      "keywords": [
+        "naive bayes",
+        "gaussian naive bayes",
+        "naive bayes classifier"
+      ],
+      "related": [
+        "discriminant_analysis",
+        "k_nearest_neighbors"
+      ],
+      "viz": "naive_bayes_visualizer.html",
+      "source": "naive_bayes_feynman.md"
+    },
+    {
+      "id": "support_vector_machines",
+      "name": "Support Vector Machines",
+      "keywords": [
+        "support vector machine",
+        "svm",
+        "maximum margin classifier",
+        "kernel trick"
+      ],
+      "related": [
+        "discriminant_analysis",
+        "naive_bayes"
+      ],
+      "viz": "support_vector_machines_visualizer.html",
+      "source": "support_vector_machines_feynman.md"
+    },
+    {
+      "id": "clustering",
+      "name": "Clustering",
+      "keywords": [
+        "clustering",
+        "k-means clustering",
+        "hierarchical clustering",
+        "dbscan"
+      ],
+      "related": [
+        "dimensionality_reduction"
+      ],
+      "viz": "clustering_visualizer.html",
+      "source": "clustering_feynman.md"
+    },
+    {
+      "id": "dimensionality_reduction",
+      "name": "Dimensionality Reduction",
+      "keywords": [],
+      "related": [
+        "clustering"
+      ],
+      "viz": "dimensionality_reduction_visualizer.html",
+      "source": "dimensionality_reduction_feynman.md"
+    },
+    {
+      "id": "time_series_and_forecasting",
+      "name": "Time Series & Forecasting",
+      "keywords": [
+        "time series forecasting",
+        "stationarity",
+        "seasonal decomposition",
+        "arima"
+      ],
+      "related": [
+        "wape_and_forecast_bias"
+      ],
+      "viz": "time_series_and_forecasting_visualizer.html",
+      "source": "time_series_and_forecasting_feynman.md"
     }
   ]
 }

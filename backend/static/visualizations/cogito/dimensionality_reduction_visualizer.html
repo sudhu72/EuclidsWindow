@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dimensionality Reduction, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 16px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabbtn:hover{border-color:var(--chalk-dim);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:130px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  table.coord{border-collapse:collapse;margin:14px auto;width:100%;max-width:640px;}
+  table.coord th, table.coord td{border:1px solid var(--border);padding:7px 9px;text-align:center;font-size:12.5px;}
+  table.coord th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+  table.coord td.winner{color:var(--amber);font-weight:700;}
+  table.coord td.bad{color:var(--coral);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dimensionality Reduction, live</h1>
+  <p class="sub">Six tabs, matching the tutorial's six verified demonstrations.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="curse">Curse of Dimensionality</button>
+    <button class="tabbtn" data-tab="pca">PCA Workflow</button>
+    <button class="tabbtn" data-tab="jl">Random Projection &amp; JL Lemma</button>
+    <button class="tabbtn" data-tab="lda">LDA vs. PCA</button>
+    <button class="tabbtn" data-tab="tsne">t-SNE Toy Example</button>
+    <button class="tabbtn" data-tab="ae">Autoencoder = PCA</button>
+  </div>
+
+  <!-- ============ TAB 1: CURSE OF DIMENSIONALITY ============ -->
+  <div class="tabpanel active" id="tab-curse">
+    <div class="panel">
+      <h2>As Dimensions Grow, "Close" and "Far" Converge</h2>
+      <p class="sub">200 random points in a unit hypercube. Drag the dimension count and watch the gap between the closest and farthest pair collapse.</p>
+      <div class="row"><label>Dimensions</label><input type="range" id="curseD" min="2" max="1000" step="1" value="2"><span class="readout" id="curseDOut">2</span></div>
+      <div class="row">
+        <button class="op" id="btnCurse2">d=2</button>
+        <button class="op" id="btnCurse10">d=10</button>
+        <button class="op" id="btnCurse100">d=100</button>
+        <button class="op" id="btnCurse1000">d=1,000</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">min pairwise distance</div><div class="num" id="curseMin">-</div></div>
+        <div class="metric coral"><div class="lbl">max pairwise distance</div><div class="num" id="curseMax">-</div></div>
+        <div class="metric amber"><div class="lbl">(max-min)/min</div><div class="num" id="curseRatio">-</div></div>
+      </div>
+      <div class="story-line" id="curseStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: PCA WORKFLOW ============ -->
+  <div class="tabpanel" id="tab-pca">
+    <div class="panel">
+      <h2>Explained Variance &amp; Reconstruction Error</h2>
+      <p class="sub">The shared 10-point dataset already verified in Continuity &amp; Extrema and Eigenvalues &amp; Eigenvectors.</p>
+      <div class="row"><button class="op primary" id="btnPcaLoad">Load shared dataset</button></div>
+      <svg id="pcaSvg" width="360" height="300" viewBox="0 0 360 300"></svg>
+      <table class="coord" id="pcaTable"></table>
+      <div class="story-line" id="pcaStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Choosing k: the 95% Cumulative-Variance Rule</h2>
+      <p class="sub">A genuinely constructed 5-feature dataset: 3 real signal dimensions, 2 pure noise dimensions.</p>
+      <div class="row"><button class="op primary" id="btnScreeLoad">Load 5D scree example</button></div>
+      <table class="coord" id="screeTable"></table>
+      <div class="story-line" id="screeStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: RANDOM PROJECTION & JL LEMMA ============ -->
+  <div class="tabpanel" id="tab-jl">
+    <div class="panel">
+      <h2>Random Projection: Does It Actually Preserve Distances?</h2>
+      <p class="sub">300 points in 2,000 dimensions, projected down through a random matrix. n and D are fixed to the tutorial's exact example — only k (the target dimension) changes.</p>
+      <div class="row">
+        <button class="op primary" id="btnJl768">k=634 (JL minimum)</button>
+        <button class="op" id="btnJl300">k=200 (below minimum)</button>
+        <button class="op" id="btnJl50">k=30 (far below minimum)</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">min distortion ratio</div><div class="num" id="jlMin">-</div></div>
+        <div class="metric coral"><div class="lbl">max distortion ratio</div><div class="num" id="jlMax">-</div></div>
+        <div class="metric amber"><div class="lbl">within (0.7, 1.3)?</div><div class="num" id="jlOk">-</div></div>
+      </div>
+      <div class="story-line" id="jlStory">Computing all 44,850 pairwise distances &mdash; this may take a moment.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: LDA VS PCA ============ -->
+  <div class="tabpanel" id="tab-lda">
+    <div class="panel">
+      <h2>Supervised vs. Unsupervised Projection, Head to Head</h2>
+      <p class="sub">3 classes, 4 features: only features 1-2 carry class signal; features 3-4 are pure noise with larger raw variance.</p>
+      <div class="row"><button class="op primary" id="btnLdaLoad">Run LDA vs. PCA on the 3-class example</button></div>
+      <svg id="ldaSvg" width="640" height="220" viewBox="0 0 640 220"></svg>
+      <table class="coord" id="ldaTable"></table>
+      <div class="story-line" id="ldaStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: T-SNE TOY EXAMPLE ============ -->
+  <div class="tabpanel" id="tab-tsne">
+    <div class="panel">
+      <h2>Neighbor Affinities and a Live Gradient Descent</h2>
+      <p class="sub">6 points, two well-separated clusters of 3. Perplexity = 2.</p>
+      <div class="row"><button class="op primary" id="btnTsneLoad">Compute affinities &amp; run 3,000 iterations</button></div>
+      <table class="coord" id="tsneAffinityTable"></table>
+      <svg id="tsneSvg" width="640" height="120" viewBox="0 0 640 120"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">Cluster A spread</div><div class="num" id="tsneSpreadA">-</div></div>
+        <div class="metric coral"><div class="lbl">Cluster B spread</div><div class="num" id="tsneSpreadB">-</div></div>
+        <div class="metric amber"><div class="lbl">gap between clusters</div><div class="num" id="tsneGap">-</div></div>
+      </div>
+      <div class="story-line" id="tsneStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: AUTOENCODER = PCA ============ -->
+  <div class="tabpanel" id="tab-ae">
+    <div class="panel">
+      <h2>A Linear Autoencoder, Trained From Scratch, Converging to PCA</h2>
+      <p class="sub">Same shared 10-point dataset. Encoder and decoder weights start random; watch them converge toward PCA's exact eigenvector.</p>
+      <div class="row"><button class="op primary" id="btnAeTrain">Train the autoencoder (20,000 gradient steps)</button></div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">PCA PC1 angle</div><div class="num" id="aePcaAngle">-</div></div>
+        <div class="metric green"><div class="lbl">Autoencoder angle</div><div class="num" id="aeAeAngle">-</div></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">PCA reconstruction error</div><div class="num" id="aePcaErr">-</div></div>
+        <div class="metric amber"><div class="lbl">Autoencoder reconstruction error</div><div class="num" id="aeAeErr">-</div></div>
+      </div>
+      <div class="story-line" id="aeStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../unsupervised/dimensionality_reduction_feynman.md">Dimensionality Reduction</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function makeLCG(seed){ let s = seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function boxMuller(rand){ const u1=Math.max(rand(),1e-12), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     TAB 1 — CURSE OF DIMENSIONALITY
+     ============================================================ */
+  function pairwiseDistances(pts){
+    const n = pts.length;
+    const sq = pts.map(p => p.reduce((s,v)=>s+v*v,0));
+    let out = [];
+    for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+      const d2 = sq[i]+sq[j]-2*pts[i].reduce((s,v,k)=>s+v*pts[j][k],0);
+      out.push(Math.sqrt(Math.max(d2,0)));
+    }
+    return out;
+  }
+  function runCurse(d){
+    const rand = makeLCG(99);
+    // seed 99's stream must reach dimension d deterministically -- regenerate all lower dims' draws first
+    // so results are reproducible per-d without depending on prior UI state.
+    const n = 200;
+    const pts = [];
+    for(let i=0;i<n;i++){
+      const row = [];
+      for(let k=0;k<d;k++) row.push(rand());
+      pts.push(row);
+    }
+    const dists = pairwiseDistances(pts);
+    const mn = Math.min(...dists), mx = Math.max(...dists);
+    const ratio = (mx-mn)/mn;
+    document.getElementById("curseMin").textContent = mn.toFixed(4);
+    document.getElementById("curseMax").textContent = mx.toFixed(4);
+    document.getElementById("curseRatio").textContent = ratio.toFixed(2);
+    document.getElementById("curseDOut").textContent = d;
+    document.getElementById("curseStory").textContent =
+      d <= 2
+      ? "At low dimensions, a small random sample can coincidentally place two points almost on top of each other, making this ratio huge and volatile from run to run."
+      : `At d=${d}, the farthest pair is only ${(ratio*100).toFixed(0)}% farther than the closest pair -- "close" and "far" are converging toward meaninglessness.`;
+  }
+  document.getElementById("curseD").addEventListener("input", (e) => runCurse(parseInt(e.target.value,10)));
+  [["btnCurse2",2],["btnCurse10",10],["btnCurse100",100],["btnCurse1000",1000]].forEach(([id,d]) => {
+    document.getElementById(id).addEventListener("click", () => {
+      document.getElementById("curseD").value = d;
+      runCurse(d);
+    });
+  });
+  runCurse(2);
+
+  /* ============================================================
+     TAB 2 — PCA WORKFLOW
+     ============================================================ */
+  const PCA_POINTS = [[1,2],[2,3],[3,3],[4,5],[5,4],[6,6],[2,1],[5,6],[3,5],[4,3]];
+  function eig2x2(a,b,c){ // symmetric [[a,b],[b,c]]
+    const tr = a+c, det = a*c-b*b;
+    const disc = Math.sqrt(Math.max(tr*tr-4*det,0));
+    const l1 = (tr+disc)/2, l2 = (tr-disc)/2;
+    function vecFor(l){
+      if (Math.abs(b) > 1e-12) return [l-c, b];
+      return [1,0];
+    }
+    let v1 = vecFor(l1);
+    const n1 = Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1]);
+    v1 = [v1[0]/n1, v1[1]/n1];
+    return {l1,l2,v1};
+  }
+  function runPca(){
+    const n = PCA_POINTS.length;
+    const mx = PCA_POINTS.reduce((s,p)=>s+p[0],0)/n, my = PCA_POINTS.reduce((s,p)=>s+p[1],0)/n;
+    const cX = PCA_POINTS.map(p=>[p[0]-mx,p[1]-my]);
+    let Sxx=0,Sxy=0,Syy=0;
+    cX.forEach(([x,y])=>{Sxx+=x*x;Sxy+=x*y;Syy+=y*y;});
+    Sxx/=n; Sxy/=n; Syy/=n;
+    const {l1,l2,v1} = eig2x2(Sxx,Sxy,Syy);
+    const total = l1+l2;
+    const angle = Math.atan2(v1[1],v1[0])*180/Math.PI;
+    const reconErr = cX.reduce((s,[x,y])=>{
+      const proj = x*v1[0]+y*v1[1];
+      const rx = proj*v1[0], ry = proj*v1[1];
+      return s + (x-rx)*(x-rx) + (y-ry)*(y-ry);
+    },0);
+
+    const svg = document.getElementById("pcaSvg");
+    svg.innerHTML = "";
+    const W=360,H=300,pad=30;
+    function X(x){ return pad + (x-0)/7*(W-2*pad); }
+    function Y(y){ return H-pad - (y-0)/7*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    const arrowLen = 3.2;
+    svg.appendChild(el("line",{x1:X(mx-v1[0]*arrowLen),y1:Y(my-v1[1]*arrowLen),x2:X(mx+v1[0]*arrowLen),y2:Y(my+v1[1]*arrowLen),stroke:"var(--amber)","stroke-width":2}));
+    PCA_POINTS.forEach(([x,y])=>{
+      svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:5,fill:"var(--blue)",opacity:0.85}));
+    });
+
+    const table = document.getElementById("pcaTable");
+    table.innerHTML = `<tr><th>Component</th><th>Eigenvalue</th><th>Explained variance ratio</th></tr>
+      <tr><td>PC1</td><td>${l1.toFixed(4)}</td><td>${(100*l1/total).toFixed(2)}%</td></tr>
+      <tr><td>PC2</td><td>${l2.toFixed(4)}</td><td>${(100*l2/total).toFixed(2)}%</td></tr>`;
+    document.getElementById("pcaStory").textContent =
+      `PC1 angle: ${angle.toFixed(2)}°. Keeping only PC1 discards ${(100*l2/total).toFixed(2)}% of the variance and costs exactly ${reconErr.toFixed(4)} total squared reconstruction error -- which equals n(=10) times the discarded eigenvalue (${l2.toFixed(4)}), an exact identity.`;
+  }
+  document.getElementById("btnPcaLoad").addEventListener("click", runPca);
+  runPca();
+
+  function runScree(){
+    const rand = makeLCG(7);
+    const n = 60;
+    function col(scale){ const out=[]; for(let i=0;i<n;i++) out.push(boxMuller(rand)*scale); return out; }
+    const z1=col(3.0), z2=col(2.0), z3=col(1.0), noise4=col(0.3), noise5=col(0.2);
+    const cols = [z1,z2,z3,noise4,noise5];
+    const means = cols.map(c => c.reduce((s,v)=>s+v,0)/n);
+    const centered = cols.map((c,i)=>c.map(v=>v-means[i]));
+    const d = 5;
+    const cov = Array.from({length:d},()=>new Array(d).fill(0));
+    for(let i=0;i<d;i++) for(let j=0;j<d;j++){
+      let s=0; for(let k=0;k<n;k++) s+=centered[i][k]*centered[j][k];
+      cov[i][j] = s/n;
+    }
+    // Jacobi eigenvalue algorithm for symmetric 5x5
+    let A = cov.map(r=>r.slice());
+    for(let sweep=0; sweep<100; sweep++){
+      let off=0;
+      for(let p=0;p<d;p++) for(let q=p+1;q<d;q++) off += A[p][q]*A[p][q];
+      if (off < 1e-14) break;
+      for(let p=0;p<d;p++) for(let q=p+1;q<d;q++){
+        if (Math.abs(A[p][q]) < 1e-14) continue;
+        const theta = (A[q][q]-A[p][p])/(2*A[p][q]);
+        const t = Math.sign(theta || 1)/(Math.abs(theta)+Math.sqrt(theta*theta+1));
+        const c = 1/Math.sqrt(t*t+1), s = t*c;
+        const App=A[p][p], Aqq=A[q][q], Apq=A[p][q];
+        A[p][p] = c*c*App - 2*s*c*Apq + s*s*Aqq;
+        A[q][q] = s*s*App + 2*s*c*Apq + c*c*Aqq;
+        A[p][q] = 0; A[q][p] = 0;
+        for(let k=0;k<d;k++){
+          if (k===p || k===q) continue;
+          const Akp=A[k][p], Akq=A[k][q];
+          A[k][p] = c*Akp - s*Akq; A[p][k]=A[k][p];
+          A[k][q] = s*Akp + c*Akq; A[q][k]=A[k][q];
+        }
+      }
+    }
+    const vals = A.map((row,i)=>row[i]).sort((a,b)=>b-a);
+    const total = vals.reduce((s,v)=>s+v,0);
+    let cum = 0;
+    const rows = vals.map((v,i)=>{ cum += v; return {v, cum: cum/total}; });
+    const k95 = rows.findIndex(r => r.cum >= 0.95) + 1;
+
+    const table = document.getElementById("screeTable");
+    let html = "<tr><th>Component</th><th>Eigenvalue</th><th>Cumulative variance explained</th></tr>";
+    rows.forEach((r,i)=>{
+      const isK = (i+1) === k95;
+      html += `<tr><td${isK?' class="winner"':""}>PC${i+1}</td><td${isK?' class="winner"':""}>${r.v.toFixed(4)}</td><td${isK?' class="winner"':""}>${(r.cum*100).toFixed(2)}%</td></tr>`;
+    });
+    table.innerHTML = html;
+    document.getElementById("screeStory").textContent =
+      `The 95% rule picks k=${k95} -- exactly the true number of genuine signal dimensions this dataset was built from, recovered with no one telling the algorithm in advance which columns were real.`;
+  }
+  document.getElementById("btnScreeLoad").addEventListener("click", runScree);
+  runScree();
+
+  /* ============================================================
+     TAB 3 — RANDOM PROJECTION & JL LEMMA
+     ============================================================ */
+  function runJl(k){
+    const rand = makeLCG(42);
+    const nPoints = 300, D = 2000, eps = 0.3;
+    const X = [];
+    for(let i=0;i<nPoints;i++){
+      const row = new Float64Array(D);
+      for(let j=0;j<D;j++) row[j] = boxMuller(rand);
+      X.push(row);
+    }
+    const sq = X.map(row => { let s=0; for(let j=0;j<D;j++) s+=row[j]*row[j]; return s; });
+    function pairDist2(A, sqA, i, j){
+      let dot=0; const Ai=A[i], Aj=A[j];
+      for(let k2=0;k2<Ai.length;k2++) dot += Ai[k2]*Aj[k2];
+      return sqA[i]+sqA[j]-2*dot;
+    }
+    // R: D x k, scaled by 1/sqrt(k)
+    const scale = 1/Math.sqrt(k);
+    const Xp = X.map(()=>new Float64Array(k));
+    for(let j=0;j<D;j++){
+      const Rrow = new Float64Array(k);
+      for(let c=0;c<k;c++) Rrow[c] = boxMuller(rand)*scale;
+      for(let i=0;i<nPoints;i++){
+        const xij = X[i][j];
+        const outRow = Xp[i];
+        for(let c=0;c<k;c++) outRow[c] += xij*Rrow[c];
+      }
+    }
+    const sqP = Xp.map(row => { let s=0; for(let c=0;c<k;c++) s+=row[c]*row[c]; return s; });
+
+    let minR = Infinity, maxR = -Infinity;
+    for(let i=0;i<nPoints;i++) for(let j=i+1;j<nPoints;j++){
+      const dOrig = pairDist2(X, sq, i, j);
+      const dProj = pairDist2(Xp, sqP, i, j);
+      const r = dProj/dOrig;
+      if (r<minR) minR=r; if (r>maxR) maxR=r;
+    }
+    document.getElementById("jlMin").textContent = minR.toFixed(4);
+    document.getElementById("jlMax").textContent = maxR.toFixed(4);
+    const ok = minR >= (1-eps) && maxR <= (1+eps);
+    document.getElementById("jlOk").textContent = ok ? "Yes" : "No";
+    document.getElementById("jlStory").textContent =
+      `k=${k}: distortion ratio ranged [${minR.toFixed(4)}, ${maxR.toFixed(4)}] against the promised (0.7, 1.3) band. ${ok ? "Holds -- every checked pair stayed inside the guarantee." : "Breaks -- distances are visibly distorted below the JL-prescribed minimum k=634."}`;
+  }
+  document.getElementById("btnJl768").addEventListener("click", () => runJl(634));
+  document.getElementById("btnJl300").addEventListener("click", () => runJl(200));
+  document.getElementById("btnJl50").addEventListener("click", () => runJl(30));
+
+  /* ============================================================
+     TAB 4 — LDA VS PCA
+     ============================================================ */
+  function mat4Inv(M){
+    // Gauss-Jordan inversion for a 4x4 matrix
+    const n = 4;
+    const A = M.map((row,i)=> row.concat(Array.from({length:n},(_,j)=>i===j?1:0)));
+    for(let col=0; col<n; col++){
+      let piv = col;
+      for(let r=col+1;r<n;r++) if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv=r;
+      [A[col],A[piv]] = [A[piv],A[col]];
+      const pv = A[col][col];
+      for(let c2=0;c2<2*n;c2++) A[col][c2] /= pv;
+      for(let r=0;r<n;r++){
+        if (r===col) continue;
+        const f = A[r][col];
+        for(let c2=0;c2<2*n;c2++) A[r][c2] -= f*A[col][c2];
+      }
+    }
+    return A.map(row => row.slice(n));
+  }
+  function matMul(A,B){
+    const n=A.length, m=B[0].length, p=B.length;
+    const out = Array.from({length:n},()=>new Array(m).fill(0));
+    for(let i=0;i<n;i++) for(let j=0;j<m;j++){ let s=0; for(let k=0;k<p;k++) s+=A[i][k]*B[k][j]; out[i][j]=s; }
+    return out;
+  }
+  function jacobiEig(Ain){
+    const d = Ain.length;
+    let A = Ain.map(r=>r.slice());
+    let V = Array.from({length:d},(_,i)=>Array.from({length:d},(_,j)=>i===j?1:0));
+    for(let sweep=0; sweep<100; sweep++){
+      let off=0;
+      for(let p=0;p<d;p++) for(let q=p+1;q<d;q++) off += A[p][q]*A[p][q];
+      if (off < 1e-12) break;
+      for(let p=0;p<d;p++) for(let q=p+1;q<d;q++){
+        if (Math.abs(A[p][q]) < 1e-14) continue;
+        const theta = (A[q][q]-A[p][p])/(2*A[p][q]);
+        const t = Math.sign(theta||1)/(Math.abs(theta)+Math.sqrt(theta*theta+1));
+        const c = 1/Math.sqrt(t*t+1), s = t*c;
+        const App=A[p][p], Aqq=A[q][q], Apq=A[p][q];
+        A[p][p]=c*c*App-2*s*c*Apq+s*s*Aqq;
+        A[q][q]=s*s*App+2*s*c*Apq+c*c*Aqq;
+        A[p][q]=0; A[q][p]=0;
+        for(let k=0;k<d;k++){
+          if (k===p||k===q) continue;
+          const Akp=A[k][p], Akq=A[k][q];
+          A[k][p]=c*Akp-s*Akq; A[p][k]=A[k][p];
+          A[k][q]=s*Akp+c*Akq; A[q][k]=A[k][q];
+        }
+        for(let k=0;k<d;k++){
+          const Vkp=V[k][p], Vkq=V[k][q];
+          V[k][p]=c*Vkp-s*Vkq;
+          V[k][q]=s*Vkp+c*Vkq;
+        }
+      }
+    }
+    const idx = A.map((row,i)=>[row[i],i]).sort((a,b)=>b[0]-a[0]);
+    const vals = idx.map(x=>x[0]);
+    const vecs = idx.map(x => V.map(row=>row[x[1]]));  // vecs[k] = k-th eigenvector (not yet transposed)
+    return {vals, vecs}; // vecs[i] is the i-th component across eigenvectors -- caller should transpose as needed
+  }
+  function runLda(){
+    const rand = makeLCG(11);
+    const meansArr = [[0,0,5,-3],[4,0,5,-3],[2,4,5,-3]];
+    const scales = [1,1,2,2];
+    const nPer = 30;
+    const X = [], y = [];
+    meansArr.forEach((mu, c) => {
+      for(let i=0;i<nPer;i++){
+        const row = [];
+        for(let f=0;f<4;f++) row.push(boxMuller(rand)*scales[f] + mu[f]);
+        X.push(row); y.push(c);
+      }
+    });
+    const n = X.length, d = 4;
+    const overall = new Array(d).fill(0);
+    X.forEach(row => row.forEach((v,i)=>overall[i]+=v));
+    for(let i=0;i<d;i++) overall[i] /= n;
+
+    const Sw = Array.from({length:d},()=>new Array(d).fill(0));
+    const Sb = Array.from({length:d},()=>new Array(d).fill(0));
+    for(let c=0;c<3;c++){
+      const idxs = y.map((yy,i)=>yy===c?i:-1).filter(i=>i>=0);
+      const mc = new Array(d).fill(0);
+      idxs.forEach(i => X[i].forEach((v,f)=>mc[f]+=v));
+      for(let f=0;f<d;f++) mc[f] /= idxs.length;
+      idxs.forEach(i => {
+        for(let a=0;a<d;a++) for(let b=0;b<d;b++) Sw[a][b] += (X[i][a]-mc[a])*(X[i][b]-mc[b]);
+      });
+      for(let a=0;a<d;a++) for(let b=0;b<d;b++) Sb[a][b] += idxs.length*(mc[a]-overall[a])*(mc[b]-overall[b]);
+    }
+    const SwInv = mat4Inv(Sw);
+    const M = matMul(SwInv, Sb);
+    const {vals, vecs} = jacobiEig(M.map((row,i)=>row.map((v,j)=>(v+M[j][i])/2))); // symmetrize numerically for stability of the Jacobi routine
+    // vecs here approximate the top directions of the symmetrized proxy; recompute exact top-2 via power iteration on M directly for correctness
+    function matVec(A,v){ return A.map(row => row.reduce((s,x,i)=>s+x*v[i],0)); }
+    function normalize(v){ const n2=Math.sqrt(v.reduce((s,x)=>s+x*x,0)); return v.map(x=>x/n2); }
+    function powerIter(A, deflateVecs){
+      let v = [0.6,0.4,0.3,0.2];
+      for(let it=0; it<500; it++){
+        let Av = matVec(A, v);
+        deflateVecs.forEach(dv => { const proj = Av.reduce((s,x,i)=>s+x*dv[i],0); Av = Av.map((x,i)=>x-proj*dv[i]); });
+        v = normalize(Av);
+      }
+      let Av2 = matVec(A, v);
+      const lambda = v.reduce((s,x,i)=>s+x*Av2[i],0);
+      return {v, lambda};
+    }
+    const r1 = powerIter(M, []);
+    const r2 = powerIter(M, [r1.v]);
+    const W = [r1.v, r2.v]; // 2 x 4, rows are the two discriminant directions
+
+    function project(row, W){ return W.map(w => w.reduce((s,x,i)=>s+x*row[i],0)); }
+    const Z = X.map(row => project(row, W));
+    function scatterRatio(Zdata){
+      const dim = Zdata[0].length;
+      const overallZ = new Array(dim).fill(0);
+      Zdata.forEach(row => row.forEach((v,i)=>overallZ[i]+=v));
+      for(let i=0;i<dim;i++) overallZ[i] /= Zdata.length;
+      let Sw_=0, Sb_=0;
+      for(let c=0;c<3;c++){
+        const idxs = y.map((yy,i)=>yy===c?i:-1).filter(i=>i>=0);
+        const mc = new Array(dim).fill(0);
+        idxs.forEach(i => Zdata[i].forEach((v,f)=>mc[f]+=v));
+        for(let f=0;f<dim;f++) mc[f] /= idxs.length;
+        idxs.forEach(i => { for(let f=0;f<dim;f++){ const diff=Zdata[i][f]-mc[f]; Sw_ += diff*diff; } });
+        for(let f=0;f<dim;f++){ const diff=mc[f]-overallZ[f]; Sb_ += idxs.length*diff*diff; }
+      }
+      return {Sw_, Sb_, ratio: Sb_/Sw_};
+    }
+    const ldaScatter = scatterRatio(Z);
+
+    // PCA top-2 for comparison
+    const centered = X.map(row => row.map((v,i)=>v-overall[i]));
+    const cov = Array.from({length:d},()=>new Array(d).fill(0));
+    for(let a=0;a<d;a++) for(let b=0;b<d;b++){ let s=0; centered.forEach(row=>s+=row[a]*row[b]); cov[a][b]=s/n; }
+    const pcaEig = jacobiEig(cov);
+    const Wpca = [pcaEig.vecs[0], pcaEig.vecs[1]];
+    const Zpca = X.map(row => project(row, Wpca));
+    const pcaScatter = scatterRatio(Zpca);
+
+    const svg = document.getElementById("ldaSvg");
+    svg.innerHTML = "";
+    const W_=640,H_=220,pad=40;
+    const allZ = Z.flat();
+    const minZ = Math.min(...allZ), maxZ = Math.max(...allZ);
+    function sx(v,i){ return pad + i*(W_-2*pad)/2 + (v-minZ)/(maxZ-minZ+1e-9)*((W_-2*pad)/2-30); }
+    const colors = ["var(--blue)","var(--green)","var(--coral)"];
+    Z.forEach((row,i) => {
+      svg.appendChild(el("circle",{cx:sx(row[0],0), cy: 110+(row[1]-minZ)/(maxZ-minZ+1e-9)*0-0, r:4, fill:colors[y[i]], opacity:0.8}));
+    });
+    svg.appendChild(el("text",{x:W_/2,y:20,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"LDA projection (LD1 vs position), 3 classes colored"));
+
+    const table = document.getElementById("ldaTable");
+    table.innerHTML = `<tr><th>Method</th><th>Within-class scatter</th><th>Between-class scatter</th><th>Separation ratio</th></tr>
+      <tr class="winner"><td class="winner">LDA (top 2 discriminant directions)</td><td class="winner">${ldaScatter.Sw_.toFixed(2)}</td><td class="winner">${ldaScatter.Sb_.toFixed(2)}</td><td class="winner">${ldaScatter.ratio.toFixed(4)}</td></tr>
+      <tr><td>PCA (top 2 principal components)</td><td>${pcaScatter.Sw_.toFixed(2)}</td><td>${pcaScatter.Sb_.toFixed(2)}</td><td>${pcaScatter.ratio.toFixed(4)}</td></tr>`;
+    document.getElementById("ldaStory").textContent =
+      `LDA's separation ratio (${ldaScatter.ratio.toFixed(4)}) beats PCA's (${pcaScatter.ratio.toFixed(4)}) by ${(ldaScatter.ratio/pcaScatter.ratio).toFixed(2)}x -- because PCA chases raw variance (which lives mostly in the two noise features here), while LDA optimizes for class separation directly.`;
+  }
+  document.getElementById("btnLdaLoad").addEventListener("click", runLda);
+
+  /* ============================================================
+     TAB 5 — T-SNE TOY EXAMPLE
+     ============================================================ */
+  const TSNE_POINTS = [
+    [0.0,0.0],[0.3,0.2],[0.1,-0.2],
+    [10.0,10.0],[10.3,9.8],[9.8,10.3],
+  ];
+  function pairwiseSqMat(pts){
+    const n = pts.length;
+    const D = Array.from({length:n},()=>new Array(n).fill(0));
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+      let s=0; for(let k=0;k<pts[i].length;k++){ const diff=pts[i][k]-pts[j][k]; s+=diff*diff; }
+      D[i][j]=s;
+    }
+    return D;
+  }
+  function runTsne(){
+    const n = TSNE_POINTS.length;
+    const D2 = pairwiseSqMat(TSNE_POINTS);
+    function binarySearchSigma(distRow, i, targetPerp){
+      let lo=1e-4, hi=1e4, sigma=1;
+      for(let it=0; it<50; it++){
+        sigma = (lo+hi)/2;
+        const p = distRow.map((d,j)=> j===i?0:Math.exp(-d/(2*sigma*sigma)));
+        const psum = p.reduce((s,v)=>s+v,0);
+        if (psum <= 1e-12) { lo = sigma; continue; }
+        const pn = p.map(v=>v/psum);
+        let H = 0; pn.forEach(v => { if (v>0) H -= v*Math.log2(v); });
+        const perp = Math.pow(2,H);
+        if (perp > targetPerp) hi = sigma; else lo = sigma;
+      }
+      return sigma;
+    }
+    const P = Array.from({length:n},()=>new Array(n).fill(0));
+    for(let i=0;i<n;i++){
+      const sigma = binarySearchSigma(D2[i], i, 2.0);
+      const p = D2[i].map((d,j)=> j===i?0:Math.exp(-d/(2*sigma*sigma)));
+      const psum = p.reduce((s,v)=>s+v,0);
+      for(let j=0;j<n;j++) P[i][j] = p[j]/psum;
+    }
+    const Psym = Array.from({length:n},()=>new Array(n).fill(0));
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++) Psym[i][j] = Math.max((P[i][j]+P[j][i])/(2*n), 1e-12);
+
+    const table = document.getElementById("tsneAffinityTable");
+    let html = "<tr><th></th>" + Array.from({length:n},(_,j)=>`<th>${j}</th>`).join("") + "</tr>";
+    for(let i=0;i<n;i++){
+      html += `<tr><th>${i}</th>` + Psym[i].map((v,j)=> i===j? "<td>-</td>" : `<td>${v.toFixed(4)}</td>`).join("") + "</tr>";
+    }
+    table.innerHTML = html;
+
+    let Y = [[0.01],[-0.01],[0.01],[-0.01],[0.01],[-0.01]];
+    function pairwiseSq1D(Yv){
+      const nn = Yv.length;
+      const D = Array.from({length:nn},()=>new Array(nn).fill(0));
+      for(let i=0;i<nn;i++) for(let j=0;j<nn;j++){ const diff=Yv[i][0]-Yv[j][0]; D[i][j]=diff*diff; }
+      return D;
+    }
+    for(let it=0; it<3000; it++){
+      const d2 = pairwiseSq1D(Y);
+      const num = Array.from({length:n},()=>new Array(n).fill(0));
+      let numSum = 0;
+      for(let i=0;i<n;i++) for(let j=0;j<n;j++){ if (i===j) continue; num[i][j] = 1/(1+d2[i][j]); numSum += num[i][j]; }
+      const grad = Array.from({length:n},()=>[0]);
+      for(let i=0;i<n;i++){
+        let g = 0;
+        for(let j=0;j<n;j++){
+          if (i===j) continue;
+          const Q = Math.max(num[i][j]/numSum, 1e-12);
+          g += (Psym[i][j]-Q)*num[i][j]*(Y[i][0]-Y[j][0]);
+        }
+        grad[i][0] = 4*g;
+      }
+      const lr = 2.0;
+      for(let i=0;i<n;i++) Y[i][0] -= lr*grad[i][0];
+      const meanY = Y.reduce((s,v)=>s+v[0],0)/n;
+      for(let i=0;i<n;i++) Y[i][0] -= meanY;
+    }
+
+    const flatY = Y.map(v=>v[0]);
+    const A = flatY.slice(0,3), B = flatY.slice(3,6);
+    const spreadA = Math.max(...A)-Math.min(...A);
+    const spreadB = Math.max(...B)-Math.min(...B);
+    const meanA = A.reduce((s,v)=>s+v,0)/3, meanB = B.reduce((s,v)=>s+v,0)/3;
+    const gap = Math.abs(meanA-meanB);
+    document.getElementById("tsneSpreadA").textContent = spreadA.toFixed(4);
+    document.getElementById("tsneSpreadB").textContent = spreadB.toFixed(4);
+    document.getElementById("tsneGap").textContent = gap.toFixed(4);
+
+    const svg = document.getElementById("tsneSvg");
+    svg.innerHTML = "";
+    const W_=640,H_=120,pad=40;
+    const minY = Math.min(...flatY), maxY = Math.max(...flatY);
+    function sx(v){ return pad + (v-minY)/(maxY-minY+1e-9)*(W_-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:60,x2:W_-pad,y2:60,stroke:"var(--chalk-dim)"}));
+    flatY.forEach((v,i) => {
+      svg.appendChild(el("circle",{cx:sx(v),cy:60,r:7,fill: i<3?"var(--blue)":"var(--coral)",stroke:"var(--bg)","stroke-width":1.5}));
+    });
+    document.getElementById("tsneStory").textContent =
+      `After 3,000 gradient-descent steps, cluster A collapsed to ${meanA.toFixed(4)} and cluster B to ${meanB.toFixed(4)} -- tight, perfectly separated islands, with a gap (${gap.toFixed(2)}) that doesn't match the original 2D gap between cluster centers -- exactly the "scale is meaningless" warning.`;
+  }
+  document.getElementById("btnTsneLoad").addEventListener("click", runTsne);
+
+  /* ============================================================
+     TAB 6 — AUTOENCODER = PCA
+     ============================================================ */
+  function runAutoencoder(){
+    const X = PCA_POINTS;
+    const n = X.length;
+    const mx = X.reduce((s,p)=>s+p[0],0)/n, my = X.reduce((s,p)=>s+p[1],0)/n;
+    const C = X.map(p=>[p[0]-mx,p[1]-my]);
+
+    let Sxx=0,Sxy=0,Syy=0;
+    C.forEach(([x,y])=>{Sxx+=x*x;Sxy+=x*y;Syy+=y*y;});
+    Sxx/=n; Sxy/=n; Syy/=n;
+    const {l1,l2,v1} = eig2x2(Sxx,Sxy,Syy);
+    const pcaAngle = Math.atan2(v1[1],v1[0])*180/Math.PI;
+    const pcaErr = C.reduce((s,[x,y])=>{
+      const proj = x*v1[0]+y*v1[1];
+      const rx=proj*v1[0], ry=proj*v1[1];
+      return s+(x-rx)*(x-rx)+(y-ry)*(y-ry);
+    },0);
+
+    const rand = makeLCG(0);
+    let wEnc = [ (rand()-0.5)*0.2, (rand()-0.5)*0.2 ];
+    let wDec = [ (rand()-0.5)*0.2, (rand()-0.5)*0.2 ];
+    const lr = 0.01;
+    for(let it=0; it<20000; it++){
+      const z = C.map(([x,y]) => x*wEnc[0]+y*wEnc[1]);
+      const Xhat = z.map(zi => [zi*wDec[0], zi*wDec[1]]);
+      const diff = Xhat.map((xh,i) => [xh[0]-C[i][0], xh[1]-C[i][1]]);
+      let gDec0=0, gDec1=0;
+      for(let i=0;i<n;i++){ gDec0 += z[i]*diff[i][0]; gDec1 += z[i]*diff[i][1]; }
+      gDec0 *= 2/n; gDec1 *= 2/n;
+      let gEnc0=0, gEnc1=0;
+      for(let i=0;i<n;i++){
+        const dotDW = diff[i][0]*wDec[0] + diff[i][1]*wDec[1];
+        gEnc0 += C[i][0]*dotDW; gEnc1 += C[i][1]*dotDW;
+      }
+      gEnc0 *= 2/n; gEnc1 *= 2/n;
+      wDec[0] -= lr*gDec0; wDec[1] -= lr*gDec1;
+      wEnc[0] -= lr*gEnc0; wEnc[1] -= lr*gEnc1;
+    }
+    const encNorm = Math.sqrt(wEnc[0]*wEnc[0]+wEnc[1]*wEnc[1]);
+    let encDir = [wEnc[0]/encNorm, wEnc[1]/encNorm];
+    // an eigenvector's sign is arbitrary (v and -v are the same principal axis) --
+    // flip to the same half-plane as PCA's v1 for a clean angle comparison.
+    if (encDir[0]*v1[0] + encDir[1]*v1[1] < 0) encDir = [-encDir[0], -encDir[1]];
+    const aeAngle = Math.atan2(encDir[1],encDir[0])*180/Math.PI;
+    const z = C.map(([x,y]) => x*wEnc[0]+y*wEnc[1]);
+    const Xhat = z.map(zi => [zi*wDec[0], zi*wDec[1]]);
+    const aeErr = Xhat.reduce((s,xh,i) => s + (xh[0]-C[i][0])*(xh[0]-C[i][0]) + (xh[1]-C[i][1])*(xh[1]-C[i][1]), 0);
+
+    document.getElementById("aePcaAngle").textContent = pcaAngle.toFixed(4)+"°";
+    document.getElementById("aeAeAngle").textContent = aeAngle.toFixed(4)+"°";
+    document.getElementById("aePcaErr").textContent = pcaErr.toFixed(4);
+    document.getElementById("aeAeErr").textContent = aeErr.toFixed(4);
+    document.getElementById("aeStory").textContent =
+      `Trained from scratch by gradient descent with no knowledge of eigenvectors, the autoencoder converged to within ${Math.abs(pcaAngle-aeAngle).toFixed(4)}° of PCA's exact direction, with a reconstruction error differing by only ${Math.abs(pcaErr-aeErr).toFixed(4)} -- numerically confirming the Baldi & Hornik 1989 equivalence.`;
+  }
+  document.getElementById("btnAeTrain").addEventListener("click", runAutoencoder);
+})();
+</script>
+</body>
+</html>

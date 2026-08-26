@@ -13,6 +13,7 @@ this script is safe to re-run.
 Usage:
     python3 scripts/seed_cogito_library.py
     python3 scripts/seed_cogito_library.py --cogito ~/Research/cogito --base-url http://localhost:8010
+    python3 scripts/seed_cogito_library.py --skip-dirs pydata python
 """
 
 from __future__ import annotations
@@ -33,9 +34,20 @@ DEFAULT_BASE_URL = "http://localhost:8010"
 SKIP_NAMES = {"readme.md"}
 
 
-def find_markdown(cogito_dir: Path) -> list[Path]:
+def find_markdown(cogito_dir: Path, skip_dirs: set[str] | None = None) -> list[Path]:
+    """All tutorial .md files, optionally excluding whole top-level tracks.
+
+    ``skip_dirs`` matches the *first* path component under ``cogito_dir``
+    (e.g. ``pydata``, ``python``) — an opt-in filter for a scoped sync, not a
+    permanent exclusion; omitting it (the default) preserves the original
+    full-repo behavior.
+    """
+    skip_dirs = skip_dirs or set()
     files = [p for p in sorted(cogito_dir.rglob("*.md")) if ".git" not in p.parts]
-    return [p for p in files if p.name.lower() not in SKIP_NAMES]
+    files = [p for p in files if p.name.lower() not in SKIP_NAMES]
+    if skip_dirs:
+        files = [p for p in files if p.relative_to(cogito_dir).parts[0] not in skip_dirs]
+    return files
 
 
 def upload(base_url: str, path: Path) -> tuple[bool, str]:
@@ -79,6 +91,8 @@ def main() -> int:
                     help=f"Path to the cogito repo (default: {DEFAULT_COGITO})")
     ap.add_argument("--base-url", default=DEFAULT_BASE_URL,
                     help=f"Base URL of the running app (default: {DEFAULT_BASE_URL})")
+    ap.add_argument("--skip-dirs", nargs="+", default=[],
+                    help="Top-level cogito directories to exclude from this run (e.g. pydata python)")
     args = ap.parse_args()
 
     cogito_dir: Path = args.cogito.expanduser()
@@ -86,7 +100,7 @@ def main() -> int:
         print(f"error: cogito directory not found: {cogito_dir}", file=sys.stderr)
         return 2
 
-    files = find_markdown(cogito_dir)
+    files = find_markdown(cogito_dir, skip_dirs=set(args.skip_dirs))
     if not files:
         print(f"error: no Markdown tutorials found under {cogito_dir}", file=sys.stderr)
         return 2
