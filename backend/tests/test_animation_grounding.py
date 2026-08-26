@@ -301,6 +301,73 @@ def test_validate_code_allows_matrix_at_fixed_position():
     assert AnimationPipeline._validate_code(code) is None
 
 
+def test_validate_code_rejects_cartesian_product_comprehension():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        class_1 = [1, 2, 3]\n"
+        "        class_2 = [4, 5, 6]\n"
+        "        support_vectors = [\n"
+        "            Dot() for i in range(len(class_1)) for j in range(len(class_2))\n"
+        "        ]\n"
+        "        self.play(Create(VGroup(*support_vectors)))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+    assert "cartesian" in error.lower() or "for" in error.lower()
+
+
+def test_validate_code_rejects_nested_for_loops():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        dots = []\n"
+        "        for i in range(3):\n"
+        "            for j in range(3):\n"
+        "                dots.append(Dot())\n"
+        "        self.play(Create(VGroup(*dots)))\n"
+    )
+    error = AnimationPipeline._validate_code(code)
+    assert error is not None
+
+
+def test_validate_code_allows_nested_for_in_a_different_function_scope():
+    # A scalar math helper (e.g. a Fourier partial-sum function called by
+    # axes.plot) legitimately nests a summation loop inside an outer loop
+    # over approximation levels — a different function scope, not a
+    # mobject-construction runaway loop, and must not be flagged.
+    code = (
+        "from manim import *\n"
+        "import numpy as np\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        axes = Axes()\n"
+        "        for k, n_terms in enumerate([1, 3, 5]):\n"
+        "            def approx(x, n=n_terms):\n"
+        "                s = 0\n"
+        "                for i in range(1, n + 1, 2):\n"
+        "                    s += np.sin(i * x) / i\n"
+        "                return s\n"
+        "            curve = axes.plot(approx)\n"
+        "            self.play(Create(curve))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
+def test_validate_code_allows_single_loop_over_fixed_points():
+    code = (
+        "from manim import *\n"
+        "class GeneratedScene(Scene):\n"
+        "    def construct(self):\n"
+        "        points = [(1, 1), (2, 2), (3, 1), (1, 3), (2, 3)]\n"
+        "        dots = [Dot(point=(x, y, 0)) for x, y in points]\n"
+        "        self.play(Create(VGroup(*dots)))\n"
+    )
+    assert AnimationPipeline._validate_code(code) is None
+
+
 def test_heuristic_phase_unaffected_by_graph_context(monkeypatch):
     # Phase 1's template keyword match must not see the graph's related-concept
     # words — only the caller-supplied topic/context, unchanged from before.

@@ -128,6 +128,17 @@ RULES — follow every one:
     that position and runs off-frame. Anchor a matrix directly instead:
     `.move_to(ORIGIN)`, or `.to_edge(DOWN)` on the matrix itself, never
     relative to another mobject's position.
+17. NEVER build a mobject list from a nested loop or a comprehension with
+    two or more `for` clauses (e.g. `[Dot(...) for i in A for j in B]`, or a
+    `for` loop containing another `for` loop that creates mobjects). This
+    creates an uncontrolled, often huge, number of on-screen elements —
+    directly violating the 5-6-elements-visible rule above — and the extra
+    generated code to lay all of them out is a common reason a scene runs
+    out of its writing budget mid-file. If a topic tempts you toward "solve
+    it for real with live computed data" (e.g. actual support vectors from
+    actual coordinates), don't — pick a small, fixed, hand-picked set of
+    points (5-8 is plenty) and hard-code their positions instead of
+    computing/looping over a larger synthetic dataset.
 
 CREATIVE STANDARDS (from 3Blue1Brown):
 - Geometry before algebra: show the shape first, the equation second.
@@ -186,6 +197,8 @@ Requirements:
 - Only one matrix representation on screen at a time — fade/remove or
   Transform the first before showing a second
 - Anchor a matrix to a fixed position directly, not .next_to() a label
+- Use a small, fixed, hand-picked set of points (5-8) for any data/example —
+  never a loop or comprehension with 2+ for-clauses generating mobjects
 
 Output the complete Python script (class GeneratedScene(Scene)).
 """)
@@ -477,14 +490,23 @@ class AnimationPipeline:
         try. Retries once at a lower temperature before giving up, the same
         pattern used elsewhere in the pipeline (lesson.py, discovery.py).
 
-        num_predict=3500 (was 2000): current Claude models think by default,
-        and num_predict caps that thinking on this app's Anthropic path (see
-        providers.py's _anthropic_chat) — for a topic with no obvious simple
-        shape (e.g. the Jacobian matrix), Claude has been observed spending
-        the *entire* 2000-token budget thinking and returning zero text,
-        which silently falls back to local Ollama and its weaker output.
-        Same fix as discovery.py's reasoning-model budget bump, applied here
-        for the same reason.
+        num_predict=4500 (was 2000, then 3500): current Claude models think
+        by default, and num_predict caps that thinking on this app's
+        Anthropic path (see providers.py's _anthropic_chat) — for a topic
+        with no obvious simple shape (e.g. the Jacobian matrix, or Support
+        Vector Machines), Claude has been observed spending the *entire*
+        budget thinking and returning zero text, which silently falls back
+        to local Ollama. Same fix as discovery.py's reasoning-model budget
+        bump, applied here for the same reason.
+
+        Raised again after the SVM case: Ollama's own fallback response was
+        measured at 13,267 characters and still got cut off mid-statement at
+        3500 tokens — the primary fix for *that* specific cause (a runaway
+        cartesian-product mobject loop) is the new
+        _validate_no_nested_element_loops check below, but a well-behaved,
+        genuinely long scene can still need more room than 3500 tokens
+        allows, so this is raised as a safety net alongside that check, not
+        instead of it.
         """
         level_instruction = LEVEL_INSTRUCTIONS.get(learner_level, LEVEL_INSTRUCTIONS["teen"])
         messages = [
@@ -508,9 +530,9 @@ class AnimationPipeline:
             raw = self._llm.chat(
                 messages,
                 task="codegen",
-                timeout_seconds=120,
-                num_predict=3500,
-                num_ctx=8192,  # two fewshot examples + instructions need headroom
+                timeout_seconds=150,
+                num_predict=4500,
+                num_ctx=12000,  # two fewshot examples + instructions need headroom
                 temperature=0.3 if attempt == 0 else 0.15,
             )
             if not raw:
@@ -537,18 +559,26 @@ class AnimationPipeline:
         line than the last (68 -> 100 -> 121 in one observed run) — the
         model was reconstructing the unseen tail from scratch each time,
         introducing a fresh mistake in it, rather than actually fixing one.
+
+        Raised again (8000 -> 14000 visible chars, num_predict 2500 -> 4000):
+        a genuinely long generated scene (13,267 chars, from an SVM topic
+        that tempted the model into a runaway cartesian-product mobject
+        loop — see _validate_no_nested_element_loops) was still bigger than
+        the old 8000-char window, so this call was hitting the exact same
+        can't-see-the-whole-file problem the window was originally sized to
+        avoid, just at a larger scale.
         """
         raw = self._llm.chat(
             [
                 {
                     "role": "user",
-                    "content": FIX_PROMPT_TEMPLATE.format(code=code[:8000], error=error[-500:]),
+                    "content": FIX_PROMPT_TEMPLATE.format(code=code[:14000], error=error[-500:]),
                 }
             ],
             task="codegen",
-            timeout_seconds=60,
-            num_predict=2500,
-            num_ctx=8192,  # up to 8000 chars of visible code needs headroom
+            timeout_seconds=90,
+            num_predict=4000,
+            num_ctx=12000,  # up to 14000 chars of visible code needs headroom
             temperature=0.2,
         )
         if not raw:
@@ -649,6 +679,60 @@ class AnimationPipeline:
         matrix_error = AnimationPipeline._validate_matrix_overlap(tree)
         if matrix_error:
             return matrix_error
+        nested_loop_error = AnimationPipeline._validate_no_nested_element_loops(tree)
+        if nested_loop_error:
+            return nested_loop_error
+        return None
+
+    @staticmethod
+    def _validate_no_nested_element_loops(tree: ast.AST) -> Optional[str]:
+        """Reject a mobject list built from a cartesian-product loop.
+
+        Observed failure: asked to animate Support Vector Machines "live-
+        solved", the model wrote
+        ``[Dot(...) for i in range(len(class_1)) for j in range(len(class_2))]``
+        — an O(n*m) cartesian product of two datasets, each Dot() call
+        adding more code to lay out and animate. The resulting file (13k+
+        characters for this one topic alone) blew straight through the
+        codegen token budget and got cut off mid-statement, producing a
+        SyntaxError that every subsequent LLM-fix attempt also failed to
+        resolve (each fix has to rewrite the same oversized file and hits
+        the same ceiling). Catching the pattern that *causes* the runaway
+        length, rather than only raising the token budget to cover it, is
+        the fix that generalizes — this exact failure could recur on any
+        topic that tempts the model toward "compute it for real" instead of
+        a small hand-picked example.
+
+        A nested for-loop is only flagged within the SAME function scope —
+        the FOURIER_SERIES template legitimately nests a nested-``def``'s
+        summation loop (a scalar math helper called by ``axes.plot``, not a
+        mobject-construction loop) inside an outer loop over approximation
+        levels; that's a different function scope and must not be flagged.
+        """
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.ListComp, ast.SetComp, ast.GeneratorExp)) and len(node.generators) >= 2:
+                return (
+                    "A list/set/generator comprehension has 2+ 'for' clauses (a "
+                    "cartesian product) — this generates an uncontrolled, often huge, "
+                    "number of mobjects. Use a small, fixed, hand-picked set of points "
+                    "(5-8) instead of looping over two datasets."
+                )
+            if isinstance(node, ast.For):
+                # Check each direct child statement for a nested For, without
+                # descending into a nested function/lambda's own scope.
+                stack = [stmt for stmt in node.body]
+                while stack:
+                    stmt = stack.pop()
+                    if isinstance(stmt, ast.For):
+                        return (
+                            "A for-loop is nested inside another for-loop in the same "
+                            "scope — this pattern generates an uncontrolled, often huge, "
+                            "number of mobjects. Use a small, fixed, hand-picked set of "
+                            "points (5-8) instead of looping over two datasets."
+                        )
+                    if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                        continue  # different scope — don't look inside
+                    stack.extend(ast.iter_child_nodes(stmt))
         return None
 
     @staticmethod
