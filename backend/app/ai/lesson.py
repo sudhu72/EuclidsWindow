@@ -159,6 +159,8 @@ EXPLAIN_SYSTEM_PROMPT = textwrap.dedent("""\
     - Inline math: \\\\(...\\\\). Display math: $$...$$ on its own lines.
     - Never use \\\\begin{equation} or other LaTeX environments, and never
       wrap prose sentences in \\\\text{...} — plain text is just text.
+    - Never use a bare "$" for a dollar amount (it collides with math
+      delimiters) — spell it out, e.g. "5 dollars" instead of "$5".
     """)
 
 

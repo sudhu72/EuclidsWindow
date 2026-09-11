@@ -194,7 +194,10 @@ function isMathLike(inner: string): boolean {
   if (/^[\d.,\s]+$/.test(s)) return false; // pure number -> currency
   if (/[\\=^_<>]/.test(s)) return true; // latex command / relational
   if (/\d\s*[-+*/]\s*[\d(]/.test(s)) return true; // arithmetic like 25 - (0.1)
+  if (/^[+-]\s*\d+(\.\d+)?%?°?$/.test(s)) return true; // signed number: +3, -15, -0.5°
+  if (/^\d+(\.\d+)?°$/.test(s)) return true; // a number with a degree sign: 5°
   if (/^[a-zA-Z]('|\^.+)?(\([^)]*\))?$/.test(s)) return true; // x, f(x), x^2
+  if (/^[a-zA-Z]\s*[-+*/=]\s*\S.*$/.test(s)) return true; // A - (-5), x = 3
   if (/^[[(][\d\s.,;-]+[\])]$/.test(s)) return true; // a vector: [1,1,1,1]
   return false;
 }
@@ -208,6 +211,11 @@ export function normalizeForKatex(text: string): string {
   n = convertLineBreaks(n);
   n = convertEnvironments(n);
   n = n.replace(/\$\$([\s\S]+?)\$\$/g, "\\[$1\\]");
+  // Any "$$" (or more) surviving past the block-math pass above isn't a real
+  // display-math opener — it's a small model doubling the dollar sign by
+  // mistake (e.g. "$$5$" for "$5"). Collapse the run to one before pairing,
+  // or the stray extra "$" is left with nothing to pair with.
+  n = n.replace(/\${2,}/g, "$");
   // Only treat $...$ as math when the content looks mathematical.
   n = n.replace(/\$([^$\n]+?)\$/g, (m, inner: string) => (isMathLike(inner) ? `\\(${inner}\\)` : m));
   // Any remaining $ is currency or an unmatched delimiter -> literal, so
