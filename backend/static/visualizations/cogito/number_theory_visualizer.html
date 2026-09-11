@@ -120,6 +120,7 @@
     <button class="tab" data-tab="atoms">Atoms of Multiplication</button>
     <button class="tab" data-tab="fermat">Fermat's Chairs</button>
     <button class="tab" data-tab="rsa">RSA Round Trip</button>
+    <button class="tab" data-tab="dh">Diffie–Hellman / ECDH</button>
   </div>
 
   <!-- ============ MODULAR CLOCK ============ -->
@@ -230,6 +231,27 @@
         </div>
       </div>
       <div class="caption"><b>Why it matters:</b> factoring <span class="formula">n=33</span> back into <span class="formula">3 × 11</span> is trivial at this toy size — real RSA is this identical four-step recipe with <span class="formula">p</span> and <span class="formula">q</span> hundreds of digits long, where factoring <span class="formula">n</span> back apart is the computationally infeasible step that keeps the private key private.</div>
+    </div>
+  </div>
+
+  <!-- ============ DIFFIE-HELLMAN / ECDH ============ -->
+  <div class="panel" id="panel-dh">
+    <div class="card">
+      <h2>Two Secrets In, One Shared Secret Out — Never Transmitted</h2>
+      <p class="sub"><b>What's happening:</b> Alice and Bob each pick a private number and publish only a "mixed" version of it. Both computations land on the identical shared secret — top row does it with modular exponentiation (classic Diffie–Hellman), bottom row does the exact same trick with points on an elliptic curve (ECDH).</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> load the preset, then change just Alice's private number in either row — both "public" values and the final shared secret update, but the *other side's* math still lands on the same answer, because exponents (and scalars) commute regardless of which number changed.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="dhPreset">Load tutorial's verified example</button>
+      </div>
+      <h4 style="margin:14px 0 4px;">Classic Diffie–Hellman &mdash; public p=23, g=5</h4>
+      <div class="row"><label>Alice's private a</label><input type="range" id="dhA" min="1" max="21" step="1" value="6"><span class="readout" id="dhAOut">6</span></div>
+      <div class="row"><label>Bob's private b</label><input type="range" id="dhB" min="1" max="21" step="1" value="15"><span class="readout" id="dhBOut">15</span></div>
+      <div class="rsaflow" id="dhFlow"></div>
+      <h4 style="margin:16px 0 4px;">ECDH &mdash; curve y&sup2;=x&sup3;+2x+3 mod 97, base point G=(0,10)</h4>
+      <div class="row"><label>Alice's private a</label><input type="range" id="ecA" min="1" max="49" step="1" value="11"><span class="readout" id="ecAOut">11</span></div>
+      <div class="row"><label>Bob's private b</label><input type="range" id="ecB" min="1" max="49" step="1" value="19"><span class="readout" id="ecBOut">19</span></div>
+      <div class="rsaflow" id="ecFlow"></div>
+      <div class="caption"><b>Why it matters:</b> neither row ever sends the private number itself — only a one-way "mixed" public value — and both rows reach the identical shared secret purely because the underlying operation (modular exponentiation, or elliptic-curve point addition) commutes. ECDH reaches the same security with far smaller numbers, which is why TLS 1.3 uses it, not classic DH, on almost every HTTPS connection today.</div>
     </div>
   </div>
 
@@ -551,6 +573,80 @@
       (back===m ? `<b style="color:var(--c1)">✓ recovered exactly — m' = m</b>` : `✗ mismatch`);
   }
   renderRsa();
+
+  /* =========================================================
+     DIFFIE-HELLMAN / ECDH
+     ========================================================= */
+  const DH_P = 23, DH_G = 5;
+  const EC_A = 2, EC_B = 3, EC_P = 97, EC_G = [0, 10];
+
+  function invMod(n, p){ n = ((n % p) + p) % p; return modPow(n, p - 2, p); }
+  function pointAdd(P, Q){
+    if (P === null) return Q;
+    if (Q === null) return P;
+    const [x1, y1] = P, [x2, y2] = Q;
+    if (x1 === x2 && ((y1 + y2) % EC_P) === 0) return null;
+    let m;
+    if (x1 === x2 && y1 === y2) {
+      if (y1 === 0) return null;
+      m = ((3 * x1 * x1 + EC_A) % EC_P) * invMod(2 * y1, EC_P) % EC_P;
+    } else {
+      m = ((y2 - y1) % EC_P + EC_P) % EC_P * invMod(x2 - x1, EC_P) % EC_P;
+    }
+    let x3 = ((m * m - x1 - x2) % EC_P + EC_P) % EC_P;
+    let y3 = ((m * (x1 - x3) - y1) % EC_P + EC_P) % EC_P;
+    return [x3, y3];
+  }
+  function scalarMult(k, P){
+    let R = null, Q = P;
+    while (k > 0) {
+      if (k & 1) R = pointAdd(R, Q);
+      Q = pointAdd(Q, Q);
+      k >>= 1;
+    }
+    return R;
+  }
+
+  const dhA = document.getElementById("dhA"), dhB = document.getElementById("dhB");
+  const ecA = document.getElementById("ecA"), ecB = document.getElementById("ecB");
+
+  function renderDH(){
+    const a = parseInt(dhA.value), b = parseInt(dhB.value);
+    dhAOut.textContent = a; dhBOut.textContent = b;
+    const A = modPow(DH_G, a, DH_P);
+    const B = modPow(DH_G, b, DH_P);
+    const aliceShared = modPow(B, a, DH_P);
+    const bobShared = modPow(A, b, DH_P);
+    document.getElementById("dhFlow").innerHTML =
+      `Alice's private a=${a} → publishes A = g^a mod p = ${DH_G}^${a} mod ${DH_P} = <b>${A}</b><br>` +
+      `Bob's private b=${b} → publishes B = g^b mod p = ${DH_G}^${b} mod ${DH_P} = <b>${B}</b><br>` +
+      `Alice computes B^a mod p = ${B}^${a} mod ${DH_P} = <b>${aliceShared}</b><br>` +
+      `Bob computes A^b mod p = ${A}^${b} mod ${DH_P} = <b>${bobShared}</b><br>` +
+      (aliceShared === bobShared ? `<b style="color:var(--c1)">✓ shared secret = ${aliceShared}, never transmitted</b>` : `✗ mismatch`);
+  }
+  function renderEC(){
+    const a = parseInt(ecA.value), b = parseInt(ecB.value);
+    ecAOut.textContent = a; ecBOut.textContent = b;
+    const A = scalarMult(a, EC_G);
+    const B = scalarMult(b, EC_G);
+    const aliceShared = scalarMult(a, B);
+    const bobShared = scalarMult(b, A);
+    const fmt = P => P ? `(${P[0]}, ${P[1]})` : "∞";
+    const match = aliceShared && bobShared && aliceShared[0]===bobShared[0] && aliceShared[1]===bobShared[1];
+    document.getElementById("ecFlow").innerHTML =
+      `Alice's private a=${a} → publishes A = a·G = <b>${fmt(A)}</b><br>` +
+      `Bob's private b=${b} → publishes B = b·G = <b>${fmt(B)}</b><br>` +
+      `Alice computes a·B = <b>${fmt(aliceShared)}</b><br>` +
+      `Bob computes b·A = <b>${fmt(bobShared)}</b><br>` +
+      (match ? `<b style="color:var(--c1)">✓ shared point = ${fmt(aliceShared)} — shared secret is its x = ${aliceShared[0]}</b>` : `✗ mismatch`);
+  }
+  [dhA, dhB].forEach(inp => inp.addEventListener("input", renderDH));
+  [ecA, ecB].forEach(inp => inp.addEventListener("input", renderEC));
+  document.getElementById("dhPreset").addEventListener("click", () => {
+    dhA.value = 6; dhB.value = 15; ecA.value = 11; ecB.value = 19;
+    renderDH(); renderEC();
+  });
+  renderDH(); renderEC();
 
 })();
 </script>

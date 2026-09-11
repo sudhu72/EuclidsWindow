@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classification and Completeness, Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1020px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12px; color:var(--ink-soft); min-width:110px; }
+  input[type=range]{ flex:1; min-width:130px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.7; white-space:pre-wrap; }
+  table.dt{ border-collapse:collapse; margin:14px auto; font-family:"IBM Plex Mono",monospace; font-size:12.5px; width:100%; }
+  table.dt th, table.dt td{ border:1px solid var(--line); padding:6px 8px; text-align:center; }
+  table.dt th{ background:var(--accent-soft); font-weight:600; }
+  table.dt td.win{ color:var(--c1); font-weight:700; }
+  .verdict.pass{ background:#E4F3EC; } .verdict.fail{ background:#FBEAEA; }
+  .grid-picker{ display:grid; grid-template-columns: repeat(6, 1fr); gap:6px; margin:10px 0; }
+  .cell{ border:1.5px solid var(--line); border-radius:8px; padding:8px 4px; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:12px; cursor:pointer; background:#fff; }
+  .cell.valid{ border-color:var(--c1); background:#E4F3EC; color:var(--c1); font-weight:700; }
+  .cell.flat{ border-color:var(--ink-soft); background:#f0f0f0; color:var(--ink-soft); }
+  .cell.bad{ border-color:var(--c3); background:#FBEAEA; color:var(--c3); }
+  .cell.sel{ outline:3px solid var(--accent); }
+  .metric-row{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; }
+  .metric{ text-align:center; border:1px solid var(--line); border-radius:8px; padding:8px 12px; min-width:100px; background:#fff; }
+  .metric .lbl{ font-size:10.5px; color:var(--ink-soft); }
+  .metric .num{ font-family:"IBM Plex Mono", monospace; font-size:14px; margin-top:3px; color:var(--accent); font-weight:600; }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px; margin-top:24px; }
+  footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Classification and Completeness</div>
+    <h1>How Do You Prove a List Is Finished?</h1>
+    <p>Three tabs, matching the tutorial's three verified demonstrations: a finite, provable classification (Platonic solids), a law of nature proven the same way (crystallographic restriction), and a case where exhaustiveness is provably impossible (diagonalization).</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="platonic">Platonic Solids</button>
+    <button class="tab" data-tab="crystal">Crystallographic Restriction</button>
+    <button class="tab" data-tab="diag">Diagonalization, Live</button>
+    <button class="tab" data-tab="symfilter">Symmetry Filter</button>
+  </div>
+
+  <!-- ============ TAB 1: PLATONIC SOLIDS ============ -->
+  <div class="panel active" id="panel-platonic">
+    <div class="card">
+      <h2>Angle-Defect Search</h2>
+      <p class="sub"><b>What's happening:</b> pick a face shape (p-gon) and how many meet at each corner (q). The wedge diagram unfolds that corner flat — green means it folds into a real 3D point, gray means it lies perfectly flat (tiles a plane, no solid), red means the faces would have to overlap.</p>
+      <div class="grid-picker" id="platonicGrid"></div>
+      <svg id="platonicSvg" viewBox="0 0 320 320"></svg>
+      <div class="verdict" id="platonicVerdict"></div>
+      <table class="dt" id="platonicTable"></table>
+      <div class="caption"><b>Why it matters:</b> exactly 5 of the 30 cells above ever turn green, no matter how far the grid is extended — a finite, checkable search, not a lucky absence of counterexamples.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: CRYSTALLOGRAPHIC RESTRICTION ============ -->
+  <div class="panel" id="panel-crystal">
+    <div class="card">
+      <h2>Which Rotations Can a Periodic Lattice Have?</h2>
+      <p class="sub"><b>What's happening:</b> drag the rotation order n. A lattice-preserving rotation's trace, 2cos(360&deg;/n), must land exactly on a whole integer -- watch how rarely that happens.</p>
+      <div class="row"><label>Rotation order n</label><input type="range" id="crystalN" min="1" max="12" step="1" value="4"><span class="readout" id="crystalNOut">4</span></div>
+      <svg id="crystalSvg" viewBox="0 0 480 160"></svg>
+      <div class="metric-row">
+        <div class="metric"><div class="lbl">360&deg;/n</div><div class="num" id="crystalAngle">-</div></div>
+        <div class="metric"><div class="lbl">2cos(360&deg;/n)</div><div class="num" id="crystalVal">-</div></div>
+        <div class="metric"><div class="lbl">whole integer?</div><div class="num" id="crystalOk">-</div></div>
+      </div>
+      <div class="verdict" id="crystalStory"></div>
+      <div class="caption"><b>The exception that proves the rule:</b> n=5 fails here -- and real quasicrystals do show 5-fold symmetry, but only because their structure never exactly repeats (non-periodic), which is exactly the one assumption this proof depends on.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: DIAGONALIZATION, LIVE ============ -->
+  <div class="panel" id="panel-diag">
+    <div class="card">
+      <h2>No Oracle Can Ever Be Right About This Program</h2>
+      <p class="sub"><b>What's happening:</b> suppose a perfect oracle H predicts whether a program halts or loops forever. Program D asks H what it predicts about D itself, then deliberately does the opposite. Pick a prediction for H to make, and watch D immediately falsify it.</p>
+      <div class="row">
+        <button class="op" id="btnPredictHalts">Oracle predicts: "D halts"</button>
+        <button class="op" id="btnPredictLoops">Oracle predicts: "D loops forever"</button>
+        <button class="op" id="btnDiagReset">Reset</button>
+      </div>
+      <svg id="diagSvg" viewBox="0 0 480 150"></svg>
+      <div class="verdict" id="diagStory">Pick a prediction above.</div>
+      <div class="caption"><b>The Gödel connection:</b> replace "halts" with "provable" and "D" with a self-referential arithmetic sentence G, and this exact contradiction is Gödel's own proof -- G is true precisely because a consistent system can never prove it.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: SYMMETRY FILTER ============ -->
+  <div class="panel" id="panel-symfilter">
+    <div class="card">
+      <h2>More Structure, Fewer Symmetries</h2>
+      <p class="sub"><b>What's happening:</b> pick a shape built from the same 4 points. Every one of the 24 possible relabelings of those points gets checked against the shape's actual distances -- green means it survives as a genuine symmetry.</p>
+      <div class="row">
+        <button class="op active" id="btnShapeSquare">Square</button>
+        <button class="op" id="btnShapeRect">Rectangle (unequal sides)</button>
+        <button class="op" id="btnShapeBare">Bare set (no structure)</button>
+      </div>
+      <div class="grid-picker" id="symGrid" style="grid-template-columns: repeat(6, 1fr);"></div>
+      <div class="metric-row">
+        <div class="metric"><div class="lbl">Total relabelings checked</div><div class="num">24</div></div>
+        <div class="metric"><div class="lbl">Survive as symmetries</div><div class="num" id="symCount">-</div></div>
+      </div>
+      <div class="verdict" id="symStory"></div>
+      <div class="caption"><b>Why it matters:</b> the filtering step is the entire proof of exhaustiveness -- not "we didn't find a 9th symmetry," but "all 24 were checked, and exactly this many pass."</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../classification-and-completeness.md">Classification and Completeness</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     TAB 1 — PLATONIC SOLIDS
+     ============================================================ */
+  const SOLID_NAMES = {"3,3":"Tetrahedron","3,4":"Octahedron","3,5":"Icosahedron","4,3":"Cube","5,3":"Dodecahedron"};
+  let selP = 3, selQ = 3;
+  function interiorAngle(p){ return (p-2)*180/p; }
+  function statusFor(p,q){
+    const total = interiorAngle(p)*q;
+    if (total < 360 - 1e-9) return {total, cls:"valid", label:"closes into a solid"};
+    if (Math.abs(total-360) < 1e-9) return {total, cls:"flat", label:"flat, tiles a plane"};
+    return {total, cls:"bad", label:"impossible, overlaps"};
+  }
+  function renderPlatonicGrid(){
+    const wrap = document.getElementById("platonicGrid");
+    wrap.innerHTML = "";
+    // header row
+    const corner = document.createElement("div"); corner.textContent = "p \\ q"; corner.style.fontFamily="'IBM Plex Mono',monospace"; corner.style.fontSize="11px"; corner.style.textAlign="center"; wrap.appendChild(corner);
+    for(let q=3;q<=7;q++){
+      const h = document.createElement("div"); h.textContent = "q="+q; h.style.fontFamily="'IBM Plex Mono',monospace"; h.style.fontSize="11px"; h.style.textAlign="center"; h.style.fontWeight="600"; wrap.appendChild(h);
+    }
+    for(let p=3;p<=9;p++){
+      const rowLabel = document.createElement("div"); rowLabel.textContent = "p="+p; rowLabel.style.fontFamily="'IBM Plex Mono',monospace"; rowLabel.style.fontSize="11px"; rowLabel.style.display="flex"; rowLabel.style.alignItems="center"; rowLabel.style.fontWeight="600"; wrap.appendChild(rowLabel);
+      for(let q=3;q<=7;q++){
+        const st = statusFor(p,q);
+        const cell = document.createElement("div");
+        cell.className = "cell "+st.cls+(p===selP&&q===selQ?" sel":"");
+        cell.textContent = st.cls==="valid" ? "{"+p+","+q+"}" : (st.cls==="flat" ? "flat" : "✗");
+        cell.title = `p=${p}, q=${q}: total=${st.total.toFixed(1)}°`;
+        cell.addEventListener("click", () => { selP=p; selQ=q; renderPlatonic(); });
+        wrap.appendChild(cell);
+      }
+    }
+  }
+  function renderPlatonic(){
+    renderPlatonicGrid();
+    const st = statusFor(selP, selQ);
+    const svg = document.getElementById("platonicSvg");
+    svg.innerHTML = "";
+    const cx=160, cy=160, R=110;
+    const angPer = interiorAngle(selP);
+    const colorFor = st.cls==="valid" ? "var(--c1)" : (st.cls==="flat" ? "var(--ink-soft)" : "var(--c3)");
+    let startDeg = -90;
+    for(let i=0;i<selQ;i++){
+      const a0 = (startDeg)*Math.PI/180, a1 = (startDeg+angPer)*Math.PI/180;
+      const x0 = cx+R*Math.cos(a0), y0 = cy+R*Math.sin(a0);
+      const x1 = cx+R*Math.cos(a1), y1 = cy+R*Math.sin(a1);
+      const largeArc = angPer > 180 ? 1 : 0;
+      const path = `M${cx},${cy} L${x0.toFixed(2)},${y0.toFixed(2)} A${R},${R} 0 ${largeArc} 1 ${x1.toFixed(2)},${y1.toFixed(2)} Z`;
+      svg.appendChild(el("path",{d:path, fill:colorFor, opacity:0.55-0.03*i, stroke:"#fff", "stroke-width":1.5}));
+      startDeg += angPer;
+    }
+    svg.appendChild(el("circle",{cx,cy,r:3,fill:"var(--ink)"}));
+    const total = st.total;
+    const remain = 360-total;
+    svg.appendChild(el("text",{x:cx,y:20,"text-anchor":"middle","font-size":13,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink)"}, `p=${selP} (${angPer.toFixed(1)}°) × q=${selQ}  =  ${total.toFixed(1)}°`));
+    if (st.cls === "valid") svg.appendChild(el("text",{x:cx,y:38,"text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono, monospace",fill:"var(--c1)"}, `gap of ${remain.toFixed(1)}° folds up into a real corner`));
+
+    const key = selP+","+selQ;
+    const nameStr = SOLID_NAMES[key];
+    const verdict = document.getElementById("platonicVerdict");
+    verdict.className = "verdict " + (st.cls==="valid" ? "pass" : "fail");
+    verdict.textContent = st.cls === "valid"
+      ? `{${selP},${selQ}}: total angle ${total.toFixed(1)}° < 360° -- closes into a real corner. This is the ${nameStr}.`
+      : st.cls === "flat"
+      ? `{${selP},${selQ}}: total angle exactly 360° -- lies perfectly flat, tiles a plane, no solid corner at all.`
+      : `{${selP},${selQ}}: total angle ${total.toFixed(1)}° > 360° -- the faces would have to overlap. Impossible.`;
+
+    const VALID = [[3,3],[3,4],[3,5],[4,3],[5,3]];
+    const table = document.getElementById("platonicTable");
+    let html = "<tr><th>{p,q}</th><th>Solid</th><th>Total angle</th></tr>";
+    VALID.forEach(([p,q]) => {
+      const s2 = statusFor(p,q);
+      html += `<tr><td class="win">{${p},${q}}</td><td class="win">${SOLID_NAMES[p+","+q]}</td><td class="win">${s2.total.toFixed(1)}°</td></tr>`;
+    });
+    table.innerHTML = html;
+  }
+  renderPlatonic();
+
+  /* ============================================================
+     TAB 2 — CRYSTALLOGRAPHIC RESTRICTION
+     ============================================================ */
+  function renderCrystal(){
+    const n = parseInt(document.getElementById("crystalN").value, 10);
+    document.getElementById("crystalNOut").textContent = n;
+    const angleDeg = 360/n;
+    const val = 2*Math.cos(angleDeg*Math.PI/180);
+    const nearest = Math.round(val);
+    const isInt = Math.abs(val-nearest) < 1e-9;
+    document.getElementById("crystalAngle").textContent = angleDeg.toFixed(2)+"°";
+    document.getElementById("crystalVal").textContent = val.toFixed(4);
+    document.getElementById("crystalOk").textContent = isInt ? "Yes" : "No";
+
+    const svg = document.getElementById("crystalSvg");
+    svg.innerHTML = "";
+    const W=480,H=160,pad=40;
+    function X(nn){ return pad + (nn-1)/(12-1)*(W-2*pad); }
+    function Y(v){ return H-30 - (v+2)/4*(H-60); }
+    svg.appendChild(el("line",{x1:pad,y1:Y(0),x2:W-pad,y2:Y(0),stroke:"var(--line)"}));
+    for(let m=1;m<=12;m++){
+      const a = 360/m, v = 2*Math.cos(a*Math.PI/180);
+      const ok = Math.abs(v-Math.round(v))<1e-9;
+      svg.appendChild(el("circle",{cx:X(m),cy:Y(v),r: m===n?7:4.5, fill: ok?"var(--c1)":"var(--c3)", opacity: m===n?1:0.55, stroke: m===n?"var(--ink)":"none","stroke-width":1.5}));
+      svg.appendChild(el("text",{x:X(m),y:H-12,"text-anchor":"middle","font-size":10,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink-soft)"}, m));
+    }
+    [-2,-1,0,1,2].forEach(v => svg.appendChild(el("text",{x:pad-8,y:Y(v)+4,"text-anchor":"end","font-size":10,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink-soft)"}, v)));
+
+    const story = document.getElementById("crystalStory");
+    story.className = "verdict " + (isInt ? "pass" : "fail");
+    if (isInt){
+      story.textContent = `n=${n}: 2cos(360°/${n}) = ${val.toFixed(4)} -- exactly the integer ${nearest}. A rotation of this order CAN preserve a periodic lattice.${(n===5)?"":""}`;
+    } else {
+      story.textContent = `n=${n}: 2cos(360°/${n}) = ${val.toFixed(4)} -- not a whole integer (nearest is ${nearest}). No periodic lattice can have an n=${n}-fold rotation.` + (n===5 ? " This is exactly the case real quasicrystals slip through -- by never being periodic in the first place." : "");
+    }
+  }
+  document.getElementById("crystalN").addEventListener("input", renderCrystal);
+  renderCrystal();
+
+  /* ============================================================
+     TAB 3 — DIAGONALIZATION, LIVE
+     ============================================================ */
+  function H_predict(prediction){ return prediction; }
+  function D_program(oracleSaysHalts){
+    const prediction = H_predict(oracleSaysHalts);
+    if (prediction) return {action:"looped forever", contradicts:"the oracle predicted D halts"};
+    return {action:"halted immediately", contradicts:"the oracle predicted D loops forever"};
+  }
+  function renderDiag(outcome){
+    const svg = document.getElementById("diagSvg");
+    svg.innerHTML = "";
+    const boxes = [
+      {x:20, label:"Oracle H", sub: outcome ? outcome.predictionLabel : "?"},
+      {x:190, label:"Program D asks H\nabout itself", sub:""},
+      {x:360, label:"D does the opposite", sub: outcome ? outcome.action : "?"},
+    ];
+    boxes.forEach((b,i) => {
+      svg.appendChild(el("rect",{x:b.x,y:40,width:100,height:60,rx:8,fill:"#fff",stroke: i===2 && outcome ? "var(--c3)" : "var(--line)","stroke-width":1.5}));
+      svg.appendChild(el("text",{x:b.x+50,y:65,"text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink)"}, b.label.split("\n")[0]));
+      if (b.label.split("\n")[1]) svg.appendChild(el("text",{x:b.x+50,y:78,"text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink)"}, b.label.split("\n")[1]));
+      if (b.sub) svg.appendChild(el("text",{x:b.x+50,y:95,"text-anchor":"middle","font-size":10.5,"font-family":"IBM Plex Mono, monospace",fill: i===2?"var(--c3)":"var(--accent)","font-weight":"700"}, b.sub));
+      if (i<2) svg.appendChild(el("line",{x1:b.x+100,y1:70,x2:boxes[i+1].x,y2:70,stroke:"var(--ink-soft)","stroke-width":1.5,"marker-end":"url(#arrow)"}));
+    });
+    const defs = el("defs",{});
+    const marker = el("marker",{id:"arrow",markerWidth:8,markerHeight:8,refX:6,refY:3,orient:"auto"});
+    marker.appendChild(el("path",{d:"M0,0 L6,3 L0,6 Z", fill:"var(--ink-soft)"}));
+    defs.appendChild(marker);
+    svg.insertBefore(defs, svg.firstChild);
+    if (outcome) svg.appendChild(el("text",{x:240,y:130,"text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono, monospace",fill:"var(--c3)"}, "contradicts: "+outcome.contradicts));
+  }
+  function predict(saysHalts, label){
+    const result = D_program(saysHalts);
+    renderDiag({predictionLabel: label, action: result.action, contradicts: result.contradicts});
+    const story = document.getElementById("diagStory");
+    story.className = "verdict fail";
+    story.textContent = `Oracle predicts: ${label}.\nD actually does: ${result.action}.\nEvery possible prediction H makes about D turns out wrong -- no perfect halting-oracle can exist. Swap "halts" for "provable" and this is Gödel's own proof.`;
+  }
+  document.getElementById("btnPredictHalts").addEventListener("click", () => predict(true, '"D halts"'));
+  document.getElementById("btnPredictLoops").addEventListener("click", () => predict(false, '"D loops forever"'));
+  document.getElementById("btnDiagReset").addEventListener("click", () => {
+    renderDiag(null);
+    document.getElementById("diagStory").className = "verdict";
+    document.getElementById("diagStory").textContent = "Pick a prediction above.";
+  });
+  renderDiag(null);
+
+  /* ============================================================
+     TAB 4 — SYMMETRY FILTER
+     ============================================================ */
+  const SHAPES = {
+    square: [[0,0],[1,0],[1,1],[0,1]],
+    rect: [[0,0],[2,0],[2,1],[0,1]],
+    bare: null
+  };
+  let symShape = "square";
+  function permutations(arr){
+    if (arr.length <= 1) return [arr];
+    const result = [];
+    for(let i=0;i<arr.length;i++){
+      const rest = arr.slice(0,i).concat(arr.slice(i+1));
+      permutations(rest).forEach(p => result.push([arr[i], ...p]));
+    }
+    return result;
+  }
+  const ALL_PERMS = permutations([0,1,2,3]);
+  function symDist(pts,a,b){ const dx=pts[a][0]-pts[b][0], dy=pts[a][1]-pts[b][1]; return Math.sqrt(dx*dx+dy*dy); }
+  function isSymmetry(shapeKey, perm){
+    if (shapeKey === "bare") return true;
+    const pts = SHAPES[shapeKey];
+    for(let i=0;i<4;i++) for(let j=0;j<4;j++){
+      if (Math.abs(symDist(pts,i,j) - symDist(pts,perm[i],perm[j])) > 1e-9) return false;
+    }
+    return true;
+  }
+  function renderSym(){
+    const wrap = document.getElementById("symGrid");
+    wrap.innerHTML = "";
+    let count = 0;
+    ALL_PERMS.forEach((perm) => {
+      const ok = isSymmetry(symShape, perm);
+      if (ok) count++;
+      const cell = document.createElement("div");
+      cell.className = "cell " + (ok ? "valid" : "bad");
+      cell.textContent = "(" + perm.join(",") + ")";
+      cell.title = ok ? "preserves all distances -- a genuine symmetry" : "changes at least one distance -- not a symmetry";
+      wrap.appendChild(cell);
+    });
+    document.getElementById("symCount").textContent = count;
+    const story = document.getElementById("symStory");
+    story.className = "verdict " + (count === 24 ? "pass" : "");
+    const shapeLabel = symShape === "square" ? "square" : (symShape === "rect" ? "rectangle" : "bare 4-element set");
+    story.textContent = symShape === "bare"
+      ? `A ${shapeLabel} has no structure beyond membership, so all 24 relabelings trivially preserve it -- the automorphism group is the entire set of 24 permutations, with nothing to filter.`
+      : `Checked all 24 relabelings against the ${shapeLabel}'s actual distances: exactly ${count} survive as genuine symmetries.`;
+  }
+  [["btnShapeSquare","square"],["btnShapeRect","rect"],["btnShapeBare","bare"]].forEach(([id,key]) => {
+    document.getElementById(id).addEventListener("click", () => {
+      symShape = key;
+      document.querySelectorAll("#panel-symfilter .op").forEach(b=>b.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      renderSym();
+    });
+  });
+  renderSym();
+})();
+</script>
+</body>
+</html>

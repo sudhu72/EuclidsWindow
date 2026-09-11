@@ -71,6 +71,25 @@
   <!-- ============ TAB 1: BUILD THE MATRIX ============ -->
   <div class="tabpanel active" id="tab-build">
     <div class="panel">
+      <h2>Why the Cloud Tilts — Covariance As Shape</h2>
+      <p class="sub">Drag Var(X), Var(Y), and Cov(X,Y) directly. The same 90-point cloud reshapes and tilts live to match, so you can watch what each matrix entry actually does to the picture, instead of just reading the numbers.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnTiltPos">Positive (height &amp; weight)</button>
+        <button class="op" id="btnTiltNeg">Negative</button>
+        <button class="op" id="btnTiltZero">Zero (uncorrelated)</button>
+      </div>
+      <div class="row"><label>Var(X)</label><input type="range" id="tiltVx" min="10" max="150" step="1" value="62.65"><span class="readout" id="tiltVxOut">62.65</span></div>
+      <div class="row"><label>Var(Y)</label><input type="range" id="tiltVy" min="10" max="150" step="1" value="86.77"><span class="readout" id="tiltVyOut">86.77</span></div>
+      <div class="row"><label>Cov(X,Y)</label><input type="range" id="tiltCov" min="-140" max="140" step="1" value="57.41"><span class="readout" id="tiltCovOut">57.41</span></div>
+      <svg viewBox="0 0 360 300" id="tiltSvg" width="360" height="300"></svg>
+      <div style="display:flex; gap:30px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
+        <div><div class="sub" style="text-align:center;">covariance matrix</div><table class="heat" id="tiltCovHeat"></table></div>
+        <div><div class="sub" style="text-align:center;">correlation matrix</div><table class="heat" id="tiltCorrHeat"></table></div>
+      </div>
+      <div class="story-line" id="tiltStory"></div>
+      <div class="caption" style="text-align:center; font-size:11.5px; color:var(--chalk-dim); margin-top:6px;">dashed lines: the best-fit ellipse's own two axes -- the covariance matrix's eigenvectors, scaled by the square root of their eigenvalues.</div>
+    </div>
+    <div class="panel">
       <h2>Four Variables, Every Kind of Relationship at Once</h2>
       <p class="sub">Edit any value below and watch both matrices update live. X1/X2 move together; X3 mirrors X1 exactly; X4 is unrelated to all three.</p>
       <table class="datatable" id="dataTable"></table>
@@ -149,6 +168,103 @@
     if (v>=0) return "rgba(143,209,158,"+ (0.08+t*0.55) +")";
     return "rgba(255,130,102,"+ (0.08+t*0.55) +")";
   }
+
+  /* =========================================================
+     TAB 1 (panel 0): WHY THE CLOUD TILTS
+     ========================================================= */
+  (function(){
+    // 90 points, exactly mean-zero and exactly unit-covariance (whitened) by construction --
+    // transforming them by a covariance matrix's own Cholesky factor gives a cloud whose
+    // empirical covariance matches that matrix EXACTLY, not approximately.
+    const BASE = [[1.7905,-2.5107],[0.337,-0.5791],[-0.461,-0.2517],[-1.9138,-0.3076],[-0.7537,3.2493],[0.1642,-0.3705],[-0.3137,-0.6963],[-1.0238,-0.4408],[0.4045,-0.2508],[0.8464,-0.2003],[0.0255,1.5083],[0.4562,-0.5138],[-0.1918,0.5054],[1.7503,-0.2448],[-0.2364,0.9621],[-0.8649,-0.3382],[0.7964,0.5719],[0.0657,0.641],[-2.631,0.9155],[-0.9676,-1.7064],[0.2378,0.6759],[-0.4755,-1.1057],[-0.0132,-0.078],[1.2854,0.751],[0.1717,1.0817],[-0.25,-0.9503],[0.5199,0.5666],[-0.255,-0.8085],[0.1131,-2.4952],[0.6159,0.4788],[-1.5532,-0.0069],[-0.9103,0.7007],[-1.9443,-0.9853],[0.6507,1.1392],[-2.0485,-0.5752],[0.2524,-0.6225],[1.4077,-1.1681],[0.2659,-1.0577],[1.2662,-0.0122],[-0.4246,-1.7407],[1.5415,0.7633],[0.691,1.1219],[0.2713,-0.6518],[-0.7979,-0.8406],[1.1965,-1.4408],[-0.5969,-0.3602],[0.1866,0.5503],[-1.2374,-1.7747],[-0.0095,1.1778],[0.6709,0.2069],[-0.3226,0.2566],[-0.2409,0.7785],[-0.7689,0.0868],[-0.125,0.5101],[0.2367,2.5098],[1.3906,1.4969],[-1.9347,-0.4157],[-0.5866,0.4869],[-2.1183,1.0815],[0.9197,-1.2914],[-0.9632,-0.8461],[0.0203,0.6108],[1.8566,-0.1704],[0.6791,0.1474],[1.6136,0.7547],[1.2048,-1.061],[-0.2349,-0.8387],[1.3752,0.6644],[-0.3303,-0.483],[0.3953,-0.7101],[-0.8863,0.4277],[2.2402,-0.2082],[-0.5809,-1.2025],[-1.2599,0.4608],[0.7526,0.0043],[0.275,0.0971],[0.0537,-1.5372],[-0.4578,0.0727],[-0.7739,-0.5189],[-0.8036,-0.378],[0.7442,-0.4082],[-0.1581,0.7773],[0.6043,1.6722],[-1.9516,0.771],[-0.4796,0.0951],[0.7676,1.0698],[0.931,0.1539],[1.4484,-0.2663],[-0.1465,0.7633],[-0.4923,2.104]];
+
+    const tiltVx = document.getElementById("tiltVx"), tiltVy = document.getElementById("tiltVy"), tiltCov = document.getElementById("tiltCov");
+    const tiltSvg = document.getElementById("tiltSvg");
+
+    function eig2x2Sym(Vx,Vy,Cxy){
+      const tr = Vx+Vy, det = Vx*Vy-Cxy*Cxy;
+      const disc = Math.sqrt(Math.max(tr*tr-4*det,0));
+      const l1 = (tr+disc)/2, l2 = (tr-disc)/2;
+      let v1;
+      if (Math.abs(Cxy) > 1e-9) v1 = [l1-Vy, Cxy];
+      else v1 = [1,0];
+      const n1 = Math.hypot(v1[0],v1[1]) || 1;
+      v1 = [v1[0]/n1, v1[1]/n1];
+      return {l1,l2,v1};
+    }
+
+    function renderTilt(){
+      let Vx = parseFloat(tiltVx.value), Vy = parseFloat(tiltVy.value), Cxy = parseFloat(tiltCov.value);
+      const maxCov = Math.sqrt(Vx*Vy) * 0.995;
+      if (Cxy > maxCov) Cxy = maxCov;
+      if (Cxy < -maxCov) Cxy = -maxCov;
+      document.getElementById("tiltVxOut").textContent = Vx.toFixed(2);
+      document.getElementById("tiltVyOut").textContent = Vy.toFixed(2);
+      document.getElementById("tiltCovOut").textContent = Cxy.toFixed(2);
+
+      // Cholesky factor L (lower-triangular) of [[Vx,Cxy],[Cxy,Vy]]: transformed = BASE @ L^T
+      const a = Math.sqrt(Vx), b = Cxy/a, c = Math.sqrt(Math.max(Vy - b*b, 1e-6));
+
+      const scale = 105 / (3.3*Math.sqrt(Math.max(Vx,Vy)));
+      clear(tiltSvg);
+      const W=360,H=300,cx=W/2,cy=H/2;
+      tiltSvg.appendChild(el("line",{x1:0,y1:cy,x2:W,y2:cy,stroke:"rgba(244,241,232,.15)"}));
+      tiltSvg.appendChild(el("line",{x1:cx,y1:0,x2:cx,y2:H,stroke:"rgba(244,241,232,.15)"}));
+      BASE.forEach(([bx,by])=>{
+        const x = a*bx, y = b*bx + c*by;
+        tiltSvg.appendChild(el("circle",{cx:cx+x*scale, cy:cy-y*scale, r:3.4, fill:"var(--blue)", opacity:0.8}));
+      });
+      const eig = eig2x2Sym(Vx,Vy,Cxy);
+      [[eig.l1,eig.v1],[eig.l2,[-eig.v1[1],eig.v1[0]]]].forEach(([lam,v])=>{
+        const len = Math.sqrt(Math.max(lam,0))*scale;
+        tiltSvg.appendChild(el("line",{x1:cx-v[0]*len,y1:cy+v[1]*len,x2:cx+v[0]*len,y2:cy-v[1]*len,stroke:"var(--amber)","stroke-width":1.6,"stroke-dasharray":"5,4"}));
+      });
+
+      function heatTable(id, M, isCorr){
+        const t = document.getElementById(id);
+        t.innerHTML = "";
+        const names = ["X","Y"];
+        const header = document.createElement("tr");
+        header.appendChild(document.createElement("th"));
+        names.forEach(n=>{ const th=document.createElement("th"); th.textContent=n; header.appendChild(th); });
+        t.appendChild(header);
+        for (let i=0;i<2;i++){
+          const tr = document.createElement("tr");
+          const th = document.createElement("th"); th.textContent = names[i]; tr.appendChild(th);
+          for (let j=0;j<2;j++){
+            const td = document.createElement("td");
+            td.textContent = fmt(M[i][j], isCorr?4:2);
+            td.style.background = heatColor(isCorr ? M[i][j] : M[i][j]/Math.max(Vx,Vy));
+            tr.appendChild(td);
+          }
+          t.appendChild(tr);
+        }
+      }
+      const covM = [[Vx,Cxy],[Cxy,Vy]];
+      const sx = Math.sqrt(Vx), sy = Math.sqrt(Vy);
+      const rho = Cxy/(sx*sy);
+      const corrM = [[1,rho],[rho,1]];
+      heatTable("tiltCovHeat", covM, false);
+      heatTable("tiltCorrHeat", corrM, true);
+
+      const tiltWord = Cxy > 0.5 ? "tilts diagonally, rising left-to-right" : (Cxy < -0.5 ? "tilts the other way, falling left-to-right" : "shows no tilt at all -- aligned straight with the axes");
+      document.getElementById("tiltStory").textContent =
+        `Cov(X,Y) = ${Cxy.toFixed(2)}, correlation = ${rho.toFixed(4)} -- the cloud ${tiltWord}. The dashed axes are this exact covariance matrix's own eigenvectors: the best-fit ellipse hugging the cloud, not a separate decoration.`;
+    }
+    [tiltVx,tiltVy,tiltCov].forEach(inp=>inp.addEventListener("input", renderTilt));
+    const TILT_PRESETS = {pos:{vx:62.65,vy:86.77,cov:57.41}, neg:{vx:62.65,vy:86.77,cov:-57.41}, zero:{vx:62.65,vy:86.77,cov:0}};
+    function applyTiltPreset(key, btn){
+      document.querySelectorAll("#btnTiltPos,#btnTiltNeg,#btnTiltZero").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      const p = TILT_PRESETS[key];
+      tiltVx.value = p.vx; tiltVy.value = p.vy; tiltCov.value = p.cov;
+      renderTilt();
+    }
+    document.getElementById("btnTiltPos").addEventListener("click", (e)=>applyTiltPreset("pos", e.target));
+    document.getElementById("btnTiltNeg").addEventListener("click", (e)=>applyTiltPreset("neg", e.target));
+    document.getElementById("btnTiltZero").addEventListener("click", (e)=>applyTiltPreset("zero", e.target));
+    renderTilt();
+  })();
 
   /* =========================================================
      TAB 1: BUILD THE MATRIX

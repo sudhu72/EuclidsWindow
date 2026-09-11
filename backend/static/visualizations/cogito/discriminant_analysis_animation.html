@@ -94,6 +94,10 @@
         <button class="op" id="btnModeQDA">Per-class covariance (QDA)</button>
       </div>
       <div class="row" id="rowSpread"><label>Class-1 spread multiplier</label><input type="range" id="spreadMult" min="2" max="12" step="0.5" value="9"><span class="readout" id="spreadOut">9.0</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnDetOn">Include −½log|Σ| term (correct)</button>
+        <button class="op" id="btnDetOff">Drop it (common mistake)</button>
+      </div>
 
       <div class="cols">
         <svg id="ldaqdaSvg" width="420" height="360" viewBox="0 0 420 360"></svg>
@@ -223,6 +227,7 @@
      ============================================================ */
   let scenario = "A"; // A = different means same shape, B = same mean different shape
   let covMode = "LDA"; // LDA = shared, QDA = per-class
+  let useDetTerm = true; // whether the -0.5*log|Sigma| normalizing term is included
 
   function ldaqdaData(){
     if (scenario === "A"){
@@ -244,7 +249,8 @@
     const dx=x[0]-mu[0], dy=x[1]-mu[1];
     const iv = invRes.inv;
     const quad = dx*(iv[0][0]*dx+iv[0][1]*dy) + dy*(iv[1][0]*dx+iv[1][1]*dy);
-    return -0.5*Math.log(Math.abs(invRes.det)) - 0.5*quad + priorLog;
+    const detTerm = useDetTerm ? -0.5*Math.log(Math.abs(invRes.det)) : 0;
+    return detTerm - 0.5*quad + priorLog;
   }
 
   function renderLdaQda(){
@@ -298,8 +304,10 @@
     const story = document.getElementById("ldaqdaStory");
     if (degenerate){
       story.textContent = "LDA has no signal here at all — the two class means coincide exactly, so Σ⁻¹(μ₁−μ₀) is the zero vector. No shaded region is drawn because LDA genuinely cannot separate this case.";
+    } else if (scenario === "B" && covMode === "QDA" && !useDetTerm){
+      story.textContent = "The −½log|Σ| term is switched OFF: the tight class's entire predicted region has vanished. Without that term, the wide class wins everywhere except the exact center point — the bullseye this tab is built around simply isn't there anymore.";
     } else if (scenario === "B" && covMode === "QDA"){
-      story.textContent = "QDA's bullseye: points near the shared center are judged the tight class; points farther out are judged the wide class — a boundary no straight line could ever produce.";
+      story.textContent = "QDA's bullseye: points near the shared center are judged the tight class; points farther out are judged the wide class — a boundary no straight line could ever produce, and one that depends on the −½log|Σ| term above just as much as on distance.";
     } else if (scenario === "A"){
       story.textContent = covMode==="LDA"
         ? "Different means, similar shape: LDA's straight boundary sits right where you'd expect."
@@ -322,6 +330,12 @@
     covMode="QDA"; this.classList.add("active"); document.getElementById("btnModeLDA").classList.remove("active"); renderLdaQda();
   });
   document.getElementById("spreadMult").addEventListener("input", renderLdaQda);
+  document.getElementById("btnDetOn").addEventListener("click", function(){
+    useDetTerm=true; this.classList.add("active"); document.getElementById("btnDetOff").classList.remove("active"); renderLdaQda();
+  });
+  document.getElementById("btnDetOff").addEventListener("click", function(){
+    useDetTerm=false; this.classList.add("active"); document.getElementById("btnDetOn").classList.remove("active"); renderLdaQda();
+  });
   renderLdaQda();
 })();
 </script>

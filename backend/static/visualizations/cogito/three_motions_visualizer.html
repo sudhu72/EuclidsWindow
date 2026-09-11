@@ -69,6 +69,7 @@
     <button class="tab active" data-tab="linalg">Linear Transformations</button>
     <button class="tab" data-tab="span">Span Builder</button>
     <button class="tab" data-tab="basis">Change of Basis</button>
+    <button class="tab" data-tab="qr">QR / Gram-Schmidt</button>
     <button class="tab" data-tab="calc">Tangent Line &amp; Riemann Sum</button>
     <button class="tab" data-tab="ode">Direction Fields</button>
     <button class="tab" data-tab="osc">Oscillator</button>
@@ -138,6 +139,28 @@
         <div class="stat" id="basisStatDot">dot-product shortcut: —</div>
       </div>
       <p class="caption"><b>Why it matters:</b> teal = b₁, gold = b₂, purple = w (fixed). The properly-solved coordinates always reconstruct w exactly, no matter what basis you drag into existence — the dot-product shortcut only agrees with them when b₁ and b₂ are orthonormal (mutually perpendicular, each length 1), and silently gives the wrong answer the moment they aren't.</p>
+    </div>
+  </div>
+
+  <!-- ============ QR / GRAM-SCHMIDT ============ -->
+  <div class="panel" id="panel-qr">
+    <div class="card">
+      <h2>Straightening Two Vectors Into a Perpendicular Pair</h2>
+      <p class="sub"><b>What's happening:</b> two vectors <span class="formula">v₁</span> and <span class="formula">v₂</span> start out pointing in whatever directions you give them. Gram-Schmidt builds an orthonormal pair <span class="formula">q₁, q₂</span> one at a time: <span class="formula">q₁</span> is just <span class="formula">v₁</span> rescaled to length 1. Then it subtracts <span class="formula">v₂</span>'s <em>shadow</em> onto <span class="formula">q₁</span> (the dashed grey projection) — the perpendicular leftover (dashed purple) gets rescaled to length 1 to become <span class="formula">q₂</span>. Those two lengths, plus that one shadow, are exactly the three numbers in <span class="formula">R</span>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Nearly parallel</em> and watch how thin the leftover perpendicular sliver is — R's off-diagonal entry (the shadow length) is nearly as large as <span class="formula">v₂</span> itself, exactly the unstable case QR is used to avoid. Then press <em>Already perpendicular</em> and watch the shadow collapse to zero — R becomes purely diagonal, and Q is just v₁, v₂ rescaled.</p>
+      <div class="presetbar">
+        <button class="op" data-qrpreset="typical">Typical pair</button>
+        <button class="op" data-qrpreset="parallel">Nearly parallel</button>
+        <button class="op" data-qrpreset="perp">Already perpendicular</button>
+      </div>
+      <div class="row"><label>v₁ = (</label><input type="number" id="qrV1x" value="3" step="0.5" style="width:52px;"><span>,</span><input type="number" id="qrV1y" value="1" step="0.5" style="width:52px;"><span>)</span></div>
+      <div class="row"><label>v₂ = (</label><input type="number" id="qrV2x" value="2" step="0.5" style="width:52px;"><span>,</span><input type="number" id="qrV2y" value="2" step="0.5" style="width:52px;"><span>)</span></div>
+      <svg id="qrSvg" viewBox="-160 -160 320 320"></svg>
+      <div class="statrow">
+        <div class="stat" id="qrStatQ">Q columns: —</div>
+        <div class="stat" id="qrStatR">R = —</div>
+      </div>
+      <p class="caption"><b>Why it matters:</b> teal = v₁ (also q₁'s direction), gold = v₂, dashed grey = v₂'s shadow on q₁ (length r₁₂), dashed purple = the perpendicular leftover that becomes q₂. R's diagonal entries are the two lengths ‖v₁‖ and ‖leftover‖; its one off-diagonal entry is the shadow length — R is upper triangular because q₂ was built using v₁ and v₂ only, never looking ahead to a vector that hasn't been processed yet.</p>
     </div>
   </div>
 
@@ -567,6 +590,68 @@
   });
   [cbWx,cbWy,cbB1x,cbB1y,cbB2x,cbB2y].forEach(inp => inp.addEventListener("input", renderBasis));
   renderBasis();
+
+  // ================= QR / GRAM-SCHMIDT =================
+  const qrV1x=document.getElementById("qrV1x"), qrV1y=document.getElementById("qrV1y"),
+        qrV2x=document.getElementById("qrV2x"), qrV2y=document.getElementById("qrV2y");
+  const qrSvg = document.getElementById("qrSvg");
+
+  function renderQR(){
+    const v1x=parseFloat(qrV1x.value)||0, v1y=parseFloat(qrV1y.value)||0;
+    const v2x=parseFloat(qrV2x.value)||0, v2y=parseFloat(qrV2y.value)||0;
+
+    qrSvg.innerHTML = "";
+    qrSvg.appendChild(el("line",{x1:-160,y1:0,x2:160,y2:0,stroke:"var(--line)",["stroke-width"]:1}));
+    qrSvg.appendChild(el("line",{x1:0,y1:-160,x2:0,y2:160,stroke:"var(--line)",["stroke-width"]:1}));
+    function arrow(x2,y2,color,w){
+      qrSvg.appendChild(el("line",{x1:0,y1:0,x2,y2,stroke:color,["stroke-width"]:w||3}));
+      qrSvg.appendChild(el("circle",{cx:x2,cy:y2,r:4,fill:color}));
+    }
+    function dashed(x1,y1,x2,y2,color){
+      qrSvg.appendChild(el("line",{x1,y1,x2,y2,stroke:color,["stroke-width"]:1.5,["stroke-dasharray"]:"4,3"}));
+    }
+
+    const r11 = Math.hypot(v1x,v1y);
+    if(r11 < 1e-9){
+      document.getElementById("qrStatQ").innerHTML = `<b style="color:var(--c2)">v₁ is the zero vector — pick a nonzero v₁</b>`;
+      document.getElementById("qrStatR").innerHTML = "—";
+      return;
+    }
+    const q1x=v1x/r11, q1y=v1y/r11;
+    const r12 = v2x*q1x + v2y*q1y;
+    const perpx = v2x - r12*q1x, perpy = v2y - r12*q1y;
+    const r22 = Math.hypot(perpx,perpy);
+    const singular = r22 < 1e-6;
+    const q2x = singular ? 0 : perpx/r22, q2y = singular ? 0 : perpy/r22;
+
+    arrow(v1x*SCALE, -v1y*SCALE, "var(--c1)");
+    arrow(v2x*SCALE, -v2y*SCALE, "var(--c2)");
+    dashed(0, 0, r12*q1x*SCALE, -r12*q1y*SCALE, "#888");
+    dashed(r12*q1x*SCALE, -r12*q1y*SCALE, v2x*SCALE, -v2y*SCALE, "var(--accent)");
+    if(!singular) arrow(q2x*SCALE, -q2y*SCALE, "var(--accent)", 3);
+
+    document.getElementById("qrStatQ").innerHTML =
+      singular
+        ? `<b style="color:var(--c2)">v₁ and v₂ are parallel — no second perpendicular direction exists</b>`
+        : `q₁ = (${q1x.toFixed(3)}, ${q1y.toFixed(3)}) &nbsp;·&nbsp; q₂ = (${q2x.toFixed(3)}, ${q2y.toFixed(3)})`;
+    document.getElementById("qrStatR").innerHTML =
+      `R = [[${r11.toFixed(3)}, ${r12.toFixed(3)}], [0, ${r22.toFixed(3)}]] &nbsp;·&nbsp; Q·R reconstructs v₁, v₂ exactly`;
+  }
+  const QR_PRESETS = {
+    typical: {v1:[3,1], v2:[2,2]},
+    parallel: {v1:[3,1], v2:[6,1.8]},
+    perp: {v1:[2,0], v2:[0,2]},
+  };
+  document.querySelectorAll("[data-qrpreset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const p = QR_PRESETS[btn.dataset.qrpreset];
+      qrV1x.value = p.v1[0]; qrV1y.value = p.v1[1];
+      qrV2x.value = p.v2[0]; qrV2y.value = p.v2[1];
+      renderQR();
+    });
+  });
+  [qrV1x,qrV1y,qrV2x,qrV2y].forEach(inp => inp.addEventListener("input", renderQR));
+  renderQR();
 
   // ================= OSCILLATOR =================
   const oscSvg = document.getElementById("oscSvg");

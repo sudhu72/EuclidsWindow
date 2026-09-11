@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Harness Engineering — The Body Around the Brain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12px; color:var(--ink-soft); min-width:150px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:48px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.8; white-space:pre-line; }
+  .cols{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  table.rt{ border-collapse:collapse; width:100%; font-size:13px; margin-top:8px; }
+  table.rt td, table.rt th{ border:1px solid var(--line); padding:7px 10px; text-align:left; background:#fff; }
+  table.rt th{ background:var(--accent-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px; margin-top:24px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math/ML Tutorial · Agent Harness Engineering</div>
+    <h1>The Body Around the Brain</h1>
+    <p>A model predicts tokens; everything else — tools, MCP, skills, loops, graphs of agents, multiple models, and the guardrails containing all of it — is engineered around it. Five pieces of that engineering, made interactive.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>try this</b>, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="anatomy">Harness Anatomy</button>
+    <button class="tab" data-tab="mcp">MCP Flow</button>
+    <button class="tab" data-tab="graph">Multi-Agent Graph</button>
+    <button class="tab" data-tab="routing">Multi-Model Routing</button>
+    <button class="tab" data-tab="defense">Defense in Depth</button>
+  </div>
+
+  <!-- ============ TAB 1: HARNESS ANATOMY ============ -->
+  <div class="panel active" id="panel-anatomy">
+    <div class="card">
+      <h2>Six Organs Around One Brain</h2>
+      <p class="sub"><b>What's happening:</b> the model (center) only predicts tokens. Click any organ around it to see what it actually adds, and which Part of the tutorial builds it.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click through all six — notice that every single one is answering "the model can't do this on its own, so something has to be built around it to supply it."</p>
+      <svg id="anatSvg" viewBox="0 0 480 380"></svg>
+      <div class="steplog" id="anatInfo">Click an organ above.</div>
+      <div class="caption"><b>Why it matters:</b> "the model got smarter" and "the harness got better" are different claims — most of what separates a demo from a production agent is this diagram, not the model in the middle of it.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: MCP FLOW ============ -->
+  <div class="panel" id="panel-mcp">
+    <div class="card">
+      <h2>Client, Server, and Five Steps Between Them</h2>
+      <p class="sub"><b>What's happening:</b> the harness (an MCP <b>client</b>) talks to an external <b>MCP server</b> in a standard sequence — discover, call, execute, return, append. Step through it.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> step all the way through, then notice step 5 — the server's result doesn't magically appear in the model's head, it has to be explicitly appended to context, exactly like any other tool result.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnMcpPrev">◀ Back</button>
+        <button class="op active" id="btnMcpNext">Next step ▶</button>
+        <button class="op" id="btnMcpReset">Reset</button>
+      </div>
+      <svg id="mcpSvg" viewBox="0 0 480 280"></svg>
+      <div class="steplog" id="mcpLog"></div>
+      <div class="caption"><b>Why it matters:</b> a client that only ever discovers what a server currently offers, rather than hardcoding it, keeps working when the server adds or changes tools — the entire reason MCP is a discovery protocol, not just a shared function-call format.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: MULTI-AGENT GRAPH ============ -->
+  <div class="panel" id="panel-graph">
+    <div class="card">
+      <h2>Same Work, Four Topologies, Four Very Different Totals</h2>
+      <p class="sub"><b>What's happening:</b> pick a topology and adjust each node's cost (seconds). Watch the token move through the actual path taken, and the total latency recompute live.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> load the default costs on <b>Sequential</b> (total 10s), then switch to <b>Parallel</b> with the exact same four costs (total drops to 4s) — nothing about the work changed, only the shape it's arranged in.</p>
+      <div class="presetbar">
+        <button class="op active" id="gtSequential">Sequential</button>
+        <button class="op" id="gtParallel">Parallel</button>
+        <button class="op" id="gtConditional">Conditional</button>
+        <button class="op" id="gtCyclic">Cyclic</button>
+      </div>
+      <div id="graphControls"></div>
+      <svg id="graphSvg" viewBox="0 0 480 220"></svg>
+      <div class="steplog" id="graphVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> topology is a latency (and cost) decision, not a cosmetic one — defaulting to sequential when steps are independent is pure wasted time, paid on every single run.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: MULTI-MODEL ROUTING ============ -->
+  <div class="panel" id="panel-routing">
+    <div class="card">
+      <h2>Three Strategies, One Stream of Tasks</h2>
+      <p class="sub"><b>What's happening:</b> a stream of tasks is a mix of "easy" and "hard." Adjust each model's cost/success rate and the easy/hard mix, and watch all three strategies' cost and success recompute live.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> load the preset, then watch "Routed" land within a few points of "Always expensive"'s success rate at roughly a third of the cost.</p>
+      <div class="presetbar"><button class="op" id="rtPreset">Load verified example</button></div>
+      <div class="cols">
+        <div class="col">
+          <div class="row"><label>cheap: cost ($)</label><input type="range" id="rCheapCost" min="0" max="0.05" step="0.001" value="0.001"><span class="readout" id="rCheapCostOut">0.0010</span></div>
+          <div class="row"><label>cheap: success on easy</label><input type="range" id="rCheapEasy" min="0" max="1" step="0.01" value="0.95"><span class="readout" id="rCheapEasyOut">0.95</span></div>
+          <div class="row"><label>cheap: success on hard</label><input type="range" id="rCheapHard" min="0" max="1" step="0.01" value="0.40"><span class="readout" id="rCheapHardOut">0.40</span></div>
+        </div>
+        <div class="col">
+          <div class="row"><label>expensive: cost ($)</label><input type="range" id="rExpCost" min="0" max="0.1" step="0.001" value="0.02"><span class="readout" id="rExpCostOut">0.0200</span></div>
+          <div class="row"><label>expensive: success on easy</label><input type="range" id="rExpEasy" min="0" max="1" step="0.01" value="0.99"><span class="readout" id="rExpEasyOut">0.99</span></div>
+          <div class="row"><label>expensive: success on hard</label><input type="range" id="rExpHard" min="0" max="1" step="0.01" value="0.95"><span class="readout" id="rExpHardOut">0.95</span></div>
+        </div>
+      </div>
+      <div class="row"><label>fraction of tasks "easy"</label><input type="range" id="rFracEasy" min="0" max="1" step="0.01" value="0.7"><span class="readout" id="rFracEasyOut">0.70</span></div>
+      <table class="rt" id="routingTable"></table>
+      <div class="caption"><b>Why it matters:</b> routing is a genuinely different point on the cost/quality tradeoff, not a compromise between the two pure strategies — measured, not assumed.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: DEFENSE IN DEPTH ============ -->
+  <div class="panel" id="panel-defense">
+    <div class="card">
+      <h2>Imperfect Layers, Stacked</h2>
+      <p class="sub"><b>What's happening:</b> each ring is one guardrail layer, catching an attack independently at its own rate. The combined catch rate is what survives after every layer gets a chance.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set the per-layer rate to 60% and slide layers from 1 to 4 — the combined rate climbs 60% → 84% → 93.6% → 97.4%, without any single layer improving at all.</p>
+      <div class="row"><label>number of layers</label><input type="range" id="dfLayers" min="1" max="5" step="1" value="3"><span class="readout" id="dfLayersOut">3</span></div>
+      <div class="row"><label>catch rate per layer</label><input type="range" id="dfRate" min="0" max="1" step="0.01" value="0.6"><span class="readout" id="dfRateOut">0.60</span></div>
+      <div class="cols">
+        <div class="col" style="min-width:220px;">
+          <svg id="dfSvg" viewBox="0 0 220 220"></svg>
+        </div>
+        <div class="col">
+          <div class="steplog" id="dfVerdict"></div>
+          <div class="row" style="margin-top:10px;"><button class="op" id="dfSimulate">Simulate 200 attacks</button></div>
+          <div class="steplog" id="dfSimResult"></div>
+        </div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> no single guardrail layer needs to be trustworthy enough to stand alone — that's the entire mathematical case for defense-in-depth over betting everything on one filter.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../deep_learning/agent_harness_engineering_feynman.md">Agent Harness Engineering</a> in the <a href="../README.md">Building ML Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x,y,str,color,size,anchor,weight){
+    const t = el("text",{x,y,["text-anchor"]:anchor||"middle","font-family":"IBM Plex Mono, monospace","font-size":size||12,fill:color||"var(--ink)"});
+    if(weight) t.setAttribute("font-weight",weight);
+    t.textContent = str;
+    return t;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* =========================================================
+     TAB 1 — HARNESS ANATOMY
+     ========================================================= */
+  const ORGANS = [
+    { id:"tools", label:"Tools", angle:-90, color:"var(--c1)",
+      desc:"New capabilities: call a function, read a file, search the web. The schema is the model's only sense of what a tool does — a vague description is a sense organ with no nerve endings. (Part 3)" },
+    { id:"mcp", label:"MCP", angle:-18, color:"var(--c2)",
+      desc:"A standard wire format for getting tools/resources/prompts from an external server, so N harnesses × M services doesn't mean N×M bespoke integrations — the USB-C of AI tools. (Part 4)" },
+    { id:"skills", label:"Skills", angle:54, color:"var(--c3)",
+      desc:"Reusable procedural knowledge for one specific kind of task, loaded into context only when that task actually comes up — unlike a system prompt, which costs its full weight on every turn. (Part 5)" },
+    { id:"loop", label:"The Loop", angle:126, color:"var(--accent)",
+      desc:"The ability to act more than once, reacting to real results instead of guessing everything in one shot: propose → execute → observe → decide again. (Part 6)" },
+    { id:"context", label:"Context Budget", angle:198, color:"var(--c4)",
+      desc:"A finite, quadratically-expensive window: keep the high-value tokens, compress the medium-value ones, drop the rest — before the window forces the decision for you. (Part 2)" },
+    { id:"gate", label:"Permission Gate", angle:270, color:"var(--c1)",
+      desc:"Least-privilege by default: auto-approve safe, reversible actions; stop and ask before anything hard to reverse, destructive, or affecting shared state. (Part 1)" },
+  ];
+  function renderAnatomy(){
+    const svg = document.getElementById("anatSvg");
+    svg.innerHTML = "";
+    const cx=240, cy=170, R=140;
+    ORGANS.forEach(o => {
+      const rad = o.angle*Math.PI/180;
+      const x = cx+R*Math.cos(rad), y = cy+R*Math.sin(rad);
+      svg.appendChild(el("line",{x1:cx,y1:cy,x2:x,y2:y,stroke:"var(--line)","stroke-width":1.6}));
+    });
+    svg.appendChild(el("circle",{cx,cy,r:55,fill:"var(--accent-soft)",stroke:"var(--accent)","stroke-width":2}));
+    svg.appendChild(txt(cx,cy-4,"MODEL","var(--accent)",15,"middle","700"));
+    svg.appendChild(txt(cx,cy+16,"(predicts tokens)","var(--ink-soft)",10.5,"middle"));
+    ORGANS.forEach(o => {
+      const rad = o.angle*Math.PI/180;
+      const x = cx+R*Math.cos(rad), y = cy+R*Math.sin(rad);
+      const g = el("g",{cursor:"pointer","data-id":o.id});
+      g.appendChild(el("circle",{cx:x,cy:y,r:38,fill:"#fff",stroke:o.color,"stroke-width":2.4}));
+      const lines = o.label.split(" ");
+      lines.forEach((ln,i) => g.appendChild(txt(x,y+5+(i-(lines.length-1)/2)*14,ln,o.color,11.5,"middle","700")));
+      g.addEventListener("click", () => selectOrgan(o.id));
+      svg.appendChild(g);
+    });
+  }
+  function selectOrgan(id){
+    const o = ORGANS.find(x=>x.id===id);
+    document.getElementById("anatInfo").innerHTML = `<b style="color:${o.color}">${o.label}</b> — ${o.desc}`;
+  }
+  renderAnatomy();
+
+  /* =========================================================
+     TAB 2 — MCP FLOW
+     ========================================================= */
+  let mcpStep = 0;
+  const MCP_MAX = 5;
+  const MCP_LINES = [
+    "Step 1: the harness (MCP client) discovers what this server currently offers — its tools, resources, and prompts — rather than having them hardcoded.",
+    "Step 2: the harness calls a specific tool on the server, with arguments, using the model's own ordinary tool-calling mechanism.",
+    "Step 3: the MCP server actually executes the real action (query a database, read a file, hit an API) — code the harness never had to write itself.",
+    "Step 4: the server returns a result back across the connection to the client.",
+    "Step 5: the harness appends that real result into the model's context, as new tokens for it to read on its next turn.",
+  ];
+  function renderMcp(){
+    const svg = document.getElementById("mcpSvg");
+    svg.innerHTML = "";
+    const clientX=90, serverX=390, boxY=60, boxW=110, boxH=60, midY=90;
+    svg.appendChild(el("rect",{x:clientX-boxW/2,y:boxY,width:boxW,height:boxH,rx:8,fill:"var(--accent-soft)",stroke:"var(--accent)","stroke-width":2}));
+    svg.appendChild(txt(clientX,boxY+28,"Harness","var(--accent)",13,"middle","700"));
+    svg.appendChild(txt(clientX,boxY+44,"(MCP client)","var(--ink-soft)",10.5,"middle"));
+    svg.appendChild(el("rect",{x:clientX-50,y:190,width:100,height:44,rx:8,fill:"#fff",stroke:"var(--c3)","stroke-width":2}));
+    svg.appendChild(txt(clientX,190+26,"Model","var(--c3)",12.5,"middle","700"));
+    svg.appendChild(el("rect",{x:serverX-boxW/2,y:boxY,width:boxW,height:boxH,rx:8,fill:"#fff",stroke:"var(--c1)","stroke-width":2}));
+    svg.appendChild(txt(serverX,boxY+28,"MCP Server","var(--c1)",13,"middle","700"));
+    svg.appendChild(txt(serverX,boxY+44,"(external)","var(--ink-soft)",10.5,"middle"));
+
+    function arrow(x1,y1,x2,y2,color,label){
+      svg.appendChild(el("line",{x1,y1,x2,y2,stroke:color,"stroke-width":2.4,"marker-end":"url(#ah)"}));
+      svg.appendChild(txt((x1+x2)/2,(y1+y2)/2-8,label,color,11,"middle","700"));
+    }
+    const defs = el("defs",{});
+    const marker = el("marker",{id:"ah",markerWidth:8,markerHeight:8,refX:6,refY:3,orient:"auto"});
+    marker.appendChild(el("path",{d:"M0,0 L6,3 L0,6 Z",fill:"var(--ink)"}));
+    defs.appendChild(marker); svg.appendChild(defs);
+
+    if(mcpStep>=1) arrow(clientX+boxW/2, boxY+30, serverX-boxW/2, boxY+30, "var(--c2)", "discover");
+    if(mcpStep>=2) arrow(clientX+boxW/2, boxY+45, serverX-boxW/2, boxY+45, "var(--accent)", "call tool(args)");
+    if(mcpStep>=3) svg.appendChild(el("circle",{cx:serverX,cy:boxY+boxH+14,r:5,fill:"var(--c1)"})), svg.appendChild(txt(serverX,boxY+boxH+30,"executing…","var(--c1)",11,"middle","700"));
+    if(mcpStep>=4) arrow(serverX-boxW/2, boxY+55, clientX+boxW/2, boxY+55, "var(--c3)", "result");
+    if(mcpStep>=5) arrow(clientX, boxY+boxH, clientX, 190, "var(--c4)", "append to context");
+
+    document.getElementById("btnMcpPrev").disabled = mcpStep<=0;
+    document.getElementById("btnMcpNext").disabled = mcpStep>=MCP_MAX;
+    document.getElementById("mcpLog").textContent = mcpStep===0 ? "Press Next step to begin." : MCP_LINES.slice(0,mcpStep).join("\n");
+  }
+  document.getElementById("btnMcpNext").addEventListener("click", () => { if(mcpStep<MCP_MAX) mcpStep++; renderMcp(); });
+  document.getElementById("btnMcpPrev").addEventListener("click", () => { if(mcpStep>0) mcpStep--; renderMcp(); });
+  document.getElementById("btnMcpReset").addEventListener("click", () => { mcpStep=0; renderMcp(); });
+  renderMcp();
+
+  /* =========================================================
+     TAB 3 — MULTI-AGENT GRAPH
+     ========================================================= */
+  let graphTopo = "sequential";
+  const graphState = {
+    sequential: {costs:[3,2,4,1]},
+    parallel: {costs:[3,2,4,1]},
+    conditional: {overhead:0.5, branches:[3,5,2], chosen:0},
+    cyclic: {worker:3, critic:1, revisions:2},
+  };
+  function buildGraphControls(){
+    const wrap = document.getElementById("graphControls");
+    wrap.innerHTML = "";
+    function slider(id,label,min,max,step,val,onInput){
+      const row = document.createElement("div"); row.className="row";
+      row.innerHTML = `<label>${label}</label><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"><span class="readout" id="${id}Out">${val}</span>`;
+      wrap.appendChild(row);
+      row.querySelector("input").addEventListener("input", e => { onInput(parseFloat(e.target.value)); document.getElementById(id+"Out").textContent=e.target.value; renderGraph(); });
+    }
+    if(graphTopo==="sequential" || graphTopo==="parallel"){
+      graphState[graphTopo].costs.forEach((c,i) => slider(`g_${graphTopo}_${i}`, `node ${String.fromCharCode(65+i)} cost (s)`, 0,10,0.5,c, v=>graphState[graphTopo].costs[i]=v));
+    } else if(graphTopo==="conditional"){
+      slider("g_cond_overhead","router overhead (s)",0,3,0.1,graphState.conditional.overhead, v=>graphState.conditional.overhead=v);
+      graphState.conditional.branches.forEach((c,i) => slider(`g_cond_b${i}`, `branch ${i+1} cost (s)`, 0,10,0.5,c, v=>graphState.conditional.branches[i]=v));
+    } else if(graphTopo==="cyclic"){
+      slider("g_cyc_worker","worker cost (s)",0,10,0.5,graphState.cyclic.worker, v=>graphState.cyclic.worker=v);
+      slider("g_cyc_critic","critic cost (s)",0,10,0.5,graphState.cyclic.critic, v=>graphState.cyclic.critic=v);
+      slider("g_cyc_rev","revisions (full passes)",1,4,1,graphState.cyclic.revisions, v=>graphState.cyclic.revisions=v);
+    }
+  }
+  function renderGraph(){
+    const svg = document.getElementById("graphSvg");
+    svg.innerHTML = "";
+    let total = 0, note = "";
+    if(graphTopo==="sequential"){
+      const costs = graphState.sequential.costs;
+      const xs=[70,190,310,410];
+      xs.forEach((x,i) => {
+        svg.appendChild(el("circle",{cx:x,cy:110,r:26,fill:"var(--accent-soft)",stroke:"var(--accent)","stroke-width":2}));
+        svg.appendChild(txt(x,106,String.fromCharCode(65+i),"var(--accent)",14,"middle","700"));
+        svg.appendChild(txt(x,124,costs[i]+"s","var(--ink-soft)",10,"middle"));
+        if(i<xs.length-1) svg.appendChild(el("line",{x1:x+26,y1:110,x2:xs[i+1]-26,y2:110,stroke:"var(--ink-soft)","stroke-width":1.6}));
+      });
+      total = costs.reduce((a,b)=>a+b,0);
+      note = `sum of every node: ${costs.join(" + ")} = ${total}s`;
+    } else if(graphTopo==="parallel"){
+      const costs = graphState.parallel.costs;
+      const startX=50, endX=430, ys=[40,90,140,190];
+      svg.appendChild(el("circle",{cx:startX,cy:115,r:20,fill:"#fff",stroke:"var(--ink-soft)","stroke-width":2}));
+      svg.appendChild(txt(startX,120,"start","var(--ink-soft)",10,"middle"));
+      svg.appendChild(el("circle",{cx:endX,cy:115,r:20,fill:"#fff",stroke:"var(--ink-soft)","stroke-width":2}));
+      svg.appendChild(txt(endX,120,"merge","var(--ink-soft)",9.5,"middle"));
+      ys.forEach((y,i) => {
+        const x=240;
+        svg.appendChild(el("line",{x1:startX+20,y1:115,x2:x-26,y2:y,stroke:"var(--line)","stroke-width":1.4}));
+        svg.appendChild(el("line",{x1:x+26,y1:y,x2:endX-20,y2:115,stroke:"var(--line)","stroke-width":1.4}));
+        svg.appendChild(el("circle",{cx:x,cy:y,r:24,fill:"var(--accent-soft)",stroke:"var(--accent)","stroke-width":2}));
+        svg.appendChild(txt(x,y-2,String.fromCharCode(65+i),"var(--accent)",13,"middle","700"));
+        svg.appendChild(txt(x,y+13,costs[i]+"s","var(--ink-soft)",9.5,"middle"));
+      });
+      total = Math.max(...costs);
+      note = `slowest node only: max(${costs.join(", ")}) = ${total}s`;
+    } else if(graphTopo==="conditional"){
+      const {overhead,branches,chosen} = graphState.conditional;
+      svg.appendChild(el("circle",{cx:80,cy:110,r:24,fill:"var(--c2)",fill:"var(--accent-soft)",stroke:"var(--accent)","stroke-width":2}));
+      svg.appendChild(txt(80,106,"router","var(--accent)",11,"middle","700"));
+      svg.appendChild(txt(80,122,overhead+"s","var(--ink-soft)",9.5,"middle"));
+      const ys=[40,110,180];
+      branches.forEach((c,i) => {
+        const x=280, y=ys[i];
+        const isChosen = i===chosen;
+        svg.appendChild(el("line",{x1:104,y1:110,x2:x-26,y2:y,stroke: isChosen?"var(--c1)":"var(--line)","stroke-width": isChosen?2.6:1.4}));
+        const g = el("g",{cursor:"pointer"});
+        g.appendChild(el("circle",{cx:x,cy:y,r:24,fill: isChosen?"var(--accent-soft)":"#fff",stroke: isChosen?"var(--c1)":"var(--line)","stroke-width":2}));
+        g.appendChild(txt(x,y-2,"branch "+(i+1),isChosen?"var(--c1)":"var(--ink-soft)",10,"middle","700"));
+        g.appendChild(txt(x,y+13,c+"s",isChosen?"var(--c1)":"var(--ink-soft)",9.5,"middle"));
+        g.addEventListener("click", () => { graphState.conditional.chosen=i; renderGraph(); });
+        svg.appendChild(g);
+      });
+      total = overhead + branches[chosen];
+      note = `router overhead + the one branch taken: ${overhead} + ${branches[chosen]} = ${total}s (click a branch to change which one runs)`;
+    } else if(graphTopo==="cyclic"){
+      const {worker,critic,revisions} = graphState.cyclic;
+      svg.appendChild(el("circle",{cx:150,cy:110,r:28,fill:"var(--accent-soft)",stroke:"var(--accent)","stroke-width":2}));
+      svg.appendChild(txt(150,105,"worker","var(--accent)",12,"middle","700"));
+      svg.appendChild(txt(150,122,worker+"s","var(--ink-soft)",10,"middle"));
+      svg.appendChild(el("circle",{cx:330,cy:110,r:28,fill:"#fff",stroke:"var(--c3)","stroke-width":2}));
+      svg.appendChild(txt(330,105,"critic","var(--c3)",12,"middle","700"));
+      svg.appendChild(txt(330,122,critic+"s","var(--ink-soft)",10,"middle"));
+      svg.appendChild(el("line",{x1:178,y1:110,x2:302,y2:110,stroke:"var(--ink-soft)","stroke-width":1.6,"marker-end":"url(#ah2)"}));
+      const defs = el("defs",{});
+      const m1 = el("marker",{id:"ah2",markerWidth:8,markerHeight:8,refX:6,refY:3,orient:"auto"});
+      m1.appendChild(el("path",{d:"M0,0 L6,3 L0,6 Z",fill:"var(--ink-soft)"})); defs.appendChild(m1);
+      const m2 = el("marker",{id:"ah3",markerWidth:8,markerHeight:8,refX:6,refY:3,orient:"auto"});
+      m2.appendChild(el("path",{d:"M0,0 L6,3 L0,6 Z",fill:"var(--c3)"})); defs.appendChild(m2);
+      svg.appendChild(defs);
+      svg.appendChild(el("path",{d:"M330,138 C330,180 150,180 150,138",fill:"none",stroke:"var(--c3)","stroke-width":1.6,"stroke-dasharray":"5,4","marker-end":"url(#ah3)"}));
+      svg.appendChild(txt(240,195,"send back for revision",  "var(--c3)",10.5,"middle"));
+      total = revisions*(worker+critic);
+      note = `${revisions} full pass(es) of worker+critic: ${revisions}×(${worker}+${critic}) = ${total}s`;
+    }
+    document.getElementById("graphVerdict").textContent = `Total latency: ${total.toFixed(1)}s — ${note}`;
+  }
+  function setGraphTopo(t, btn){
+    graphTopo = t;
+    ["gtSequential","gtParallel","gtConditional","gtCyclic"].forEach(id=>document.getElementById(id).classList.remove("active"));
+    btn.classList.add("active");
+    buildGraphControls(); renderGraph();
+  }
+  document.getElementById("gtSequential").addEventListener("click", function(){ setGraphTopo("sequential", this); });
+  document.getElementById("gtParallel").addEventListener("click", function(){ setGraphTopo("parallel", this); });
+  document.getElementById("gtConditional").addEventListener("click", function(){ setGraphTopo("conditional", this); });
+  document.getElementById("gtCyclic").addEventListener("click", function(){ setGraphTopo("cyclic", this); });
+  buildGraphControls(); renderGraph();
+
+  /* =========================================================
+     TAB 4 — MULTI-MODEL ROUTING
+     ========================================================= */
+  const rIds = ["rCheapCost","rCheapEasy","rCheapHard","rExpCost","rExpEasy","rExpHard","rFracEasy"];
+  function renderRouting(){
+    const v = {};
+    rIds.forEach(id => { v[id] = parseFloat(document.getElementById(id).value); document.getElementById(id+"Out").textContent = v[id].toFixed(id.includes("Cost")?4:2); });
+    const fe = v.rFracEasy, fh = 1-fe;
+    function strat(costE,costH,sE,sH){
+      return { cost: fe*costE+fh*costH, succ: fe*sE+fh*sH };
+    }
+    const always_exp = strat(v.rExpCost, v.rExpCost, v.rExpEasy, v.rExpHard);
+    const always_cheap = strat(v.rCheapCost, v.rCheapCost, v.rCheapEasy, v.rCheapHard);
+    const routed = strat(v.rCheapCost, v.rExpCost, v.rCheapEasy, v.rExpHard);
+    const rows = [
+      ["Always expensive", always_exp],
+      ["Always cheap", always_cheap],
+      ["Routed (cheap→easy, expensive→hard)", routed],
+    ];
+    document.getElementById("routingTable").innerHTML =
+      "<tr><th>Strategy</th><th>Cost / task</th><th>Success rate</th></tr>" +
+      rows.map(([name,r]) => `<tr><td>${name}</td><td>$${r.cost.toFixed(4)}</td><td>${(r.succ*100).toFixed(1)}%</td></tr>`).join("");
+  }
+  rIds.forEach(id => document.getElementById(id).addEventListener("input", renderRouting));
+  document.getElementById("rtPreset").addEventListener("click", () => {
+    const defaults = {rCheapCost:0.001, rCheapEasy:0.95, rCheapHard:0.40, rExpCost:0.02, rExpEasy:0.99, rExpHard:0.95, rFracEasy:0.7};
+    Object.keys(defaults).forEach(id => document.getElementById(id).value = defaults[id]);
+    renderRouting();
+  });
+  renderRouting();
+
+  /* =========================================================
+     TAB 5 — DEFENSE IN DEPTH
+     ========================================================= */
+  const dfLayers = document.getElementById("dfLayers"), dfRate = document.getElementById("dfRate");
+  function renderDefense(){
+    const n = parseInt(dfLayers.value,10), p = parseFloat(dfRate.value);
+    dfLayersOut.textContent = n; dfRateOut.textContent = p.toFixed(2);
+    const svg = document.getElementById("dfSvg");
+    svg.innerHTML = "";
+    const cx=110, cy=110;
+    for(let i=n; i>=1; i--){
+      const r = 12 + i*(85/n);
+      svg.appendChild(el("circle",{cx,cy,r,fill:"none",stroke: i%2? "var(--accent)":"var(--c1)","stroke-width":2,opacity:0.75}));
+    }
+    svg.appendChild(el("circle",{cx,cy,r:6,fill:"var(--c3)"}));
+    svg.appendChild(txt(cx,cy+4+18," ","var(--ink)",1));
+    const combined = 1 - Math.pow(1-p, n);
+    document.getElementById("dfVerdict").innerHTML =
+      `${n} independent layer(s), each catching an attack ${(p*100).toFixed(0)}% of the time on its own.\n`+
+      `P(slips through all ${n}) = (1−${p.toFixed(2)})^${n} = ${Math.pow(1-p,n).toFixed(4)}\n`+
+      `Combined catch rate = 1 − that = ${(combined*100).toFixed(1)}%`;
+  }
+  dfLayers.addEventListener("input", renderDefense);
+  dfRate.addEventListener("input", renderDefense);
+  document.getElementById("dfSimulate").addEventListener("click", () => {
+    const n = parseInt(dfLayers.value,10), p = parseFloat(dfRate.value);
+    const N=200; let caught=0;
+    for(let i=0;i<N;i++){
+      let blocked=false;
+      for(let L=0;L<n;L++){ if(Math.random()<p){ blocked=true; break; } }
+      if(blocked) caught++;
+    }
+    const theoretical = (1-Math.pow(1-p,n))*100;
+    document.getElementById("dfSimResult").textContent =
+      `Simulated ${N} attacks: caught ${caught}/${N} = ${(caught/N*100).toFixed(1)}% (theoretical: ${theoretical.toFixed(1)}%)`;
+  });
+  renderDefense();
+})();
+</script>
+</body>
+</html>

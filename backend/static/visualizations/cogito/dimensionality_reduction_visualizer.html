@@ -61,10 +61,11 @@
 <body>
 <div class="wrap">
   <h1>Dimensionality Reduction, live</h1>
-  <p class="sub">Six tabs, matching the tutorial's six verified demonstrations.</p>
+  <p class="sub">Seven tabs, matching the tutorial's seven verified demonstrations.</p>
 
   <div class="tabs">
-    <button class="tabbtn active" data-tab="curse">Curse of Dimensionality</button>
+    <button class="tabbtn active" data-tab="proj">Matrix &times; Vector = Projection</button>
+    <button class="tabbtn" data-tab="curse">Curse of Dimensionality</button>
     <button class="tabbtn" data-tab="pca">PCA Workflow</button>
     <button class="tabbtn" data-tab="jl">Random Projection &amp; JL Lemma</button>
     <button class="tabbtn" data-tab="lda">LDA vs. PCA</button>
@@ -72,8 +73,32 @@
     <button class="tabbtn" data-tab="ae">Autoencoder = PCA</button>
   </div>
 
+  <!-- ============ TAB 0: MATRIX x VECTOR = PROJECTION ============ -->
+  <div class="tabpanel active" id="tab-proj">
+    <div class="panel">
+      <h2>Every Row, Projected Onto One Direction, At Once</h2>
+      <p class="sub">The lecture's own 3 points -- (1,4), (3,2), (4,4). Drag the angle to rotate v; drag the stretch to see what happens when v isn't a unit vector.</p>
+      <div class="row">
+        <button class="op primary" id="btnProjPreset30">Preset: &theta;=30&deg;, unit vector</button>
+        <button class="op" id="btnProjPresetNonunit">Preset: non-unit v=(1,2)</button>
+        <button class="op" id="btnProjReset">Reset</button>
+      </div>
+      <div class="row"><label>Angle &theta; (&deg;)</label><input type="range" id="projTheta" min="0" max="180" step="1" value="30"><span class="readout" id="projThetaOut">30</span></div>
+      <div class="row"><label>Stretch (|v|)</label><input type="range" id="projScale" min="0.5" max="5" step="0.1" value="1"><span class="readout" id="projScaleOut">1.0</span></div>
+      <svg id="projSvg" width="420" height="320" viewBox="0 0 420 320"></svg>
+      <table class="coord" id="projTable"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">|v|</div><div class="num" id="projNormV">-</div></div>
+        <div class="metric coral"><div class="lbl">Var(raw Xv)</div><div class="num" id="projVarRaw">-</div></div>
+        <div class="metric green"><div class="lbl">Var(true projection)</div><div class="num" id="projVarTrue">-</div></div>
+        <div class="metric amber"><div class="lbl">ratio (should = |v|&sup2;)</div><div class="num" id="projVarRatio">-</div></div>
+      </div>
+      <div class="story-line" id="projStory"></div>
+    </div>
+  </div>
+
   <!-- ============ TAB 1: CURSE OF DIMENSIONALITY ============ -->
-  <div class="tabpanel active" id="tab-curse">
+  <div class="tabpanel" id="tab-curse">
     <div class="panel">
       <h2>As Dimensions Grow, "Close" and "Far" Converge</h2>
       <p class="sub">200 random points in a unit hypercube. Drag the dimension count and watch the gap between the closest and farthest pair collapse.</p>
@@ -96,6 +121,21 @@
   <!-- ============ TAB 2: PCA WORKFLOW ============ -->
   <div class="tabpanel" id="tab-pca">
     <div class="panel">
+      <h2>Why Center First?</h2>
+      <p class="sub">A genuinely correlated 200-point cloud, true signal direction fixed by construction. Toggle whether it sits at the origin or gets shifted away from it before PCA runs.</p>
+      <div class="row">
+        <button class="op primary active" id="btnCenterOn">Centered (correct)</button>
+        <button class="op" id="btnCenterOff">Shifted away from origin (skip centering)</button>
+      </div>
+      <svg id="centerSvg" width="360" height="240" viewBox="0 0 360 240"></svg>
+      <table class="coord" id="centerTable"></table>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">‖mean‖² (the "jet engine")</div><div class="num" id="centerMeanSq">-</div></div>
+        <div class="metric green"><div class="lbl">Cov(X)'s own top eigenvalue (the "whisper")</div><div class="num" id="centerCovEig">-</div></div>
+      </div>
+      <div class="story-line" id="centerStory"></div>
+    </div>
+    <div class="panel">
       <h2>Explained Variance &amp; Reconstruction Error</h2>
       <p class="sub">The shared 10-point dataset already verified in Continuity &amp; Extrema and Eigenvalues &amp; Eigenvectors.</p>
       <div class="row"><button class="op primary" id="btnPcaLoad">Load shared dataset</button></div>
@@ -109,6 +149,44 @@
       <div class="row"><button class="op primary" id="btnScreeLoad">Load 5D scree example</button></div>
       <table class="coord" id="screeTable"></table>
       <div class="story-line" id="screeStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Eigenvector Sign Ambiguity</h2>
+      <p class="sub">The identical shared dataset. Flip PC1's sign and watch the arrow reverse -- while variance and reconstruction error refuse to move.</p>
+      <div class="row"><button class="op primary" id="btnSignFlip">Flip PC1's sign</button></div>
+      <svg id="signSvg" width="360" height="260" viewBox="0 0 360 260"></svg>
+      <table class="coord" id="signTable"></table>
+      <div class="story-line" id="signStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Whitening: Turning Every Channel to the Same Volume</h2>
+      <p class="sub">Same shared dataset, projected onto both principal components. Toggle whitening and watch an elongated cloud become a perfect circle.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnWhitenOff">Raw PCA projection</button>
+        <button class="op" id="btnWhitenOn">Whitened</button>
+      </div>
+      <svg id="whitenSvg" width="360" height="260" viewBox="0 0 360 260"></svg>
+      <div class="metric-row">
+        <div class="metric"><div class="lbl">PC1 variance</div><div class="num" id="whitenVar1">-</div></div>
+        <div class="metric"><div class="lbl">PC2 variance</div><div class="num" id="whitenVar2">-</div></div>
+      </div>
+      <div class="story-line" id="whitenStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Why This Direction? Rotating a Test Vector Through the Data</h2>
+      <p class="sub">Same shared dataset. Drag the angle and watch the variance along that one test direction change live -- the eigenvector isn't assumed to be the best direction, it's found by literally being the best one.</p>
+      <div class="row"><label>Test angle</label><input type="range" id="rotAngle" min="0" max="180" step="1" value="0"><span class="readout" id="rotAngleOut">0&deg;</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnSnapPc1">Snap to PC1 (max)</button>
+        <button class="op" id="btnSnapPc2">Snap to PC2 (min)</button>
+        <button class="op" id="btnIsoToggle">Use a circular (isotropic) cloud instead</button>
+      </div>
+      <svg id="rotSvg" width="360" height="280" viewBox="0 0 360 280"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">variance along test direction</div><div class="num" id="rotVar">-</div></div>
+        <div class="metric green"><div class="lbl">PC1 eigenvalue (the true max)</div><div class="num" id="rotMaxEig">-</div></div>
+      </div>
+      <div class="story-line" id="rotStory"></div>
     </div>
   </div>
 
@@ -203,6 +281,77 @@
   }));
 
   /* ============================================================
+     TAB 0 — MATRIX x VECTOR = PROJECTION
+     ============================================================ */
+  const PROJ_POINTS = [[1,4],[3,2],[4,4]];
+  let projTheta = 30, projScale = 1;
+  function renderProj(){
+    const thetaRad = projTheta*Math.PI/180;
+    const dir = [Math.cos(thetaRad), Math.sin(thetaRad)];
+    const v = [dir[0]*projScale, dir[1]*projScale];
+
+    const rawZ = PROJ_POINTS.map(p => p[0]*v[0]+p[1]*v[1]);
+    const trueProj = PROJ_POINTS.map(p => p[0]*dir[0]+p[1]*dir[1]); // dot with the UNIT direction -- the actual shadow distance
+    function mean(a){ return a.reduce((s,x)=>s+x,0)/a.length; }
+    function variance(a){ const m=mean(a); return a.reduce((s,x)=>s+(x-m)*(x-m),0)/a.length; }
+    const varRaw = variance(rawZ), varTrue = variance(trueProj);
+
+    const svg = document.getElementById("projSvg");
+    svg.innerHTML = "";
+    const W=420,H=320,pad=36,maxAxis=6.5;
+    function X(x){ return pad + (x+2)/(maxAxis+2)*(W-2*pad); }
+    function Y(y){ return H-pad - (y+2)/(maxAxis+2)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:X(-2),y1:Y(0),x2:X(maxAxis),y2:Y(0),stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:X(0),y1:Y(-2),x2:X(0),y2:Y(maxAxis),stroke:"var(--chalk-dim)"}));
+    // the line through the origin along dir, drawn using the UNIT direction regardless of stretch --
+    // stretch only changes v's length, never the direction the line itself points.
+    const lo = -2, hi = 7.5;
+    svg.appendChild(el("line",{x1:X(dir[0]*lo),y1:Y(dir[1]*lo),x2:X(dir[0]*hi),y2:Y(dir[1]*hi),stroke:"var(--amber)","stroke-width":2}));
+    const colors = ["var(--blue)","var(--green)","var(--coral)"];
+    PROJ_POINTS.forEach((p,i) => {
+      const t = trueProj[i];
+      const foot = [dir[0]*t, dir[1]*t];
+      svg.appendChild(el("line",{x1:X(p[0]),y1:Y(p[1]),x2:X(foot[0]),y2:Y(foot[1]),stroke:colors[i],"stroke-width":1,"stroke-dasharray":"4,3",opacity:0.8}));
+      svg.appendChild(el("circle",{cx:X(foot[0]),cy:Y(foot[1]),r:4,fill:colors[i],opacity:0.9}));
+      svg.appendChild(el("circle",{cx:X(p[0]),cy:Y(p[1]),r:6,fill:colors[i]}));
+      svg.appendChild(el("text",{x:X(p[0])+9,y:Y(p[1])-7,"font-size":11,fill:colors[i]}, `(${p[0]},${p[1]})`));
+    });
+    svg.appendChild(el("text",{x:X(dir[0]*hi)-4,y:Y(dir[1]*hi)-8,"font-size":11,fill:"var(--amber)","text-anchor":"end"}, "v's direction"));
+
+    const table = document.getElementById("projTable");
+    table.innerHTML = `<tr><th>Point</th><th>raw X&middot;v</th><th>true projection (X&middot;unit v)</th><th>ratio</th></tr>` +
+      PROJ_POINTS.map((p,i) => `<tr><td>(${p[0]},${p[1]})</td><td${projScale!==1?' class="bad"':''}>${rawZ[i].toFixed(4)}</td><td class="winner">${trueProj[i].toFixed(4)}</td><td>${(rawZ[i]/trueProj[i]).toFixed(4)}</td></tr>`).join("");
+
+    document.getElementById("projNormV").textContent = projScale.toFixed(2);
+    document.getElementById("projVarRaw").textContent = varRaw.toFixed(4);
+    document.getElementById("projVarTrue").textContent = varTrue.toFixed(4);
+    document.getElementById("projVarRatio").textContent = (varRaw/varTrue).toFixed(4) + ` (|v|²=${(projScale*projScale).toFixed(4)})`;
+    document.getElementById("projThetaOut").textContent = projTheta;
+    document.getElementById("projScaleOut").textContent = projScale.toFixed(1);
+    document.getElementById("projStory").textContent = projScale === 1
+      ? `v is a unit vector: every raw X·v entry above IS the true perpendicular-projection distance, exactly.`
+      : `v has length ${projScale.toFixed(2)}, not 1: every raw entry is the true projection distance scaled by ${projScale.toFixed(2)}x, and Var(raw Xv) is scaled by ${projScale.toFixed(2)}² = ${(projScale*projScale).toFixed(2)}x -- the exact "unbounded variance" reason PCA requires unit vectors.`;
+  }
+  document.getElementById("projTheta").addEventListener("input", (e) => { projTheta = parseFloat(e.target.value); renderProj(); });
+  document.getElementById("projScale").addEventListener("input", (e) => { projScale = parseFloat(e.target.value); renderProj(); });
+  document.getElementById("btnProjPreset30").addEventListener("click", () => {
+    projTheta = 30; projScale = 1;
+    document.getElementById("projTheta").value = 30; document.getElementById("projScale").value = 1;
+    renderProj();
+  });
+  document.getElementById("btnProjPresetNonunit").addEventListener("click", () => {
+    projTheta = Math.atan2(2,1)*180/Math.PI; projScale = Math.sqrt(5);
+    document.getElementById("projTheta").value = projTheta; document.getElementById("projScale").value = projScale;
+    renderProj();
+  });
+  document.getElementById("btnProjReset").addEventListener("click", () => {
+    projTheta = 0; projScale = 1;
+    document.getElementById("projTheta").value = 0; document.getElementById("projScale").value = 1;
+    renderProj();
+  });
+  renderProj();
+
+  /* ============================================================
      TAB 1 — CURSE OF DIMENSIONALITY
      ============================================================ */
   function pairwiseDistances(pts){
@@ -264,6 +413,90 @@
     v1 = [v1[0]/n1, v1[1]/n1];
     return {l1,l2,v1};
   }
+  /* ---- Why Center First? ---- */
+  function buildCorrelatedCloud(seed, n){
+    const rand = makeLCG(seed);
+    const pts = [];
+    for(let i=0;i<n;i++){
+      const t = boxMuller(rand);
+      const noise = boxMuller(rand)*0.3;
+      pts.push([t*3, t*3+noise]);
+    }
+    return pts;
+  }
+  const CENTER_CLOUD = buildCorrelatedCloud(123, 200);
+  const CENTER_SHIFT = [16, 2];
+  let centerMode = "on";
+  function meanOf(pts){
+    const n = pts.length; const m = [0,0];
+    pts.forEach(p => { m[0]+=p[0]; m[1]+=p[1]; });
+    return [m[0]/n, m[1]/n];
+  }
+  function secondMomentMatrix(pts){
+    const n = pts.length; let a=0,b=0,c=0;
+    pts.forEach(([x,y]) => { a+=x*x; b+=x*y; c+=y*y; });
+    return [a/n, b/n, c/n];
+  }
+  function angleOf(v){ return ((Math.atan2(v[1],v[0])*180/Math.PI)+180)%180; }
+  function renderCenter(){
+    const shifted = CENTER_CLOUD.map(p => centerMode==="off" ? [p[0]+CENTER_SHIFT[0], p[1]+CENTER_SHIFT[1]] : p);
+    const mean = meanOf(shifted);
+    const centered = shifted.map(p => [p[0]-mean[0], p[1]-mean[1]]);
+    const [Sxx,Sxy,Syy] = secondMomentMatrix(centered);
+    const trueEig = eig2x2(Sxx,Sxy,Syy);
+    const trueAngle = angleOf(trueEig.v1);
+
+    let foundAngle, foundVal, usedMatrixLabel;
+    if (centerMode === "on"){
+      foundAngle = trueAngle; foundVal = trueEig.l1; usedMatrixLabel = "Cov(X), mean subtracted first";
+    } else {
+      const [Mxx,Mxy,Myy] = secondMomentMatrix(shifted);
+      const naiveEig = eig2x2(Mxx,Mxy,Myy);
+      foundAngle = angleOf(naiveEig.v1); foundVal = naiveEig.l1; usedMatrixLabel = "raw XᵀX/n, centering skipped";
+    }
+    const meanAngle = angleOf(mean);
+    const meanNormSq = mean[0]*mean[0]+mean[1]*mean[1];
+
+    const svg = document.getElementById("centerSvg");
+    svg.innerHTML = "";
+    const cx=180, cy=120, R=90;
+    svg.appendChild(el("circle",{cx,cy,r:R,fill:"none",stroke:"var(--border)"}));
+    function arrowAt(angDeg, color, label, len){
+      const rad = angDeg*Math.PI/180;
+      const x2 = cx + Math.cos(rad)*len, y2 = cy - Math.sin(rad)*len;
+      svg.appendChild(el("line",{x1:cx,y1:cy,x2,y2,stroke:color,"stroke-width":2.5}));
+      svg.appendChild(el("text",{x: x2+(x2>cx?6:-6), y:y2, "font-size":11, fill:color, "text-anchor": x2>cx?"start":"end"}, label));
+    }
+    arrowAt(trueAngle, "var(--green)", "true signal", R*0.95);
+    if (centerMode === "off") arrowAt(meanAngle, "var(--chalk-dim)", "mean direction", R*0.7);
+    arrowAt(foundAngle, "var(--amber)", "PCA found this", R*0.8);
+
+    const table = document.getElementById("centerTable");
+    table.innerHTML = `<tr><th>Method</th><th>Direction found</th><th>"Variance"/eigenvalue</th></tr>
+      <tr class="winner"><td class="winner">True (centered first)</td><td class="winner">${trueAngle.toFixed(2)}°</td><td class="winner">${trueEig.l1.toFixed(4)}</td></tr>
+      <tr${centerMode==="off"?' class="bad"':''}><td>${usedMatrixLabel}</td><td${centerMode==="off"?' class="bad"':''}>${foundAngle.toFixed(2)}°</td><td${centerMode==="off"?' class="bad"':''}>${foundVal.toFixed(4)}</td></tr>`;
+
+    document.getElementById("centerMeanSq").textContent = meanNormSq.toFixed(2);
+    document.getElementById("centerCovEig").textContent = trueEig.l1.toFixed(4);
+
+    document.getElementById("centerStory").textContent = centerMode === "on"
+      ? `Centered first: PCA correctly finds the true ${trueAngle.toFixed(2)}° signal direction, variance ${trueEig.l1.toFixed(4)}. (‖mean‖²=${meanNormSq.toFixed(2)} was already subtracted away, so it never gets a vote.)`
+      : `Centering skipped: PCA's "top direction" swings to ${foundAngle.toFixed(2)}° -- almost exactly the mean's own direction (${meanAngle.toFixed(2)}°), ${Math.abs(trueAngle-foundAngle).toFixed(1)}° away from the true ${trueAngle.toFixed(2)}° signal. Look at the two numbers below: ‖mean‖² outweighs Cov(X)'s own top eigenvalue by ${(meanNormSq/trueEig.l1).toFixed(1)}x -- the jet engine drowns out the whisper, and the eigendecomposition reports the jet engine.`;
+  }
+  document.getElementById("btnCenterOn").addEventListener("click", () => {
+    centerMode = "on";
+    document.getElementById("btnCenterOn").classList.add("active");
+    document.getElementById("btnCenterOff").classList.remove("active");
+    renderCenter();
+  });
+  document.getElementById("btnCenterOff").addEventListener("click", () => {
+    centerMode = "off";
+    document.getElementById("btnCenterOff").classList.add("active");
+    document.getElementById("btnCenterOn").classList.remove("active");
+    renderCenter();
+  });
+  renderCenter();
+
   function runPca(){
     const n = PCA_POINTS.length;
     const mx = PCA_POINTS.reduce((s,p)=>s+p[0],0)/n, my = PCA_POINTS.reduce((s,p)=>s+p[1],0)/n;
@@ -302,6 +535,174 @@
   }
   document.getElementById("btnPcaLoad").addEventListener("click", runPca);
   runPca();
+
+  /* ---- Eigenvector Sign Ambiguity ---- */
+  let signFlipped = false;
+  function pcaEigCommon(){
+    const n = PCA_POINTS.length;
+    const mx = PCA_POINTS.reduce((s,p)=>s+p[0],0)/n, my = PCA_POINTS.reduce((s,p)=>s+p[1],0)/n;
+    const cX = PCA_POINTS.map(p=>[p[0]-mx,p[1]-my]);
+    let Sxx=0,Sxy=0,Syy=0;
+    cX.forEach(([x,y])=>{Sxx+=x*x;Sxy+=x*y;Syy+=y*y;});
+    Sxx/=n; Sxy/=n; Syy/=n;
+    const eig = eig2x2(Sxx,Sxy,Syy);
+    const v2 = [-eig.v1[1], eig.v1[0]];
+    return {n, mx, my, cX, l1:eig.l1, l2:eig.l2, v1:eig.v1, v2};
+  }
+  function runSign(){
+    const {n, mx, my, cX, l1, l2, v1} = pcaEigCommon();
+    const sign = signFlipped ? -1 : 1;
+    const v = [v1[0]*sign, v1[1]*sign];
+    const angle = Math.atan2(v[1],v[0])*180/Math.PI;
+    const Z = cX.map(([x,y]) => x*v[0]+y*v[1]);
+    const variance = Z.reduce((s,z)=>s+z*z,0)/n;
+    const reconErr = cX.reduce((s,[x,y],i) => {
+      const rx = Z[i]*v[0], ry = Z[i]*v[1];
+      return s + (x-rx)*(x-rx) + (y-ry)*(y-ry);
+    }, 0);
+
+    const svg = document.getElementById("signSvg");
+    svg.innerHTML = "";
+    const W=360,H=260,pad=30;
+    function X(x){ return pad + (x-0)/7*(W-2*pad); }
+    function Y(y){ return H-pad - (y-0)/7*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    const arrowLen = 3.2;
+    const tailX = mx - v[0]*arrowLen, tailY = my - v[1]*arrowLen;
+    const headX = mx + v[0]*arrowLen, headY = my + v[1]*arrowLen;
+    svg.appendChild(el("line",{x1:X(tailX),y1:Y(tailY),x2:X(headX),y2:Y(headY),stroke:"var(--amber)","stroke-width":2.5,"marker-end":"url(#signArrowHead)"}));
+    const defs = el("defs",{});
+    const marker = el("marker",{id:"signArrowHead",markerWidth:8,markerHeight:8,refX:6,refY:3,orient:"auto"});
+    marker.appendChild(el("path",{d:"M0,0 L6,3 L0,6 Z", fill:"var(--amber)"}));
+    defs.appendChild(marker);
+    svg.insertBefore(defs, svg.firstChild);
+    PCA_POINTS.forEach(([x,y])=>{
+      svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:5,fill:"var(--blue)",opacity:0.85}));
+    });
+
+    document.getElementById("signTable").innerHTML =
+      `<tr><th>Sign</th><th>Angle</th><th>Variance</th><th>Reconstruction error</th></tr>
+       <tr><td>${signFlipped?"−v1":"+v1"}</td><td>${angle.toFixed(4)}°</td><td>${variance.toFixed(4)}</td><td>${reconErr.toFixed(4)}</td></tr>`;
+    document.getElementById("signStory").textContent =
+      `Angle flipped by exactly 180° (now ${angle.toFixed(2)}°), but variance (${variance.toFixed(4)}) and reconstruction error (${reconErr.toFixed(4)}) are unchanged -- only the label moved, nothing PCA actually computed.`;
+  }
+  document.getElementById("btnSignFlip").addEventListener("click", () => { signFlipped = !signFlipped; runSign(); });
+  runSign();
+
+  /* ---- Whitening ---- */
+  let whitenOn = false;
+  function runWhiten(){
+    const {n, cX, l1, l2, v1, v2} = pcaEigCommon();
+    let Z1 = cX.map(([x,y]) => x*v1[0]+y*v1[1]);
+    let Z2 = cX.map(([x,y]) => x*v2[0]+y*v2[1]);
+    if (whitenOn){
+      Z1 = Z1.map(z => z/Math.sqrt(l1));
+      Z2 = Z2.map(z => z/Math.sqrt(l2));
+    }
+    const var1 = Z1.reduce((s,z)=>s+z*z,0)/n;
+    const var2 = Z2.reduce((s,z)=>s+z*z,0)/n;
+    document.getElementById("whitenVar1").textContent = var1.toFixed(4);
+    document.getElementById("whitenVar2").textContent = var2.toFixed(4);
+
+    const svg = document.getElementById("whitenSvg");
+    svg.innerHTML = "";
+    const W=360,H=260,pad=30;
+    const range = whitenOn ? 3.5 : Math.sqrt(l1)*3.2;
+    function X(x){ return pad + (x+range)/(2*range)*(W-2*pad); }
+    function Y(y){ return H-pad - (y+range)/(2*range)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H/2,x2:W-pad,y2:H/2,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:W/2,y1:pad,x2:W/2,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    for(let i=0;i<n;i++){
+      svg.appendChild(el("circle",{cx:X(Z1[i]),cy:Y(Z2[i]),r:5,fill:"var(--blue)",opacity:0.85}));
+    }
+    document.getElementById("whitenStory").textContent = whitenOn
+      ? `Whitened: both PC1 and PC2 now have variance exactly ${var1.toFixed(2)} and ${var2.toFixed(2)} -- a perfectly round cloud, no direction reads "louder" than the other.`
+      : `Raw projection: PC1 variance (${var1.toFixed(4)}) is far larger than PC2's (${var2.toFixed(4)}) -- the natural elongated shape PCA's own ranking produces.`;
+  }
+  document.getElementById("btnWhitenOff").addEventListener("click", () => {
+    whitenOn=false; document.getElementById("btnWhitenOff").classList.add("active"); document.getElementById("btnWhitenOn").classList.remove("active"); runWhiten();
+  });
+  document.getElementById("btnWhitenOn").addEventListener("click", () => {
+    whitenOn=true; document.getElementById("btnWhitenOn").classList.add("active"); document.getElementById("btnWhitenOff").classList.remove("active"); runWhiten();
+  });
+  runWhiten();
+
+  /* ---- Why This Direction? Rotating a test vector through the data ---- */
+  let rotIsotropic = false;
+  const ISO_R = 2.5, ISO_N = 16;
+  function isoPoints(mx, my){
+    const pts = [];
+    for (let k=0; k<ISO_N; k++){
+      const a = 2*Math.PI*k/ISO_N;
+      pts.push([mx + ISO_R*Math.cos(a), my + ISO_R*Math.sin(a)]);
+    }
+    return pts;
+  }
+  function rotCovAndPoints(){
+    const n0 = PCA_POINTS.length;
+    const mx = PCA_POINTS.reduce((s,p)=>s+p[0],0)/n0, my = PCA_POINTS.reduce((s,p)=>s+p[1],0)/n0;
+    const pts = rotIsotropic ? isoPoints(mx,my) : PCA_POINTS;
+    const n = pts.length;
+    const cX = pts.map(p=>[p[0]-mx,p[1]-my]);
+    let Sxx=0,Sxy=0,Syy=0;
+    cX.forEach(([x,y])=>{Sxx+=x*x;Sxy+=x*y;Syy+=y*y;});
+    Sxx/=n; Sxy/=n; Syy/=n;
+    return {mx,my,pts,Sxx,Sxy,Syy};
+  }
+  function runRot(){
+    const {mx,my,pts,Sxx,Sxy,Syy} = rotCovAndPoints();
+    const eig = eig2x2(Sxx,Sxy,Syy);
+    const thetaDeg = parseFloat(document.getElementById("rotAngle").value);
+    document.getElementById("rotAngleOut").textContent = thetaDeg.toFixed(0) + "°";
+    const theta = thetaDeg*Math.PI/180;
+    const v = [Math.cos(theta), Math.sin(theta)];
+    const varAlong = Sxx*v[0]*v[0] + 2*Sxy*v[0]*v[1] + Syy*v[1]*v[1];
+
+    const svg = document.getElementById("rotSvg");
+    svg.innerHTML = "";
+    const W=360,H=280,pad=30;
+    function X(x){ return pad + (x-0)/7*(W-2*pad); }
+    function Y(y){ return H-pad - (y-0)/7*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    pts.forEach(([x,y])=>{
+      svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:5,fill:"var(--blue)",opacity:0.85}));
+    });
+    const pcLen = 3.2;
+    svg.appendChild(el("line",{x1:X(mx-eig.v1[0]*pcLen),y1:Y(my-eig.v1[1]*pcLen),x2:X(mx+eig.v1[0]*pcLen),y2:Y(my+eig.v1[1]*pcLen),stroke:"var(--green)","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+    svg.appendChild(el("line",{x1:X(mx-v[0]*pcLen),y1:Y(my-v[1]*pcLen),x2:X(mx+v[0]*pcLen),y2:Y(my+v[1]*pcLen),stroke:"var(--amber)","stroke-width":2.5}));
+
+    document.getElementById("rotVar").textContent = varAlong.toFixed(4);
+    document.getElementById("rotMaxEig").textContent = eig.l1.toFixed(4);
+    const pc1Angle = ((Math.atan2(eig.v1[1],eig.v1[0])*180/Math.PI)+180)%180;
+    document.getElementById("rotStory").textContent = rotIsotropic
+      ? `Circular cloud: variance along the test direction stays at ${varAlong.toFixed(4)} no matter what angle you pick -- every direction is equally valid as "the" eigenvector here, because there is no preferred axis to find. Full rotational symmetry, no invariant direction stands out from any other.`
+      : `At ${thetaDeg}°, variance along this test direction is ${varAlong.toFixed(4)}. It peaks at exactly ${pc1Angle.toFixed(2)}° (PC1's own angle, dashed green) and reaches its minimum exactly 90° away (PC2) -- the eigenvector is not assumed to be optimal, dragging the slider around and watching the peak land exactly there is the proof.`;
+  }
+  document.getElementById("rotAngle").addEventListener("input", runRot);
+  document.getElementById("btnSnapPc1").addEventListener("click", () => {
+    const {Sxx,Sxy,Syy} = rotCovAndPoints();
+    const eig = eig2x2(Sxx,Sxy,Syy);
+    const ang = ((Math.atan2(eig.v1[1],eig.v1[0])*180/Math.PI)+180)%180;
+    document.getElementById("rotAngle").value = Math.round(ang);
+    runRot();
+  });
+  document.getElementById("btnSnapPc2").addEventListener("click", () => {
+    const {Sxx,Sxy,Syy} = rotCovAndPoints();
+    const eig = eig2x2(Sxx,Sxy,Syy);
+    const ang = (((Math.atan2(eig.v1[1],eig.v1[0])*180/Math.PI)+180)%180 + 90)%180;
+    document.getElementById("rotAngle").value = Math.round(ang);
+    runRot();
+  });
+  document.getElementById("btnIsoToggle").addEventListener("click", () => {
+    rotIsotropic = !rotIsotropic;
+    const btn = document.getElementById("btnIsoToggle");
+    btn.classList.toggle("active", rotIsotropic);
+    btn.textContent = rotIsotropic ? "Back to real (anisotropic) cloud" : "Use a circular (isotropic) cloud instead";
+    runRot();
+  });
+  runRot();
 
   function runScree(){
     const rand = makeLCG(7);

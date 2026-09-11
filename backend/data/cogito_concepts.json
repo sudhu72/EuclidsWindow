@@ -1411,6 +1411,62 @@
       ],
       "viz": "time_series_and_forecasting_visualizer.html",
       "source": "time_series_and_forecasting_feynman.md"
+    },
+    {
+      "id": "natural_numbers",
+      "name": "Natural Numbers",
+      "keywords": [
+        "abacus",
+        "soroban",
+        "suanpan"
+      ],
+      "related": [
+        "elementary_toolkit",
+        "number_theory"
+      ],
+      "viz": "abacus_visualizer.html",
+      "source": "abacus-toolkit.md"
+    },
+    {
+      "id": "classification_and_completeness",
+      "name": "Classification and Completeness",
+      "keywords": [
+        "classification and completeness",
+        "platonic solids",
+        "wallpaper group",
+        "crystallographic restriction",
+        "finite simple groups",
+        "godel incompleteness",
+        "incompleteness theorem"
+      ],
+      "related": [
+        "proof_and_axiomatic_method",
+        "mathematical_logic",
+        "symmetry_invariance",
+        "geometry",
+        "set_theory",
+        "infinity"
+      ],
+      "viz": "classification_and_completeness_visualizer.html",
+      "source": "classification-and-completeness.md"
+    },
+    {
+      "id": "agent_harness_engineering",
+      "name": "Agent Harness Engineering",
+      "keywords": [
+        "agent harness",
+        "agent harness engineering",
+        "mcp",
+        "model context protocol",
+        "multi-agent system",
+        "context engineering"
+      ],
+      "related": [
+        "react_agent_loop",
+        "llm_roadmap"
+      ],
+      "viz": "agent_harness_engineering_visualizer.html",
+      "source": "agent_harness_engineering_feynman.md"
     }
   ]
 }

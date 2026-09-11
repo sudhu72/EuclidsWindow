@@ -72,6 +72,7 @@
     <button class="tab" data-tab="pagerank">PageRank, Live</button>
     <button class="tab" data-tab="complex">Complex Eigenvalues</button>
     <button class="tab" data-tab="vibration">Vibration Modes</button>
+    <button class="tab" data-tab="stability">Stability: Spiral In, Out, or Orbit</button>
   </div>
 
   <!-- ============ TAB 1: CHARACTERISTIC EQUATION ============ -->
@@ -154,6 +155,27 @@
       </div>
       <svg id="vibSvg" viewBox="0 0 700 200"></svg>
       <div class="caption"><b>Why it matters:</b> these two shapes are the system's entire repertoire of pure motion — any other starting position is just some mixture of these two, each piece oscillating at its own eigenvalue-determined frequency.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: STABILITY ============ -->
+  <div class="panel" id="panel-stability">
+    <div class="card">
+      <h2>Does a Nudge Die Out, or Blow Up?</h2>
+      <p class="sub"><b>What's happening:</b> for a system `x' = Ax`, the eigenvalues' <b>real part</b> — not the whole eigenvalue — decides everything: negative real part and every nudge spirals back to rest; positive real part and every nudge spirals out of control; exactly zero real part is the knife-edge, pure unending rotation (exactly the "Complex Eigenvalues" tab's rotation matrix, generalized). The imaginary part just sets the spin rate; it never decides stable-vs-unstable on its own.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> load "Marginal" first — same knife-edge rotation as the previous tab, drawn as an orbit instead of a single sweep. Then load "Stable" and "Unstable" and watch the identical spin rate spiral inward or outward — the only thing that changed is the sign of one number.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="stPresetStable">Stable (d=−0.2)</button>
+        <button class="op active" id="stPresetMarginal">Marginal — pure rotation (d=0)</button>
+        <button class="op" id="stPresetUnstable">Unstable (d=+0.2)</button>
+      </div>
+      <div class="row"><label>real part d</label><input type="range" id="stD" min="-30" max="30" step="1" value="0"><span class="readout" id="stDOut">0.00</span></div>
+      <svg id="stSvg" viewBox="0 0 340 340"></svg>
+      <div class="metric-row">
+        <div class="metric"><div class="lbl">eigenvalues</div><div class="num" id="stEig">-</div></div>
+        <div class="metric"><div class="lbl">verdict</div><div class="num" id="stVerdict">-</div></div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> this exact check — "do this system's eigenvalues have negative real parts?" — is how control engineers certify an autopilot or a chemical process is safe before ever running it, and how ecologists tell whether a predator-prey equilibrium recovers from a shock or collapses.</div>
     </div>
   </div>
 
@@ -441,6 +463,73 @@
   document.getElementById("btnModeMix").addEventListener("click", function(){ setVibMode("mix", this); });
   renderVibration();
   vibFrame = requestAnimationFrame(vibTick);
+
+  /* =========================================================
+     TAB 6 — STABILITY (spiral in / out / orbit)
+     ========================================================= */
+  const stD = document.getElementById("stD");
+  const ST_X0=2.5, ST_Y0=0, ST_OMEGA=2, ST_TMAX=1.5*Math.PI;
+  let stTrail = [];
+  let stT = 0;
+  let stScale = 40;
+  function stPoint(d,t){
+    const e = Math.exp(d*t);
+    return [e*(ST_X0*Math.cos(ST_OMEGA*t) - ST_Y0*Math.sin(ST_OMEGA*t)), e*(ST_X0*Math.sin(ST_OMEGA*t) + ST_Y0*Math.cos(ST_OMEGA*t))];
+  }
+  function stRecomputeScale(d){
+    const maxRadius = Math.hypot(ST_X0,ST_Y0) * Math.exp(Math.max(0,d)*ST_TMAX);
+    stScale = 140/Math.max(maxRadius,1);
+  }
+  function renderStability(){
+    const d = parseFloat(stD.value)/100;
+    document.getElementById("stDOut").textContent = d.toFixed(2);
+    const svg = document.getElementById("stSvg");
+    svg.innerHTML = "";
+    const cx=170,cy=170;
+    svg.appendChild(el("circle",{cx,cy,r:2.5,fill:"var(--ink-soft)"}));
+    let pts="";
+    stTrail.forEach(([x,y]) => { pts += `${cx+x*stScale},${cy-y*stScale} `; });
+    svg.appendChild(el("polyline",{points:pts, fill:"none", stroke:"var(--accent)", ["stroke-width"]:2, opacity:0.85}));
+    if(stTrail.length){
+      const [lx,ly] = stTrail[stTrail.length-1];
+      svg.appendChild(el("circle",{cx:cx+lx*stScale, cy:cy-ly*stScale, r:6, fill:"var(--c3)"}));
+    }
+    document.getElementById("stEig").textContent = `${d.toFixed(2)} ± ${ST_OMEGA}i`;
+    const verdictEl = document.getElementById("stVerdict");
+    if (Math.abs(d) < 1e-9){ verdictEl.textContent = "marginal — pure orbit"; }
+    else if (d < 0){ verdictEl.textContent = "stable — spirals to rest"; }
+    else { verdictEl.textContent = "unstable — spirals away"; }
+  }
+  let stFrame = null;
+  function stTick(){
+    const d = parseFloat(stD.value)/100;
+    stT += 0.02;
+    if (stT > ST_TMAX){ stT = 0; stTrail = []; }
+    stTrail.push(stPoint(d, stT));
+    if (stTrail.length > 2000) stTrail.shift();
+    renderStability();
+    stFrame = requestAnimationFrame(stTick);
+  }
+  function stReset(d){
+    stD.value = Math.round(d*100);
+    stRecomputeScale(d);
+    stT = 0; stTrail = [];
+  }
+  function setStPreset(id, d){
+    ["stPresetStable","stPresetMarginal","stPresetUnstable"].forEach(bid=>document.getElementById(bid).classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    stReset(d);
+  }
+  document.getElementById("stPresetStable").addEventListener("click", () => setStPreset("stPresetStable", -0.2));
+  document.getElementById("stPresetMarginal").addEventListener("click", () => setStPreset("stPresetMarginal", 0));
+  document.getElementById("stPresetUnstable").addEventListener("click", () => setStPreset("stPresetUnstable", 0.2));
+  stD.addEventListener("input", () => {
+    ["stPresetStable","stPresetMarginal","stPresetUnstable"].forEach(bid=>document.getElementById(bid).classList.remove("active"));
+    stReset(parseFloat(stD.value)/100);
+  });
+  stReset(0);
+  renderStability();
+  stFrame = requestAnimationFrame(stTick);
 })();
 </script>
 </body>

@@ -74,6 +74,7 @@
     <button class="tab" data-tab="sampling">Sampling Distribution</button>
     <button class="tab" data-tab="hyp">Hypothesis Testing</button>
     <button class="tab" data-tab="corr">Correlation &amp; Simpson's Paradox</button>
+    <button class="tab" data-tab="dof">Degrees of Freedom</button>
   </div>
 
   <!-- ============ TAB 1: DISTRIBUTIONS & SUMMARY STATS ============ -->
@@ -104,6 +105,26 @@
       </div>
       <div class="verdict" id="besselVerdict"></div>
       <div class="caption"><b>Why it matters:</b> every reported "sample standard deviation" in a study, poll, or lab report is quietly using n−1 for exactly this reason.</div>
+    </div>
+
+    <div class="card">
+      <h2>Skewness &amp; Kurtosis — the Shape Variance Can't See</h2>
+      <p class="sub"><b>What's happening:</b> the exact ten bar patrons from above. Add the billionaire and watch skewness jump from roughly symmetric to strongly positive — the same event that dragged the mean into the millions, now given an actual number.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnNoBillionaire">Without the billionaire</button>
+        <button class="op" id="btnBillionaire">Billionaire walks in</button>
+      </div>
+      <svg id="skewSvg" viewBox="0 0 700 200"></svg>
+      <div class="verdict" id="skewVerdict"></div>
+      <p class="sub" style="margin:18px 0 10px;"><b>What's happening:</b> eighteen calm days plus, optionally, two real crash days -- built to share the identical mean and standard deviation as a genuinely normal comparison set. Kurtosis is the number that tells the two apart when variance can't.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnCalmOnly">18 calm days only</button>
+        <button class="op" id="btnCalmCrash">18 calm + 2 crash days</button>
+        <button class="op" id="btnMatchedNormal">2,000 matched-normal draws</button>
+      </div>
+      <svg id="kurtSvg" viewBox="0 0 700 200"></svg>
+      <div class="verdict" id="kurtVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> two datasets can share the identical mean and variance and still carry wildly different real-world risk -- kurtosis is the number 2008-era financial risk models left out.</div>
     </div>
   </div>
 
@@ -187,6 +208,29 @@
       <svg id="simpsonSvg" viewBox="0 0 700 240"></svg>
       <div class="verdict" id="simpsonVerdict"></div>
       <div class="caption"><b>Why it matters:</b> Treatment A was used mostly on the harder large-stone cases — always check the subgroup breakdown before trusting a combined number.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: DEGREES OF FREEDOM ============ -->
+  <div class="panel" id="panel-dof">
+    <div class="card">
+      <h2>How Many of These Numbers Are Actually Free to Move?</h2>
+      <p class="sub"><b>What's happening:</b> five numbers, one fixed rule: their mean must stay exactly 6. Edit any of the first four freely — the fifth adjusts itself the instant you type, to keep the mean locked at 6. It has no freedom left; the other four already spent it.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set all four free values to 6 and watch the fifth land on exactly 6 too, no adjustment needed. Then push one free value far from 6 and watch the fifth swing hard the other way to compensate — it's never "off" by choice, it's the one value in the set with nothing left to decide.</p>
+      <div class="row"><label>v1 (free)</label><input type="number" id="dofV1" value="2" step="1" style="width:64px;"></div>
+      <div class="row"><label>v2 (free)</label><input type="number" id="dofV2" value="4" step="1" style="width:64px;"></div>
+      <div class="row"><label>v3 (free)</label><input type="number" id="dofV3" value="9" step="1" style="width:64px;"></div>
+      <div class="row"><label>v4 (free)</label><input type="number" id="dofV4" value="7" step="1" style="width:64px;"></div>
+      <div class="row"><label>v5 (forced)</label><span class="readout" id="dofV5Out" style="min-width:64px; display:inline-block;">—</span></div>
+      <div class="verdict" id="dofVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is exactly why sample variance divides by n−1, not n — the deviations from a sample's own mean must always sum to zero, so only n−1 of them were ever free to vary; the last one is bookkeeping, never new information.</div>
+
+      <h2 style="margin-top:28px;">ddof: One Parameter, Two Silent Defaults</h2>
+      <p class="sub"><b>What's happening:</b> the divisor used to compute variance/std is always <span class="formula">N − ddof</span>. Drag the slider and watch the divisor, and the resulting standard deviation, change live on the same fixed dataset, <span class="formula">[2, 4, 6, 8, 10]</span>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set ddof to 0 and note the std — that's numpy's silent default. Now set it to 1 and note the std again — that's pandas' silent default. Same five numbers, two different "correct" answers, purely from an unannounced default.</p>
+      <div class="row"><label>ddof</label><input type="range" id="dofDdof" min="0" max="3" step="1" value="0"><span class="readout" id="dofDdofOut">0</span></div>
+      <div class="verdict" id="ddofVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> <span class="formula">numpy.std(x)</span> defaults to <span class="formula">ddof=0</span>; <span class="formula">pandas.Series.std()</span> defaults to <span class="formula">ddof=1</span> — mixing the two libraries on the same data without ever passing <span class="formula">ddof</span> explicitly silently computes two different numbers.</div>
     </div>
   </div>
 
@@ -309,6 +353,75 @@
   document.getElementById("btnBesselMany").addEventListener("click", () => { for(let i=0;i<1000;i++) drawBesselSample(); renderBessel(); });
   document.getElementById("btnBesselReset").addEventListener("click", () => { besselTrials=0; besselSumBiased=0; besselSumUnbiased=0; renderBessel(); });
   renderBessel();
+
+  /* =========================================================
+     TAB 1a (extra) — SKEWNESS & KURTOSIS
+     ========================================================= */
+  function skewness(a){
+    const m = mean(a); const n = a.length;
+    const s = Math.sqrt(a.reduce((acc,x)=>acc+(x-m)*(x-m),0)/n);
+    return a.reduce((acc,x)=>acc+Math.pow((x-m)/s,3),0)/n;
+  }
+  function kurtosis(a){
+    const m = mean(a); const n = a.length;
+    const s = Math.sqrt(a.reduce((acc,x)=>acc+(x-m)*(x-m),0)/n);
+    return a.reduce((acc,x)=>acc+Math.pow((x-m)/s,4),0)/n;
+  }
+  const PATRONS = [45,48,50,52,49,51,47,53,50,49];
+  let billionaireIn = false;
+  function renderSkew(){
+    const data = billionaireIn ? PATRONS.concat([1000000]) : PATRONS.slice();
+    const plotData = billionaireIn ? PATRONS.slice() : PATRONS.slice(); // billionaire off-scale; show patrons' own histogram either way
+    const geo = histogramSvg(document.getElementById("skewSvg"), plotData, {bins:8, h:200});
+    const sk = skewness(data);
+    document.getElementById("skewVerdict").innerHTML =
+      `skewness = <b>${fmt(sk,4)}</b> &nbsp;·&nbsp; mean = <b>${fmt(mean(data),2)}</b> &nbsp;·&nbsp; median = <b>${fmt(median(data),2)}</b>` +
+      (billionaireIn ? ` — <span class="bad-t">strong positive skew: a single extreme value dragged this far above 0.</span>` : ` — roughly symmetric, close to 0.`);
+  }
+  document.getElementById("btnNoBillionaire").addEventListener("click", (e)=>{
+    billionaireIn=false; document.getElementById("btnNoBillionaire").classList.add("active"); document.getElementById("btnBillionaire").classList.remove("active"); renderSkew();
+  });
+  document.getElementById("btnBillionaire").addEventListener("click", (e)=>{
+    billionaireIn=true; document.getElementById("btnBillionaire").classList.add("active"); document.getElementById("btnNoBillionaire").classList.remove("active"); renderSkew();
+  });
+  renderSkew();
+
+  const CALM_DAYS = [0.1,-0.2,0.3,-0.1,0.2,0.0,-0.3,0.1,0.2,-0.2,0.1,0.0,-0.1,0.3,-0.2,0.1,0.0,-0.1];
+  const CRASH_DAYS = [-8.0,-7.5];
+  let kurtMode = "calm";
+  let matchedNormalCache = null;
+  function renderKurt(){
+    let data;
+    if(kurtMode==="calm") data = CALM_DAYS.slice();
+    else if(kurtMode==="crash") data = CALM_DAYS.concat(CRASH_DAYS);
+    else {
+      const crashData = CALM_DAYS.concat(CRASH_DAYS);
+      const m = mean(crashData), s = Math.sqrt(crashData.reduce((a,x)=>a+(x-m)*(x-m),0)/crashData.length);
+      if(!matchedNormalCache){
+        matchedNormalCache = [];
+        for(let i=0;i<2000;i++) matchedNormalCache.push(m + s*randNormal());
+      }
+      data = matchedNormalCache;
+    }
+    const geo = histogramSvg(document.getElementById("kurtSvg"), data, {bins: kurtMode==="matched"?30:14, h:200});
+    const kt = kurtosis(data);
+    document.getElementById("kurtVerdict").innerHTML =
+      `kurtosis = <b>${fmt(kt,4)}</b> &nbsp;·&nbsp; normal baseline = <b>3.0000</b> &nbsp;·&nbsp; mean = ${fmt(mean(data),3)}, std = ${fmt(Math.sqrt(data.reduce((a,x)=>{const m=mean(data);return a+(x-m)*(x-m);},0)/data.length),3)}` +
+      (kt>4 ? ` — <span class="bad-t">fat tails: far more extreme days than a normal model would predict.</span>` : (kurtMode==="matched" ? ` — lands right on the baseline, as a genuine normal sample should.` : ``));
+  }
+  document.getElementById("btnCalmOnly").addEventListener("click", ()=>{
+    kurtMode="calm"; ["btnCalmOnly","btnCalmCrash","btnMatchedNormal"].forEach(id=>document.getElementById(id).classList.remove("active"));
+    document.getElementById("btnCalmOnly").classList.add("active"); renderKurt();
+  });
+  document.getElementById("btnCalmCrash").addEventListener("click", ()=>{
+    kurtMode="crash"; ["btnCalmOnly","btnCalmCrash","btnMatchedNormal"].forEach(id=>document.getElementById(id).classList.remove("active"));
+    document.getElementById("btnCalmCrash").classList.add("active"); renderKurt();
+  });
+  document.getElementById("btnMatchedNormal").addEventListener("click", ()=>{
+    kurtMode="matched"; ["btnCalmOnly","btnCalmCrash","btnMatchedNormal"].forEach(id=>document.getElementById(id).classList.remove("active"));
+    document.getElementById("btnMatchedNormal").classList.add("active"); renderKurt();
+  });
+  renderKurt();
 
   /* =========================================================
      TAB 2 — GALTON BOARD
@@ -552,6 +665,47 @@
       `A wins small stones (93.1% vs 86.7%) <b>and</b> large stones (73.0% vs 68.8%) — but B wins overall (82.6% vs 78.0%). <span class="bad-t">The reversal is real, not a rounding error.</span>`;
   }
   renderSimpson();
+
+  // ================= DEGREES OF FREEDOM =================
+  const dofV1=document.getElementById("dofV1"), dofV2=document.getElementById("dofV2"),
+        dofV3=document.getElementById("dofV3"), dofV4=document.getElementById("dofV4");
+  const DOF_TARGET_MEAN = 6;
+  function renderDof(){
+    const v1=parseFloat(dofV1.value)||0, v2=parseFloat(dofV2.value)||0,
+          v3=parseFloat(dofV3.value)||0, v4=parseFloat(dofV4.value)||0;
+    const v5 = DOF_TARGET_MEAN*5 - (v1+v2+v3+v4);
+    document.getElementById("dofV5Out").textContent = v5.toFixed(2);
+    const mean = (v1+v2+v3+v4+v5)/5;
+    document.getElementById("dofVerdict").innerHTML =
+      `mean of all five = <b>${mean.toFixed(4)}</b> (locked at 6) &nbsp;·&nbsp; you chose 4 values freely; the 5th, <b>${v5.toFixed(2)}</b>, had no choice left — <b>4 degrees of freedom</b>, not 5.`;
+  }
+  [dofV1,dofV2,dofV3,dofV4].forEach(inp => inp.addEventListener("input", renderDof));
+  renderDof();
+
+  const DOF_DATA = [2,4,6,8,10];
+  const dofDdof = document.getElementById("dofDdof");
+  function renderDdof(){
+    const ddof = parseInt(dofDdof.value,10);
+    document.getElementById("dofDdofOut").textContent = ddof;
+    const n = DOF_DATA.length;
+    const mean = DOF_DATA.reduce((a,b)=>a+b,0)/n;
+    const ss = DOF_DATA.reduce((a,b)=>a+(b-mean)*(b-mean),0);
+    const divisor = n - ddof;
+    let html;
+    if(divisor <= 0){
+      html = `<b style="color:var(--c3)">divisor = ${n}−${ddof} = ${divisor} — undefined, can't divide by zero or a negative number</b>`;
+    } else {
+      const variance = ss/divisor;
+      const std = Math.sqrt(variance);
+      let note = "";
+      if(ddof===0) note = " — this is numpy's silent default";
+      if(ddof===1) note = " — this is pandas' silent default (Bessel's correction)";
+      html = `divisor = N−ddof = ${n}−${ddof} = <b>${divisor}</b> &nbsp;·&nbsp; variance = <b>${variance.toFixed(4)}</b> &nbsp;·&nbsp; std = <b>${std.toFixed(4)}</b>${note}`;
+    }
+    document.getElementById("ddofVerdict").innerHTML = html;
+  }
+  dofDdof.addEventListener("input", renderDdof);
+  renderDdof();
 })();
 </script>
 </body>

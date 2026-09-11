@@ -72,9 +72,12 @@
   <div class="tabs">
     <button class="tab active" data-tab="continuity">Continuity Explorer</button>
     <button class="tab" data-tab="extrema">Local vs. Global</button>
+    <button class="tab" data-tab="newton">Newton vs. Bisection</button>
+    <button class="tab" data-tab="lagrange">Lagrange Multipliers</button>
     <button class="tab" data-tab="mle">MLE as a Hill to Climb</button>
     <button class="tab" data-tab="pca">PCA as a Hill to Climb</button>
     <button class="tab" data-tab="landscape">Local Minima in ML</button>
+    <button class="tab" data-tab="corners">Corners and Cusps</button>
   </div>
 
   <!-- ============ TAB 1: CONTINUITY EXPLORER ============ -->
@@ -88,6 +91,7 @@
         <button class="op" id="fnRemovable">Removable (a hole)</button>
         <button class="op" id="fnInfinite">Infinite (asymptote)</button>
         <button class="op" id="fnTax">Tax bracket</button>
+        <button class="op" id="fnOscillating">Oscillating (sin 1/x)</button>
       </div>
       <div class="row"><label>a</label><input type="range" id="ctA" min="-3" max="3" step="0.01" value="0"><span class="readout" id="ctAOut">0.00</span></div>
       <div class="row"><label>ε (target)</label><input type="range" id="ctEps" min="0.05" max="2" step="0.01" value="0.5"><span class="readout" id="ctEpsOut">0.50</span></div>
@@ -112,6 +116,7 @@
       <div class="row" style="gap:6px;">
         <button class="op active" id="btnCubicMinus3x">f(x) = x³ − 3x (has local max/min)</button>
         <button class="op" id="btnCubicPlain">f(x) = x³ (inflection only — no extrema at all)</button>
+        <button class="op" id="btnCubicSquare">f(x) = x² (convex — critical point always wins)</button>
       </div>
       <div class="row"><label>left endpoint a</label><input type="range" id="exA" min="-3" max="0" step="0.05" value="-2"><span class="readout" id="exAOut">-2.00</span></div>
       <div class="row"><label>right endpoint b</label><input type="range" id="exB" min="0" max="3" step="0.05" value="2"><span class="readout" id="exBOut">2.00</span></div>
@@ -121,6 +126,44 @@
         <div class="metric"><div class="lbl">global min</div><div class="num" id="exMin">-</div></div>
       </div>
       <div class="caption"><b>Why it matters:</b> checking critical points alone can miss the real answer — the global extremum on a closed interval can just as easily sit at an endpoint.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: NEWTON VS. BISECTION ============ -->
+  <div class="panel" id="panel-newton">
+    <div class="card">
+      <h2>Racing Toward √2: Newton's Method vs. Bisection</h2>
+      <p class="sub"><b>What's happening:</b> both methods hunt for the root of <span class="formula">f(x) = x² − 2</span> (i.e. <span class="formula">√2</span>), starting from the same interval/guess. Click "Step" to advance both by one iteration and watch the error columns pull apart.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnNewtonStep">Step (advance both by 1)</button>
+        <button class="op" id="btnNewtonReset">Reset</button>
+      </div>
+      <svg id="newtonSvg" viewBox="0 0 700 320"></svg>
+      <table class="dt" id="newtonTable"></table>
+      <div class="metric-row">
+        <div class="metric"><div class="lbl">Newton: steps to error &lt; 10⁻⁶</div><div class="num" id="newtonStepsTo6">-</div></div>
+        <div class="metric"><div class="lbl">Bisection: steps to error &lt; 10⁻⁶</div><div class="num" id="bisectStepsTo6">-</div></div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> Newton's method reaches ~10⁻⁶ precision in 4 steps and ~10⁻¹² precision in 5 — the number of correct digits roughly doubles every step (quadratic convergence). Bisection needs 19 and 38 steps for those same two targets — one more correct bit per step (linear convergence), verified live instead of just asserted.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: LAGRANGE MULTIPLIERS ============ -->
+  <div class="panel" id="panel-lagrange">
+    <div class="card">
+      <h2>Where the Hill's Uphill Direction Points Straight Into the Fence</h2>
+      <p class="sub"><b>What's happening:</b> drag a point along the constraint line <span class="formula">x+y=10</span>. Watch the objective's gradient (red arrow) and the constraint's gradient (gold arrow) swing into alignment exactly at the true constrained optimum.</p>
+      <div class="row"><label>x (y = 10 − x)</label><input type="range" id="lagX" min="-2" max="12" step="0.05" value="2"><span class="readout" id="lagXOut">2.00</span></div>
+      <svg id="lagSvg" viewBox="0 0 700 420"></svg>
+      <div class="metric-row">
+        <div class="metric"><div class="lbl">x</div><div class="num" id="lagXVal">-</div></div>
+        <div class="metric"><div class="lbl">y = 10−x</div><div class="num" id="lagYVal">-</div></div>
+        <div class="metric"><div class="lbl">f(x,y) = xy</div><div class="num" id="lagFVal">-</div></div>
+        <div class="metric"><div class="lbl">∇f = (y, x)</div><div class="num" id="lagGradF">-</div></div>
+        <div class="metric"><div class="lbl">∇g = (1, 1)</div><div class="num" id="lagGradG">-</div></div>
+      </div>
+      <div class="verdict" id="lagVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the constrained maximum is the one point on the line where sliding any further along the fence can't improve f — exactly where ∇f and ∇g point the same way.</div>
     </div>
   </div>
 
@@ -174,6 +217,26 @@
     </div>
   </div>
 
+  <!-- ============ TAB 6: CORNERS AND CUSPS ============ -->
+  <div class="panel" id="panel-corners">
+    <div class="card">
+      <h2>Continuous, But No Single Slope Exists</h2>
+      <p class="sub"><b>What's happening:</b> the function's <em>value</em> is perfectly continuous at the marked point either way — only the <em>slope</em> misbehaves. Drag h toward 0 from both sides and watch the two difference quotients either disagree forever (a corner) or agree on infinity (a cusp).</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-cf="corner">|x| — a corner</button>
+        <button class="op" data-cf="cusp">x^(1/3) — a cusp</button>
+      </div>
+      <svg id="cornersSvg" viewBox="0 0 440 320"></svg>
+      <div class="row"><label>|h|</label><input type="range" id="cornersH" min="1" max="40" step="1" value="20"><span class="readout" id="cornersHOut">0.20</span></div>
+      <div class="metric-row">
+        <div class="metric"><div class="lbl">from the right: (f(0+h)-f(0))/h</div><div class="num" id="cornersRight">-</div></div>
+        <div class="metric"><div class="lbl">from the left: (f(0-h)-f(0))/(-h)</div><div class="num" id="cornersLeft">-</div></div>
+      </div>
+      <div class="caption" id="cornersStory"></div>
+      <div class="caption"><b>Why it matters:</b> a corner is two different finite answers refusing to agree, no matter how small h gets; a cusp is both sides agreeing — on a slope that was never actually a number. Continuity never wavers in either case; only the derivative fails, and it fails in two genuinely different ways.</div>
+    </div>
+  </div>
+
   <footer>
     <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../continuity-and-extrema.md">Continuity and Extrema</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
   </footer>
@@ -215,11 +278,13 @@
       f: x => Math.abs(x-2) < 1e-6 ? null : 1/(x-2) },
     tax: { domain:[0,60000], yRange:[0,15000], label:"total tax(income)",
       f: inc => inc<=10000 ? inc*0.10 : (inc<=40000 ? 1000 + (inc-10000)*0.20 : 7000 + (inc-40000)*0.30) },
+    oscillating: { domain:[-1,1], yRange:[-1.3,1.3], label:"f(x) = sin(1/x)",
+      f: x => Math.abs(x) < 1e-4 ? null : Math.sin(1/x) },
   };
   let currentFn = "continuous";
 
   function setFnButtons(id){
-    ["fnContinuous","fnJump","fnRemovable","fnInfinite","fnTax"].forEach(b => document.getElementById(b).classList.remove("active"));
+    ["fnContinuous","fnJump","fnRemovable","fnInfinite","fnTax","fnOscillating"].forEach(b => document.getElementById(b).classList.remove("active"));
     document.getElementById(id).classList.add("active");
   }
   document.getElementById("fnContinuous").addEventListener("click", function(){ currentFn="continuous"; setFnButtons(this.id); resetCtRange(); renderContinuity(); });
@@ -227,12 +292,13 @@
   document.getElementById("fnRemovable").addEventListener("click", function(){ currentFn="removable"; setFnButtons(this.id); resetCtRange(); renderContinuity(); });
   document.getElementById("fnInfinite").addEventListener("click", function(){ currentFn="infinite"; setFnButtons(this.id); resetCtRange(); renderContinuity(); });
   document.getElementById("fnTax").addEventListener("click", function(){ currentFn="tax"; setFnButtons(this.id); resetCtRange(); renderContinuity(); });
+  document.getElementById("fnOscillating").addEventListener("click", function(){ currentFn="oscillating"; setFnButtons(this.id); resetCtRange(); renderContinuity(); });
 
   function resetCtRange(){
     const d = fns[currentFn].domain;
     const a = document.getElementById("ctA");
     a.min = d[0]; a.max = d[1]; a.step = (d[1]-d[0])/600;
-    a.value = currentFn==="jump" ? 1 : (currentFn==="removable" ? 1 : (currentFn==="infinite" ? 2 : (currentFn==="tax" ? 10000 : 0)));
+    a.value = currentFn==="jump" ? 1 : (currentFn==="removable" ? 1 : (currentFn==="infinite" ? 2 : (currentFn==="tax" ? 10000 : (currentFn==="oscillating" ? 0 : 0))));
     const eps = document.getElementById("ctEps"), delta = document.getElementById("ctDelta");
     const span = d[1]-d[0];
     eps.min = span*0.005; eps.max = span*0.25; eps.step = span*0.005; eps.value = span*0.05;
@@ -286,7 +352,7 @@
 
     // plot the function as a series of segments, breaking at nulls
     let d = ""; let drawing=false;
-    const steps = 500;
+    const steps = currentFn==="oscillating" ? 2000 : 500;
     for(let i=0;i<=steps;i++){
       const x = xMin + (i/steps)*(xMax-xMin);
       const y = cfg.f(x);
@@ -331,7 +397,7 @@
     if (passes){
       verdict.innerHTML = `<b>✓ This δ works.</b> Every sampled x within δ=${delta.toFixed(3)} of a stays within ε=${eps.toFixed(3)} of f(a). Try shrinking ε — for a continuous function, a smaller δ can always be found to match.`;
     } else {
-      verdict.innerHTML = `<b>✗ This δ fails.</b> At x≈${worstX.toFixed(3)}, f(x) is ${maxDeviation.toFixed(3)} away from f(a) — outside ε=${eps.toFixed(3)}. ${currentFn==="jump"||currentFn==="infinite" ? "Try shrinking δ further: at this exact a, no δ will ever work." : "Try shrinking δ — it should start passing."}`;
+      verdict.innerHTML = `<b>✗ This δ fails.</b> At x≈${worstX.toFixed(3)}, f(x) is ${maxDeviation.toFixed(3)} away from f(a) — outside ε=${eps.toFixed(3)}. ${currentFn==="jump"||currentFn==="infinite"||currentFn==="oscillating" ? "Try shrinking δ further: at this exact a, no δ will ever work." : "Try shrinking δ — it should start passing."}`;
     }
   }
   ["ctA","ctEps","ctDelta"].forEach(id => document.getElementById(id).addEventListener("input", renderContinuity));
@@ -341,10 +407,17 @@
   /* =========================================================
      TAB 2 — LOCAL VS GLOBAL
      ========================================================= */
+  const curveDefs = {
+    minus3x: { f:x=>x*x*x-3*x, fpp:x=>6*x, criticalXs:[-1,1], label:"f(x) = x³ − 3x", yRange:[-4,4],
+      critLabel: (cx,fpp) => fpp>0 ? "critical (local min)" : "critical (local max)" },
+    plain:   { f:x=>x*x*x,     fpp:x=>6*x, criticalXs:[0],    label:"f(x) = x³", yRange:[-4,4],
+      critLabel: () => "critical (inflection — not an extremum)" },
+    square:  { f:x=>x*x,       fpp:x=>2,   criticalXs:[0],    label:"f(x) = x² (convex)", yRange:[-1,10],
+      critLabel: () => "critical (local min — and, since f is convex, automatically the GLOBAL min too)" },
+  };
   let cubicMode = "minus3x";
-  function cubicF(x){ return cubicMode==="minus3x" ? (x*x*x - 3*x) : (x*x*x); }
-  function cubicFp(x){ return cubicMode==="minus3x" ? (3*x*x - 3) : (3*x*x); }
-  function cubicFpp(x){ return 6*x; }
+  function cubicF(x){ return curveDefs[cubicMode].f(x); }
+  function cubicFpp(x){ return curveDefs[cubicMode].fpp(x); }
 
   function renderExtrema(){
     const a = parseFloat(document.getElementById("exA").value);
@@ -352,10 +425,11 @@
     document.getElementById("exAOut").textContent = a.toFixed(2);
     document.getElementById("exBOut").textContent = b.toFixed(2);
 
+    const def = curveDefs[cubicMode];
     const svg = document.getElementById("exSvg");
     svg.innerHTML = "";
     const W=700,H=380,pad=50;
-    const xMin=-3,xMax=3,yMin=-4,yMax=4;
+    const xMin=-3,xMax=3,[yMin,yMax]=def.yRange;
     function X(x){ return pad + (x-xMin)/(xMax-xMin)*(W-2*pad); }
     function Y(y){ return H-pad - (y-yMin)/(yMax-yMin)*(H-2*pad); }
 
@@ -370,8 +444,7 @@
 
     // candidates: critical points within [a,b], plus endpoints
     const candidates = [{x:a, label:"a (endpoint)"}, {x:b, label:"b (endpoint)"}];
-    const criticalXs = cubicMode==="minus3x" ? [-1,1] : [0];
-    for (const cx of criticalXs) if (cx>=a && cx<=b) candidates.push({x:cx, label: cubicMode==="minus3x" ? (cubicFpp(cx)>0?"critical (local min)":"critical (local max)") : "critical (inflection — not an extremum)"});
+    for (const cx of def.criticalXs) if (cx>=a && cx<=b) candidates.push({x:cx, label: def.critLabel(cx, cubicFpp(cx))});
     const withF = candidates.map(c => ({...c, f: cubicF(c.x)}));
     const globalMaxVal = Math.max(...withF.map(c=>c.f));
     const globalMinVal = Math.min(...withF.map(c=>c.f));
@@ -384,22 +457,191 @@
       svg.appendChild(el("circle",{cx:X(c.x),cy:Y(c.f),r: (isMax||isMin) ? 8:6, fill:color, stroke:"#fff", ["stroke-width"]:1.6}));
       svg.appendChild(txt(X(c.x), Y(c.f) - 14, c.label + (isMax?" ★ GLOBAL MAX":(isMin?" ★ GLOBAL MIN":"")), color, 10.5, "middle", "600"));
     }
-    svg.appendChild(txt(X(0), 24, cubicMode==="minus3x" ? "f(x) = x³ − 3x" : "f(x) = x³", "var(--ink-soft)", 12, "middle", "600"));
+    svg.appendChild(txt(X(0), 24, def.label, "var(--ink-soft)", 12, "middle", "600"));
   }
   ["exA","exB"].forEach(id => document.getElementById(id).addEventListener("input", renderExtrema));
+  function setCubicButtons(id){
+    ["btnCubicMinus3x","btnCubicPlain","btnCubicSquare"].forEach(b => document.getElementById(b).classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
   document.getElementById("btnCubicMinus3x").addEventListener("click", function(){
-    cubicMode = "minus3x"; this.classList.add("active");
-    document.getElementById("btnCubicPlain").classList.remove("active");
+    cubicMode = "minus3x"; setCubicButtons(this.id);
     document.getElementById("exHeading").textContent = "f(x) = x³ − 3x — Local Peaks, and the Actual Global Winner";
     renderExtrema();
   });
   document.getElementById("btnCubicPlain").addEventListener("click", function(){
-    cubicMode = "plain"; this.classList.add("active");
-    document.getElementById("btnCubicMinus3x").classList.remove("active");
+    cubicMode = "plain"; setCubicButtons(this.id);
     document.getElementById("exHeading").textContent = "f(x) = x³ — a Critical Point That Isn't a Peak or Valley";
     renderExtrema();
   });
+  document.getElementById("btnCubicSquare").addEventListener("click", function(){
+    cubicMode = "square"; setCubicButtons(this.id);
+    document.getElementById("exHeading").textContent = "f(x) = x² — Convex, so the Critical Point Always Wins";
+    renderExtrema();
+  });
   renderExtrema();
+
+  /* =========================================================
+     TAB — NEWTON VS. BISECTION
+     ========================================================= */
+  function newtonSeqUpto(n){
+    const sq2 = Math.sqrt(2);
+    const seq = [{x:1.0, err:Math.abs(1.0-sq2)}];
+    let x = 1.0;
+    for(let i=1;i<=n;i++){
+      const fx = x*x-2;
+      x = x - fx/(2*x);
+      seq.push({x, err:Math.abs(x-sq2)});
+    }
+    return seq;
+  }
+  function bisectSeqUpto(n){
+    const sq2 = Math.sqrt(2);
+    const seq = [];
+    let a=1.0, b=2.0;
+    for(let i=1;i<=n;i++){
+      const m = (a+b)/2;
+      const fm = m*m-2;
+      if (fm>0) b=m; else a=m;
+      seq.push({a,b,m, err:Math.abs(m-sq2)});
+    }
+    return seq;
+  }
+  let newtonStep = 0;
+  const NEWTON_MAX_STEPS = 25;
+
+  function drawNewtonSvg(newtonPt, bisectPt){
+    const svg = document.getElementById("newtonSvg");
+    svg.innerHTML = "";
+    const W=700,H=320,pad=50;
+    const xMin=0.8,xMax=2.1,yMin=-1.6,yMax=2.6;
+    function X(x){ return pad + (x-xMin)/(xMax-xMin)*(W-2*pad); }
+    function Y(y){ return H-pad - (y-yMin)/(yMax-yMin)*(H-2*pad); }
+
+    svg.appendChild(el("line",{x1:pad,y1:Y(0),x2:W-pad,y2:Y(0),stroke:"var(--line)","stroke-width":1}));
+    let d = "";
+    for(let i=0;i<=300;i++){ const x=xMin+(i/300)*(xMax-xMin); const y=x*x-2; d += (i===0?"M":"L")+X(x)+","+Y(y)+" "; }
+    svg.appendChild(el("path",{d, fill:"none", stroke:"var(--accent)", ["stroke-width"]:2.2}));
+
+    const sq2 = Math.sqrt(2);
+    svg.appendChild(el("line",{x1:X(sq2),y1:pad*0.3,x2:X(sq2),y2:H-pad,stroke:"var(--c1)","stroke-width":1.2,["stroke-dasharray"]:"4 3"}));
+    svg.appendChild(txt(X(sq2), pad*0.3-8, "√2 = " + sq2.toFixed(6), "var(--c1)", 11, "middle", "700"));
+
+    if (bisectPt){
+      svg.appendChild(el("rect",{x:X(bisectPt.a), y:pad*0.55, width:Math.max(1,X(bisectPt.b)-X(bisectPt.a)), height:H-pad*0.55-pad, fill:"rgba(217,166,46,0.16)"}));
+      svg.appendChild(txt((X(bisectPt.a)+X(bisectPt.b))/2, pad*0.55-6, "bisection interval [a,b]", "var(--c2)", 10.5, "middle", "600"));
+      svg.appendChild(el("circle",{cx:X(bisectPt.m),cy:Y(bisectPt.m*bisectPt.m-2),r:5,fill:"var(--c2)",stroke:"#fff",["stroke-width"]:1.2}));
+    }
+    if (newtonPt){
+      const xn=newtonPt.x, fxn=xn*xn-2, fpxn=2*xn;
+      const dx=0.35;
+      svg.appendChild(el("line",{x1:X(xn-dx),y1:Y(fxn-fpxn*dx),x2:X(xn+dx),y2:Y(fxn+fpxn*dx),stroke:"var(--c3)","stroke-width":1.6,["stroke-dasharray"]:"3 2"}));
+      svg.appendChild(el("circle",{cx:X(xn),cy:Y(fxn),r:6,fill:"var(--c3)",stroke:"#fff",["stroke-width"]:1.4}));
+      svg.appendChild(txt(X(xn), Y(fxn)-14, "Newton xₙ="+xn.toFixed(6), "var(--c3)", 10.5, "middle", "700"));
+    }
+    svg.appendChild(txt(W/2, 22, "f(x) = x² − 2", "var(--ink-soft)", 12, "middle", "600"));
+  }
+
+  function renderNewtonTab(){
+    const nFull = newtonSeqUpto(6); // Newton saturates by step 5-6 (double precision limit)
+    const bFull = bisectSeqUpto(newtonStep); // bisection keeps changing every step
+
+    let html = "<tr><th>step</th><th>Newton xₙ</th><th>Newton error</th><th>Bisection midpoint</th><th>Bisection error</th></tr>";
+    for (let i=0; i<=newtonStep; i++){
+      const nRow = nFull[Math.min(i,6)];
+      const bRow = i===0 ? null : bFull[i-1];
+      html += "<tr><td>"+i+"</td><td>"+nRow.x.toFixed(12)+"</td><td>"+(i===0?"—":nRow.err.toExponential(2))+"</td><td>"+(bRow?bRow.m.toFixed(10):"—")+"</td><td>"+(bRow?bRow.err.toExponential(2):"—")+"</td></tr>";
+    }
+    document.getElementById("newtonTable").innerHTML = html;
+
+    let n6 = "-";
+    for(let i=0;i<nFull.length;i++){ if(nFull[i].err<1e-6){ n6=i; break; } }
+    const bLong = bisectSeqUpto(40);
+    let b6 = "-";
+    for(let i=0;i<bLong.length;i++){ if(bLong[i].err<1e-6){ b6=i+1; break; } }
+    document.getElementById("newtonStepsTo6").textContent = n6;
+    document.getElementById("bisectStepsTo6").textContent = b6;
+
+    const curNewton = nFull[Math.min(newtonStep,6)];
+    const curBisect = bFull.length ? bFull[bFull.length-1] : null;
+    drawNewtonSvg(curNewton, curBisect);
+  }
+  document.getElementById("btnNewtonStep").addEventListener("click", () => {
+    if (newtonStep < NEWTON_MAX_STEPS){ newtonStep++; renderNewtonTab(); }
+  });
+  document.getElementById("btnNewtonReset").addEventListener("click", () => { newtonStep=0; renderNewtonTab(); });
+  renderNewtonTab();
+
+  /* =========================================================
+     TAB — LAGRANGE MULTIPLIERS
+     ========================================================= */
+  function lagContourPath(c, X, Y, xMin, xMax, yMin, yMax){
+    let d = "", started = false;
+    const steps = 600;
+    for(let i=0;i<=steps;i++){
+      const px = xMin + (i/steps)*(xMax-xMin);
+      if (Math.abs(px) < 0.2){ started=false; continue; }
+      const py = c/px;
+      if (py < yMin-3 || py > yMax+3){ started=false; continue; }
+      d += (!started?"M":"L")+X(px)+","+Y(py)+" ";
+      started = true;
+    }
+    return d;
+  }
+  function renderLagrange(){
+    const x = parseFloat(document.getElementById("lagX").value);
+    const y = 10 - x;
+    document.getElementById("lagXOut").textContent = x.toFixed(2);
+    document.getElementById("lagXVal").textContent = x.toFixed(2);
+    document.getElementById("lagYVal").textContent = y.toFixed(2);
+    const fVal = x*y;
+    document.getElementById("lagFVal").textContent = fVal.toFixed(3);
+    document.getElementById("lagGradF").textContent = "("+y.toFixed(2)+", "+x.toFixed(2)+")";
+    document.getElementById("lagGradG").textContent = "(1.00, 1.00)";
+
+    const svg = document.getElementById("lagSvg");
+    svg.innerHTML = "";
+    const W=700,H=420,pad=50;
+    const xMin=-3,xMax=13,yMin=-3,yMax=13;
+    function X(px){ return pad + (px-xMin)/(xMax-xMin)*(W-2*pad); }
+    function Y(py){ return H-pad - (py-yMin)/(yMax-yMin)*(H-2*pad); }
+
+    svg.appendChild(el("line",{x1:X(xMin),y1:Y(0),x2:X(xMax),y2:Y(0),stroke:"var(--line)","stroke-width":1}));
+    svg.appendChild(el("line",{x1:X(0),y1:Y(yMin),x2:X(0),y2:Y(yMax),stroke:"var(--line)","stroke-width":1}));
+
+    const levels = [{c:-10,col:"var(--line)",w:1.3,op:0.5},{c:10,col:"var(--line)",w:1.3,op:0.5},{c:25,col:"var(--c1)",w:2.4,op:0.95},{c:32,col:"var(--line)",w:1.3,op:0.5}];
+    for (const lvl of levels){
+      const d = lagContourPath(lvl.c, X, Y, xMin, xMax, yMin, yMax);
+      svg.appendChild(el("path",{d, fill:"none", stroke:lvl.col, ["stroke-width"]:lvl.w, opacity:lvl.op}));
+    }
+    svg.appendChild(txt(X(10.2), Y(25/10.2)-8, "xy=25 (tangent — the optimum)", "var(--c1)", 10.5, "start", "700"));
+
+    svg.appendChild(el("line",{x1:X(xMin),y1:Y(10-xMin),x2:X(xMax),y2:Y(10-xMax),stroke:"var(--accent)","stroke-width":2.4}));
+    svg.appendChild(txt(X(11.6), Y(10-11.6)-10, "x + y = 10", "var(--accent)", 11.5, "middle", "700"));
+
+    function drawArrow(x0,y0,vx,vy,color,label){
+      const mag = Math.sqrt(vx*vx+vy*vy) || 1;
+      const ux = vx/mag, uy = vy/mag;
+      const lenPx = 55;
+      const ex = X(x0) + ux*lenPx, ey = Y(y0) - uy*lenPx;
+      svg.appendChild(el("line",{x1:X(x0),y1:Y(y0),x2:ex,y2:ey,stroke:color,["stroke-width"]:2.6}));
+      svg.appendChild(el("circle",{cx:ex,cy:ey,r:4,fill:color}));
+      svg.appendChild(txt(ex, ey-10, label, color, 11, "middle", "700"));
+    }
+    drawArrow(x,y, y,x, "var(--c3)", "∇f");
+    drawArrow(x,y, 1,1, "var(--c2)", "∇g");
+    svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:7,fill:"var(--ink)",stroke:"#fff",["stroke-width"]:1.6}));
+
+    const cross = y - x;
+    const aligned = Math.abs(cross) < 0.06;
+    const verdict = document.getElementById("lagVerdict");
+    verdict.className = "verdict " + (aligned ? "pass" : "fail");
+    verdict.innerHTML = aligned
+      ? "<b>✓ Aligned.</b> ∇f=("+y.toFixed(2)+", "+x.toFixed(2)+") points the same way as ∇g=(1,1) here — sliding along the fence in either direction can no longer improve f. This is the constrained optimum: x=y=5, f=25."
+      : "<b>✗ Not aligned yet.</b> ∇f=("+y.toFixed(2)+", "+x.toFixed(2)+") points partly *along* the fence, not just into it — meaning you can still slide along x+y=10 and increase f. Try dragging toward x=5.";
+  }
+  document.getElementById("lagX").addEventListener("input", renderLagrange);
+  renderLagrange();
 
   /* =========================================================
      TAB 3 — MLE AS A HILL TO CLIMB
@@ -591,6 +833,70 @@
     drawLandscape();
   });
   drawLandscape();
+
+  /* ============================================================
+     TAB 6 — CORNERS AND CUSPS
+     ============================================================ */
+  const CORNER_FNS = {
+    corner: { f: x => Math.abs(x), label: "f(x) = |x|", kind: "corner" },
+    cusp:   { f: x => Math.sign(x) * Math.pow(Math.abs(x), 1/3), label: "f(x) = x^(1/3)", kind: "cusp" }
+  };
+  let cornersFn = "corner";
+  function renderCorners(){
+    const hRaw = parseInt(document.getElementById("cornersH").value, 10);
+    const h = hRaw / 100;
+    document.getElementById("cornersHOut").textContent = h.toFixed(2);
+    const def = CORNER_FNS[cornersFn];
+    const F = def.f;
+    const qRight = (F(0+h) - F(0)) / h;
+    const qLeft = (F(0-h) - F(0)) / (-h);
+    document.getElementById("cornersRight").textContent = qRight.toFixed(3);
+    document.getElementById("cornersLeft").textContent = qLeft.toFixed(3);
+
+    const svg = document.getElementById("cornersSvg");
+    svg.innerHTML = "";
+    const W=440,H=280,pad=40;
+    const view = def.kind==="corner" ? {xmin:-1.5,xmax:1.5,ymin:-0.2,ymax:1.6} : {xmin:-1.5,xmax:1.5,ymin:-1.3,ymax:1.3};
+    function X(x){ return pad + (x-view.xmin)/(view.xmax-view.xmin)*(W-2*pad); }
+    function Y(y){ return H-pad - (y-view.ymin)/(view.ymax-view.ymin)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:Y(0),x2:W-pad,y2:Y(0),stroke:"var(--line)"}));
+    svg.appendChild(el("line",{x1:X(0),y1:pad,x2:X(0),y2:H-pad,stroke:"var(--line)"}));
+    // curve
+    let d = "";
+    for(let px=0; px<=W-2*pad; px+=2){
+      const x = view.xmin + (px/(W-2*pad))*(view.xmax-view.xmin);
+      const y = F(x);
+      const cx = X(x), cy = Y(y);
+      d += (px===0 ? "M" : "L") + cx.toFixed(1) + "," + cy.toFixed(1) + " ";
+    }
+    svg.appendChild(el("path",{d, fill:"none", stroke:"var(--c1)", ["stroke-width"]:2.5}));
+    // secant lines to +h and -h
+    const p0 = [X(0), Y(F(0))];
+    const pR = [X(h), Y(F(h))];
+    const pL = [X(-h), Y(F(-h))];
+    svg.appendChild(el("line",{x1:p0[0],y1:p0[1],x2:pR[0],y2:pR[1],stroke:"var(--c2)", ["stroke-width"]:2}));
+    svg.appendChild(el("line",{x1:p0[0],y1:p0[1],x2:pL[0],y2:pL[1],stroke:"var(--c4)", ["stroke-width"]:2}));
+    svg.appendChild(el("circle",{cx:p0[0],cy:p0[1],r:5,fill:"var(--c3)"}));
+    svg.appendChild(el("circle",{cx:pR[0],cy:pR[1],r:4,fill:"var(--c2)"}));
+    svg.appendChild(el("circle",{cx:pL[0],cy:pL[1],r:4,fill:"var(--c4)"}));
+
+    const story = document.getElementById("cornersStory");
+    if (def.kind === "corner"){
+      story.innerHTML = "<b>" + def.label + "</b>: right-side slope = <b>" + qRight.toFixed(3) + "</b>, left-side slope = <b>" + qLeft.toFixed(3) + "</b> — these never converge to the same number, no matter how small h gets. Two different finite answers, permanently disagreeing.";
+    } else {
+      story.innerHTML = "<b>" + def.label + "</b>: right-side slope = <b>" + qRight.toFixed(3) + "</b>, left-side slope = <b>" + qLeft.toFixed(3) + "</b> — both sides agree with each other, and both are racing toward infinity as h shrinks. One answer, but it was never actually a number.";
+    }
+  }
+  document.querySelectorAll('#panel-corners [data-cf]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll('#panel-corners [data-cf]').forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      cornersFn = btn.dataset.cf;
+      renderCorners();
+    });
+  });
+  document.getElementById("cornersH").addEventListener("input", renderCorners);
+  renderCorners();
 })();
 </script>
 </body>

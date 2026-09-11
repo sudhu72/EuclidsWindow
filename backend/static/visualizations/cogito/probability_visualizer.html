@@ -90,6 +90,7 @@
     <button class="tab" data-tab="lln">Law of Large Numbers</button>
     <button class="tab" data-tab="baserate">Base-Rate Explorer</button>
     <button class="tab" data-tab="variance">Variance Comparer</button>
+    <button class="tab" data-tab="binompois">Binomial &amp; Poisson</button>
   </div>
 
   <!-- ============ TAB 1: AND/OR TREE ============ -->
@@ -285,6 +286,29 @@
       <svg id="varSvg" viewBox="0 0 640 200" role="img" aria-label="Variance comparison dot plot"></svg>
       <div class="verdict" id="varVerdict"></div>
       <div class="caption"><b>Why it matters:</b> a mean alone can make two genuinely very different situations look identical on paper — variance is the number that actually distinguishes "reliably average" from "wildly unpredictable but averages out."</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BINOMIAL & POISSON ============ -->
+  <div class="panel" id="panel-binompois">
+    <div class="card">
+      <h2>n Independent Trials, Counted</h2>
+      <p class="sub"><b>What's happening:</b> drag <code>n</code> (number of trials) and <code>p</code> (success probability per trial) and watch the Binomial distribution's bars, mean, and variance update live -- the two-flip-coin example from 3.2, scaled up to any n.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set n=10, p=0.3 and confirm the readouts land on mean=3.0 and variance=2.1 exactly, matching np and np(1-p). Then push n up while dragging p down so that n&times;p stays fixed near 5 -- watch the bars quietly reshape into the Poisson curve below.</p>
+      <div class="row"><label>n (trials)</label><input type="range" id="bpN" min="1" max="60" step="1" value="10"><span class="readout" id="bpNOut">10</span></div>
+      <div class="row"><label>p (success prob.)</label><input type="range" id="bpP" min="1" max="99" step="1" value="30"><span class="readout" id="bpPOut">0.30</span></div>
+      <svg id="bpSvg" viewBox="0 0 640 220" role="img" aria-label="Binomial distribution bar chart"></svg>
+      <div class="verdict" id="bpVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every A/B test's "number of conversions out of n visitors" is exactly this distribution, and its variance formula is precisely what a significance test needs to judge a real effect from noise.</div>
+    </div>
+    <div class="card">
+      <h2>Rare Events, Many Chances: the Poisson Limit</h2>
+      <p class="sub"><b>What's happening:</b> drag &lambda; (the expected count) and watch the Poisson distribution's bars update, with the matching Binomial(n=2000, p=&lambda;/n) drawn as an outline on top -- confirming the limit is real, not just similar in spirit.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> watch mean and variance below -- for a true Poisson process they are always exactly equal. If real count data's variance is far larger than its mean, that mismatch (called overdispersion) is a real, checkable sign the plain Poisson model doesn't fit.</p>
+      <div class="row"><label>&lambda; (expected count)</label><input type="range" id="bpLam" min="1" max="200" step="1" value="50"><span class="readout" id="bpLamOut">5.0</span></div>
+      <svg id="poisSvg" viewBox="0 0 640 220" role="img" aria-label="Poisson distribution bar chart"></svg>
+      <div class="verdict" id="poisVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> call-center arrivals, typos per page, and radioactive decays are all classically modeled this way -- and the forced mean-equals-variance signature is a real diagnostic real statisticians actually check.</div>
     </div>
   </div>
 
@@ -953,6 +977,86 @@
   }
   [varMean,varSpreadA,varSpreadB].forEach(inp => inp.addEventListener("input", drawVariance));
   drawVariance();
+
+  /* =========================================================
+     TAB — BINOMIAL & POISSON
+     ========================================================= */
+  function combC(n,k){
+    if (k<0 || k>n) return 0;
+    let r = 1;
+    for (let i=0;i<k;i++) r = r*(n-i)/(i+1);
+    return r;
+  }
+  function binomPMF(n,p){
+    const out = [];
+    for (let k=0;k<=n;k++) out.push(combC(n,k)*Math.pow(p,k)*Math.pow(1-p,n-k));
+    return out;
+  }
+  function poissonPMF(lam, kmax){
+    const out = [];
+    let term = Math.exp(-lam); // k=0 term
+    out.push(term);
+    for (let k=1;k<=kmax;k++){ term = term*lam/k; out.push(term); }
+    return out;
+  }
+  function drawBars(svgId, pmf, color, outlinePmf){
+    const svg = document.getElementById(svgId);
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    const W=640,H=220,padL=30,padB=24,padT=10;
+    const n = pmf.length;
+    const maxP = Math.max(...pmf, outlinePmf ? Math.max(...outlinePmf) : 0) || 1;
+    const barW = (W-padL-10)/n;
+    svg.appendChild(el("line",{x1:padL,y1:H-padB,x2:W-10,y2:H-padB,stroke:"var(--line)"}));
+    pmf.forEach((v,k)=>{
+      const h = (v/maxP)*(H-padB-padT);
+      svg.appendChild(el("rect",{x:padL+k*barW+1, y:H-padB-h, width:Math.max(barW-2,1), height:h, fill:color, opacity:0.85}));
+    });
+    if (outlinePmf){
+      let pts = "";
+      outlinePmf.forEach((v,k)=>{
+        const h = (v/maxP)*(H-padB-padT);
+        const cx = padL+k*barW+barW/2;
+        pts += (cx)+","+(H-padB-h)+" ";
+      });
+      svg.appendChild(el("polyline",{points:pts.trim(), fill:"none", stroke:"var(--accent)", "stroke-width":2}));
+    }
+    // x-axis ticks every ~5 counts
+    const step = n<=20 ? 1 : Math.ceil(n/20)*5;
+    for (let k=0;k<n;k+=step){
+      svg.appendChild(el("text",{x:padL+k*barW+barW/2, y:H-8, "text-anchor":"middle", "font-size":10, fill:"var(--ink-soft)"}, String(k)));
+    }
+  }
+  const bpN = document.getElementById("bpN"), bpP = document.getElementById("bpP");
+  function renderBinom(){
+    const n = parseInt(bpN.value,10);
+    const p = parseInt(bpP.value,10)/100;
+    document.getElementById("bpNOut").textContent = n;
+    document.getElementById("bpPOut").textContent = p.toFixed(2);
+    const pmf = binomPMF(n,p);
+    drawBars("bpSvg", pmf, "var(--pA)");
+    const mean = n*p, variance = n*p*(1-p);
+    document.getElementById("bpVerdict").innerHTML =
+      `mean = n&middot;p = <b>${mean.toFixed(2)}</b> &nbsp;&middot;&nbsp; variance = n&middot;p&middot;(1-p) = <b>${variance.toFixed(2)}</b>`;
+  }
+  [bpN,bpP].forEach(inp=>inp.addEventListener("input", renderBinom));
+  renderBinom();
+
+  const bpLam = document.getElementById("bpLam");
+  function renderPoisson(){
+    const lam = parseInt(bpLam.value,10)/10;
+    document.getElementById("bpLamOut").textContent = lam.toFixed(1);
+    const kmax = Math.max(20, Math.ceil(lam*3));
+    const pmf = poissonPMF(lam, kmax);
+    // matching Binomial(n=2000, p=lam/n) overlay to show the limit is real
+    const nApprox = 2000, pApprox = lam/nApprox;
+    const binomOverlay = [];
+    for (let k=0;k<=kmax;k++) binomOverlay.push(combC(nApprox,k)*Math.pow(pApprox,k)*Math.pow(1-pApprox,nApprox-k));
+    drawBars("poisSvg", pmf, "var(--pB)", binomOverlay);
+    document.getElementById("poisVerdict").innerHTML =
+      `mean = &lambda; = <b>${lam.toFixed(2)}</b> &nbsp;&middot;&nbsp; variance = <b>${lam.toFixed(2)}</b> (always equal) &nbsp;&middot;&nbsp; purple outline: Binomial(n=2000, p=&lambda;/n) -- the limit this distribution comes from`;
+  }
+  bpLam.addEventListener("input", renderPoisson);
+  renderPoisson();
 })();
 </script>
 </body>

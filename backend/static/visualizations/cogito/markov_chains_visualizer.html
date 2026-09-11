@@ -92,6 +92,7 @@
     <button class="tab" data-tab="walker">Long-Run Walker</button>
     <button class="tab" data-tab="race">HH vs HT Race</button>
     <button class="tab" data-tab="ruin">Gambler's Ruin</button>
+    <button class="tab" data-tab="sufficient">Is the State Enough?</button>
   </div>
 
   <!-- ============ TAB 1: PROBABILITY TREE (BAYES) ============ -->
@@ -234,6 +235,22 @@
       <div class="bar" id="ruinBar"><div style="background:var(--accent); width:0%">—</div></div>
       <div class="stat-line" id="ruinStatLine"></div>
       <div class="caption"><b>Why it matters:</b> the house doesn't even need an edge to grind most gamblers down — the closer your target is relative to your bankroll, the likelier ruin comes first, purely from the arithmetic of an absorbing random walk. This exact skeleton (states you can enter but never leave) models customer churn, disease progression, and credit-rating default.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: IS THE STATE ENOUGH? (SUFFICIENT STATISTIC) ============ -->
+  <div class="panel" id="panel-sufficient">
+    <div class="card">
+      <h2>How Much History Actually Belongs in "the State"?</h2>
+      <p class="sub"><b>What's happening:</b> a real weather sequence was generated where tomorrow's rain chance genuinely depends on <em>both</em> today and yesterday — not just today. Pick how much history you're willing to pack into "the state" and see whether that's actually enough to predict well.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with "today only." Its predictions look plausible but are secretly a blend of two very different true rates. Switch to "today + yesterday" and watch the table split apart into the correct, verified numbers — then check the italic comparison row: going one day further back barely moves the number at all, which is exactly how you'd confirm a state is <em>sufficient</em> instead of just guessing.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-order="1">State = today only</button>
+        <button class="op" data-order="2">State = today + yesterday</button>
+      </div>
+      <div id="sufficientTable"></div>
+      <div class="verdict" id="sufficientVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is the exact design question behind an AI agent's context window — the model can only ever see its current state (whatever's in context), so the real question is never "is this Markovian" (a bounded context forces that), it's "does this state pack in enough history to be <em>sufficient</em>" — precisely what this tab lets you check by hand.</div>
     </div>
   </div>
 
@@ -622,6 +639,88 @@
   document.getElementById("ruinReset").addEventListener("click", function(){ ruinWins=0; ruinCount=0; ruinBarUpdate(); drawRuinPath([parseInt(ruinStartSlider.value,10)], false); });
   ruinStartSlider.addEventListener("input", function(){ updateRuinTheoryLabel(); ruinBarUpdate(); drawRuinPath([parseInt(ruinStartSlider.value,10)], false); });
   updateRuinTheoryLabel(); ruinBarUpdate(); drawRuinPath([parseInt(ruinStartSlider.value,10)], false);
+
+  /* =========================================================
+     TAB 6 — IS THE STATE ENOUGH? (sufficient statistic)
+     ========================================================= */
+  (function(){
+    function makeLCG(seed){ var s = seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+    var rand = makeLCG(42);
+    // A genuine order-2 rule: P(tomorrow=Rain | yesterday, today) depends on BOTH days.
+    var TRUE_P2 = { "R,R":0.85, "S,R":0.45, "R,S":0.20, "S,S":0.05 };
+    var seq = ["R","R"];
+    var N = 6000;
+    for (var t=2; t<N; t++){
+      var y = seq[t-2], tod = seq[t-1];
+      var p = TRUE_P2[y+","+tod];
+      seq.push(rand() < p ? "R" : "S");
+    }
+    function tally(keyFn){
+      var counts = {};
+      for (var t=0; t<seq.length-1; t++){
+        var k = keyFn(t);
+        if (k===null) continue;
+        if (!counts[k]) counts[k] = [0,0];
+        counts[k][1]++;
+        if (seq[t+1]==="R") counts[k][0]++;
+      }
+      return counts;
+    }
+    var order1 = tally(function(t){ return t>=0 ? seq[t] : null; });
+    var order2 = tally(function(t){ return t>=1 ? seq[t-1]+","+seq[t] : null; });
+    var order3 = tally(function(t){ return t>=2 ? seq[t-2]+","+seq[t-1]+","+seq[t] : null; });
+
+    function pRain(counts,key){ var c = counts[key]; return c ? c[0]/c[1] : null; }
+    function fmtP(x){ return x===null ? "—" : (x*100).toFixed(1)+"%"; }
+
+    var curOrder = 1;
+    function renderSufficient(){
+      var tableDiv = document.getElementById("sufficientTable");
+      var rows = "";
+      if (curOrder===1){
+        ["R","S"].forEach(function(tod){
+          var p1 = pRain(order1, tod);
+          // one level deeper, broken out by yesterday, for comparison
+          var pRR = pRain(order2, "R,"+tod), pSR = pRain(order2, "S,"+tod);
+          rows += '<div style="margin-bottom:14px;">' +
+            '<div style="font-size:13px;margin-bottom:4px;">today = <b>'+(tod==="R"?"Rain":"Sun")+'</b> &nbsp;→&nbsp; P(rain tomorrow) = <b>'+fmtP(p1)+'</b></div>' +
+            '<div class="bar"><div style="background:var(--rain); width:'+(p1*100).toFixed(1)+'%">'+fmtP(p1)+'</div></div>' +
+            '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px;font-style:italic;">but broken out by yesterday too: after Rain,'+tod+' → '+fmtP(pRR)+' &nbsp;|&nbsp; after Sun,'+tod+' → '+fmtP(pSR)+' — two genuinely different rates, hidden inside that one blended number above.</div>' +
+            '</div>';
+        });
+      } else {
+        ["R,R","S,R","R,S","S,S"].forEach(function(key){
+          var p2 = pRain(order2, key);
+          var parts = key.split(",");
+          var pDeeper1 = pRain(order3, "R,"+key), pDeeper2 = pRain(order3, "S,"+key);
+          var maxDev = Math.max(Math.abs(pDeeper1-p2), Math.abs(pDeeper2-p2));
+          rows += '<div style="margin-bottom:14px;">' +
+            '<div style="font-size:13px;margin-bottom:4px;">yesterday='+(parts[0]==="R"?"Rain":"Sun")+', today='+(parts[1]==="R"?"Rain":"Sun")+' &nbsp;→&nbsp; P(rain tomorrow) = <b>'+fmtP(p2)+'</b></div>' +
+            '<div class="bar"><div style="background:var(--rain); width:'+(p2*100).toFixed(1)+'%">'+fmtP(p2)+'</div></div>' +
+            '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px;font-style:italic;">one day further back barely moves it: '+fmtP(pDeeper1)+' or '+fmtP(pDeeper2)+' depending on the 3rd day — max shift only '+(maxDev*100).toFixed(1)+' points.</div>' +
+            '</div>';
+        });
+      }
+      tableDiv.innerHTML = rows;
+      var verdict = document.getElementById("sufficientVerdict");
+      if (curOrder===1){
+        verdict.className = "verdict";
+        verdict.innerHTML = "<b>\"Today only\" is NOT a sufficient state.</b> Breaking each row out by one more day of history reveals two clearly different true rates hiding inside the same blended number — real predictive structure this state is throwing away.";
+      } else {
+        verdict.className = "verdict";
+        verdict.innerHTML = "<b>\"Today + yesterday\" IS a sufficient state.</b> Checking a 3rd day back barely changes any prediction — going further into the past adds essentially nothing more, exactly the test for whether a state has packed in enough history.";
+      }
+    }
+    document.querySelectorAll('#panel-sufficient [data-order]').forEach(function(b){
+      b.addEventListener("click", function(){
+        document.querySelectorAll('#panel-sufficient [data-order]').forEach(function(x){x.classList.remove("active");});
+        b.classList.add("active");
+        curOrder = parseInt(b.dataset.order,10);
+        renderSufficient();
+      });
+    });
+    renderSufficient();
+  })();
 })();
 </script>
 </body>

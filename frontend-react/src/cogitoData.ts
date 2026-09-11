@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 90 self-contained interactive visualizations
+// Cogito Gallery manifest — 93 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -205,6 +205,18 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Layered Towers — Proof & the Axiomatic Method",
         "one": "Every theorem is a tower built on axioms and earlier theorems — the axiomatic method is just being honest about which floor you're standing on.",
         "prompt": "Explain the axiomatic method and mathematical proof from first principles: what an axiom is, how theorems build on axioms and prior theorems, and why that layered structure is what makes a proof a proof."
+      },
+      {
+        "file": "abacus_visualizer.html",
+        "title": "The Abacus, Bead by Bead",
+        "one": "A bead-and-rod frame is place value made physical — every carrying trick a fast abacus user performs is the same rule your own arithmetic already uses, wearing a costume.",
+        "prompt": "Explain how an abacus works from first principles: why each rod is one place-value column, how the soroban's 1-heaven/4-earth bead design covers every digit with zero redundancy, and how carrying between rods is physically the same operation as carrying in written arithmetic."
+      },
+      {
+        "file": "classification_and_completeness_visualizer.html",
+        "title": "Classification and Completeness, Live",
+        "one": "Sometimes math can prove a list is finished forever — five Platonic solids, 230 space groups — and sometimes a theorem proves no such finished list can ever exist at all.",
+        "prompt": "Explain classification and completeness in mathematics: how the Platonic solids and crystallographic restriction theorem prove a search is finite and finished, and how Gödel's incompleteness theorem proves the opposite is sometimes true — that no finite set of axioms can ever settle every true statement."
       }
     ]
   },
@@ -542,6 +554,12 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Time Series & Forecasting: decomposition, stationarity, and a live forecast",
         "one": "Trend, seasonality, and noise are tangled together in every time series — pull them apart first, and forecasting gets much easier.",
         "prompt": "Explain time series forecasting from first principles: how to decompose a series into trend, seasonality, and residual noise, what 'stationarity' means and why it matters, and how a simple forecasting model uses all of that."
+      },
+      {
+        "file": "agent_harness_engineering_visualizer.html",
+        "title": "Agent Harness Engineering — The Body Around the Brain",
+        "one": "A model is a brain in a jar; tools, MCP, Skills, and the agent loop are the body — sensors, muscles, and rules — that turn it into something that can act.",
+        "prompt": "Explain agent harness engineering from first principles: what a harness gives a model that the model can't do alone (tools, MCP, Skills, the agent loop, context engineering), and how those pieces combine into a system that can act instead of only speak."
       }
     ]
   },

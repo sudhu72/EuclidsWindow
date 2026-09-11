@@ -84,6 +84,7 @@
     <button class="tab active" data-tab="venn">Venn Diagram</button>
     <button class="tab" data-tab="hotel">Hilbert's Hotel</button>
     <button class="tab" data-tab="diag">Cantor's Diagonal</button>
+    <button class="tab" data-tab="fnmachine">Function Machine</button>
   </div>
 
   <!-- ============ TAB 1: VENN DIAGRAM ============ -->
@@ -159,6 +160,27 @@
       <div id="diagLines"></div>
       <div class="verdict" id="diagVerdict"></div>
       <div class="caption"><b>Why it matters:</b> this construction never looks at anything except each row's own digit at its own matching position — which is exactly why it works no matter what the list contains, or how long it is.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: FUNCTION MACHINE ============ -->
+  <div class="panel" id="panel-fnmachine">
+    <div class="card">
+      <h2>Injective? Surjective? Bijective? Draw It and Find Out</h2>
+      <p class="sub">4 domain dots on the left, always. Click a left dot, then click a right dot, to draw an arrow — click the same left dot again to cancel. Every left dot needs exactly one arrow before a function is fully defined.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-cod="4">Codomain size: 4 (equal)</button>
+        <button class="op" data-cod="5">Codomain size: 5 (extra room)</button>
+        <button class="op" data-cod="3">Codomain size: 3 (not enough room)</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="btnPresetBij">Perfect bijection</button>
+        <button class="op" id="btnPresetCollide">Collision</button>
+        <button class="op" id="btnFnClear">Clear all arrows</button>
+      </div>
+      <svg viewBox="0 0 480 320" id="fnSvg"></svg>
+      <div class="verdict" id="fnVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> a red-ringed dot means two arrows landed on it — a collision, breaking injective. A gray dot with no incoming arrow breaks surjective. At equal codomain size, watch these two failures always arrive together — never one without the other.</div>
     </div>
   </div>
 
@@ -430,6 +452,117 @@
       document.getElementById("diagVerdict").textContent = "";
     });
     renderRows(getNumbers());
+  })();
+
+  /* =========================================================
+     TAB 4 — FUNCTION MACHINE
+     ========================================================= */
+  (function(){
+    const DOMAIN_N = 4;
+    let codomainN = 4;
+    let mapping = new Array(DOMAIN_N).fill(null); // mapping[i] = index of codomain dot, or null if unassigned
+    let armed = null; // index of currently-armed domain dot, or null
+
+    function domainCoords(i){ return {x:70, y: 40 + i*(240/(DOMAIN_N-1))}; }
+    function codomainCoords(i,n){ return {x:400, y: 40 + (n===1?120:i*(240/(n-1)))}; }
+
+    function computeVerdict(){
+      const incoming = new Array(codomainN).fill(0);
+      let allAssigned = true;
+      mapping.forEach(m => { if (m===null) allAssigned=false; else incoming[m]++; });
+      const collisions = incoming.map((c,i)=>c>1?i:-1).filter(i=>i>=0);
+      const empties = incoming.map((c,i)=>c===0?i:-1).filter(i=>i>=0);
+      const injective = allAssigned && collisions.length===0;
+      const surjective = allAssigned && empties.length===0;
+      const bijective = injective && surjective;
+      return {allAssigned, incoming, collisions, empties, injective, surjective, bijective};
+    }
+
+    function renderFn(){
+      const svg = document.getElementById("fnSvg");
+      svg.innerHTML = "";
+      const v = computeVerdict();
+      // arrows
+      for(let i=0;i<DOMAIN_N;i++){
+        if (mapping[i]===null) continue;
+        const d = domainCoords(i), c = codomainCoords(mapping[i], codomainN);
+        svg.appendChild(el("line",{x1:d.x,y1:d.y,x2:c.x,y2:c.y,stroke:"var(--accent)","stroke-width":2,opacity:0.75}));
+      }
+      // domain dots
+      for(let i=0;i<DOMAIN_N;i++){
+        const d = domainCoords(i);
+        svg.appendChild(el("circle",{cx:d.x,cy:d.y,r:16,fill: armed===i?"var(--c2)":"#fff", stroke:"var(--c1)","stroke-width":2}));
+        const t = el("text",{x:d.x,y:d.y+4,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":"12",fill: armed===i?"#26210f":"var(--ink)"});
+        t.textContent = i+1; svg.appendChild(t);
+      }
+      // codomain dots
+      for(let j=0;j<codomainN;j++){
+        const c = codomainCoords(j, codomainN);
+        const isCollision = v.collisions.includes(j);
+        const isEmpty = v.empties.includes(j);
+        svg.appendChild(el("circle",{cx:c.x,cy:c.y,r:16,
+          fill: isEmpty?"#E7E9E8":"#fff",
+          stroke: isCollision?"var(--c4)":"var(--c3)",
+          "stroke-width": isCollision?3.5:2}));
+        const t = el("text",{x:c.x,y:c.y+4,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":"12",fill:"var(--ink)"});
+        t.textContent = String.fromCharCode(97+j); svg.appendChild(t);
+      }
+      svg.appendChild(el("text",{x:70,y:20,"text-anchor":"middle","font-family":"Fraunces, serif","font-size":"14","font-weight":"700",fill:"var(--c1)"})).textContent="domain";
+      svg.appendChild(el("text",{x:400,y:20,"text-anchor":"middle","font-family":"Fraunces, serif","font-size":"14","font-weight":"700",fill:"var(--c3)"})).textContent="codomain";
+
+      // click targets (invisible larger circles for easier clicking)
+      for(let i=0;i<DOMAIN_N;i++){
+        const d = domainCoords(i);
+        const hit = el("circle",{cx:d.x,cy:d.y,r:20,fill:"transparent",style:"cursor:pointer"});
+        hit.addEventListener("click", ()=>{ armed = (armed===i) ? null : i; renderFn(); });
+        svg.appendChild(hit);
+      }
+      for(let j=0;j<codomainN;j++){
+        const c = codomainCoords(j, codomainN);
+        const hit = el("circle",{cx:c.x,cy:c.y,r:20,fill:"transparent",style:"cursor:pointer"});
+        hit.addEventListener("click", ()=>{
+          if (armed!==null){ mapping[armed]=j; armed=null; renderFn(); }
+        });
+        svg.appendChild(hit);
+      }
+
+      const verdictEl = document.getElementById("fnVerdict");
+      if (!v.allAssigned){
+        verdictEl.innerHTML = "Assign an arrow from every domain dot to see the full verdict. (" + mapping.filter(m=>m!==null).length + "/" + DOMAIN_N + " assigned)" +
+          (v.collisions.length ? "<br><b>Collision already found</b> at target(s): " + v.collisions.map(j=>String.fromCharCode(97+j)).join(",") + " — this can never be injective now." : "");
+        return;
+      }
+      verdictEl.innerHTML =
+        "Injective (no shared targets)? <b>"+(v.injective?"Yes":"No")+"</b>" + (v.collisions.length?" — collision at "+v.collisions.map(j=>String.fromCharCode(97+j)).join(",")+"":"") + "<br>" +
+        "Surjective (no empty targets)? <b>"+(v.surjective?"Yes":"No")+"</b>" + (v.empties.length?" — empty at "+v.empties.map(j=>String.fromCharCode(97+j)).join(",")+"":"") + "<br>" +
+        "Bijective? <span class=\"big\">"+(v.bijective?"Yes":"No")+"</span>" +
+        (codomainN===DOMAIN_N ? "<br>Equal-size domain and codomain: injective and surjective agreed with each other here ("+(v.injective===v.surjective?"as they always must":"— that should be impossible, check for a bug")+")." : "");
+    }
+
+    document.querySelectorAll("#panel-fnmachine [data-cod]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll("#panel-fnmachine [data-cod]").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        codomainN = parseInt(btn.dataset.cod,10);
+        mapping = new Array(DOMAIN_N).fill(null);
+        armed = null;
+        renderFn();
+      });
+    });
+    document.getElementById("btnPresetBij").addEventListener("click", ()=>{
+      document.querySelectorAll("#panel-fnmachine [data-cod]").forEach(b=>b.classList.remove("active"));
+      document.querySelector('#panel-fnmachine [data-cod="4"]').classList.add("active");
+      codomainN = 4; mapping=[0,1,2,3]; armed=null; renderFn();
+    });
+    document.getElementById("btnPresetCollide").addEventListener("click", ()=>{
+      document.querySelectorAll("#panel-fnmachine [data-cod]").forEach(b=>b.classList.remove("active"));
+      document.querySelector('#panel-fnmachine [data-cod="4"]').classList.add("active");
+      codomainN = 4; mapping=[0,0,2,3]; armed=null; renderFn();
+    });
+    document.getElementById("btnFnClear").addEventListener("click", ()=>{
+      mapping = new Array(DOMAIN_N).fill(null); armed=null; renderFn();
+    });
+    renderFn();
   })();
 
 })();
