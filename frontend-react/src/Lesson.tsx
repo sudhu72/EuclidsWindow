@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { buildLesson, fetchScene, type LessonBuild, type LessonScene } from "./lessonApi";
 import { streamTutor, type TutorAids, type TutorMeta } from "./api";
+import { MicButton, SpeakButton } from "./VoiceControls";
 import Markdown from "./Markdown";
 import Animation from "./Animation";
 import VizPanel from "./VizPanel";
@@ -130,6 +131,12 @@ function AskBox({
           void ask();
         }}
       >
+        <MicButton
+          onDictate={(t) => {
+            setQ(t);
+            void ask(t);
+          }}
+        />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -143,6 +150,7 @@ function AskBox({
       {answer && (
         <div className="bubble assistant ask-answer">
           <Markdown>{answer}</Markdown>
+          <SpeakButton text={answer} />
           {meta && (
             <div className="ask-meta">
               {meta.source === "curated" ? "📗 curated lesson" : "✨ tutor"}
@@ -263,6 +271,7 @@ export default function Lesson({
   return (
     <div className="lesson">
       <div className="lesson-bar">
+        <MicButton onDictate={setTopic} disabled={building} />
         <input
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
@@ -367,7 +376,10 @@ export default function Lesson({
             <div className="scene-meta">
               Scene {idx + 1} of {lesson.sections.length} • {section?.type}
             </div>
-            <h4>{section?.title}</h4>
+            <h4>
+              {section?.title}
+              {scene && scene.type !== "quiz" && <SpeakButton text={scene.narration || ""} />}
+            </h4>
             {!scene ? (
               <div className="scene-failed">
                 This scene didn&rsquo;t generate.{" "}

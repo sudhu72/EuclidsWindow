@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { discover, type Discovery } from "./discoverApi";
+import { MicButton, SpeakButton } from "./VoiceControls";
 import Markdown from "./Markdown";
 
 const LEVELS = ["kids", "teen", "college", "adult"];
@@ -53,6 +54,7 @@ export default function Discover() {
   return (
     <div className="lesson">
       <div className="lesson-bar">
+        <MicButton onDictate={setTopic} disabled={busy} />
         <input
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
@@ -87,7 +89,10 @@ export default function Discover() {
 
           {STAGES.map(([key, label]) => (
             <div className="dstage" key={key}>
-              <div className="dstage-h">{label}</div>
+              <div className="dstage-h">
+                {label}
+                <SpeakButton text={String(data[key] || "")} />
+              </div>
               <div className="dstage-b">
                 <Markdown>{String(data[key] || "")}</Markdown>
               </div>

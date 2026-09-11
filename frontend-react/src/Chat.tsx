@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { streamChat, type ChatMsg } from "./api";
 import { voice, type VoiceStatus } from "./voice";
+import { MicButton } from "./VoiceControls";
 import Markdown from "./Markdown";
 
 const LEVELS = ["kids", "teen", "college", "adult"];
@@ -21,7 +22,6 @@ export default function Chat() {
   const [speak, setSpeak] = useState(false);
   const [level, setLevel] = useState("teen");
   const [vstatus, setVstatus] = useState<VoiceStatus | null>(null);
-  const stopDictation = useRef<(() => void) | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,21 +68,6 @@ export default function Chat() {
     }
   }
 
-  async function toggleMic() {
-    if (listening) {
-      stopDictation.current?.();
-      return;
-    }
-    stopDictation.current = await voice.startDictation(
-      (t) => {
-        setInput(t);
-        // auto-send what was dictated
-        void send(t);
-      },
-      setListening
-    );
-  }
-
   return (
     <div className="chat">
       <div className="chat-scroll" ref={scroller}>
@@ -104,14 +89,14 @@ export default function Chat() {
           void send(input);
         }}
       >
-        <button
-          type="button"
-          className={`icon ${listening ? "on" : ""}`}
-          title={`Voice input (${vstatus?.detail ?? "detecting…"})`}
-          onClick={() => void toggleMic()}
-        >
-          {listening ? "⏹" : "🎤"}
-        </button>
+        <MicButton
+          onDictate={(t) => {
+            setInput(t);
+            // auto-send what was dictated
+            void send(t);
+          }}
+          onListening={setListening}
+        />
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}

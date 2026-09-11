@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { polyaStart, polyaCoach, type PolyaStart, type PolyaCoach } from "./polyaApi";
+import { MicButton, SpeakButton } from "./VoiceControls";
 import Markdown from "./Markdown";
 
 /**
@@ -143,6 +144,7 @@ export default function Solve() {
   return (
     <div className="lesson">
       <div className="lesson-bar">
+        <MicButton onDictate={setProblem} disabled={busy} />
         <input
           value={problem}
           onChange={(e) => setProblem(e.target.value)}
@@ -175,7 +177,10 @@ export default function Solve() {
       {start && (
         <div className="lesson-body">
           <div className="scene">
-            <div className="scene-meta">{start.problem_type}</div>
+            <div className="scene-meta">
+              {start.problem_type}
+              <SpeakButton text={`${start.restated}. ${start.opening}`} />
+            </div>
             <Markdown>{`**Restated:** ${start.restated}\n\n${start.opening}`}</Markdown>
           </div>
 
@@ -209,13 +214,19 @@ export default function Solve() {
           <div className="scene">
             <h4>{p.icon} {p.title}</h4>
             <p className="dsub">{p.intro}</p>
-            <textarea
-              className="polya-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Write your thinking for this step…"
-              rows={4}
-            />
+            <div className="ask-row">
+              <MicButton
+                onDictate={(t) => setInput((v) => (v ? `${v} ${t}` : t))}
+                disabled={busy}
+              />
+              <textarea
+                className="polya-input"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Write (or dictate) your thinking for this step…"
+                rows={4}
+              />
+            </div>
             <div className="nav">
               <button className="send" onClick={() => void getFeedback(false)} disabled={busy}>
                 {busy ? "…" : "Get feedback"}
@@ -236,7 +247,10 @@ export default function Solve() {
                     {coach.revised && <span className="badge-rev">✎ revised</span>}
                   </div>
                 )}
-                <div className="coach-fb"><Markdown>{coach.feedback}</Markdown></div>
+                <div className="coach-fb">
+                  <Markdown>{coach.feedback}</Markdown>
+                  <SpeakButton text={coach.feedback} />
+                </div>
                 {coach.hint && (
                   <details className="coach-hint">
                     <summary>Need a hint?</summary>
