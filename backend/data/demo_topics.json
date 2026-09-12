@@ -617,6 +617,8 @@
         "base 2",
         "base 10",
         "convert",
+        "conversion",
+        "base conversion",
         "radix"
       ],
       "response_text": "**In plain English**: We normally count in base 10 (digits 0-9). Computers count in base 2 (just 0 and 1), called binary. It's the same numbers, just written differently!\n\n**Example**: The number 13 in binary is 1101. Why? Because \\(13 = 8 + 4 + 0 + 1 = 1\u00d78 + 1\u00d74 + 0\u00d72 + 1\u00d71\\). The 1s and 0s tell you which powers of 2 to add.\n\n**Why computers use binary**: Transistors (tiny switches in your phone) are either ON or OFF\u2014that's it. So computers speak in 1s and 0s. Every photo, song, and text you've ever sent was converted to binary!\n\n**Fun story**: Leibniz (who co-invented calculus) was obsessed with binary in the 1700s. He saw it as mystical\u2014creation from nothing using just 0 and 1. He even corresponded with Jesuit missionaries in China who showed him the I Ching, an ancient book that uses a binary-like system!\n\n**Cryptography connection**: When you send a secure message, it's converted to binary, mathematically scrambled, then unscrambled by the receiver. Alan Turing used binary logic to crack Nazi codes in WWII.\n\n**Want to learn more?** Petzold's *Code: The Hidden Language* explains how computers work from scratch\u2014brilliantly accessible!",

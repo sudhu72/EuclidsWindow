@@ -74,10 +74,15 @@ class TopicCatalog:
 
         A match is confident when a multi-word phrase matched, two or more
         keywords matched, a single highly specific word matched, or the
-        matched keywords cover most of the question's content words (so
-        "what is a graph?" still hits the graph topic, while "zeros of the
-        Riemann zeta function" no longer hits the functions topic on the
-        word "function" alone).
+        matched keywords account for at least half the question's content
+        words *by character length* (so "what is a graph?" still hits the
+        graph topic, while "zeros of the Riemann zeta function" no longer
+        hits the functions topic on the word "function" alone, and neither
+        does "explain the Navier-Stokes equation" hit the equation topic on
+        the word "equation" alone). Weighting by length rather than raw word
+        count keeps short filler words ("area", "need") from outweighing a
+        legitimate single-word match the way an unrecognized proper noun
+        ("navier-stokes", "schrodinger") should.
         """
         if any(" " in kw for kw in matched_keywords):
             return True
@@ -91,12 +96,13 @@ class TopicCatalog:
         }
         if not content_words:
             return False
-        covered = sum(
-            1
+        covered_len = sum(
+            len(w)
             for w in content_words
             if any(kw in w or w in kw for kw in matched_keywords)
         )
-        return covered / len(content_words) >= 0.3
+        total_len = sum(len(w) for w in content_words)
+        return covered_len * 2 >= total_len
 
     _LEVEL_CONTENT_KEYS = {
         "kids": "kids_content",
