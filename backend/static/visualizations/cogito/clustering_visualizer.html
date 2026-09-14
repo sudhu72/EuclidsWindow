@@ -64,6 +64,7 @@
     <button class="tabbtn" data-tab="dendro">Hierarchical Dendrogram</button>
     <button class="tabbtn" data-tab="dbscan">DBSCAN Noise Detection</button>
     <button class="tabbtn" data-tab="elbow">Elbow &amp; Silhouette</button>
+    <button class="tabbtn" data-tab="gmm">GMM: Soft Clustering (EM)</button>
   </div>
 
   <!-- ============ TAB 1: K-MEANS ============ -->
@@ -157,6 +158,31 @@
       </div>
       <table class="datatable" id="elbowTable"></table>
       <div class="story-line">Both curves single out <b>k = 3</b>: WCSS's sharp bend, and silhouette's sharp peak.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: GMM / EM ============ -->
+  <div class="tabpanel" id="tab-gmm">
+    <div class="panel">
+      <h2>Soft Clusters: Every Point Gets a Probability, Not a Label</h2>
+      <p class="sub">24 points, two genuinely tilted (non-round) clusters. Step through real E-step/M-step EM iterations from a deliberately bad start (both components near the overall center). Point color blends coral/blue by each point's actual responsibility — no hard boundary anywhere.</p>
+      <div class="row">
+        <button class="op" id="gmmReset">Reset</button>
+        <button class="op" id="gmmStep">Step (E-step &#8594; M-step)</button>
+        <button class="op" id="gmmRun">Run to convergence</button>
+      </div>
+      <svg id="gmmSvg" width="560" height="360" viewBox="0 0 560 360"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">iteration</div><div class="num" id="gmmIter">0</div></div>
+        <div class="metric coral"><div class="lbl">log-likelihood</div><div class="num" id="gmmLL">&mdash;</div></div>
+        <div class="metric blue"><div class="lbl">status</div><div class="num" id="gmmStatus">ready</div></div>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:#ff8266"></span>component 0</span>
+        <span><span class="dot" style="background:#7fb3d5"></span>component 1</span>
+        <span>dashed ellipse = each component's own covariance, 1.5&sigma;</span>
+      </div>
+      <div class="story-line" id="gmmStory"></div>
     </div>
   </div>
 
@@ -649,11 +675,126 @@
     });
   });
 
+  // ================= TAB 5: GMM / EM =================
+  var GMM_PTS = [[2.249,1.841],[3.754,3.836],[3.503,3.73],[1.465,1.187],[1.854,1.359],[1.243,1.365],[2.706,2.798],[2.132,1.72],[2.725,3.247],[-0.893,0.016],[4.186,3.949],[1.672,2.074],[4.629,4.698],[6.238,3.387],[6.321,2.555],[5.181,3.331],[5.134,4.074],[7.123,2.026],[8.514,1.145],[6.307,1.922],[5.82,2.783],[7.257,1.24],[7.427,0.533],[6.642,2.434]];
+  var GMM_XMIN=-2, GMM_XMAX=9.5, GMM_YMIN=-0.8, GMM_YMAX=5.3;
+  var gmmState = null;
+
+  function gmmScale(W,H,basePad){
+    var xr = GMM_XMAX-GMM_XMIN, yr = GMM_YMAX-GMM_YMIN;
+    var s = Math.min((W-2*basePad)/xr, (H-2*basePad)/yr);
+    return { s:s, cx:(GMM_XMIN+GMM_XMAX)/2, cy:(GMM_YMIN+GMM_YMAX)/2, W:W, H:H };
+  }
+  function gmmMapXY(p, geo){
+    return [ geo.W/2 + (p[0]-geo.cx)*geo.s, geo.H/2 - (p[1]-geo.cy)*geo.s ];
+  }
+  function gauss2D(x, mu, cov){
+    var dx=x[0]-mu[0], dy=x[1]-mu[1];
+    var a=cov[0][0], b=cov[0][1], c=cov[1][0], d=cov[1][1];
+    var det = a*d-b*c; if (det <= 1e-9) det = 1e-9;
+    var ia=d/det, ib=-b/det, ic=-c/det, id=a/det;
+    var quad = dx*(ia*dx+ib*dy) + dy*(ic*dx+id*dy);
+    var norm = 1/(2*Math.PI*Math.sqrt(det));
+    return norm*Math.exp(-0.5*quad);
+  }
+  function gmmLogLik(pts, mus, covs, pis){
+    var ll=0;
+    for (var i=0;i<pts.length;i++){
+      var p = pis[0]*gauss2D(pts[i],mus[0],covs[0]) + pis[1]*gauss2D(pts[i],mus[1],covs[1]);
+      ll += Math.log(Math.max(p,1e-300));
+    }
+    return ll;
+  }
+  function gmmInit(){
+    var mx=0, my=0;
+    for (var i=0;i<GMM_PTS.length;i++){ mx+=GMM_PTS[i][0]; my+=GMM_PTS[i][1]; }
+    mx/=GMM_PTS.length; my/=GMM_PTS.length;
+    gmmState = { mus:[[mx+0.5,my],[mx-0.5,my]], covs:[[[3,0],[0,3]],[[3,0],[0,3]]], pis:[0.5,0.5], resp:null, iter:0 };
+  }
+  function gmmEStep(){
+    var resp = [];
+    for (var i=0;i<GMM_PTS.length;i++){
+      var p0 = gmmState.pis[0]*gauss2D(GMM_PTS[i], gmmState.mus[0], gmmState.covs[0]);
+      var p1 = gmmState.pis[1]*gauss2D(GMM_PTS[i], gmmState.mus[1], gmmState.covs[1]);
+      var s = p0+p1;
+      resp.push([p0/s, p1/s]);
+    }
+    gmmState.resp = resp;
+  }
+  function gmmMStep(){
+    var resp = gmmState.resp, n = GMM_PTS.length;
+    for (var k=0;k<2;k++){
+      var Nk=0, sx=0, sy=0;
+      for (var i=0;i<n;i++){ Nk += resp[i][k]; sx += resp[i][k]*GMM_PTS[i][0]; sy += resp[i][k]*GMM_PTS[i][1]; }
+      var mux=sx/Nk, muy=sy/Nk;
+      var cxx=0, cxy=0, cyy=0;
+      for (var j=0;j<n;j++){
+        var dx=GMM_PTS[j][0]-mux, dy=GMM_PTS[j][1]-muy;
+        cxx += resp[j][k]*dx*dx; cxy += resp[j][k]*dx*dy; cyy += resp[j][k]*dy*dy;
+      }
+      cxx/=Nk; cxy/=Nk; cyy/=Nk;
+      gmmState.mus[k] = [mux,muy];
+      gmmState.covs[k] = [[cxx,cxy],[cxy,cyy]];
+      gmmState.pis[k] = Nk/n;
+    }
+    gmmState.iter++;
+  }
+  function gmmEig2x2(a,b,c){
+    var tr=a+c, det=a*c-b*b;
+    var disc = Math.sqrt(Math.max(tr*tr-4*det,0));
+    var l1=(tr+disc)/2, l2=(tr-disc)/2;
+    var v1;
+    if (Math.abs(b) > 1e-9) v1=[l1-c, b]; else v1=[1,0];
+    var norm = Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1]) || 1;
+    return { l1:l1, l2:l2, v1:[v1[0]/norm, v1[1]/norm] };
+  }
+  function gmmBlend(t){
+    var c0=[255,130,102], c1=[127,179,213];
+    var r=Math.round(c0[0]+(c1[0]-c0[0])*t), g=Math.round(c0[1]+(c1[1]-c0[1])*t), b=Math.round(c0[2]+(c1[2]-c0[2])*t);
+    return "rgb("+r+","+g+","+b+")";
+  }
+  function renderGMM(){
+    var svg = document.getElementById("gmmSvg");
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W=560,H=360;
+    var geo = gmmScale(W,H,36);
+    if (!gmmState.resp) gmmEStep();
+    for (var i=0;i<GMM_PTS.length;i++){
+      var xy = gmmMapXY(GMM_PTS[i], geo);
+      var t = gmmState.resp[i][1];
+      svg.appendChild(svgEl("circle",{cx:xy[0], cy:xy[1], r:6, fill: gmmBlend(t), stroke:"#16221c", "stroke-width":0.8}));
+    }
+    for (var k=0;k<2;k++){
+      var cov = gmmState.covs[k];
+      var eig = gmmEig2x2(cov[0][0], cov[0][1], cov[1][1]);
+      var rx = Math.sqrt(Math.max(eig.l1,0))*1.5*geo.s;
+      var ry = Math.sqrt(Math.max(eig.l2,0))*1.5*geo.s;
+      var deg = -Math.atan2(eig.v1[1], eig.v1[0])*180/Math.PI;
+      var cxy = gmmMapXY(gmmState.mus[k], geo);
+      var color = k===0? "#ff8266":"#7fb3d5";
+      svg.appendChild(svgEl("ellipse",{cx:cxy[0], cy:cxy[1], rx:rx, ry:ry, transform:"rotate("+deg+" "+cxy[0]+" "+cxy[1]+")", fill:"none", stroke:color, "stroke-width":1.6, "stroke-dasharray":"5,4"}));
+    }
+    document.getElementById("gmmIter").textContent = gmmState.iter;
+    var ll = gmmLogLik(GMM_PTS, gmmState.mus, gmmState.covs, gmmState.pis);
+    document.getElementById("gmmLL").textContent = ll.toFixed(3);
+    document.getElementById("gmmStatus").textContent = gmmState.iter===0 ? "ready" : "running";
+    document.getElementById("gmmStory").textContent = gmmState.iter===0
+      ? "Both components start on top of each other, right at the overall center -- deliberately bad, like k-means' bad-corner start."
+      : "iteration "+gmmState.iter+": log-likelihood = "+ll.toFixed(3)+" -- watch it only ever climb, never drop, exactly like WCSS only ever fell for k-means.";
+  }
+  document.getElementById("gmmReset").addEventListener("click", function(){ gmmInit(); renderGMM(); });
+  document.getElementById("gmmStep").addEventListener("click", function(){ gmmEStep(); gmmMStep(); gmmEStep(); renderGMM(); });
+  document.getElementById("gmmRun").addEventListener("click", function(){
+    for (var i=0;i<40;i++){ gmmEStep(); gmmMStep(); }
+    gmmEStep(); renderGMM();
+  });
+
   // ================= INIT =================
   kmReset();
   renderDendro();
   renderDBSCAN();
   renderElbow();
+  gmmInit(); renderGMM();
 })();
 </script>
 </body>

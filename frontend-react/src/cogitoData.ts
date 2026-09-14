@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 93 self-contained interactive visualizations
+// Cogito Gallery manifest — 96 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -217,6 +217,18 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Classification and Completeness, Live",
         "one": "Sometimes math can prove a list is finished forever — five Platonic solids, 230 space groups — and sometimes a theorem proves no such finished list can ever exist at all.",
         "prompt": "Explain classification and completeness in mathematics: how the Platonic solids and crystallographic restriction theorem prove a search is finite and finished, and how Gödel's incompleteness theorem proves the opposite is sometimes true — that no finite set of axioms can ever settle every true statement."
+      },
+      {
+        "file": "matrix_factorization_visualizer.html",
+        "title": "One Matrix, Many Factorizations",
+        "one": "LU, Cholesky, QR, SVD, and NMF are all the same question — write a matrix as simpler pieces — answered a different way for a different job.",
+        "prompt": "Explain matrix factorization from first principles: why LU decomposition speeds up solving Ax=b for many b's, why Cholesky halves the work for symmetric positive-definite matrices, and how non-negative matrix factorization trades away SVD's optimality for interpretable, non-negative parts."
+      },
+      {
+        "file": "game_theory_visualizer.html",
+        "title": "When Your Best Move Depends on Theirs",
+        "one": "The Prisoner's Dilemma, the Nash equilibrium, and why the mathematically 'stable' outcome isn't always the best one for anybody.",
+        "prompt": "Explain game theory from first principles: what a payoff matrix is, why the Prisoner's Dilemma shows self-interest can make both players worse off, and what a Nash equilibrium actually guarantees (and doesn't)."
       }
     ]
   },
@@ -560,6 +572,12 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Agent Harness Engineering — The Body Around the Brain",
         "one": "A model is a brain in a jar; tools, MCP, Skills, and the agent loop are the body — sensors, muscles, and rules — that turn it into something that can act.",
         "prompt": "Explain agent harness engineering from first principles: what a harness gives a model that the model can't do alone (tools, MCP, Skills, the agent loop, context engineering), and how those pieces combine into a system that can act instead of only speak."
+      },
+      {
+        "file": "matrix_completion_visualizer.html",
+        "title": "Filling In the Missing 99%",
+        "one": "A recommender's ratings matrix is over 99% empty — matrix completion fills the holes by assuming the same low-rank structure SVD already proves exists.",
+        "prompt": "Explain matrix completion from first principles: why you can't just run SVD on a matrix with missing entries, how the alternating imputation algorithm fills holes by repeatedly trusting low-rank structure then trusting the real data, and how this is exactly the technique behind the Netflix Prize."
       }
     ]
   },

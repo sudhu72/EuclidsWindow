@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Matrix Factorization, live</title>
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'Trebuchet MS','Segoe UI',sans-serif;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-weight:700;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  code, .mono{font-family:'Courier New',monospace;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 16px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:60px;}
+  button.op{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  table.matrix{border-collapse:collapse;margin:10px auto;font-family:'Courier New',monospace;font-size:12.5px;}
+  table.matrix th, table.matrix td{border:1px solid var(--border);padding:6px 8px;text-align:center;}
+  table.matrix th{color:var(--chalk-dim);font-weight:400;}
+  table.matrix input{width:54px;background:var(--bg-panel);color:var(--chalk);border:1px solid var(--border);border-radius:4px;text-align:center;font-family:'Courier New',monospace;font-size:12px;}
+  td.negval{color:var(--coral); font-weight:700;}
+  td.posval{color:var(--green);}
+
+  .cols{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+  .col-title{text-align:center;font-size:13px;color:var(--chalk-dim);margin-bottom:4px;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:120px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Courier New',monospace;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Matrix Factorization, live</h1>
+  <p class="sub">Two tabs, matching the tutorial's verified demonstrations. Every number below is computed live in this page's own JavaScript.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="lu">LU &amp; Cholesky</button>
+    <button class="tabbtn" data-tab="nmf">NMF vs. SVD</button>
+  </div>
+
+  <!-- ============ TAB 1: LU & CHOLESKY ============ -->
+  <div class="tabpanel active" id="tab-lu">
+    <div class="panel">
+      <h2>LU Decomposition — Elimination, Kept Instead of Discarded</h2>
+      <p class="sub">Edit A (3x3) or b. L and U are computed live via Gaussian elimination, then Ax=b is solved by forward and back substitution -- no matrix inverse anywhere.</p>
+      <table class="matrix" id="luATable"></table>
+      <div class="row"><label>b =</label><input type="number" id="luB0" value="4" style="width:54px;"><input type="number" id="luB1" value="10" style="width:54px;"><input type="number" id="luB2" value="25" style="width:54px;"></div>
+      <div class="cols">
+        <div class="col"><div class="col-title">L</div><table class="matrix" id="luLTable"></table></div>
+        <div class="col"><div class="col-title">U</div><table class="matrix" id="luUTable"></table></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">L @ U matches A?</div><div class="num" id="luCheck">-</div></div>
+        <div class="metric amber"><div class="lbl">solved x</div><div class="num" id="luX">-</div></div>
+      </div>
+      <div class="story-line" id="luStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Cholesky Decomposition — Half the Work, for Symmetric Positive-Definite A</h2>
+      <p class="sub">Edit this symmetric 2x2 matrix. L is the single lower-triangular factor such that A = L L^T.</p>
+      <table class="matrix" id="cholATable"></table>
+      <div class="cols">
+        <div class="col"><div class="col-title">L</div><table class="matrix" id="cholLTable"></table></div>
+        <div class="col"><div class="col-title">L @ L^T</div><table class="matrix" id="cholCheckTable"></table></div>
+      </div>
+      <div class="story-line" id="cholStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: NMF vs SVD ============ -->
+  <div class="tabpanel" id="tab-nmf">
+    <div class="panel">
+      <h2>NMF's Factors Stay Non-Negative. SVD's Do Not.</h2>
+      <p class="sub">A real 6x5 non-negative matrix, built from two non-negative hidden topics. Step NMF's multiplicative updates and watch the error fall -- then compare against SVD's own top components on the identical matrix.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="nmfReset">Reset</button>
+        <button class="op" id="nmfStep">Step x10</button>
+        <button class="op" id="nmfRun">Run to convergence</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">iteration</div><div class="num" id="nmfIter">0</div></div>
+        <div class="metric coral"><div class="lbl">reconstruction error (Frobenius)</div><div class="num" id="nmfErr">-</div></div>
+        <div class="metric green"><div class="lbl">W, H stayed non-negative?</div><div class="num" id="nmfNonneg">yes</div></div>
+      </div>
+      <div class="cols">
+        <div class="col"><div class="col-title">NMF's W (document x topic weights)</div><table class="matrix" id="nmfWTable"></table></div>
+        <div class="col"><div class="col-title">SVD's top-2 U (same role, different math)</div><table class="matrix" id="svdUTable"></table></div>
+      </div>
+      <div class="story-line" id="nmfStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>matrix-factorization.md</code>. Self-contained — no external requests, opens directly from disk.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function fmt(v){ return (typeof v==="number"&&isFinite(v)) ? v.toFixed(3) : "-"; }
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+  }));
+
+  // ================= TAB 1a: LU =================
+  var luA = [[2,1,1],[4,3,3],[8,7,9]];
+  function buildEditableMatrix(tableId, matrix, onChange){
+    var t = document.getElementById(tableId);
+    var html = "";
+    for (var i=0;i<matrix.length;i++){
+      html += "<tr>";
+      for (var j=0;j<matrix[i].length;j++){
+        html += "<td><input type='number' data-i='"+i+"' data-j='"+j+"' value='"+matrix[i][j]+"' style='width:50px;'></td>";
+      }
+      html += "</tr>";
+    }
+    t.innerHTML = html;
+    t.querySelectorAll("input").forEach(function(inp){
+      inp.addEventListener("input", function(){
+        var i=+inp.dataset.i, j=+inp.dataset.j;
+        matrix[i][j] = parseFloat(inp.value)||0;
+        onChange();
+      });
+    });
+  }
+  function renderStaticMatrix(tableId, matrix, opts){
+    opts = opts||{};
+    var t = document.getElementById(tableId);
+    var html = "";
+    for (var i=0;i<matrix.length;i++){
+      html += "<tr>";
+      for (var j=0;j<matrix[i].length;j++){
+        var v = matrix[i][j];
+        var cls = opts.highlightNeg && v<-1e-6 ? "negval" : (opts.highlightNeg ? "posval" : "");
+        html += "<td class='"+cls+"'>"+v.toFixed(3)+"</td>";
+      }
+      html += "</tr>";
+    }
+    t.innerHTML = html;
+  }
+  function luDecompose(A){
+    var n = A.length;
+    var L = []; for (var i=0;i<n;i++){ L.push(new Array(n).fill(0)); L[i][i]=1; }
+    var U = A.map(function(r){ return r.slice(); });
+    for (var k=0;k<n-1;k++){
+      for (var i2=k+1;i2<n;i2++){
+        var factor = U[i2][k]/U[k][k];
+        L[i2][k] = factor;
+        for (var j2=k;j2<n;j2++) U[i2][j2] -= factor*U[k][j2];
+      }
+    }
+    return {L:L,U:U};
+  }
+  function matMul(A,B){
+    var n=A.length, m=B[0].length, k=B.length;
+    var C=[];
+    for (var i=0;i<n;i++){
+      var row=[];
+      for (var j=0;j<m;j++){
+        var s=0; for (var t2=0;t2<k;t2++) s+=A[i][t2]*B[t2][j];
+        row.push(s);
+      }
+      C.push(row);
+    }
+    return C;
+  }
+  function forwardSub(L,b){
+    var n=b.length, y=new Array(n).fill(0);
+    for (var i=0;i<n;i++){
+      var s=b[i];
+      for (var j=0;j<i;j++) s-=L[i][j]*y[j];
+      y[i]=s/L[i][i];
+    }
+    return y;
+  }
+  function backSub(U,y){
+    var n=y.length, x=new Array(n).fill(0);
+    for (var i=n-1;i>=0;i--){
+      var s=y[i];
+      for (var j=i+1;j<n;j++) s-=U[i][j]*x[j];
+      x[i]=s/U[i][i];
+    }
+    return x;
+  }
+  function renderLU(){
+    var lu = luDecompose(luA);
+    renderStaticMatrix("luLTable", lu.L);
+    renderStaticMatrix("luUTable", lu.U);
+    var LU = matMul(lu.L, lu.U);
+    var maxDiff = 0;
+    for (var i=0;i<luA.length;i++) for (var j=0;j<luA[i].length;j++) maxDiff = Math.max(maxDiff, Math.abs(LU[i][j]-luA[i][j]));
+    document.getElementById("luCheck").textContent = maxDiff < 1e-9 ? "yes, exactly" : "off by "+maxDiff.toFixed(6);
+    var b = [parseFloat(document.getElementById("luB0").value)||0, parseFloat(document.getElementById("luB1").value)||0, parseFloat(document.getElementById("luB2").value)||0];
+    var y = forwardSub(lu.L, b);
+    var x = backSub(lu.U, y);
+    document.getElementById("luX").textContent = "["+x.map(function(v){return v.toFixed(3);}).join(", ")+"]";
+    document.getElementById("luStory").textContent = "L and U are computed once; solving for a new b only costs forward + back substitution, never a fresh elimination.";
+  }
+  buildEditableMatrix("luATable", luA, renderLU);
+  ["luB0","luB1","luB2"].forEach(function(id){ document.getElementById(id).addEventListener("input", renderLU); });
+  renderLU();
+
+  // ================= TAB 1b: CHOLESKY =================
+  var cholA = [[2.25,1.9],[1.9,2.56]];
+  function renderCholesky(){
+    var a00=cholA[0][0], a10=cholA[1][0], a11=cholA[1][1];
+    var story = document.getElementById("cholStory");
+    if (a00<=0 || a11 - (a10*a10/a00) <= 0){
+      document.getElementById("cholLTable").innerHTML = "<tr><td>not positive-definite</td></tr>";
+      document.getElementById("cholCheckTable").innerHTML = "";
+      story.textContent = "This matrix is not symmetric positive-definite -- Cholesky's required square root would need a negative number.";
+      return;
+    }
+    var l00 = Math.sqrt(a00), l10 = a10/l00, l11 = Math.sqrt(a11 - l10*l10);
+    var L = [[l00,0],[l10,l11]];
+    renderStaticMatrix("cholLTable", L);
+    var LLt = matMul(L, [[L[0][0],L[1][0]],[L[0][1],L[1][1]]]);
+    renderStaticMatrix("cholCheckTable", LLt);
+    story.textContent = "L @ L^T reproduces A exactly -- this exact factor is what turns uncorrelated noise into a cloud with A's own covariance.";
+  }
+  buildEditableMatrix("cholATable", cholA, function(){
+    // keep symmetric: mirror off-diagonal edits
+    cholA[0][1] = cholA[1][0];
+    renderCholesky();
+  });
+  renderCholesky();
+
+  // ================= TAB 2: NMF vs SVD =================
+  var NMF_V = [[0.9335,1.6129,1.3201,0.8385,1.4431],[1.3926,2.2833,1.9431,1.3297,2.2153],[1.6278,2.8223,2.3041,1.4559,2.5115],[1.0921,1.8549,1.5376,1.0017,1.7048],[1.8429,3.0215,2.5714,1.7598,2.9317],[1.181,2.1122,1.6854,1.0149,1.7893]];
+  var NMF_W0 = [[1.1037,1.2465],[1.0991,0.6091],[1.2716,1.1339],[0.8389,1.1743],[1.1094,1.0882],[1.0085,1.164]];
+  var NMF_H0 = [[0.7791,0.9511,0.8554,1.1797,1.0119],[0.9123,0.7654,0.9228,1.0024,0.9173]];
+  var nmfState = null;
+
+  function matMulT_AtB(A,B){ // A^T @ B, A: m x k, B: m x n -> k x n
+    var m=A.length, k=A[0].length, n=B[0].length;
+    var C=[]; for (var i=0;i<k;i++){ var row=[]; for (var j=0;j<n;j++){ var s=0; for (var t2=0;t2<m;t2++) s+=A[t2][i]*B[t2][j]; row.push(s);} C.push(row); }
+    return C;
+  }
+  function matMulABt(A,B){ // A @ B^T, A: m x k, B: n x k -> m x n
+    var m=A.length, k=A[0].length, n=B.length;
+    var C=[]; for (var i=0;i<m;i++){ var row=[]; for (var j=0;j<n;j++){ var s=0; for (var t2=0;t2<k;t2++) s+=A[i][t2]*B[j][t2]; row.push(s);} C.push(row); }
+    return C;
+  }
+  function frob(A){ var s=0; for (var i=0;i<A.length;i++) for (var j=0;j<A[i].length;j++) s+=A[i][j]*A[i][j]; return Math.sqrt(s); }
+  function matSub(A,B){ return A.map(function(row,i){ return row.map(function(v,j){ return v-B[i][j]; }); }); }
+
+  function nmfInit(){
+    nmfState = { W: NMF_W0.map(function(r){return r.slice();}), H: NMF_H0.map(function(r){return r.slice();}), iter:0 };
+  }
+  function nmfStepOnce(){
+    var W=nmfState.W, H=nmfState.H, V=NMF_V;
+    var WtV = matMulT_AtB(W,V);      // k x n
+    var WtW = matMulT_AtB(W,W);      // k x k
+    var WtWH = matMul(WtW,H);        // k x n
+    for (var i=0;i<H.length;i++) for (var j=0;j<H[i].length;j++) H[i][j] *= WtV[i][j]/(WtWH[i][j]+1e-12);
+    var VHt = matMulABt(V,H);        // m x k
+    var HHt = matMul(H, H[0].map(function(_,j){ return H.map(function(row){return row[j];}); })); // k x k via H@H^T
+    var WHHt = matMul(W,HHt);        // m x k
+    for (var i2=0;i2<W.length;i2++) for (var j2=0;j2<W[i2].length;j2++) W[i2][j2] *= VHt[i2][j2]/(WHHt[i2][j2]+1e-12);
+    nmfState.iter++;
+  }
+  function renderNMF(){
+    var W=nmfState.W, H=nmfState.H, V=NMF_V;
+    var WH = matMul(W,H);
+    var err = frob(matSub(V,WH));
+    document.getElementById("nmfIter").textContent = nmfState.iter;
+    document.getElementById("nmfErr").textContent = err.toExponential(3);
+    var allNonneg = true;
+    W.forEach(function(r){ r.forEach(function(v){ if (v<-1e-9) allNonneg=false; }); });
+    H.forEach(function(r){ r.forEach(function(v){ if (v<-1e-9) allNonneg=false; }); });
+    document.getElementById("nmfNonneg").textContent = allNonneg ? "yes" : "no (!)";
+    renderStaticMatrix("nmfWTable", W, {highlightNeg:true});
+    document.getElementById("nmfStory").textContent = "After "+nmfState.iter+" iterations: reconstruction error = "+err.toExponential(3)+". W's entries stay non-negative -- compare against SVD's U on the right.";
+  }
+  document.getElementById("nmfReset").addEventListener("click", function(){ nmfInit(); renderNMF(); });
+  document.getElementById("nmfStep").addEventListener("click", function(){ for (var i=0;i<10;i++) nmfStepOnce(); renderNMF(); });
+  document.getElementById("nmfRun").addEventListener("click", function(){ for (var i=0;i<1000;i++) nmfStepOnce(); renderNMF(); });
+  nmfInit(); renderNMF();
+
+  // ---- SVD of NMF_V via power iteration + deflation, top 2 components ----
+  function norm(v){ var s=0; for (var i=0;i<v.length;i++) s+=v[i]*v[i]; return Math.sqrt(s); }
+  function normalize(v){ var n=norm(v)||1; return v.map(function(x){return x/n;}); }
+  function matVec(A,v){ return A.map(function(row){ var s=0; for (var j=0;j<v.length;j++) s+=row[j]*v[j]; return s; }); }
+  function matVecT(A,u){ var n=A[0].length; var out=new Array(n).fill(0); for (var i=0;i<A.length;i++) for (var j=0;j<n;j++) out[j]+=A[i][j]*u[i]; return out; }
+  function topKSVD(A,k){
+    var m=A.length, n=A[0].length;
+    var Ak = A.map(function(r){return r.slice();});
+    var Us=[];
+    for (var c=0;c<k;c++){
+      var v = []; for (var i=0;i<n;i++) v.push(Math.sin(i*1.7+c*2.3+1)+1.2);
+      v = normalize(v);
+      var u=[];
+      for (var it=0; it<300; it++){
+        u = normalize(matVec(Ak,v));
+        v = normalize(matVecT(Ak,u));
+      }
+      u = matVec(Ak,v);
+      var sigma = norm(u);
+      var uNorm = u.map(function(x){ return sigma>0? x/sigma : 0; });
+      Us.push(uNorm);
+      for (var i2=0;i2<m;i2++) for (var j2=0;j2<n;j2++) Ak[i2][j2] -= sigma*uNorm[i2]*v[j2];
+    }
+    return Us; // array of column vectors (length k), each length m
+  }
+  var svdU = topKSVD(NMF_V, 2);
+  var svdUTable = [];
+  for (var r=0;r<NMF_V.length;r++) svdUTable.push([svdU[0][r], svdU[1][r]]);
+  renderStaticMatrix("svdUTable", svdUTable, {highlightNeg:true});
+})();
+</script>
+</body>
+</html>

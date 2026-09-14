@@ -1467,6 +1467,49 @@
       ],
       "viz": "agent_harness_engineering_visualizer.html",
       "source": "agent_harness_engineering_feynman.md"
+    },
+    {
+      "id": "matrix_factorization",
+      "name": "Matrix Factorization",
+      "keywords": [
+        "matrix factorization",
+        "lu decomposition",
+        "cholesky decomposition",
+        "non-negative matrix factorization",
+        "nmf"
+      ],
+      "related": [
+        "svd",
+        "matrices",
+        "matrix_completion"
+      ],
+      "viz": "matrix_factorization_visualizer.html",
+      "source": "matrix-factorization.md"
+    },
+    {
+      "id": "matrix_completion",
+      "name": "Matrix Completion",
+      "keywords": [
+        "matrix completion",
+        "missing values",
+        "netflix prize",
+        "collaborative filtering"
+      ],
+      "related": [
+        "svd",
+        "matrix_factorization",
+        "dimensionality_reduction"
+      ],
+      "viz": "matrix_completion_visualizer.html",
+      "source": "matrix_completion_feynman.md"
+    },
+    {
+      "id": "game_theory",
+      "name": "Game Theory",
+      "keywords": [],
+      "related": [],
+      "viz": "game_theory_visualizer.html",
+      "source": "game-theory.md"
     }
   ]
 }

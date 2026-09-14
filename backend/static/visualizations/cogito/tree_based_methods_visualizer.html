@@ -74,6 +74,7 @@
     <button class="tabbtn" data-tab="gbm">7 · Gradient Boosting</button>
     <button class="tabbtn" data-tab="interpret">8 · PDP &amp; SHAP</button>
     <button class="tabbtn" data-tab="overfit">9 · GBM Overfitting</button>
+    <button class="tabbtn" data-tab="isoforest">10 · Isolation Forest</button>
   </div>
 
   <!-- TAB 1: REGRESSION TREE -->
@@ -243,6 +244,20 @@
         <div class="metric amber"><div class="lbl">test RSS at round 60</div><div class="num" id="overfitFinal">20.51</div></div>
       </div>
       <div class="story-line" id="overfitStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpanel" id="tab-isoforest">
+    <div class="panel">
+      <h2>How Many Random Cuts Does It Take to Isolate You?</h2>
+      <p class="sub">A fixed cluster of 16 ordinary points, plus one point you drag away. Each random cut picks a random feature (x or y) and a random threshold within the current subset's own range -- the real isolation-tree splitting rule, simulated 300 times per point for a stable average.</p>
+      <div class="row"><label>outlier's distance from the cluster</label><input type="range" id="isoDist" min="0" max="10" step="0.5" value="2"><span class="readout" id="isoDistOut">2.0</span></div>
+      <svg id="isoSvg" width="480" height="320" viewBox="0 0 480 320"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">avg. splits to isolate the dragged point</div><div class="num" id="isoOutlierPath">-</div></div>
+        <div class="metric blue"><div class="lbl">avg. splits for a typical cluster point</div><div class="num" id="isoNormalPath">-</div></div>
+      </div>
+      <div class="story-line" id="isoStory"></div>
     </div>
   </div>
 
@@ -844,6 +859,58 @@
     drawOverfit(btn.dataset.lambda);
   }));
   drawOverfit("1.0");
+
+  // ================= TAB 10: ISOLATION FOREST =================
+  var ISO_CLUSTER = [
+    [0.3,0.2],[-0.2,0.4],[0.1,-0.3],[-0.4,-0.1],[0.5,0.5],[-0.5,0.3],[0.2,0.6],[-0.3,-0.5],
+    [0.6,-0.2],[-0.1,0.1],[0.4,-0.4],[-0.6,0.2],[0.0,0.3],[0.3,-0.6],[-0.2,-0.2],[0.1,0.5]
+  ];
+  function isoPathLength(point, data, depth, maxDepth){
+    if (data.length <= 1 || depth >= maxDepth) return depth;
+    var xs = data.map(function(p){return p[0];}), ys = data.map(function(p){return p[1];});
+    var feat = Math.random() < 0.5 ? 0 : 1;
+    var vals = feat === 0 ? xs : ys;
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    if (lo === hi) return depth;
+    var split = lo + Math.random()*(hi-lo);
+    var subset = point[feat] <= split
+      ? data.filter(function(p){ return p[feat] <= split; })
+      : data.filter(function(p){ return p[feat] > split; });
+    return isoPathLength(point, subset, depth+1, maxDepth);
+  }
+  function isoAvgPath(point, data, trials){
+    var sum = 0;
+    for (var i=0;i<trials;i++) sum += isoPathLength(point, data, 0, 20);
+    return sum/trials;
+  }
+  function renderIso(){
+    var d = parseFloat(document.getElementById("isoDist").value);
+    document.getElementById("isoDistOut").textContent = d.toFixed(1);
+    var outlier = [d*0.7071, d*0.7071];
+    var fullData = ISO_CLUSTER.concat([outlier]);
+
+    var svg = document.getElementById("isoSvg");
+    svg.innerHTML = "";
+    var W=480,H=320,pad=36;
+    function X(x){ return pad + (x+1.5)/13 * (W-2*pad); }
+    function Y(y){ return (H-pad) - (y+1.5)/13 * (H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--border)"}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--border)"}));
+    ISO_CLUSTER.forEach(function(p){
+      svg.appendChild(el("circle",{cx:X(p[0]),cy:Y(p[1]),r:5,fill:"var(--blue)",opacity:0.85}));
+    });
+    svg.appendChild(el("circle",{cx:X(outlier[0]),cy:Y(outlier[1]),r:7,fill:"var(--coral)",stroke:"var(--chalk)","stroke-width":1}));
+
+    var outlierPath = isoAvgPath(outlier, fullData, 300);
+    var normalPath = isoAvgPath(ISO_CLUSTER[0], fullData, 300);
+    document.getElementById("isoOutlierPath").textContent = outlierPath.toFixed(3);
+    document.getElementById("isoNormalPath").textContent = normalPath.toFixed(3);
+    document.getElementById("isoStory").textContent = d < 1.0
+      ? "At this distance the dragged point is basically part of the crowd -- its average path length barely differs from a typical cluster point's."
+      : "The farther out it sits, the fewer random cuts it takes to isolate it -- at distance "+d.toFixed(1)+", it isolates roughly "+(normalPath/Math.max(outlierPath,0.01)).toFixed(2)+"x faster than an ordinary cluster point.";
+  }
+  document.getElementById("isoDist").addEventListener("input", renderIso);
+  renderIso();
 })();
 </script>
 </body>

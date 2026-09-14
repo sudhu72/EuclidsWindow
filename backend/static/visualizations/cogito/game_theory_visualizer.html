@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Game Theory, live</title>
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'Trebuchet MS','Segoe UI',sans-serif;padding:32px 24px 60px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  h1{font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-weight:700;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  code, .mono{font-family:'Courier New',monospace;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 16px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:120px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  input[type=number]{width:64px;padding:5px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg-panel);color:var(--chalk);font-family:'Courier New',monospace;text-align:center;}
+  .readout{font-family:'Courier New',monospace;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:50px;text-align:center;}
+
+  table.matrix{border-collapse:collapse;margin:14px auto;font-family:'Courier New',monospace;font-size:13px;}
+  table.matrix th, table.matrix td{border:1px solid var(--border);padding:10px 14px;text-align:center;min-width:100px;}
+  table.matrix th{color:var(--chalk-dim);font-weight:400;}
+  td.cell{position:relative;}
+  td.nash{background:rgba(143,209,158,0.18); box-shadow: inset 0 0 0 2px var(--green);}
+  .cellinputs{display:flex;gap:4px;justify-content:center;align-items:center;}
+
+  table.coaltable{border-collapse:collapse;margin:10px auto;font-family:'Courier New',monospace;font-size:12.5px;}
+  table.coaltable th, table.coaltable td{border:1px solid var(--border);padding:6px 10px;text-align:center;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:120px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Courier New',monospace;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Game Theory, live</h1>
+  <p class="sub">Three tabs, matching the tutorial's three verified demonstrations. Every number below is computed live in this page's own JavaScript.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="pd">Prisoner's Dilemma</button>
+    <button class="tabbtn" data-tab="mixed">Mixed Strategies</button>
+    <button class="tabbtn" data-tab="shapley">Shapley Value</button>
+  </div>
+
+  <!-- ============ TAB 1: PRISONER'S DILEMMA ============ -->
+  <div class="tabpanel active" id="tab-pd">
+    <div class="panel">
+      <h2>Edit the Payoffs, Watch the Nash Equilibrium Move</h2>
+      <p class="sub">Each cell holds (Player 1 payoff, Player 2 payoff). The green-highlighted cell(s) are the Nash equilibria -- where neither player can improve by switching alone.</p>
+      <table class="matrix" id="pdTable"></table>
+      <div class="story-line" id="pdStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: MIXED STRATEGIES ============ -->
+  <div class="tabpanel" id="tab-mixed">
+    <div class="panel">
+      <h2>Matching Pennies: Finding the Indifference Point</h2>
+      <p class="sub">Player 1 wins $1 on a match, Player 2 wins $1 on a mismatch. Drag Player 2's probability of playing Heads and watch Player 1's expected payoff from each of their own two choices.</p>
+      <div class="row"><label>P(Player 2 plays Heads)</label><input type="range" id="mixQ" min="0" max="100" step="1" value="30"><span class="readout" id="mixQOut">0.30</span></div>
+      <svg id="mixSvg" width="560" height="260" viewBox="0 0 560 260"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">E[payoff | Player 1 plays Heads]</div><div class="num" id="mixEvH">-</div></div>
+        <div class="metric blue"><div class="lbl">E[payoff | Player 1 plays Tails]</div><div class="num" id="mixEvT">-</div></div>
+      </div>
+      <div class="story-line" id="mixStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: SHAPLEY VALUE ============ -->
+  <div class="tabpanel" id="tab-shapley">
+    <div class="panel">
+      <h2>Splitting a Joint Payoff, Fairly</h2>
+      <p class="sub">Edit any coalition's value below. Each player's Shapley value is the average of their marginal contribution, across every possible order the coalition could have formed in.</p>
+      <table class="coaltable" id="coalTable"></table>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">Shapley(A)</div><div class="num" id="shA">-</div></div>
+        <div class="metric blue"><div class="lbl">Shapley(B)</div><div class="num" id="shB">-</div></div>
+        <div class="metric green"><div class="lbl">Shapley(C)</div><div class="num" id="shC">-</div></div>
+        <div class="metric amber"><div class="lbl">sum vs v(ABC)</div><div class="num" id="shSum">-</div></div>
+      </div>
+      <div class="story-line" id="shStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>game-theory.md</code>. Self-contained — no external requests, opens directly from disk.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+  }));
+
+  // ================= TAB 1: PRISONER'S DILEMMA =================
+  var pdVals = {
+    CC: [3,3], CD: [0,5], DC: [5,0], DD: [1,1]
+  };
+  function buildPD(){
+    var t = document.getElementById("pdTable");
+    t.innerHTML =
+      "<tr><th></th><th>P2: Cooperate</th><th>P2: Defect</th></tr>" +
+      "<tr><th>P1: Cooperate</th>" +
+        "<td class='cell' data-cell='CC'></td>" +
+        "<td class='cell' data-cell='CD'></td>" +
+      "</tr>" +
+      "<tr><th>P1: Defect</th>" +
+        "<td class='cell' data-cell='DC'></td>" +
+        "<td class='cell' data-cell='DD'></td>" +
+      "</tr>";
+    Object.keys(pdVals).forEach(function(key){
+      var td = t.querySelector("[data-cell='"+key+"']");
+      var div = document.createElement("div"); div.className="cellinputs";
+      var i1 = document.createElement("input"); i1.type="number"; i1.value=pdVals[key][0]; i1.style.width="48px";
+      var comma = document.createElement("span"); comma.textContent=",";
+      var i2 = document.createElement("input"); i2.type="number"; i2.value=pdVals[key][1]; i2.style.width="48px";
+      i1.addEventListener("input", function(){ pdVals[key][0]=parseFloat(i1.value)||0; renderPD(); });
+      i2.addEventListener("input", function(){ pdVals[key][1]=parseFloat(i2.value)||0; renderPD(); });
+      div.appendChild(i1); div.appendChild(comma); div.appendChild(i2);
+      td.appendChild(div);
+    });
+  }
+  function renderPD(){
+    var cells = {
+      CC: {row:'C',col:'C'}, CD: {row:'C',col:'D'}, DC: {row:'D',col:'C'}, DD: {row:'D',col:'D'}
+    };
+    var nashCells = [];
+    Object.keys(cells).forEach(function(key){
+      var p1 = pdVals[key][0], p2 = pdVals[key][1];
+      var altRowKey = (cells[key].row==='C'?'D':'C') + cells[key].col;
+      var altColKey = cells[key].row + (cells[key].col==='C'?'D':'C');
+      var p1_alt = pdVals[altRowKey][0];
+      var p2_alt = pdVals[altColKey][1];
+      var stable = (p1 >= p1_alt) && (p2 >= p2_alt);
+      var td = document.getElementById("pdTable").querySelector("[data-cell='"+key+"']");
+      td.classList.toggle("nash", stable);
+      if (stable) nashCells.push(key);
+    });
+    var story = document.getElementById("pdStory");
+    var names = {CC:"(Cooperate, Cooperate)", CD:"(Cooperate, Defect)", DC:"(Defect, Cooperate)", DD:"(Defect, Defect)"};
+    if (nashCells.length===0) story.textContent = "No pure-strategy Nash equilibrium exists for these payoffs -- a mixed strategy would be required (Part 3).";
+    else story.textContent = "Nash equilibrium: " + nashCells.map(function(k){return names[k];}).join(" and ") + ".";
+  }
+  buildPD();
+  Object.keys(pdVals).forEach(function(key){
+    var td = document.getElementById("pdTable").querySelector("[data-cell='"+key+"']");
+  });
+  renderPD();
+
+  // ================= TAB 2: MIXED STRATEGIES =================
+  function renderMixed(){
+    var q = parseInt(document.getElementById("mixQ").value,10)/100;
+    document.getElementById("mixQOut").textContent = q.toFixed(2);
+    // Player 1 payoff: Heads-vs-Heads = +1, Heads-vs-Tails = -1, Tails-vs-Heads = -1, Tails-vs-Tails = +1
+    var evH = q*1 + (1-q)*(-1);
+    var evT = q*(-1) + (1-q)*1;
+    document.getElementById("mixEvH").textContent = evH.toFixed(3);
+    document.getElementById("mixEvT").textContent = evT.toFixed(3);
+
+    var svg = document.getElementById("mixSvg");
+    svg.innerHTML = "";
+    var W=560,H=260,padL=50,padR=20,padT=20,padB=36;
+    function X(qq){ return padL + qq*(W-padL-padR); }
+    function Y(v){ return (H-padB) - ((v+1)/2)*(H-padT-padB); }
+    svg.appendChild(el("line",{x1:padL,y1:H-padB,x2:W-padR,y2:H-padB,stroke:"var(--border)"}));
+    svg.appendChild(el("line",{x1:padL,y1:padT,x2:padL,y2:H-padB,stroke:"var(--border)"}));
+    svg.appendChild(el("line",{x1:padL,y1:Y(0),x2:W-padR,y2:Y(0),stroke:"var(--border)","stroke-dasharray":"3 3"}));
+    var hPts = "", tPts = "";
+    for (var i=0;i<=100;i++){
+      var qq = i/100;
+      hPts += X(qq)+","+Y(qq*1+(1-qq)*(-1))+" ";
+      tPts += X(qq)+","+Y(qq*(-1)+(1-qq)*1)+" ";
+    }
+    svg.appendChild(el("polyline",{points:hPts.trim(),fill:"none",stroke:"var(--coral)","stroke-width":2}));
+    svg.appendChild(el("polyline",{points:tPts.trim(),fill:"none",stroke:"var(--blue)","stroke-width":2}));
+    // indifference marker at q=0.5
+    svg.appendChild(el("line",{x1:X(0.5),y1:padT,x2:X(0.5),y2:H-padB,stroke:"var(--green)","stroke-width":1,"stroke-dasharray":"4 3"}));
+    svg.appendChild(el("text",{x:X(0.5)+4,y:padT+10,"font-size":10,fill:"var(--green)"},"q=0.5"));
+    // current q marker
+    svg.appendChild(el("circle",{cx:X(q),cy:Y(evH),r:5,fill:"var(--coral)"}));
+    svg.appendChild(el("circle",{cx:X(q),cy:Y(evT),r:5,fill:"var(--blue)"}));
+    svg.appendChild(el("text",{x:padL+6,y:padT+12,"font-size":11,fill:"var(--coral)"},"— play Heads"));
+    svg.appendChild(el("text",{x:padL+120,y:padT+12,"font-size":11,fill:"var(--blue)"},"— play Tails"));
+
+    var story = document.getElementById("mixStory");
+    story.textContent = Math.abs(q-0.5)<0.01
+      ? "At q=0.5, both expected payoffs are equal (0.0) -- true indifference, exactly the mixed Nash equilibrium."
+      : "At q="+q.toFixed(2)+", playing "+(evH>evT?"Heads":"Tails")+" is strictly better -- Player 1 has no reason to randomize here. Only at q=0.5 does that advantage vanish.";
+  }
+  document.getElementById("mixQ").addEventListener("input", renderMixed);
+  renderMixed();
+
+  // ================= TAB 3: SHAPLEY VALUE =================
+  var coalVals = { A:10, B:20, C:5, AB:40, AC:20, BC:30, ABC:60 };
+  function buildCoalTable(){
+    var t = document.getElementById("coalTable");
+    var rows = [["v(A)","A"],["v(B)","B"],["v(C)","C"],["v(A,B)","AB"],["v(A,C)","AC"],["v(B,C)","BC"],["v(A,B,C)","ABC"]];
+    var html = "<tr>" + rows.map(function(r){return "<th>"+r[0]+"</th>";}).join("") + "</tr><tr>";
+    html += rows.map(function(r){return "<td><input type='number' id='coal_"+r[1]+"' value='"+coalVals[r[1]]+"' style='width:56px;'></td>";}).join("");
+    html += "</tr>";
+    t.innerHTML = html;
+    rows.forEach(function(r){
+      document.getElementById("coal_"+r[1]).addEventListener("input", function(e){
+        coalVals[r[1]] = parseFloat(e.target.value)||0;
+        renderShapley();
+      });
+    });
+  }
+  function vOf(setArr){
+    if (setArr.length===0) return 0;
+    var key = setArr.slice().sort().join("");
+    return coalVals[key];
+  }
+  function renderShapley(){
+    var players = ["A","B","C"];
+    var perms = [
+      ["A","B","C"],["A","C","B"],["B","A","C"],["B","C","A"],["C","A","B"],["C","B","A"]
+    ];
+    var totals = {A:0,B:0,C:0};
+    perms.forEach(function(perm){
+      var coalition = [];
+      perm.forEach(function(p){
+        var before = vOf(coalition);
+        coalition.push(p);
+        var after = vOf(coalition);
+        totals[p] += (after-before);
+      });
+    });
+    var shapley = {};
+    players.forEach(function(p){ shapley[p] = totals[p]/perms.length; });
+    document.getElementById("shA").textContent = shapley.A.toFixed(3);
+    document.getElementById("shB").textContent = shapley.B.toFixed(3);
+    document.getElementById("shC").textContent = shapley.C.toFixed(3);
+    var sum = shapley.A+shapley.B+shapley.C;
+    document.getElementById("shSum").textContent = sum.toFixed(3) + " vs " + coalVals.ABC.toFixed(3);
+    var story = document.getElementById("shStory");
+    story.textContent = Math.abs(sum-coalVals.ABC)<0.001
+      ? "The three shares sum exactly to v(A,B,C) -- the efficiency property, holding for any values you enter."
+      : "Something's off -- the shares should always sum exactly to v(A,B,C).";
+  }
+  buildCoalTable();
+  renderShapley();
+})();
+</script>
+</body>
+</html>
