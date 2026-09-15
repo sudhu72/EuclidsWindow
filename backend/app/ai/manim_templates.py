@@ -109,6 +109,7 @@ class GeneratedScene(Scene):
         self.camera.background_color = BG
 
         title = Text({title!r}, font_size=48, color=PRIMARY, weight=BOLD, font=MONO)
+        title.scale_to_fit_width(min(title.width, 12.5))
         self.play(Write(title), run_time=1.5)
         self.wait(1.0)
         self.play(title.animate.scale(0.6).to_edge(UP, buff=0.4), run_time=0.8)
