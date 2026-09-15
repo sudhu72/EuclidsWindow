@@ -165,6 +165,8 @@ class MusicComposeResponse(BaseModel):
 class LessonOutlineRequest(BaseModel):
     topic: str = Field(..., min_length=1, max_length=500)
     level: str = Field("teen", pattern="^(kids|teen|college|adult)$")
+    # Continue an existing saved conversation instead of starting a new one.
+    conversation_id: Optional[str] = None
 
 
 class LessonSection(BaseModel):
@@ -220,6 +222,7 @@ class LessonBuildResponse(LessonOutlineResponse):
     # Scenes align 1:1 with ``sections``; a null entry is a scene that failed
     # generation and can be retried via the per-scene endpoint.
     scenes: List[Optional[LessonSceneResponse]]
+    conversation_id: Optional[str] = None
 
 
 class AppSettingsResponse(BaseModel):

@@ -1,13 +1,19 @@
 """AI media generation routes: images, music (audio + symbolic), lessons."""
 import asyncio
+import json
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from ..ai.discovery import DiscoveryService
 from ..ai.image_router import SmartImageService
 from ..ai.lesson import LessonService
 from ..ai.media import DiffusionImageService, MusicGenService
 from ..ai.music_composer import SymbolicMusicComposer
+from ..deps import get_current_user, get_db
+from ..db import User
+from ..services import ConversationService
 from ..models import (
     DiscoverRequest,
     DiscoverResponse,
@@ -92,7 +98,11 @@ async def ai_discover(payload: DiscoverRequest) -> DiscoverResponse:
 
 
 @router.post("/api/ai/lesson/build", response_model=LessonBuildResponse)
-async def ai_lesson_build(payload: LessonOutlineRequest) -> LessonBuildResponse:
+async def ai_lesson_build(
+    payload: LessonOutlineRequest,
+    user: Optional[User] = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> LessonBuildResponse:
     """Outline + all scenes in one call, scenes generated in parallel.
 
     Graph orchestration: ``outline -> [scene ‖ scene ‖ ...] -> assemble``. The
@@ -103,7 +113,20 @@ async def ai_lesson_build(payload: LessonOutlineRequest) -> LessonBuildResponse:
     lesson = await asyncio.to_thread(lesson_service.build, payload.topic, payload.level)
     if not lesson:
         raise HTTPException(status_code=502, detail="Could not generate a lesson outline")
-    return LessonBuildResponse(**lesson)
+
+    service = ConversationService(db)
+    if payload.conversation_id:
+        conv = service.get_conversation(payload.conversation_id)
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+    else:
+        conv = service.create_conversation(
+            title=lesson["title"], user_id=user.id if user else None
+        )
+    service.add_message(conv.id, role="user", content=payload.topic)
+    service.add_message(conv.id, role="assistant", content=json.dumps(lesson))
+
+    return LessonBuildResponse(**lesson, conversation_id=conv.id)
 
 
 @router.post("/api/ai/lesson/scene", response_model=LessonSceneResponse)

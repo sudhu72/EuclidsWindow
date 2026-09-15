@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from .config import get_settings
 from .content import TopicCatalog
 from .db import Concept, EvalRun, Resource, User, get_db, init_db
+from .deps import get_current_user, require_user
 from .logging_config import logger
 from .metrics import metrics
 from .middleware import MetricsMiddleware, RateLimitMiddleware
@@ -310,38 +311,6 @@ async def serve_favicon_ico():
 
 
 # =============================================================================
-# Dependencies
-# =============================================================================
-def get_current_user(
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
-) -> Optional[User]:
-    """Get current user from Authorization header (optional)."""
-    if not authorization:
-        return None
-    if not authorization.startswith("Bearer "):
-        return None
-    token = authorization[7:]
-    service = UserService(db)
-    return service.get_user_from_token(token)
-
-
-def require_user(
-    authorization: str = Header(...),
-    db: Session = Depends(get_db),
-) -> User:
-    """Require authenticated user."""
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
-    token = authorization[7:]
-    service = UserService(db)
-    user = service.get_user_from_token(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    return user
-
-
-# =============================================================================
 # Health endpoints
 # =============================================================================
 @app.get("/health", response_model=HealthResponse)
@@ -537,11 +506,17 @@ async def list_conversations(
 
 @app.get("/api/conversations/{conversation_id}", response_model=ConversationResponse)
 async def get_conversation(
-    conversation_id: str, db: Session = Depends(get_db)
+    conversation_id: str,
+    user: Optional[User] = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> ConversationResponse:
     service = ConversationService(db)
     conv = service.get_conversation(conversation_id)
     if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if conv.user_id != (user.id if user else None):
+        # 404, not 403 — don't reveal that a conversation owned by someone
+        # else exists.
         raise HTTPException(status_code=404, detail="Conversation not found")
     return ConversationResponse(
         id=conv.id,

@@ -17,14 +17,18 @@ import json
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 from ..ai.engine import LocalLLMEngine
 from ..ai.library import get_library
 from ..ai.service import GenerativeTutorService
 from ..content import TopicCatalog
+from ..db import User
+from ..deps import get_current_user, get_db
+from ..services import ConversationService
 
 logger = logging.getLogger("euclids_window")
 
@@ -57,7 +61,10 @@ class TutorStreamRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=4000)
     history: List[TutorStreamMessage] = Field(default_factory=list)
     learner_level: Optional[str] = "teen"
+    # In-memory semantic context window (see context_service below) — distinct
+    # from conversation_id, which is the SQL-persisted chat history.
     session_id: Optional[str] = None
+    conversation_id: Optional[str] = None
 
 
 def _is_followup(question: str, history: List[TutorStreamMessage]) -> bool:
@@ -100,7 +107,23 @@ def _closing_aids(req: "TutorStreamRequest", answer: str) -> dict:
 
 
 @router.post("/api/ai/tutor/stream")
-async def tutor_stream(req: TutorStreamRequest) -> StreamingResponse:
+async def tutor_stream(
+    req: TutorStreamRequest,
+    user: Optional[User] = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> StreamingResponse:
+    conv_service = ConversationService(db)
+    if req.conversation_id:
+        conv = conv_service.get_conversation(req.conversation_id)
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+    else:
+        conv = conv_service.create_conversation(
+            title=req.question[:50], user_id=user.id if user else None
+        )
+    conv_service.add_message(conv.id, role="user", content=req.question)
+    conversation_id = conv.id
+
     raw_history = [m.model_dump() for m in req.history]
 
     # With a session, the semantic context window supplies the history — the same
@@ -140,13 +163,22 @@ async def tutor_stream(req: TutorStreamRequest) -> StreamingResponse:
         "topic_id": (topic or {}).get("id", "") if use_curated else "",
         "learner_level": level_key,
         "library_grounded": bool(library_override) or not use_curated,
+        "conversation_id": conversation_id,
     }
 
     if use_curated:
         def curated_source():
             yield _sse({"meta": meta})
             yield _sse({"t": curated_text})
-            yield _sse({"done": True, "takeaways": [], "next_questions": []})
+            conv_service.add_message(conversation_id, role="assistant", content=curated_text)
+            yield _sse(
+                {
+                    "done": True,
+                    "takeaways": [],
+                    "next_questions": [],
+                    "conversation_id": conversation_id,
+                }
+            )
 
         return StreamingResponse(
             curated_source(),
@@ -183,7 +215,15 @@ async def tutor_stream(req: TutorStreamRequest) -> StreamingResponse:
             text = engine.chat(messages, num_predict=1200, num_ctx=4096, temperature=0.4)
             collected.append(text or "The tutor is unavailable right now.")
             yield _sse({"t": collected[-1]})
-        yield _sse({"done": True, **_closing_aids(req, "".join(collected))})
+        answer_text = "".join(collected)
+        conv_service.add_message(conversation_id, role="assistant", content=answer_text)
+        yield _sse(
+            {
+                "done": True,
+                "conversation_id": conversation_id,
+                **_closing_aids(req, answer_text),
+            }
+        )
 
     return StreamingResponse(
         event_source(),
