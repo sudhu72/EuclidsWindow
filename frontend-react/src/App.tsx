@@ -14,11 +14,13 @@ import ConceptGraph from "./ConceptGraph";
 import MathMap from "./MathMap";
 import Gallery from "./Gallery";
 import Euclid from "./Euclid";
+import Login from "./Login";
+import { useAuth } from "./auth";
 
 type Tab =
   | "learn" | "discover" | "solve" | "chat" | "labs" | "library"
   | "symbols" | "resources" | "prompts" | "concepts" | "mathmap"
-  | "gallery" | "euclid" | "settings" | "eval";
+  | "gallery" | "euclid" | "settings" | "eval" | "login";
 
 /** Primary destinations, always visible as labelled tabs. */
 const TABS: [Tab, string][] = [
@@ -51,6 +53,7 @@ const UTILITY: [Tab, string, string][] = [
 ];
 
 const ALL_IDS = new Set<string>([...TABS, ...EXPLORE, ...UTILITY].map(([id]) => id));
+ALL_IDS.add("login");
 
 /** `/app#chat` opens straight into that tab, so links can deep-link here. */
 function tabFromHash(): Tab {
@@ -98,6 +101,7 @@ export default function App() {
   }, [menuOpen]);
 
   const exploreActive = EXPLORE.some(([id]) => id === tab);
+  const { user, loading: authLoading, logout } = useAuth();
 
   return (
     <div className="app">
@@ -153,7 +157,22 @@ export default function App() {
           ))}
         </nav>
         <nav className="links">
-          <span className="badge">Euclid&rsquo;s Window</span>
+          {authLoading ? null : user ? (
+            <>
+              <span className="badge">{user.name || user.email}</span>
+              <button className="btn-ghost" onClick={logout}>
+                Log out
+              </button>
+            </>
+          ) : (
+            <button
+              className="btn-ghost"
+              onClick={() => setTab("login")}
+              title="Optional — the app works fully without an account. Logging in just saves your lessons and conversations to your account instead of anonymously."
+            >
+              Log in
+            </button>
+          )}
         </nav>
       </header>
       <main className="main">
@@ -185,6 +204,8 @@ export default function App() {
           <Settings />
         ) : tab === "eval" ? (
           <Evaluation />
+        ) : tab === "login" ? (
+          <Login onDone={() => setTab("learn")} />
         ) : (
           <Lesson seedTopic={seedTopic} onSeedUsed={() => setSeedTopic(null)} />
         )}

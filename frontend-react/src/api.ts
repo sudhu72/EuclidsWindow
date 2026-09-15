@@ -1,5 +1,6 @@
 // Streaming chat client — reads the /api/chat/stream SSE and delivers tokens
 // as they arrive so the UI renders the reply in real time.
+import { authHeaders } from "./auth";
 
 export interface ChatMsg {
   role: "user" | "assistant";
@@ -39,7 +40,7 @@ export async function streamTutor(
 ): Promise<void> {
   const resp = await fetch("/api/ai/tutor/stream", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({
       question,
       history: opts.history ?? [],
