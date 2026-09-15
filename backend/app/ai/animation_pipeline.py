@@ -243,6 +243,16 @@ Output the JSON plan now.
 FIX_PROMPT_TEMPLATE = textwrap.dedent("""\
 The following Manim code failed to render.  Fix it.
 
+The ERROR below often names ONE specific line as an example, but the rule
+it describes applies to the WHOLE file. If the error describes a pattern
+(for example, "a second matrix/title/heading appearing while an earlier
+one is still on screen"), search the ENTIRE file for every other place
+that same pattern occurs -- not just the named line -- and fix all of
+them the same way (fade or remove the earlier mobject before the next one
+appears). Fixing only the named line while an identical violation remains
+later in the file will just fail again on the next pass with a new line
+number.
+
 Before returning, re-check every opening ``(``, ``[``, and ``{{`` in the
 whole file has a matching close — nested calls (a VGroup built from a list
 comprehension, a chain of .to_edge()/.next_to() calls) are the most common
@@ -682,6 +692,9 @@ class AnimationPipeline:
         nested_loop_error = AnimationPipeline._validate_no_nested_element_loops(tree)
         if nested_loop_error:
             return nested_loop_error
+        duration_error = AnimationPipeline._validate_duration(tree)
+        if duration_error:
+            return duration_error
         return None
 
     @staticmethod
@@ -733,6 +746,67 @@ class AnimationPipeline:
                     if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
                         continue  # different scope — don't look inside
                     stack.extend(ast.iter_child_nodes(stmt))
+        return None
+
+    @staticmethod
+    def _validate_duration(tree: ast.AST) -> Optional[str]:
+        """Reject a scene whose estimated total runtime badly exceeds the
+        15-second budget (rule 8 in CODEGEN_SYSTEM_PROMPT).
+
+        Observed failure: a Nash-equilibrium scene rendered mathematically
+        correct content but ran ~51s -- over 3x the stated budget -- because
+        nothing ever checked duration; only content-correctness and layout
+        were validated. Approximate, not exact: sums every ``self.wait(...)``
+        / ``self.play(...)`` call inside ``construct()``, using a literal
+        argument (``wait(2)``) or literal ``run_time=`` kwarg where given,
+        else Manim's own default of 1 second for whichever call omits one. A
+        run_time expressed as a variable or computed expression can't be
+        resolved statically and is counted at that 1-second default, so this
+        heuristic can only under-count a genuinely dynamic scene, never
+        over-count -- same "miss an edge case rather than block legitimate
+        code" spirit as the other heuristics in this file.
+        """
+        construct = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "construct":
+                construct = node
+                break
+        if construct is None:
+            return None
+
+        def literal_seconds(node: Optional[ast.AST]) -> Optional[float]:
+            if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+                return float(node.value)
+            return None
+
+        total = 0.0
+        for stmt in construct.body:
+            for sub in ast.walk(stmt):
+                if not isinstance(sub, ast.Call):
+                    continue
+                func = sub.func
+                if not (
+                    isinstance(func, ast.Attribute)
+                    and isinstance(func.value, ast.Name)
+                    and func.value.id == "self"
+                ):
+                    continue
+                if func.attr == "wait":
+                    secs = literal_seconds(sub.args[0]) if sub.args else 1.0
+                    total += secs if secs is not None else 1.0
+                elif func.attr == "play":
+                    run_time_kw = next((kw.value for kw in sub.keywords if kw.arg == "run_time"), None)
+                    secs = literal_seconds(run_time_kw)
+                    total += secs if secs is not None else 1.0
+
+        BUDGET_SECONDS = 20.0  # rule says 15s; slack for this heuristic's approximation
+        if total > BUDGET_SECONDS:
+            return (
+                f"Estimated total runtime is ~{total:.0f}s (summing self.wait()/"
+                "self.play() durations), well over the 15-second budget. Cut a "
+                "beat, shorten self.wait() calls, or lower run_time= on "
+                "self.play() calls to bring the total under 15s."
+            )
         return None
 
     @staticmethod
@@ -921,8 +995,41 @@ class AnimationPipeline:
         def referenced_names(node: ast.AST) -> set:
             return {n.id for n in ast.walk(node) if isinstance(n, ast.Name)}
 
+        def is_deliberate_split(new_name: str, source_names: set, later_stmts: list) -> bool:
+            """True if ``new_name`` is later built via
+            ``TransformFromCopy(source, new_name)`` where ``source`` is one of
+            the mobjects currently on screen.
+
+            Observed false positive: a Cholesky/LU-style scene legitimately
+            shows ``A`` "splitting" into ``L``/``L^T`` via
+            ``TransformFromCopy(matA, matL)`` — A stays visible for that one
+            beat by design (a copy morphs into the new matrix; the original
+            is untouched), then gets faded once the split reads clearly. That
+            deliberate, labeled overlap looks identical to the sloppy "forgot
+            to fade the old matrix" mistake this check exists to catch. A
+            TransformFromCopy sourced from an on-screen mobject is the
+            structural signal that distinguishes the two.
+            """
+            for later in later_stmts:
+                for sub in ast.walk(later):
+                    if (
+                        isinstance(sub, ast.Call)
+                        and isinstance(sub.func, ast.Name)
+                        and sub.func.id == "TransformFromCopy"
+                        and len(sub.args) >= 2
+                    ):
+                        src, dst = sub.args[0], sub.args[1]
+                        if (
+                            isinstance(src, ast.Name)
+                            and src.id in source_names
+                            and isinstance(dst, ast.Name)
+                            and dst.id == new_name
+                        ):
+                            return True
+            return False
+
         on_screen: dict = {}
-        for stmt in construct.body:
+        for i, stmt in enumerate(construct.body):
             for sub in ast.walk(stmt):
                 if not isinstance(sub, ast.Call):
                     continue
@@ -935,13 +1042,16 @@ class AnimationPipeline:
 
             if isinstance(stmt, ast.Assign) and isinstance(stmt.value, ast.Call):
                 if is_matrix_call(stmt.value):
-                    if on_screen:
+                    new_name = next(
+                        (t.id for t in stmt.targets if isinstance(t, ast.Name)), None
+                    )
+                    exempt = new_name and on_screen and is_deliberate_split(
+                        new_name, set(on_screen), construct.body[i + 1 :]
+                    )
+                    if on_screen and not exempt:
                         uncleared = ", ".join(on_screen)
-                        new_name = next(
-                            (t.id for t in stmt.targets if isinstance(t, ast.Name)), "it"
-                        )
                         return (
-                            f"'{new_name}' (line {stmt.lineno}) is a second matrix "
+                            f"'{new_name or 'it'}' (line {stmt.lineno}) is a second matrix "
                             f"representation while '{uncleared}' is still on screen — "
                             f"they'll overlap into an unreadable mess. FadeOut or remove "
                             f"the first matrix before showing the second."
