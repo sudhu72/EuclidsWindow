@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { GALLERY, GALLERY_BASE, type GalleryItem } from "./cogitoData";
 import { streamTutor } from "./api";
 import Markdown from "./Markdown";
+import { levelLabel } from "./levelLabels";
 
 const LEVELS = ["kids", "teen", "college", "adult"];
 
@@ -87,7 +88,7 @@ export default function Gallery({ onAsk }: { onAsk: (question: string) => void }
           <strong style={{ flex: 1 }}>{open.title}</strong>
           <select value={level} onChange={(e) => setLevel(e.target.value)} title="Learner level" aria-label="Learner level">
             {LEVELS.map((l) => (
-              <option key={l} value={l}>{l[0].toUpperCase() + l.slice(1)}</option>
+              <option key={l} value={l}>{levelLabel(l)}</option>
             ))}
           </select>
           <a
@@ -128,7 +129,7 @@ export default function Gallery({ onAsk }: { onAsk: (question: string) => void }
         />
         <select value={level} onChange={(e) => setLevel(e.target.value)} title="Learner level" aria-label="Learner level">
           {LEVELS.map((l) => (
-            <option key={l} value={l}>{l[0].toUpperCase() + l.slice(1)}</option>
+            <option key={l} value={l}>{levelLabel(l)}</option>
           ))}
         </select>
         <span className="status">

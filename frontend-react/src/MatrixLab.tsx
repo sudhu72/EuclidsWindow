@@ -16,6 +16,7 @@ import {
   type Vec,
 } from "./matrix";
 import { LEVELS, LEVEL_PROSE, PREREQ, type Level } from "./matrixData";
+import { levelLabel } from "./levelLabels";
 
 const DIMS = [2, 3, 4];
 
@@ -425,7 +426,7 @@ export default function MatrixLab({ onAsk }: { onAsk: (question: string) => void
                 className={`chip ${level === l ? "active" : ""}`}
                 onClick={() => setLevel(l)}
               >
-                {l[0].toUpperCase() + l.slice(1)}
+                {levelLabel(l)}
               </button>
             ))}
           </div>

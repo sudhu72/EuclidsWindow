@@ -2,6 +2,7 @@ import { useState } from "react";
 import { discover, type Discovery } from "./discoverApi";
 import { MicButton, SpeakButton } from "./VoiceControls";
 import Markdown from "./Markdown";
+import { levelLabel } from "./levelLabels";
 
 const LEVELS = ["kids", "teen", "college", "adult"];
 
@@ -64,7 +65,7 @@ export default function Discover() {
         <select value={level} onChange={(e) => setLevel(e.target.value)}>
           {LEVELS.map((l) => (
             <option key={l} value={l}>
-              {l[0].toUpperCase() + l.slice(1)}
+              {levelLabel(l)}
             </option>
           ))}
         </select>

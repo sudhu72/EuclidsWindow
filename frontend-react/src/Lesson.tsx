@@ -7,6 +7,7 @@ import Animation from "./Animation";
 import VizPanel from "./VizPanel";
 import Scratchpad from "./Scratchpad";
 import { exportLesson } from "./exportLesson";
+import { levelLabel } from "./levelLabels";
 
 const TYPE_ICON: Record<string, string> = { explain: "📖", example: "🧮", quiz: "❓" };
 const LEVELS = ["kids", "teen", "college", "adult"];
@@ -281,7 +282,7 @@ export default function Lesson({
         <select value={level} onChange={(e) => setLevel(e.target.value)}>
           {LEVELS.map((l) => (
             <option key={l} value={l}>
-              {l[0].toUpperCase() + l.slice(1)}
+              {levelLabel(l)}
             </option>
           ))}
         </select>

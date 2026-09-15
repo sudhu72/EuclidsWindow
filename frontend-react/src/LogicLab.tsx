@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import Markdown from "./Markdown";
+import { levelLabel } from "./levelLabels";
 import { safeEvaluator, truthTable, type TruthTable } from "./logic";
 import {
   ARGUMENT_EXAMPLES,
@@ -71,7 +72,7 @@ function GameShell({
               className={`chip ${level === l ? "active" : ""}`}
               onClick={() => setLevel(l)}
             >
-              {l[0].toUpperCase() + l.slice(1)}
+              {levelLabel(l)}
             </button>
           ))}
         </div>

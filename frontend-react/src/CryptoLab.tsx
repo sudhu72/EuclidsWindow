@@ -10,6 +10,7 @@ import {
   rsaKeys,
 } from "./crypto";
 import { COPY, LEVELS, SAMPLE_TEXTS, type Level } from "./cryptoData";
+import { levelLabel } from "./levelLabels";
 
 type Game = "caesar" | "frequency" | "rsa" | "diffiehellman";
 
@@ -53,7 +54,7 @@ function GameShell({
               className={`chip ${level === l ? "active" : ""}`}
               onClick={() => setLevel(l)}
             >
-              {l[0].toUpperCase() + l.slice(1)}
+              {levelLabel(l)}
             </button>
           ))}
         </div>

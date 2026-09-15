@@ -2,6 +2,7 @@ import { useState } from "react";
 import { polyaStart, polyaCoach, type PolyaStart, type PolyaCoach } from "./polyaApi";
 import { MicButton, SpeakButton } from "./VoiceControls";
 import Markdown from "./Markdown";
+import { levelLabel } from "./levelLabels";
 
 /**
  * The four phases, each with Pólya's own guiding questions from *How to Solve
@@ -153,7 +154,7 @@ export default function Solve() {
         />
         <select value={level} onChange={(e) => setLevel(e.target.value)}>
           {LEVELS.map((l) => (
-            <option key={l} value={l}>{l[0].toUpperCase() + l.slice(1)}</option>
+            <option key={l} value={l}>{levelLabel(l)}</option>
           ))}
         </select>
         <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>

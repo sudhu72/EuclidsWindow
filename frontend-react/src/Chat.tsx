@@ -3,6 +3,7 @@ import { streamChat, type ChatMsg } from "./api";
 import { voice, type VoiceStatus } from "./voice";
 import { MicButton } from "./VoiceControls";
 import Markdown from "./Markdown";
+import { levelLabel } from "./levelLabels";
 
 const LEVELS = ["kids", "teen", "college", "adult"];
 
@@ -111,7 +112,7 @@ export default function Chat() {
         >
           {LEVELS.map((l) => (
             <option key={l} value={l}>
-              {l[0].toUpperCase() + l.slice(1)}
+              {levelLabel(l)}
             </option>
           ))}
         </select>

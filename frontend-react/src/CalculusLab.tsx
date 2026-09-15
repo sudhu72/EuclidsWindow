@@ -16,6 +16,7 @@ import {
   type RiemannMethod,
 } from "./calculus";
 import { COPY, LEVELS, type Level } from "./calculusData";
+import { levelLabel } from "./levelLabels";
 
 type Game = "slope" | "riemann" | "optimize" | "diffeq" | "projectile" | "orbital";
 
@@ -54,7 +55,7 @@ function GameShell({
         <div className="chips">
           {LEVELS.map((l) => (
             <button key={l} className={`chip ${level === l ? "active" : ""}`} onClick={() => setLevel(l)}>
-              {l[0].toUpperCase() + l.slice(1)}
+              {levelLabel(l)}
             </button>
           ))}
           {copy.prompt && (
