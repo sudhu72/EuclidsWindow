@@ -1445,7 +1445,8 @@
         "symmetry_invariance",
         "geometry",
         "set_theory",
-        "infinity"
+        "infinity",
+        "axioms"
       ],
       "viz": "classification_and_completeness_visualizer.html",
       "source": "classification-and-completeness.md"
@@ -1510,6 +1511,24 @@
       "related": [],
       "viz": "game_theory_visualizer.html",
       "source": "game-theory.md"
+    },
+    {
+      "id": "axioms",
+      "name": "Axioms & Proofs",
+      "keywords": [
+        "godel numbering",
+        "diagonal lemma",
+        "hilbert's program",
+        "liar's paradox",
+        "second incompleteness theorem"
+      ],
+      "related": [
+        "classification_and_completeness",
+        "mathematical_logic",
+        "set_theory"
+      ],
+      "viz": "godels_incompleteness_visualizer.html",
+      "source": "godels-incompleteness-theorem.md"
     }
   ]
 }

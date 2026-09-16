@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gödel's Incompleteness Theorem, Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1020px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:0.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12px; color:var(--ink-soft); min-width:110px; }
+  input[type=range]{ flex:1; min-width:130px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.7; white-space:pre-wrap; }
+  table.dt{ border-collapse:collapse; margin:14px auto; font-family:"IBM Plex Mono",monospace; font-size:12.5px; width:100%; }
+  table.dt th, table.dt td{ border:1px solid var(--line); padding:6px 8px; text-align:center; }
+  table.dt th{ background:var(--accent-soft); font-weight:600; }
+  table.dt td.win{ color:var(--c1); font-weight:700; }
+  .verdict.pass{ background:#E4F3EC; } .verdict.fail{ background:#FBEAEA; }
+  .grid-picker{ display:grid; grid-template-columns: repeat(6, 1fr); gap:6px; margin:10px 0; }
+  .cell{ border:1.5px solid var(--line); border-radius:8px; padding:8px 4px; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:12px; cursor:pointer; background:#fff; }
+  .cell.valid{ border-color:var(--c1); background:#E4F3EC; color:var(--c1); font-weight:700; }
+  .cell.sel{ outline:3px solid var(--accent); }
+  .metric-row{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; }
+  .metric{ text-align:center; border:1px solid var(--line); border-radius:8px; padding:8px 12px; min-width:100px; background:#fff; }
+  .metric .lbl{ font-size:10.5px; color:var(--ink-soft); }
+  .metric .num{ font-family:"IBM Plex Mono", monospace; font-size:14px; margin-top:3px; color:var(--accent); font-weight:600; }
+  .symbol-strip{ display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
+  .symbol-strip button{ min-width:44px; }
+  .chosen-seq{ font-family:"IBM Plex Mono", monospace; font-size:16px; background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px 14px; min-height:20px; letter-spacing:2px; }
+  .triangle-wrap{ display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+  .step-box{ border:1px solid var(--line); border-radius:10px; padding:14px 16px; background:#fff; margin-bottom:10px; opacity:0.35; transition:opacity .2s, border-color .2s; }
+  .step-box.revealed{ opacity:1; border-color:var(--accent); }
+  .step-box .tag{ font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px; margin-top:24px; }
+  footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Gödel's Incompleteness Theorem</div>
+    <h1>The Sentence That Cannot Be Proven</h1>
+    <p>Four tabs, matching the tutorial's four verified constructions: encoding a sentence as a number, watching self-reference explode or resolve depending on one word, seeing why consistency, completeness, and decidability can't all survive together, and why no system can vouch for its own consistency.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="numbering">Gödel Numbering</button>
+    <button class="tab" data-tab="diagonal">Diagonal Lemma / Fixed Point</button>
+    <button class="tab" data-tab="triangle">Hilbert's Triangle</button>
+    <button class="tab" data-tab="second">Second Incompleteness</button>
+  </div>
+
+  <!-- ============ TAB 1: GÖDEL NUMBERING ============ -->
+  <div class="panel active" id="panel-numbering">
+    <div class="card">
+      <h2>Turn a Sentence Into One Number, and Back Again</h2>
+      <p class="sub"><b>What's happening:</b> click symbols to build a short sequence. Each symbol has a fixed code; the sequence is encoded as one whole number by using the codes as exponents on successive primes (2, 3, 5, 7, ...). Decoding just factors the number back apart.</p>
+      <div class="symbol-strip" id="symbolStrip"></div>
+      <div class="row"><label>Your sequence</label><div class="chosen-seq" id="chosenSeq">(click symbols above)</div></div>
+      <button class="op" id="btnClearSeq">Clear</button>
+      <div class="metric-row">
+        <div class="metric"><div class="lbl">symbol codes</div><div class="num" id="codesOut">-</div></div>
+        <div class="metric"><div class="lbl">Gödel number</div><div class="num" id="godelNumOut">-</div></div>
+      </div>
+      <svg id="numberingSvg" viewBox="0 0 480 90"></svg>
+      <div class="verdict" id="numberingStory">Click symbols to build a sequence, such as S, 0, =.</div>
+      <div class="caption"><b>Why it matters:</b> every whole number has exactly one prime factorization, so decoding the Gödel number recovers the exact original symbol sequence, in the exact original order, with zero ambiguity -- a fact about numbers and a fact about sentences become the same fact.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: DIAGONAL LEMMA / FIXED POINT ============ -->
+  <div class="panel" id="panel-diagonal">
+    <div class="card">
+      <h2>Same Construction, One Word Changed</h2>
+      <p class="sub"><b>What's happening:</b> the diagonal lemma builds a sentence &phi; that says "I have property P" about its own Gödel number, for any expressible property P. Pick a property and watch what happens when &phi; is evaluated.</p>
+      <div class="row">
+        <button class="op active" id="btnPropFalse">P(x) = "x is false"</button>
+        <button class="op" id="btnPropUnprovable">P(x) = "x is not provable in S"</button>
+      </div>
+      <svg id="diagSvg" viewBox="0 0 480 130"></svg>
+      <button class="op" id="btnEvaluate">Evaluate &phi;</button>
+      <div class="verdict" id="diagStory">Pick a property, then click Evaluate.</div>
+      <div class="caption"><b>The one-word substitution:</b> "false" and "true" are exhaustive opposites -- refusing both is a contradiction. "Provable-by-S" and "unprovable-by-S" are not that kind of opposite -- a sentence can be perfectly true while one fixed rulebook simply fails to reach it. That third option is the entire theorem.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: HILBERT'S TRIANGLE ============ -->
+  <div class="panel" id="panel-triangle">
+    <div class="card">
+      <h2>Consistency, Completeness, Decidability -- Pick How Many</h2>
+      <p class="sub"><b>What's happening:</b> Hilbert wanted all three, at once, for one fixed axiom system rich enough for arithmetic. Pick a real formal system and see which corners it actually holds onto.</p>
+      <div class="row">
+        <button class="op active" id="btnSysProp">Propositional logic</button>
+        <button class="op" id="btnSysPresburger">Presburger arithmetic</button>
+        <button class="op" id="btnSysPeano">Full Peano arithmetic</button>
+        <button class="op" id="btnSysBad">Inconsistent toy system</button>
+      </div>
+      <div class="triangle-wrap">
+        <svg id="triangleSvg" viewBox="0 0 320 280" style="max-width:340px;"></svg>
+        <div style="flex:1; min-width:220px;">
+          <div class="verdict" id="triangleStory"></div>
+        </div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> only systems too weak to encode arithmetic (propositional logic, Presburger arithmetic -- no multiplication of variables) can ever hold all three corners at once. The moment a system is rich enough to encode its own provability (full Peano arithmetic), completeness and decidability both fail, forever, for any choice of axioms.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: SECOND INCOMPLETENESS ============ -->
+  <div class="panel" id="panel-second">
+    <div class="card">
+      <h2>Can a System Vouch for Itself?</h2>
+      <p class="sub"><b>What's happening:</b> click through the four steps of the second incompleteness theorem, one at a time, and watch the contradiction assemble.</p>
+      <div id="stepsWrap"></div>
+      <div class="row">
+        <button class="op" id="btnStepNext">Reveal next step</button>
+        <button class="op" id="btnStepReset">Reset</button>
+      </div>
+      <div class="caption"><b>Why it matters:</b> this is why the first theorem's blind spot isn't just "one weird sentence" -- it's specifically the question of self-trust, and no consistent system rich enough for arithmetic can ever certify its own consistency from the inside.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../godels-incompleteness-theorem.md">Gödel's Incompleteness Theorem</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function htmlEl(tag, attrs, text){
+    const e = document.createElement(tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     TAB 1 — GÖDEL NUMBERING
+     ============================================================ */
+  const SYMBOLS = [
+    {sym:"0", code:1}, {sym:"S", code:2}, {sym:"=", code:3},
+    {sym:"(", code:4}, {sym:")", code:5}, {sym:"+", code:6},
+    {sym:"¬", code:7}, {sym:"∀", code:8}, {sym:"x", code:9}
+  ];
+  const PRIMES = [2,3,5,7,11,13,17,19,23,29,31,37];
+  let sequence = [];
+
+  function isPrime(n){
+    if (n < 2) return false;
+    for(let i=2;i*i<=n;i++) if (n%i===0) return false;
+    return true;
+  }
+  function primeFactorExponents(n){
+    // returns list of exponents for successive primes, in order, up to the largest prime factor present
+    let m = n;
+    const exps = [];
+    for (const p of PRIMES){
+      let e = 0;
+      while (m % p === 0){ m = m/p; e++; }
+      exps.push(e);
+      if (m === 1) break;
+    }
+    return exps;
+  }
+  function renderSymbolStrip(){
+    const wrap = document.getElementById("symbolStrip");
+    wrap.innerHTML = "";
+    SYMBOLS.forEach(s => {
+      const b = htmlEl("button", {class:"op"}, s.sym+" ("+s.code+")");
+      b.addEventListener("click", () => { sequence.push(s); renderNumbering(); });
+      wrap.appendChild(b);
+    });
+  }
+  function godelNumber(seq){
+    let n = 1n;
+    seq.forEach((s,i) => { n *= BigInt(PRIMES[i]) ** BigInt(s.code); });
+    return n;
+  }
+  function renderNumbering(){
+    document.getElementById("chosenSeq").textContent = sequence.length ? sequence.map(s=>s.sym).join(" ") : "(click symbols above)";
+    document.getElementById("codesOut").textContent = sequence.length ? "["+sequence.map(s=>s.code).join(", ")+"]" : "-";
+    const svg = document.getElementById("numberingSvg");
+    svg.innerHTML = "";
+    if (!sequence.length){
+      document.getElementById("godelNumOut").textContent = "-";
+      document.getElementById("numberingStory").textContent = "Click symbols to build a sequence, such as S, 0, =.";
+      return;
+    }
+    if (sequence.length > 6){
+      document.getElementById("godelNumOut").textContent = "(too long to display -- try 6 symbols or fewer)";
+      document.getElementById("numberingStory").textContent = "Real Gödel numbers grow astronomically fast -- this demo caps the sequence at 6 symbols so the number stays readable. The encoding principle is identical either way.";
+      return;
+    }
+    const gn = godelNumber(sequence);
+    document.getElementById("godelNumOut").textContent = gn.toString();
+    // draw the product visually: prime^exponent boxes
+    let x = 10;
+    sequence.forEach((s,i) => {
+      const w = 70;
+      svg.appendChild(el("rect",{x, y:10, width:w-8, height:50, rx:8, fill:"#fff", stroke:"var(--line)", "stroke-width":1.5}));
+      svg.appendChild(el("text",{x:x+(w-8)/2, y:30, "text-anchor":"middle","font-size":13,"font-family":"IBM Plex Mono, monospace",fill:"var(--accent)","font-weight":"700"}, PRIMES[i]+"^"+s.code));
+      svg.appendChild(el("text",{x:x+(w-8)/2, y:48, "text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink-soft)"}, "'"+s.sym+"'"));
+      if (i < sequence.length-1) svg.appendChild(el("text",{x:x+w-4, y:38, "text-anchor":"middle","font-size":16,fill:"var(--ink-soft)"}, "×"));
+      x += w;
+    });
+    svg.appendChild(el("text",{x:10, y:78, "font-size":11,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink)"}, "= "+gn.toString()));
+    const decoded = primeFactorExponents(gn <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(gn) : NaN);
+    document.getElementById("numberingStory").textContent =
+      `Encoded "${sequence.map(s=>s.sym).join(" ")}" as ${gn.toString()} = `+
+      sequence.map((s,i)=>PRIMES[i]+"^"+s.code).join(" × ")+
+      `.\nFactor ${gn.toString()} back apart and the exponents [${sequence.map(s=>s.code).join(", ")}] reappear exactly -- decode those codes and the original symbols "${sequence.map(s=>s.sym).join(" ")}" come back, in order, with zero ambiguity.`;
+  }
+  document.getElementById("btnClearSeq").addEventListener("click", () => { sequence = []; renderNumbering(); });
+  renderSymbolStrip();
+  renderNumbering();
+
+  /* ============================================================
+     TAB 2 — DIAGONAL LEMMA / FIXED POINT
+     ============================================================ */
+  let propMode = "false"; // "false" | "unprovable"
+  function renderDiagBoxes(evaluated){
+    const svg = document.getElementById("diagSvg");
+    svg.innerHTML = "";
+    const propLabel = propMode === "false" ? 'P(x) = "x is false"' : 'P(x) = "x is not provable in S"';
+    const phiLabel = propMode === "false" ? 'φ says: "I am false"' : 'φ says: "I am not provable in S"';
+    const boxes = [
+      {x:10, w:150, label:propLabel},
+      {x:175, w:150, label:"Diagonal lemma builds φ"},
+      {x:340, w:130, label:phiLabel},
+    ];
+    boxes.forEach((b,i) => {
+      svg.appendChild(el("rect",{x:b.x,y:15,width:b.w,height:55,rx:8,fill:"#fff",stroke:"var(--line)","stroke-width":1.5}));
+      const words = b.label.split(" ");
+      let line1 = "", line2 = "";
+      let cur = "";
+      words.forEach(w => { if ((cur+" "+w).trim().length <= 20 && !line2) { cur = (cur+" "+w).trim(); } else { line2 += (line2?" ":"")+w; } });
+      line1 = cur;
+      svg.appendChild(el("text",{x:b.x+b.w/2,y:38,"text-anchor":"middle","font-size":10.5,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink)"}, line1));
+      if (line2) svg.appendChild(el("text",{x:b.x+b.w/2,y:52,"text-anchor":"middle","font-size":10.5,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink)"}, line2));
+      if (i<2){
+        const nx = boxes[i+1].x;
+        svg.appendChild(el("line",{x1:b.x+b.w,y1:42,x2:nx,y2:42,stroke:"var(--ink-soft)","stroke-width":1.5,"marker-end":"url(#arrow2)"}));
+      }
+    });
+    const defs = el("defs",{});
+    const marker = el("marker",{id:"arrow2",markerWidth:8,markerHeight:8,refX:6,refY:3,orient:"auto"});
+    marker.appendChild(el("path",{d:"M0,0 L6,3 L0,6 Z", fill:"var(--ink-soft)"}));
+    defs.appendChild(marker);
+    svg.insertBefore(defs, svg.firstChild);
+    if (evaluated){
+      const cls = evaluated.exploded ? "var(--c3)" : "var(--c1)";
+      svg.appendChild(el("rect",{x:120,y:90,width:280,height:34,rx:8,fill: evaluated.exploded ? "#FBEAEA" : "#E4F3EC", stroke: cls, "stroke-width":1.5}));
+      svg.appendChild(el("text",{x:260,y:111,"text-anchor":"middle","font-size":11.5,"font-family":"IBM Plex Mono, monospace",fill: cls,"font-weight":"700"}, evaluated.label));
+    }
+  }
+  function evaluateDiag(){
+    if (propMode === "false"){
+      renderDiagBoxes({exploded:true, label:"CONTRADICTION: oscillates true ↔ false forever"});
+      const story = document.getElementById("diagStory");
+      story.className = "verdict fail";
+      story.textContent = 'If φ is true, then "I am false" is accurate, so φ is false. If φ is false, then "I am false" is inaccurate, so φ is true. Every possible truth value is immediately contradicted -- this is the Liar\'s Paradox, and it never settles.';
+    } else {
+      renderDiagBoxes({exploded:false, label:"STABLE: true, and unprovable by S -- no contradiction"});
+      const story = document.getElementById("diagStory");
+      story.className = "verdict pass";
+      story.textContent = 'If S could prove φ, S would have proven something false about itself (a consistency violation) -- so a consistent S cannot prove φ. But that\'s exactly what φ claims ("I am not provable in S") -- so φ is true, precisely because S cannot prove it. True, but permanently out of S\'s reach. No oscillation, no contradiction -- just a fact this rulebook can\'t reach.';
+    }
+  }
+  document.getElementById("btnPropFalse").addEventListener("click", function(){
+    propMode = "false";
+    document.getElementById("btnPropFalse").classList.add("active");
+    document.getElementById("btnPropUnprovable").classList.remove("active");
+    renderDiagBoxes(null);
+    document.getElementById("diagStory").className = "verdict";
+    document.getElementById("diagStory").textContent = "Pick a property, then click Evaluate.";
+  });
+  document.getElementById("btnPropUnprovable").addEventListener("click", function(){
+    propMode = "unprovable";
+    document.getElementById("btnPropUnprovable").classList.add("active");
+    document.getElementById("btnPropFalse").classList.remove("active");
+    renderDiagBoxes(null);
+    document.getElementById("diagStory").className = "verdict";
+    document.getElementById("diagStory").textContent = "Pick a property, then click Evaluate.";
+  });
+  document.getElementById("btnEvaluate").addEventListener("click", evaluateDiag);
+  renderDiagBoxes(null);
+
+  /* ============================================================
+     TAB 3 — HILBERT'S TRIANGLE
+     ============================================================ */
+  const SYSTEMS = {
+    prop: {
+      name:"Propositional logic",
+      consistent:true, complete:true, decidable:true,
+      note:"Too weak to encode arithmetic at all (no numbers, no quantifiers) -- truth tables mechanically settle every formula. All three corners hold, but the system can't even state \"2+2=4\"."
+    },
+    presburger: {
+      name:"Presburger arithmetic",
+      consistent:true, complete:true, decidable:true,
+      note:"Addition on the natural numbers, but deliberately no multiplication of two variables (Mojżesz Presburger, 1929). Just barely too weak for Gödel numbering to get off the ground -- proven consistent, complete, AND decidable, all three, genuinely."
+    },
+    peano: {
+      name:"Full Peano arithmetic",
+      consistent:true, complete:false, decidable:false,
+      note:"Adds multiplication of variables -- exactly the extra expressive power Gödel numbering (Part 4) needs. Consistency is assumed; completeness and decidability both fail, permanently, for any choice of axioms -- this is the theorem's actual target."
+    },
+    bad: {
+      name:"Inconsistent toy system",
+      consistent:false, complete:true, decidable:true,
+      note:"An inconsistent system can prove absolutely everything (including contradictions), so it's trivially \"complete\" and \"decidable\" -- every statement gets a proof. This corner combination is a cautionary technicality, not a prize: a system that proves everything has proven nothing meaningful."
+    }
+  };
+  function renderTriangle(sysKey){
+    const s = SYSTEMS[sysKey];
+    const svg = document.getElementById("triangleSvg");
+    svg.innerHTML = "";
+    const pts = { consistent:[160,30], complete:[40,240], decidable:[280,240] };
+    const labels = { consistent:"Consistency", complete:"Completeness", decidable:"Decidability" };
+    // triangle edges
+    svg.appendChild(el("polygon",{points: Object.values(pts).map(p=>p.join(",")).join(" "), fill:"none", stroke:"var(--line)", "stroke-width":2}));
+    Object.keys(pts).forEach(k => {
+      const [x,y] = pts[k];
+      const ok = s[k];
+      svg.appendChild(el("circle",{cx:x,cy:y,r:26,fill: ok ? "#E4F3EC" : "#FBEAEA", stroke: ok ? "var(--c1)" : "var(--c3)", "stroke-width":2.5}));
+      svg.appendChild(el("text",{x,y:y+5,"text-anchor":"middle","font-size":18,"font-family":"IBM Plex Mono, monospace",fill: ok?"var(--c1)":"var(--c3)","font-weight":"700"}, ok ? "✓" : "✗"));
+      const ly = k==="consistent" ? y-38 : y+46;
+      svg.appendChild(el("text",{x,y:ly,"text-anchor":"middle","font-size":12,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink)","font-weight":"600"}, labels[k]));
+    });
+    svg.appendChild(el("text",{x:160,y:150,"text-anchor":"middle","font-size":11,"font-family":"Fraunces, serif",fill:"var(--ink-soft)"}, s.name));
+    const story = document.getElementById("triangleStory");
+    const allThree = s.consistent && s.complete && s.decidable;
+    story.className = "verdict " + (s.consistent && !allThree ? "" : (allThree && s.consistent ? "pass" : "fail"));
+    story.textContent = s.name+":\nConsistent: "+(s.consistent?"yes":"no")+"  |  Complete: "+(s.complete?"yes":"no")+"  |  Decidable: "+(s.decidable?"yes":"no")+"\n\n"+s.note;
+  }
+  function bindSysButton(id, key){
+    document.getElementById(id).addEventListener("click", function(){
+      document.querySelectorAll("#panel-triangle .op").forEach(b=>b.classList.remove("active"));
+      this.classList.add("active");
+      renderTriangle(key);
+    });
+  }
+  bindSysButton("btnSysProp","prop");
+  bindSysButton("btnSysPresburger","presburger");
+  bindSysButton("btnSysPeano","peano");
+  bindSysButton("btnSysBad","bad");
+  renderTriangle("prop");
+
+  /* ============================================================
+     TAB 4 — SECOND INCOMPLETENESS
+     ============================================================ */
+  const STEPS = [
+    {tag:"Step 1 -- already established (Part 6, first theorem)", text:"S can prove the conditional: \"IF S is consistent, THEN G is true.\" This whole argument (Part 6's Case 1-2 reasoning) can be formalized and carried out entirely inside S, using Gödel numbering -- it becomes a genuine theorem of S itself: S ⊢ (Con(S) → G)."},
+    {tag:"Step 2 -- the assumption being tested", text:"Now suppose S could ALSO prove its own consistency outright: S ⊢ Con(S)."},
+    {tag:"Step 3 -- combine them", text:"From Step 1 (S ⊢ Con(S) → G) and Step 2 (S ⊢ Con(S)), one step of modus ponens gives: S ⊢ G."},
+    {tag:"Step 4 -- contradiction", text:"But the first incompleteness theorem already proved a consistent S can never prove G (Part 6, Case 1). Step 3 just derived S ⊢ G anyway -- a direct contradiction. So the Step 2 assumption must be false: no consistent S rich enough for arithmetic can ever prove Con(S), its own consistency, from the inside."}
+  ];
+  let stepIdx = 0;
+  function renderSteps(){
+    const wrap = document.getElementById("stepsWrap");
+    wrap.innerHTML = "";
+    STEPS.forEach((s,i) => {
+      const box = htmlEl("div", {class:"step-box"+(i<stepIdx?" revealed":"")});
+      const tag = htmlEl("div", {class:"tag"}, s.tag);
+      const txt = htmlEl("div", {}, i<stepIdx ? s.text : "—");
+      box.appendChild(tag); box.appendChild(txt);
+      wrap.appendChild(box);
+    });
+    document.getElementById("btnStepNext").disabled = stepIdx >= STEPS.length;
+    document.getElementById("btnStepNext").textContent = stepIdx >= STEPS.length ? "All steps revealed" : "Reveal next step";
+  }
+  document.getElementById("btnStepNext").addEventListener("click", () => { if (stepIdx < STEPS.length){ stepIdx++; renderSteps(); } });
+  document.getElementById("btnStepReset").addEventListener("click", () => { stepIdx = 0; renderSteps(); });
+  renderSteps();
+
+})();
+</script>
+</body>
+</html>

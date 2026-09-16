@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 96 self-contained interactive visualizations
+// Cogito Gallery manifest — 97 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -217,6 +217,12 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Classification and Completeness, Live",
         "one": "Sometimes math can prove a list is finished forever — five Platonic solids, 230 space groups — and sometimes a theorem proves no such finished list can ever exist at all.",
         "prompt": "Explain classification and completeness in mathematics: how the Platonic solids and crystallographic restriction theorem prove a search is finite and finished, and how Gödel's incompleteness theorem proves the opposite is sometimes true — that no finite set of axioms can ever settle every true statement."
+      },
+      {
+        "file": "godels_incompleteness_visualizer.html",
+        "title": "A Sentence That Talks About Itself",
+        "one": "Swap the Liar's Paradox's 'false' for 'unprovable' and the contradiction resolves into a true, stable sentence a rulebook can never prove — Hilbert's dream, gone in one substitution.",
+        "prompt": "Explain Gödel's incompleteness theorem from first principles: why Hilbert's program wanted a complete, decidable set of axioms for arithmetic, why the Liar's Paradox can't be used directly to break it, how Gödel numbering lets a sentence about numbers also be a sentence about proofs, and why swapping 'false' for 'unprovable' produces a true sentence the system can never prove instead of a contradiction."
       },
       {
         "file": "matrix_factorization_visualizer.html",
