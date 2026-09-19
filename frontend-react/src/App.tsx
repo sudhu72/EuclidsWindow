@@ -14,13 +14,14 @@ import ConceptGraph from "./ConceptGraph";
 import MathMap from "./MathMap";
 import Gallery from "./Gallery";
 import Euclid from "./Euclid";
+import Quest from "./Quest";
 import Login from "./Login";
 import { useAuth } from "./auth";
 
 type Tab =
   | "learn" | "discover" | "solve" | "chat" | "labs" | "library"
   | "symbols" | "resources" | "prompts" | "concepts" | "mathmap"
-  | "gallery" | "euclid" | "settings" | "eval" | "login";
+  | "gallery" | "euclid" | "quest" | "settings" | "eval" | "login";
 
 /** Primary destinations, always visible as labelled tabs. */
 const TABS: [Tab, string][] = [
@@ -41,6 +42,7 @@ const EXPLORE: [Tab, string, string][] = [
   ["mathmap", "Map of Mathematics", "◈"],
   ["gallery", "Cogito Gallery", "◉"],
   ["euclid", "Euclid's Elements", "△"],
+  ["quest", "Math Quest", "★"],
   ["symbols", "Symbols", "𝑥"],
   ["resources", "Resources", "☰"],
   ["prompts", "Prompt Library", "❖"],
@@ -200,6 +202,8 @@ export default function App() {
           <Gallery onAsk={askInLearn} />
         ) : tab === "euclid" ? (
           <Euclid onAsk={askInLearn} />
+        ) : tab === "quest" ? (
+          <Quest onAsk={askInLearn} />
         ) : tab === "settings" ? (
           <Settings />
         ) : tab === "eval" ? (

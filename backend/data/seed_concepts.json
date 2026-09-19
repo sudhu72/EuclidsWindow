@@ -1265,6 +1265,189 @@
       "prerequisites": [
         "constructing_rational_arguments"
       ]
+    },
+
+    {
+      "slug": "variance_std_dev",
+      "name": "Variance & Standard Deviation",
+      "description": "How spread out a dataset is around its mean, measured by squaring deviations (variance) and taking their root (standard deviation).",
+      "level": 4,
+      "category": "statistics",
+      "euclid_ref": null,
+      "prerequisites": ["statistics"]
+    },
+    {
+      "slug": "normal_distribution",
+      "name": "The Normal Distribution",
+      "description": "The bell curve: a symmetric distribution fully described by its mean and standard deviation, and the most common model for natural variation.",
+      "level": 4,
+      "category": "statistics",
+      "euclid_ref": null,
+      "prerequisites": ["variance_std_dev"]
+    },
+    {
+      "slug": "sampling",
+      "name": "Sampling & Populations",
+      "description": "Why a well-chosen sample can stand in for an entire population, and how sampling bias quietly wrecks that promise.",
+      "level": 4,
+      "category": "statistics",
+      "euclid_ref": null,
+      "prerequisites": ["statistics"]
+    },
+    {
+      "slug": "central_limit_theorem",
+      "name": "The Central Limit Theorem",
+      "description": "Why the average of many independent samples tends toward a normal distribution, no matter what the underlying data looks like.",
+      "level": 5,
+      "category": "statistics",
+      "euclid_ref": null,
+      "prerequisites": ["normal_distribution", "sampling"]
+    },
+    {
+      "slug": "confidence_intervals",
+      "name": "Confidence Intervals",
+      "description": "A range built from sample data that's likely to contain the true population value, and what \"95% confident\" actually means.",
+      "level": 5,
+      "category": "statistics",
+      "euclid_ref": null,
+      "prerequisites": ["central_limit_theorem"]
+    },
+    {
+      "slug": "hypothesis_testing",
+      "name": "Hypothesis Testing",
+      "description": "Testing whether an observed effect is likely real or just noise, by asking how surprising the data would be if nothing were going on.",
+      "level": 5,
+      "category": "statistics",
+      "euclid_ref": null,
+      "prerequisites": ["confidence_intervals"]
+    },
+    {
+      "slug": "p_values",
+      "name": "P-Values",
+      "description": "The probability of seeing data this extreme if the null hypothesis were true \u2014 and why a small p-value is evidence, not proof.",
+      "level": 6,
+      "category": "statistics",
+      "euclid_ref": null,
+      "prerequisites": ["hypothesis_testing"]
+    },
+    {
+      "slug": "correlation",
+      "name": "Correlation",
+      "description": "How strongly two variables move together, measured on a scale from -1 to 1 \u2014 and why correlation alone never proves one causes the other.",
+      "level": 4,
+      "category": "statistics",
+      "euclid_ref": null,
+      "prerequisites": ["statistics"]
+    },
+    {
+      "slug": "regression",
+      "name": "Linear Regression",
+      "description": "Fitting the straight line that best predicts one variable from another, and reading what its slope and scatter actually mean.",
+      "level": 5,
+      "category": "statistics",
+      "euclid_ref": null,
+      "prerequisites": ["correlation", "linear_equations"]
+    },
+
+    {
+      "slug": "propositional_logic",
+      "name": "Propositional Logic",
+      "description": "Building compound statements from simple ones with AND, OR, NOT, and IMPLIES, and evaluating whether they're true.",
+      "level": 3,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["mathematical_logic"]
+    },
+    {
+      "slug": "truth_tables",
+      "name": "Truth Tables",
+      "description": "Exhaustively listing every combination of truth values for a compound statement's inputs to see exactly when it's true.",
+      "level": 3,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["propositional_logic"]
+    },
+    {
+      "slug": "set_operations",
+      "name": "Set Operations",
+      "description": "Union, intersection, complement, and De Morgan's laws \u2014 the algebra of combining and comparing sets.",
+      "level": 3,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["set_theory"]
+    },
+    {
+      "slug": "predicate_logic",
+      "name": "Predicate Logic & Quantifiers",
+      "description": "Extending propositional logic with \"for all\" and \"there exists\" to make statements about whole categories of things at once.",
+      "level": 4,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["propositional_logic"]
+    },
+    {
+      "slug": "boolean_algebra",
+      "name": "Boolean Algebra",
+      "description": "The algebra of true/false values that underlies both formal logic and digital circuits \u2014 the same rules, two different applications.",
+      "level": 4,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["propositional_logic", "set_operations"]
+    },
+    {
+      "slug": "proof_by_induction",
+      "name": "Proof by Induction",
+      "description": "Proving a statement holds for every natural number by showing it holds for the first one and that each case implies the next.",
+      "level": 4,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["proof", "natural_numbers"]
+    },
+    {
+      "slug": "proof_by_contradiction",
+      "name": "Proof by Contradiction",
+      "description": "Assuming the opposite of what you want to prove, then showing that assumption collapses into a logical impossibility.",
+      "level": 4,
+      "category": "foundations",
+      "euclid_ref": null,
+      "prerequisites": ["proof"]
+    },
+
+    {
+      "slug": "permutations_combinations",
+      "name": "Permutations & Combinations",
+      "description": "Counting arrangements where order matters (permutations) versus where it doesn't (combinations), and the formulas that separate them.",
+      "level": 3,
+      "category": "discrete_math",
+      "euclid_ref": null,
+      "prerequisites": ["combinatorics"]
+    },
+    {
+      "slug": "euclidean_algorithm",
+      "name": "The Euclidean Algorithm",
+      "description": "Finding the greatest common divisor of two numbers by repeated division \u2014 one of the oldest algorithms still taught unchanged.",
+      "level": 3,
+      "category": "discrete_math",
+      "euclid_ref": "VII.2",
+      "prerequisites": ["divisibility"]
+    },
+    {
+      "slug": "pigeonhole_principle",
+      "name": "The Pigeonhole Principle",
+      "description": "If you place more items into boxes than there are boxes, some box must hold more than one \u2014 a trivial-sounding idea with surprisingly sharp proofs.",
+      "level": 4,
+      "category": "discrete_math",
+      "euclid_ref": null,
+      "prerequisites": ["permutations_combinations"]
+    },
+    {
+      "slug": "recurrence_relations",
+      "name": "Recurrence Relations",
+      "description": "Defining a sequence by how each term relates to the ones before it, like the Fibonacci sequence, and solving for a direct formula.",
+      "level": 5,
+      "category": "discrete_math",
+      "euclid_ref": null,
+      "prerequisites": ["sequence"]
     }
   ]
 }

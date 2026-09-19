@@ -916,3 +916,124 @@ body {
 .mx-anim { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 14px; }
 .mx-anim h4 { margin: 0 0 4px; }
 .mx-plot { max-width: 520px; margin: 0 auto; }
+
+/* Math Quest — story-driven game over the concept prerequisite graph.
+   Mirrors .lesson/.lesson-body: .main is overflow:hidden, so a tall screen
+   (the story picker, the map) needs its own overflow-y:auto region. */
+.qst-shell {
+  width: 100%; max-width: 900px; display: flex; flex-direction: column;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+}
+.qst-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 14px 18px 0;
+}
+.qst-header .lesson-title { margin-bottom: 2px; }
+.qst-scroll { flex: 1; overflow-y: auto; padding: 18px; }
+
+.qst-start { max-width: 760px; margin: 0 auto; }
+.qst-story-group { margin-top: 10px; }
+.qst-story-group h4 { margin: 18px 0 8px; }
+.qst-theme-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px; margin-bottom: 6px;
+}
+.qst-theme-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 12px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--paper); cursor: pointer; text-align: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.qst-theme-card:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.qst-theme-card.active { border-color: var(--ink); background: #fff; box-shadow: 0 0 0 2px var(--ink) inset; }
+.qst-theme-card strong { font-size: 13px; }
+.qst-theme-card span { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+.qst-level-prompt { margin: 18px 0 4px; font-weight: 600; }
+
+.qst-map-wrap { display: flex; flex-direction: column; gap: 8px; }
+.qst-map-bar { display: flex; align-items: center; gap: 10px; }
+.qst-progress-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.qst-svg {
+  width: 100%; aspect-ratio: 1200/900; max-height: 70vh;
+  border: 1px solid var(--line); border-radius: 12px; background: #fff;
+  touch-action: none; cursor: grab;
+}
+.qst-node-current { animation: qst-pulse-ring 1.4s ease-in-out infinite; }
+@keyframes qst-pulse-ring {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.35; }
+}
+
+.qst-stage {
+  border: 1px solid var(--line); border-radius: 12px; padding: 16px;
+  background: var(--paper);
+}
+.qst-stage-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.qst-stage-title { margin: 0; }
+.qst-stage-meta { margin: 2px 0 0; font-size: 12px; color: var(--muted); text-transform: capitalize; }
+.qst-stage-close { margin-left: auto; }
+.qst-flavor { font-style: italic; color: #57534e; }
+.qst-voice-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+.qst-verdict { margin-top: 10px; padding: 12px; border-radius: 10px; border: 1px solid; }
+.qst-verdict.qst-right { border-color: #16a34a; background: #f0fdf4; }
+.qst-verdict.qst-wrong { border-color: #dc2626; background: #fef2f2; }
+.qst-hint-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+.qst-tutorial { margin-top: 6px; }
+.qst-tutorial-scene { margin: 10px 0; }
+.qst-tutorial-nav { display: flex; gap: 8px; margin-top: 12px; }
+.qst-correct-choice { color: #15803d; font-weight: 600; }
+
+/* Sprite — procedurally-drawn SVG "poses", no image assets */
+.qst-sprite { flex-shrink: 0; overflow: visible; }
+.qst-pose-idle .qst-sprite-body { animation: qst-bob 2.2s ease-in-out infinite; }
+.qst-pose-walk .qst-leg-l { animation: qst-walk-l 0.55s ease-in-out infinite; transform-origin: 42px 80px; }
+.qst-pose-walk .qst-leg-r { animation: qst-walk-r 0.55s ease-in-out infinite; transform-origin: 58px 80px; }
+.qst-pose-walk .qst-sprite-body { animation: qst-bob 0.55s ease-in-out infinite; }
+.qst-pose-success .qst-sprite-body { animation: qst-jump 0.7s ease-out 1; }
+.qst-pose-success .qst-arm-l { animation: qst-raise-l 0.5s ease-out forwards; transform-origin: 34px 58px; }
+.qst-pose-success .qst-arm-r { animation: qst-raise-r 0.5s ease-out forwards; transform-origin: 66px 58px; }
+.qst-pose-stuck .qst-sprite-body { animation: qst-tilt 1.3s ease-in-out infinite; transform-origin: 50px 90px; }
+.qst-sprite-spark { animation: qst-spark 1s ease-out infinite; transform-origin: center; }
+.qst-spark-b { animation-delay: 0.2s; }
+.qst-spark-c { animation-delay: 0.4s; }
+.qst-sprite-stuckmark { animation: qst-wiggle 1.3s ease-in-out infinite; }
+
+@keyframes qst-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes qst-walk-l {
+  0%, 100% { transform: rotate(18deg); }
+  50% { transform: rotate(-18deg); }
+}
+@keyframes qst-walk-r {
+  0%, 100% { transform: rotate(-18deg); }
+  50% { transform: rotate(18deg); }
+}
+@keyframes qst-jump {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-14px); }
+  100% { transform: translateY(0); }
+}
+@keyframes qst-raise-l {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-70deg); }
+}
+@keyframes qst-raise-r {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(70deg); }
+}
+@keyframes qst-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-6deg); }
+}
+@keyframes qst-spark {
+  0% { opacity: 0; transform: scale(0.6) translateY(0); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.1) translateY(-10px); }
+}
+@keyframes qst-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(8deg); }
+}
