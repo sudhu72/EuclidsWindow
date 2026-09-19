@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shape & Spread Explorer — histogram, box plot, violin plot, Q-Q plot, linked</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --violet:#b39ddb; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  h2{font-family:'Kalam',cursive;font-weight:700;font-size:17px;margin:0 0 8px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.6;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  svg{width:100%;height:auto;display:block;background:rgba(0,0,0,0.12);border-radius:8px;}
+  .axis{stroke:var(--chalk-dim);stroke-width:1px;}
+  .axis-label{font-size:10.5px;fill:var(--chalk-dim);}
+  .grid-4{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:720px){.grid-4{grid-template-columns:1fr;}}
+  .cell{background:rgba(0,0,0,0.08);border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .cell h2{font-size:14px;margin-bottom:6px;}
+  .presetbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  button.active{background:var(--violet);color:#16221c;border-color:var(--violet);font-weight:700;}
+  .slider-wrap{max-width:520px;margin:14px 0 4px;}
+  .slider-wrap input[type=range]{width:100%;accent-color:var(--violet);}
+  .slider-caption{font-size:12px;color:var(--chalk-dim);margin-top:4px;}
+  .readout-row{display:flex;justify-content:center;gap:16px;margin:14px 0 4px;flex-wrap:wrap;}
+  .readout{text-align:center;border:1px solid var(--border);border-radius:8px;padding:8px 14px;min-width:88px;}
+  .readout .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .readout .num{font-family:'Kalam',cursive;font-size:17px;margin-top:2px;color:var(--amber);}
+  .point{fill:var(--chalk-dim);}
+  .point.outlier{fill:var(--coral);}
+  .flag-banner{text-align:center;font-size:12.5px;padding:6px;border-radius:6px;margin-top:8px;color:var(--chalk-dim);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Shape & Spread Explorer</h1>
+  <p class="sub">Companion to <b>Shapes of Data</b> and the EDA tutorial's box-plot/violin-plot sections. Pick a distribution shape, and watch the identical sample rendered four different ways at once — a histogram, a box plot, a violin plot, and a Q-Q plot against a normal reference. Nothing here is a separate skill per chart; it's the same numbers, drawn four times.</p>
+
+  <div class="panel">
+    <div class="presetbar" id="shapePicker"></div>
+    <div class="slider-wrap">
+      <label style="font-size:12px;color:var(--chalk-dim);">sample size (n)</label>
+      <input type="range" id="nSlider" min="20" max="1000" step="10" value="300">
+    </div>
+    <div class="slider-caption" id="nCaption">n = 300</div>
+    <div style="margin-top:10px;"><button id="btnResample">New sample (same shape)</button></div>
+
+    <div class="readout-row">
+      <div class="readout"><div class="lbl">n</div><div class="num" id="roN"></div></div>
+      <div class="readout"><div class="lbl">mean</div><div class="num" id="roMean"></div></div>
+      <div class="readout"><div class="lbl">median</div><div class="num" id="roMedian"></div></div>
+      <div class="readout"><div class="lbl">Q1 / Q3</div><div class="num" id="roIQR"></div></div>
+      <div class="readout"><div class="lbl">outliers (1.5×IQR)</div><div class="num" id="roOutliers"></div></div>
+      <div class="readout"><div class="lbl">skewness</div><div class="num" id="roSkew"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="grid-4">
+      <div class="cell">
+        <h2>Histogram</h2>
+        <svg viewBox="0 0 460 240" id="histSvg"></svg>
+      </div>
+      <div class="cell">
+        <h2>Box Plot</h2>
+        <svg viewBox="0 0 460 240" id="boxSvg"></svg>
+      </div>
+      <div class="cell">
+        <h2>Violin Plot</h2>
+        <svg viewBox="0 0 460 240" id="violinSvg"></svg>
+      </div>
+      <div class="cell">
+        <h2>Q-Q Plot (vs. Normal)</h2>
+        <svg viewBox="0 0 460 240" id="qqSvg"></svg>
+      </div>
+    </div>
+    <div class="flag-banner" id="qqNote"></div>
+  </div>
+
+  <div class="panel">
+    <h2 style="font-size:15px;">Why it matters</h2>
+    <p class="sub" style="margin:0;">The histogram shows the raw shape. The box plot compresses it to five numbers plus outlier flags — fast to compare across groups, but blind to bimodality (a box plot of a two-humped distribution just looks like one wide box). The violin plot fixes exactly that blind spot by showing the full density instead of five numbers. The Q-Q plot answers a sharper, different question: not "what shape is this" but "does this shape match a normal distribution specifically" — points hugging the diagonal say yes; a curve bending away says no, and the direction of the bend says which of this file's shapes you're actually looking at.</p>
+  </div>
+
+  <footer style="font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;">
+    Fully offline &amp; private — nothing sent anywhere. Companion to <a href="../shapes_of_data_feynman_tutorial.md" style="color:var(--blue);">Shapes of Data</a> and <a href="../eda_feynman_tutorial.md" style="color:var(--blue);">the EDA tutorial</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const ns = "http://www.w3.org/2000/svg";
+function el(tag, attrs){
+  const e = document.createElementNS(ns, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function txt(x,y,str,cls,anchor){
+  const t = el("text",{x,y,class:cls||"axis-label","text-anchor":anchor||"middle"});
+  t.textContent = str;
+  return t;
+}
+
+/* ---------------- seeded PRNG so the demo is stable ---------------- */
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+let rand = mulberry32(42);
+function randNormal(){
+  const u1 = Math.max(rand(), 1e-9), u2 = rand();
+  return Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+}
+
+/* ---------------- distribution generators (matches Shapes of Data's own taxonomy) ---------------- */
+const SHAPES = {
+  normal:   { label:"Normal",       gen:(n)=> Array.from({length:n}, ()=> 50 + 10*randNormal()) },
+  right:    { label:"Right-skewed", gen:(n)=> Array.from({length:n}, ()=> 5 + 8*Math.exp(0.5*randNormal())) },
+  left:     { label:"Left-skewed",  gen:(n)=> Array.from({length:n}, ()=> 100 - (5 + 8*Math.exp(0.5*randNormal()))) },
+  bimodal:  { label:"Bimodal",      gen:(n)=> Array.from({length:n}, ()=> rand()<0.5 ? 30+6*randNormal() : 70+6*randNormal()) },
+  uniform:  { label:"Uniform",      gen:(n)=> Array.from({length:n}, ()=> rand()*100) },
+  power:    { label:"Heavy-tailed", gen:(n)=> Array.from({length:n}, ()=> { const a=2.5, xmin=5; return xmin*Math.pow(1-Math.max(rand(),1e-9), -1/(a-1)); }) },
+};
+let currentShape = "normal";
+let currentData = [];
+
+/* ---------------- stats (matches the exact linear-interpolation quantile + 1.5xIQR rule already used in this repo's own outlier_robustness_animation.html) ---------------- */
+function quantile(sorted, p){
+  const idx = p*(sorted.length-1);
+  const lo = Math.floor(idx), hi = Math.min(lo+1, sorted.length-1);
+  const frac = idx-lo;
+  return sorted[lo] + (sorted[hi]-sorted[lo])*frac;
+}
+function computeStats(vals){
+  const s = [...vals].sort((a,b)=>a-b);
+  const n = s.length;
+  const mean = s.reduce((a,b)=>a+b,0)/n;
+  const median = n%2===1 ? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2;
+  const q1 = quantile(s,0.25), q3 = quantile(s,0.75);
+  const iqr = q3-q1;
+  const lower = q1-1.5*iqr, upper = q3+1.5*iqr;
+  const outliers = s.filter(v => v<lower || v>upper);
+  const std = Math.sqrt(s.reduce((a,v)=>a+(v-mean)**2,0)/n);
+  const skew = std>0 ? s.reduce((a,v)=>a+((v-mean)/std)**3,0)/n : 0;
+  return { sorted:s, n, mean, median, q1, q3, iqr, lower, upper, outliers, min:s[0], max:s[n-1], std, skew };
+}
+
+/* ---------------- approximate inverse normal CDF (Acklam's rational approximation) ---------------- */
+function inverseNormalCDF(p){
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const plow=0.02425, phigh=1-plow;
+  let q,r;
+  if(p<plow){
+    q=Math.sqrt(-2*Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if(p<=phigh){
+    q=p-0.5; r=q*q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else {
+    q=Math.sqrt(-2*Math.log(1-p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+}
+
+/* ---------------- Gaussian KDE for the violin plot (Silverman's rule of thumb bandwidth) ---------------- */
+function kde(sorted, xs){
+  const n = sorted.length;
+  const std = Math.sqrt(sorted.reduce((a,v)=>{const m=sorted.reduce((x,y)=>x+y,0)/n; return a+(v-m)**2;},0)/n);
+  const bw = 1.06 * Math.max(std,1e-6) * Math.pow(n, -0.2);
+  return xs.map(x => {
+    let sum = 0;
+    for(const v of sorted){
+      const z = (x-v)/bw;
+      sum += Math.exp(-0.5*z*z);
+    }
+    return sum / (n*bw*Math.sqrt(2*Math.PI));
+  });
+}
+
+/* ---------------- rendering ---------------- */
+function renderHistogram(st){
+  const svg = document.getElementById("histSvg");
+  svg.innerHTML = "";
+  const W=460,H=240,padL=36,padR=10,padT=10,padB=26;
+  const nbins = 24;
+  const binW = (st.max-st.min)/nbins || 1;
+  const counts = new Array(nbins).fill(0);
+  st.sorted.forEach(v => {
+    let b = Math.floor((v-st.min)/binW);
+    if(b>=nbins) b = nbins-1;
+    if(b<0) b = 0;
+    counts[b]++;
+  });
+  const maxCount = Math.max(...counts,1);
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  svg.appendChild(el("line",{x1:padL,y1:H-padB,x2:W-padR,y2:H-padB,class:"axis"}));
+  counts.forEach((c,i) => {
+    const x = padL + i*(plotW/nbins);
+    const h = (c/maxCount)*plotH;
+    svg.appendChild(el("rect",{x:x+1,y:H-padB-h,width:plotW/nbins-2,height:h,fill:"var(--blue)",opacity:0.8,rx:2}));
+  });
+  svg.appendChild(txt(padL,H-8,st.min.toFixed(1),"axis-label","start"));
+  svg.appendChild(txt(W-padR,H-8,st.max.toFixed(1),"axis-label","end"));
+}
+
+function renderBox(st){
+  const svg = document.getElementById("boxSvg");
+  svg.innerHTML = "";
+  const W=460,H=240,padL=40,padR=40,padT=30,padB=30;
+  const range = st.max-st.min || 1;
+  function px(v){ return padL + (v-st.min)/range * (W-padL-padR); }
+  const cy = H/2, boxH = 50;
+  const whiskerLo = Math.max(st.min, st.sorted.find(v=>v>=st.lower) ?? st.min);
+  const whiskerHi = Math.min(st.max, [...st.sorted].reverse().find(v=>v<=st.upper) ?? st.max);
+  svg.appendChild(el("line",{x1:px(whiskerLo),y1:cy,x2:px(st.q1),y2:cy,stroke:"var(--blue)","stroke-width":1.6}));
+  svg.appendChild(el("line",{x1:px(st.q3),y1:cy,x2:px(whiskerHi),y2:cy,stroke:"var(--blue)","stroke-width":1.6}));
+  svg.appendChild(el("line",{x1:px(whiskerLo),y1:cy-12,x2:px(whiskerLo),y2:cy+12,stroke:"var(--blue)","stroke-width":1.6}));
+  svg.appendChild(el("line",{x1:px(whiskerHi),y1:cy-12,x2:px(whiskerHi),y2:cy+12,stroke:"var(--blue)","stroke-width":1.6}));
+  svg.appendChild(el("rect",{x:px(st.q1),y:cy-boxH/2,width:Math.max(px(st.q3)-px(st.q1),1),height:boxH,fill:"var(--violet)",opacity:0.35,stroke:"var(--violet)","stroke-width":1.6}));
+  svg.appendChild(el("line",{x1:px(st.median),y1:cy-boxH/2,x2:px(st.median),y2:cy+boxH/2,stroke:"var(--amber)","stroke-width":2.4}));
+  st.outliers.forEach(v => {
+    svg.appendChild(el("circle",{cx:px(v),cy:cy + (rand()*20-10),r:2.6,class:"point outlier"}));
+  });
+  svg.appendChild(txt(px(st.min),cy+40,"min "+st.min.toFixed(1),"axis-label"));
+  svg.appendChild(txt(px(st.median),cy-40,"median "+st.median.toFixed(1),"axis-label"));
+  svg.appendChild(txt(px(st.max),cy+40,"max "+st.max.toFixed(1),"axis-label"));
+}
+
+function renderViolin(st){
+  const svg = document.getElementById("violinSvg");
+  svg.innerHTML = "";
+  const W=460,H=240,padL=40,padR=40,padT=20,padB=20;
+  const range = st.max-st.min || 1;
+  const nPts = 60;
+  const xs = Array.from({length:nPts}, (_,i)=> st.min + i*(range/(nPts-1)));
+  const density = kde(st.sorted, xs);
+  const maxD = Math.max(...density,1e-9);
+  const cx = W/2;
+  const halfWidth = 90;
+  function py(v){ return padT + (1 - (v-st.min)/range) * (H-padT-padB); }
+  let leftPts = [], rightPts = [];
+  for(let i=0;i<nPts;i++){
+    const w = (density[i]/maxD)*halfWidth;
+    leftPts.push(`${cx-w},${py(xs[i])}`);
+    rightPts.push(`${cx+w},${py(xs[i])}`);
+  }
+  const pathPts = leftPts.concat(rightPts.reverse()).join(" ");
+  svg.appendChild(el("polygon",{points:pathPts,fill:"var(--green)",opacity:0.45,stroke:"var(--green)","stroke-width":1.4}));
+  svg.appendChild(el("line",{x1:cx,y1:py(st.q1),x2:cx,y2:py(st.q3),stroke:"var(--chalk)","stroke-width":3}));
+  svg.appendChild(el("circle",{cx,cy:py(st.median),r:3.4,fill:"var(--amber)"}));
+  svg.appendChild(txt(cx,H-6,"value axis runs vertically — width = density","axis-label"));
+}
+
+function renderQQ(st){
+  const svg = document.getElementById("qqSvg");
+  svg.innerHTML = "";
+  const W=460,H=240,padL=40,padR=15,padT=15,padB=30;
+  const n = st.n;
+  const theo = st.sorted.map((_,i) => inverseNormalCDF((i+0.5)/n));
+  const tMin = Math.min(...theo), tMax = Math.max(...theo);
+  const vMin = st.min, vMax = st.max;
+  function px(t){ return padL + (t-tMin)/(tMax-tMin||1) * (W-padL-padR); }
+  function py(v){ return H-padB - (v-vMin)/(vMax-vMin||1) * (H-padT-padB); }
+  svg.appendChild(el("line",{x1:padL,y1:H-padB,x2:W-padR,y2:H-padB,class:"axis"}));
+  svg.appendChild(el("line",{x1:padL,y1:padT,x2:padL,y2:H-padB,class:"axis"}));
+  // reference diagonal: least-squares line through the points, for a visual "if normal, sits on this" guide
+  const mean_t = theo.reduce((a,b)=>a+b,0)/n, mean_v = st.sorted.reduce((a,b)=>a+b,0)/n;
+  let num=0,den=0;
+  for(let i=0;i<n;i++){ num += (theo[i]-mean_t)*(st.sorted[i]-mean_v); den += (theo[i]-mean_t)**2; }
+  const slope = den>0 ? num/den : 0;
+  const intercept = mean_v - slope*mean_t;
+  svg.appendChild(el("line",{x1:px(tMin),y1:py(slope*tMin+intercept),x2:px(tMax),y2:py(slope*tMax+intercept),stroke:"var(--coral)","stroke-width":1.4,"stroke-dasharray":"5,4"}));
+  theo.forEach((t,i) => svg.appendChild(el("circle",{cx:px(t),cy:py(st.sorted[i]),r:2,fill:"var(--blue)",opacity:0.75})));
+  svg.appendChild(txt(W/2,H-8,"theoretical normal quantile","axis-label"));
+}
+
+function render(){
+  const st = computeStats(currentData);
+  document.getElementById("roN").textContent = st.n;
+  document.getElementById("roMean").textContent = st.mean.toFixed(2);
+  document.getElementById("roMedian").textContent = st.median.toFixed(2);
+  document.getElementById("roIQR").textContent = st.q1.toFixed(1)+" / "+st.q3.toFixed(1);
+  document.getElementById("roOutliers").textContent = st.outliers.length;
+  document.getElementById("roSkew").textContent = st.skew.toFixed(2);
+  renderHistogram(st);
+  renderBox(st);
+  renderViolin(st);
+  renderQQ(st);
+  const label = SHAPES[currentShape].label;
+  let note;
+  if(Math.abs(st.skew) < 0.3) note = `${label}: skewness ${st.skew.toFixed(2)} (close to 0) -- Q-Q points should hug the dashed reference line if this is genuinely normal-shaped.`;
+  else if(st.skew > 0.3) note = `${label}: skewness ${st.skew.toFixed(2)} (positive) -- expect the Q-Q plot's upper-right points to curve above the reference line.`;
+  else note = `${label}: skewness ${st.skew.toFixed(2)} (negative) -- expect the Q-Q plot's lower-left points to curve below the reference line.`;
+  document.getElementById("qqNote").textContent = note;
+}
+
+function resample(){
+  const n = parseInt(document.getElementById("nSlider").value, 10);
+  currentData = SHAPES[currentShape].gen(n);
+  render();
+}
+
+function buildShapePicker(){
+  const wrap = document.getElementById("shapePicker");
+  wrap.innerHTML = "";
+  Object.entries(SHAPES).forEach(([key,s]) => {
+    const b = document.createElement("button");
+    b.textContent = s.label;
+    if(key===currentShape) b.classList.add("active");
+    b.addEventListener("click", () => {
+      currentShape = key;
+      document.querySelectorAll("#shapePicker button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      resample();
+    });
+    wrap.appendChild(b);
+  });
+}
+
+document.getElementById("nSlider").addEventListener("input", (e) => {
+  document.getElementById("nCaption").textContent = "n = "+e.target.value;
+  resample();
+});
+document.getElementById("btnResample").addEventListener("click", () => { rand = mulberry32(Math.floor(Math.random()*1e9)); resample(); });
+
+buildShapePicker();
+resample();
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 97 self-contained interactive visualizations
+// Cogito Gallery manifest — 103 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -235,6 +235,24 @@ export const GALLERY: GalleryCategory[] = [
         "title": "When Your Best Move Depends on Theirs",
         "one": "The Prisoner's Dilemma, the Nash equilibrium, and why the mathematically 'stable' outcome isn't always the best one for anybody.",
         "prompt": "Explain game theory from first principles: what a payoff matrix is, why the Prisoner's Dilemma shows self-interest can make both players worse off, and what a Nash equilibrium actually guarantees (and doesn't)."
+      },
+      {
+        "file": "logical_fallacies_visualizer.html",
+        "title": "The Forged Signature of an Argument",
+        "one": "A fallacy is an argument that keeps its persuasive shell after the logical machinery inside it has already broken — this is the field guide to spotting the break.",
+        "prompt": "Explain logical fallacies from first principles: the difference between a formally invalid pattern and an informal fallacy, why a fallacious argument can still feel completely persuasive, and how the same broken pattern shows up in courtrooms, ads, and scientific papers alike."
+      },
+      {
+        "file": "philosophy_of_mathematics_visualizer.html",
+        "title": "What Kind of Thing Is the Number 7?",
+        "one": "Every proof quietly assumes an answer to whether mathematical objects are discovered or invented — and the four different answers can make the same valid proof acceptable to one mathematician and rejected by another.",
+        "prompt": "Explain the philosophy of mathematics from first principles: what Platonism, formalism, and intuitionism each claim a mathematical object actually is, and why a perfectly valid existence proof by cases can be accepted by one school and rejected outright by another."
+      },
+      {
+        "file": "power_laws_visualizer.html",
+        "title": "When There's No Such Thing as Typical",
+        "one": "Power laws are what happens when a quantity has no natural typical size at all — the same shape at every scale is why a handful of cities, words, or websites hold a wildly disproportionate share of everything.",
+        "prompt": "Explain power laws and scale-free networks from first principles: what scale invariance actually means, why it makes 'the average city size' a meaningless number, and a real generative mechanism that produces a power law from scratch."
       }
     ]
   },
@@ -584,6 +602,24 @@ export const GALLERY: GalleryCategory[] = [
         "title": "Filling In the Missing 99%",
         "one": "A recommender's ratings matrix is over 99% empty — matrix completion fills the holes by assuming the same low-rank structure SVD already proves exists.",
         "prompt": "Explain matrix completion from first principles: why you can't just run SVD on a matrix with missing entries, how the alternating imputation algorithm fills holes by repeatedly trusting low-rank structure then trusting the real data, and how this is exactly the technique behind the Netflix Prize."
+      },
+      {
+        "file": "text_embeddings_visualizer.html",
+        "title": "One Word Doing Three Jobs",
+        "one": "'Embedding' means a lookup-table row, a context-dependent Transformer activation, and a similarity-trained vector — three different objects, and most embedding bugs come from silently swapping one for another.",
+        "prompt": "Explain text embeddings from first principles: the difference between a static lookup-table embedding, a context-dependent Transformer activation, and a task-trained similarity vector, and why treating them as interchangeable causes real production bugs."
+      },
+      {
+        "file": "agentic_eval_engine_visualizer.html",
+        "title": "Does It Actually Work, or Did It Just Get Lucky?",
+        "one": "One successful demo run can't tell 'right for the right reasons' apart from 'right by a lucky shortcut' — an eval engine automates asking that question hundreds of times instead of once.",
+        "prompt": "Explain agentic eval engine architecture from first principles: why a single watched transcript can't distinguish a sound process from a lucky non-deterministic run, and how an eval engine turns 'it worked once' into a measured success rate that catches regressions."
+      },
+      {
+        "file": "shape_and_spread_explorer.html",
+        "title": "The Shape Your Summary Numbers Hide",
+        "one": "A mean and standard deviation can describe wildly different-looking datasets identically — histograms, box plots, violin plots, and Q-Q plots each reveal a different way a distribution's shape hides from its own summary statistics.",
+        "prompt": "Explain how to read the shape of a data distribution from first principles: what a histogram, box plot, violin plot, and Q-Q plot each show that a mean and standard deviation alone cannot, and why checking shape before trusting summary statistics matters."
       }
     ]
   },

@@ -62,13 +62,15 @@
   <header>
     <div class="eyebrow">Companion to the Feynman Math/ML Tutorial · Agent Harness Engineering</div>
     <h1>The Body Around the Brain</h1>
-    <p>A model predicts tokens; everything else — tools, MCP, skills, loops, graphs of agents, multiple models, and the guardrails containing all of it — is engineered around it. Five pieces of that engineering, made interactive.</p>
+    <p>A model predicts tokens; everything else — tools, MCP, skills, loops, memory, graphs of agents, multiple models, and the guardrails containing all of it — is engineered around it. Six pieces of that engineering, made interactive.</p>
     <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>try this</b>, and <b>why it matters</b>.</p>
   </header>
 
   <div class="tabs">
     <button class="tab active" data-tab="anatomy">Harness Anatomy</button>
     <button class="tab" data-tab="mcp">MCP Flow</button>
+    <button class="tab" data-tab="protocols">Protocol Landscape</button>
+    <button class="tab" data-tab="memory">Agent Memory</button>
     <button class="tab" data-tab="graph">Multi-Agent Graph</button>
     <button class="tab" data-tab="routing">Multi-Model Routing</button>
     <button class="tab" data-tab="defense">Defense in Depth</button>
@@ -103,10 +105,47 @@
     </div>
   </div>
 
+  <!-- ============ TAB: PROTOCOL LANDSCAPE ============ -->
+  <div class="panel" id="panel-protocols">
+    <div class="card">
+      <h2>Five Protocols, One Question Each: Who's Talking to Whom?</h2>
+      <p class="sub"><b>What's happening:</b> click a protocol to see who it connects, its one distinguishing mechanic, and its real, current status (as of 2026) — not marketing copy.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click MCP, then A2A, and notice the diagram itself changes shape — MCP is always agent-to-tool (one arrow, asymmetric), every other protocol here is agent-to-agent (a two-way relationship between peers).</p>
+      <div class="presetbar" id="protoPicker"></div>
+      <svg id="protoSvg" viewBox="0 0 480 150"></svg>
+      <div class="steplog" id="protoInfo"></div>
+      <div class="caption" style="margin-bottom:14px;"><b>Why it matters:</b> "just use a protocol" isn't one decision — agent-to-tool and agent-to-agent are structurally different problems, and even within agent-to-agent, centralized discovery (A2A) and fully decentralized trust (ANP) solve for different enemies.</div>
+      <h2 style="font-size:16px; margin-top:6px;">Scenario Matcher — Which Protocol Actually Fits?</h2>
+      <p class="sub">Read the scenario, then click the protocol you think fits best.</p>
+      <div class="steplog" id="protoScenario"></div>
+      <div class="presetbar" id="protoGuessBar"></div>
+      <div class="steplog" id="protoScenarioResult"></div>
+      <div class="row" style="justify-content:center;"><button class="op" id="btnProtoNextScenario">Next scenario ▶</button></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: AGENT MEMORY ============ -->
+  <div class="panel" id="panel-memory">
+    <div class="card">
+      <h2>Same Question, Same Facts, Two Retrieval Methods</h2>
+      <p class="sub"><b>What's happening:</b> the identical two stored facts, searched two ways. Vector similarity picks whichever stored text scores highest against the query — with no notion of which fact is still true. Graph traversal follows the actual relationship and checks which edge is currently valid.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> run "Vector similarity" first and notice it confidently returns the *wrong*, superseded answer — then run "Graph traversal" and watch it correctly follow Alice → team → current manager instead.</p>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op" id="btnMemVector">Search via vector similarity</button>
+        <button class="op" id="btnMemGraph">Search via graph traversal</button>
+        <button class="op" id="btnMemReset">Reset</button>
+      </div>
+      <div class="steplog" id="memQuery" style="text-align:center; font-weight:600;">Query: "Who currently manages the team Alice is on?"</div>
+      <svg id="memSvg" viewBox="0 0 480 220"></svg>
+      <div class="steplog" id="memVerdict">Pick a search method above.</div>
+      <div class="caption"><b>Why it matters:</b> both stored facts are genuinely, textually "about team management" — vector similarity has no built-in way to prefer the current one over the superseded one, because that's a fact about *time*, not meaning.</div>
+    </div>
+  </div>
+
   <!-- ============ TAB 3: MULTI-AGENT GRAPH ============ -->
   <div class="panel" id="panel-graph">
     <div class="card">
-      <h2>Same Work, Four Topologies, Four Very Different Totals</h2>
+      <h2>Same Work, Five Topologies, Five Very Different Totals</h2>
       <p class="sub"><b>What's happening:</b> pick a topology and adjust each node's cost (seconds). Watch the token move through the actual path taken, and the total latency recompute live.</p>
       <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> load the default costs on <b>Sequential</b> (total 10s), then switch to <b>Parallel</b> with the exact same four costs (total drops to 4s) — nothing about the work changed, only the shape it's arranged in.</p>
       <div class="presetbar">
@@ -114,6 +153,7 @@
         <button class="op" id="gtParallel">Parallel</button>
         <button class="op" id="gtConditional">Conditional</button>
         <button class="op" id="gtCyclic">Cyclic</button>
+        <button class="op" id="gtMesh">Mesh</button>
       </div>
       <div id="graphControls"></div>
       <svg id="graphSvg" viewBox="0 0 480 220"></svg>
@@ -292,6 +332,128 @@
   renderMcp();
 
   /* =========================================================
+     TAB — PROTOCOL LANDSCAPE
+     ========================================================= */
+  const PROTOCOLS = [
+    { id:"mcp", name:"MCP", peer:"tool", mechanic:"Client discovers a server's tools/resources/prompts, calls one, gets a result back.", status:"Live, widely adopted", ok:true },
+    { id:"a2a", name:"A2A", peer:"agent", mechanic:"Agent Cards for discovery, OAuth 2.0 auth, JSON-RPC + SSE for long-running, trackable tasks.", status:"Live — 150+ orgs, production use across major clouds", ok:true },
+    { id:"acp", name:"ACP", peer:"agent", mechanic:"REST-first, multimodal multipart messages, offline/air-gapped discovery.", status:"Folded into A2A (Aug 2025) — its ideas live on, the standalone project doesn't", ok:false },
+    { id:"anp", name:"ANP", peer:"agent", mechanic:"Fully decentralized — W3C DID identity, no central registry, cryptographic handshake.", status:"Live, aimed at open-internet, cross-organization use", ok:true },
+    { id:"agora", name:"Agora", peer:"agent", mechanic:"A meta-protocol — agents negotiate which protocol/format to use, per interaction.", status:"Proposed — no working implementation yet", ok:false },
+  ];
+  let protoSelected = "mcp";
+  function buildProtoPicker(){
+    const wrap = document.getElementById("protoPicker");
+    wrap.innerHTML = "";
+    PROTOCOLS.forEach(p => {
+      const b = document.createElement("button");
+      b.className = "op" + (p.id===protoSelected ? " active" : "");
+      b.textContent = p.name;
+      b.addEventListener("click", () => { protoSelected = p.id; buildProtoPicker(); renderProto(); });
+      wrap.appendChild(b);
+    });
+  }
+  function renderProto(){
+    const p = PROTOCOLS.find(x=>x.id===protoSelected);
+    const svg = document.getElementById("protoSvg");
+    svg.innerHTML = "";
+    const color = p.ok ? "var(--c1)" : "var(--c3)";
+    const leftLabel = "Agent";
+    const rightLabel = p.peer==="tool" ? "Tool / Data" : "Agent";
+    svg.appendChild(el("line",{x1:150,y1:75,x2:330,y2:75,stroke:color,"stroke-width":2.4}));
+    svg.appendChild(el("circle",{cx:100,cy:75,r:40,fill:"var(--accent-soft)",stroke:"var(--accent)","stroke-width":2}));
+    svg.appendChild(txt(100,80,leftLabel,"var(--accent)",13,"middle","700"));
+    if(p.peer==="tool"){
+      svg.appendChild(el("rect",{x:340,y:45,width:100,height:60,rx:10,fill:"#fff",stroke:color,"stroke-width":2}));
+      svg.appendChild(txt(390,80,rightLabel,color,12,"middle","700"));
+    } else {
+      svg.appendChild(el("circle",{cx:390,cy:75,r:40,fill:"var(--accent-soft)",stroke:color,"stroke-width":2}));
+      svg.appendChild(txt(390,80,rightLabel,color,13,"middle","700"));
+    }
+    svg.appendChild(txt(240,30,p.name,color,15,"middle","700"));
+    document.getElementById("protoInfo").innerHTML = `<b>Connects:</b> agent &harr; ${p.peer==="tool"?"tool/data source":"agent (peer)"}\n<b>Mechanic:</b> ${p.mechanic}\n<b>Status:</b> <span style="color:${color}; font-weight:700;">${p.status}</span>`;
+  }
+
+  const SCENARIOS = [
+    { text:"Your harness needs to read files from Google Drive and post messages to Slack.", answer:"mcp", explain:"MCP — this is a harness reaching for a tool/data source it already knows about, exactly Part 4's USB-C analogy." },
+    { text:"Your company's ordering agent needs to discover and delegate a shipping task to a completely different company's logistics agent, found via a public capability listing.", answer:"a2a", explain:"A2A — discovery via a published Agent Card, then delegating a whole long-running task, not one function call." },
+    { text:"Two agents inside a bank's air-gapped internal network (no internet access) need to exchange images, structured data, and text together in one message.", answer:"acp", explain:"This is exactly the problem ACP was built for (offline discovery, multimodal multipart messages) — its ideas are now part of A2A's own spec, since ACP folded in during 2025." },
+    { text:"Two agents from completely unrelated organizations, with zero prior relationship, need to verify each other's identity on the open internet with no central authority involved.", answer:"anp", explain:"ANP — W3C DID-based identity means each agent can cryptographically prove who it is with no registry or mutual acquaintance required." },
+    { text:"Two agents want to pick whichever message format best fits this exact interaction, on the fly, rather than being locked into one protocol forever.", answer:"agora", explain:"Agora's whole idea — a protocol for choosing protocols — though, honestly, no one can actually run this yet; it's still a proposal." },
+  ];
+  let scenarioIdx = 0;
+  function renderScenario(){
+    const s = SCENARIOS[scenarioIdx];
+    document.getElementById("protoScenario").textContent = s.text;
+    document.getElementById("protoScenarioResult").textContent = "";
+    const bar = document.getElementById("protoGuessBar");
+    bar.innerHTML = "";
+    PROTOCOLS.forEach(p => {
+      const b = document.createElement("button");
+      b.className = "op";
+      b.textContent = p.name;
+      b.addEventListener("click", () => {
+        const correct = p.id === s.answer;
+        document.getElementById("protoScenarioResult").innerHTML =
+          `<span style="color:${correct?'var(--c1)':'var(--c3)'}; font-weight:700;">${correct?'Correct':'Not quite'} — ${s.explain}</span>`;
+      });
+      bar.appendChild(b);
+    });
+  }
+  document.getElementById("btnProtoNextScenario").addEventListener("click", () => {
+    scenarioIdx = (scenarioIdx+1) % SCENARIOS.length;
+    renderScenario();
+  });
+  buildProtoPicker(); renderProto(); renderScenario();
+
+  /* =========================================================
+     TAB — AGENT MEMORY (vector similarity vs. graph traversal)
+     ========================================================= */
+  const MEM_POS = { Alice:[70,40], Team:[200,40], Bob:[330,120], Carol:[330,-30+70] };
+  function renderMemoryGraph(mode){
+    const svg = document.getElementById("memSvg");
+    svg.innerHTML = "";
+    if(mode==="vector"){
+      // flat list of two stored chunks with similarity scores -- no relationship structure at all
+      const chunks = [
+        {text:'"Bob manages the team." (stored 3 months ago)', score:0.89, correct:false},
+        {text:'"Carol replaced Bob as manager." (stored 1 week ago)', score:0.82, correct:true},
+      ];
+      chunks.sort((a,b)=>b.score-a.score);
+      chunks.forEach((c,i) => {
+        const y = 50 + i*80;
+        const isTop = i===0;
+        svg.appendChild(el("rect",{x:40,y:y-28,width:400,height:56,rx:10,fill: isTop?"var(--accent-soft)":"#fff", stroke: isTop?"var(--accent)":"var(--line)", "stroke-width":2}));
+        svg.appendChild(txt(60,y-4,c.text,"var(--ink)",11.5,"start","600"));
+        svg.appendChild(txt(60,y+16,"similarity to query: "+c.score.toFixed(2)+(isTop?"  <- HIGHEST, RETURNED":""),isTop?"var(--accent)":"var(--ink-soft)",10.5,"start",isTop?"700":"400"));
+      });
+      document.getElementById("memVerdict").innerHTML = `<b style="color:var(--c3)">Vector search returns:</b> "Bob manages the team" (similarity 0.89) -- the single most textually-similar stored chunk. <b>This is stale</b> -- Carol replaced Bob a week ago, but nothing about "similarity" knows that. The correct fact (0.82) scores lower and never gets surfaced.`;
+    } else if(mode==="graph"){
+      const nodes = {Alice:[70,110], Team:[220,60], Bob:[370,140], Carol:[370,20]};
+      // edges
+      svg.appendChild(el("line",{x1:nodes.Alice[0]+28,y1:nodes.Alice[1],x2:nodes.Team[0]-30,y2:nodes.Team[1]+10,stroke:"var(--c1)","stroke-width":2.4}));
+      svg.appendChild(txt((nodes.Alice[0]+nodes.Team[0])/2,80,"is on","var(--c1)",10.5,"middle","700"));
+      svg.appendChild(el("line",{x1:nodes.Team[0]+30,y1:nodes.Team[1]+8,x2:nodes.Carol[0]-28,y2:nodes.Carol[1],stroke:"var(--c1)","stroke-width":2.4}));
+      svg.appendChild(txt((nodes.Team[0]+nodes.Carol[0])/2+10,32,"managed by (valid: now)","var(--c1)",10,"middle","700"));
+      svg.appendChild(el("line",{x1:nodes.Team[0]+30,y1:nodes.Team[1]+16,x2:nodes.Bob[0]-28,y2:nodes.Bob[1],stroke:"var(--line)","stroke-width":1.6,"stroke-dasharray":"4,4"}));
+      svg.appendChild(txt((nodes.Team[0]+nodes.Bob[0])/2+10,168,"managed by (closed: 1wk ago)","var(--ink-soft)",9.5,"middle"));
+      // nodes
+      Object.entries(nodes).forEach(([name,[x,y]]) => {
+        const isPath = name==="Alice"||name==="Team"||name==="Carol";
+        svg.appendChild(el("circle",{cx:x,cy:y,r:26,fill: isPath?"var(--accent-soft)":"#fff", stroke: isPath?"var(--accent)":"var(--line)","stroke-width":2}));
+        svg.appendChild(txt(x,y+4,name,isPath?"var(--accent)":"var(--ink-soft)",12,"middle","700"));
+      });
+      document.getElementById("memVerdict").innerHTML = `<b style="color:var(--c1)">Graph traversal returns:</b> Alice &rarr; Team &rarr; Carol, following the edge marked <b>valid: now</b>. The Bob edge still exists in the graph (nothing was deleted) but its validity window is <b>closed</b>, so traversal correctly skips it -- the exact bi-temporal discipline Part 2B's Graphiti example uses.`;
+    } else {
+      document.getElementById("memVerdict").textContent = "Pick a search method above.";
+    }
+  }
+  document.getElementById("btnMemVector").addEventListener("click", () => renderMemoryGraph("vector"));
+  document.getElementById("btnMemGraph").addEventListener("click", () => renderMemoryGraph("graph"));
+  document.getElementById("btnMemReset").addEventListener("click", () => renderMemoryGraph(null));
+  renderMemoryGraph(null);
+
+  /* =========================================================
      TAB 3 — MULTI-AGENT GRAPH
      ========================================================= */
   let graphTopo = "sequential";
@@ -300,6 +462,7 @@
     parallel: {costs:[3,2,4,1]},
     conditional: {overhead:0.5, branches:[3,5,2], chosen:0},
     cyclic: {worker:3, critic:1, revisions:2},
+    mesh: {n:5},
   };
   function buildGraphControls(){
     const wrap = document.getElementById("graphControls");
@@ -319,6 +482,8 @@
       slider("g_cyc_worker","worker cost (s)",0,10,0.5,graphState.cyclic.worker, v=>graphState.cyclic.worker=v);
       slider("g_cyc_critic","critic cost (s)",0,10,0.5,graphState.cyclic.critic, v=>graphState.cyclic.critic=v);
       slider("g_cyc_rev","revisions (full passes)",1,4,1,graphState.cyclic.revisions, v=>graphState.cyclic.revisions=v);
+    } else if(graphTopo==="mesh"){
+      slider("g_mesh_n","agents (N)",2,10,1,graphState.mesh.n, v=>graphState.mesh.n=v);
     }
   }
   function renderGraph(){
@@ -391,12 +556,34 @@
       svg.appendChild(txt(240,195,"send back for revision",  "var(--c3)",10.5,"middle"));
       total = revisions*(worker+critic);
       note = `${revisions} full pass(es) of worker+critic: ${revisions}×(${worker}+${critic}) = ${total}s`;
+    } else if(graphTopo==="mesh"){
+      const n = graphState.mesh.n;
+      const cx=240, cy=110, r=85;
+      const pts = [];
+      for(let i=0;i<n;i++){
+        const angle = -Math.PI/2 + i*(2*Math.PI/n);
+        pts.push([cx+r*Math.cos(angle), cy+r*Math.sin(angle)]);
+      }
+      let edgeCount = 0;
+      for(let i=0;i<n;i++){
+        for(let j=i+1;j<n;j++){
+          svg.appendChild(el("line",{x1:pts[i][0],y1:pts[i][1],x2:pts[j][0],y2:pts[j][1],stroke:"var(--c4)","stroke-width":1.2,opacity:0.55}));
+          edgeCount++;
+        }
+      }
+      pts.forEach((p,i) => {
+        svg.appendChild(el("circle",{cx:p[0],cy:p[1],r:18,fill:"var(--accent-soft)",stroke:"var(--accent)","stroke-width":2}));
+        svg.appendChild(txt(p[0],p[1]+4,String.fromCharCode(65+ (i%26)),"var(--accent)",11,"middle","700"));
+      });
+      const hubEdges = n-1;
+      document.getElementById("graphVerdict").innerHTML = `<b>N = ${n} agents</b> &mdash; mesh edges: <span class="formula">N(N-1)/2 = ${n}×${n-1}/2 = ${edgeCount}</span>. A hub-and-spoke system with the same ${n} agents would need only <span class="formula">N-1 = ${hubEdges}</span> edges. Drag N up and watch the mesh line curve away from the hub line — quadratic vs. linear, exactly the table in Part 7.`;
+      return;
     }
     document.getElementById("graphVerdict").textContent = `Total latency: ${total.toFixed(1)}s — ${note}`;
   }
   function setGraphTopo(t, btn){
     graphTopo = t;
-    ["gtSequential","gtParallel","gtConditional","gtCyclic"].forEach(id=>document.getElementById(id).classList.remove("active"));
+    ["gtSequential","gtParallel","gtConditional","gtCyclic","gtMesh"].forEach(id=>document.getElementById(id).classList.remove("active"));
     btn.classList.add("active");
     buildGraphControls(); renderGraph();
   }
@@ -404,6 +591,7 @@
   document.getElementById("gtParallel").addEventListener("click", function(){ setGraphTopo("parallel", this); });
   document.getElementById("gtConditional").addEventListener("click", function(){ setGraphTopo("conditional", this); });
   document.getElementById("gtCyclic").addEventListener("click", function(){ setGraphTopo("cyclic", this); });
+  document.getElementById("gtMesh").addEventListener("click", function(){ setGraphTopo("mesh", this); });
   buildGraphControls(); renderGraph();
 
   /* =========================================================

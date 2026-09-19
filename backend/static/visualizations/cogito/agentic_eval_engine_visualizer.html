@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic Eval Engine Architecture, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12px; color:var(--ink-soft); min-width:150px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  input[type=text]{ font-family:"IBM Plex Mono", monospace; font-size:13px; border:1px solid var(--line); border-radius:8px; padding:8px 10px; flex:1; min-width:220px; }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:48px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.8; white-space:pre-line; }
+  .cols{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  table.rt{ border-collapse:collapse; width:100%; font-size:13px; margin-top:8px; }
+  table.rt td, table.rt th{ border:1px solid var(--line); padding:7px 10px; text-align:left; background:#fff; }
+  table.rt th{ background:var(--accent-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); }
+  table.rt td.win{ color:var(--c1); font-weight:700; } table.rt td.lose{ color:var(--c3); font-weight:700; }
+  .presetbar{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px; margin-top:24px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math/ML Tutorial · Agentic Eval Engine Architecture</div>
+    <h1>Does This Agent Actually Work?</h1>
+    <p>An eval engine is the automated system that keeps asking that question at scale. Three pieces of it, made interactive: the pipeline architecture, the two-axis grading that catches "right answer, bad process," and how a Skill's own trigger description gets tested like a classifier.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>try this</b>, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="pipeline">Eval Pipeline</button>
+    <button class="tab" data-tab="twoaxis">Two-Axis Eval</button>
+    <button class="tab" data-tab="router">Skill Router</button>
+  </div>
+
+  <!-- ============ TAB 1: EVAL PIPELINE ============ -->
+  <div class="panel active" id="panel-pipeline">
+    <div class="card">
+      <h2>Five Stages, One Task Run at a Time</h2>
+      <p class="sub"><b>What's happening:</b> click any stage to see its job, its driving-test-system twin, and which Part of the tutorial builds it. Click "Run one task" to animate a token through the whole pipeline.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click each stage first, then run a task and watch it visit every one in order — notice the Sandbox Provisioner always runs *before* the Agent Under Test, never after.</p>
+      <svg id="pipeSvg" viewBox="0 0 480 220"></svg>
+      <div class="row" style="justify-content:center;"><button class="op" id="btnPipeRun">Run one task ▶</button></div>
+      <div class="steplog" id="pipeInfo">Click a stage above, or run a task.</div>
+      <div class="caption"><b>Why it matters:</b> skip any one of these five and the whole system stops being trustworthy — no isolation means one run contaminates the next; no aggregator means every result stays a disconnected anecdote.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: TWO-AXIS EVAL ============ -->
+  <div class="panel" id="panel-twoaxis">
+    <div class="card">
+      <h2>Same Four Policies, Two Scores Each</h2>
+      <p class="sub"><b>What's happening:</b> run the tutorial's exact toy simulation live — 4 agent policies, 3 tasks each, graded on both outcome accuracy and trajectory score.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> run it once at the default luck rate (0.70) and confirm LuckyPolicy's outcome accuracy vs. its trajectory score; then drag the luck rate down to 0.30 and re-run — outcome accuracy drops with it, but trajectory score stays pinned at exactly 0%, because luck rate never touches *how* it reasons, only how often the guess happens to land.</p>
+      <div class="row">
+        <label>LuckyPolicy's luck rate</label>
+        <input type="range" id="luckRate" min="0" max="1" step="0.05" value="0.70">
+        <span class="readout" id="luckRateOut">0.70</span>
+      </div>
+      <div class="row">
+        <label>Trials per task</label>
+        <input type="range" id="trialsN" min="20" max="500" step="20" value="200">
+        <span class="readout" id="trialsNOut">200</span>
+      </div>
+      <div class="row" style="justify-content:center;"><button class="op" id="btnRunEval">Run evaluation ▶</button></div>
+      <table class="rt" id="twoAxisTable"></table>
+      <div class="steplog" id="twoAxisNote">Click "Run evaluation" to compute both scores for all four policies.</div>
+      <div class="caption"><b>Why it matters:</b> outcome accuracy alone would rank LuckyPolicy as "pretty good" and CarefulButMisledPolicy as "failing" — trajectory score reveals the opposite is closer to the truth about which one you can actually trust going forward.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: SKILL ROUTER ============ -->
+  <div class="panel" id="panel-router">
+    <div class="card">
+      <h2>Score Your Own Trigger Description</h2>
+      <p class="sub"><b>What's happening:</b> pick (or edit) a trigger description's topic tags and see it scored against the tutorial's exact 10 held-out prompts — 4 genuinely in-scope, 6 genuinely out-of-scope.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> load Description A, B, and C in turn and watch the score and the specific wrong prompts change — then check the two checkboxes on and off to build your own description and see if you can beat 10/10.</p>
+      <div class="presetbar">
+        <button class="op" id="btnDescA">Load Description A (too vague)</button>
+        <button class="op active" id="btnDescB">Load Description B (well-scoped)</button>
+        <button class="op" id="btnDescC">Load Description C (too narrow)</button>
+      </div>
+      <div class="row"><label style="min-width:220px;">Required tags (your description):</label></div>
+      <div class="row" id="tagCheckboxes"></div>
+      <table class="rt" id="routerTable"></table>
+      <div class="steplog" id="routerNote"></div>
+      <div class="caption"><b>Why it matters:</b> a description "fires" only when every tag it names is present in the request — adding a tag makes it more specific (fewer false positives, more false negatives); removing one makes it broader (the opposite trade). There's no free lunch, only the right-sized description for the job.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../deep_learning/agentic_eval_engine_architecture_feynman.md">Agentic Eval Engine Architecture</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x,y,str,color,size,anchor,weight){
+    const t = el("text",{x,y,["text-anchor"]:anchor||"middle","font-family":"IBM Plex Mono, monospace","font-size":size||12,fill:color||"var(--ink)"});
+    if(weight) t.setAttribute("font-weight",weight);
+    t.textContent = str;
+    return t;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* =========================================================
+     TAB 1 — EVAL PIPELINE
+     ========================================================= */
+  const STAGES = [
+    { id:"task", label:"Task Store", twin:"Course design", part:"Part 1", detail:"A versioned collection of task specifications -- the goal, environment, checker, agent config, and repetition count (Part 2)." },
+    { id:"sandbox", label:"Sandbox\nProvisioner", twin:"Road & car conditions", part:"Part 1", detail:"Spins up a fresh, isolated environment for THIS run only, so no run's side effects can contaminate the next one's result." },
+    { id:"agent", label:"Agent\nUnder Test", twin:"The candidate driving", part:"Part 1", detail:"The real, unmodified harness -- not a stripped-down eval-only stand-in -- given the task inside that fresh sandbox." },
+    { id:"grader", label:"Grader", twin:"Examiner's rubric", part:"Part 2", detail:"Checks the run's result: deterministic test execution, deterministic exact-match, or an LLM-as-judge rubric (Part 2)." },
+    { id:"agg", label:"Aggregator", twin:"DMV pass-rate report", part:"Part 3", detail:"Rolls up every run's result into a success rate with variance, cost, and latency -- never a single anecdotal pass." },
+  ];
+  const PIPE_X = [55, 155, 255, 355, 445];
+  let pipeSelected = null;
+  let pipeRunning = false;
+  function renderPipe(highlightIdx){
+    const svg = document.getElementById("pipeSvg");
+    svg.innerHTML = "";
+    STAGES.forEach((s, i) => {
+      const x = PIPE_X[i], y = 90;
+      const isSel = s.id === pipeSelected;
+      const isRun = highlightIdx === i;
+      const color = isRun ? "var(--c2)" : (isSel ? "var(--accent)" : "var(--line)");
+      const fill = isRun ? "#FBF3DE" : (isSel ? "var(--accent-soft)" : "#fff");
+      const g = el("g",{cursor:"pointer"});
+      g.appendChild(el("rect",{x:x-42,y:y-32,width:84,height:64,rx:10,fill,stroke:color,"stroke-width":2}));
+      s.label.split("\n").forEach((line,li) => g.appendChild(txt(x,y-2+li*13,line,isSel||isRun?"var(--accent)":"var(--ink)",10.5,"middle","700")));
+      g.addEventListener("click", () => { pipeSelected = s.id; renderPipe(null); showPipeInfo(s); });
+      svg.appendChild(g);
+      svg.appendChild(txt(x,y+46,s.twin,"var(--ink-soft)",9,"middle"));
+      if(i < STAGES.length-1){
+        svg.appendChild(el("line",{x1:x+42,y1:y,x2:PIPE_X[i+1]-42,y2:y,stroke:"var(--ink-soft)","stroke-width":1.6,"marker-end":"url(#pipeArrow)"}));
+      }
+    });
+    const defs = el("defs",{});
+    const m = el("marker",{id:"pipeArrow",markerWidth:8,markerHeight:8,refX:6,refY:3,orient:"auto"});
+    m.appendChild(el("path",{d:"M0,0 L6,3 L0,6 Z", fill:"var(--ink-soft)"}));
+    defs.appendChild(m);
+    svg.insertBefore(defs, svg.firstChild);
+  }
+  function showPipeInfo(s){
+    document.getElementById("pipeInfo").innerHTML = `<b>${s.label.replace("\n"," ")}</b> (driving-test twin: ${s.twin})\n${s.detail}\nBuilt in this tutorial's ${s.part}.`;
+  }
+  document.getElementById("btnPipeRun").addEventListener("click", async () => {
+    if(pipeRunning) return;
+    pipeRunning = true;
+    for(let i=0;i<STAGES.length;i++){
+      renderPipe(i);
+      showPipeInfo(STAGES[i]);
+      await new Promise(r => setTimeout(r, 550));
+    }
+    renderPipe(null);
+    document.getElementById("pipeInfo").textContent = "Task run complete -- passed through all five stages in order.";
+    pipeRunning = false;
+  });
+  renderPipe(null);
+
+  /* =========================================================
+     TAB 2 — TWO-AXIS EVAL
+     ========================================================= */
+  const TASKS2 = {
+    T1: { golden:"42", goodSteps:["read_file","compute","verify"] },
+    T2: { golden:"yes", goodSteps:["check_condition","cross_reference","decide"] },
+    T3: { golden:"B", goodSteps:["list_options","eliminate","select"] },
+  };
+  function runGoodPolicy(task, rand){
+    const steps = TASKS2[task].goodSteps.slice();
+    if(rand() < 0.1) steps.push("retry_step");
+    return { steps, answer: TASKS2[task].golden };
+  }
+  function runLuckyPolicy(task, rand, luckRate){
+    const steps = ["guess"];
+    const answer = rand() < luckRate ? TASKS2[task].golden : "WRONG";
+    return { steps, answer };
+  }
+  function runCarefulMisledPolicy(task, rand){
+    const steps = TASKS2[task].goodSteps.slice();
+    const answer = rand() < 0.65 ? "WRONG" : TASKS2[task].golden;
+    return { steps, answer };
+  }
+  function runBadPolicy(task, rand){
+    return { steps:["flail_randomly"], answer:"WRONG" };
+  }
+  function trajScore(task, steps){
+    const good = new Set(TASKS2[task].goodSteps.concat(["retry_step"]));
+    if(!steps.length) return 0;
+    const relevant = steps.filter(s => good.has(s));
+    return relevant.length / steps.length;
+  }
+  // simple deterministic PRNG (mulberry32) for reproducible-per-run but genuinely random-looking behavior
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function runTwoAxisEval(){
+    const luckRate = parseFloat(document.getElementById("luckRate").value);
+    const n = parseInt(document.getElementById("trialsN").value, 10);
+    const rand = mulberry32(42);
+    const policies = {
+      GoodPolicy: (t) => runGoodPolicy(t, rand),
+      LuckyPolicy: (t) => runLuckyPolicy(t, rand, luckRate),
+      CarefulButMisledPolicy: (t) => runCarefulMisledPolicy(t, rand),
+      BadPolicy: (t) => runBadPolicy(t, rand),
+    };
+    const rows = [];
+    Object.entries(policies).forEach(([name, fn]) => {
+      let outcomes = 0, trajSum = 0, total = 0;
+      for(let i=0;i<n;i++){
+        Object.keys(TASKS2).forEach(task => {
+          const { steps, answer } = fn(task);
+          outcomes += (answer === TASKS2[task].golden) ? 1 : 0;
+          trajSum += trajScore(task, steps);
+          total++;
+        });
+      }
+      rows.push({ name, outcome: 100*outcomes/total, traj: 100*trajSum/total });
+    });
+    return rows;
+  }
+  function renderTwoAxis(){
+    const rows = runTwoAxisEval();
+    const table = document.getElementById("twoAxisTable");
+    table.innerHTML = "<tr><th>Policy</th><th>Outcome accuracy</th><th>Trajectory score</th></tr>" +
+      rows.map(r => `<tr><td>${r.name}</td><td class="${r.outcome>=70?'win':(r.outcome<=40?'lose':'')}">${r.outcome.toFixed(1)}%</td><td class="${r.traj>=70?'win':(r.traj<=40?'lose':'')}">${r.traj.toFixed(1)}%</td></tr>`).join("");
+    const lucky = rows.find(r=>r.name==="LuckyPolicy");
+    const misled = rows.find(r=>r.name==="CarefulButMisledPolicy");
+    document.getElementById("twoAxisNote").textContent =
+      `LuckyPolicy: ${lucky.outcome.toFixed(1)}% outcome but ${lucky.traj.toFixed(1)}% trajectory -- looks fine by outcome alone, reasons not at all.\n` +
+      `CarefulButMisledPolicy: ${misled.outcome.toFixed(1)}% outcome but ${misled.traj.toFixed(1)}% trajectory -- looks broken by outcome alone, reasons perfectly (the fix is the input data, not the process).`;
+  }
+  document.getElementById("luckRate").addEventListener("input", e => { document.getElementById("luckRateOut").textContent = parseFloat(e.target.value).toFixed(2); });
+  document.getElementById("trialsN").addEventListener("input", e => { document.getElementById("trialsNOut").textContent = e.target.value; });
+  document.getElementById("btnRunEval").addEventListener("click", renderTwoAxis);
+  renderTwoAxis();
+
+  /* =========================================================
+     TAB 3 — SKILL ROUTER
+     ========================================================= */
+  const ALL_TAGS = ["pdf","summarize","bullets","document","onboarding","exact_page_count"];
+  const PROMPTS3 = [
+    { text:"Can you summarize this 45-page PDF report into bullet points?", tags:["pdf","summarize","bullets","document"], should:true },
+    { text:"Turn this long PDF into a bulleted summary for my team.", tags:["pdf","summarize","bullets","document"], should:true },
+    { text:"I have a lengthy PDF -- give me bullet-point highlights.", tags:["pdf","summarize","bullets","document"], should:true },
+    { text:"Please condense this PDF document into bullet points.", tags:["pdf","summarize","bullets","document"], should:true },
+    { text:"Can you help me reformat this document's font and margins?", tags:["document"], should:false },
+    { text:"Can you draft a reply to this email for me?", tags:["email"], should:false },
+    { text:"Convert this spreadsheet into a bar chart.", tags:["spreadsheet","chart"], should:false },
+    { text:"Write a Python function to reverse a string.", tags:["code"], should:false },
+    { text:"Translate this paragraph into French.", tags:["translate"], should:false },
+    { text:"Schedule a meeting with the design team.", tags:["schedule"], should:false },
+  ];
+  const DESCS = {
+    A: { tags:["document"] },
+    B: { tags:["pdf","summarize","bullets"] },
+    C: { tags:["pdf","summarize","bullets","onboarding","exact_page_count"] },
+  };
+  let routerTags = new Set(DESCS.B.tags);
+  function buildTagCheckboxes(){
+    const wrap = document.getElementById("tagCheckboxes");
+    wrap.innerHTML = "";
+    ALL_TAGS.forEach(tag => {
+      const label = document.createElement("label");
+      label.style.display = "inline-flex"; label.style.alignItems = "center"; label.style.gap = "5px"; label.style.minWidth="auto"; label.style.marginRight="10px";
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.checked = routerTags.has(tag);
+      cb.addEventListener("change", () => {
+        if(cb.checked) routerTags.add(tag); else routerTags.delete(tag);
+        renderRouter();
+      });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(tag));
+      wrap.appendChild(label);
+    });
+  }
+  function renderRouter(){
+    let correct = 0;
+    const rows = PROMPTS3.map(p => {
+      const ptagset = new Set(p.tags);
+      const fires = [...routerTags].every(t => ptagset.has(t)) && routerTags.size > 0;
+      const ok = fires === p.should;
+      if(ok) correct++;
+      return { text:p.text, should:p.should, fires, ok };
+    });
+    document.getElementById("routerTable").innerHTML =
+      "<tr><th>Prompt</th><th>Should match?</th><th>Fired?</th><th>Result</th></tr>" +
+      rows.map(r => `<tr><td>${r.text}</td><td>${r.should?"yes":"no"}</td><td>${r.fires?"yes":"no"}</td><td class="${r.ok?'win':'lose'}">${r.ok?"correct":(r.fires?"FALSE POSITIVE":"FALSE NEGATIVE")}</td></tr>`).join("");
+    document.getElementById("routerNote").textContent = `Score: ${correct}/10 correct. Required tags: {${[...routerTags].join(", ")||"(none)"}}.`;
+  }
+  function loadDesc(key, btn){
+    routerTags = new Set(DESCS[key].tags);
+    ["btnDescA","btnDescB","btnDescC"].forEach(id => document.getElementById(id).classList.remove("active"));
+    btn.classList.add("active");
+    buildTagCheckboxes();
+    renderRouter();
+  }
+  document.getElementById("btnDescA").addEventListener("click", function(){ loadDesc("A", this); });
+  document.getElementById("btnDescB").addEventListener("click", function(){ loadDesc("B", this); });
+  document.getElementById("btnDescC").addEventListener("click", function(){ loadDesc("C", this); });
+  buildTagCheckboxes();
+  renderRouter();
+})();
+</script>
+</body>
+</html>

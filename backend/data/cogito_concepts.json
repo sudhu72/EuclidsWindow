@@ -1529,6 +1529,116 @@
       ],
       "viz": "godels_incompleteness_visualizer.html",
       "source": "godels-incompleteness-theorem.md"
+    },
+    {
+      "id": "logical_fallacies",
+      "name": "Logical Fallacies",
+      "keywords": [
+        "logical fallacy",
+        "logical fallacies",
+        "fallacy",
+        "fallacies",
+        "ad hominem",
+        "straw man",
+        "slippery slope",
+        "false dichotomy"
+      ],
+      "related": [
+        "mathematical_logic",
+        "proof"
+      ],
+      "viz": "logical_fallacies_visualizer.html",
+      "source": "logical-fallacies.md"
+    },
+    {
+      "id": "philosophy_of_mathematics",
+      "name": "Philosophy of Mathematics",
+      "keywords": [
+        "philosophy of mathematics",
+        "platonism",
+        "formalism",
+        "intuitionism",
+        "mathematical realism"
+      ],
+      "related": [
+        "set_theory",
+        "axioms",
+        "proof",
+        "classification_and_completeness"
+      ],
+      "viz": "philosophy_of_mathematics_visualizer.html",
+      "source": "philosophy-of-mathematics.md"
+    },
+    {
+      "id": "power_laws",
+      "name": "Power Laws & Scale-Free Networks",
+      "keywords": [
+        "power law",
+        "power laws",
+        "scale-free network",
+        "scale free network",
+        "zipf's law",
+        "zipfs law",
+        "pareto distribution"
+      ],
+      "related": [
+        "statistics",
+        "probability"
+      ],
+      "viz": "power_laws_visualizer.html",
+      "source": "power-laws-and-scale-free-networks.md"
+    },
+    {
+      "id": "text_embeddings",
+      "name": "Text Embeddings",
+      "keywords": [
+        "text embeddings",
+        "word embeddings",
+        "word2vec",
+        "embedding space",
+        "vector representation"
+      ],
+      "related": [
+        "attention",
+        "dimensionality_reduction",
+        "transformers"
+      ],
+      "viz": "text_embeddings_visualizer.html",
+      "source": "text_embeddings_feynman.md"
+    },
+    {
+      "id": "agentic_eval_engine",
+      "name": "Agentic Eval Engine Architecture",
+      "keywords": [
+        "agentic eval engine",
+        "eval engine",
+        "agent evaluation",
+        "llm evaluation harness"
+      ],
+      "related": [
+        "agent_harness_engineering"
+      ],
+      "viz": "agentic_eval_engine_visualizer.html",
+      "source": "agentic_eval_engine_architecture_feynman.md"
+    },
+    {
+      "id": "distribution_shape",
+      "name": "The Shape of a Distribution",
+      "keywords": [
+        "histogram",
+        "box plot",
+        "boxplot",
+        "violin plot",
+        "q-q plot",
+        "qq plot",
+        "distribution shape"
+      ],
+      "related": [
+        "statistics",
+        "probability"
+      ],
+      "viz": "shape_and_spread_explorer.html",
+      "source": "shapes_of_data_feynman_tutorial.md"
     }
   ]
 }
