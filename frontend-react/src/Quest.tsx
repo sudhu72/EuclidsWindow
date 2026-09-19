@@ -32,13 +32,28 @@ export default function Quest({ onAsk }: { onAsk?: (question: string) => void })
 
   useEffect(() => {
     if (!story) return;
+    // Clear the previous story's graph/open stage immediately so a switch
+    // never leaves the old view on screen while the new one loads (or if the
+    // fetch fails) — without this, stale state from the prior story just sits
+    // there since this component never unmounts on a story change.
+    setGraph(null);
+    setSelected(null);
+    setCurrentSlug(null);
     setStatus("Loading the case board…");
+    let cancelled = false;
     fetchQuestGraph(story.theme)
       .then((g) => {
+        if (cancelled) return;
         setGraph(g);
         setStatus("");
       })
-      .catch((e) => setStatus(`Couldn't load: ${(e as Error).message}`));
+      .catch((e) => {
+        if (cancelled) return;
+        setStatus(`Couldn't load: ${(e as Error).message}`);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [story]);
 
   useEffect(() => {
