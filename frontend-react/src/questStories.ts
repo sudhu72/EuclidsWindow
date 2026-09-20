@@ -100,7 +100,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "architects-folly",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Architect's Folly",
     blurb: "A building collapses mid-construction — someone tampered with the calculations, and the blueprints don't lie.",
@@ -254,7 +254,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "canyon-of-echoes",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Canyon of Echoes",
     blurb: "A canyon's strange acoustics hide a puzzle that only gives up its answer to careful, patient math.",

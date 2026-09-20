@@ -338,6 +338,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "architects-folly",
+    sceneText:
+      "**A half-built skyscraper, floodlights buzzing over silent scaffolding.**\n\n" +
+      "Priya, the site's junior structural engineer, meets you at the gate, hard hat still crooked. \"Mr. Reyes is dead, in the site office,\" she says. \"A section of the east wing floor came down earlier tonight — nobody hurt, thank God, just noise and dust. But Reyes had been recalculating the load numbers for that exact section for days. He told me yesterday the beams installed don't match what the blueprints actually call for. He was going to halt the whole project tomorrow morning.\"\n\n" +
+      "The site went quiet at the usual hour, and five people had reason enough to still be somewhere on these floors well past that. Reyes, everyone agrees, was the kind of engineer who checked his own arithmetic twice before he'd ever act on it — which made him exactly the kind of man who'd notice a beam that wasn't what it claimed to be.",
+    cast: [
+      {
+        name: "Dana Whitfield",
+        detail: "The project's lead contractor, facing ruinous financial penalties — and the loss of the entire contract — if construction halted for a full safety review.",
+      },
+      {
+        name: "Sanjay Kapoor",
+        detail: "A junior structural engineer whose own stamp appears on the beam calculations Reyes was about to flag as falsified.",
+      },
+      {
+        name: "Ms. Okafor",
+        detail: "The building's developer, already facing bankruptcy over repeated delays, and increasingly desperate for the project to finish on schedule.",
+      },
+      {
+        name: "Grady",
+        detail: "The site's safety inspector, publicly humiliated by Reyes months ago over a violation he'd missed — a grudge neither man has ever quite let go.",
+      },
+      {
+        name: "Old Feeny",
+        detail: "The night watchman and crane operator, walking the same equipment checks every night for years. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "canyon-of-echoes",
+    sceneText:
+      "**A deep desert canyon, walls rising sheer on either side, your own footsteps returning to you a half-second late.**\n\n" +
+      "Talia has spent four field seasons mapping this canyon's peculiar acoustics, ever since a local guide first told her that sound itself, not stone, guarded whatever was hidden at its heart. \"They didn't carve locks or riddles into these walls,\" she tells you, testing a small drum against the rock. \"They carved the canyon itself into an instrument, and trusted its own physics to keep out anyone too impatient to actually measure what they were hearing.\"\n\n" +
+      "Her instruments already tell you two things worth remembering: sound moves through this dry desert air at about 340 meters per second, and a single sharp clap here returns as a clean, unmistakable echo. \"Every marker from here to the canyon's heart tests the same thing,\" Talia says, shouldering her gear. \"Whether you trust the actual numbers an echo gives you, or you just guess at how far away something sounds.\"",
+    cast: [
+      {
+        name: "Talia",
+        detail: "Your guide — four field seasons spent mapping this canyon's acoustics, and the first to take its echoes as seriously as its geology.",
+      },
+      {
+        name: "The Echo Keepers",
+        detail: "The ancient people who tuned this canyon. Long gone, but every chamber they carved still tests the same thing: whether your arithmetic can be trusted completely.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {

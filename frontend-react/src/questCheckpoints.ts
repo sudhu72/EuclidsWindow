@@ -730,6 +730,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real vault gives way at last, and lantern light spills across gear and journals frozen in place for centuries — not gold, but something the Frost Wardens clearly valued just as highly: measuring rods, sighting glasses, and slate tablets dense with worked calculations on ice, melt, and time.\n\n" +
       "\"They really did trust the numbers over the cold,\" Freya says, brushing frost from a tablet's edge. \"No lock could be picked around arithmetic that simply doesn't lie.\" The tablet's final line, translated slowly: \"What the ice keeps, it keeps exactly as long as the numbers say it will, and not one day more.\" Outside, the glacier groans softly, indifferent, melting at exactly the rate it always has, and exactly the rate it always will, whether anyone is patient enough to calculate it or not.",
   },
+
+  // ------------------------------------------------------------------
+  // The Architect's Folly
+  // ------------------------------------------------------------------
+  {
+    id: "architect-mid",
+    storyId: "architects-folly",
+    afterClue: "architect-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that evening and lay them side by side.\n\n" +
+      "**Dana Whitfield:** \"I was in the site trailer finalizing next week's schedule — my foreman can vouch, he's in and out of that trailer most evenings.\"\n\n" +
+      "**Sanjay Kapoor:** \"I was double-checking the east wing's rebar placement, alone, same as any night shift.\"\n\n" +
+      "**Ms. Okafor:** \"I was at a dinner with three city permit officials, trying to smooth over the delay. Ask any of them.\"\n\n" +
+      "**Grady:** \"I did my full safety walk of every floor, same as every night — Feeny saw me finishing up near the loading dock.\"\n\n" +
+      "**Old Feeny:** \"I ran the crane's shutdown checks like always. Grady's telling the truth, I did see him at the loading dock. Though the east wing's rebar Sanjay claims he was checking all night — that section was already inspected and signed off two days ago. Nothing left there to check.\"\n\n" +
+      "You already know Reyes's body was found in the site office, and that the office sits directly beside the east wing stairwell.",
+    entities: ["Dana Whitfield", "Sanjay Kapoor", "Ms. Okafor", "Grady", "Old Feeny"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      "Dana Whitfield": "Alibi Breaks",
+      "Sanjay Kapoor": "Alibi Breaks",
+      "Ms. Okafor": "Alibi Holds",
+      Grady: "Alibi Holds",
+      "Old Feeny": "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and a full night's lead slips away chasing it. Look again at which claims are confirmed by someone specifically placing them there tonight, and which rest on a vague habit — and check whether Feeny's own detail actually matches what someone claimed to be doing.",
+    explain:
+      "Okafor's account is confirmed by three independent city officials, and Grady's is corroborated directly by Feeny — both hold. Feeny himself has no motive and supplies the key detail, so his account holds too. But Dana's corroboration is vague at best — a foreman who's simply 'in and out most evenings' doesn't actually confirm her whereabouts tonight. And Sanjay's claim of checking rebar that was already signed off two days earlier doesn't survive Feeny's own knowledge of the schedule.",
+  },
+  {
+    id: "architect-final",
+    storyId: "architects-folly",
+    afterClue: "architect-10",
+    kind: "final",
+    title: "The Site Office",
+    scenario:
+      "You confront the two remaining names in the site office itself, blueprints still spread across the desk.\n\n" +
+      "**Dana Whitfield:** \"It was Sanjay. He's the one who actually stamped those beam calculations — ask any engineer what a falsified signature like that is worth in court.\"\n\n" +
+      "**Sanjay Kapoor:** \"Ask instead who ordered the cheaper beams in the first place, and who stood to lose an entire contract's worth of profit if Reyes ever filed that report.\"\n\n" +
+      "You already know the final load-equation Reyes solved in his own notebook, balancing the exact tonnage difference between the beams that were ordered and the beams the blueprints specified, matches a payment Dana authorized personally, under a supplier name that doesn't appear anywhere else in the project's books.",
+    entities: ["Dana Whitfield", "Sanjay Kapoor"],
+    options: ["Guilty", "Innocent"],
+    answer: { "Dana Whitfield": "Guilty", "Sanjay Kapoor": "Innocent" },
+    wrongConsequence:
+      "The site office goes quiet, and nothing more is offered — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually profited financially from the switch, versus who was following orders under pressure with nothing personally to gain.",
+    explain:
+      "Sanjay's stamped signature is damning on paper, but a junior engineer signing off under pressure from a contractor who controls his contract is a common, survivable mistake, not a murder motive. Dana's exposure was total and financial: the falsified beam order traces straight back to a payment she personally authorized, under a supplier name invented specifically to hide it, and Reyes's own load equation matches that exact discrepancy, ton for ton.",
+    resolution:
+      "You lay it out for Priya, piece by piece: the total load calculation that first showed the floor's true capacity, no more and no less. The safety factor, proving the beams installed were rated for a fraction of what the blueprints demanded. The stress calculation, the exact number climbing past what any honest beam could bear. The blueprint's own scale, confirming the failed brace matched the plans on paper, if nowhere else. The diagonal brace's clean, provable length, the same clean arithmetic Reyes trusted in everything he built. The percentage shortfall in the substituted material's rated strength, a number too precise to be an accident. The concrete mix ratio, thinned exactly enough to save money and just enough to matter. The arithmetic sequence of floor loads, climbing steadily toward a failure that was never really a surprise. The unit conversion, turning a contractor's quiet cost-cutting into tons nobody could argue with. And the load equation itself, solved in Reyes's own hand, balancing to the exact tonnage difference that ties directly back to Dana's own falsified order.\n\n" +
+      "Dana doesn't bother denying it once the supplier name is traced back to her own signature. \"The whole project would have collapsed financially, not just physically,\" she says, as if that were somehow a defense. Priya looks up at the half-built tower for a long moment. \"He built his whole career trusting that the numbers don't lie,\" she says quietly, \"and in the end, they're exactly what caught her.\" Above the site, the crane sits motionless against the night sky, work halted, finally, for reasons that have nothing to do with the weather.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Canyon of Echoes
+  // ------------------------------------------------------------------
+  {
+    id: "canyon-mid",
+    storyId: "canyon-of-echoes",
+    afterClue: "canyon-5",
+    kind: "mid",
+    title: "Three Passages",
+    scenario:
+      "Beyond the narrows, the canyon splits into three side-passages, each marked with a claim carved into the rock. Talia reads them aloud:\n\n" +
+      "**Passage A:** \"Doubling the distance from a sound source always cuts its intensity to one-quarter, not one-half.\"\n\n" +
+      "**Passage B:** \"A tube open at both ends and a tube closed at one end produce the exact same fundamental wavelength for the same length.\"\n\n" +
+      "**Passage C:** \"The frequency of a sound and its wavelength always move in the same direction — a higher frequency always means a longer wavelength.\"\n\n" +
+      "\"The Echo Keepers sealed the false passages behind claims that sound reasonable but fall apart under real arithmetic,\" Talia says. \"Check every one properly before you trust it.\"",
+    entities: ["Passage A", "Passage B", "Passage C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Passage A": "True Claim", "Passage B": "False Claim", "Passage C": "False Claim" },
+    wrongConsequence:
+      "The wrong passage narrows to a dead end, and you double back with nothing but an echo of your own footsteps for the trouble. \"Test each claim against real numbers,\" Talia says. \"Not what sounds reasonable — what actually holds up once you calculate it.\"",
+    explain:
+      "Passage A restates exactly what you calculated yourself: intensity drops with the square of the distance, so doubling distance always cuts it to a quarter, not a half. Passage B is false — a tube closed at one end only fits a quarter-wavelength, not a half, so its fundamental wavelength is four times its length, not twice. Passage C is false too: wavelength and frequency move in opposite directions for a fixed speed of sound — a higher frequency always means a shorter wavelength, never a longer one.",
+  },
+  {
+    id: "canyon-final",
+    storyId: "canyon-of-echoes",
+    afterClue: "canyon-10",
+    kind: "final",
+    title: "Three Final Chambers",
+    scenario:
+      "Talia reads each final chamber's carved inscription aloud:\n\n" +
+      "**Chamber 1:** \"Two sounds of the same frequency, played together in phase, combine to a louder sound than either alone.\"\n\n" +
+      "**Chamber 2:** \"The speed of sound in air stays exactly the same at every temperature.\"\n\n" +
+      "**Chamber 3:** \"If you double a sound's frequency while its speed stays the same, its wavelength also doubles.\"\n\n" +
+      "\"One of these is true without a single exception,\" Talia says. \"The Echo Keepers trusted their whole cache's protection on that one rule.\"",
+    entities: ["Chamber 1", "Chamber 2", "Chamber 3"],
+    options: ["Real Chamber", "False Chamber"],
+    answer: { "Chamber 1": "Real Chamber", "Chamber 2": "False Chamber", "Chamber 3": "False Chamber" },
+    wrongConsequence:
+      "Stone grinds down over the wrong chamber, sealed for good this time. \"Don't trust the shape of the sentence,\" Talia says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Chamber 1 holds exactly: two in-phase sound waves of the same frequency really do combine constructively into a louder sound — a real, measurable effect called constructive interference. Chamber 2 is false: sound actually travels faster through warmer air, since warmer molecules bump into each other more quickly — the speed of sound is not a fixed constant regardless of temperature. Chamber 3 is false too, and you've already proven it yourself: doubling the frequency while speed stays fixed halves the wavelength, it doesn't double it, since wavelength and frequency move in opposite directions.",
+    resolution:
+      "The real chamber gives way at last, and lantern light spills across a shallow chamber lined with carved resonating pipes, each tuned centuries ago to a note that still rings true today. Tucked among them, wrapped against the dry desert air, a stack of thin stone tablets dense with worked calculations — echo timings, tuned intervals, careful notes on how sound itself behaves.\n\n" +
+      "\"They really did trust their own careful listening over any map,\" Talia says, running a hand along one silent pipe. \"No guard could out-argue arithmetic that simply repeats the same result, echo after echo, century after century.\" The topmost tablet's final line, translated slowly: \"What the canyon returns to you is never more, and never less, than what you sent into it — measured honestly, it never once lies.\" Outside, the canyon walls carry your own voice back to you one last time, precisely on schedule, exactly as they always have.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

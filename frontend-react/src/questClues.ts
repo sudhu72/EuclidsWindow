@@ -2180,8 +2180,275 @@ const ICE_VAULT_CLUES: QuestClue[] = [
   },
 ];
 
+const ARCHITECT_CLUES: QuestClue[] = [
+  {
+    id: "architect-1",
+    storyId: "architects-folly",
+    order: 1,
+    sceneText: "Priya shows you the specs for one floor section: 40 support columns, each rated to carry 2,500 kilograms safely.",
+    puzzle: "What's the floor section's total safe load capacity, combining all 40 columns?",
+    choices: ["100,000 kilograms", "62,500 kilograms", "40,000 kilograms", "2,500 kilograms"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the number of columns by the safe load each one carries,\" Priya says. \"Don't just add the two numbers together.\"",
+    solvedBeat:
+      "40 × 2,500 = 100,000 kilograms total safe capacity. \"Which is exactly the number Reyes was cross-checking the night he died,\" Priya says. — Total capacity is simply each unit's own capacity multiplied by how many units share the load.",
+    concept: "Load Calculation",
+  },
+  {
+    id: "architect-2",
+    storyId: "architects-folly",
+    order: 2,
+    sceneText: "A beam is rated to withstand 12,000 kilograms before failing, but the building code requires it to actually carry no more than 4,000 kilograms in normal use.",
+    puzzle: "What's this beam's safety factor — its failure capacity divided by its actual working load?",
+    choices: ["3", "4", "8", "1/3"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the beam's failure capacity by the load it's actually meant to carry,\" Priya says. \"Don't subtract the two numbers.\"",
+    solvedBeat:
+      "12,000 ÷ 4,000 = 3. \"A safety factor of 3 is standard,\" Priya says. \"Meaning this beam could handle three times its normal job before failing.\" — A safety factor is simply how many times stronger something is built than it strictly needs to be.",
+    concept: "Safety Factor",
+  },
+  {
+    id: "architect-3",
+    storyId: "architects-folly",
+    order: 3,
+    sceneText: "A support column carries a load of 60,000 newtons of force, spread evenly across a cross-section measuring 0.03 square meters.",
+    puzzle: "What's the stress on that column, in newtons per square meter (force divided by area)?",
+    choices: ["2,000,000 N/m²", "1,800,000 N/m²", "20,000 N/m²", "600,000 N/m²"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total force by the cross-sectional area,\" Priya says. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "60,000 ÷ 0.03 = 2,000,000 newtons per square meter. \"That number has to stay under whatever the material can actually take,\" Priya says. — Stress is always force divided by the area it's spread across, whatever the material.",
+    concept: "Stress (Force ÷ Area)",
+  },
+  {
+    id: "architect-4",
+    storyId: "architects-folly",
+    order: 4,
+    sceneText: "The blueprint is drawn at a scale where 1 centimeter represents 2 meters of the real building. A support brace measures 7.5 centimeters on the drawing.",
+    puzzle: "How long is that brace in the real, built structure?",
+    choices: ["15 meters", "9.5 meters", "3.75 meters", "20 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the drawing's measurement by the scale factor,\" Priya says. \"Don't add the two numbers.\"",
+    solvedBeat:
+      "7.5 × 2 = 15 meters, full scale. \"Exactly the brace that failed,\" Priya says quietly. — A blueprint's scale is just a fixed ratio, and reading a real measurement off it is one multiplication.",
+    concept: "Scale & Proportion",
+  },
+  {
+    id: "architect-5",
+    storyId: "architects-folly",
+    order: 5,
+    sceneText: "A diagonal support brace needs to span a gap 9 meters wide and 12 meters tall, corner to corner.",
+    puzzle: "Using the Pythagorean theorem, how long does that diagonal brace need to be?",
+    choices: ["15 meters", "21 meters", "10.5 meters", "18 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Square both measurements, add them together, then take the square root of that sum,\" Priya says.",
+    solvedBeat:
+      "9² + 12² = 81 + 144 = 225, and the square root of 225 is exactly 15. \"A clean number,\" Priya says. \"Reyes always said a real brace length should come out clean, or you'd measured something wrong.\" — The Pythagorean theorem turns two straight measurements into the length of the diagonal connecting them.",
+    concept: "The Pythagorean Theorem",
+  },
+  {
+    id: "architect-6",
+    storyId: "architects-folly",
+    order: 6,
+    sceneText: "The beams actually installed are rated at only 7,800 kilograms, though the blueprints specify beams rated for 12,000 kilograms.",
+    puzzle: "What percentage below the specified strength are the installed beams?",
+    choices: ["35%", "65%", "30%", "42%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the actual shortfall first — specified minus installed,\" Priya says, \"then divide that shortfall by the specified strength.\"",
+    solvedBeat:
+      "12,000 − 7,800 = 4,200 kilograms short, and 4,200 ÷ 12,000 = 35%. \"More than a third weaker than the plans ever allowed,\" Priya says grimly. — A percentage shortfall always measures the missing amount against what was originally required.",
+    concept: "Percentage Decrease",
+  },
+  {
+    id: "architect-7",
+    storyId: "architects-folly",
+    order: 7,
+    sceneText: "The site's concrete mix is specified as a ratio of 1 part cement to 2 parts sand to 3 parts gravel, by volume.",
+    puzzle: "For a batch using 12 buckets of gravel, how many buckets of cement does that same ratio call for?",
+    choices: ["4 buckets", "6 buckets", "3 buckets", "8 buckets"],
+    correctIndex: 0,
+    wrongBeat: "\"Find how many times the gravel's own ratio-part fits into 12 buckets,\" Priya says, \"then apply that same multiple to the cement's ratio-part.\"",
+    solvedBeat:
+      "12 buckets of gravel is 4 times the ratio's \"3 parts,\" so cement's \"1 part\" scales the same way: 1 × 4 = 4 buckets. \"Get that ratio wrong and the whole mix is weaker than it looks,\" Priya says. — A ratio holds steady no matter how large the actual batch gets, as long as every part scales by the same multiple.",
+    concept: "Ratio & Proportion",
+  },
+  {
+    id: "architect-8",
+    storyId: "architects-folly",
+    order: 8,
+    sceneText: "Reyes's notebook lists the expected load on each successive floor, growing by a fixed amount floor by floor: 20, 26, 32, 38 tons, ...",
+    puzzle: "Following that same pattern, what load would the next floor up carry?",
+    choices: ["44 tons", "42 tons", "40 tons", "46 tons"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the fixed gap between each floor's load and the one before it,\" Priya says, \"then add that same gap once more to the last number.\"",
+    solvedBeat:
+      "Each floor adds exactly 6 tons over the last, so 38 + 6 = 44 tons. \"Which is exactly why the lower floors needed the stronger beams,\" Priya says. — A sequence with the same fixed gap at every step is called an arithmetic sequence.",
+    concept: "Arithmetic Sequences",
+  },
+  {
+    id: "architect-9",
+    storyId: "architects-folly",
+    order: 9,
+    sceneText: "Reyes's notes record the discrepancy in the shipment records as 2.1 tons of missing steel.",
+    puzzle: "Using 2,000 pounds in a ton, how many pounds does that 2.1-ton discrepancy come to?",
+    choices: ["4,200 pounds", "2,100 pounds", "4,000 pounds", "2,000 pounds"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the number of tons by how many pounds are in one ton,\" Priya says. \"Don't just guess at a round number.\"",
+    solvedBeat:
+      "2.1 × 2,000 = 4,200 pounds exactly. \"A very specific number, for something Dana kept calling 'a rounding error,'\" Priya says. — Converting tons into pounds is just another fixed conversion factor, multiplied straight through.",
+    concept: "Unit Conversion (Tons to Pounds)",
+  },
+  {
+    id: "architect-10",
+    storyId: "architects-folly",
+    order: 10,
+    sceneText: "Reyes's final notebook page works out an equation for the missing beam strength: 3x − 8 = 22, where x is the shortfall, in hundreds of kilograms.",
+    puzzle: "Solving for x, what number was Reyes working out?",
+    choices: ["10", "8", "6", "14"],
+    correctIndex: 0,
+    wrongBeat: "\"Isolate x by undoing each step in reverse,\" Priya says. \"Add 8 to both sides first, then divide by 3.\"",
+    solvedBeat:
+      "22 + 8 = 30, and 30 ÷ 3 = 10. \"A thousand kilograms of missing strength, floor after floor,\" Priya says quietly. — Solving an equation for an unknown is just undoing, one careful step at a time, whatever was done to build it.",
+    concept: "Solving a Linear Equation",
+  },
+];
+
+const CANYON_CLUES: QuestClue[] = [
+  {
+    id: "canyon-1",
+    storyId: "canyon-of-echoes",
+    order: 1,
+    sceneText: "Talia claps sharply against the canyon wall. The echo returns exactly 2 seconds later. Sound travels through this desert air at about 340 meters per second.",
+    puzzle: "Since the sound has to travel to the wall and back, how far away is that canyon wall?",
+    choices: ["340 meters", "680 meters", "170 meters", "1,020 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the speed by the total time first,\" Talia says, \"then divide by 2, since the sound makes a round trip — there and back.\"",
+    solvedBeat:
+      "340 × 2 = 680 meters total round trip, divided by 2 is 340 meters to the wall. \"Exactly what the old markers claim,\" Talia says. — An echo's distance is always the round-trip distance divided by two, since the sound has to travel there and back.",
+    concept: "Speed of Sound (Echo Distance)",
+  },
+  {
+    id: "canyon-2",
+    storyId: "canyon-of-echoes",
+    order: 2,
+    sceneText: "Talia's tuning fork rings at 340 Hz. Sound moves through this canyon air at 340 meters per second.",
+    puzzle: "Using wavelength = speed ÷ frequency, what's the wavelength of that 340 Hz tone?",
+    choices: ["1 meter", "340 meters", "0.5 meters", "2 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the speed of sound by the frequency,\" Talia says. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "340 ÷ 340 = 1 meter exactly. \"A clean number, on purpose,\" Talia says, marking the tuning fork's case. — Wavelength is simply how far one full wave travels in the time it takes to complete a single cycle.",
+    concept: "Wavelength & Frequency",
+  },
+  {
+    id: "canyon-3",
+    storyId: "canyon-of-echoes",
+    order: 3,
+    sceneText: "A second tuning fork rings at a steady 50 Hz.",
+    puzzle: "Using period = 1 ÷ frequency, how long does one single cycle of that 50 Hz tone take?",
+    choices: ["0.02 seconds (20 milliseconds)", "50 seconds", "2 seconds", "0.5 seconds"],
+    correctIndex: 0,
+    wrongBeat: "\"Period is 1 divided by frequency,\" Talia says. \"Don't just move the decimal point on the frequency itself.\"",
+    solvedBeat:
+      "1 ÷ 50 = 0.02 seconds, or 20 milliseconds, per cycle. \"Faster than you could ever count by hand,\" Talia says. — Period and frequency are always reciprocals of each other: one full cycle's time, divided into a single second.",
+    concept: "Period (Time per Cycle)",
+  },
+  {
+    id: "canyon-4",
+    storyId: "canyon-of-echoes",
+    order: 4,
+    sceneText: "A narrow side-canyon acts like an open tube, 4 meters deep. For a tube open at both ends, the longest resonant wavelength that fits is exactly twice the tube's length.",
+    puzzle: "What's that fundamental resonant wavelength for a 4-meter-deep open tube?",
+    choices: ["8 meters", "4 meters", "2 meters", "16 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Double the tube's length,\" Talia says. \"The fundamental wavelength for an open tube is always twice as long as the tube itself.\"",
+    solvedBeat:
+      "2 × 4 = 8 meters. \"Which is exactly the tone that hums through here at dusk,\" Talia says. — An open tube's longest resonant wave is always twice its own length, the same relationship in every wind instrument built this way.",
+    concept: "Resonance (Open-Tube Harmonics)",
+  },
+  {
+    id: "canyon-5",
+    storyId: "canyon-of-echoes",
+    order: 5,
+    sceneText: "Talia's sound meter reads 80 units of intensity at 2 meters from a source. The inverse-square law says intensity falls off with the square of the distance.",
+    puzzle: "Using that same law, what intensity should the meter read at 4 meters — twice the distance — from that same source?",
+    choices: ["20 units", "40 units", "10 units", "60 units"],
+    correctIndex: 0,
+    wrongBeat: "\"Doubling the distance doesn't just halve the intensity,\" Talia says. \"Square the distance ratio first, then divide the original intensity by that squared number.\"",
+    solvedBeat:
+      "Doubling the distance means dividing the intensity by 2² = 4, so 80 ÷ 4 = 20 units. \"Sound fades faster than people expect,\" Talia says. — The inverse-square law means intensity drops with the square of the distance, not the distance itself.",
+    concept: "The Inverse-Square Law",
+  },
+  {
+    id: "canyon-6",
+    storyId: "canyon-of-echoes",
+    order: 6,
+    sceneText:
+      "Talia claps again. This time, two echoes return: one after 1 second, from the near wall, and a second, fainter echo 3 seconds after the clap, from a farther wall deeper in the canyon.",
+    puzzle: "Using 340 meters per second for sound, how far away is that second, farther wall?",
+    choices: ["510 meters", "1,020 meters", "170 meters", "680 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Use the full round-trip time for that specific echo,\" Talia says, \"multiply by the speed of sound, then divide by 2 for the one-way distance.\"",
+    solvedBeat:
+      "340 × 3 = 1,020 meters round trip, divided by 2 is 510 meters. \"Deep enough to be the second marker on the old map,\" Talia says. — Each separate echo gets its own round-trip calculation, no matter how many walls are bouncing sound back at once.",
+    concept: "Echo Timing (Multiple Reflections)",
+  },
+  {
+    id: "canyon-7",
+    storyId: "canyon-of-echoes",
+    order: 7,
+    sceneText: "A carved flute found at the canyon's mouth plays a note at 220 Hz. Talia says the old markers respond only to its octave, exactly double that frequency.",
+    puzzle: "What frequency is that octave?",
+    choices: ["440 Hz", "220 Hz", "330 Hz", "880 Hz"],
+    correctIndex: 0,
+    wrongBeat: "\"An octave is always exactly double the frequency below it,\" Talia says. \"Multiply — don't add a fixed amount.\"",
+    solvedBeat:
+      "220 × 2 = 440 Hz. \"The same note carved into the flute's own case, if you look closely,\" Talia says. — An octave is defined by a frequency ratio of exactly 2 to 1, no matter which note you start from.",
+    concept: "Ratios in Music (Octaves)",
+  },
+  {
+    id: "canyon-8",
+    storyId: "canyon-of-echoes",
+    order: 8,
+    sceneText: "A patch of soft canyon sand absorbs sound instead of reflecting it. An echo that should carry 100 units of intensity returns carrying only 65 units after crossing that patch.",
+    puzzle: "What percentage of the sound's intensity did that sand patch absorb?",
+    choices: ["35%", "65%", "30%", "70%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the amount actually lost first,\" Talia says, \"the original intensity minus what came back, then express that loss as a percentage of the original.\"",
+    solvedBeat:
+      "100 − 65 = 35 units lost, and 35 ÷ 100 = 35%. \"Which is exactly why that stretch never echoes right,\" Talia says. — A percentage loss like this always measures the missing amount against the original total.",
+    concept: "Percentage Loss",
+  },
+  {
+    id: "canyon-9",
+    storyId: "canyon-of-echoes",
+    order: 9,
+    sceneText: "Talia wants the canyon's own speed of sound, 340 meters per second, converted into kilometers per hour for her field notes.",
+    puzzle: "Using 3,600 seconds in an hour and 1,000 meters in a kilometer, what's 340 meters per second in kilometers per hour?",
+    choices: ["1,224 km/h", "340 km/h", "3,400 km/h", "612 km/h"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the speed by 3,600 to convert seconds to hours,\" Talia says, \"then divide by 1,000 to convert meters to kilometers.\"",
+    solvedBeat:
+      "340 × 3,600 = 1,224,000 meters per hour, divided by 1,000 is 1,224 kilometers per hour. \"Faster than it feels, standing still in a canyon,\" Talia says. — Converting a rate between units just means applying each unit's own conversion factor in turn.",
+    concept: "Unit Conversion (Speed)",
+  },
+  {
+    id: "canyon-10",
+    storyId: "canyon-of-echoes",
+    order: 10,
+    sceneText: "The final marker gives only a time: a clap at the cache's entrance takes exactly 2.5 seconds for its echo to return to this exact spot.",
+    puzzle: "Using 340 meters per second for sound, how far away is the cache's entrance?",
+    choices: ["425 meters", "850 meters", "212.5 meters", "680 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the speed by the full round-trip time,\" Talia says, \"then divide by 2 for the one-way distance to the cache.\"",
+    solvedBeat:
+      "340 × 2.5 = 850 meters round trip, divided by 2 is 425 meters. Talia paces it off herself, counting under her breath. — The same echo calculation works at any distance, once you trust the numbers instead of guessing at the sound.",
+    concept: "Speed, Distance & Time",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }
