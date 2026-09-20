@@ -132,7 +132,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "museum-heist",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Museum Heist",
     blurb: "A priceless artifact vanishes from behind a security system its own designer called unbreakable.",
@@ -206,7 +206,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "cartographers-riddle",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Cartographer's Riddle",
     blurb: "A mapmaker died before finishing his final map — the blank corner is exactly where the vault should be.",

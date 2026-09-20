@@ -384,6 +384,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "museum-heist",
+    sceneText:
+      "**A city museum, after hours, one gallery's display case standing empty under emergency lighting.**\n\n" +
+      "Odette, a junior security technician, meets you at the staff entrance, badge still in hand. \"Dr. Voss is dead, in the control room,\" she says. \"The Ambrose Diamond is gone from its case — the same case behind a system its own designer swore was unbreakable. Dr. Voss didn't believe that for a second. He'd been recalculating the sensor grid's actual coverage for days, convinced there was a real gap in the math somewhere, not just a story people told themselves.\"\n\n" +
+      "The museum closed at the usual hour, and five people had reason enough to still be somewhere in this building well past that. Dr. Voss, everyone agrees, trusted the system's own numbers a great deal more than he trusted anyone's word about how safe it was — which made him exactly the kind of man who'd notice the one gap that mattered.",
+    cast: [
+      {
+        name: "Marcus Webb",
+        detail: "The security system's original designer, whose entire reputation rests on a system that just proved breakable.",
+      },
+      {
+        name: "Priya Anand",
+        detail: "A rival museum's acquisitions director, quietly known to broker sales for collectors who never ask where a piece really came from.",
+      },
+      {
+        name: "Colette Fischer",
+        detail: "The museum's night security guard, with more hands-on knowledge of this exact sensor grid than almost anyone else in the building.",
+      },
+      {
+        name: "Alderman Reeves",
+        detail: "The museum's board chair, facing a funding scandal that a conveniently timed insurance payout would go a long way toward covering.",
+      },
+      {
+        name: "Old Baptiste",
+        detail: "The museum's night janitor, cleaning the same galleries in the same order for over a decade. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "cartographers-riddle",
+    sceneText:
+      "**A retired cartographer's study, dust thick on shelves of rolled maps and old surveying instruments.**\n\n" +
+      "Marisol, Cornelius Drake's granddaughter, has spent months going through her grandfather's papers since his passing, trying to make sense of one map in particular — his last, and never finished. \"He always said a real map should let anyone check it and get the same answer,\" she tells you, unrolling the map's tattered edge. \"Every measurement on this one checks out perfectly, right up until this corner, which he simply left blank. I don't think that was carelessness. I think he wanted whoever finished it to actually earn the answer.\"\n\n" +
+      "Two landmarks anchor the whole map: the old well, and the chapel ruins, exactly 300 meters apart along a straight baseline. \"Every step from here to that blank corner tests the same thing,\" Marisol says, shouldering a satchel of her grandfather's own instruments. \"Whether you trust the actual numbers a measurement gives you, or you just guess at a distance.\"",
+    cast: [
+      {
+        name: "Marisol",
+        detail: "Cornelius Drake's granddaughter — new to surveying herself, but determined to finish the one map her grandfather never could.",
+      },
+      {
+        name: "Cornelius Drake",
+        detail: "A retired cartographer, meticulous to a fault. Long gone now, but every measurement he left behind still checks out, right up to the blank corner he left on purpose.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {

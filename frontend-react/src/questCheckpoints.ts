@@ -831,6 +831,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real chamber gives way at last, and lantern light spills across a shallow chamber lined with carved resonating pipes, each tuned centuries ago to a note that still rings true today. Tucked among them, wrapped against the dry desert air, a stack of thin stone tablets dense with worked calculations — echo timings, tuned intervals, careful notes on how sound itself behaves.\n\n" +
       "\"They really did trust their own careful listening over any map,\" Talia says, running a hand along one silent pipe. \"No guard could out-argue arithmetic that simply repeats the same result, echo after echo, century after century.\" The topmost tablet's final line, translated slowly: \"What the canyon returns to you is never more, and never less, than what you sent into it — measured honestly, it never once lies.\" Outside, the canyon walls carry your own voice back to you one last time, precisely on schedule, exactly as they always have.",
   },
+
+  // ------------------------------------------------------------------
+  // The Museum Heist
+  // ------------------------------------------------------------------
+  {
+    id: "museum-mid",
+    storyId: "museum-heist",
+    afterClue: "museum-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that evening and lay them side by side.\n\n" +
+      "**Marcus Webb:** \"I was at my own office across town, finishing paperwork for tomorrow's install — my assistant was there the entire evening.\"\n\n" +
+      "**Priya Anand:** \"I was at a gallery opening downtown, surrounded by at least thirty other people all evening.\"\n\n" +
+      "**Colette Fischer:** \"I did my usual rounds all night, checking every gallery hourly — ask Baptiste, he saw me on my last round.\"\n\n" +
+      "**Alderman Reeves:** \"I was at a board dinner, then home. My driver dropped me off, though I let him leave before I actually went inside.\"\n\n" +
+      "**Old Baptiste:** \"I did my usual cleaning rounds. Colette's telling the truth, I did see her on her last pass. Though the gap in her own shift log — the one hour right before the theft — was marked as a break she doesn't usually take.\"\n\n" +
+      "You already know Dr. Voss's body was found by Odette in the control room, and that the control room sits directly beside the service corridor.",
+    entities: ["Marcus Webb", "Priya Anand", "Colette Fischer", "Alderman Reeves", "Old Baptiste"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      "Marcus Webb": "Alibi Holds",
+      "Priya Anand": "Alibi Holds",
+      "Colette Fischer": "Alibi Breaks",
+      "Alderman Reeves": "Alibi Breaks",
+      "Old Baptiste": "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and a full night's lead slips away chasing it. Look again at which claims are confirmed by someone specifically placing them there tonight, and which leave a gap unaccounted for — and check whether Baptiste's own detail actually matches what someone claimed to be doing.",
+    explain:
+      "Webb's account is confirmed by his assistant, and Priya's by thirty independent witnesses at a public event — both hold. Baptiste himself has no motive and supplies the key detail, so his account holds too. But Colette's shift log shows an unusual, unscheduled break logged in the exact hour before the theft — not her usual pattern. And Reeves's claim falls apart the moment you notice he sent his driver away before actually going inside, leaving no one to confirm he ever did.",
+  },
+  {
+    id: "museum-final",
+    storyId: "museum-heist",
+    afterClue: "museum-10",
+    kind: "final",
+    title: "The Control Room",
+    scenario:
+      "You confront the two remaining names in the control room itself, monitors still dark.\n\n" +
+      "**Colette Fischer:** \"It was Reeves. He needed that insurance payout to cover the funding scandal — ask anyone on the board what a write-off like that is worth.\"\n\n" +
+      "**Alderman Reeves:** \"Ask instead who actually knows this building's sensor grid well enough to walk through it blind, and who's been quietly meeting with a buyer for months.\"\n\n" +
+      "You already know the midpoint coordinates worked out from the two disabled sensors point exactly to the service corridor only night staff carry keys to, and that Colette's own personnel file lists a prior position installing sensor systems — the same specialized training Marcus Webb once gave his own staff.",
+    entities: ["Colette Fischer", "Alderman Reeves"],
+    options: ["Guilty", "Innocent"],
+    answer: { "Colette Fischer": "Guilty", "Alderman Reeves": "Innocent" },
+    wrongConsequence:
+      "The control room stays silent, and nothing more is offered — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually had the technical knowledge to beat two independent sensors, versus who merely had a financial motive with no way to actually pull it off.",
+    explain:
+      "Reeves's financial motive is real, but nothing places him anywhere near the sensor grid itself, and insurance fraud rarely requires personally disabling two independent systems by hand. Colette's exposure was total and specific: her own unscheduled break lines up exactly with the theft window, her prior training gave her the exact technical knowledge to beat both sensors, and the disabled sensors' own midpoint traces straight to the one corridor only she had keys to that night.",
+    resolution:
+      "You lay it out for Odette, piece by piece: the binary scrap that first hinted someone had written the real access code down before they'd fully memorized it. The distance between the two disabled sensors, wide enough for exactly one careful person to pass through untouched. The overlapping access logs, narrowing the field down to the three people who could have reached both rooms at all. The AND gate's own unforgiving logic, proving both sensors had to be beaten, not just one. The rotating dial's modular arithmetic, landing on precisely the position it was actually found on. The lock's full combination count, and the blind-spot percentage that made exactly one approach angle survivable. The keypad's timing pattern, and the digit code's own count, narrowing an impossible number of guesses down to one deliberate, informed choice. And the midpoint between the two disabled sensors, pointing directly at the one corridor only Colette carried keys to that night.\n\n" +
+      "Colette doesn't run — there's nowhere in a locked museum left to run to. \"I could have made triple my salary in one night,\" she says quietly, \"and no one was ever supposed to get hurt over it.\" Odette looks at the empty display case for a long moment. \"Dr. Voss trusted the numbers to catch what people couldn't see,\" she says. \"Turns out he was right, even about the person he trusted enough to teach.\" Above the darkened galleries, the museum's real security system — the one built from careful, patient arithmetic — finally, quietly, does its job.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Cartographer's Riddle
+  // ------------------------------------------------------------------
+  {
+    id: "cartographer-mid",
+    storyId: "cartographers-riddle",
+    afterClue: "cartographer-5",
+    kind: "mid",
+    title: "Three Passages",
+    scenario:
+      "Beyond the marked stone, the trail splits into three overgrown passages, each carved with a claim. Marisol reads them aloud:\n\n" +
+      "**Passage A:** \"A map's scale is a single fixed ratio, however large or small the real distance being measured is.\"\n\n" +
+      "**Passage B:** \"Slope is calculated by dividing the horizontal run by the vertical rise.\"\n\n" +
+      "**Passage C:** \"Interpolating a value between two known points always requires knowing at least three data points.\"\n\n" +
+      "\"Grandfather sealed his false notes behind claims that sound reasonable but fall apart under real arithmetic,\" Marisol says. \"Check every one properly before you trust it.\"",
+    entities: ["Passage A", "Passage B", "Passage C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Passage A": "True Claim", "Passage B": "False Claim", "Passage C": "False Claim" },
+    wrongConsequence:
+      "The wrong passage narrows to a dead end, and you double back with nothing but lost daylight for the trouble. \"Test each claim against real numbers,\" Marisol says. \"Not what sounds reasonable — what actually holds up once you calculate it.\"",
+    explain:
+      "Passage A restates exactly what you proved yourself: a map's scale never changes, whatever distance you're actually measuring. Passage B is false — slope is rise over run, the vertical change divided by the horizontal change, not the other way around. Passage C is false too, and you already proved it: interpolating a midpoint value needs only the two known ends, nothing more.",
+  },
+  {
+    id: "cartographer-final",
+    storyId: "cartographers-riddle",
+    afterClue: "cartographer-10",
+    kind: "final",
+    title: "Three Marked Plots",
+    scenario:
+      "Marisol reads each marked plot's carved inscription aloud:\n\n" +
+      "**Plot 1:** \"A back-bearing is always exactly 180 degrees from the original bearing, no matter which direction you started facing.\"\n\n" +
+      "**Plot 2:** \"Doubling a rectangular plot's length and width both at once only doubles its area.\"\n\n" +
+      "**Plot 3:** \"Interpolating between two elevation points always assumes the ground rises or falls in a perfectly straight line, and that assumption is always exactly correct in the real world.\"\n\n" +
+      "\"One of these is true without a single exception,\" Marisol says. \"Grandfather trusted his whole vault's protection on that one rule.\"",
+    entities: ["Plot 1", "Plot 2", "Plot 3"],
+    options: ["Real Plot", "False Plot"],
+    answer: { "Plot 1": "Real Plot", "Plot 2": "False Plot", "Plot 3": "False Plot" },
+    wrongConsequence:
+      "The wrong plot yields nothing but bare, undisturbed ground, and you're left resetting your bearings by lamplight. \"Don't trust the shape of the sentence,\" Marisol says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Plot 1 holds exactly: a back-bearing is always a perfect 180-degree reversal of the original bearing, without exception. Plot 2 is false — doubling both a rectangle's length and width multiplies its area by four, not two, the same trap that catches any two-dimensional scaling. Plot 3 is false too: real ground rarely rises in a perfectly straight line, so elevation interpolation is always a useful approximation, never a guaranteed exact answer.",
+    resolution:
+      "The real plot gives way to Marisol's careful digging, and there it is — Cornelius Drake's true vault, exactly where two independent methods, a triangulation and a map scale, both said it would be. Inside, wrapped against the damp, his real final map: not the blank-cornered one he left behind for the world, but a complete one, filled in with decades of careful, checked measurements no one else was ever meant to see.\n\n" +
+      "\"He always said a map you couldn't verify twice wasn't worth trusting once,\" Marisol says, unrolling it carefully. Tucked into the map's corner, a note in Drake's own hand: \"Anyone patient enough to check my numbers twice has earned the right to see where they actually lead.\" Above the plot, the sun is already dropping toward the horizon, and Marisol, for once, isn't worried about finding her way back — she has the bearing for that too.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

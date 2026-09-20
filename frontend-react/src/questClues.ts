@@ -2447,8 +2447,283 @@ const CANYON_CLUES: QuestClue[] = [
   },
 ];
 
+const MUSEUM_CLUES: QuestClue[] = [
+  {
+    id: "museum-1",
+    storyId: "museum-heist",
+    order: 1,
+    sceneText: "The vault's keypad accepts codes only in binary. Odette recovers a scrap of paper from the wastebasket reading: 1 0 1 1 0.",
+    puzzle: "What's that binary number, 10110, converted into an ordinary base-10 number?",
+    choices: ["22", "26", "18", "20"],
+    correctIndex: 0,
+    wrongBeat: "\"Count each binary digit's own place value,\" Odette says, \"16, 8, 4, 2, 1 from left to right, and add up only the places marked with a 1.\"",
+    solvedBeat:
+      "16 + 4 + 2 = 22. \"Someone wrote down part of the real code before they'd fully memorized it,\" Odette says. — Binary numbers use only 0s and 1s, but each position still stands for a power of two, the same way each position in an ordinary number stands for a power of ten.",
+    concept: "Binary Numbers",
+  },
+  {
+    id: "museum-2",
+    storyId: "museum-heist",
+    order: 2,
+    sceneText: "The floor plan marks the pressure-sensor grid on a coordinate map. One sensor sits at (2, 3), another at (6, 6).",
+    puzzle: "Using the distance formula, how far apart are those two sensors?",
+    choices: ["5 units", "7 units", "4 units", "10 units"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the difference in each coordinate separately,\" Odette says, \"square both differences, add them together, then take the square root.\"",
+    solvedBeat:
+      "(6−2)² + (6−3)² = 16 + 9 = 25, and the square root of 25 is exactly 5. \"A clean gap,\" Odette says, \"exactly wide enough for someone to slip through untouched.\" — The distance formula is really just the Pythagorean theorem, applied to two points on a coordinate grid.",
+    concept: "Coordinate Geometry (Distance Formula)",
+  },
+  {
+    id: "museum-3",
+    storyId: "museum-heist",
+    order: 3,
+    sceneText: "Museum records show 8 staff members have access to the vault room, and 6 have access to the control room. Exactly 3 staff members have access to both rooms.",
+    puzzle: "Using those numbers, how many staff members have access to at least one of the two rooms?",
+    choices: ["11", "14", "5", "17"],
+    correctIndex: 0,
+    wrongBeat: "\"Add both groups together,\" Odette says, \"then subtract the number counted twice — the ones with access to both rooms.\"",
+    solvedBeat:
+      "8 + 6 − 3 = 11 staff members total. \"Which means only three of them could have gotten into both rooms the same night,\" Odette says. — Adding two overlapping groups together double-counts whoever belongs to both, so that overlap has to be subtracted back out.",
+    concept: "Set Theory (Overlapping Groups)",
+  },
+  {
+    id: "museum-4",
+    storyId: "museum-heist",
+    order: 4,
+    sceneText:
+      "The vault's alarm only stays silent if the pressure sensor reads clear AND the motion sensor reads clear. If either one alone reads clear but the other doesn't, the alarm still fires.",
+    puzzle: "If the pressure sensor is clear but the motion sensor detects movement, does the alarm stay silent?",
+    choices: [
+      "No — the alarm fires, since AND requires both conditions true",
+      "Yes — one clear sensor is enough",
+      "Only if the pressure sensor was clear first",
+      "It depends on the time of night",
+    ],
+    correctIndex: 0,
+    wrongBeat: "\"An AND gate only stays silent when every single condition is true at once,\" Odette says. \"One true and one false is still not enough.\"",
+    solvedBeat:
+      "With an AND gate, both sensors must read clear at the same time, or the alarm fires — one clear reading alone changes nothing. \"So whoever did this beat both sensors, not just one,\" Odette says grimly. — Boolean AND logic requires every single condition to hold true before the whole statement counts as true.",
+    concept: "Boolean Logic (AND Gates)",
+  },
+  {
+    id: "museum-5",
+    storyId: "museum-heist",
+    order: 5,
+    sceneText:
+      "The vault's rotating dial has 40 numbered positions, wrapping back to 0 after 39. It currently rests on position 15. Odette knows the thief rotated it forward exactly 57 positions to open it.",
+    puzzle: "Since the dial wraps every 40 positions, what position does it land on after rotating forward 57 from position 15?",
+    choices: ["32", "17", "72", "12"],
+    correctIndex: 0,
+    wrongBeat: "\"Add the rotation to the starting position first,\" Odette says, \"then divide by 40 and keep only the remainder.\"",
+    solvedBeat:
+      "15 + 57 = 72, and 72 divided by 40 leaves a remainder of 32. \"Which matches the position it was actually found on,\" Odette says. — A dial that wraps around after a fixed number of positions is modular arithmetic in disguise, the same as a clock face.",
+    concept: "Modular Arithmetic (Rotating Lock)",
+  },
+  {
+    id: "museum-6",
+    storyId: "museum-heist",
+    order: 6,
+    sceneText: "The vault's backup lock uses 4 distinct digits chosen from 0 through 9, entered in a specific order, with no repeats.",
+    puzzle: "How many different codes are possible for that backup lock?",
+    choices: ["5,040", "10,000", "210", "40"],
+    correctIndex: 0,
+    wrongBeat: "\"Count the choices at each position, in order,\" Odette says. \"Ten for the first digit, then nine left, then eight, then seven — multiply them together.\"",
+    solvedBeat:
+      "10 × 9 × 8 × 7 = 5,040 possible codes. \"Far too many to guess blind,\" Odette says, \"which means someone already knew it.\" — That's a permutation: every distinct ordering of a set, found by shrinking the choices by one at each step.",
+    concept: "Permutations",
+  },
+  {
+    id: "museum-7",
+    storyId: "museum-heist",
+    order: 7,
+    sceneText: "Marcus Webb's own coverage report claims the sensor grid covers 96% of the gallery floor, leaving the remaining area as blind spots.",
+    puzzle: "Out of a gallery floor measuring 150 square meters total, how many square meters are blind spots?",
+    choices: ["6 square meters", "96 square meters", "14.4 square meters", "4 square meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the uncovered percentage first,\" Odette says, \"100% minus 96%, then apply that percentage to the total floor area.\"",
+    solvedBeat:
+      "100% − 96% = 4% uncovered, and 4% of 150 is 6 square meters. \"Small,\" Odette says, \"but more than enough room to stand in.\" — Even a small uncovered percentage still translates into real, physical space once you apply it to the actual total.",
+    concept: "Percentage",
+  },
+  {
+    id: "museum-8",
+    storyId: "museum-heist",
+    order: 8,
+    sceneText: "The keypad's timing log shows entry attempts spaced exactly the same interval apart: 5, 9, 13, 17 seconds after the first attempt.",
+    puzzle: "Following that same pattern, how many seconds after the first attempt would the next entry come?",
+    choices: ["21", "20", "19", "23"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the fixed gap between each time and the one before it,\" Odette says, \"then add that same gap once more to the last one.\"",
+    solvedBeat:
+      "Each interval is 4 seconds more than the last, so 17 + 4 = 21 seconds. \"Too steady to be a nervous guess,\" Odette says. \"That's someone who already knew exactly what they were doing.\" — A sequence with the same fixed gap at every step is called an arithmetic sequence.",
+    concept: "Arithmetic Sequences",
+  },
+  {
+    id: "museum-9",
+    storyId: "museum-heist",
+    order: 9,
+    sceneText: "The final override panel needs a 3-digit code using digits 1 through 6, with repeats allowed, and the first digit must be even.",
+    puzzle: "How many such codes are possible in total?",
+    choices: ["108", "216", "36", "18"],
+    correctIndex: 0,
+    wrongBeat: "\"Count each position's own choices separately, in order,\" Odette says. \"Three even digits for the first slot, then six choices each for the second and third, since repeats are allowed — multiply them all together.\"",
+    solvedBeat:
+      "3 × 6 × 6 = 108 possible codes. \"Not narrow enough on its own,\" Odette admits, \"but the panel's own memory recorded the exact code used that night.\" — That's the counting principle: multiplying the choices available at each step, in order, to count every possibility at once.",
+    concept: "The Counting Principle",
+  },
+  {
+    id: "museum-10",
+    storyId: "museum-heist",
+    order: 10,
+    sceneText: "The two disabled sensors sit at coordinates (10, 14) and (30, 26) on the gallery's floor plan.",
+    puzzle: "Using the midpoint formula, what point sits exactly between those two disabled sensors?",
+    choices: ["(20, 20)", "(20, 40)", "(15, 20)", "(40, 40)"],
+    correctIndex: 0,
+    wrongBeat: "\"Average the two x-coordinates separately,\" Odette says, \"then average the two y-coordinates separately.\"",
+    solvedBeat:
+      "(10+30)/2 = 20, and (14+26)/2 = 20, giving (20, 20). \"Right where the service corridor door sits,\" Odette says slowly. — A midpoint is always the simple average of both points' coordinates, one axis at a time.",
+    concept: "Coordinate Geometry (Midpoint Formula)",
+  },
+];
+
+const CARTOGRAPHER_CLUES: QuestClue[] = [
+  {
+    id: "cartographer-1",
+    storyId: "cartographers-riddle",
+    order: 1,
+    sceneText: "Drake's notes describe the trail from the study running on a bearing of 60 degrees. At the marked stone, the trail turns 45 degrees further clockwise.",
+    puzzle: "What's the trail's new bearing after that turn?",
+    choices: ["105°", "15°", "90°", "135°"],
+    correctIndex: 0,
+    wrongBeat: "\"Add the turn directly onto the original bearing,\" Marisol says, \"since both are measured the same way — clockwise from north.\"",
+    solvedBeat:
+      "60° + 45° = 105°. \"Exactly the angle marked on the second stone,\" Marisol says. — A compass bearing is just an angle measured clockwise from north, and turning further clockwise simply adds to it.",
+    concept: "Compass Bearings",
+  },
+  {
+    id: "cartographer-2",
+    storyId: "cartographers-riddle",
+    order: 2,
+    sceneText:
+      "Marisol paces off a 300-meter baseline between the old well and the chapel ruins, both landmarks marked on Drake's map. From the well, the vault sits exactly 400 meters away, on a line that meets the well-to-chapel baseline at a perfect right angle.",
+    puzzle: "Using the Pythagorean theorem, how far is the vault from the chapel ruins?",
+    choices: ["500 meters", "700 meters", "350 meters", "600 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Square both known distances, add them together, then take the square root of that sum,\" Marisol says.",
+    solvedBeat:
+      "300² + 400² = 90,000 + 160,000 = 250,000, and the square root of 250,000 is exactly 500. \"Triangulating from two fixed points is exactly how Drake always worked,\" Marisol says. — Triangulation uses two known points and the distances or angles between them to pin down a third point exactly.",
+    concept: "Triangulation",
+  },
+  {
+    id: "cartographer-3",
+    storyId: "cartographers-riddle",
+    order: 3,
+    sceneText: "Drake's final map is drawn at a scale where 1 centimeter represents 50 meters of real ground. The distance from the well to the vault measures 10 centimeters on the map.",
+    puzzle: "How far is that in real meters?",
+    choices: ["500 meters", "50 meters", "510 meters", "450 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the map's measurement by the scale factor,\" Marisol says. \"Don't add the two numbers.\"",
+    solvedBeat:
+      "10 × 50 = 500 meters, matching your own triangulation exactly. \"Two different methods, the same answer,\" Marisol says. \"That's how you know you can trust it.\" — A map's scale is just a fixed ratio, and reading a real distance off it is one multiplication.",
+    concept: "Scale & Proportion",
+  },
+  {
+    id: "cartographer-4",
+    storyId: "cartographers-riddle",
+    order: 4,
+    sceneText: "A trail on Drake's map rises 60 meters in elevation over a horizontal distance of 200 meters.",
+    puzzle: "What's the slope of that trail, expressed as rise over run?",
+    choices: ["0.3 (or 3/10)", "3.3", "0.03", "6"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the rise by the run,\" Marisol says. \"Don't divide the run by the rise, and don't just subtract them.\"",
+    solvedBeat:
+      "60 ÷ 200 = 0.3. \"A gentle climb, easy walking,\" Marisol says, checking her boots anyway. — Slope is always rise divided by run, telling you exactly how steep something is, however long the actual path.",
+    concept: "Slope of a Line (Rise Over Run)",
+  },
+  {
+    id: "cartographer-5",
+    storyId: "cartographers-riddle",
+    order: 5,
+    sceneText:
+      "Two marked contour points on Drake's map: one at 100 meters elevation, another 400 meters farther along the trail at 160 meters elevation. The vault marker sits exactly halfway between them.",
+    puzzle: "Assuming a steady climb, what elevation should the vault marker sit at?",
+    choices: ["130 meters", "150 meters", "120 meters", "140 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Average the two elevations directly,\" Marisol says, \"since the point sits exactly halfway between them along a steady climb.\"",
+    solvedBeat:
+      "(100 + 160) ÷ 2 = 130 meters. \"Right where the old marker stone actually sits,\" Marisol says, brushing off moss. — Interpolating along a steady slope means the value at the midpoint is simply the average of the two ends.",
+    concept: "Elevation Interpolation",
+  },
+  {
+    id: "cartographer-6",
+    storyId: "cartographers-riddle",
+    order: 6,
+    sceneText: "On Drake's coordinate grid, the well sits at (10, 20) and the chapel ruins sit at (30, 60).",
+    puzzle: "Using the midpoint formula, what point sits exactly halfway between them?",
+    choices: ["(20, 40)", "(20, 20)", "(40, 80)", "(15, 30)"],
+    correctIndex: 0,
+    wrongBeat: "\"Average the two x-coordinates separately,\" Marisol says, \"then average the two y-coordinates separately.\"",
+    solvedBeat:
+      "(10+30)/2 = 20, and (20+60)/2 = 40, giving (20, 40). \"Right where the trail forks,\" Marisol says. — A midpoint is always the simple average of both points' coordinates, one axis at a time.",
+    concept: "Coordinate Geometry (Midpoint Formula)",
+  },
+  {
+    id: "cartographer-7",
+    storyId: "cartographers-riddle",
+    order: 7,
+    sceneText: "Drake's notes describe the search plot as a rectangle 80 meters by 45 meters.",
+    puzzle: "What's the total area of that plot?",
+    choices: ["3,600 square meters", "1,800 square meters", "2,500 square meters", "4,000 square meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the two side lengths together,\" Marisol says. \"Don't add them.\"",
+    solvedBeat:
+      "80 × 45 = 3,600 square meters. \"A lot of ground to search without knowing exactly where to dig,\" Marisol says. — The area of a rectangle is always its length times its width.",
+    concept: "Area of a Rectangular Plot",
+  },
+  {
+    id: "cartographer-8",
+    storyId: "cartographers-riddle",
+    order: 8,
+    sceneText: "Drake's final map claims the well-to-chapel distance is 400 meters. Marisol's own careful pacing measures it at 420 meters.",
+    puzzle: "What percentage error does that represent, compared to Drake's claimed distance?",
+    choices: ["5%", "4.8%", "20%", "2%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the actual difference first,\" Marisol says, \"then divide that difference by Drake's original claimed distance.\"",
+    solvedBeat:
+      "420 − 400 = 20 meters off, and 20 ÷ 400 = 5%. \"Small enough to trust the rest of the map,\" Marisol says, relieved. — A percentage error always measures the gap against the original claimed value.",
+    concept: "Percentage Error",
+  },
+  {
+    id: "cartographer-9",
+    storyId: "cartographers-riddle",
+    order: 9,
+    sceneText: "A row of numbered survey stakes along the trail reads: 5, 11, 17, 23, ...",
+    puzzle: "Following that same pattern, what number should the next stake carry?",
+    choices: ["29", "28", "25", "31"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the fixed gap between each stake's number and the one before it,\" Marisol says, \"then add that same gap once more.\"",
+    solvedBeat:
+      "Each stake is 6 more than the last, so 23 + 6 = 29. \"Drake never numbered anything carelessly,\" Marisol says. — A sequence with the same fixed gap at every step is an arithmetic sequence, and its next term is never a guess.",
+    concept: "Arithmetic Sequences",
+  },
+  {
+    id: "cartographer-10",
+    storyId: "cartographers-riddle",
+    order: 10,
+    sceneText: "The vault's final marker gives only Drake's outbound bearing to reach it: 130 degrees from the study. Marisol needs the exact return bearing to get back safely in the dark.",
+    puzzle: "Using back-bearing = original bearing ± 180°, what's the return bearing from the vault back to the study?",
+    choices: ["310°", "50°", "230°", "130°"],
+    correctIndex: 0,
+    wrongBeat: "\"Add 180 degrees to the original bearing if it's under 180, or subtract 180 if it's over,\" Marisol says. \"The return path is always exactly opposite the outbound one.\"",
+    solvedBeat:
+      "130° + 180° = 310°. Marisol notes it carefully before the light fails. — A back-bearing is always exactly opposite the original direction, a perfect half-turn of 180 degrees.",
+    concept: "Back-Bearing",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }
