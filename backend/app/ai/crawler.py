@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 
 from ..logging_config import logger
-from .library import _ASSET_RE, _UA, get_library
+from .library import _ASSET_RE, _UA, ORIGIN_WEB, get_library
 
 MIN_DELAY_SECONDS = 1.0  # politeness delay between requests to the same host
 
@@ -103,9 +103,13 @@ class CrawlManager:
                     kind, payload, links = lib.fetch_url(url)
                     if kind == "pdf":
                         from pathlib import Path
-                        res = lib.ingest(Path(url.split("?")[0]).name or "document.pdf", payload)
+                        res = lib.ingest(
+                            Path(url.split("?")[0]).name or "document.pdf",
+                            payload,
+                            origin=ORIGIN_WEB,
+                        )
                     else:
-                        res = lib.ingest_text(url, payload)
+                        res = lib.ingest_text(url, payload, origin=ORIGIN_WEB)
                     st["pages"] += 1
                     st["ingested"] += 1
                     st["chunks"] += res.get("chunks", 0)

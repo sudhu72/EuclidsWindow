@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Time Series &amp; Forecasting: decomposition, stationarity, and a live forecast</title>
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#9fb0a5;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --purple:#c9a6ff;
+    --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);
+       font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+       padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:25px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.5;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:Georgia,"Times New Roman",serif;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  h3{font-size:13px;color:var(--chalk-dim);margin:16px 0 6px;text-transform:uppercase;letter-spacing:.04em;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:inherit;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:200px;}
+  input[type=range]{flex:1;min-width:160px;accent-color:var(--amber);}
+  .readout{font-family:Georgia,serif;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:52px;text-align:center;}
+
+  button.op{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .preset-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;max-width:100%;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:120px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:Georgia,serif;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+  .metric.purple .num{color:var(--purple);}
+
+  .legend{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--chalk-dim);margin-top:6px;}
+  .legend span.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  .top-controls{margin-bottom:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+  code{background:rgba(244,241,232,.08);padding:1px 5px;border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Time Series &amp; Forecasting: decomposition, stationarity, and a live forecast</h1>
+  <p class="sub">Companion to <a href="../foundations/time_series_and_forecasting_feynman.md" style="color:var(--blue);">Time Series &amp; Forecasting (ARIMA) — The Feynman Way</a>. One shared 36-month series feeds all three tabs below — change it here, or just click a preset, and every tab updates together.</p>
+
+  <div class="panel top-controls">
+    <h2>The series (shared across all three tabs)</h2>
+    <p class="sub">Built the same way as the tutorial: <code>series = trend + seasonal + noise</code>. The sliders scale each real ingredient; the noise values themselves are fixed, reproducible numbers (not re-randomized on every drag).</p>
+    <div class="preset-row">
+      <button class="op active" id="presetTutorial">Tutorial Example (defaults)</button>
+      <button class="op" id="presetNoSeason">No Seasonality</button>
+      <button class="op" id="presetNoTrend">No Trend</button>
+      <button class="op" id="presetNoisy">Extra Noisy</button>
+    </div>
+    <div class="row">
+      <label>Trend slope multiplier</label><input type="range" id="slopeSlider" min="0" max="2" step="0.1" value="1"><span class="readout" id="slopeOut">1.0×</span>
+    </div>
+    <div class="row">
+      <label>Seasonal amplitude multiplier</label><input type="range" id="ampSlider" min="0" max="2" step="0.1" value="1"><span class="readout" id="ampOut">1.0×</span>
+    </div>
+    <div class="row">
+      <label>Noise scale multiplier</label><input type="range" id="noiseSlider" min="0" max="3" step="0.1" value="1"><span class="readout" id="noiseOut">1.0×</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="decomp">Decomposition</button>
+    <button class="tabbtn" data-tab="diff">Differencing / Stationarity</button>
+    <button class="tabbtn" data-tab="forecast">Forecast Demo</button>
+  </div>
+
+  <!-- ============ TAB 1: DECOMPOSITION ============ -->
+  <div class="tabpanel active" id="tab-decomp">
+    <div class="panel">
+      <h2>Pulling the series apart into trend, seasonal, and residual</h2>
+      <p class="sub">A real centered 12-month moving average estimates the trend; averaging what's left, month-position by month-position, gives the seasonal shape; whatever's left after both is the residual — computed live below, not hardcoded.</p>
+      <svg id="decompSvg" width="1000" height="480" viewBox="0 0 1000 480"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--blue);"></span>raw series</span>
+        <span><span class="sw" style="background:var(--amber);"></span>trend (12-month centered MA)</span>
+        <span><span class="sw" style="background:var(--green);"></span>seasonal (averaged by month position)</span>
+        <span><span class="sw" style="background:var(--coral);"></span>residual (what's left)</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">trend at month 7 (idx 6)</div><div class="num" id="mTrend6">-</div></div>
+        <div class="metric green"><div class="lbl">seasonal cycle (12 values)</div><div class="num" id="mSeasonCycle" style="font-size:11px;">-</div></div>
+        <div class="metric coral"><div class="lbl">residual std dev</div><div class="num" id="mResidStd">-</div></div>
+      </div>
+      <div class="story-line" id="decompStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: DIFFERENCING / STATIONARITY ============ -->
+  <div class="tabpanel" id="tab-diff">
+    <div class="panel">
+      <h2>Raw (trending) vs. first-differenced (flat) — the stationarity fix, visually</h2>
+      <p class="sub">Stationarity means a series' mean and spread don't drift over time. Toggle below: the raw series visibly climbs; its first difference (each point minus the one before it) hovers around a roughly constant band instead.</p>
+      <div class="row" style="justify-content:center;">
+        <button class="op active" id="btnRaw">Raw series</button>
+        <button class="op" id="btnDiff">First difference</button>
+      </div>
+      <svg id="diffSvg" width="900" height="320" viewBox="0 0 900 320"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">mean, first half</div><div class="num" id="mMeanFirst">-</div></div>
+        <div class="metric blue"><div class="lbl">mean, second half</div><div class="num" id="mMeanSecond">-</div></div>
+        <div class="metric amber"><div class="lbl">gap between the two</div><div class="num" id="mMeanGap">-</div></div>
+      </div>
+      <div class="story-line" id="diffStory"></div>
+      <p class="sub" style="margin-top:10px;">This split-in-half mean comparison is a quick visual proxy for "does the mean drift over time" — the tutorial's actual stationarity verdict uses the real Augmented Dickey-Fuller test (<code>statsmodels.tsa.stattools.adfuller</code>), cited there with real p-values (<code>0.52</code> raw → <code>1.45×10⁻¹²</code> differenced), which this page does not recompute.</p>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: FORECAST DEMO ============ -->
+  <div class="tabpanel" id="tab-forecast">
+    <div class="panel">
+      <h2>Hold out the last few points, forecast them, see how close you land</h2>
+      <p class="sub">Three real, live-computed forecasting methods — pick one. Each is fit only on the training portion (never touching the held-out points), then extended forward; the real held-out actual values are overlaid so you can see the gap directly. (This is a simplified stand-in for the tutorial's full statsmodels ARIMA fit, not a reimplementation of ARIMA's maximum-likelihood estimation — disclosed, not hidden.)</p>
+      <div class="row" style="justify-content:center;">
+        <button class="op" id="btnNaive">Naive (repeat last value)</button>
+        <button class="op" id="btnSeasonalNaive">Seasonal naive (same month, 1yr back)</button>
+        <button class="op active" id="btnLinearSeasonal">Linear trend + seasonal average</button>
+      </div>
+      <div class="row" style="justify-content:center;">
+        <label style="min-width:140px;">Holdout horizon (h)</label>
+        <input type="range" id="horizonSlider" min="1" max="8" step="1" value="4"><span class="readout" id="horizonOut">4</span>
+        <button class="op" id="btnH4">Reset to h=4 (tutorial default)</button>
+      </div>
+      <svg id="forecastSvg" width="1000" height="380" viewBox="0 0 1000 380"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--blue);"></span>training data</span>
+        <span><span class="sw" style="background:var(--chalk-dim);"></span>actual held-out (ground truth)</span>
+        <span><span class="sw" style="background:var(--coral);"></span>forecast</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">WAPE (Σ|A−F| / ΣA)</div><div class="num" id="mWape">-</div></div>
+        <div class="metric purple"><div class="lbl">Bias (Σ(F−A) / ΣA)</div><div class="num" id="mBias">-</div></div>
+      </div>
+      <div class="story-line" id="forecastStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything on this page runs locally, no external fonts, scripts, or network calls. Companion to <a href="../foundations/time_series_and_forecasting_feynman.md">Time Series &amp; Forecasting (ARIMA) — The Feynman Way</a>, which also reuses <a href="../foundations/wape_and_forecast_bias_feynman.md">WAPE and Forecast Bias</a>'s exact formulas for the metrics shown here.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function mean(a){ return a.reduce((x,y)=>x+y,0)/a.length; }
+  function stdOf(a,m){ if(m===undefined) m=mean(a); return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length); }
+
+  /* ============================================================
+     SHARED SERIES STATE
+     36 months = trend + seasonal + noise, exactly as built in the
+     tutorial (numpy seed 42). Sliders scale each real ingredient;
+     the noise values themselves are the fixed, real random draws.
+     ============================================================ */
+  const N = 36;
+  const SEASON_PATTERN = [10, 5, -5, -10, -8, 0, 8, 15, 10, 0, -10, -15];
+  const NOISE = [
+    1.490142, -0.414793, 1.943066, 4.569090, -0.702460, -0.702411, 4.737638, 2.302304, -1.408423, 1.627680, -1.390253, -1.397189,
+    0.725887, -5.739841, -5.174753, -1.686863, -3.038493, 0.942742, -2.724072, -4.236911, 4.396946, -0.677329, 0.202585, -4.274245,
+    -1.633148, 0.332768, -3.452981, 1.127094, -1.801916, -0.875081, -1.805120, 5.556835, -0.040492, -3.173133, 2.467635, -3.662531
+  ];
+
+  let slopeMult = 1, ampMult = 1, noiseMult = 1;
+
+  function buildSeries(){
+    const y = [];
+    for(let i=0;i<N;i++){
+      const trend = 100 + 2.0*slopeMult*i;
+      const seasonal = SEASON_PATTERN[i%12]*ampMult;
+      const noise = NOISE[i]*noiseMult;
+      y.push(trend + seasonal + noise);
+    }
+    return y;
+  }
+
+  function setSlopeReadout(){ document.getElementById("slopeOut").textContent = slopeMult.toFixed(1)+"×"; }
+  function setAmpReadout(){ document.getElementById("ampOut").textContent = ampMult.toFixed(1)+"×"; }
+  function setNoiseReadout(){ document.getElementById("noiseOut").textContent = noiseMult.toFixed(1)+"×"; }
+
+  function renderAll(){
+    const series = buildSeries();
+    renderDecomp(series);
+    renderDiff(series);
+    renderForecast(series);
+  }
+
+  document.getElementById("slopeSlider").addEventListener("input", function(){
+    slopeMult = parseFloat(this.value); setSlopeReadout(); renderAll();
+  });
+  document.getElementById("ampSlider").addEventListener("input", function(){
+    ampMult = parseFloat(this.value); setAmpReadout(); renderAll();
+  });
+  document.getElementById("noiseSlider").addEventListener("input", function(){
+    noiseMult = parseFloat(this.value); setNoiseReadout(); renderAll();
+  });
+
+  function applyPreset(newSlope, newAmp, newNoise, btnId){
+    slopeMult = newSlope; ampMult = newAmp; noiseMult = newNoise;
+    document.getElementById("slopeSlider").value = newSlope;
+    document.getElementById("ampSlider").value = newAmp;
+    document.getElementById("noiseSlider").value = newNoise;
+    setSlopeReadout(); setAmpReadout(); setNoiseReadout();
+    document.querySelectorAll(".preset-row .op").forEach(b=>b.classList.remove("active"));
+    document.getElementById(btnId).classList.add("active");
+    renderAll();
+  }
+  document.getElementById("presetTutorial").addEventListener("click", ()=>applyPreset(1,1,1,"presetTutorial"));
+  document.getElementById("presetNoSeason").addEventListener("click", ()=>applyPreset(1,0,1,"presetNoSeason"));
+  document.getElementById("presetNoTrend").addEventListener("click", ()=>applyPreset(0,1,1,"presetNoTrend"));
+  document.getElementById("presetNoisy").addEventListener("click", ()=>applyPreset(1,1,3,"presetNoisy"));
+
+  /* ============================================================
+     TABS
+     ============================================================ */
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     GENERIC LINE-CHART DRAWING HELPER
+     ============================================================ */
+  function drawAxes(svg, x0,y0,w,h, xDomain, yDomain){
+    function X(x){ return x0 + (x-xDomain[0])/(xDomain[1]-xDomain[0])*w; }
+    function Y(y){ return y0+h - (y-yDomain[0])/(yDomain[1]-yDomain[0])*h; }
+    svg.appendChild(el("line",{x1:x0,y1:y0+h,x2:x0+w,y2:y0+h,stroke:"var(--chalk-dim)","stroke-width":1}));
+    svg.appendChild(el("line",{x1:x0,y1:y0,x2:x0,y2:y0+h,stroke:"var(--chalk-dim)","stroke-width":1}));
+    return {X,Y};
+  }
+  function drawLine(svg, X, Y, points, color, width, dash){
+    let d = "";
+    let started = false;
+    points.forEach((p) => {
+      if (p===null || p===undefined || isNaN(p.v)){ started=false; return; }
+      const cmd = started ? "L" : "M";
+      d += `${cmd}${X(p.i).toFixed(2)},${Y(p.v).toFixed(2)} `;
+      started = true;
+    });
+    const attrs = {d, fill:"none", stroke:color, "stroke-width":width};
+    if (dash) attrs["stroke-dasharray"] = dash;
+    svg.appendChild(el("path", attrs));
+  }
+  function toPoints(arr){ return arr.map((v,i)=> (v===null||v===undefined||isNaN(v)) ? null : {i,v}); }
+
+  /* ============================================================
+     TAB 1 — DECOMPOSITION
+     trend: real centered 12-month moving average (2x12 filter)
+     seasonal: average of detrended values, grouped by month position
+     residual: series - trend - seasonal
+     ============================================================ */
+  function decompose(series){
+    const n = series.length;
+    const period = 12;
+    const half = period/2; // 6
+    const trend = new Array(n).fill(null);
+    // 2x12 centered moving average: 0.5*y[i-6] + y[i-5..i+5] + 0.5*y[i+6], divided by 12
+    for(let i=half; i<=n-half-1; i++){
+      let s = 0.5*series[i-half] + 0.5*series[i+half];
+      for(let k=-(half-1); k<=half-1; k++) s += series[i+k];
+      trend[i] = s/period;
+    }
+    const detrended = series.map((v,i)=> trend[i]===null ? null : v-trend[i]);
+    const seasonAvg = new Array(period).fill(0);
+    const seasonCount = new Array(period).fill(0);
+    for(let i=0;i<n;i++){
+      if (detrended[i]!==null){
+        seasonAvg[i%period] += detrended[i];
+        seasonCount[i%period]++;
+      }
+    }
+    for(let m=0;m<period;m++) seasonAvg[m] = seasonCount[m] ? seasonAvg[m]/seasonCount[m] : 0;
+    const centerShift = mean(seasonAvg);
+    for(let m=0;m<period;m++) seasonAvg[m] -= centerShift;
+    const seasonal = series.map((v,i)=> seasonAvg[i%period]);
+    const residual = series.map((v,i)=> trend[i]===null ? null : v - trend[i] - seasonal[i]);
+    return {trend, seasonal, residual, seasonAvg};
+  }
+
+  function renderDecomp(series){
+    const {trend, seasonal, residual, seasonAvg} = decompose(series);
+
+    document.getElementById("mTrend6").textContent = trend[6]===null ? "n/a" : trend[6].toFixed(3);
+    document.getElementById("mSeasonCycle").textContent = seasonAvg.map(v=>v.toFixed(1)).join(", ");
+    const residVals = residual.filter(v=>v!==null);
+    document.getElementById("mResidStd").textContent = residVals.length ? stdOf(residVals).toFixed(3) : "n/a";
+
+    const svg = document.getElementById("decompSvg");
+    svg.innerHTML = "";
+    const W=1000, rowH=105, gap=15, x0=60, w=900;
+    const rows = [
+      {label:"raw series", data: series, color:"var(--blue)"},
+      {label:"trend", data: trend, color:"var(--amber)"},
+      {label:"seasonal", data: seasonal, color:"var(--green)"},
+      {label:"residual", data: residual, color:"var(--coral)"},
+    ];
+    rows.forEach((row, ri) => {
+      const y0 = 10 + ri*(rowH+gap);
+      const defined = row.data.filter(v=>v!==null && !isNaN(v));
+      let yMin = Math.min(...defined), yMax = Math.max(...defined);
+      if (yMin===yMax){ yMin-=1; yMax+=1; }
+      const pad = (yMax-yMin)*0.15 || 1;
+      const {X,Y} = drawAxes(svg, x0, y0, w, rowH, [0,N-1], [yMin-pad, yMax+pad]);
+      const label = el("text",{x:8, y:y0+14, "font-size":11.5, fill:row.color, "font-family":"Georgia, serif"});
+      label.textContent = row.label;
+      svg.appendChild(label);
+      drawLine(svg, X, Y, toPoints(row.data), row.color, 2, null);
+      // zero-reference line for seasonal/residual rows
+      if (ri>=2 && yMin<0 && yMax>0){
+        svg.appendChild(el("line",{x1:X(0),y1:Y(0),x2:X(N-1),y2:Y(0),stroke:"var(--chalk-dim)","stroke-width":0.75,"stroke-dasharray":"3 3"}));
+      }
+    });
+    const xAxisLabel = el("text",{x:x0+w/2, y:10+4*(rowH+gap)-2, "text-anchor":"middle", "font-size":11, fill:"var(--chalk-dim)"});
+    xAxisLabel.textContent = "month index (0-35)";
+    svg.appendChild(xAxisLabel);
+
+    const story = document.getElementById("decompStory");
+    if (ampMult < 0.05){
+      story.textContent = "Seasonal amplitude near zero: the recovered seasonal row flattens to near-zero wiggle — decomposition can't invent a cycle that isn't there.";
+    } else if (slopeMult < 0.05){
+      story.textContent = "Trend slope near zero: the recovered trend row flattens near a constant level instead of climbing.";
+    } else {
+      story.textContent = `At these settings, trend at month 7 is ${trend[6]===null?"n/a":trend[6].toFixed(2)} and the residual's spread (std dev) is ${residVals.length?stdOf(residVals).toFixed(2):"n/a"} — compare to the tutorial's cited defaults (trend[6]=112.856, residual std=2.025) by clicking "Tutorial Example".`;
+    }
+  }
+
+  /* ============================================================
+     TAB 2 — DIFFERENCING / STATIONARITY
+     ============================================================ */
+  let diffMode = "raw";
+  document.getElementById("btnRaw").addEventListener("click", function(){
+    diffMode="raw"; this.classList.add("active"); document.getElementById("btnDiff").classList.remove("active");
+    renderDiff(buildSeries());
+  });
+  document.getElementById("btnDiff").addEventListener("click", function(){
+    diffMode="diff"; this.classList.add("active"); document.getElementById("btnRaw").classList.remove("active");
+    renderDiff(buildSeries());
+  });
+
+  function firstDifference(series){
+    const d = [];
+    for(let i=1;i<series.length;i++) d.push(series[i]-series[i-1]);
+    return d;
+  }
+
+  function renderDiff(series){
+    const data = diffMode==="raw" ? series : firstDifference(series);
+    const n = data.length;
+    const half1 = data.slice(0, Math.floor(n/2));
+    const half2 = data.slice(Math.floor(n/2));
+    const m1 = mean(half1), m2 = mean(half2);
+    document.getElementById("mMeanFirst").textContent = m1.toFixed(3);
+    document.getElementById("mMeanSecond").textContent = m2.toFixed(3);
+    document.getElementById("mMeanGap").textContent = Math.abs(m2-m1).toFixed(3);
+
+    const svg = document.getElementById("diffSvg");
+    svg.innerHTML = "";
+    const x0=60, y0=20, w=800, h=250;
+    const yMin = Math.min(...data), yMax = Math.max(...data);
+    const pad = (yMax-yMin)*0.1 || 1;
+    const {X,Y} = drawAxes(svg, x0, y0, w, h, [0,n-1], [yMin-pad, yMax+pad]);
+    drawLine(svg, X, Y, toPoints(data), diffMode==="raw" ? "var(--blue)" : "var(--green)", 2.4, null);
+    // half markers
+    svg.appendChild(el("line",{x1:X(m1===undefined?0:half1.length-0.5),y1:y0,x2:X(half1.length-0.5),y2:y0+h,stroke:"var(--chalk-dim)","stroke-width":1,"stroke-dasharray":"4 4"}));
+    svg.appendChild(el("line",{x1:x0,y1:Y(m1),x2:X(half1.length-0.5),y2:Y(m1),stroke:"var(--amber)","stroke-width":2}));
+    svg.appendChild(el("line",{x1:X(half1.length-0.5),y1:Y(m2),x2:x0+w,y2:Y(m2),stroke:"var(--coral)","stroke-width":2}));
+    const xAxisLabel = el("text",{x:x0+w/2, y:y0+h+22, "text-anchor":"middle", "font-size":11, fill:"var(--chalk-dim)"});
+    xAxisLabel.textContent = diffMode==="raw" ? "month index (0-35)" : "month index (1-35, one point shorter — differencing always costs the first point)";
+    svg.appendChild(xAxisLabel);
+
+    const story = document.getElementById("diffStory");
+    story.textContent = diffMode==="raw"
+      ? `Raw series: first-half mean ${m1.toFixed(2)} vs second-half mean ${m2.toFixed(2)} — a gap of ${Math.abs(m2-m1).toFixed(2)}, visible proof the mean is drifting (non-stationary).`
+      : `First-differenced series: first-half mean ${m1.toFixed(2)} vs second-half mean ${m2.toFixed(2)} — a much smaller gap of ${Math.abs(m2-m1).toFixed(2)}, hovering near a constant band instead of climbing.`;
+  }
+
+  /* ============================================================
+     TAB 3 — FORECAST DEMO
+     Three real, live-computed methods:
+       naive: repeat the last training value
+       seasonal naive: repeat the value from 12 steps back
+       linear + seasonal: OLS trend line + seasonal-average offset
+     WAPE / Bias use the exact formula from wape_and_forecast_bias_feynman.md:
+       WAPE = sum(|A-F|) / sum(A)      Bias = sum(F-A) / sum(A)
+     ============================================================ */
+  let horizon = 4;
+  let method = "linearSeasonal";
+
+  function olsFit(train){
+    const n = train.length;
+    const xs = Array.from({length:n}, (_,i)=>i);
+    const xbar = mean(xs), ybar = mean(train);
+    let sxy=0, sxx=0;
+    for(let i=0;i<n;i++){ sxy += (xs[i]-xbar)*(train[i]-ybar); sxx += (xs[i]-xbar)**2; }
+    const slope = sxy/sxx, intercept = ybar - slope*xbar;
+    return {slope, intercept};
+  }
+
+  function forecastNaive(train, h){
+    const last = train[train.length-1];
+    return new Array(h).fill(last);
+  }
+  function forecastSeasonalNaive(train, h){
+    const n = train.length;
+    const out = [];
+    for(let k=0;k<h;k++){
+      const idx = n - 12 + k;
+      out.push(idx>=0 ? train[idx] : train[idx+12]);
+    }
+    return out;
+  }
+  function forecastLinearSeasonal(train, h){
+    const n = train.length;
+    const {slope, intercept} = olsFit(train);
+    const detrended = train.map((v,i)=> v - (slope*i+intercept));
+    const seasonAvg = new Array(12).fill(0);
+    const seasonCount = new Array(12).fill(0);
+    for(let i=0;i<n;i++){ seasonAvg[i%12] += detrended[i]; seasonCount[i%12]++; }
+    for(let m=0;m<12;m++) seasonAvg[m] = seasonCount[m] ? seasonAvg[m]/seasonCount[m] : 0;
+    const shift = mean(seasonAvg);
+    for(let m=0;m<12;m++) seasonAvg[m] -= shift;
+    const out = [];
+    for(let k=0;k<h;k++){
+      const t = n+k;
+      out.push(slope*t + intercept + seasonAvg[t%12]);
+    }
+    return out;
+  }
+
+  function wape(actual, forecast){
+    let num=0, den=0;
+    for(let i=0;i<actual.length;i++){ num += Math.abs(actual[i]-forecast[i]); den += actual[i]; }
+    return num/den;
+  }
+  function biasMetric(actual, forecast){
+    let num=0, den=0;
+    for(let i=0;i<actual.length;i++){ num += (forecast[i]-actual[i]); den += actual[i]; }
+    return num/den;
+  }
+
+  function setMethodButtons(){
+    document.getElementById("btnNaive").classList.toggle("active", method==="naive");
+    document.getElementById("btnSeasonalNaive").classList.toggle("active", method==="seasonalNaive");
+    document.getElementById("btnLinearSeasonal").classList.toggle("active", method==="linearSeasonal");
+  }
+  document.getElementById("btnNaive").addEventListener("click", ()=>{ method="naive"; setMethodButtons(); renderForecast(buildSeries()); });
+  document.getElementById("btnSeasonalNaive").addEventListener("click", ()=>{ method="seasonalNaive"; setMethodButtons(); renderForecast(buildSeries()); });
+  document.getElementById("btnLinearSeasonal").addEventListener("click", ()=>{ method="linearSeasonal"; setMethodButtons(); renderForecast(buildSeries()); });
+  document.getElementById("horizonSlider").addEventListener("input", function(){
+    horizon = parseInt(this.value,10);
+    document.getElementById("horizonOut").textContent = horizon;
+    renderForecast(buildSeries());
+  });
+  document.getElementById("btnH4").addEventListener("click", function(){
+    horizon = 4;
+    document.getElementById("horizonSlider").value = 4;
+    document.getElementById("horizonOut").textContent = "4";
+    renderForecast(buildSeries());
+  });
+
+  function renderForecast(series){
+    const n = series.length;
+    const h = Math.min(horizon, n-13); // keep at least 13 training points so seasonalNaive has a full year to look back on
+    const train = series.slice(0, n-h);
+    const actual = series.slice(n-h, n);
+    let fc;
+    if (method==="naive") fc = forecastNaive(train, h);
+    else if (method==="seasonalNaive") fc = forecastSeasonalNaive(train, h);
+    else fc = forecastLinearSeasonal(train, h);
+
+    const w = wape(actual, fc), b = biasMetric(actual, fc);
+    document.getElementById("mWape").textContent = (w*100).toFixed(3)+"%";
+    document.getElementById("mBias").textContent = (b*100>=0?"+":"")+(b*100).toFixed(3)+"%";
+
+    const svg = document.getElementById("forecastSvg");
+    svg.innerHTML = "";
+    const x0=60, y0=20, W=900, ph=300;
+    const allVals = train.concat(actual, fc);
+    const yMin = Math.min(...allVals), yMax = Math.max(...allVals);
+    const pad = (yMax-yMin)*0.12 || 1;
+    const {X,Y} = drawAxes(svg, x0, y0, W, ph, [0, n-1], [yMin-pad, yMax+pad]);
+
+    const trainPts = train.map((v,i)=>({i,v}));
+    const actualPts = actual.map((v,i)=>({i:train.length+i, v}));
+    const fcPts = fc.map((v,i)=>({i:train.length+i, v}));
+
+    drawLine(svg, X, Y, trainPts, "var(--blue)", 2.2, null);
+    drawLine(svg, X, Y, actualPts, "var(--chalk-dim)", 2.2, null);
+    drawLine(svg, X, Y, fcPts, "var(--coral)", 2.4, "6 4");
+    actualPts.forEach(p => svg.appendChild(el("circle",{cx:X(p.i), cy:Y(p.v), r:4.5, fill:"var(--chalk-dim)"})));
+    fcPts.forEach(p => svg.appendChild(el("circle",{cx:X(p.i), cy:Y(p.v), r:4.5, fill:"var(--coral)"})));
+    svg.appendChild(el("line",{x1:X(train.length-1),y1:y0,x2:X(train.length-1),y2:y0+ph,stroke:"var(--chalk-dim)","stroke-width":1,"stroke-dasharray":"3 3"}));
+
+    const xAxisLabel = el("text",{x:x0+W/2, y:y0+ph+22, "text-anchor":"middle", "font-size":11, fill:"var(--chalk-dim)"});
+    xAxisLabel.textContent = `month index (0-${n-1}) — dashed vertical line marks where training stops and the ${h}-point holdout begins`;
+    svg.appendChild(xAxisLabel);
+
+    const methodName = method==="naive" ? "Naive" : (method==="seasonalNaive" ? "Seasonal naive" : "Linear trend + seasonal average");
+    const story = document.getElementById("forecastStory");
+    story.textContent = `${methodName}, horizon ${h}: forecast [${fc.map(v=>v.toFixed(1)).join(", ")}] vs actual held-out [${actual.map(v=>v.toFixed(1)).join(", ")}] → WAPE ${(w*100).toFixed(2)}%, Bias ${(b*100).toFixed(2)}%. Try all three methods at h=4 to reproduce the tutorial's comparison table.`;
+  }
+
+  /* ============================================================
+     INITIAL RENDER
+     ============================================================ */
+  setSlopeReadout(); setAmpReadout(); setNoiseReadout();
+  renderAll();
+})();
+</script>
+</body>
+</html>

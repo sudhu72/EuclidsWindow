@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import renderMathInElement from "katex/contrib/auto-render";
 import { EXERCISES, TIERS, STAGE_ORDER, type Exercise } from "./aibyhandData";
+import { BYHAND_CHECKS } from "./aibyhandChecks";
 
 // The stage strings are curated HTML (tables, steps) with \(...\) math, so we
 // inject them and typeset with KaTeX after render.
@@ -23,6 +24,71 @@ function Html({ html }: { html: string }) {
   return <div ref={ref} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
+/** A small "predict and check" quiz, one per exercise, built only from
+ *  numbers already given (and already verified) in that exercise's own
+ *  by-hand walkthrough — this tests recall of a real computation, it never
+ *  introduces a new unverified number. */
+function TryItYourself({ exId }: { exId: string }) {
+  const check = BYHAND_CHECKS[exId];
+  const [values, setValues] = useState<string[]>(() => (check ? check.fields.map(() => "") : []));
+  const [result, setResult] = useState<"idle" | "correct" | "wrong">("idle");
+  const [showAnswer, setShowAnswer] = useState(false);
+
+  if (!check) return null;
+
+  function submit() {
+    const ok = check.fields.every((f, i) => {
+      const v = parseFloat(values[i]);
+      return !Number.isNaN(v) && Math.abs(v - f.answer) <= f.tolerance;
+    });
+    setResult(ok ? "correct" : "wrong");
+  }
+
+  return (
+    <div className="abh-tryit">
+      <div className="abh-tryit-h">✏️ Try it yourself</div>
+      <Html html={check.prompt} />
+      <div className="abh-tryit-fields">
+        {check.fields.map((f, i) => (
+          <label key={i} className="set-row" style={{ maxWidth: 260 }}>
+            <span>{f.label}</span>
+            <input
+              type="number"
+              step="any"
+              value={values[i]}
+              onChange={(e) => {
+                const next = values.slice();
+                next[i] = e.target.value;
+                setValues(next);
+                setResult("idle");
+              }}
+            />
+          </label>
+        ))}
+      </div>
+      <div className="set-actions">
+        <button className="send" onClick={submit}>Check my answer</button>
+        <button className="btn-ghost" onClick={() => setShowAnswer((s) => !s)}>
+          {showAnswer ? "Hide answer" : "Show answer"}
+        </button>
+      </div>
+      {result === "correct" && <div className="lg-verdict lg-tautology">✓ {check.successMsg}</div>}
+      {result === "wrong" && (
+        <div className="lg-verdict lg-contingent">
+          Not quite — recheck the arithmetic in the steps above and try again.
+        </div>
+      )}
+      {showAnswer && (
+        <div className="lg-note">
+          {check.fields.map((f, i) => (
+            <div key={i}>{f.label} = {f.answer}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Walkthrough({ ex, onBack }: { ex: Exercise; onBack: () => void }) {
   return (
     <div className="lesson-body">
@@ -38,6 +104,7 @@ function Walkthrough({ ex, onBack }: { ex: Exercise; onBack: () => void }) {
           <div className="abh-stage-h">{label}</div>
           <div className="abh-stage-b">
             <Html html={ex.stages[key]} />
+            {key === "byhand" && <TryItYourself key={ex.id} exId={ex.id} />}
           </div>
         </div>
       ))}

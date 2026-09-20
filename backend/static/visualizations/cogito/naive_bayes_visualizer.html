@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Naive Bayes: word by word, and the Gaussian boundary</title>
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#9aab9f;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+    --mono: 'SF Mono', 'Menlo', 'Consolas', 'DejaVu Sans Mono', monospace;
+    --hand: Georgia, 'Trebuchet MS', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:var(--mono);padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:var(--hand);font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.5;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:var(--hand);font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  h3{font-family:var(--hand);font-size:15px;margin:18px 0 8px;color:var(--chalk-dim);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:var(--mono);font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:150px;}
+  input[type=text]{flex:1;min-width:220px;font-family:var(--mono);font-size:14px;background:rgba(244,241,232,.06);border:1px solid var(--border);color:var(--chalk);border-radius:6px;padding:8px 10px;}
+  input[type=text]:focus{outline:none;border-color:var(--amber);}
+
+  button.op{font-family:var(--mono);font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.go{font-family:var(--mono);font-size:13px;font-weight:700;border:1px solid var(--amber);background:var(--amber);color:#26210f;border-radius:8px;padding:8px 16px;cursor:pointer;}
+  button.go:hover{opacity:0.9;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0;}
+  th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--border);}
+  th{color:var(--chalk-dim);font-weight:700;text-align:right;}
+  td:first-child, th:first-child{text-align:left;}
+  tr.wordrow-spam td.wordcell{color:var(--coral);}
+  tr.wordrow-ham td.wordcell{color:var(--blue);}
+  tr.skipped td{color:var(--chalk-dim);font-style:italic;}
+
+  .doclist{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;}
+  .doc{border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;}
+  .doc.spam{border-color:rgba(255,130,102,0.5);color:var(--coral);}
+  .doc.ham{border-color:rgba(127,179,213,0.5);color:var(--blue);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .cols{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+
+  .metric-row{display:flex;justify-content:center;gap:26px;margin:16px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:12px 18px;min-width:150px;}
+  .metric .lbl{font-size:11px;color:var(--chalk-dim);}
+  .metric .num{font-family:var(--hand);font-size:22px;margin-top:4px;}
+  .metric.spam .num{color:var(--coral);}
+  .metric.ham .num{color:var(--blue);}
+
+  .bars{margin:14px 0;}
+  .barrow{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .barrow .barlabel{width:60px;font-size:12px;color:var(--chalk-dim);}
+  .bartrack{flex:1;height:18px;background:rgba(244,241,232,.06);border-radius:9px;overflow:hidden;}
+  .barfill{height:100%;border-radius:9px;transition:width 0.2s;}
+  .barfill.spam{background:var(--coral);}
+  .barfill.ham{background:var(--blue);}
+  .barpct{width:70px;text-align:right;font-size:12px;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:14px;min-height:20px;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  code{background:rgba(244,241,232,.08);padding:1px 5px;border-radius:4px;}
+
+  .legend{display:flex;justify-content:center;gap:22px;font-size:12px;color:var(--chalk-dim);margin-top:6px;flex-wrap:wrap;}
+  .legend .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Naive Bayes: watching the evidence pile up</h1>
+  <p class="sub">Two tabs, matching the two worked examples in <code>naive_bayes_feynman.md</code>: a word-by-word multinomial spam filter with real Laplace smoothing, and a Gaussian Naive Bayes decision boundary computed live from a small numeric dataset. Everything below is computed in this page, live, in your browser — nothing is sent anywhere.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="spam">Spam or Ham?</button>
+    <button class="tabbtn" data-tab="gauss">Gaussian Decision Boundary</button>
+  </div>
+
+  <!-- ============ TAB 1: SPAM / HAM ============ -->
+  <div class="tabpanel active" id="tab-spam">
+    <div class="panel">
+      <h2>The training set (5 spam, 5 ham — 3 words each)</h2>
+      <p class="sub">This is the exact dataset from Part 2 of the tutorial. Word order is thrown away (bag-of-words) — only counts matter.</p>
+      <div class="doclist" id="docList"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Classify a message, word by word</h2>
+      <p class="sub">Pick a preset or type your own message using words from the training vocabulary above. Watch each word's smoothed likelihood multiply into a running score for each class.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" data-preset="urgent team meeting">"urgent team meeting"</button>
+        <button class="op" data-preset="free win team">"free win team"</button>
+        <button class="op" data-preset="free money win">"free money win"</button>
+        <button class="op" data-preset="team project report">"team project report"</button>
+      </div>
+      <div class="row">
+        <label>Your message</label>
+        <input type="text" id="msgInput" value="urgent team meeting" spellcheck="false">
+        <button class="go" id="classifyBtn">Classify</button>
+      </div>
+      <div class="row" style="gap:14px;">
+        <label style="min-width:auto;">
+          <input type="checkbox" id="smoothToggle" checked style="accent-color:var(--amber);">
+          Apply Laplace (add-one) smoothing
+        </label>
+      </div>
+
+      <table id="wordTable">
+        <thead>
+          <tr>
+            <th>word</th><th>count|spam</th><th>count|ham</th>
+            <th>P(word|spam)</th><th>P(word|ham)</th>
+            <th>running score(spam)</th><th>running score(ham)</th>
+          </tr>
+        </thead>
+        <tbody id="wordTableBody"></tbody>
+      </table>
+
+      <div class="bars">
+        <div class="barrow">
+          <div class="barlabel">spam</div>
+          <div class="bartrack"><div class="barfill spam" id="barSpam" style="width:0%"></div></div>
+          <div class="barpct" id="barSpamPct">-</div>
+        </div>
+        <div class="barrow">
+          <div class="barlabel">ham</div>
+          <div class="bartrack"><div class="barfill ham" id="barHam" style="width:0%"></div></div>
+          <div class="barpct" id="barHamPct">-</div>
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric spam"><div class="lbl">P(spam | message)</div><div class="num" id="mSpam">-</div></div>
+        <div class="metric ham"><div class="lbl">P(ham | message)</div><div class="num" id="mHam">-</div></div>
+      </div>
+      <div class="story-line" id="spamStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: GAUSSIAN NB ============ -->
+  <div class="tabpanel" id="tab-gauss">
+    <div class="panel">
+      <h2>Ten emails, two continuous features</h2>
+      <p class="sub">Each point is one email: (number of hyperlinks, number of exclamation marks). This is the exact dataset from Part 3 of the tutorial. The ellipses are each class's learned Gaussian "blob" (1 and 2 standard deviations out from its mean), and the shaded background is the live decision region.</p>
+
+      <div class="row">
+        <label>Test point — hyperlinks</label>
+        <input type="range" id="gx" min="-2" max="9" step="0.2" value="3">
+        <span class="readout" id="gxOut" style="font-family:var(--hand);min-width:36px;text-align:center;">3.0</span>
+      </div>
+      <div class="row">
+        <label>Test point — exclamations</label>
+        <input type="range" id="gy" min="-2" max="6" step="0.2" value="1">
+        <span class="readout" id="gyOut" style="font-family:var(--hand);min-width:36px;text-align:center;">1.0</span>
+      </div>
+
+      <div class="cols">
+        <svg id="gaussSvg" width="460" height="420" viewBox="0 0 460 420"></svg>
+      </div>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--coral);"></span>spam points / region</span>
+        <span><span class="swatch" style="background:var(--blue);"></span>ham points / region</span>
+        <span><span class="swatch" style="background:var(--amber);"></span>test point</span>
+      </div>
+
+      <h3>Learned per-class mean / variance</h3>
+      <table id="gaussStatsTable">
+        <thead><tr><th>class</th><th>mean(hyperlinks)</th><th>mean(exclamations)</th><th>var(hyperlinks)</th><th>var(exclamations)</th></tr></thead>
+        <tbody id="gaussStatsBody"></tbody>
+      </table>
+
+      <div class="metric-row">
+        <div class="metric spam"><div class="lbl">P(spam | test point)</div><div class="num" id="gSpam">-</div></div>
+        <div class="metric ham"><div class="lbl">P(ham | test point)</div><div class="num" id="gHam">-</div></div>
+      </div>
+      <div class="story-line" id="gaussStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything on this page runs locally, no fonts, scripts, or data ever leave your browser. Companion to <a href="../supervised/naive_bayes_feynman.md" style="color:var(--blue);">Naive Bayes</a>, Parts 2–3.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ============================================================
+  // TAB 1 — MULTINOMIAL NAIVE BAYES (spam / ham)
+  // ============================================================
+
+  const DOCS = [
+    {text:"free money now",    cls:"spam"},
+    {text:"win free money",    cls:"spam"},
+    {text:"urgent free offer", cls:"spam"},
+    {text:"win urgent prize",  cls:"spam"},
+    {text:"free win now",      cls:"spam"},
+    {text:"team meeting now",       cls:"ham"},
+    {text:"project report meeting", cls:"ham"},
+    {text:"team lunch project",     cls:"ham"},
+    {text:"meeting report today",   cls:"ham"},
+    {text:"lunch team meeting",     cls:"ham"},
+  ];
+
+  function tokenize(s){
+    return s.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  }
+
+  // Build vocabulary + per-class word counts, exactly like CountVectorizer + summing rows.
+  const wordCounts = { spam:{}, ham:{} };
+  const vocabSet = new Set();
+  let totalWords = { spam:0, ham:0 };
+  const docsPerClass = { spam:0, ham:0 };
+
+  DOCS.forEach(d => {
+    docsPerClass[d.cls]++;
+    tokenize(d.text).forEach(w => {
+      vocabSet.add(w);
+      wordCounts[d.cls][w] = (wordCounts[d.cls][w] || 0) + 1;
+      totalWords[d.cls]++;
+    });
+  });
+  const VOCAB = Array.from(vocabSet).sort();
+  const V = VOCAB.length;
+  const totalDocs = DOCS.length;
+  const prior = { spam: docsPerClass.spam/totalDocs, ham: docsPerClass.ham/totalDocs };
+
+  function renderDocList(){
+    const box = document.getElementById("docList");
+    box.innerHTML = "";
+    DOCS.forEach(d => {
+      const div = document.createElement("div");
+      div.className = "doc " + d.cls;
+      div.textContent = "\"" + d.text + "\"  [" + d.cls + "]";
+      box.appendChild(div);
+    });
+  }
+  renderDocList();
+
+  // P(word|class), with or without Laplace smoothing.
+  function pWordGivenClass(word, cls, smoothed){
+    const c = wordCounts[cls][word] || 0;
+    if(smoothed){
+      return (c + 1) / (totalWords[cls] + V);
+    } else {
+      return totalWords[cls] > 0 ? (c / totalWords[cls]) : 0;
+    }
+  }
+
+  function classify(message, smoothed){
+    const tokens = tokenize(message);
+    let scoreSpam = prior.spam;
+    let scoreHam  = prior.ham;
+    const rows = [];
+    tokens.forEach(w => {
+      if(!vocabSet.has(w)){
+        rows.push({word:w, skipped:true});
+        return;
+      }
+      const pS = pWordGivenClass(w, "spam", smoothed);
+      const pH = pWordGivenClass(w, "ham", smoothed);
+      scoreSpam *= pS;
+      scoreHam  *= pH;
+      rows.push({
+        word:w,
+        cSpam: wordCounts.spam[w]||0,
+        cHam:  wordCounts.ham[w]||0,
+        pSpam: pS,
+        pHam:  pH,
+        runSpam: scoreSpam,
+        runHam:  scoreHam,
+      });
+    });
+    const Z = scoreSpam + scoreHam;
+    const postSpam = Z > 0 ? scoreSpam / Z : NaN;
+    const postHam  = Z > 0 ? scoreHam  / Z : NaN;
+    return { rows, scoreSpam, scoreHam, postSpam, postHam };
+  }
+
+  function fmtSci(x){
+    if(!isFinite(x)) return "-";
+    if(x === 0) return "0";
+    return x.toExponential(3);
+  }
+  function fmtPct(x){
+    if(!isFinite(x)) return "undefined (0/0)";
+    return (x*100).toFixed(2) + "%";
+  }
+
+  function runClassifyUI(){
+    const msg = document.getElementById("msgInput").value;
+    const smoothed = document.getElementById("smoothToggle").checked;
+    const result = classify(msg, smoothed);
+
+    const tbody = document.getElementById("wordTableBody");
+    tbody.innerHTML = "";
+    result.rows.forEach(r => {
+      const tr = document.createElement("tr");
+      if(r.skipped){
+        tr.className = "skipped";
+        tr.innerHTML = `<td class="wordcell">${r.word}</td><td colspan="6">not in training vocabulary — skipped</td>`;
+      } else {
+        tr.className = "wordrow-" + (r.pSpam >= r.pHam ? "spam" : "ham");
+        tr.innerHTML = `
+          <td class="wordcell">${r.word}</td>
+          <td>${r.cSpam}</td>
+          <td>${r.cHam}</td>
+          <td>${r.pSpam.toFixed(4)}</td>
+          <td>${r.pHam.toFixed(4)}</td>
+          <td>${fmtSci(r.runSpam)}</td>
+          <td>${fmtSci(r.runHam)}</td>
+        `;
+      }
+      tbody.appendChild(tr);
+    });
+
+    const pSpam = result.postSpam, pHam = result.postHam;
+    document.getElementById("mSpam").textContent = fmtPct(pSpam);
+    document.getElementById("mHam").textContent  = fmtPct(pHam);
+
+    const barSpamEl = document.getElementById("barSpam");
+    const barHamEl  = document.getElementById("barHam");
+    const bsp = isFinite(pSpam) ? pSpam*100 : 0;
+    const bhp = isFinite(pHam)  ? pHam*100  : 0;
+    barSpamEl.style.width = bsp + "%";
+    barHamEl.style.width  = bhp + "%";
+    document.getElementById("barSpamPct").textContent = fmtPct(pSpam);
+    document.getElementById("barHamPct").textContent  = fmtPct(pHam);
+
+    const story = document.getElementById("spamStory");
+    if(!isFinite(pSpam)){
+      story.textContent = "Both classes' raw scores hit exactly zero (a word missing from one class zeroed it out, and a different word missing from the other zeroed that one out too) — the unsmoothed model can't even decide. Turn smoothing back on.";
+    } else if(pSpam > pHam){
+      story.textContent = `Classified SPAM — ${(pSpam*100).toFixed(2)}% vs ${(pHam*100).toFixed(2)}% for ham.`;
+    } else {
+      story.textContent = `Classified HAM — ${(pHam*100).toFixed(2)}% vs ${(pSpam*100).toFixed(2)}% for spam.`;
+    }
+  }
+
+  document.getElementById("classifyBtn").addEventListener("click", runClassifyUI);
+  document.getElementById("smoothToggle").addEventListener("change", runClassifyUI);
+  document.getElementById("msgInput").addEventListener("keydown", (e) => { if(e.key === "Enter") runClassifyUI(); });
+  document.querySelectorAll("#tab-spam .op").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById("msgInput").value = btn.getAttribute("data-preset");
+      runClassifyUI();
+    });
+  });
+
+  runClassifyUI();
+
+  // ============================================================
+  // TAB 2 — GAUSSIAN NAIVE BAYES
+  // ============================================================
+
+  const GDATA = [
+    {x:5, y:3, cls:"spam"}, {x:6, y:2, cls:"spam"}, {x:4, y:4, cls:"spam"},
+    {x:7, y:1, cls:"spam"}, {x:5, y:2, cls:"spam"},
+    {x:0, y:0, cls:"ham"}, {x:1, y:0, cls:"ham"}, {x:0, y:1, cls:"ham"},
+    {x:1, y:1, cls:"ham"}, {x:0, y:0, cls:"ham"},
+  ];
+
+  function meanVar(vals){
+    const n = vals.length;
+    const mean = vals.reduce((a,b)=>a+b,0)/n;
+    const varr = vals.reduce((a,b)=>a+(b-mean)*(b-mean),0)/n; // population variance, ddof=0 — matches sklearn GaussianNB
+    return {mean, varr};
+  }
+
+  const gStats = {};
+  ["spam","ham"].forEach(cls => {
+    const pts = GDATA.filter(p => p.cls === cls);
+    const mx = meanVar(pts.map(p=>p.x));
+    const my = meanVar(pts.map(p=>p.y));
+    gStats[cls] = { mx: mx.mean, my: my.mean, vx: mx.varr, vy: my.varr, prior: pts.length/GDATA.length };
+  });
+
+  function gaussPdf(x, mean, varr){
+    return (1/Math.sqrt(2*Math.PI*varr)) * Math.exp(-((x-mean)*(x-mean))/(2*varr));
+  }
+
+  function classifyGaussian(x, y){
+    const scores = {};
+    ["spam","ham"].forEach(cls => {
+      const s = gStats[cls];
+      const pdfX = gaussPdf(x, s.mx, s.vx);
+      const pdfY = gaussPdf(y, s.my, s.vy);
+      scores[cls] = s.prior * pdfX * pdfY;
+    });
+    const Z = scores.spam + scores.ham;
+    return { postSpam: scores.spam/Z, postHam: scores.ham/Z };
+  }
+
+  function renderGaussStats(){
+    const tbody = document.getElementById("gaussStatsBody");
+    tbody.innerHTML = "";
+    ["spam","ham"].forEach(cls => {
+      const s = gStats[cls];
+      const tr = document.createElement("tr");
+      tr.className = "wordrow-" + cls;
+      tr.innerHTML = `<td class="wordcell">${cls}</td><td>${s.mx.toFixed(2)}</td><td>${s.my.toFixed(2)}</td><td>${s.vx.toFixed(2)}</td><td>${s.vy.toFixed(2)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  renderGaussStats();
+
+  // --- SVG plotting ---
+  const svgNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs){
+    const e = document.createElementNS(svgNS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  const svg = document.getElementById("gaussSvg");
+  const W = 460, H = 420, PAD = 40;
+  const xMin = -2, xMax = 9, yMin = -2, yMax = 6;
+  function sx(x){ return PAD + (x - xMin)/(xMax - xMin) * (W - 2*PAD); }
+  function sy(y){ return H - PAD - (y - yMin)/(yMax - yMin) * (H - 2*PAD); }
+
+  const COLORS = { spam: "#ff8266", ham: "#7fb3d5" };
+
+  function drawGaussPlot(testX, testY){
+    svg.innerHTML = "";
+
+    // background decision-region heatmap
+    const gridStep = 10; // pixels
+    for(let px = PAD; px < W - PAD; px += gridStep){
+      for(let py = PAD; py < H - PAD; py += gridStep){
+        const dataX = xMin + (px - PAD)/(W - 2*PAD) * (xMax - xMin);
+        const dataY = yMin + (H - PAD - py)/(H - 2*PAD) * (yMax - yMin);
+        const r = classifyGaussian(dataX, dataY);
+        const winner = r.postSpam >= r.postHam ? "spam" : "ham";
+        const conf = Math.max(r.postSpam, r.postHam); // 0.5 .. 1
+        const opacity = 0.06 + 0.22 * (conf - 0.5) * 2;
+        const rect = el("rect", {x:px, y:py, width:gridStep, height:gridStep,
+          fill: COLORS[winner], opacity: Math.max(0.05, Math.min(0.32, opacity))});
+        svg.appendChild(rect);
+      }
+    }
+
+    // axes
+    svg.appendChild(el("line", {x1:sx(xMin), y1:sy(0), x2:sx(xMax), y2:sy(0), stroke:"rgba(244,241,232,.25)", "stroke-width":1}));
+    svg.appendChild(el("line", {x1:sx(0), y1:sy(yMin), x2:sx(0), y2:sy(yMax), stroke:"rgba(244,241,232,.25)", "stroke-width":1}));
+    const xlab = el("text", {x:sx(xMax)-4, y:sy(0)-6, fill:"rgba(244,241,232,.5)", "font-size":"10", "text-anchor":"end"});
+    xlab.textContent = "hyperlinks →";
+    svg.appendChild(xlab);
+    const ylab = el("text", {x:sx(0)+6, y:sy(yMax)+10, fill:"rgba(244,241,232,.5)", "font-size":"10"});
+    ylab.textContent = "exclamations ↑";
+    svg.appendChild(ylab);
+
+    // per-class Gaussian ellipses at 1 and 2 std devs
+    ["spam","ham"].forEach(cls => {
+      const s = gStats[cls];
+      const sdx = Math.sqrt(s.vx), sdy = Math.sqrt(s.vy);
+      [1,2].forEach(k => {
+        const rx = Math.abs(sx(s.mx + k*sdx) - sx(s.mx));
+        const ry = Math.abs(sy(s.my + k*sdy) - sy(s.my));
+        svg.appendChild(el("ellipse", {
+          cx:sx(s.mx), cy:sy(s.my), rx:rx, ry:ry,
+          fill:"none", stroke:COLORS[cls], "stroke-width": k===1?2:1,
+          "stroke-dasharray": k===1?"none":"4,3", opacity: k===1?0.9:0.55
+        }));
+      });
+      // mean marker
+      svg.appendChild(el("circle", {cx:sx(s.mx), cy:sy(s.my), r:4, fill:COLORS[cls], stroke:"#0c1a13", "stroke-width":1.5}));
+    });
+
+    // data points
+    GDATA.forEach(p => {
+      svg.appendChild(el("circle", {cx:sx(p.x), cy:sy(p.y), r:6, fill:COLORS[p.cls], stroke:"#0c1a13", "stroke-width":1.5}));
+    });
+
+    // test point
+    svg.appendChild(el("circle", {cx:sx(testX), cy:sy(testY), r:7, fill:"#ffce54", stroke:"#26210f", "stroke-width":2}));
+  }
+
+  function runGaussUI(){
+    const x = parseFloat(document.getElementById("gx").value);
+    const y = parseFloat(document.getElementById("gy").value);
+    document.getElementById("gxOut").textContent = x.toFixed(1);
+    document.getElementById("gyOut").textContent = y.toFixed(1);
+
+    const r = classifyGaussian(x, y);
+    document.getElementById("gSpam").textContent = (r.postSpam*100).toFixed(4) + "%";
+    document.getElementById("gHam").textContent  = (r.postHam*100).toFixed(4) + "%";
+
+    const story = document.getElementById("gaussStory");
+    const winner = r.postSpam >= r.postHam ? "spam" : "ham";
+    const winPct = (Math.max(r.postSpam, r.postHam)*100).toFixed(4);
+    story.textContent = `Test point (${x.toFixed(1)}, ${y.toFixed(1)}) → classified ${winner.toUpperCase()} at ${winPct}% confidence.`;
+
+    drawGaussPlot(x, y);
+  }
+
+  document.getElementById("gx").addEventListener("input", runGaussUI);
+  document.getElementById("gy").addEventListener("input", runGaussUI);
+
+  runGaussUI();
+
+  // ============================================================
+  // TAB SWITCHING
+  // ============================================================
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tabpanel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-" + btn.getAttribute("data-tab")).classList.add("active");
+  }));
+
+})();
+</script>
+</body>
+</html>

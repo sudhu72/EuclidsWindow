@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Much Does Y Tell You About X? — Mutual Information</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --good:#0F8B8D; --warn:#D9636B; --pB:#D9A62E;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:940px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  table.jt{ border-collapse:collapse; margin:14px auto; font-family:"IBM Plex Mono",monospace; font-size:13.5px; }
+  table.jt th, table.jt td{ border:1px solid var(--line); padding:8px 10px; text-align:center; }
+  table.jt th{ background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  table.jt input{ width:64px; font-family:"IBM Plex Mono",monospace; font-size:13px; border:1px solid var(--line); border-radius:6px; padding:4px 6px; text-align:center; }
+  table.jt td.marg{ background:#F5F4F0; color:var(--ink-soft); }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.8; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  .metric-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:14px; }
+  .metric{ text-align:center; border:1px solid var(--line); border-radius:10px; padding:10px 16px; min-width:110px; background:#fff; }
+  .metric .lbl{ font-size:11px; color:var(--ink-soft); }
+  .metric .num{ font-family:"IBM Plex Mono",monospace; font-size:16px; font-weight:700; color:var(--accent); margin-top:4px; }
+  .warn-text{ color:var(--warn); font-weight:700; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Mutual Information</div>
+    <h1>How Much Does Y Tell You About X?</h1>
+    <p>Edit any cell of the joint-probability table below (it renormalizes automatically to sum to 1). Watch entropy, conditional entropy, and mutual information update live — computed three independent ways, always agreeing.</p>
+  </header>
+
+  <div class="card">
+    <h2>Joint Probability Table</h2>
+    <p class="sub"><b>What's happening:</b> edit any of the four joint probabilities. The marginals (row/column totals) and every downstream quantity recompute automatically.</p>
+    <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click "Snap to independence" and watch I(X;Y) fall to exactly 0. Click "Snap to perfect channel" and watch it jump to exactly H(X). Then hand-edit toward something in between and watch the KL-divergence panel below confirm the same number a third way.</p>
+    <div class="row" style="gap:6px; justify-content:center;">
+      <button class="op" id="btnWeather">Weather/umbrella example</button>
+      <button class="op" id="btnIndep">Snap to independence</button>
+      <button class="op" id="btnPerfect">Snap to perfect channel</button>
+    </div>
+    <table class="jt" id="jointTable"></table>
+    <div class="metric-row">
+      <div class="metric"><div class="lbl">H(X)</div><div class="num" id="mHx">-</div></div>
+      <div class="metric"><div class="lbl">H(Y)</div><div class="num" id="mHy">-</div></div>
+      <div class="metric"><div class="lbl">H(X,Y)</div><div class="num" id="mHxy">-</div></div>
+      <div class="metric"><div class="lbl">H(X|Y)</div><div class="num" id="mHxgy">-</div></div>
+      <div class="metric"><div class="lbl">H(Y|X)</div><div class="num" id="mHygx">-</div></div>
+      <div class="metric"><div class="lbl">I(X;Y)</div><div class="num" id="mI">-</div></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div class="caption"><b>Why it matters:</b> all three routes to I(X;Y) — H(X)-H(X|Y), H(X)+H(Y)-H(X,Y), and KL(joint‖product-of-marginals) — are the same number by construction, not by coincidence; this table computes all three live so the identity is something you watch hold, not something you take on faith.</div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../mutual-information.md">Mutual Information</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const LABELS_X = ["Rain", "No Rain"];
+  const LABELS_Y = ["Umbrella: Yes", "Umbrella: No"];
+  let joint = [[0.35, 0.05], [0.10, 0.50]]; // rows = X (Rain/NoRain), cols = Y (Yes/No)
+
+  function renormalize(){
+    let sum = 0;
+    for (const row of joint) for (const v of row) sum += v;
+    if (sum <= 0) { joint = [[0.25,0.25],[0.25,0.25]]; return; }
+    for (let i=0;i<2;i++) for (let j=0;j<2;j++) joint[i][j] = joint[i][j]/sum;
+  }
+
+  function marginalsX(){ return [joint[0][0]+joint[0][1], joint[1][0]+joint[1][1]]; }
+  function marginalsY(){ return [joint[0][0]+joint[1][0], joint[0][1]+joint[1][1]]; }
+
+  function entropyOf(probs){
+    return probs.reduce((s,p) => p>1e-12 ? s - p*Math.log2(p) : s, 0);
+  }
+
+  function renderTable(){
+    const table = document.getElementById("jointTable");
+    const mx = marginalsX(), my = marginalsY();
+    let html = "<tr><th></th>";
+    LABELS_Y.forEach(l => html += `<th>${l}</th>`);
+    html += "<th>P(X)</th></tr>";
+    for (let i=0;i<2;i++){
+      html += `<tr><th>${LABELS_X[i]}</th>`;
+      for (let j=0;j<2;j++){
+        html += `<td><input type="number" step="0.01" min="0" max="1" data-i="${i}" data-j="${j}" value="${joint[i][j].toFixed(4)}"></td>`;
+      }
+      html += `<td class="marg">${mx[i].toFixed(4)}</td></tr>`;
+    }
+    html += `<tr><th>P(Y)</th><td class="marg">${my[0].toFixed(4)}</td><td class="marg">${my[1].toFixed(4)}</td><td class="marg">1.0000</td></tr>`;
+    table.innerHTML = html;
+    table.querySelectorAll("input").forEach(inp => inp.addEventListener("input", e => {
+      const i = parseInt(e.target.dataset.i,10), j = parseInt(e.target.dataset.j,10);
+      joint[i][j] = Math.max(0, parseFloat(e.target.value) || 0);
+      renormalize();
+      update();
+    }));
+  }
+
+  function update(){
+    renderTable();
+    const mx = marginalsX(), my = marginalsY();
+    const flatJoint = [joint[0][0], joint[0][1], joint[1][0], joint[1][1]];
+
+    const Hx = entropyOf(mx);
+    const Hy = entropyOf(my);
+    const Hxy = entropyOf(flatJoint);
+    const HxGivenY = Hxy - Hy;
+    const HyGivenX = Hxy - Hx;
+    const I_diff = Hx - HxGivenY;
+    const I_sum = Hx + Hy - Hxy;
+
+    let klSum = 0;
+    for (let i=0;i<2;i++) for (let j=0;j<2;j++){
+      const pxy = joint[i][j], indep = mx[i]*my[j];
+      if (pxy > 1e-12 && indep > 1e-12) klSum += pxy * Math.log2(pxy/indep);
+    }
+
+    document.getElementById("mHx").textContent = Hx.toFixed(4);
+    document.getElementById("mHy").textContent = Hy.toFixed(4);
+    document.getElementById("mHxy").textContent = Hxy.toFixed(4);
+    document.getElementById("mHxgy").textContent = HxGivenY.toFixed(4);
+    document.getElementById("mHygx").textContent = HyGivenX.toFixed(4);
+    document.getElementById("mI").textContent = I_diff.toFixed(4);
+
+    const closeToZero = I_diff < 0.001;
+    const closeToHx = Math.abs(I_diff - Hx) < 0.001;
+    let story = closeToZero
+      ? "I(X;Y) is essentially 0 — this joint table is (very close to) independent: knowing Y tells you almost nothing about X."
+      : (closeToHx
+        ? "I(X;Y) is essentially H(X) — this is (very close to) a perfect channel: knowing Y pins X down almost completely."
+        : "This table sits strictly between the two extremes — Y is genuinely informative about X, but doesn't determine it.");
+
+    document.getElementById("verdict").innerHTML =
+      `I(X;Y) via H(X)-H(X|Y) = <b>${I_diff.toFixed(4)}</b> bits &nbsp;·&nbsp; `+
+      `via H(X)+H(Y)-H(X,Y) = <b>${I_sum.toFixed(4)}</b> bits &nbsp;·&nbsp; `+
+      `via KL(joint‖product) = <b>${klSum.toFixed(4)}</b> bits<br>${story}`;
+  }
+
+  document.getElementById("btnWeather").addEventListener("click", () => {
+    joint = [[0.35,0.05],[0.10,0.50]];
+    update();
+  });
+  document.getElementById("btnIndep").addEventListener("click", () => {
+    const mx = marginalsX(), my = marginalsY();
+    joint = [[mx[0]*my[0], mx[0]*my[1]], [mx[1]*my[0], mx[1]*my[1]]];
+    update();
+  });
+  document.getElementById("btnPerfect").addEventListener("click", () => {
+    const mx = marginalsX();
+    joint = [[mx[0], 0], [0, mx[1]]];
+    update();
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>

@@ -9,15 +9,26 @@ import urllib.request
 import urllib.error
 from .logging_config import logger
 
-SETTINGS_PATH = Path(__file__).resolve().parents[1] / "data" / "app_settings.json"
+_DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+
+# Lives under data/state/, which docker-compose backs with a named volume. The
+# rest of data/ is seed content baked into the image, so a settings file kept
+# there is destroyed by every `docker compose up --build` — taking the user's
+# saved API keys with it.
+SETTINGS_PATH = _DATA_DIR / "state" / "app_settings.json"
+_LEGACY_SETTINGS_PATH = _DATA_DIR / "app_settings.json"
 
 
 class SettingsStore:
     def read(self) -> Dict[str, Any]:
-        if not SETTINGS_PATH.exists():
-            return {}
+        path = SETTINGS_PATH
+        if not path.exists():
+            # Carry over settings written before the move to data/state/.
+            if not _LEGACY_SETTINGS_PATH.exists():
+                return {}
+            path = _LEGACY_SETTINGS_PATH
         try:
-            return json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
+            return json.loads(path.read_text(encoding="utf-8"))
         except Exception as exc:
             logger.warning(f"Failed to read settings store: {exc}")
             return {}
@@ -26,7 +37,13 @@ class SettingsStore:
         SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
         SETTINGS_PATH.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
-    def get_effective_settings(self) -> Dict[str, Any]:
+    def get_configured_settings(self) -> Dict[str, Any]:
+        """What the user actually chose: base config plus their overrides.
+
+        No derived values — this is the shape that is safe to show in a settings
+        form and to write straight back. Use ``get_effective_settings`` for what
+        will really run.
+        """
         base = get_settings()
         overrides = self.read()
         settings = {
@@ -68,10 +85,23 @@ class SettingsStore:
                 "local_diffusion_timeout_seconds", base.local_diffusion_timeout_seconds
             ),
         }
+        return settings
+
+    def get_effective_settings(self) -> Dict[str, Any]:
+        """What will actually run: configured settings plus fast-mode derivations.
+
+        Fast mode swaps in a smaller model and turns the multi-agent pipeline
+        off. Those are *runtime* consequences of a single toggle, not choices the
+        user made, so they must never be echoed to a settings form — a client
+        that reads settings, edits one field and writes the object back would
+        persist them over the user's real choice. Serve
+        ``get_configured_settings`` to editors and keep this for the engine.
+        """
+        settings = self.get_configured_settings()
         if settings["fast_mode_enabled"]:
             settings["local_multi_agent_enabled"] = False
             settings["local_llm_model"] = self._select_fast_model(
-                settings["local_llm_model"], base.local_llm_base_url
+                settings["local_llm_model"], get_settings().local_llm_base_url
             )
         return settings
 

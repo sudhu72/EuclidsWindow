@@ -165,6 +165,8 @@ class MusicComposeResponse(BaseModel):
 class LessonOutlineRequest(BaseModel):
     topic: str = Field(..., min_length=1, max_length=500)
     level: str = Field("teen", pattern="^(kids|teen|college|adult)$")
+    # Continue an existing saved conversation instead of starting a new one.
+    conversation_id: Optional[str] = None
 
 
 class LessonSection(BaseModel):
@@ -220,6 +222,7 @@ class LessonBuildResponse(LessonOutlineResponse):
     # Scenes align 1:1 with ``sections``; a null entry is a scene that failed
     # generation and can be retried via the per-scene endpoint.
     scenes: List[Optional[LessonSceneResponse]]
+    conversation_id: Optional[str] = None
 
 
 class AppSettingsResponse(BaseModel):
@@ -241,6 +244,10 @@ class AppSettingsResponse(BaseModel):
     local_music_timeout_seconds: int
     local_music_fast_mode: bool
     local_diffusion_timeout_seconds: int
+    # Read-only: what fast mode actually runs, which differs from the configured
+    # values above when it is on. Never write these back — they are derived.
+    effective_llm_model: Optional[str] = None
+    effective_multi_agent_enabled: Optional[bool] = None
 
 
 class AppSettingsUpdate(BaseModel):
@@ -523,6 +530,7 @@ class VisualizationOnDemandRequest(BaseModel):
     quality: str = Field("low", pattern="^(low|medium|high)$")
     output_format: str = Field("gif", pattern="^(gif|mp4)$")
     async_render: bool = True
+    learner_level: str = Field("teen", pattern="^(kids|teen|college|adult)$")
 
 
 class VisualizationOnDemandResponse(BaseModel):

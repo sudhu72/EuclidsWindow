@@ -1,8 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Built with base "/app/" so FastAPI can serve the bundle at /app alongside the
-// existing vanilla SPA at /. In dev, proxy /api to the backend for same-origin.
+// Built with base "/app/" so the asset URLs are absolute: FastAPI serves this
+// bundle both at / (the app) and at /app (kept so existing links and the
+// /app#tab deep links still work). In dev, proxy /api for same-origin.
 export default defineConfig({
   base: "/app/",
   plugins: [react()],

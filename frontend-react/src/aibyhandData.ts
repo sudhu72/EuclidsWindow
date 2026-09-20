@@ -17,7 +17,7 @@ export interface Exercise {
   };
 }
 
-const M = (s: string): string => `\\(${s}\\)`; // inline math shorthand
+export const M = (s: string): string => `\\(${s}\\)`; // inline math shorthand
 // Small helper to render a matrix/vector as an HTML table.
 function mat(rows: string[][]): string {
   const body = rows

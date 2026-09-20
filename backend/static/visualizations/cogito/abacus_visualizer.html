@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Abacus, Bead by Bead</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --wood:#B08560; --bead:#F4E9D8; --beadOn:#D9A62E;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:900px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; margin:0 6px 6px 0; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  svg{ width:100%; height:auto; display:block; background:#FBF8F2; border-radius:10px; }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:15px; background:var(--accent-soft); border-radius:8px; padding:12px 14px; margin-top:14px; line-height:1.7; }
+  .bignum{ font-family:"IBM Plex Mono", monospace; font-size:28px; font-weight:600; color:var(--accent); text-align:center; margin:10px 0 16px; letter-spacing:0.05em; }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:16px; margin-top:10px; }
+  footer a{ color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to "The Abacus — Place Value, Made Physical"</div>
+    <h1>Bead by Bead</h1>
+    <p>Click a rod to set its digit, and watch the decimal reading update live — then step through the three addition moves (direct, five-complement, ten-complement) one at a time and see exactly which beads move.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="soroban">Interactive Soroban</button>
+    <button class="tab" data-tab="mechanics">Bead Mechanics</button>
+    <button class="tab" data-tab="binary">Binary Complement</button>
+  </div>
+
+  <!-- ============ TAB 1: INTERACTIVE SOROBAN ============ -->
+  <div class="panel active" id="panel-soroban">
+    <div class="card">
+      <h2>Click Any Bead</h2>
+      <p class="sub"><b>What's happening:</b> click a rod's heaven bead (top) to toggle it; click an earth bead to set how many of that rod's four earth beads are pushed up to the bar. Only beads touching the crossbar count.</p>
+      <div class="bignum" id="sorobanNumber">0</div>
+      <svg id="sorobanSvg" viewBox="0 0 480 260"></svg>
+      <div style="margin-top:12px;">
+        <button class="op" id="loadExample">Load example: 379</button>
+        <button class="op" id="resetSoroban">Reset to 0</button>
+      </div>
+      <div class="caption"><b>Why it matters:</b> every rod is a full digit, 0–9, and nothing about reading the number requires anything except counting beads touching the bar, rod by rod, left to right.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: BEAD MECHANICS ============ -->
+  <div class="panel" id="panel-mechanics">
+    <div class="card">
+      <h2>Watch the Three Addition Moves</h2>
+      <p class="sub"><b>What's happening:</b> pick a preset, then press "Perform the move" to watch the exact beads slide — verified against Part 3's worked examples.</p>
+      <div>
+        <button class="op active" id="mDirect">Direct: 1 + 2</button>
+        <button class="op" id="mFive">Five-complement: 3 + 4</button>
+        <button class="op" id="mTen">Ten-complement: 7 + 8</button>
+      </div>
+      <svg id="mechSvg" viewBox="0 0 480 220"></svg>
+      <div>
+        <button class="op" id="mPerform">Perform the move</button>
+        <button class="op" id="mReset">Reset</button>
+      </div>
+      <div class="readout" id="mechReadout"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: BINARY COMPLEMENT ============ -->
+  <div class="panel" id="panel-binary">
+    <div class="card">
+      <h2>The Same Trick, One Base Lower</h2>
+      <p class="sub"><b>What's happening:</b> click B's bits to set it (default 3 = <code>0011</code>), then step through flipping every bit, adding 1, adding it to a fixed A=7, and dropping the overflow bit — Part 5's exact <code>7 − 3</code> example.</p>
+      <svg id="binSvg" viewBox="0 0 480 240"></svg>
+      <div>
+        <button class="op" id="binNext">Next step ▶</button>
+        <button class="op" id="binReset">Reset</button>
+      </div>
+      <div class="readout" id="binReadout"></div>
+      <div class="caption"><b>Why it matters:</b> flipping bits (one's complement) never needs to borrow from a neighboring bit, exactly like Part 3's nine's-complement move — the <code>+1</code> and the dropped overflow bit are the same two patch-up steps the abacus already used, just in base 2.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../abacus-toolkit.md">The Abacus — Place Value, Made Physical</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x,y,str,color,size,anchor,weight){
+    const t = el("text",{x,y,["text-anchor"]:anchor||"middle","font-family":"IBM Plex Mono, monospace","font-size":size||12,fill:color||"var(--ink)"});
+    if (weight) t.setAttribute("font-weight",weight);
+    t.textContent = str;
+    return t;
+  }
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* A rod-drawing helper shared by both tabs.
+     Draws one rod at horizontal center x, with a crossbar at y=barY.
+     heaven: 0 or 1 (bead touches bar when 1, i.e. pushed DOWN toward it)
+     earth: 0-4 (that many beads, counted from the bar upward, touch the bar)
+     Returns click regions if `onHeavenClick`/`onEarthClick` provided. */
+  function drawRod(svg, x, barY, heaven, earth, opts){
+    opts = opts || {};
+    const beadR = 12, gap = 4;
+    // vertical rod line
+    svg.appendChild(el("line",{x1:x,y1:barY-95,x2:x,y2:barY+95,stroke:"var(--wood)","stroke-width":3}));
+    // heaven bead: rests above the bar when off; sits ON the bar (touching) when on
+    const heavenRestY = barY - 60;
+    const heavenOnY = barY - beadR - 1;
+    const hy = heaven ? heavenOnY : heavenRestY;
+    const hCircle = el("circle",{cx:x,cy:hy,r:beadR,fill: heaven?"var(--beadOn)":"var(--bead)",stroke:"var(--ink-soft)","stroke-width":1.4,cursor:"pointer"});
+    if (opts.onHeavenClick) hCircle.addEventListener("click", opts.onHeavenClick);
+    svg.appendChild(hCircle);
+    // earth beads: 4 beads below the bar; the bottom `earth` of them are pushed UP to touch the bar,
+    // the remaining ones rest further down, away from the bar.
+    for (let i=0;i<4;i++){
+      // i=0 is the bead closest to the bar when resting; touching order is bar-adjacent first
+      const touching = i < earth;
+      const restSlot = barY + beadR + 1 + i*(2*beadR+gap) + (4-earth)*0; // baseline rest position ignoring push, recomputed below
+      let cy;
+      if (touching){
+        // stacked upward from the bar, in order
+        cy = barY + beadR + 1 + i*(2*beadR+gap);
+      } else {
+        // rests down at the bottom, stacked from the far end
+        const restIndexFromBottom = i - earth;
+        cy = barY + 95 - beadR - restIndexFromBottom*(2*beadR+gap);
+      }
+      const idx = i;
+      const eCircle = el("circle",{cx:x,cy,r:beadR,fill: touching?"var(--beadOn)":"var(--bead)",stroke:"var(--ink-soft)","stroke-width":1.4,cursor:"pointer"});
+      if (opts.onEarthClick) eCircle.addEventListener("click", () => opts.onEarthClick(idx));
+      svg.appendChild(eCircle);
+    }
+    // crossbar drawn last, on top, thin
+    svg.appendChild(el("line",{x1:x-22,y1:barY,x2:x+22,y2:barY,stroke:"var(--ink)","stroke-width":2}));
+  }
+  function rodValue(heaven, earth){ return heaven*5 + earth; }
+
+  /* =========================================================
+     TAB 1 — INTERACTIVE SOROBAN
+     ========================================================= */
+  const N_RODS = 5;
+  let rods = new Array(N_RODS).fill(0).map(() => ({heaven:0, earth:0}));
+  function renderSoroban(){
+    const svg = document.getElementById("sorobanSvg");
+    svg.innerHTML = "";
+    const barY = 130;
+    const spacing = 480/(N_RODS+1);
+    svg.appendChild(el("line",{x1:20,y1:barY,x2:460,y2:barY,stroke:"var(--ink)","stroke-width":2,opacity:0.15}));
+    rods.forEach((r,i) => {
+      const x = spacing*(i+1);
+      drawRod(svg, x, barY, r.heaven, r.earth, {
+        onHeavenClick: () => { r.heaven = r.heaven ? 0 : 1; renderSoroban(); },
+        onEarthClick: (idx) => { r.earth = (idx+1===r.earth) ? idx : idx+1; renderSoroban(); },
+      });
+      svg.appendChild(txt(x, 245, rodValue(r.heaven,r.earth), "var(--ink-soft)", 11, "middle"));
+    });
+    const num = rods.map(r=>rodValue(r.heaven,r.earth)).join("");
+    document.getElementById("sorobanNumber").textContent = num.replace(/^0+(?=\d)/,"");
+  }
+  document.getElementById("loadExample").addEventListener("click", () => {
+    rods = [{heaven:0,earth:0},{heaven:0,earth:0},{heaven:0,earth:3},{heaven:1,earth:2},{heaven:1,earth:4}];
+    renderSoroban();
+  });
+  document.getElementById("resetSoroban").addEventListener("click", () => {
+    rods = new Array(N_RODS).fill(0).map(() => ({heaven:0, earth:0}));
+    renderSoroban();
+  });
+  renderSoroban();
+
+  /* =========================================================
+     TAB 2 — BEAD MECHANICS
+     ========================================================= */
+  const MOVES = {
+    direct: {
+      label: "Direct addition",
+      before: {units:{heaven:0,earth:1}, tens:null},
+      after:  {units:{heaven:0,earth:3}, tens:null, carry:false},
+      text: "1 + 2 = 3. Two more earth beads slide up — there's room, no complement needed."
+    },
+    five: {
+      label: "Five-complement",
+      before: {units:{heaven:0,earth:3}, tens:null},
+      after:  {units:{heaven:1,earth:2}, tens:null, carry:false},
+      text: "3 + 4 = 7. Only 1 earth bead was free, not 4 — so instead: push the heaven bead down (+5) and slide 1 earth bead back away from the bar (−1). Net +4, using beads that were actually available."
+    },
+    ten: {
+      label: "Ten-complement",
+      before: {units:{heaven:1,earth:2}, tens:{heaven:0,earth:0}},
+      after:  {units:{heaven:1,earth:0}, tens:{heaven:0,earth:1}, carry:true},
+      text: "7 + 8 = 15. No rod can ever show past 9 — so instead: subtract 8's ten-complement (10−8=2) from this rod, and carry 1 bead onto the tens rod. Units rod: 7−2=5. Tens rod: +1. Reading both together: 15."
+    }
+  };
+  let currentMove = "direct";
+  let performed = false;
+  function renderMech(){
+    const svg = document.getElementById("mechSvg");
+    svg.innerHTML = "";
+    const m = MOVES[currentMove];
+    const state = performed ? m.after : m.before;
+    const barY = 110;
+    if (state.tens){
+      drawRod(svg, 170, barY, state.tens.heaven, state.tens.earth, {});
+      svg.appendChild(txt(170, 210, "tens rod", "var(--ink-soft)", 11, "middle"));
+      drawRod(svg, 310, barY, state.units.heaven, state.units.earth, {});
+      svg.appendChild(txt(310, 210, "units rod", "var(--ink-soft)", 11, "middle"));
+    } else {
+      drawRod(svg, 240, barY, state.units.heaven, state.units.earth, {});
+      svg.appendChild(txt(240, 210, "units rod", "var(--ink-soft)", 11, "middle"));
+    }
+    const label = performed ? `After: ${m.label} performed.` : `Before: about to perform "${m.label}."`;
+    document.getElementById("mechReadout").innerHTML = `<b>${label}</b><br>${m.text}`;
+  }
+  function setMove(key, btn){
+    currentMove = key;
+    performed = false;
+    ["mDirect","mFive","mTen"].forEach(id=>document.getElementById(id).classList.remove("active"));
+    btn.classList.add("active");
+    renderMech();
+  }
+  document.getElementById("mDirect").addEventListener("click", function(){ setMove("direct", this); });
+  document.getElementById("mFive").addEventListener("click", function(){ setMove("five", this); });
+  document.getElementById("mTen").addEventListener("click", function(){ setMove("ten", this); });
+  document.getElementById("mPerform").addEventListener("click", () => { performed = true; renderMech(); });
+  document.getElementById("mReset").addEventListener("click", () => { performed = false; renderMech(); });
+  renderMech();
+
+  /* =========================================================
+     TAB 3 — BINARY COMPLEMENT
+     ========================================================= */
+  const A_FIXED = [0,1,1,1]; // 7, MSB first, fixed to match the tutorial's exact worked example
+  let bBits = [0,0,1,1];     // 3, MSB first — the only thing the user edits, and only at step 0
+  let binStep = 0;           // 0=raw B, 1=flip, 2=+1, 3=add to A (5-bit), 4=drop overflow
+  const BIN_MAX = 4;
+
+  function bitsToInt(bits){ return bits.reduce((acc,b)=>acc*2+b, 0); }
+  function flipBits(bits){ return bits.map(b=>1-b); }
+  function addBits(a, b){
+    // a, b: equal-length MSB-first arrays. Returns {sum: array same length, carry: 0|1}.
+    const n = a.length;
+    const out = new Array(n).fill(0);
+    let carry = 0;
+    for (let i=n-1;i>=0;i--){
+      const s = a[i]+b[i]+carry;
+      out[i] = s % 2;
+      carry = s >= 2 ? 1 : 0;
+    }
+    return {sum: out, carry};
+  }
+  function addOne(bits4){
+    const one = [0,0,0,1];
+    return addBits(bits4, one).sum; // two's complement is defined mod 2^n, so any carry-out here is discarded on purpose
+  }
+
+  function drawBitRow(svg, y, bits, label, color, clickable, onBitClick){
+    const boxW = 34, gap = 6, startX = 210 - (bits.length*(boxW+gap))/2;
+    svg.appendChild(txt(startX-14, y+17, label, "var(--ink-soft)", 11, "end", "700"));
+    bits.forEach((b,i) => {
+      const x = startX + i*(boxW+gap);
+      const rect = el("rect",{x,y,width:boxW,height:boxW,rx:6,fill: b?"var(--beadOn)":"#fff",stroke:color,["stroke-width"]:1.8,cursor: clickable?"pointer":"default"});
+      if (clickable) rect.addEventListener("click", () => onBitClick(i));
+      svg.appendChild(rect);
+      svg.appendChild(txt(x+boxW/2, y+22, b, b?"#fff":"var(--ink)", 15, "middle", "700"));
+    });
+    const decX = startX + bits.length*(boxW+gap) + 10;
+    svg.appendChild(txt(decX, y+22, "= "+bitsToInt(bits), "var(--ink-soft)", 13, "start"));
+  }
+  function renderBin(){
+    const svg = document.getElementById("binSvg");
+    svg.innerHTML = "";
+    let y = 20;
+    drawBitRow(svg, y, bBits, "B", "var(--c3)", binStep===0, (i) => { bBits[i] = 1-bBits[i]; renderBin(); });
+    let ones, twos, sumRes;
+    if (binStep>=1){
+      y += 44; ones = flipBits(bBits);
+      drawBitRow(svg, y, ones, "flip (1's)", "var(--c2)", false);
+    }
+    if (binStep>=2){
+      y += 44; twos = addOne(ones);
+      drawBitRow(svg, y, twos, "+1 (2's)", "var(--accent)", false);
+    }
+    if (binStep>=3){
+      y += 44;
+      drawBitRow(svg, y, A_FIXED, "A", "var(--c1)", false);
+      y += 44;
+      const {sum, carry} = addBits(A_FIXED, twos);
+      sumRes = {sum, carry};
+      const withCarry = [carry, ...sum];
+      drawBitRow(svg, y, withCarry, "A + (−B)", "var(--ink-soft)", false);
+      if (carry) svg.appendChild(txt(210, y-8, "↑ overflow bit — about to be dropped", "var(--c3)", 10.5, "middle","700"));
+    }
+    if (binStep>=4){
+      y += 44;
+      drawBitRow(svg, y, sumRes.sum, "result (dropped)", "var(--c1)", false);
+    }
+    document.getElementById("binNext").disabled = binStep>=BIN_MAX;
+    const bVal = bitsToInt(bBits), aVal = bitsToInt(A_FIXED);
+    const lines = [
+      `B = ${bVal}. Step ${binStep} of ${BIN_MAX}.`,
+      binStep>=1 ? "Flipped every bit -- this rod's one's complement, no borrowing needed anywhere." : "",
+      binStep>=2 ? "Added 1 -- this is B's two's complement, representing −"+bVal+"." : "",
+      binStep>=3 ? `Added A(${aVal}) + two's-complement(${bVal}): a 5-bit result came out.` : "",
+      binStep>=4 ? `Dropped the overflow bit: ${aVal} − ${bVal} = ${bitsToInt(sumRes.sum)} -- verified.` : "",
+    ].filter(Boolean);
+    document.getElementById("binReadout").textContent = lines.join("\n");
+  }
+  document.getElementById("binNext").addEventListener("click", () => { if (binStep<BIN_MAX) binStep++; renderBin(); });
+  document.getElementById("binReset").addEventListener("click", () => { binStep = 0; renderBin(); });
+  renderBin();
+})();
+</script>
+</body>
+</html>

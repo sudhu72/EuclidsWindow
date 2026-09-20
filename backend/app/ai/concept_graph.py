@@ -23,6 +23,16 @@ from ..logging_config import logger
 
 _WORD = re.compile(r"[a-z0-9]+")
 
+# Filler words stripped before judging how much of a query an alias actually
+# explains — so "explain" and "the" in "explain the schrodinger equation"
+# don't get credited to whichever alias happens to match.
+_STOPWORDS = frozenset(
+    "a an the is are was were do does did explain what why how when where "
+    "which who whom this that these those of in on at to for and or not no "
+    "please tell show describe about it its can could would should will "
+    "really actually just very".split()
+)
+
 
 def _norm(text: str) -> str:
     return " ".join(_WORD.findall((text or "").lower()))
@@ -164,6 +174,17 @@ class ConceptGraph:
         Prefers the most *specific* alias that appears in the query — a longer,
         multi-word alias beats a short generic one, so "Euler's identity" binds
         to the ``euler`` node rather than to a stray ``e`` or ``identity``.
+
+        A candidate must also account for at least half of the query's
+        actual content (stopwords aside), weighted by word length, not just
+        be present somewhere in it — otherwise a single generic keyword
+        (e.g. "equation" inside "the Navier-Stokes equation" or "the
+        Schrodinger equation") would hijack an unrelated, more specific
+        topic just by being the only thing that matches at all. Weighting by
+        length (rather than token count) keeps short filler content words
+        ("area", "measure", "need") from outweighing a legitimate single-word
+        match the way an unrecognized proper noun ("navier-stokes",
+        "schrodinger") should.
         """
         q = _norm(query)
         if not q:
@@ -171,6 +192,10 @@ class ConceptGraph:
         if q in self._alias_index:
             return self._alias_index[q]
         q_tokens = set(q.split())
+        # Drop stopwords and 1-2 letter noise (stray variable names, units)
+        # so they neither inflate nor deflate how "explained" a query is.
+        content_tokens = {t for t in q_tokens if t not in _STOPWORDS and len(t) > 2}
+        content_len = sum(len(t) for t in content_tokens) or 1
         best_id, best_score = None, 0
         for alias, tid in self._alias_index.items():
             a_tokens = alias.split()
@@ -180,8 +205,20 @@ class ConceptGraph:
             if alias in q or set(a_tokens) <= q_tokens:
                 # Longer, multi-word aliases are more specific → higher score.
                 score = len(alias) + 5 * (len(a_tokens) - 1)
-                if score > best_score:
-                    best_id, best_score = tid, score
+                if score <= best_score:
+                    continue
+                # A content token counts as "explained" by this alias if it
+                # (or its singular form) appears in the alias text — matches
+                # how the alias itself matched the query above, including the
+                # plural/singular slack ("numbers" vs. "imaginary number").
+                covered_len = sum(
+                    len(t)
+                    for t in content_tokens
+                    if t in alias or (len(t) > 3 and t.endswith("s") and t[:-1] in alias)
+                )
+                if covered_len * 2 < content_len:
+                    continue  # explains less than half the query — too weak
+                best_id, best_score = tid, score
         # Require a non-trivial match so a single 2-3 char token can't hijack.
         return best_id if best_score >= 4 else None
 

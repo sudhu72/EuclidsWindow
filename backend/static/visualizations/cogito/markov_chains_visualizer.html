@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trees, Goldfish, and the Long Run — Markov Chains & Probability Trees</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --sun:#D9A62E; --rain:#0F8B8D; --sick:#D9636B; --healthy:#0F8B8D;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); width:200px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:52px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:12px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:14px; background:var(--accent-soft); border-radius:10px; padding:16px 18px; margin-top:16px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:26px; font-weight:700; color:var(--accent); }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  .matrix{ display:inline-grid; grid-template-columns:auto auto auto; gap:6px; font-family:"IBM Plex Mono",monospace; font-size:13px; align-items:center; margin:6px 0 14px; }
+  .matrix .mh{ color:var(--ink-soft); font-size:11.5px; text-align:center; }
+  .matrix .mc{ background:var(--accent-soft); border-radius:6px; padding:6px 10px; text-align:center; min-width:56px; }
+  /* distribution bars */
+  .bar{ height:34px; border-radius:8px; display:flex; overflow:hidden; border:1px solid var(--line); background:#F5F4F0; }
+  .bar > div{ display:flex; align-items:center; justify-content:center; color:#fff; font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; transition:width .35s ease; white-space:nowrap; overflow:hidden; }
+  .stat-line{ position:relative; height:20px; margin-top:6px; }
+  .stat-tick{ position:absolute; top:0; width:2px; height:14px; background:var(--ink); }
+  .stat-tick::after{ content:attr(data-l); position:absolute; top:14px; left:50%; transform:translateX(-50%); font-size:10.5px; color:var(--ink-soft); white-space:nowrap; font-family:"IBM Plex Mono",monospace; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft); margin-top:12px; max-height:110px; overflow-y:auto; white-space:pre; background:#F5F4F0; border-radius:8px; padding:10px 12px; }
+  .flipstream{ font-family:"IBM Plex Mono", monospace; font-size:15px; letter-spacing:3px; background:#F5F4F0; border-radius:8px; padding:12px 14px; min-height:26px; word-break:break-all; }
+  .flipstream .hit{ color:#fff; background:var(--accent); border-radius:4px; padding:0 2px; }
+  .racecard{ border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .racecard h3{ margin:0 0 8px; font-family:"Fraunces",serif; font-size:15px; }
+  canvas{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); }
+  footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Markov Chains &amp; Probability Trees</div>
+    <h1>Trees, Goldfish, and the Long Run</h1>
+    <p>Multiply <em>down</em> a path, add <em>across</em> paths — then let the same rule repeat forever and watch it forget where it started. Three hands-on tools for the one idea behind Bayes' theorem, PageRank, and predictive text.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="tree">Probability Tree</button>
+    <button class="tab" data-tab="stepper">Markov Stepper</button>
+    <button class="tab" data-tab="walker">Long-Run Walker</button>
+    <button class="tab" data-tab="race">HH vs HT Race</button>
+    <button class="tab" data-tab="ruin">Gambler's Ruin</button>
+    <button class="tab" data-tab="sufficient">Is the State Enough?</button>
+  </div>
+
+  <!-- ============ TAB 1: PROBABILITY TREE (BAYES) ============ -->
+  <div class="panel active" id="panel-tree">
+    <div class="card">
+      <h2>The Test That Fools Doctors</h2>
+      <p class="sub"><b>What's happening:</b> a rare disease, a very accurate test, and a positive result. To find the chance you're <em>actually</em> sick, we send 10,000 imaginary people down the tree — first split by who's truly sick, then by who tests positive. The answer is the sick-<em>and</em>-positive group as a share of <em>everyone</em> who tested positive.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> keep the test excellent (99% / 95%) but drag prevalence down to ~1%. <span class="formula">P(sick | positive)</span> collapses to about 1-in-6 — because false alarms from the huge healthy majority far outnumber the few real cases. Slide prevalence back up and watch the number climb toward what your gut expected.</p>
+      <div class="row"><label>Disease prevalence &nbsp;P(D)</label><input type="range" id="tPrev" min="0.1" max="50" step="0.1" value="1"><span class="readout" id="tPrevOut">1.0%</span></div>
+      <div class="row"><label>Sensitivity &nbsp;P(+ | disease)</label><input type="range" id="tSens" min="50" max="100" step="0.5" value="99"><span class="readout" id="tSensOut">99%</span></div>
+      <div class="row"><label>Specificity &nbsp;P(− | healthy)</label><input type="range" id="tSpec" min="50" max="100" step="0.5" value="95"><span class="readout" id="tSpecOut">95%</span></div>
+      <svg id="treeSvg" viewBox="0 0 840 470" role="img" aria-label="Probability tree"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--sick)"></span>has disease</span>
+        <span><span class="dot" style="background:var(--healthy)"></span>healthy</span>
+        <span>Bold leaves = tested positive</span>
+      </div>
+      <div class="verdict" id="treeVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> multiply <b>down</b> each path to get its leaf, add the two positive leaves to get everyone who tested positive, then take <b>part ÷ whole</b>. That flips "how accurate is the test?" into the question you actually care about — "given a positive, am I sick?" — which is Bayes' theorem. The tree <em>is</em> the theorem.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: MARKOV STEPPER ============ -->
+  <div class="panel" id="panel-stepper">
+    <div class="card">
+      <h2>Weather That Forgets Where It Started</h2>
+      <p class="sub"><b>What's happening:</b> tomorrow's weather depends only on today's — that single rule is what makes this a "Markov" chain. Set those odds, pick today's weather as your starting belief, and step forward one day at a time; each step just applies the same rule again.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Start 100% Sunny</em>, then <em>Run to settle</em>, and note where the bar lands. Now <em>Start 100% Rainy</em> and run again — it settles on the <em>exact same</em> split (the black tick). The chain forgets where it began; that settling point is the long-run climate.</p>
+      <div class="cols">
+        <div class="col">
+          <div class="row"><label>If Sunny → Sunny tomorrow</label><input type="range" id="mSS" min="0" max="100" step="1" value="80"><span class="readout" id="mSSOut">80%</span></div>
+          <div class="row"><label>If Rainy → Rainy tomorrow</label><input type="range" id="mRR" min="0" max="100" step="1" value="60"><span class="readout" id="mRROut">60%</span></div>
+          <div class="matrix" id="mMatrix"></div>
+          <div class="row" style="gap:6px;">
+            <button class="op" id="mStartS">Start 100% Sunny</button>
+            <button class="op" id="mStartR">Start 100% Rainy</button>
+          </div>
+          <div class="row" style="gap:6px;">
+            <button class="op active" id="mStep">Step a day ▶</button>
+            <button class="op" id="mRun">Run to settle ⏩</button>
+            <button class="op" id="mReset">Reset</button>
+          </div>
+        </div>
+        <div class="col">
+          <svg id="stepSvg" viewBox="0 0 380 240" role="img" aria-label="State diagram"></svg>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="caption" style="margin:0 0 6px;">Belief on <b>day <span id="mDay">0</span></b> — the black tick marks the <b>stationary distribution</b>, the fixed long-run mix this belief is heading toward:</div>
+        <div class="bar" id="mBar"></div>
+        <div class="stat-line" id="mStatLine"></div>
+      </div>
+      <div class="steplog" id="mLog"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: LONG-RUN WALKER ============ -->
+  <div class="panel" id="panel-walker">
+    <div class="card">
+      <h2>One Wanderer, Counting His Days</h2>
+      <p class="sub"><b>What's happening:</b> instead of tracking a belief, we set one token loose to wander the same weather graph at random — step after step, with no plan and no memory of where it's been.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> let it run and watch the two bars — its share of time spent Sunny vs. Rainy — climb toward the black ticks, the very same split the Stepper predicted. One aimless wanderer, given enough time, spends its days in exactly the stationary proportions. <em>That</em> is what "stationary" really means.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="wRun">Start walking ▶</button>
+        <button class="op" id="wPause">Pause ⏸</button>
+        <button class="op" id="wReset">Reset</button>
+        <label style="width:auto; margin-left:10px;">Speed</label><input type="range" id="wSpeed" min="1" max="60" step="1" value="20" style="max-width:160px;">
+      </div>
+      <div class="cols" style="margin-top:8px;">
+        <div class="col" style="max-width:320px;">
+          <svg id="walkSvg" viewBox="0 0 320 240" role="img" aria-label="Walker on state diagram"></svg>
+        </div>
+        <div class="col">
+          <div class="caption" style="margin:0 0 6px;">Steps taken: <b id="wSteps">0</b> — empirical visit share vs. stationary (black tick):</div>
+          <div style="margin-bottom:14px;">
+            <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Sunny</div>
+            <div class="bar" id="wBarS"><div style="background:var(--sun); width:0%">0%</div></div>
+            <div class="stat-line" id="wStatS"></div>
+          </div>
+          <div>
+            <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Rainy</div>
+            <div class="bar" id="wBarR"><div style="background:var(--rain); width:0%">0%</div></div>
+            <div class="stat-line" id="wStatR"></div>
+          </div>
+        </div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> the walker uses the same rule you set in the <b>Markov Stepper</b> tab. Track one wanderer long enough and its time-average lands on the stationary distribution — the same reason a fair coin, flipped enough times, sits near 50/50.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: HH vs HT RACE ============ -->
+  <div class="panel" id="panel-race">
+    <div class="card">
+      <h2>Why "HH" Takes Longer Than "HT"</h2>
+      <p class="sub"><b>What's happening:</b> two independent fair-coin streams, each hunting its own two-flip pattern — one watches for <b>HH</b>, the other for <b>HT</b>. Both patterns are equally likely on any given pair of flips, so it feels like they should take the same time to show up. They don't.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Watch one live race</em> a few times and see HH's stream often run noticeably longer. Then press <em>Run 1,000 more instantly</em> repeatedly — the running averages settle onto <b>6 flips for HH</b> and <b>4 flips for HT</b>, exactly the numbers the Polya worked example derives from scratch.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="raceWatch">Watch one live race ▶</button>
+        <button class="op" id="raceBatch">Run 1,000 more instantly ⏩</button>
+        <button class="op" id="raceReset">Reset stats</button>
+      </div>
+      <div class="racecard">
+        <h3>Hunting <span class="formula">HH</span></h3>
+        <div class="flipstream" id="raceStreamHH">—</div>
+      </div>
+      <div class="racecard">
+        <h3>Hunting <span class="formula">HT</span></h3>
+        <div class="flipstream" id="raceStreamHT">—</div>
+      </div>
+      <div class="caption" style="margin:6px 0;">Average flips-to-target across <b id="raceN">0</b> races so far (black tick = the theoretical answer):</div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">HH — theoretical average: 6 flips</div>
+        <div class="bar" id="raceBarHH"><div style="background:var(--sick); width:0%">—</div></div>
+        <div class="stat-line" id="raceStatHH"></div>
+      </div>
+      <div>
+        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">HT — theoretical average: 4 flips</div>
+        <div class="bar" id="raceBarHT"><div style="background:var(--healthy); width:0%">—</div></div>
+        <div class="stat-line" id="raceStatHT"></div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> a tail after a lone H sends the HH-hunt all the way back to zero progress, but an extra H while hunting HT costs nothing — it's still a perfectly good launchpad. Patterns that can "sabotage themselves" on a near-miss take longer on average, even though every individual pattern is exactly as likely to appear first.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: GAMBLER'S RUIN ============ -->
+  <div class="panel" id="panel-ruin">
+    <div class="card">
+      <h2>Absorbing States: When the Story Only Ends One of Two Ways</h2>
+      <p class="sub"><b>What's happening:</b> you start with some money, bet $1 on a fair coin every round, and stop the moment you either go broke ($0) or hit your target. $0 and the target are <b>absorbing states</b> — once you land there, the story is over.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag your starting bankroll and watch the theoretical win-chance track it exactly — <b>your share of the total pot</b>, nothing more exotic. Then <em>Run one walk</em> to watch a single bankroll wander up and down before finally hitting an edge, and <em>Run 1,000 walks</em> to confirm the empirical win rate lands on that same simple fraction.</p>
+      <div class="row"><label>Starting bankroll</label><input type="range" id="ruinStart" min="1" max="9" step="1" value="3"><span class="readout" id="ruinStartOut">$3</span></div>
+      <div class="caption" style="margin:0 0 10px;">Target: <b>$10</b> (fixed) — theoretical P(reach target before ruin) = start ÷ target = <b id="ruinTheory">30%</b></div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="ruinWatch">Run one walk (animated) ▶</button>
+        <button class="op" id="ruinBatch">Run 1,000 walks instantly ⏩</button>
+        <button class="op" id="ruinReset">Reset stats</button>
+      </div>
+      <canvas id="ruinCanvas" width="720" height="220"></canvas>
+      <div class="caption" style="margin:10px 0 6px;">Empirical win rate across <b id="ruinN">0</b> walks (black tick = theoretical):</div>
+      <div class="bar" id="ruinBar"><div style="background:var(--accent); width:0%">—</div></div>
+      <div class="stat-line" id="ruinStatLine"></div>
+      <div class="caption"><b>Why it matters:</b> the house doesn't even need an edge to grind most gamblers down — the closer your target is relative to your bankroll, the likelier ruin comes first, purely from the arithmetic of an absorbing random walk. This exact skeleton (states you can enter but never leave) models customer churn, disease progression, and credit-rating default.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: IS THE STATE ENOUGH? (SUFFICIENT STATISTIC) ============ -->
+  <div class="panel" id="panel-sufficient">
+    <div class="card">
+      <h2>How Much History Actually Belongs in "the State"?</h2>
+      <p class="sub"><b>What's happening:</b> a real weather sequence was generated where tomorrow's rain chance genuinely depends on <em>both</em> today and yesterday — not just today. Pick how much history you're willing to pack into "the state" and see whether that's actually enough to predict well.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with "today only." Its predictions look plausible but are secretly a blend of two very different true rates. Switch to "today + yesterday" and watch the table split apart into the correct, verified numbers — then check the italic comparison row: going one day further back barely moves the number at all, which is exactly how you'd confirm a state is <em>sufficient</em> instead of just guessing.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-order="1">State = today only</button>
+        <button class="op" data-order="2">State = today + yesterday</button>
+      </div>
+      <div id="sufficientTable"></div>
+      <div class="verdict" id="sufficientVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is the exact design question behind an AI agent's context window — the model can only ever see its current state (whatever's in context), so the real question is never "is this Markovian" (a bounded context forces that), it's "does this state pack in enough history to be <em>sufficient</em>" — precisely what this tab lets you check by hand.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../04-markov-chains-and-probability-trees.md">Markov Chains &amp; Probability Trees</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var fmtPct = function(x){ return (x*100).toFixed(1) + "%"; };
+  var round = function(x){ return Math.round(x); };
+
+  /* ---------- tab switching ---------- */
+  var tabs = document.querySelectorAll(".tab");
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){
+      tabs.forEach(function(x){ x.classList.remove("active"); });
+      t.classList.add("active");
+      document.querySelectorAll(".panel").forEach(function(p){ p.classList.remove("active"); });
+      document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+      if(t.dataset.tab === "walker"){ syncWalkerToRule(); }
+    });
+  });
+
+  /* =========================================================
+     TAB 1 — PROBABILITY TREE (Bayes)
+     ========================================================= */
+  var tPrev = document.getElementById("tPrev"),
+      tSens = document.getElementById("tSens"),
+      tSpec = document.getElementById("tSpec");
+
+  function branch(x1,y1,x2,y2,label,color){
+    var mx = (x1+x2)/2, my=(y1+y2)/2;
+    return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+'" stroke-width="2"/>'+
+           '<rect x="'+(mx-24)+'" y="'+(my-11)+'" width="48" height="19" rx="5" fill="#fff" stroke="'+color+'" stroke-width="1"/>'+
+           '<text x="'+mx+'" y="'+(my+3)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="'+color+'">'+label+'</text>';
+  }
+  function node(x,y,label,fill){
+    return '<circle cx="'+x+'" cy="'+y+'" r="7" fill="'+fill+'"/>'+
+           '<text x="'+x+'" y="'+(y-13)+'" text-anchor="middle" font-family="Inter" font-weight="600" font-size="12.5" fill="var(--ink)">'+label+'</text>';
+  }
+  function leaf(x,y,title,count,joint,bold,color){
+    var w=150,h=44;
+    return '<rect x="'+x+'" y="'+(y-h/2)+'" width="'+w+'" height="'+h+'" rx="8" fill="'+(bold?color:"#F5F4F0")+'" fill-opacity="'+(bold?"0.14":"1")+'" stroke="'+(bold?color:"var(--line)")+'" stroke-width="'+(bold?"2":"1")+'"/>'+
+           '<text x="'+(x+12)+'" y="'+(y-6)+'" font-family="Inter" font-weight="'+(bold?"700":"500")+'" font-size="12" fill="var(--ink)">'+title+'</text>'+
+           '<text x="'+(x+12)+'" y="'+(y+12)+'" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--ink-soft)">'+count+' ppl · p='+joint+'</text>';
+  }
+
+  function drawTree(){
+    var p = parseFloat(tPrev.value)/100,
+        sens = parseFloat(tSens.value)/100,
+        spec = parseFloat(tSpec.value)/100;
+    tPrevOut.textContent = (parseFloat(tPrev.value)).toFixed(1)+"%";
+    tSensOut.textContent = tSens.value+"%";
+    tSpecOut.textContent = tSpec.value+"%";
+
+    var N = 10000;
+    var sick = N*p, healthy = N*(1-p);
+    var TP = sick*sens, FN = sick*(1-sens);
+    var FP = healthy*(1-spec), TN = healthy*spec;
+    var pos = TP + FP;
+    var posterior = pos > 0 ? TP/pos : 0;
+
+    var rootX=40, rootY=235;
+    var l1x=250, dY=130, hY=340;
+    var l2x=560;
+    var svg = "";
+    // branches root -> L1
+    svg += branch(rootX+8, rootY, l1x, dY, p.toFixed(3), "var(--sick)");
+    svg += branch(rootX+8, rootY, l1x, hY, (1-p).toFixed(3), "var(--healthy)");
+    // branches L1 -> L2
+    svg += branch(l1x, dY, l2x, 70,  sens.toFixed(2), "var(--sick)");
+    svg += branch(l1x, dY, l2x, 175, (1-sens).toFixed(2), "var(--sick)");
+    svg += branch(l1x, hY, l2x, 300, (1-spec).toFixed(2), "var(--healthy)");
+    svg += branch(l1x, hY, l2x, 405, spec.toFixed(2), "var(--healthy)");
+    // nodes
+    svg += node(rootX, rootY, "10,000", "var(--accent)");
+    svg += node(l1x, dY, "Disease", "var(--sick)");
+    svg += node(l1x, hY, "Healthy", "var(--healthy)");
+    // leaves
+    svg += leaf(l2x, 70,  "Disease · Test +", round(TP), (p*sens).toFixed(4), true,  "var(--sick)");
+    svg += leaf(l2x, 175, "Disease · Test −", round(FN), (p*(1-sens)).toFixed(4), false, "var(--sick)");
+    svg += leaf(l2x, 300, "Healthy · Test +", round(FP), ((1-p)*(1-spec)).toFixed(4), true,  "var(--healthy)");
+    svg += leaf(l2x, 405, "Healthy · Test −", round(TN), ((1-p)*spec).toFixed(4), false, "var(--healthy)");
+    document.getElementById("treeSvg").innerHTML = svg;
+
+    document.getElementById("treeVerdict").innerHTML =
+      'True positives (sick &amp; +): <b>'+round(TP)+'</b> &nbsp;·&nbsp; False positives (healthy &amp; +): <b>'+round(FP)+'</b><br>'+
+      'Everyone who tested positive = '+round(TP)+' + '+round(FP)+' = <b>'+round(pos)+'</b><br>'+
+      'So P(sick | positive) = '+round(TP)+' / '+round(pos)+' = <span class="big">'+fmtPct(posterior)+'</span>';
+  }
+  [tPrev,tSens,tSpec].forEach(function(el){ el.addEventListener("input", drawTree); });
+  drawTree();
+
+  /* =========================================================
+     SHARED WEATHER RULE (Stepper + Walker)
+     ========================================================= */
+  var mSS = document.getElementById("mSS"), mRR = document.getElementById("mRR");
+  function rule(){
+    var pSS = parseFloat(mSS.value)/100, pRR = parseFloat(mRR.value)/100;
+    return { pSS:pSS, pSR:1-pSS, pRR:pRR, pRS:1-pRR };
+  }
+  function stationary(){
+    var r = rule();
+    var denom = r.pSR + r.pRS;
+    if(denom === 0){ return null; } // both states absorbing
+    var piS = r.pRS / denom;
+    return { S:piS, R:1-piS };
+  }
+
+  /* =========================================================
+     TAB 2 — MARKOV STEPPER
+     ========================================================= */
+  var mDay = 0, dist = { S:1, R:0 };
+  var mBar = document.getElementById("mBar"),
+      mLog = document.getElementById("mLog"),
+      mStatLine = document.getElementById("mStatLine");
+
+  function drawMatrix(){
+    var r = rule();
+    mSSOut.textContent = mSS.value+"%"; mRROut.textContent = mRR.value+"%";
+    document.getElementById("mMatrix").innerHTML =
+      '<div class="mh"></div><div class="mh">→ Sunny</div><div class="mh">→ Rainy</div>'+
+      '<div class="mh">Sunny →</div><div class="mc">'+r.pSS.toFixed(2)+'</div><div class="mc">'+r.pSR.toFixed(2)+'</div>'+
+      '<div class="mh">Rainy →</div><div class="mc">'+r.pRS.toFixed(2)+'</div><div class="mc">'+r.pRR.toFixed(2)+'</div>';
+  }
+  function drawStateDiagram(){
+    var r = rule();
+    var Sx=110, Sy=120, Rx=280, Ry=120, rad=42;
+    var svg = '<defs><marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-soft)"/></marker></defs>';
+    // S->R (top arc), R->S (bottom arc)
+    svg += '<path d="M '+(Sx+30)+' '+(Sy-28)+' Q '+((Sx+Rx)/2)+' '+(Sy-70)+' '+(Rx-30)+' '+(Ry-28)+'" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#arw)"/>';
+    svg += '<text x="'+((Sx+Rx)/2)+'" y="'+(Sy-56)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="var(--ink-soft)">'+r.pSR.toFixed(2)+'</text>';
+    svg += '<path d="M '+(Rx-30)+' '+(Ry+28)+' Q '+((Sx+Rx)/2)+' '+(Sy+70)+' '+(Sx+30)+' '+(Sy+28)+'" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#arw)"/>';
+    svg += '<text x="'+((Sx+Rx)/2)+'" y="'+(Sy+66)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="var(--ink-soft)">'+r.pRS.toFixed(2)+'</text>';
+    // self loops
+    svg += '<path d="M '+(Sx-30)+' '+(Sy-24)+' C '+(Sx-80)+' '+(Sy-70)+', '+(Sx-80)+' '+(Sy+70)+', '+(Sx-30)+' '+(Sy+24)+'" fill="none" stroke="var(--sun)" stroke-width="1.6" marker-end="url(#arw)"/>';
+    svg += '<text x="'+(Sx-70)+'" y="'+(Sy+4)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="var(--sun)">'+r.pSS.toFixed(2)+'</text>';
+    svg += '<path d="M '+(Rx+30)+' '+(Ry-24)+' C '+(Rx+80)+' '+(Ry-70)+', '+(Rx+80)+' '+(Ry+70)+', '+(Rx+30)+' '+(Ry+24)+'" fill="none" stroke="var(--rain)" stroke-width="1.6" marker-end="url(#arw)"/>';
+    svg += '<text x="'+(Rx+70)+'" y="'+(Ry+4)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="var(--rain)">'+r.pRR.toFixed(2)+'</text>';
+    // nodes
+    svg += '<circle cx="'+Sx+'" cy="'+Sy+'" r="'+rad+'" fill="var(--sun)" fill-opacity="0.15" stroke="var(--sun)" stroke-width="2"/>';
+    svg += '<text x="'+Sx+'" y="'+(Sy+5)+'" text-anchor="middle" font-family="Fraunces,serif" font-size="15" font-weight="600" fill="var(--ink)">Sunny</text>';
+    svg += '<circle cx="'+Rx+'" cy="'+Ry+'" r="'+rad+'" fill="var(--rain)" fill-opacity="0.15" stroke="var(--rain)" stroke-width="2"/>';
+    svg += '<text x="'+Rx+'" y="'+(Ry+5)+'" text-anchor="middle" font-family="Fraunces,serif" font-size="15" font-weight="600" fill="var(--ink)">Rainy</text>';
+    document.getElementById("stepSvg").innerHTML = svg;
+  }
+  function drawBar(){
+    var s = Math.round(dist.S*1000)/10, r = Math.round(dist.R*1000)/10;
+    mBar.innerHTML =
+      '<div style="background:var(--sun); width:'+dist.S*100+'%">'+(dist.S>0.08?("☀ "+s+"%"):"")+'</div>'+
+      '<div style="background:var(--rain); width:'+dist.R*100+'%">'+(dist.R>0.08?("☔ "+r+"%"):"")+'</div>';
+    var st = stationary();
+    mStatLine.innerHTML = st ? '<div class="stat-tick" data-l="π = '+(st.S*100).toFixed(1)+'% sunny" style="left:'+(st.S*100)+'%"></div>' : '';
+  }
+  function logStep(){
+    var line = "day "+String(mDay).padStart(2," ")+":  sunny "+(dist.S).toFixed(4)+"   rainy "+(dist.R).toFixed(4);
+    mLog.textContent = line + "\n" + mLog.textContent;
+  }
+  function stepDay(){
+    var r = rule();
+    var nS = dist.S*r.pSS + dist.R*r.pRS;
+    var nR = dist.S*r.pSR + dist.R*r.pRR;
+    dist = { S:nS, R:nR }; mDay++;
+    mDayEl.textContent = mDay; drawBar(); logStep();
+  }
+  var mDayEl = document.getElementById("mDay");
+  function resetStepper(startS){
+    dist = { S: startS, R: 1-startS }; mDay = 0;
+    mDayEl.textContent = 0; mLog.textContent = ""; drawBar(); logStep();
+  }
+  document.getElementById("mStep").addEventListener("click", stepDay);
+  document.getElementById("mRun").addEventListener("click", function(){
+    var i=0; var iv = setInterval(function(){ stepDay(); if(++i>=40){ clearInterval(iv); } }, 90);
+  });
+  document.getElementById("mReset").addEventListener("click", function(){ resetStepper(dist.S>=0.5?1:0); });
+  document.getElementById("mStartS").addEventListener("click", function(){ resetStepper(1); });
+  document.getElementById("mStartR").addEventListener("click", function(){ resetStepper(0); });
+  [mSS,mRR].forEach(function(el){ el.addEventListener("input", function(){ drawMatrix(); drawStateDiagram(); drawBar(); syncWalkerToRule(); }); });
+  drawMatrix(); drawStateDiagram(); resetStepper(1);
+
+  /* =========================================================
+     TAB 3 — LONG-RUN WALKER
+     ========================================================= */
+  var wState = 0; // 0 = Sunny, 1 = Rainy
+  var visits = [0,0], wSteps = 0, wTimer = null;
+  var wBarS = document.getElementById("wBarS").firstElementChild,
+      wBarR = document.getElementById("wBarR").firstElementChild;
+
+  function drawWalker(){
+    var Sx=90, Sy=120, Rx=230, Ry=120, rad=40;
+    var svg = '<defs><marker id="arw2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="var(--line)"/></marker></defs>';
+    svg += '<path d="M '+(Sx+28)+' '+(Sy-26)+' Q '+((Sx+Rx)/2)+' '+(Sy-62)+' '+(Rx-28)+' '+(Ry-26)+'" fill="none" stroke="var(--line)" stroke-width="1.6" marker-end="url(#arw2)"/>';
+    svg += '<path d="M '+(Rx-28)+' '+(Ry+26)+' Q '+((Sx+Rx)/2)+' '+(Sy+62)+' '+(Sx+28)+' '+(Sy+26)+'" fill="none" stroke="var(--line)" stroke-width="1.6" marker-end="url(#arw2)"/>';
+    svg += '<circle cx="'+Sx+'" cy="'+Sy+'" r="'+rad+'" fill="var(--sun)" fill-opacity="'+(wState===0?"0.32":"0.10")+'" stroke="var(--sun)" stroke-width="'+(wState===0?"3":"1.5")+'"/>';
+    svg += '<text x="'+Sx+'" y="'+(Sy+5)+'" text-anchor="middle" font-family="Fraunces,serif" font-size="14" font-weight="600" fill="var(--ink)">Sunny</text>';
+    svg += '<circle cx="'+Rx+'" cy="'+Ry+'" r="'+rad+'" fill="var(--rain)" fill-opacity="'+(wState===1?"0.32":"0.10")+'" stroke="var(--rain)" stroke-width="'+(wState===1?"3":"1.5")+'"/>';
+    svg += '<text x="'+Rx+'" y="'+(Ry+5)+'" text-anchor="middle" font-family="Fraunces,serif" font-size="14" font-weight="600" fill="var(--ink)">Rainy</text>';
+    // token
+    var tx = wState===0 ? Sx : Rx;
+    svg += '<circle cx="'+tx+'" cy="'+(Sy-rad-10)+'" r="7" fill="var(--accent)"><animate attributeName="cy" values="'+(Sy-rad-16)+';'+(Sy-rad-8)+';'+(Sy-rad-16)+'" dur="0.9s" repeatCount="indefinite"/></circle>';
+    document.getElementById("walkSvg").innerHTML = svg;
+  }
+  function drawWalkerBars(){
+    var tot = wSteps || 1;
+    var fS = visits[0]/tot, fR = visits[1]/tot;
+    wBarS.style.width = (fS*100)+"%"; wBarS.textContent = (fS*100).toFixed(1)+"%";
+    wBarR.style.width = (fR*100)+"%"; wBarR.textContent = (fR*100).toFixed(1)+"%";
+    document.getElementById("wSteps").textContent = wSteps;
+    var st = stationary();
+    document.getElementById("wStatS").innerHTML = st ? '<div class="stat-tick" data-l="π '+(st.S*100).toFixed(1)+'%" style="left:'+(st.S*100)+'%"></div>' : '';
+    document.getElementById("wStatR").innerHTML = st ? '<div class="stat-tick" data-l="π '+(st.R*100).toFixed(1)+'%" style="left:'+(st.R*100)+'%"></div>' : '';
+  }
+  function walkStep(){
+    var r = rule();
+    if(wState===0){ wState = Math.random() < r.pSS ? 0 : 1; }
+    else          { wState = Math.random() < r.pRR ? 1 : 0; }
+    visits[wState]++; wSteps++;
+    drawWalker(); drawWalkerBars();
+  }
+  function startWalk(){
+    if(wTimer) return;
+    var speed = parseInt(document.getElementById("wSpeed").value,10);
+    wTimer = setInterval(walkStep, Math.max(16, 1000/speed));
+    document.getElementById("wRun").classList.add("active");
+  }
+  function pauseWalk(){ if(wTimer){ clearInterval(wTimer); wTimer=null; } document.getElementById("wRun").classList.remove("active"); }
+  function resetWalk(){ pauseWalk(); wState=0; visits=[1,0]; wSteps=1; drawWalker(); drawWalkerBars(); }
+  function syncWalkerToRule(){ drawWalker(); drawWalkerBars(); }
+  document.getElementById("wRun").addEventListener("click", startWalk);
+  document.getElementById("wPause").addEventListener("click", pauseWalk);
+  document.getElementById("wReset").addEventListener("click", resetWalk);
+  document.getElementById("wSpeed").addEventListener("input", function(){ if(wTimer){ pauseWalk(); startWalk(); } });
+  resetWalk();
+
+  /* =========================================================
+     TAB 4 — HH vs HT RACE
+     ========================================================= */
+  var raceSumHH=0, raceSumHT=0, raceCount=0, raceTimer=null;
+  var elStreamHH=document.getElementById("raceStreamHH"), elStreamHT=document.getElementById("raceStreamHT");
+
+  function huntStep(state){
+    // state: {seq:[], last:null, target:'HH'|'HT', done:false, flips:0}
+    if(state.done) return;
+    var cur = Math.random()<0.5 ? 'H':'T';
+    state.flips++;
+    var isHit = state.last==='H' && ((state.target==='HH' && cur==='H') || (state.target==='HT' && cur==='T'));
+    state.seq.push({c:cur, hit:isHit});
+    state.last = cur;
+    if(isHit) state.done = true;
+  }
+  function renderStream(el, state){
+    el.innerHTML = state.seq.map(function(f,i){
+      var isLastTwo = i>=state.seq.length-2;
+      return (isLastTwo && state.done) ? '<span class="hit">'+f.c+'</span>' : f.c;
+    }).join('') || '—';
+  }
+  function raceStats(){
+    document.getElementById("raceN").textContent = raceCount;
+    var avgHH = raceCount ? raceSumHH/raceCount : 0, avgHT = raceCount ? raceSumHT/raceCount : 0;
+    var maxBar = 12;
+    var barHH = document.getElementById("raceBarHH").firstElementChild;
+    var barHT = document.getElementById("raceBarHT").firstElementChild;
+    barHH.style.width = Math.min(100, avgHH/maxBar*100)+"%"; barHH.textContent = raceCount ? avgHH.toFixed(2) : "—";
+    barHT.style.width = Math.min(100, avgHT/maxBar*100)+"%"; barHT.textContent = raceCount ? avgHT.toFixed(2) : "—";
+    document.getElementById("raceStatHH").innerHTML = '<div class="stat-tick" data-l="theory: 6" style="left:'+(6/maxBar*100)+'%"></div>';
+    document.getElementById("raceStatHT").innerHTML = '<div class="stat-tick" data-l="theory: 4" style="left:'+(4/maxBar*100)+'%"></div>';
+  }
+  function watchOneRace(){
+    if(raceTimer) return;
+    var sHH = {seq:[], last:null, target:'HH', done:false, flips:0};
+    var sHT = {seq:[], last:null, target:'HT', done:false, flips:0};
+    elStreamHH.innerHTML = "—"; elStreamHT.innerHTML = "—";
+    raceTimer = setInterval(function(){
+      huntStep(sHH); huntStep(sHT);
+      renderStream(elStreamHH, sHH); renderStream(elStreamHT, sHT);
+      if(sHH.done && sHT.done){
+        clearInterval(raceTimer); raceTimer=null;
+        raceSumHH += sHH.flips; raceSumHT += sHT.flips; raceCount++;
+        raceStats();
+      }
+    }, 260);
+  }
+  function runRaceBatch(n){
+    for(var i=0;i<n;i++){
+      var sHH = {last:null, target:'HH', done:false, flips:0};
+      var sHT = {last:null, target:'HT', done:false, flips:0};
+      while(!sHH.done){ huntStepFast(sHH); }
+      while(!sHT.done){ huntStepFast(sHT); }
+      raceSumHH += sHH.flips; raceSumHT += sHT.flips; raceCount++;
+    }
+    raceStats();
+  }
+  function huntStepFast(state){
+    var cur = Math.random()<0.5 ? 'H':'T';
+    state.flips++;
+    var isHit = state.last==='H' && ((state.target==='HH' && cur==='H') || (state.target==='HT' && cur==='T'));
+    state.last = cur;
+    if(isHit) state.done = true;
+  }
+  document.getElementById("raceWatch").addEventListener("click", watchOneRace);
+  document.getElementById("raceBatch").addEventListener("click", function(){ runRaceBatch(1000); });
+  document.getElementById("raceReset").addEventListener("click", function(){
+    raceSumHH=0; raceSumHT=0; raceCount=0;
+    elStreamHH.innerHTML="—"; elStreamHT.innerHTML="—";
+    raceStats();
+  });
+  raceStats();
+
+  /* =========================================================
+     TAB 5 — GAMBLER'S RUIN
+     ========================================================= */
+  var TARGET = 10;
+  var ruinStartSlider = document.getElementById("ruinStart");
+  var ruinWins=0, ruinCount=0, ruinTimer=null;
+  var rc = document.getElementById("ruinCanvas"), rctx = rc.getContext("2d");
+  var RW = rc.width, RH = rc.height;
+
+  function ruinTheory(){ return parseInt(ruinStartSlider.value,10) / TARGET; }
+  function drawRuinPath(path, finished){
+    rctx.clearRect(0,0,RW,RH);
+    var pad=30;
+    var plotW = RW-2*pad, plotH = RH-2*pad;
+    var maxX = Math.max(path.length-1, 20);
+    function px(i){ return pad + (i/maxX)*plotW; }
+    function py(v){ return pad + plotH - (v/TARGET)*plotH; }
+    // gridlines at 0 and TARGET
+    rctx.strokeStyle = "rgba(27,36,48,0.15)"; rctx.lineWidth=1;
+    [0,TARGET].forEach(function(v){
+      rctx.beginPath(); rctx.moveTo(pad, py(v)); rctx.lineTo(RW-pad, py(v)); rctx.stroke();
+    });
+    rctx.fillStyle="var(--ink-soft)"; rctx.font='11px "IBM Plex Mono",monospace';
+    rctx.fillText("ruin ($0)", pad, py(0)-4);
+    rctx.fillText("target ($"+TARGET+")", pad, py(TARGET)-4);
+    // path
+    rctx.beginPath(); rctx.strokeStyle="var(--accent)"; rctx.lineWidth=2.4;
+    for(var i=0;i<path.length;i++){ var X=px(i), Y=py(path[i]); if(i===0) rctx.moveTo(X,Y); else rctx.lineTo(X,Y); }
+    rctx.stroke();
+    if(finished){
+      var last = path[path.length-1];
+      rctx.beginPath(); rctx.arc(px(path.length-1), py(last), 5, 0, 7);
+      rctx.fillStyle = last>=TARGET ? "var(--healthy)" : "var(--sick)"; rctx.fill();
+    }
+  }
+  function ruinBarUpdate(){
+    document.getElementById("ruinN").textContent = ruinCount;
+    var rate = ruinCount ? ruinWins/ruinCount : 0;
+    var bar = document.getElementById("ruinBar").firstElementChild;
+    bar.style.width = (rate*100)+"%"; bar.textContent = ruinCount ? (rate*100).toFixed(1)+"%" : "—";
+    var th = ruinTheory();
+    document.getElementById("ruinStatLine").innerHTML = '<div class="stat-tick" data-l="theory: '+(th*100).toFixed(0)+'%" style="left:'+(th*100)+'%"></div>';
+  }
+  function updateRuinTheoryLabel(){
+    ruinStartOut.textContent = "$"+ruinStartSlider.value;
+    document.getElementById("ruinTheory").textContent = (ruinTheory()*100).toFixed(0)+"%";
+  }
+  function watchOneWalk(){
+    if(ruinTimer) return;
+    var bal = parseInt(ruinStartSlider.value,10);
+    var path = [bal];
+    ruinTimer = setInterval(function(){
+      bal += Math.random()<0.5 ? 1 : -1;
+      path.push(bal);
+      drawRuinPath(path, false);
+      if(bal<=0 || bal>=TARGET){
+        clearInterval(ruinTimer); ruinTimer=null;
+        drawRuinPath(path, true);
+        ruinCount++; if(bal>=TARGET) ruinWins++;
+        ruinBarUpdate();
+      }
+    }, 45);
+  }
+  function runRuinBatch(n){
+    var start = parseInt(ruinStartSlider.value,10);
+    for(var i=0;i<n;i++){
+      var bal = start;
+      while(bal>0 && bal<TARGET){ bal += Math.random()<0.5 ? 1 : -1; }
+      ruinCount++; if(bal>=TARGET) ruinWins++;
+    }
+    ruinBarUpdate();
+  }
+  document.getElementById("ruinWatch").addEventListener("click", watchOneWalk);
+  document.getElementById("ruinBatch").addEventListener("click", function(){ runRuinBatch(1000); });
+  document.getElementById("ruinReset").addEventListener("click", function(){ ruinWins=0; ruinCount=0; ruinBarUpdate(); drawRuinPath([parseInt(ruinStartSlider.value,10)], false); });
+  ruinStartSlider.addEventListener("input", function(){ updateRuinTheoryLabel(); ruinBarUpdate(); drawRuinPath([parseInt(ruinStartSlider.value,10)], false); });
+  updateRuinTheoryLabel(); ruinBarUpdate(); drawRuinPath([parseInt(ruinStartSlider.value,10)], false);
+
+  /* =========================================================
+     TAB 6 — IS THE STATE ENOUGH? (sufficient statistic)
+     ========================================================= */
+  (function(){
+    function makeLCG(seed){ var s = seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+    var rand = makeLCG(42);
+    // A genuine order-2 rule: P(tomorrow=Rain | yesterday, today) depends on BOTH days.
+    var TRUE_P2 = { "R,R":0.85, "S,R":0.45, "R,S":0.20, "S,S":0.05 };
+    var seq = ["R","R"];
+    var N = 6000;
+    for (var t=2; t<N; t++){
+      var y = seq[t-2], tod = seq[t-1];
+      var p = TRUE_P2[y+","+tod];
+      seq.push(rand() < p ? "R" : "S");
+    }
+    function tally(keyFn){
+      var counts = {};
+      for (var t=0; t<seq.length-1; t++){
+        var k = keyFn(t);
+        if (k===null) continue;
+        if (!counts[k]) counts[k] = [0,0];
+        counts[k][1]++;
+        if (seq[t+1]==="R") counts[k][0]++;
+      }
+      return counts;
+    }
+    var order1 = tally(function(t){ return t>=0 ? seq[t] : null; });
+    var order2 = tally(function(t){ return t>=1 ? seq[t-1]+","+seq[t] : null; });
+    var order3 = tally(function(t){ return t>=2 ? seq[t-2]+","+seq[t-1]+","+seq[t] : null; });
+
+    function pRain(counts,key){ var c = counts[key]; return c ? c[0]/c[1] : null; }
+    function fmtP(x){ return x===null ? "—" : (x*100).toFixed(1)+"%"; }
+
+    var curOrder = 1;
+    function renderSufficient(){
+      var tableDiv = document.getElementById("sufficientTable");
+      var rows = "";
+      if (curOrder===1){
+        ["R","S"].forEach(function(tod){
+          var p1 = pRain(order1, tod);
+          // one level deeper, broken out by yesterday, for comparison
+          var pRR = pRain(order2, "R,"+tod), pSR = pRain(order2, "S,"+tod);
+          rows += '<div style="margin-bottom:14px;">' +
+            '<div style="font-size:13px;margin-bottom:4px;">today = <b>'+(tod==="R"?"Rain":"Sun")+'</b> &nbsp;→&nbsp; P(rain tomorrow) = <b>'+fmtP(p1)+'</b></div>' +
+            '<div class="bar"><div style="background:var(--rain); width:'+(p1*100).toFixed(1)+'%">'+fmtP(p1)+'</div></div>' +
+            '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px;font-style:italic;">but broken out by yesterday too: after Rain,'+tod+' → '+fmtP(pRR)+' &nbsp;|&nbsp; after Sun,'+tod+' → '+fmtP(pSR)+' — two genuinely different rates, hidden inside that one blended number above.</div>' +
+            '</div>';
+        });
+      } else {
+        ["R,R","S,R","R,S","S,S"].forEach(function(key){
+          var p2 = pRain(order2, key);
+          var parts = key.split(",");
+          var pDeeper1 = pRain(order3, "R,"+key), pDeeper2 = pRain(order3, "S,"+key);
+          var maxDev = Math.max(Math.abs(pDeeper1-p2), Math.abs(pDeeper2-p2));
+          rows += '<div style="margin-bottom:14px;">' +
+            '<div style="font-size:13px;margin-bottom:4px;">yesterday='+(parts[0]==="R"?"Rain":"Sun")+', today='+(parts[1]==="R"?"Rain":"Sun")+' &nbsp;→&nbsp; P(rain tomorrow) = <b>'+fmtP(p2)+'</b></div>' +
+            '<div class="bar"><div style="background:var(--rain); width:'+(p2*100).toFixed(1)+'%">'+fmtP(p2)+'</div></div>' +
+            '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px;font-style:italic;">one day further back barely moves it: '+fmtP(pDeeper1)+' or '+fmtP(pDeeper2)+' depending on the 3rd day — max shift only '+(maxDev*100).toFixed(1)+' points.</div>' +
+            '</div>';
+        });
+      }
+      tableDiv.innerHTML = rows;
+      var verdict = document.getElementById("sufficientVerdict");
+      if (curOrder===1){
+        verdict.className = "verdict";
+        verdict.innerHTML = "<b>\"Today only\" is NOT a sufficient state.</b> Breaking each row out by one more day of history reveals two clearly different true rates hiding inside the same blended number — real predictive structure this state is throwing away.";
+      } else {
+        verdict.className = "verdict";
+        verdict.innerHTML = "<b>\"Today + yesterday\" IS a sufficient state.</b> Checking a 3rd day back barely changes any prediction — going further into the past adds essentially nothing more, exactly the test for whether a state has packed in enough history.";
+      }
+    }
+    document.querySelectorAll('#panel-sufficient [data-order]').forEach(function(b){
+      b.addEventListener("click", function(){
+        document.querySelectorAll('#panel-sufficient [data-order]').forEach(function(x){x.classList.remove("active");});
+        b.classList.add("active");
+        curOrder = parseInt(b.dataset.order,10);
+        renderSufficient();
+      });
+    });
+    renderSufficient();
+  })();
+})();
+</script>
+</body>
+</html>

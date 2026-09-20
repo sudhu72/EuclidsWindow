@@ -2,6 +2,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app import main as main_module
 from app.main import app
 
 
@@ -26,7 +27,12 @@ def test_visualize_on_demand_diagram(client):
         assert payload.get("visualization_job_id") is not None
 
 
-def test_visualize_on_demand_animation_unmapped_topic(client):
+def test_visualize_on_demand_animation_unmapped_topic(client, monkeypatch):
+    # No pre-built scene matches "set theory", so this exercises the dynamic
+    # (template + LLM) pipeline's "nothing generated" response path. Stub the
+    # pipeline rather than relying on the live LLM/Manim render to fail — that
+    # depends on real model output and was flaky (it sometimes succeeds).
+    monkeypatch.setattr(main_module.animation_pipeline, "generate", lambda *a, **k: None)
     response = client.post(
         "/api/ai/visualize",
         json={"question": "Explain set theory", "style": "animation"},

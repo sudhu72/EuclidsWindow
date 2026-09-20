@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What Must Be True — Formal Logic, Interactively</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --true:#0F8B8D; --false:#D9636B; --vac:#D9A62E;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .ttable{ width:100%; border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:13.5px; margin-top:14px; }
+  .ttable th, .ttable td{ text-align:center; padding:9px 10px; border-bottom:1px solid var(--line); }
+  .ttable th{ color:var(--ink-soft); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
+  .cell-T{ color:var(--true); font-weight:700; }
+  .cell-F{ color:var(--false); font-weight:700; }
+  .cell-vac{ background:rgba(217,166,46,0.18); border-radius:6px; }
+  .row-hi{ background:var(--accent-soft); }
+  .row-counter{ background:rgba(217,99,107,0.14); }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:18px; font-weight:700; }
+  .good-t{ color:var(--true); } .bad-t{ color:var(--false); }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .sw{ width:13px; height:13px; border-radius:3px; display:inline-block; border:1px solid var(--line); }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Formal Logic</div>
+    <h1>What Must Be True</h1>
+    <p>Every row of a truth table is a possible world. An argument is valid only if the conclusion holds in <em>every</em> world where the premises do — no exceptions allowed. Two tools for seeing exactly where that either holds or breaks.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="table">Truth Table Builder</button>
+    <button class="tab" data-tab="valid">Argument Validity Checker</button>
+  </div>
+
+  <!-- ============ TAB 1: TRUTH TABLE BUILDER ============ -->
+  <div class="panel active" id="panel-table">
+    <div class="card">
+      <h2>Vacuous Truth, Caught in the Act</h2>
+      <p class="sub"><b>What's happening:</b> pick a formula built from P and Q. Every row is one of the four possible combinations of true/false for P and Q — pick <span class="formula">P → Q</span> and watch the gold-highlighted rows: those are exactly where P is false, and the implication is true there by default, since a false premise can never be caught breaking a promise.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> select the two De Morgan presets and check the <em>Match?</em> column — every single row agrees, which is the actual content of "De Morgan's Law is true," made undeniable instead of asserted.</p>
+      <div class="row" id="formulaBtns"></div>
+      <table class="ttable" id="tt1"></table>
+      <div class="legend">
+        <span><span class="sw" style="background:rgba(217,166,46,0.5)"></span>vacuously true (false antecedent)</span>
+      </div>
+      <div class="verdict" id="tt1Verdict"></div>
+      <div class="caption"><b>Why it matters:</b> "if pigs can fly, then 2+2=5" is a true logical statement for exactly this reason — the antecedent is false, so there's no possible world in the table where it could be caught being wrong.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: ARGUMENT VALIDITY CHECKER ============ -->
+  <div class="panel" id="panel-valid">
+    <div class="card">
+      <h2>Is the Argument Actually Valid?</h2>
+      <p class="sub"><b>What's happening:</b> pick a classic argument pattern, told with "P = it rains, Q = the ground gets wet." Every row where <em>both</em> premises are true gets highlighted — if the conclusion is also true in every one of those rows, the argument is valid. If even one highlighted row has a false conclusion, that row is a genuine counterexample, and the argument is invalid — no matter how convincing it sounds in English.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with <em>Modus Ponens</em> (valid) and confirm every premises-true row has a true conclusion. Then switch to <em>Affirming the Consequent</em> — the tutorial's own worked example — and watch the sprinkler-on-a-sunny-day row light up red: premises true, conclusion false, argument broken.</p>
+      <div class="row" id="argBtns"></div>
+      <table class="ttable" id="tt2"></table>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--accent-soft)"></span>both premises true</span>
+        <span><span class="sw" style="background:rgba(217,99,107,0.3)"></span>counterexample (premises true, conclusion false)</span>
+      </div>
+      <div class="verdict" id="tt2Verdict"></div>
+      <div class="caption"><b>Why it matters:</b> the two "valid" patterns here (Modus Ponens, Modus Tollens) and the two "invalid" ones (Affirming the Consequent, Denying the Antecedent) are the four ways any single-implication argument can be shaped — memorizing which two are traps is worth more than memorizing any Latin names.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../07-logic.md">Formal Logic</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* =========================================================
+     TAB 1 — TRUTH TABLE BUILDER
+     ========================================================= */
+  const P_ = (p,q)=>p, Q_ = (p,q)=>q, NOTP=(p,q)=>!p, NOTQ=(p,q)=>!q;
+  const AND=(p,q)=>p&&q, OR=(p,q)=>p||q, IMP=(p,q)=>(!p)||q, IFF=(p,q)=>p===q;
+  const FORMULAS = [
+    { key:"and", label:"P ∧ Q", cols:[{title:"P∧Q", fn:AND}] },
+    { key:"or", label:"P ∨ Q", cols:[{title:"P∨Q", fn:OR}] },
+    { key:"imp", label:"P → Q", cols:[{title:"P→Q", fn:IMP, vacuousIf:(p,q)=>!p}] },
+    { key:"iff", label:"P ↔ Q", cols:[{title:"P↔Q", fn:IFF}] },
+    { key:"contra", label:"P→Q vs ¬Q→¬P (contrapositive)", cols:[
+        {title:"P→Q", fn:IMP, vacuousIf:(p,q)=>!p},
+        {title:"¬Q→¬P", fn:(p,q)=>q||(!p), vacuousIf:(p,q)=>q}
+      ] },
+    { key:"dm1", label:"¬(P∧Q) vs ¬P∨¬Q (De Morgan)", cols:[
+        {title:"¬(P∧Q)", fn:(p,q)=>!(p&&q)},
+        {title:"¬P∨¬Q", fn:(p,q)=>(!p)||(!q)}
+      ] },
+    { key:"dm2", label:"¬(P∨Q) vs ¬P∧¬Q (De Morgan)", cols:[
+        {title:"¬(P∨Q)", fn:(p,q)=>!(p||q)},
+        {title:"¬P∧¬Q", fn:(p,q)=>(!p)&&(!q)}
+      ] }
+  ];
+  let currentFormula = FORMULAS[2]; // start on P→Q to foreground vacuous truth
+
+  const fbtns = document.getElementById("formulaBtns");
+  FORMULAS.forEach(f => {
+    const b = document.createElement("button");
+    b.className = "op" + (f.key===currentFormula.key ? " active" : "");
+    b.textContent = f.label;
+    b.addEventListener("click", () => {
+      currentFormula = f;
+      document.querySelectorAll("#formulaBtns .op").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      renderTT1();
+    });
+    fbtns.appendChild(b);
+  });
+
+  function tf(v){ return v ? '<span class="cell-T">T</span>' : '<span class="cell-F">F</span>'; }
+  function renderTT1(){
+    const rows = [[true,true],[true,false],[false,true],[false,false]];
+    const cols = currentFormula.cols;
+    let html = "<tr><th>P</th><th>Q</th>";
+    cols.forEach(c => html += `<th>${c.title}</th>`);
+    if(cols.length>1) html += "<th>Match?</th>";
+    html += "</tr>";
+    let allMatch = true;
+    rows.forEach(([p,q]) => {
+      html += "<tr>";
+      html += `<td>${tf(p)}</td><td>${tf(q)}</td>`;
+      const vals = [];
+      cols.forEach(c => {
+        const v = c.fn(p,q);
+        vals.push(v);
+        const vac = c.vacuousIf && c.vacuousIf(p,q);
+        html += `<td class="${vac?'cell-vac':''}">${tf(v)}</td>`;
+      });
+      if(cols.length>1){
+        const match = vals.every(v => v===vals[0]);
+        if(!match) allMatch = false;
+        html += `<td>${match ? '<span class="good-t">✓</span>' : '<span class="bad-t">✗</span>'}</td>`;
+      }
+      html += "</tr>";
+    });
+    document.getElementById("tt1").innerHTML = html;
+    const v = document.getElementById("tt1Verdict");
+    if(cols.length>1){
+      v.innerHTML = allMatch
+        ? `<b class="good-t big">Equivalent</b> — every one of the 4 rows agrees, so these two formulas mean exactly the same thing, always.`
+        : `<b class="bad-t big">Not equivalent</b> — at least one row disagrees, so these formulas can diverge.`;
+    } else if(currentFormula.key==="imp"){
+      v.innerHTML = `Two of the four rows are gold — those are exactly the rows where <b>P is false</b>, and <span class="formula">P→Q</span> is true there automatically, regardless of Q. It can only be made <em>false</em> in the one row where P is true and Q is false.`;
+    } else {
+      v.innerHTML = `${currentFormula.label} is true in exactly the rows marked T above.`;
+    }
+  }
+  renderTT1();
+
+  /* =========================================================
+     TAB 2 — ARGUMENT VALIDITY CHECKER
+     ========================================================= */
+  const ARGS = [
+    { key:"mp", name:"Modus Ponens", valid:true,
+      premises:[{title:"P→Q", fn:IMP, story:"If it rains, the ground gets wet."},{title:"P", fn:P_, story:"It rains."}],
+      conclusion:{title:"Q", fn:Q_, story:"∴ The ground gets wet."} },
+    { key:"ac", name:"Affirming the Consequent", valid:false,
+      premises:[{title:"P→Q", fn:IMP, story:"If it rains, the ground gets wet."},{title:"Q", fn:Q_, story:"The ground is wet."}],
+      conclusion:{title:"P", fn:P_, story:"∴ It rained."} },
+    { key:"mt", name:"Modus Tollens", valid:true,
+      premises:[{title:"P→Q", fn:IMP, story:"If it rains, the ground gets wet."},{title:"¬Q", fn:NOTQ, story:"The ground is not wet."}],
+      conclusion:{title:"¬P", fn:NOTP, story:"∴ It did not rain."} },
+    { key:"da", name:"Denying the Antecedent", valid:false,
+      premises:[{title:"P→Q", fn:IMP, story:"If it rains, the ground gets wet."},{title:"¬P", fn:NOTP, story:"It did not rain."}],
+      conclusion:{title:"¬Q", fn:NOTQ, story:"∴ The ground is not wet."} }
+  ];
+  let currentArg = ARGS[0];
+  const abtns = document.getElementById("argBtns");
+  ARGS.forEach(a => {
+    const b = document.createElement("button");
+    b.className = "op" + (a.key===currentArg.key ? " active" : "");
+    b.textContent = a.name + (a.valid ? "" : " ⚠");
+    b.addEventListener("click", () => {
+      currentArg = a;
+      document.querySelectorAll("#argBtns .op").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      renderTT2();
+    });
+    abtns.appendChild(b);
+  });
+
+  function renderTT2(){
+    const rows = [[true,true],[true,false],[false,true],[false,false]];
+    let html = "<tr><th>P</th><th>Q</th>";
+    currentArg.premises.forEach(pr => html += `<th>${pr.title}</th>`);
+    html += `<th>${currentArg.conclusion.title}</th></tr>`;
+    let counterFound = false;
+    rows.forEach(([p,q]) => {
+      const premVals = currentArg.premises.map(pr => pr.fn(p,q));
+      const bothTrue = premVals.every(v => v);
+      const concVal = currentArg.conclusion.fn(p,q);
+      const isCounter = bothTrue && !concVal;
+      if(isCounter) counterFound = true;
+      const rowClass = isCounter ? "row-counter" : (bothTrue ? "row-hi" : "");
+      html += `<tr class="${rowClass}"><td>${tf(p)}</td><td>${tf(q)}</td>`;
+      premVals.forEach(v => html += `<td>${tf(v)}</td>`);
+      html += `<td>${tf(concVal)}</td></tr>`;
+    });
+    document.getElementById("tt2").innerHTML = html;
+    const storyLines = currentArg.premises.map(pr=>pr.story).concat([currentArg.conclusion.story]).join("<br>");
+    const v = document.getElementById("tt2Verdict");
+    v.innerHTML = storyLines + "<br><br>" +
+      (counterFound
+        ? `<b class="bad-t big">Invalid</b> — the red row is a counterexample: both premises true, conclusion false. (Here: a sprinkler could make the ground wet with no rain at all.)`
+        : `<b class="good-t big">Valid</b> — every row where the premises are both true also has a true conclusion. No counterexample exists.`);
+  }
+  renderTT2();
+})();
+</script>
+</body>
+</html>

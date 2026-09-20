@@ -149,6 +149,22 @@
   });
 
   // =========================================================================
+  // Learner-level tab switching (kids/teen/college/adult), same pattern as
+  // the FFT Lab's .fft-math-panel — each game's math note gets its own panel.
+  // =========================================================================
+  document.querySelectorAll(".fft-math-panel").forEach((panel) => {
+    panel.querySelectorAll(".fft-math-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        panel.querySelectorAll(".fft-math-tab").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        panel.querySelectorAll(".fft-math-content").forEach((c) => {
+          c.classList.toggle("hidden", c.dataset.level !== tab.dataset.level);
+        });
+      });
+    });
+  });
+
+  // =========================================================================
   // 1. Mozart's Dice Game — with staff notation & probability visualization
   // =========================================================================
   const MOZART_TABLE = [

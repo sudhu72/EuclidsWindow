@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The 2026 LLM Engineering Roadmap — the ladder of levers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c;
+    --bg-panel:#1b2b23;
+    --bg-rung:#20342a;
+    --chalk:#f4f1e8;
+    --chalk-dim:#7f8f83;
+    --amber:#ffce54;
+    --coral:#ff8266;
+    --mint:#8fd19e;
+    --sky:#7ec8e3;
+    --border:rgba(244,241,232,0.14);
+    --border-hi:rgba(255,206,84,0.55);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:28px 22px 60px;}
+  .wrap{max-width:1120px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:27px;margin:0 0 4px;line-height:1.2;}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 18px;max-width:760px;line-height:1.5;}
+  .sub b{color:var(--chalk);font-weight:500;}
+
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px;}
+  button{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--bg-panel);color:var(--chalk);
+          border:1px solid var(--border);border-radius:7px;padding:8px 14px;cursor:pointer;transition:all .15s ease;}
+  button:hover{border-color:var(--border-hi);color:var(--amber);}
+  button.primary{background:var(--amber);color:#1a1a1a;border-color:var(--amber);font-weight:700;}
+  button.primary:hover{color:#1a1a1a;filter:brightness(1.08);}
+  .hint{color:var(--chalk-dim);font-size:11px;}
+
+  .stage{display:grid;grid-template-columns:1.05fr 1fr;gap:26px;align-items:start;}
+  @media(max-width:860px){.stage{grid-template-columns:1fr;}}
+
+  /* ---- ladder column ---- */
+  .ladder-col{position:relative;}
+  .axis-label{font-size:10px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px 46px;}
+  .ladder{position:relative;display:flex;flex-direction:column-reverse;gap:9px;padding-left:46px;}
+  /* cost meter running up the left side */
+  .cost-rail{position:absolute;left:14px;top:6px;bottom:6px;width:8px;border-radius:5px;
+             background:linear-gradient(to top,#3a5a46,#6f8f4e 45%,#b98a3e 72%,var(--coral));opacity:.85;}
+  .cost-cap{position:absolute;left:2px;font-size:9px;color:var(--chalk-dim);width:40px;text-align:center;}
+  .cost-cap.top{top:-2px;} .cost-cap.bot{bottom:-2px;}
+
+  .rung{position:relative;background:var(--bg-rung);border:1px solid var(--border);border-radius:9px;
+        padding:11px 13px;cursor:pointer;transition:all .18s ease;display:flex;align-items:center;gap:12px;}
+  .rung:hover{border-color:var(--border-hi);transform:translateX(3px);}
+  .rung.active{border-color:var(--amber);background:#2a3f31;box-shadow:0 0 0 1px var(--amber),0 6px 20px rgba(0,0,0,.35);}
+  .rung.climb-lit{border-color:var(--mint);box-shadow:0 0 0 1px var(--mint);}
+  .rung .num{font-family:'Kalam',cursive;font-size:22px;font-weight:700;color:var(--amber);width:26px;text-align:center;flex:none;}
+  .rung.active .num{color:var(--amber);}
+  .rung .body{min-width:0;}
+  .rung .name{font-size:14px;font-weight:500;color:var(--chalk);}
+  .rung .one{font-size:11px;color:var(--chalk-dim);margin-top:1px;line-height:1.35;}
+  .rung .lever{font-size:9px;color:var(--sky);text-transform:uppercase;letter-spacing:.8px;margin-top:3px;}
+  /* connector notch */
+  .rung::before{content:"";position:absolute;left:-32px;top:50%;width:18px;height:2px;background:var(--border);transform:translateY(-50%);}
+  .rung.active::before{background:var(--amber);}
+
+  /* ---- detail column ---- */
+  .detail{background:var(--bg-panel);border:1px solid var(--border);border-radius:11px;padding:22px 24px;position:sticky;top:20px;}
+  .detail .tag{display:inline-block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#1a1a1a;
+               background:var(--amber);border-radius:5px;padding:3px 8px;font-weight:700;margin-bottom:12px;}
+  .detail h2{font-family:'Kalam',cursive;font-size:24px;margin:0 0 2px;color:var(--chalk);}
+  .detail .lever-line{font-size:11px;color:var(--sky);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
+  .qa{margin:0 0 15px;}
+  .qa .q{font-size:11px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+  .qa .a{font-size:13.5px;line-height:1.55;color:var(--chalk);}
+  .qa .a b{color:var(--amber);font-weight:500;}
+  .fails{border-left:2px solid var(--coral);padding:2px 0 2px 12px;margin:0 0 15px;}
+  .fails .a{color:#ffd9cf;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+  .chip{font-size:11px;background:rgba(244,241,232,.06);border:1px solid var(--border);border-radius:20px;padding:4px 11px;color:var(--chalk);}
+  .footlink{margin-top:18px;font-size:11px;color:var(--chalk-dim);line-height:1.5;border-top:1px solid var(--border);padding-top:12px;}
+  .footlink code{color:var(--mint);}
+
+  .spine{margin-top:26px;background:var(--bg-panel);border:1px dashed var(--border);border-radius:10px;padding:16px 20px;}
+  .spine .k{font-family:'Kalam',cursive;font-size:16px;color:var(--amber);margin-bottom:4px;}
+  .spine p{margin:0;font-size:12.5px;color:var(--chalk-dim);line-height:1.6;}
+  .spine b{color:var(--chalk);font-weight:500;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The 2026 LLM Engineering Roadmap — the ladder of levers</h1>
+  <p class="sub">Eight pillars of LLM engineering, drawn as a ladder. The one rule: <b>the model is fixed — you climb from the cheapest lever to the most expensive, and never skip a rung you haven't honestly exhausted.</b> Click a rung to see the question it answers and what breaks that forces you up. Or press <b>Climb</b> to walk it end to end.</p>
+
+  <div class="controls">
+    <button class="primary" id="climbBtn">▲ Climb the ladder</button>
+    <button id="resetBtn">Reset</button>
+    <span class="hint">click a rung · or use ↑ / ↓ keys</span>
+  </div>
+
+  <div class="stage">
+    <div class="ladder-col">
+      <p class="axis-label">the eight pillars &nbsp;·&nbsp; bottom = cheapest</p>
+      <div class="ladder" id="ladder">
+        <div class="cost-rail"></div>
+        <div class="cost-cap top">$$$ costly</div>
+        <div class="cost-cap bot">$ cheap</div>
+        <!-- rungs injected by JS -->
+      </div>
+    </div>
+
+    <div class="detail" id="detail"><!-- filled by JS --></div>
+  </div>
+
+  <div class="spine">
+    <div class="k">The spine that connects all eight</div>
+    <p>Every pillar answers the same question at a bigger budget: <b>“the model is fixed — how do I get better behavior without retraining it, and when that fails, how do I retrain the smallest possible piece?”</b> Change the <b>words</b> → change the <b>facts</b> → budget the <b>attention</b> → edit a <b>sliver of weights</b> → let it <b>act in a loop</b> → wrap it in <b>infrastructure</b> → <b>shrink</b> it → <b>prove</b> it works. The most common mistake in the whole field is skipping a rung.</p>
+  </div>
+</div>
+
+<script>
+const PILLARS = [
+  { n:1, name:"Prompt Engineering", lever:"change the words you send",
+    one:"Tighten the text — the cheapest lever there is.",
+    q:"Can better <b>words</b> get the behaviour I want?",
+    a:"An LLM's output is a function of its input, and the input is the one thing fully in your hands. Reduce ambiguity, anchor the format with <b>few-shot examples</b>, and stabilise reasoning with <b>chain-of-thought</b>. Treat prompts like code: versioned, tested, reproducible.",
+    fails:"The answer needs data the model was never trained on — private docs, fresh facts. No phrasing conjures facts the weights don't hold.",
+    chips:["few-shot","chain-of-thought","prompts-as-code"] },
+  { n:2, name:"RAG Systems", lever:"change what facts you put in front of it",
+    one:"Fetch the relevant docs and paste them into the prompt.",
+    q:"Can I feed it <b>facts</b> it never learned?",
+    a:"Put the knowledge in the <b>prompt</b>, not the weights. Chunk docs, embed them into a vector index, retrieve the top-k at query time, concatenate, generate. Fix naive RAG with <b>query rewriting</b> (better search key) and <b>reranking</b> with a cross-encoder (similarity ≠ relevance).",
+    fails:"Retrieved docs are just one source competing for a finite window — who gets the scarce token budget?",
+    chips:["chunking","embeddings","query-rewriting","reranking"] },
+  { n:3, name:"Context Engineering", lever:"budget the model's limited attention",
+    one:"Decide what stays, compresses, or gets dropped.",
+    q:"Who gets the scarce <b>token budget</b>?",
+    a:"The window is finite and attention cost grows <b>quadratically</b> with length. System prompt, history, retrieved docs, tool outputs, memory and examples all compete. Three moves: <b>keep</b> the must-haves, <b>compress</b> the mid-value (summaries), <b>drop</b> the rest — automatically, every turn.",
+    fails:"Prompting and context plateau on a niche task — the model still gets it wrong. Time to touch the weights.",
+    chips:["keep / compress / drop","summarisation","memory"] },
+  { n:4, name:"Fine-Tuning", lever:"change the weights — but only a sliver",
+    one:"Specialise the weights without moving billions of them.",
+    q:"Do I need to edit the <b>weights</b>, cheaply?",
+    a:"Continue training an already-trained model on your data. <b>LoRA</b> bets the useful update is low-rank (ΔW = B·A) so you train a fraction of a percent and dodge catastrophic forgetting; <b>QLoRA</b> adds 4-bit frozen weights to fit big models on one GPU. The hard part is the <b>data</b>, not the loop.",
+    fails:"The task needs tools, steps and reactions to real results — a single answer can't do it.",
+    chips:["LoRA","QLoRA","data quality","PEFT"] },
+  { n:5, name:"Agents", lever:"let it act in a loop, not answer once",
+    one:"Wrap the call in a loop and give it tools.",
+    q:"Should it <b>act in a loop</b> instead of answering once?",
+    a:"An agent = an LLM call in a loop with tools: pick a tool, read the result, decide the next move, repeat. The power is <b>reacting to real results it couldn't predict</b>. The easy 20% is the model; the other 80% is orchestration — state, retries, step limits, graceful failure.",
+    fails:"It works in a notebook — but will it survive 500 users at once, spiky latency, and a real cost bill?",
+    chips:["ReAct loop","tools","reflection","guardrails"] },
+  { n:6, name:"LLM Deployment", lever:"wrap it in infrastructure that survives traffic",
+    one:"Handle concurrency, scale, and bounded latency.",
+    q:"Will it survive real <b>traffic</b>?",
+    a:"DevOps ≠ MLOps ≠ LLMOps — non-determinism and token-scaled cost change everything. The first real decision is the inference engine: <b>vLLM</b>'s PagedAttention cuts KV-cache waste from 60–80% to under 4% for 2–4× throughput. Add a serving layer, an LLM gateway, and per-request cost tracking.",
+    fails:"The first inference bill lands. Now the traffic has to become affordable.",
+    chips:["vLLM / PagedAttention","serving layer","LLM gateway"] },
+  { n:7, name:"LLM Optimization", lever:"shrink it so the traffic is affordable",
+    one:"Trade a little quality for a lot of savings.",
+    q:"Can I make the traffic <b>affordable</b>?",
+    a:"<b>Quantization</b> is the biggest lever — FP16 → 4-bit cuts memory ~4× for under ~1% perplexity, fitting a 70B model on one 24GB GPU. <b>Distillation</b> trains a small student on a big teacher; <b>pruning</b> drops low-weight connections. Benchmark every tradeoff on the <b>actual</b> workload.",
+    fails:"None of these savings mean anything unless you can measure whether the system still works.",
+    chips:["quantization","distillation","pruning"] },
+  { n:8, name:"Safety · Evals · Observability", lever:"prove it works, and keep watching",
+    one:"Measure quality offline; watch behaviour live; defend against abuse.",
+    q:"How do I <b>know</b> any of it works?",
+    a:"<b>Evals</b> ask “is the output good?” — golden datasets, run as regression checks before deploy (often LLM-as-judge). <b>Observability</b> asks “what's happening now?” — trace each request, monitor tokens & latency. <b>Safety</b> defends against prompt injection: treat every tool result as untrusted data, never commands.",
+    fails:"The loop closes — evals are prompt regression tests, observability finds the change that broke prod, safety bounds the agent's tools. Back to rung 1, deliberately.",
+    chips:["evals / golden set","tracing","LLM-as-judge","prompt-injection defense"] },
+];
+
+const ladder = document.getElementById('ladder');
+const detail = document.getElementById('detail');
+let active = 0;
+let climbTimer = null;
+
+// build rungs (DOM order 1..8; flex column-reverse puts #1 at the bottom)
+PILLARS.forEach((p, i) => {
+  const el = document.createElement('div');
+  el.className = 'rung';
+  el.dataset.i = i;
+  el.innerHTML = `<div class="num">${p.n}</div>
+    <div class="body">
+      <div class="name">${p.name}</div>
+      <div class="one">${p.one}</div>
+      <div class="lever">lever · ${p.lever}</div>
+    </div>`;
+  el.addEventListener('click', () => { stopClimb(); select(i); });
+  ladder.appendChild(el);
+});
+const rungEls = [...ladder.querySelectorAll('.rung')];
+
+function renderDetail(p){
+  detail.innerHTML = `
+    <span class="tag">Rung ${p.n} of 8</span>
+    <h2>${p.name}</h2>
+    <div class="lever-line">lever · ${p.lever}</div>
+    <div class="qa"><div class="q">The question it answers</div><div class="a">${p.q}</div></div>
+    <div class="qa"><div class="q">How it works</div><div class="a">${p.a}</div></div>
+    <div class="qa fails"><div class="q">What fails first → pushes you to rung ${p.n<8?p.n+1:'1 (the loop closes)'}</div><div class="a">${p.fails}</div></div>
+    <div class="qa"><div class="q">Key techniques</div><div class="chips">${p.chips.map(c=>`<span class="chip">${c}</span>`).join('')}</div></div>
+    <div class="footlink">Full derivation: <code>ml/llm_engineering_roadmap_2026_feynman.md</code> · Pillar ${p.n}${p.n===5?' &nbsp;·&nbsp; build it: <code>ml/agentic/agents_from_scratch.ipynb</code>':''}</div>`;
+}
+
+function select(i){
+  active = i;
+  rungEls.forEach((el,j)=>el.classList.toggle('active', j===i));
+  rungEls.forEach(el=>el.classList.remove('climb-lit'));
+  renderDetail(PILLARS[i]);
+  rungEls[i].scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+
+// climb animation: light each rung bottom→top in sequence, then settle
+function startClimb(){
+  stopClimb();
+  let i = 0;
+  select(0);
+  climbTimer = setInterval(()=>{
+    // select() clears any existing climb-lit, so apply the trail AFTER it,
+    // lighting every rung climbed so far (bottom -> current).
+    select(i);
+    for(let k=0;k<=i;k++) rungEls[k].classList.add('climb-lit');
+    i++;
+    if(i>=PILLARS.length){ clearInterval(climbTimer); climbTimer=null; }
+  }, 900);
+}
+function stopClimb(){ if(climbTimer){ clearInterval(climbTimer); climbTimer=null; } rungEls.forEach(el=>el.classList.remove('climb-lit')); }
+
+document.getElementById('climbBtn').addEventListener('click', startClimb);
+document.getElementById('resetBtn').addEventListener('click', ()=>{ stopClimb(); select(0); });
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowUp'){ e.preventDefault(); stopClimb(); select(Math.min(active+1, PILLARS.length-1)); }
+  if(e.key==='ArrowDown'){ e.preventDefault(); stopClimb(); select(Math.max(active-1, 0)); }
+});
+
+select(0);
+</script>
+</body>
+</html>

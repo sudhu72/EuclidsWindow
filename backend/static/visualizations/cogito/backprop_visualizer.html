@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compute Once, Reuse Backward — Backpropagation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --fwd:#0F8B8D; --bwd:#D9636B; --delta:#D9A62E;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:30px; }
+  input[type=number]{ width:66px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; font-family:"IBM Plex Mono",monospace; }
+  svg{ width:100%; height:auto; display:block; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.8; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:18px; font-weight:700; }
+  .fwd-t{ color:var(--fwd); } .bwd-t{ color:var(--bwd); } .delta-t{ color:var(--delta); }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:12px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .sw{ width:16px; height:3px; border-radius:2px; display:inline-block; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft); margin-top:12px; max-height:150px; overflow-y:auto; white-space:pre; background:#F5F4F0; border-radius:8px; padding:10px 12px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Backpropagation</div>
+    <h1>Compute Once, Reuse Backward</h1>
+    <p>A forward pass turns inputs into a loss. A backward pass turns that loss back into "which way should each weight move" — and the whole algorithm is just the chain rule noticing that its middle term is shared. Step through both directions, one gear at a time.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="two">Two-Layer Chain</button>
+    <button class="tab" data-tab="three">Three-Layer Chain</button>
+  </div>
+
+  <!-- ============ TAB 1: TWO-LAYER CHAIN ============ -->
+  <div class="panel active" id="panel-two">
+    <div class="card">
+      <h2>The Exact Worked Example, Made Walkable</h2>
+      <p class="sub"><b>What's happening:</b> the tutorial's own numbers — <span class="formula">x → a=w1·x → b=w2·a → L=(b−y)²</span>. Step forward through the teal arrows to compute a, b, and L. Then step backward through the red arrows: the loss hands back one number, <span class="formula">δ_b</span>, and that <em>same</em> number gets reused to compute both weight gradients — the whole "aha" of backpropagation, happening in front of you.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> step all the way forward, then step backward one click at a time and watch <span class="formula">δ_b</span> appear once and get tapped <em>twice</em> — once to build <span class="formula">dL/dw2</span>, once to build <span class="formula">δ_a</span> (which then builds <span class="formula">dL/dw1</span>). Nothing about the shared error signal is ever recomputed.</p>
+      <div class="row">
+        <label>x</label><input type="number" id="twoX" value="2" step="0.5">
+        <label>w1</label><input type="number" id="twoW1" value="3" step="0.5">
+        <label>w2</label><input type="number" id="twoW2" value="0.5" step="0.1">
+        <label>y</label><input type="number" id="twoY" value="10" step="1">
+      </div>
+      <svg id="twoSvg" viewBox="0 0 900 220" role="img" aria-label="Two-layer computation graph"></svg>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="twoPrev">◀ Back</button>
+        <button class="op active" id="twoNext">Next step ▶</button>
+        <button class="op" id="twoReset">Reset</button>
+      </div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--fwd)"></span>forward pass</span>
+        <span><span class="sw" style="background:var(--bwd)"></span>backward pass (delta flow)</span>
+      </div>
+      <div class="verdict" id="twoVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> in a network with millions of weights, this "compute the shared middle term once, reuse it everywhere it feeds into" trick is the entire difference between training being feasible and being computationally hopeless.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: THREE-LAYER CHAIN ============ -->
+  <div class="panel" id="panel-three">
+    <div class="card">
+      <h2>One More Layer — Watch δ Cascade</h2>
+      <p class="sub"><b>What's happening:</b> the identical idea, one layer deeper: <span class="formula">x₀ → x₁ → x₂ → x₃ → L</span>. Now there are three deltas instead of one, and each is built from the *next* delta — <span class="formula">δ₂</span> is computed once and reused for both <span class="formula">dL/dw3</span> and to build <span class="formula">δ₁</span>, and <span class="formula">δ₁</span> is reused the same way one layer further back.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> step all the way through and count: three weight gradients came out, but only three deltas were ever computed, each one shared by exactly the two things downstream of it — no gradient anywhere recomputed a delta that already existed.</p>
+      <svg id="threeSvg" viewBox="0 0 900 220" role="img" aria-label="Three-layer computation graph"></svg>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="threePrev">◀ Back</button>
+        <button class="op active" id="threeNext">Next step ▶</button>
+        <button class="op" id="threeReset">Reset</button>
+      </div>
+      <div class="steplog" id="threeLog"></div>
+      <div class="caption"><b>Why it matters:</b> stack this pattern to a hundred layers and the arithmetic per layer never changes — one multiply to get this layer's gradient, one multiply to hand the delta further back. That constant per-layer cost, not the depth, is why deep networks are trainable at all.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../05-machine-learning-bridges.md">Machine-Learning Bridges</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* generic chain math: x0 -> w1 -> x1 -> w2 -> x2 -> ... -> wN -> xN -> L=(xN-y)^2
+     forward step k reveals xk (k=1..N) then L.
+     backward step reveals deltaN, then for k=N..1: grad_wk and delta(k-1). */
+  function buildChain(x0, weights, y){
+    const N = weights.length;
+    const xs = [x0];
+    for(let k=0;k<N;k++) xs.push(weights[k]*xs[k]);
+    const L = Math.pow(xs[N]-y, 2);
+    const deltas = new Array(N+1); // delta at index k = dL/dx_k
+    deltas[N] = 2*(xs[N]-y);
+    const grads = new Array(N);
+    for(let k=N;k>=1;k--){
+      grads[k-1] = deltas[k]*xs[k-1];       // dL/dw_k
+      if(k-1>0) deltas[k-1] = deltas[k]*weights[k-1];
+    }
+    return { xs, L, deltas, grads, N };
+  }
+
+  function nodeCircle(svg,x,y,r,fill,stroke){
+    svg.appendChild(el("circle",{cx:x,cy:y,r,fill,stroke,["stroke-width"]:2}));
+  }
+  function nodeText(svg,x,y,str,color,size,weight){
+    const t = el("text",{x,y,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":size||12,fill:color||"var(--ink)"});
+    if(weight) t.setAttribute("font-weight",weight);
+    t.textContent = str; svg.appendChild(t);
+  }
+  function arrow(svg,x1,y1,x2,y2,color,label,dashed){
+    const l = el("line",{x1,y1,x2,y2,stroke:color,["stroke-width"]:2.4});
+    if(dashed) l.setAttribute("stroke-dasharray","5 4");
+    svg.appendChild(l);
+    if(label){
+      nodeText(svg,(x1+x2)/2,(y1+y2)/2-8,label,color,12,600);
+    }
+  }
+
+  /* =========================================================
+     TAB 1 — TWO-LAYER CHAIN (matches 5.6's worked example)
+     ========================================================= */
+  const twoX=document.getElementById("twoX"), twoW1=document.getElementById("twoW1"),
+        twoW2=document.getElementById("twoW2"), twoY=document.getElementById("twoY");
+  let twoStep = 0; // 0=nothing, 1=a, 2=b, 3=L, 4=deltaB, 5=gradw2+deltaA, 6=gradw1
+  const TWO_MAX = 6;
+
+  function twoData(){
+    return buildChain(parseFloat(twoX.value), [parseFloat(twoW1.value), parseFloat(twoW2.value)], parseFloat(twoY.value));
+  }
+  function renderTwo(){
+    const d = twoData();
+    const svg = document.getElementById("twoSvg");
+    svg.innerHTML = "";
+    const xs = [80,270,460,690]; const y0=110;
+    const labels = ["x","a","b","L"];
+    // forward arrows
+    arrow(svg, xs[0]+26,y0, xs[1]-26,y0, "var(--fwd)", twoStep>=1?"×w1":"", false);
+    arrow(svg, xs[1]+26,y0, xs[2]-26,y0, "var(--fwd)", twoStep>=2?"×w2":"", false);
+    arrow(svg, xs[2]+26,y0, xs[3]-26,y0, "var(--fwd)", twoStep>=3?"(·−y)²":"", false);
+    // backward arrows (drawn above, curved-ish via offset y)
+    if(twoStep>=4) arrow(svg, xs[3]-26,y0-46, xs[2]+26,y0-46, "var(--bwd)", "δ_b", false);
+    if(twoStep>=5) arrow(svg, xs[2]-26,y0-46, xs[1]+26,y0-46, "var(--bwd)", "δ_a", false);
+    // nodes
+    const vals = [d.xs[0], twoStep>=1?d.xs[1]:null, twoStep>=2?d.xs[2]:null, twoStep>=3?d.L:null];
+    xs.forEach((x,i) => {
+      nodeCircle(svg,x,y0,26,"#fff", i===0?"var(--ink-soft)":"var(--fwd)");
+      nodeText(svg,x,y0-36,labels[i],"var(--ink-soft)",13,600);
+      nodeText(svg,x,y0+5, vals[i]!==null ? (typeof vals[i]==="number"?vals[i].toFixed(2):vals[i]) : "?", "var(--ink)", 13, 600);
+    });
+    // gradient callouts
+    if(twoStep>=5){
+      nodeText(svg, xs[2], y0+56, "dL/dw2 = "+d.grads[1].toFixed(2), "var(--bwd)", 12);
+    }
+    if(twoStep>=6){
+      nodeText(svg, xs[1], y0+56, "dL/dw1 = "+d.grads[0].toFixed(2), "var(--bwd)", 12);
+    }
+    document.getElementById("twoPrev").disabled = twoStep<=0;
+    document.getElementById("twoNext").disabled = twoStep>=TWO_MAX;
+
+    const v = document.getElementById("twoVerdict");
+    const steps = [
+      `Ready. Forward: a=w1·x, b=w2·a, L=(b−y)². Backward: δ_b=2(b−y), then reuse δ_b for dL/dw2 and for δ_a=δ_b·w2, then reuse δ_a for dL/dw1.`,
+      `a = w1·x = ${twoW1.value}×${twoX.value} = <b class="fwd-t">${d.xs[1].toFixed(2)}</b>`,
+      `b = w2·a = ${twoW2.value}×${d.xs[1].toFixed(2)} = <b class="fwd-t">${d.xs[2].toFixed(2)}</b>`,
+      `L = (b−y)² = (${d.xs[2].toFixed(2)}−${twoY.value})² = <b class="fwd-t">${d.L.toFixed(2)}</b>`,
+      `δ_b = dL/db = 2(b−y) = 2(${d.xs[2].toFixed(2)}−${twoY.value}) = <b class="delta-t">${d.deltas[2].toFixed(2)}</b> — computed once.`,
+      `Reusing δ_b twice: dL/dw2 = δ_b·a = ${d.deltas[2].toFixed(2)}×${d.xs[1].toFixed(2)} = <b class="bwd-t">${d.grads[1].toFixed(2)}</b> &nbsp;·&nbsp; δ_a = δ_b·w2 = ${d.deltas[2].toFixed(2)}×${twoW2.value} = <b class="delta-t">${d.deltas[1].toFixed(2)}</b>`,
+      `dL/dw1 = δ_a·x = ${d.deltas[1].toFixed(2)}×${twoX.value} = <b class="bwd-t big">${d.grads[0].toFixed(2)}</b> — done. Both gradients found; the shared δ_b was never recomputed.`
+    ];
+    v.innerHTML = steps[twoStep];
+  }
+  document.getElementById("twoNext").addEventListener("click", () => { if(twoStep<TWO_MAX) twoStep++; renderTwo(); });
+  document.getElementById("twoPrev").addEventListener("click", () => { if(twoStep>0) twoStep--; renderTwo(); });
+  document.getElementById("twoReset").addEventListener("click", () => { twoStep=0; renderTwo(); });
+  [twoX,twoW1,twoW2,twoY].forEach(inp => inp.addEventListener("input", () => { twoStep=0; renderTwo(); }));
+  renderTwo();
+
+  /* =========================================================
+     TAB 2 — THREE-LAYER CHAIN
+     ========================================================= */
+  const THREE_X0=1, THREE_W=[2,3,0.5], THREE_Y=5;
+  let threeStep = 0;
+  const THREE_MAX = 9; // 3 forward (x1,x2,x3->includes L as 4th reveal) : reveal x1,x2,x3,L = 4 steps; backward: delta3,(gradw3+delta2),(gradw2+delta1),(gradw1) = 4 steps => total 8. Let's use 8.
+
+  function renderThree(){
+    const d = buildChain(THREE_X0, THREE_W, THREE_Y);
+    const svg = document.getElementById("threeSvg");
+    svg.innerHTML = "";
+    const xs = [60,220,380,540,760]; const y0=110;
+    const labels = ["x0","x1","x2","x3","L"];
+    // steps: 1:x1 2:x2 3:x3 4:L 5:delta3 6:gradw3+delta2 7:gradw2+delta1 8:gradw1
+    arrow(svg, xs[0]+24,y0, xs[1]-24,y0, "var(--fwd)", threeStep>=1?"×w1":"", false);
+    arrow(svg, xs[1]+24,y0, xs[2]-24,y0, "var(--fwd)", threeStep>=2?"×w2":"", false);
+    arrow(svg, xs[2]+24,y0, xs[3]-24,y0, "var(--fwd)", threeStep>=3?"×w3":"", false);
+    arrow(svg, xs[3]+24,y0, xs[4]-24,y0, "var(--fwd)", threeStep>=4?"(·−y)²":"", false);
+    if(threeStep>=5) arrow(svg, xs[4]-24,y0-42, xs[3]+24,y0-42, "var(--bwd)", "δ3", false);
+    if(threeStep>=6) arrow(svg, xs[3]-24,y0-42, xs[2]+24,y0-42, "var(--bwd)", "δ2", false);
+    if(threeStep>=7) arrow(svg, xs[2]-24,y0-42, xs[1]+24,y0-42, "var(--bwd)", "δ1", false);
+
+    const vals = [d.xs[0], threeStep>=1?d.xs[1]:null, threeStep>=2?d.xs[2]:null, threeStep>=3?d.xs[3]:null, threeStep>=4?d.L:null];
+    xs.forEach((x,i) => {
+      nodeCircle(svg,x,y0,24,"#fff", i===0?"var(--ink-soft)":"var(--fwd)");
+      nodeText(svg,x,y0-32,labels[i],"var(--ink-soft)",12,600);
+      nodeText(svg,x,y0+5, vals[i]!==null ? (typeof vals[i]==="number"?vals[i].toFixed(2):vals[i]) : "?", "var(--ink)", 12.5, 600);
+    });
+    if(threeStep>=6) nodeText(svg, xs[3], y0+52, "dL/dw3="+d.grads[2].toFixed(2), "var(--bwd)", 11.5);
+    if(threeStep>=7) nodeText(svg, xs[2], y0+52, "dL/dw2="+d.grads[1].toFixed(2), "var(--bwd)", 11.5);
+    if(threeStep>=8) nodeText(svg, xs[1], y0+52, "dL/dw1="+d.grads[0].toFixed(2), "var(--bwd)", 11.5);
+
+    document.getElementById("threePrev").disabled = threeStep<=0;
+    document.getElementById("threeNext").disabled = threeStep>=THREE_MAX-1;
+
+    const lines = [
+      "Ready — x0=1, weights [2, 3, 0.5], target y=5.",
+      "x1 = w1·x0 = 2×1 = "+d.xs[1].toFixed(2),
+      "x2 = w2·x1 = 3×"+d.xs[1].toFixed(2)+" = "+d.xs[2].toFixed(2),
+      "x3 = w3·x2 = 0.5×"+d.xs[2].toFixed(2)+" = "+d.xs[3].toFixed(2),
+      "L = (x3−y)² = ("+d.xs[3].toFixed(2)+"−5)² = "+d.L.toFixed(2),
+      "delta3 = dL/dx3 = 2(x3−y) = "+d.deltas[3].toFixed(2)+"  <- computed once",
+      "reuse delta3: dL/dw3 = delta3*x2 = "+d.grads[2].toFixed(2)+"   AND   delta2 = delta3*w3 = "+d.deltas[2].toFixed(2),
+      "reuse delta2: dL/dw2 = delta2*x1 = "+d.grads[1].toFixed(2)+"   AND   delta1 = delta2*w2 = "+d.deltas[1].toFixed(2),
+      "reuse delta1: dL/dw1 = delta1*x0 = "+d.grads[0].toFixed(2)+"  <- three gradients, three deltas total, nothing recomputed"
+    ];
+    document.getElementById("threeLog").textContent = lines.slice(0, threeStep+1).join("\n");
+  }
+  document.getElementById("threeNext").addEventListener("click", () => { if(threeStep<THREE_MAX-1) threeStep++; renderThree(); });
+  document.getElementById("threePrev").addEventListener("click", () => { if(threeStep>0) threeStep--; renderThree(); });
+  document.getElementById("threeReset").addEventListener("click", () => { threeStep=0; renderThree(); });
+  renderThree();
+})();
+</script>
+</body>
+</html>

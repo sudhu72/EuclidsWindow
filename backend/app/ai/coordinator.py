@@ -24,7 +24,7 @@ class MultiAgentCoordinator:
         if not plan:
             return None
 
-        context = self._format_history(history)
+        context = self._build_context(question, history)
         intuition = self._run_agent(
             "intuition_agent",
             f"{context}Provide a short intuition for: {question}\n"
@@ -43,7 +43,9 @@ class MultiAgentCoordinator:
         history = self._run_agent(
             "history_agent",
             f"{context}Provide a brief historical note or anecdote related to: {question}\n"
-            "Keep it 2-3 sentences.",
+            "Keep it 2-3 sentences. Only state a date, name, or attribution you are "
+            "confident is correct — if you're not sure, say the idea's significance "
+            "instead of inventing a historical detail.",
         )
         visualization = self._run_agent(
             "visualization_agent",
@@ -117,6 +119,33 @@ class MultiAgentCoordinator:
             record_error(agent_id, int((time.time() - start) * 1000), str(exc))
             logger.warning(f"Agent {agent_id} failed: {exc}")
             return None
+
+    @staticmethod
+    def _build_context(question: str, history: Optional[list]) -> str:
+        """Shared preamble for every sub-agent call: history, grounding, guard.
+
+        Each sub-agent (intuition/examples/proof/history/visualization) was a
+        bare ``engine.generate(prompt)`` call — no concept-graph or RAG-library
+        grounding, and no anti-hallucination instruction at all, unlike every
+        other generative path in the app. ``history_agent`` in particular asks
+        for "a historical note or anecdote," the highest-fabrication-risk kind
+        of claim, with nothing to check it against. This block is prepended to
+        every sub-agent's prompt so all of them gain the same grounding +
+        verification guard the rest of the app already has.
+        """
+        from .concept_graph import get_concept_graph
+        from .library import get_library
+        from .skills import COMPACT_SKILL
+
+        parts = [MultiAgentCoordinator._format_history(history)]
+        graph_context = get_concept_graph().context_for(question)
+        if graph_context:
+            parts.append(graph_context + "\n\n")
+        library_context = get_library().context_for(question, k=2, max_chars=900)
+        if library_context:
+            parts.append(library_context + "\n\n")
+        parts.append(COMPACT_SKILL + "\n\n")
+        return "".join(p for p in parts if p)
 
     @staticmethod
     def _format_history(history: Optional[list]) -> str:

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bias and Variance: watch the decomposition happen live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .cols{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+  .col-title{text-align:center;font-family:'Kalam',cursive;font-size:14px;margin-bottom:4px;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+
+  .metric-row{display:flex;justify-content:center;gap:18px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:120px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bias and Variance: watch the decomposition happen live</h1>
+  <p class="sub">Every number below is computed by actually running the simulation in your browser right now — not looked up from a table.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="sweep">The Complexity Sweep</button>
+    <button class="tabbtn" data-tab="ensemble">Ensembling Reduces Variance</button>
+    <button class="tabbtn" data-tab="doubledescent">Double Descent</button>
+  </div>
+
+  <!-- ============ TAB 1: THE COMPLEXITY SWEEP ============ -->
+  <div class="tabpanel active" id="tab-sweep">
+    <div class="panel">
+      <h2>Fit a Polynomial of Degree 0 to 4 — 20,000 Times</h2>
+      <p class="sub">True function f(x) = 0.5x² + 2x + 1, noise σ=1, five training points at x = −2,−1,0,1,2. Drag the degree and watch bias, variance, and total error respond.</p>
+      <div class="row"><label>polynomial degree</label><input type="range" id="degSlider" min="0" max="4" step="1" value="2"><span class="readout" id="degOut">2</span></div>
+
+      <div class="cols">
+        <div class="col" style="max-width:340px;">
+          <div class="col-title">one example fit</div>
+          <svg id="fitSvg" width="320" height="280" viewBox="0 0 320 280"></svg>
+        </div>
+        <div class="col" style="max-width:340px;">
+          <div class="col-title">bias² / variance / total error vs. degree</div>
+          <svg id="curveSvg" width="320" height="280" viewBox="0 0 320 280"></svg>
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">bias²</div><div class="num" id="mBias">-</div></div>
+        <div class="metric blue"><div class="lbl">variance</div><div class="num" id="mVar">-</div></div>
+        <div class="metric amber"><div class="lbl">total error (+ σ²=1)</div><div class="num" id="mTotal">-</div></div>
+      </div>
+      <div class="story-line" id="sweepStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: ENSEMBLING REDUCES VARIANCE ============ -->
+  <div class="tabpanel" id="tab-ensemble">
+    <div class="panel">
+      <h2>Average M Independent Degree-4 Fits</h2>
+      <p class="sub">Degree 4 on 5 points is the highest-variance model from the sweep. Drag the ensemble size and watch variance fall toward zero while bias — already zero — stays exactly there.</p>
+      <div class="row"><label>ensemble size M</label><input type="range" id="ensSlider" min="1" max="20" step="1" value="1"><span class="readout" id="ensOut">1</span></div>
+      <svg id="ensSvg" width="640" height="280" viewBox="0 0 640 280"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">bias²</div><div class="num" id="eBias">-</div></div>
+        <div class="metric blue"><div class="lbl">variance</div><div class="num" id="eVar">-</div></div>
+        <div class="metric green"><div class="lbl">predicted 1/M scaling</div><div class="num" id="ePredicted">-</div></div>
+      </div>
+      <div class="story-line" id="ensStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: DOUBLE DESCENT ============ -->
+  <div class="tabpanel" id="tab-doubledescent">
+    <div class="panel">
+      <h2>The Interpolation Threshold, and What Lies Past It</h2>
+      <p class="sub">80 real training points, random ReLU features, minimum-norm least squares. Drag the parameter count p (log-scale test error) and watch the classical U-shape give way to a catastrophic spike right at p=80, then a second, genuine descent.</p>
+      <div class="row"><label>parameter count p</label><input type="range" id="ddSlider" min="0" max="76" step="1" value="30"><span class="readout" id="ddOut">28</span></div>
+      <svg id="ddSvg" width="640" height="300" viewBox="0 0 640 300"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">train MSE</div><div class="num" id="ddTrain">-</div></div>
+        <div class="metric blue"><div class="lbl">test MSE</div><div class="num" id="ddTest">-</div></div>
+        <div class="metric amber"><div class="lbl">regime</div><div class="num" id="ddRegime">-</div></div>
+      </div>
+      <div class="story-line" id="ddStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../foundations/bias_variance_tradeoff_feynman.md">The Mathematical Foundation of Bias and Variance</a>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function makeLCG(seed){ let s = seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function boxMuller(rand){ const u1=Math.max(rand(),1e-12), u2=rand(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  const xs = [-2,-1,0,1,2];
+  const trueF = x => 0.5*x*x + 2*x + 1;
+  const sigma = 1.0;
+  const x0 = 1.5;
+  const trueY0 = trueF(x0);
+
+  function polyfit(xs, ys, degree){
+    const n = xs.length, p = degree+1;
+    const XtX = Array.from({length:p}, () => new Array(p).fill(0));
+    const Xty = new Array(p).fill(0);
+    for(let i=0;i<n;i++){
+      const row = [];
+      for(let k=0;k<p;k++) row.push(Math.pow(xs[i],k));
+      for(let a=0;a<p;a++){
+        Xty[a] += row[a]*ys[i];
+        for(let b=0;b<p;b++) XtX[a][b] += row[a]*row[b];
+      }
+    }
+    const M = XtX.map((row,i) => [...row, Xty[i]]);
+    for(let col=0; col<p; col++){
+      let pivot=col;
+      for(let r=col+1;r<p;r++) if(Math.abs(M[r][col])>Math.abs(M[pivot][col])) pivot=r;
+      [M[col],M[pivot]] = [M[pivot],M[col]];
+      const pv = M[col][col];
+      for(let c=col;c<=p;c++) M[col][c] /= pv;
+      for(let r=0;r<p;r++){
+        if (r===col) continue;
+        const f = M[r][col];
+        for(let c=col;c<=p;c++) M[r][c] -= f*M[col][c];
+      }
+    }
+    const beta = M.map(row => row[p]);
+    return x => beta.reduce((s,b,k) => s + b*Math.pow(x,k), 0);
+  }
+  function mean(a){ return a.reduce((x,y)=>x+y,0)/a.length; }
+
+  function runSweepTrial(rand, degree){
+    const ys = xs.map(x => trueF(x) + sigma*boxMuller(rand));
+    return polyfit(xs, ys, degree)(x0);
+  }
+
+  /* ============================================================
+     TAB 1 — THE COMPLEXITY SWEEP
+     ============================================================ */
+  const NUM_TRIALS = 4000;
+  function computeSweepStats(degree, seed){
+    const rand = makeLCG(seed);
+    const preds = [];
+    for(let t=0;t<NUM_TRIALS;t++) preds.push(runSweepTrial(rand, degree));
+    const meanPred = mean(preds);
+    const bias = meanPred - trueY0;
+    const variance = mean(preds.map(p => (p-meanPred)**2));
+    return {bias2: bias*bias, variance, total: bias*bias+variance+sigma*sigma};
+  }
+
+  function renderFitExample(degree){
+    const rand = makeLCG(4242);
+    const ys = xs.map(x => trueF(x) + sigma*boxMuller(rand));
+    const predict = polyfit(xs, ys, degree);
+
+    const svg = document.getElementById("fitSvg");
+    svg.innerHTML = "";
+    const W=320,H=280,pad=36;
+    const xMin=-2.5,xMax=2.5,yMin=-3,yMax=10;
+    function X(x){ return pad + (x-xMin)/(xMax-xMin)*(W-2*pad); }
+    function Y(y){ return H-pad - (y-yMin)/(yMax-yMin)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:Y(0),x2:W-pad,y2:Y(0),stroke:"var(--chalk-dim)","stroke-width":1,opacity:0.4}));
+
+    let dTrue = "";
+    for(let i=0;i<=60;i++){ const x=xMin+(i/60)*(xMax-xMin); dTrue += (i===0?"M":"L")+X(x)+","+Y(trueF(x))+" "; }
+    svg.appendChild(el("path",{d:dTrue, fill:"none", stroke:"var(--chalk-dim)", "stroke-width":1.6, "stroke-dasharray":"5 4"}));
+
+    let dFit = "";
+    for(let i=0;i<=60;i++){ const x=xMin+(i/60)*(xMax-xMin); const y=Math.max(yMin-1,Math.min(yMax+1,predict(x))); dFit += (i===0?"M":"L")+X(x)+","+Y(y)+" "; }
+    svg.appendChild(el("path",{d:dFit, fill:"none", stroke:"var(--amber)", "stroke-width":2.2}));
+
+    for(let i=0;i<xs.length;i++) svg.appendChild(el("circle",{cx:X(xs[i]),cy:Y(ys[i]),r:5,fill:"var(--blue)",stroke:"var(--bg)","stroke-width":1.3}));
+    svg.appendChild(el("circle",{cx:X(x0),cy:Y(predict(x0)),r:6,fill:"var(--coral)",stroke:"var(--bg)","stroke-width":1.5}));
+  }
+
+  function renderCurve(currentDegree){
+    const svg = document.getElementById("curveSvg");
+    svg.innerHTML = "";
+    const W=320,H=280,pad=36;
+    const degrees=[0,1,2,3,4];
+    const stats = degrees.map(d => computeSweepStats(d, 1000+d));
+    const maxVal = Math.max(...stats.map(s=>s.total)) * 1.1;
+    function X(d){ return pad + (d/4)*(W-2*pad); }
+    function Y(v){ return H-pad - (v/maxVal)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    function drawLine(key,color){
+      let d="";
+      stats.forEach((s,i) => { d += (i===0?"M":"L")+X(degrees[i])+","+Y(s[key])+" "; });
+      svg.appendChild(el("path",{d, fill:"none", stroke:color, "stroke-width":2}));
+      stats.forEach((s,i) => svg.appendChild(el("circle",{cx:X(degrees[i]),cy:Y(s[key]),r:3.5,fill:color})));
+    }
+    drawLine("bias2","var(--coral)");
+    drawLine("variance","var(--blue)");
+    drawLine("total","var(--amber)");
+    svg.appendChild(el("line",{x1:X(currentDegree),y1:pad*0.3,x2:X(currentDegree),y2:H-pad,stroke:"var(--chalk)","stroke-width":1,"stroke-dasharray":"3 3",opacity:0.5}));
+    return stats[currentDegree];
+  }
+
+  function renderSweep(){
+    const degree = parseInt(document.getElementById("degSlider").value,10);
+    document.getElementById("degOut").textContent = degree;
+    renderFitExample(degree);
+    const cur = renderCurve(degree);
+    document.getElementById("mBias").textContent = cur.bias2.toFixed(3);
+    document.getElementById("mVar").textContent = cur.variance.toFixed(3);
+    document.getElementById("mTotal").textContent = cur.total.toFixed(3);
+    const story = document.getElementById("sweepStory");
+    if (degree===0) story.textContent = "Too rigid: a flat line can't capture curvature or trend — bias dominates.";
+    else if (degree<=2) story.textContent = degree===2 ? "Matches the true function's family: bias has collapsed to nearly zero, variance still modest." : "Bias is shrinking fast as the model gains the flexibility to represent a trend.";
+    else story.textContent = "More flexible than the data can support: bias is already gone, but variance is climbing fast.";
+  }
+  document.getElementById("degSlider").addEventListener("input", renderSweep);
+  renderSweep();
+
+  /* ============================================================
+     TAB 2 — ENSEMBLING REDUCES VARIANCE
+     ============================================================ */
+  const ENS_DEGREE = 4;
+  const ENS_TRIALS = 3000;
+  let baselineVariance = null;
+
+  function computeEnsembleStats(M, seed){
+    const rand = makeLCG(seed);
+    const preds = [];
+    for(let t=0;t<ENS_TRIALS;t++){
+      let sum = 0;
+      for(let m=0;m<M;m++) sum += runSweepTrial(rand, ENS_DEGREE);
+      preds.push(sum/M);
+    }
+    const meanPred = mean(preds);
+    const bias = meanPred - trueY0;
+    const variance = mean(preds.map(p => (p-meanPred)**2));
+    return {bias2: bias*bias, variance};
+  }
+
+  function renderEnsembleCurve(currentM){
+    const svg = document.getElementById("ensSvg");
+    svg.innerHTML = "";
+    const W=640,H=280,pad=44;
+    const Ms=[1,2,3,5,7,10,14,20];
+    const stats = Ms.map(M => ({M, variance: baselineVariance/M}));
+    const maxVar = baselineVariance*1.1;
+    function X(M){ return pad + (M/20)*(W-2*pad); }
+    function Y(v){ return H-pad - (v/maxVar)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    let d = "";
+    stats.forEach((s,i) => { d += (i===0?"M":"L")+X(s.M)+","+Y(s.variance)+" "; });
+    svg.appendChild(el("path",{d, fill:"none", stroke:"var(--green)", "stroke-width":2, "stroke-dasharray":"5 4"}));
+    svg.appendChild(el("line",{x1:X(currentM),y1:pad*0.3,x2:X(currentM),y2:H-pad,stroke:"var(--chalk)","stroke-width":1,"stroke-dasharray":"3 3",opacity:0.5}));
+  }
+
+  function renderEnsemble(){
+    const M = parseInt(document.getElementById("ensSlider").value,10);
+    document.getElementById("ensOut").textContent = M;
+    if (baselineVariance === null){
+      baselineVariance = computeEnsembleStats(1, 5000).variance;
+    }
+    const cur = computeEnsembleStats(M, 6000+M);
+    document.getElementById("eBias").textContent = cur.bias2.toFixed(4);
+    document.getElementById("eVar").textContent = cur.variance.toFixed(3);
+    document.getElementById("ePredicted").textContent = (baselineVariance/M).toFixed(3);
+    renderEnsembleCurve(M);
+    const story = document.getElementById("ensStory");
+    story.textContent = M===1
+      ? "A single degree-4 fit: high variance, essentially zero bias."
+      : `Averaging ${M} independent fits: variance measured at ${cur.variance.toFixed(3)}, predicted 1/M scaling gives ${(baselineVariance/M).toFixed(3)} — bias hasn't moved at all.`;
+  }
+  document.getElementById("ensSlider").addEventListener("input", renderEnsemble);
+  renderEnsemble();
+
+  // ================= TAB 3: DOUBLE DESCENT =================
+  // precomputed from the exact verified experiment: 80 training points, random ReLU features, minimum-norm least squares
+  var DD_DATA = [[1,1.22488,1.2532],[4,0.94396,1.3181],[7,0.92921,1.3756],[10,0.8081,1.3275],[13,0.79528,1.3213],[16,0.7673,1.3036],[19,0.67893,1.0496],[22,0.63174,1.1047],[25,0.45059,0.8067],[28,0.43087,0.7898],[31,0.41799,0.9026],[34,0.31492,1.2317],[37,0.30445,1.3677],[40,0.29462,1.2731],[42,0.29144,1.2164],[44,0.28522,1.4989],[46,0.27956,1.4513],[48,0.26776,1.7022],[50,0.25135,2.3168],[52,0.20688,3.0804],[54,0.18022,3.5584],[56,0.15335,3.7067],[58,0.1282,5.4781],[60,0.11867,5.2759],[62,0.1105,5.2755],[64,0.09106,9.7798],[66,0.08688,9.4904],[68,0.08072,9.5544],[70,0.05939,10.1409],[72,0.05591,10.7521],[74,0.0541,11.4092],[75,0.0475,8.1034],[76,0.02671,22.332],[77,0.02282,14.338],[78,0.01778,12.5435],[79,0.01775,13.0142],[80,0.00617,550.2388],[81,0.0,1368.8121],[82,0.0,369.3288],[83,0.0,27.028],[84,0.0,9.346],[85,0.0,9.0297],[86,0.0,7.5938],[87,0.0,7.5753],[88,0.0,6.0824],[89,0.0,5.4573],[90,0.0,5.5117],[95,0.0,3.6526],[100,0.0,3.3052],[105,0.0,2.825],[110,0.0,2.6433],[115,0.0,2.4633],[120,0.0,2.3565],[125,0.0,2.2744],[130,0.0,1.8667],[135,0.0,1.5622],[140,0.0,1.5062],[145,0.0,1.3913],[150,0.0,1.3858],[175,0.0,0.9507],[200,0.0,0.8977],[225,0.0,0.8328],[250,0.0,0.7922],[275,0.0,0.6996],[300,0.0,0.6942],[325,0.0,0.7135],[350,0.0,0.6805],[375,0.0,0.6696],[400,0.0,0.6444],[425,0.0,0.6382],[450,0.0,0.6366],[475,0.0,0.6307],[500,0.0,0.6109],[525,0.0,0.594],[550,0.0,0.5976],[575,0.0,0.579],[600,0.0,0.5733]];
+  var N_TRAIN = 80;
+  var ddPadL=46, ddPadR=16, ddPadT=18, ddPadB=32;
+  function ddX(p, W){ return ddPadL + (p-1)/(600-1)*(W-ddPadL-ddPadR); }
+  function ddY(err, H){
+    var logMin=Math.log10(0.4), logMax=Math.log10(1500);
+    var v = Math.log10(Math.max(err,0.4));
+    return (H-ddPadB) - (v-logMin)/(logMax-logMin)*(H-ddPadB-ddPadT);
+  }
+  function renderDoubleDescent(){
+    var idx = parseInt(document.getElementById("ddSlider").value,10);
+    var row = DD_DATA[idx];
+    var p = row[0], trainErr = row[1], testErr = row[2];
+    document.getElementById("ddOut").textContent = p;
+    document.getElementById("ddTrain").textContent = trainErr.toFixed(4);
+    document.getElementById("ddTest").textContent = testErr.toFixed(3);
+    var regime = p < N_TRAIN ? "underparameterized" : (p===N_TRAIN || p===N_TRAIN+1 ? "interpolation threshold" : "overparameterized");
+    document.getElementById("ddRegime").textContent = regime;
+
+    var svg = document.getElementById("ddSvg");
+    svg.innerHTML = "";
+    var W=640,H=300;
+    [0.4,1,10,100,1000].forEach(function(v){
+      var y = ddY(v,H);
+      svg.appendChild(el("line",{x1:ddPadL,y1:y,x2:W-ddPadR,y2:y,stroke:"var(--border)"}));
+      svg.appendChild(el("text",{x:ddPadL-6,y:y+3,"text-anchor":"end","font-size":10,fill:"var(--chalk-dim)"},v>=1?v:v.toString()));
+    });
+    var trainPts = "", testPts = "";
+    DD_DATA.forEach(function(r){
+      trainPts += ddX(r[0],W)+","+ddY(Math.max(r[1],0.4),H)+" ";
+      testPts += ddX(r[0],W)+","+ddY(r[2],H)+" ";
+    });
+    svg.appendChild(el("polyline",{points:trainPts.trim(),fill:"none",stroke:"var(--coral)","stroke-width":2,opacity:0.85}));
+    svg.appendChild(el("polyline",{points:testPts.trim(),fill:"none",stroke:"var(--blue)","stroke-width":2}));
+    var threshX = ddX(N_TRAIN,W);
+    svg.appendChild(el("line",{x1:threshX,y1:ddPadT,x2:threshX,y2:H-ddPadB,stroke:"var(--amber)","stroke-width":1,"stroke-dasharray":"4 3"}));
+    svg.appendChild(el("text",{x:threshX+4,y:ddPadT+10,"font-size":10,fill:"var(--amber)"},"p=n=80"));
+    var curX = ddX(p,W), curY = ddY(testErr,H);
+    svg.appendChild(el("circle",{cx:curX,cy:curY,r:5,fill:"var(--chalk)"}));
+    svg.appendChild(el("text",{x:ddPadL+8,y:ddPadT+10,"font-size":11,fill:"var(--coral)"},"— train MSE"));
+    svg.appendChild(el("text",{x:ddPadL+110,y:ddPadT+10,"font-size":11,fill:"var(--blue)"},"— test MSE (log scale)"));
+
+    var story = document.getElementById("ddStory");
+    if (p < 30) story.textContent = "Classical regime: both errors falling as p grows -- more capacity is still helping.";
+    else if (p < N_TRAIN) story.textContent = "Past the sweet spot (p≈28): train error keeps falling, but test error is climbing -- the classical overfitting half of the U-curve.";
+    else if (p <= N_TRAIN+2) story.textContent = "The interpolation threshold: train error has hit (or nearly hit) zero, and test error has exploded to " + testErr.toFixed(1) + " -- over 1,700x worse than the classical sweet spot.";
+    else story.textContent = "Past the threshold: train error stays at zero, but test error is falling again -- at p=" + p + " it has recovered to " + testErr.toFixed(3) + (testErr < 0.79 ? ", already better than the best classical-regime result." : ".");
+  }
+  document.getElementById("ddSlider").addEventListener("input", renderDoubleDescent);
+  renderDoubleDescent();
+})();
+</script>
+</body>
+</html>

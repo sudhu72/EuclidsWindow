@@ -1,0 +1,227 @@
+{
+  "_comment": "Flavor text templates for the Math Quest game, keyed by Concept.category then theme. {name} interpolates the concept's name. Used by backend/app/routers/quest.py. Two themes: 'mystery' (detective) and 'treasure' (explorer).",
+  "categories": {
+    "foundations": {
+      "mystery": {
+        "intro": "A torn page from the case file mentions {name}. Before anything else adds up, you need to understand what it means.",
+        "hint": "Every case starts with the basics. Re-read the definition of {name} — the culprit is hiding in plain sight.",
+        "success": "The fog clears. {name} was the first solid fact in this case — everything else builds on it."
+      },
+      "treasure": {
+        "intro": "The map's border is worn, but one symbol survives: {name}. Nothing else on the map will make sense until you decode it.",
+        "hint": "Foundations first — go back to what {name} actually means before chasing the next landmark.",
+        "success": "The compass steadies. {name} was bedrock — you can build the rest of the route on it."
+      }
+    },
+    "arithmetic": {
+      "mystery": {
+        "intro": "The ledger at the scene is full of numbers involving {name}. The victim was counting something — and it matters.",
+        "hint": "Go back to the arithmetic. {name} is just counting and combining, done carefully — don't overthink it.",
+        "success": "The numbers finally balance. {name} checks out, and the ledger stops lying."
+      },
+      "treasure": {
+        "intro": "An old merchant's tally, half-erased, still shows {name}. Whoever buried the treasure counted their steps this way.",
+        "hint": "Count it out slowly — {name} is arithmetic, not sorcery. One step at a time.",
+        "success": "The tally adds up. {name} gets you one stride closer to the treasure."
+      }
+    },
+    "number_theory": {
+      "mystery": {
+        "intro": "A cipher at the scene only makes sense once you understand {name} — numbers hiding a message.",
+        "hint": "Numbers have secret structure. Think about what {name} reveals about how numbers relate to each other.",
+        "success": "The cipher breaks. {name} was the key hiding inside the numbers all along."
+      },
+      "treasure": {
+        "intro": "The treasure's lock is a number puzzle built on {name} — no key, just arithmetic cunning.",
+        "hint": "The lock rewards patience with numbers. Recall what {name} says about how they behave.",
+        "success": "The tumblers click into place. {name} was exactly the trick the locksmith used."
+      }
+    },
+    "algebra": {
+      "mystery": {
+        "intro": "Witnesses gave contradictory statements — you'll need {name} to represent what's unknown and solve for it.",
+        "hint": "Name the unknown, write down what you know, and let {name} do the work of untangling it.",
+        "success": "The unknown has a value now. {name} turned a tangle of statements into a single, provable fact."
+      },
+      "treasure": {
+        "intro": "A riddle carved in stone hides the treasure's distance behind a variable — solved only by {name}.",
+        "hint": "Let x be the unknown distance. {name} is exactly the tool for isolating it.",
+        "success": "The riddle resolves to a number. {name} pointed straight at the spot."
+      }
+    },
+    "geometry": {
+      "mystery": {
+        "intro": "The crime scene's floor plan is oddly shaped — {name} explains why the angles don't lie.",
+        "hint": "Look at the shapes, not the story. {name} is about how lines and angles constrain each other.",
+        "success": "The floor plan finally makes sense. {name} showed you the one shape that couldn't have happened by accident."
+      },
+      "treasure": {
+        "intro": "The old map marks a shape in the terrain — {name} is the only way to read what it's pointing at.",
+        "hint": "Trust the shapes on the ground. {name} tells you how they constrain the true path.",
+        "success": "The shape resolves into a direction. {name} was the surveyor's real secret."
+      }
+    },
+    "statistics": {
+      "mystery": {
+        "intro": "The witness statements don't agree, but they cluster — {name} is how you read the truth out of scattered testimony.",
+        "hint": "Don't trust any single data point. {name} is about what the whole scatter of evidence is really telling you.",
+        "success": "The pattern in the noise finally holds up. {name} turned scattered testimony into a real conclusion."
+      },
+      "treasure": {
+        "intro": "A hundred old expedition logs disagree on the route, but their scatter isn't random — {name} finds the signal in it.",
+        "hint": "One log could be wrong. All of them together, read with {name}, rarely are.",
+        "success": "The logs agree once you look at them the right way. {name} was how you found the real route inside the noise."
+      }
+    },
+    "trigonometry": {
+      "mystery": {
+        "intro": "A witness saw the getaway from an angle — {name} is how you turn that angle into a distance.",
+        "hint": "Angles and sides are linked. Recall what {name} says about that relationship.",
+        "success": "The angle gives up its distance. {name} placed the culprit exactly where the evidence needed them."
+      },
+      "treasure": {
+        "intro": "The map gives only an angle of sight to a distant peak — {name} turns that angle into steps.",
+        "hint": "An angle alone isn't a distance — not until you apply {name}.",
+        "success": "The peak's true distance is yours. {name} turned a sightline into a route."
+      }
+    },
+    "calculus": {
+      "mystery": {
+        "intro": "Something in this case is changing — a rate, a trajectory — and only {name} explains how fast.",
+        "hint": "Don't look at the total, look at the rate of change. That's exactly what {name} measures.",
+        "success": "The rate of change confirms it. {name} was the motion no one else noticed."
+      },
+      "treasure": {
+        "intro": "The tide is rising over the buried chest, and {name} is the only way to know how fast you're running out of time.",
+        "hint": "Think in terms of change over an instant — that's the heart of {name}.",
+        "success": "You've outpaced the tide. {name} told you exactly how fast the ground was shifting."
+      }
+    },
+    "probability": {
+      "mystery": {
+        "intro": "There are several suspects and only partial evidence — {name} tells you who's really most likely guilty.",
+        "hint": "Don't guess — weigh the evidence properly. That's what {name} is for.",
+        "success": "The likeliest explanation wins out. {name} turned uncertainty into a real verdict."
+      },
+      "treasure": {
+        "intro": "Three paths lead from the fork, and only {name} tells you which is worth the risk.",
+        "hint": "Every path has odds. {name} is how you weigh them honestly.",
+        "success": "The odds favor you now. {name} picked the path most likely to pay off."
+      }
+    },
+    "linear_algebra": {
+      "mystery": {
+        "intro": "The suspects' alibis form a web of dependencies — {name} untangles which ones actually hold up together.",
+        "hint": "Think of the statements as a system, not one at a time. {name} handles them all at once.",
+        "success": "The whole system resolves cleanly. {name} showed exactly how the pieces depended on each other."
+      },
+      "treasure": {
+        "intro": "The map's directions only make sense together, as a system — {name} is how you solve them all at once.",
+        "hint": "Stop reading one direction at a time. {name} lets you solve the whole system together.",
+        "success": "The directions align. {name} solved the whole system in one clean move."
+      }
+    },
+    "discrete_math": {
+      "mystery": {
+        "intro": "The suspects can only be arranged so many ways — {name} counts exactly how many, and rules most of them out.",
+        "hint": "This is a counting problem, not a guessing game. {name} counts the possibilities exactly.",
+        "success": "The possibilities collapse to one. {name} counted precisely enough to name the culprit."
+      },
+      "treasure": {
+        "intro": "The vault has a combination with a huge number of possibilities — {name} narrows it down fast.",
+        "hint": "Don't try every combination — count the structure of them instead, using {name}.",
+        "success": "The combination count clicks into place. {name} made the impossible search small enough to finish."
+      }
+    },
+    "signal_processing": {
+      "mystery": {
+        "intro": "A recording from the scene is garbled — {name} is how you separate the message from the noise.",
+        "hint": "There's a signal buried in the noise. {name} is exactly the tool for pulling it out.",
+        "success": "The recording clears up. {name} separated the real message from everything drowning it out."
+      },
+      "treasure": {
+        "intro": "An old recorded chant marks the treasure's location, but it's full of static — {name} filters it clean.",
+        "hint": "The chant is a signal, the static is noise — {name} tells them apart.",
+        "success": "The chant comes through clearly now. {name} was the filter you needed."
+      }
+    },
+    "music_and_math": {
+      "mystery": {
+        "intro": "A melody left at the scene isn't just music — {name} shows the mathematical pattern hidden in it.",
+        "hint": "Listen to the structure, not just the notes. {name} is the math underneath the melody.",
+        "success": "The melody's pattern gives up its secret. {name} was the code hidden in the music."
+      },
+      "treasure": {
+        "intro": "A set of bells marks the trail, each tuned to a ratio described by {name}.",
+        "hint": "The bells aren't random — their tuning follows {name}. Listen for the pattern.",
+        "success": "The bells ring true. {name} was the tuning that marked the real trail."
+      }
+    },
+    "ml_mathematics": {
+      "mystery": {
+        "intro": "A pattern-recognition device at the scene used {name} to flag its suspect — you need to understand how it decided.",
+        "hint": "The device isn't magic — it's math. {name} is exactly how it's weighing the evidence.",
+        "success": "You understand the device's reasoning now. {name} was the mechanism behind its verdict."
+      },
+      "treasure": {
+        "intro": "An old mechanical oracle points toward the treasure using {name} — but only if you feed it the right question.",
+        "hint": "The oracle runs on {name}, not magic. Understand the mechanism and it will answer honestly.",
+        "success": "The oracle points true. {name} was the mechanism turning your question into a direction."
+      }
+    },
+    "advanced": {
+      "mystery": {
+        "intro": "The case's final thread requires {name} — the kind of reasoning that ties every earlier clue together.",
+        "hint": "This won't yield to a quick guess. Sit with {name} and let the earlier clues connect.",
+        "success": "The final thread pulls tight. {name} was the reasoning that closed the case."
+      },
+      "treasure": {
+        "intro": "The last leg of the journey is guarded by {name} — a puzzle built from everything the map taught you so far.",
+        "hint": "This is the hardest stretch. {name} rewards everything you've already learned on this journey.",
+        "success": "The final guard yields. {name} was the last thing standing between you and the treasure."
+      }
+    },
+    "applied": {
+      "mystery": {
+        "intro": "A real device from the scene only makes sense once you see {name} at work inside it.",
+        "hint": "This isn't abstract — {name} is doing real work inside a real object. Think practically.",
+        "success": "The device's purpose is clear now. {name} was the practical idea making it run."
+      },
+      "treasure": {
+        "intro": "A working contraption guards the treasure, built entirely on {name}.",
+        "hint": "The contraption is practical, not theoretical — {name} is the working idea behind it.",
+        "success": "The contraption powers down safely. {name} was the practical trick behind its design."
+      }
+    }
+  },
+  "chapters": {
+    "0": {
+      "mystery": "Chapter 1: The First Clue — every case starts with a single, undeniable fact.",
+      "treasure": "Chapter 1: The Trailhead — every journey starts from solid ground."
+    },
+    "1": {
+      "mystery": "Chapter 2: Following the Numbers — the ledger doesn't lie, if you read it right.",
+      "treasure": "Chapter 2: Counting Your Steps — the first landmarks are close together."
+    },
+    "2": {
+      "mystery": "Chapter 3: Shapes and Angles — the scene itself starts to tell its own story.",
+      "treasure": "Chapter 3: Reading the Terrain — the map's shapes start to mean something."
+    },
+    "3": {
+      "mystery": "Chapter 4: The Unknowns — it's time to name what you don't yet know, and solve for it.",
+      "treasure": "Chapter 4: The Riddles — the path forward is hidden behind a puzzle."
+    },
+    "4": {
+      "mystery": "Chapter 5: Motion and Change — nothing in this case is standing still anymore.",
+      "treasure": "Chapter 5: The Shifting Ground — the terrain itself starts working against you."
+    },
+    "5": {
+      "mystery": "Chapter 6: Weighing the Evidence — probability, systems, and structure collide.",
+      "treasure": "Chapter 6: The Guarded Pass — only careful reasoning gets you through."
+    },
+    "6": {
+      "mystery": "Chapter 7: The Final Reckoning — every earlier clue was leading here.",
+      "treasure": "Chapter 7: X Marks the Spot — every earlier landmark was leading here."
+    }
+  }
+}

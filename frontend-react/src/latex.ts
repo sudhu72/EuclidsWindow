@@ -78,19 +78,77 @@ function repairMathSegment(segment: string): string {
 
 // Wrap bare LaTeX commands that appear outside any math delimiters.
 function wrapBareMathCommands(part: string): string {
-  return part
-    // Prose text commands the model emits -> markdown (bold/italic/plain).
-    .replace(/\\textbf\{([^{}]*)\}/g, "**$1**")
-    .replace(/\\textit\{([^{}]*)\}/g, "*$1*")
-    .replace(/\\text\{([^{}]*)\}/g, "$1")
-    .replace(
-      /\\(?:d?frac|tfrac|binom)\{[^{}]*\}\{[^{}]*\}|\\sqrt(?:\[[^\]]*\])?\{[^{}]*\}/g,
-      (m) => `\\(${m}\\)`
-    )
-    .replace(
-      /\\(?:pi|theta|alpha|beta|gamma|delta|lambda|mu|sigma|omega|phi|infty)\b(?!\s*[{^_])/g,
-      (m) => `\\(${m}\\)`
+  return (
+    part
+      // Prose text commands the model emits -> markdown (bold/italic/plain).
+      .replace(/\\textbf\{([^{}]*)\}/g, "**$1**")
+      .replace(/\\textit\{([^{}]*)\}/g, "*$1*")
+      .replace(/\\text\{([^{}]*)\}/g, "$1")
+      .replace(
+        /\\(?:d?frac|tfrac|binom)\{[^{}]*\}\{[^{}]*\}|\\sqrt(?:\[[^\]]*\])?\{[^{}]*\}/g,
+        (m) => `\\(${m}\\)`
+      )
+      .replace(
+        /\\(?:pi|theta|alpha|beta|gamma|delta|lambda|mu|sigma|omega|phi|infty)\b(?!\s*[{^_])/g,
+        (m) => `\\(${m}\\)`
+      )
+      // A power or index outside math renders as literal "r^2". Wrap it — in
+      // prose an exponent is always meant as maths.
+      .replace(
+        /(?<![\\$\w^_])([A-Za-z])(\^|_)(\{[^{}]*\}|[A-Za-z0-9]+)/g,
+        (m) => `\\(${m}\\)`
+      )
+  );
+}
+
+/**
+ * Merge math spans separated only by whitespace.
+ *
+ * Two spans side by side become `$a$$b$` once handed to remark-math, and that
+ * `$$` reads as a display-math delimiter — which swallows the following prose
+ * and leaks braces into the page. Merging keeps `\pi r^2` as one expression,
+ * which is what it was meant to be anyway.
+ */
+function mergeAdjacentMath(text: string): string {
+  let out = text;
+  for (let i = 0; i < 5; i++) {
+    const next = out.replace(
+      /\\\(([^()]*?)\\\)(\s*)\\\(([^()]*?)\\\)/g,
+      (_m, a: string, gap: string, b: string) => `\\(${a}${gap ? " " : ""}${b}\\)`
     );
+    if (next === out) break;
+    out = next;
+  }
+  return out;
+}
+
+// A math span or LaTeX environment, whose contents must not be treated as
+// prose. One capture group, so String.split puts these at odd indices.
+const MATH_SPAN =
+  /(\$\$[\s\S]*?\$\$|\\begin\{[a-zA-Z]+\*?\}[\s\S]*?\\end\{[a-zA-Z]+\*?\}|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\$[^$\n]+?\$)/;
+
+/**
+ * LaTeX line breaks, which are not math.
+ *
+ * `\\[1em]` is a line break with extra spacing, but the normaliser that repairs
+ * `\\(` into `\(` turns it into `\[` — a display-math opener with no closer, so
+ * it survives to the page as a literal "[1em]". Handle these first.
+ *
+ * Only outside math: within a matrix or `aligned` block the same `\\` is a row
+ * separator. Rewriting those to blank lines splits the surrounding `$$...$$`
+ * across markdown paragraphs, which strands the rest of the matrix as raw text.
+ */
+function convertLineBreaks(text: string): string {
+  return text
+    .split(new RegExp(MATH_SPAN.source, "g"))
+    .map((part, i) =>
+      i % 2 === 1
+        ? part
+        : part
+            .replace(/\\\\\s*\[\s*[\d.]+\s*(?:em|ex|pt|cm|mm|in)\s*\]/g, "\n\n")
+            .replace(/\\\\(?=\s|$)/g, "\n\n")
+    )
+    .join("");
 }
 
 // Small models emit LaTeX environments despite instructions. Convert the ones
@@ -136,7 +194,11 @@ function isMathLike(inner: string): boolean {
   if (/^[\d.,\s]+$/.test(s)) return false; // pure number -> currency
   if (/[\\=^_<>]/.test(s)) return true; // latex command / relational
   if (/\d\s*[-+*/]\s*[\d(]/.test(s)) return true; // arithmetic like 25 - (0.1)
+  if (/^[+-]\s*\d+(\.\d+)?%?°?$/.test(s)) return true; // signed number: +3, -15, -0.5°
+  if (/^\d+(\.\d+)?°$/.test(s)) return true; // a number with a degree sign: 5°
   if (/^[a-zA-Z]('|\^.+)?(\([^)]*\))?$/.test(s)) return true; // x, f(x), x^2
+  if (/^[a-zA-Z]\s*[-+*/=]\s*\S.*$/.test(s)) return true; // A - (-5), x = 3
+  if (/^[[(][\d\s.,;-]+[\])]$/.test(s)) return true; // a vector: [1,1,1,1]
   return false;
 }
 
@@ -145,8 +207,15 @@ export function normalizeForKatex(text: string): string {
   if (!text) return "";
   let n = text;
   for (const [uni, cmd] of Object.entries(GREEK_UNICODE)) n = n.split(uni).join(cmd);
+  // Before anything turns `\\[` into `\[` and mistakes a line break for maths.
+  n = convertLineBreaks(n);
   n = convertEnvironments(n);
   n = n.replace(/\$\$([\s\S]+?)\$\$/g, "\\[$1\\]");
+  // Any "$$" (or more) surviving past the block-math pass above isn't a real
+  // display-math opener — it's a small model doubling the dollar sign by
+  // mistake (e.g. "$$5$" for "$5"). Collapse the run to one before pairing,
+  // or the stray extra "$" is left with nothing to pair with.
+  n = n.replace(/\${2,}/g, "$");
   // Only treat $...$ as math when the content looks mathematical.
   n = n.replace(/\$([^$\n]+?)\$/g, (m, inner: string) => (isMathLike(inner) ? `\\(${inner}\\)` : m));
   // Any remaining $ is currency or an unmatched delimiter -> literal, so
@@ -158,6 +227,7 @@ export function normalizeForKatex(text: string): string {
     .split(/(\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\])/)
     .map((part, i) => (i % 2 === 1 ? repairMathSegment(part) : wrapBareMathCommands(part)))
     .join("");
+  n = mergeAdjacentMath(n);
   // Hand off to remark-math: \(...\) -> $...$, \[...\] -> $$...$$
   n = n
     .replace(/\\\[([\s\S]*?)\\\]/g, (_m, inner) => `\n\n$$${inner.trim()}$$\n\n`)

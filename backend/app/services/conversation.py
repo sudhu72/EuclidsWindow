@@ -1,4 +1,5 @@
 """Conversation persistence service."""
+from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -53,6 +54,15 @@ class ConversationService:
             visualization_id=visualization_id,
         )
         self.db.add(message)
+        # add_message() alone never touches the Conversation row, so its
+        # onupdate=... never fires — bump it explicitly or list_conversations'
+        # order-by-updated_at never surfaces conversations that just got a
+        # new message.
+        conversation = (
+            self.db.query(Conversation).filter(Conversation.id == conversation_id).first()
+        )
+        if conversation is not None:
+            conversation.updated_at = datetime.utcnow()
         self.db.commit()
         self.db.refresh(message)
         return message

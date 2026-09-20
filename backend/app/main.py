@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from .config import get_settings
 from .content import TopicCatalog
 from .db import Concept, EvalRun, Resource, User, get_db, init_db
+from .deps import get_current_user, require_user
 from .logging_config import logger
 from .metrics import metrics
 from .middleware import MetricsMiddleware, RateLimitMiddleware
@@ -35,6 +36,8 @@ from .routers.graph import router as graph_router
 from .routers.chat import router as chat_router
 from .routers.voice import router as voice_router
 from .routers.learn import router as learn_router
+from .routers.tutor_stream import router as tutor_stream_router
+from .routers.quest import router as quest_router
 from .ai.viz_agent import VizAgent
 from .ai.animation_pipeline import AnimationPipeline
 from .ai.checker import SymbolicChecker
@@ -223,6 +226,8 @@ app.include_router(graph_router)
 app.include_router(chat_router)
 app.include_router(voice_router)
 app.include_router(learn_router)
+app.include_router(tutor_stream_router)
+app.include_router(quest_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -238,144 +243,57 @@ if STATIC_MEDIA_DIR.exists():
 if (FRONTEND_DIR / "vendor").exists():
     app.mount("/vendor", StaticFiles(directory=FRONTEND_DIR / "vendor"), name="vendor")
 
-# React/Vite frontend (chat + voice), built to frontend-react/dist and served at
-# /app alongside the classic vanilla SPA at /. Present only when built.
+# The React app, built to frontend-react/dist. Mounted at /app as well as being
+# served from / so older links and the /app#tab deep links keep working.
 FRONTEND_REACT_DIST = BASE_DIR.parent / "frontend-react" / "dist"
 if FRONTEND_REACT_DIST.is_dir():
     app.mount("/app", StaticFiles(directory=FRONTEND_REACT_DIST, html=True), name="react-app")
+    # The bundle is built with base "/app/", so its asset URLs are absolute and
+    # resolve through this mount whether the page was served from / or /app.
 
 
 # =============================================================================
 # Frontend HTML routes
 # =============================================================================
 @app.get("/", include_in_schema=False)
-async def serve_index():
-    """Serve the main index.html."""
-    index_path = FRONTEND_DIR / "index.html"
+async def serve_react_index():
+    """The React app is the application now."""
+    index_path = FRONTEND_REACT_DIST / "index.html"
     if index_path.exists():
         return FileResponse(index_path, headers=FRONTEND_NO_CACHE_HEADERS)
-    raise HTTPException(status_code=404, detail="Frontend not found")
+    raise HTTPException(status_code=404, detail="Frontend not built — run `npm run build` in frontend-react")
 
 
-@app.get("/index.html", include_in_schema=False)
-async def serve_index_html():
-    """Serve index.html directly."""
-    index_path = FRONTEND_DIR / "index.html"
-    if index_path.exists():
-        return FileResponse(index_path, headers=FRONTEND_NO_CACHE_HEADERS)
-    raise HTTPException(status_code=404, detail="Frontend not found")
+@app.get("/embed", include_in_schema=False)
+async def serve_embed():
+    """Shell for the labs that stayed in vanilla JS.
+
+    Music Lab and the two FFT labs are embedded rather than ported: Web Audio
+    timing, VexFlow engraving and live recording are where a rewrite would most
+    easily lose fidelity. The React Labs tab iframes this with ?tab=<id>.
+    """
+    embed_path = FRONTEND_DIR / "embed.html"
+    if embed_path.exists():
+        return FileResponse(embed_path, headers=FRONTEND_NO_CACHE_HEADERS)
+    raise HTTPException(status_code=404, detail="Embed shell not found")
 
 
-@app.get("/mathmap.html", include_in_schema=False)
-async def serve_mathmap():
-    """Serve the Math Map page."""
-    mathmap_path = FRONTEND_DIR / "mathmap.html"
-    if mathmap_path.exists():
-        return FileResponse(mathmap_path)
-    raise HTTPException(status_code=404, detail="Math Map not found")
+@app.get("/embed.css", include_in_schema=False)
+async def serve_embed_css():
+    return FileResponse(FRONTEND_DIR / "embed.css", headers=FRONTEND_NO_CACHE_HEADERS)
 
 
-@app.get("/app.js", include_in_schema=False)
-async def serve_app_js():
-    """Serve the main app.js."""
-    return FileResponse(FRONTEND_DIR / "app.js", headers=FRONTEND_NO_CACHE_HEADERS)
+# Only the scripts the embedded labs need. Everything else the classic frontend
+# served now lives in the React app.
+for _name in ("music_core.js", "mozart_notes.js", "musiclab.js", "fftlab.js", "fftlab-image.js"):
 
+    def _make_js_route(filename: str):
+        async def _serve_js():
+            return FileResponse(FRONTEND_DIR / filename, headers=FRONTEND_NO_CACHE_HEADERS)
 
-@app.get("/styles.css", include_in_schema=False)
-async def serve_styles():
-    """Serve the main styles.css."""
-    return FileResponse(FRONTEND_DIR / "styles.css", headers=FRONTEND_NO_CACHE_HEADERS)
+        return _serve_js
 
-
-@app.get("/mathmap.js", include_in_schema=False)
-async def serve_mathmap_js():
-    """Serve mathmap.js."""
-    return FileResponse(FRONTEND_DIR / "mathmap.js")
-
-
-@app.get("/mathmap.css", include_in_schema=False)
-async def serve_mathmap_css():
-    """Serve mathmap.css."""
-    return FileResponse(FRONTEND_DIR / "mathmap.css")
-
-
-@app.get("/graphmap.js", include_in_schema=False)
-async def serve_graphmap_js():
-    """Serve graphmap.js (concept-graph explorer)."""
-    return FileResponse(FRONTEND_DIR / "graphmap.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/cogito.js", include_in_schema=False)
-async def serve_cogito_js():
-    """Serve cogito.js (Cogito visualization gallery lab)."""
-    return FileResponse(FRONTEND_DIR / "cogito.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/aibyhand.js", include_in_schema=False)
-async def serve_aibyhand_js():
-    """Serve aibyhand.js (AI-by-Hand discovery lab)."""
-    return FileResponse(FRONTEND_DIR / "aibyhand.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/discovery.js", include_in_schema=False)
-async def serve_discovery_js():
-    """Serve discovery.js (Feynman discovery engine)."""
-    return FileResponse(FRONTEND_DIR / "discovery.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/lesson.js", include_in_schema=False)
-async def serve_lesson_js():
-    return FileResponse(FRONTEND_DIR / "lesson.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/polya.js", include_in_schema=False)
-async def serve_polya_js():
-    return FileResponse(FRONTEND_DIR / "polya.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/mozart_notes.js", include_in_schema=False)
-async def serve_mozart_notes_js():
-    return FileResponse(FRONTEND_DIR / "mozart_notes.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/music_core.js", include_in_schema=False)
-async def serve_music_core_js():
-    return FileResponse(FRONTEND_DIR / "music_core.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/musiclab.js", include_in_schema=False)
-async def serve_musiclab_js():
-    return FileResponse(FRONTEND_DIR / "musiclab.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/calclab.js", include_in_schema=False)
-async def serve_calclab_js():
-    return FileResponse(FRONTEND_DIR / "calclab.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/fftlab.js", include_in_schema=False)
-async def serve_fftlab_js():
-    return FileResponse(FRONTEND_DIR / "fftlab.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/fftlab-image.js", include_in_schema=False)
-async def serve_fftlab_image_js():
-    return FileResponse(FRONTEND_DIR / "fftlab-image.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/cryptolab.js", include_in_schema=False)
-async def serve_cryptolab_js():
-    return FileResponse(FRONTEND_DIR / "cryptolab.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/logiclab.js", include_in_schema=False)
-async def serve_logiclab_js():
-    return FileResponse(FRONTEND_DIR / "logiclab.js", headers=FRONTEND_NO_CACHE_HEADERS)
-
-
-@app.get("/symbols.js", include_in_schema=False)
-async def serve_symbols_js():
-    return FileResponse(FRONTEND_DIR / "symbols.js", headers=FRONTEND_NO_CACHE_HEADERS)
+    app.get(f"/{_name}", include_in_schema=False)(_make_js_route(_name))
 
 
 @app.get("/euclids-window-logo.svg", include_in_schema=False)
@@ -392,38 +310,6 @@ async def serve_favicon():
 async def serve_favicon_ico():
     # Browsers that probe /favicon.ico get the SVG; modern ones accept it.
     return FileResponse(FRONTEND_DIR / "favicon.svg", media_type="image/svg+xml")
-
-
-# =============================================================================
-# Dependencies
-# =============================================================================
-def get_current_user(
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
-) -> Optional[User]:
-    """Get current user from Authorization header (optional)."""
-    if not authorization:
-        return None
-    if not authorization.startswith("Bearer "):
-        return None
-    token = authorization[7:]
-    service = UserService(db)
-    return service.get_user_from_token(token)
-
-
-def require_user(
-    authorization: str = Header(...),
-    db: Session = Depends(get_db),
-) -> User:
-    """Require authenticated user."""
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid authorization header")
-    token = authorization[7:]
-    service = UserService(db)
-    user = service.get_user_from_token(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    return user
 
 
 # =============================================================================
@@ -622,11 +508,17 @@ async def list_conversations(
 
 @app.get("/api/conversations/{conversation_id}", response_model=ConversationResponse)
 async def get_conversation(
-    conversation_id: str, db: Session = Depends(get_db)
+    conversation_id: str,
+    user: Optional[User] = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> ConversationResponse:
     service = ConversationService(db)
     conv = service.get_conversation(conversation_id)
     if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if conv.user_id != (user.id if user else None):
+        # 404, not 403 — don't reveal that a conversation owned by someone
+        # else exists.
         raise HTTPException(status_code=404, detail="Conversation not found")
     return ConversationResponse(
         id=conv.id,
@@ -1216,6 +1108,7 @@ async def ai_visualize(payload: VisualizationOnDemandRequest) -> VisualizationOn
         animation_pipeline.generate,
         payload.question,
         "",
+        learner_level=payload.learner_level,
         quality=payload.quality,
         output_format=payload.output_format,
     )
@@ -1246,6 +1139,7 @@ async def ai_animate(payload: VisualizationOnDemandRequest):
         animation_pipeline.generate,
         payload.question,
         "",
+        learner_level=payload.learner_level,
         quality=payload.quality,
         output_format=payload.output_format,
     )
@@ -1345,15 +1239,22 @@ async def ai_viz_agent(payload: VizAgentRequest) -> VizAgentResponse:
 def _settings_response() -> AppSettingsResponse:
     from .ai.providers import CLOUD_PROVIDERS
 
+    # Serve *configured* values: a settings form must round-trip what the user
+    # chose, not fast mode's derived model / multi-agent overrides, or writing
+    # the form back would persist them permanently. The derived values are
+    # reported separately, read-only, so the UI can still show what will run.
+    configured = settings_store.get_configured_settings()
     effective = settings_store.get_effective_settings()
-    effective["cloud_keys_set"] = {
-        provider: bool(effective.get(meta["key_setting"]))
+    configured["cloud_keys_set"] = {
+        provider: bool(configured.get(meta["key_setting"]))
         for provider, meta in CLOUD_PROVIDERS.items()
     }
     # Never send raw API keys to the frontend.
     for meta in CLOUD_PROVIDERS.values():
-        effective.pop(meta["key_setting"], None)
-    return AppSettingsResponse(**effective)
+        configured.pop(meta["key_setting"], None)
+    configured["effective_llm_model"] = effective["local_llm_model"]
+    configured["effective_multi_agent_enabled"] = effective["local_multi_agent_enabled"]
+    return AppSettingsResponse(**configured)
 
 
 @app.get("/api/settings", response_model=AppSettingsResponse)

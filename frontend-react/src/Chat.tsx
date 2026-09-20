@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { streamChat, type ChatMsg } from "./api";
 import { voice, type VoiceStatus } from "./voice";
+import { MicButton } from "./VoiceControls";
 import Markdown from "./Markdown";
+import { levelLabel } from "./levelLabels";
+
+const LEVELS = ["kids", "teen", "college", "adult"];
 
 function Bubble({ role, content }: ChatMsg) {
   return (
@@ -17,8 +21,8 @@ export default function Chat() {
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [speak, setSpeak] = useState(false);
+  const [level, setLevel] = useState("teen");
   const [vstatus, setVstatus] = useState<VoiceStatus | null>(null);
-  const stopDictation = useRef<(() => void) | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,14 +42,20 @@ export default function Chat() {
     setBusy(true);
     let full = "";
     try {
-      await streamChat(q, history, (tok) => {
-        full += tok;
-        setMessages((m) => {
-          const copy = m.slice();
-          copy[copy.length - 1] = { role: "assistant", content: full };
-          return copy;
-        });
-      });
+      await streamChat(
+        q,
+        history,
+        (tok) => {
+          full += tok;
+          setMessages((m) => {
+            const copy = m.slice();
+            copy[copy.length - 1] = { role: "assistant", content: full };
+            return copy;
+          });
+        },
+        undefined,
+        level
+      );
     } catch (err) {
       full = `⚠️ ${(err as Error).message}`;
       setMessages((m) => {
@@ -57,21 +67,6 @@ export default function Chat() {
       setBusy(false);
       if (speak && full && !full.startsWith("⚠️")) void voice.speak(full);
     }
-  }
-
-  async function toggleMic() {
-    if (listening) {
-      stopDictation.current?.();
-      return;
-    }
-    stopDictation.current = await voice.startDictation(
-      (t) => {
-        setInput(t);
-        // auto-send what was dictated
-        void send(t);
-      },
-      setListening
-    );
   }
 
   return (
@@ -95,20 +90,32 @@ export default function Chat() {
           void send(input);
         }}
       >
-        <button
-          type="button"
-          className={`icon ${listening ? "on" : ""}`}
-          title={`Voice input (${vstatus?.detail ?? "detecting…"})`}
-          onClick={() => void toggleMic()}
-        >
-          {listening ? "⏹" : "🎤"}
-        </button>
+        <MicButton
+          onDictate={(t) => {
+            setInput(t);
+            // auto-send what was dictated
+            void send(t);
+          }}
+          onListening={setListening}
+        />
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={listening ? "Listening…" : "Ask a math question…"}
           disabled={busy}
         />
+        <select
+          value={level}
+          onChange={(e) => setLevel(e.target.value)}
+          title="Learner level"
+          aria-label="Learner level"
+        >
+          {LEVELS.map((l) => (
+            <option key={l} value={l}>
+              {levelLabel(l)}
+            </option>
+          ))}
+        </select>
         <button
           type="button"
           className={`icon ${speak ? "on" : ""}`}

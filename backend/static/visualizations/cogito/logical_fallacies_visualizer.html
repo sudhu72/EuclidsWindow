@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logical Fallacies, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2EFEA; --card:#FFFFFF; --ink:#231F20; --ink-soft:#615B57; --line:#E1DAD2;
+    --accent:#9A3B34; --accent-soft:#F6E8E5;
+    --c1:#9A3B34; --c2:#2E6E62; --c3:#C98A2C; --c4:#3D5A80; --c5:#6B4C8A;
+    --good:#2E6E62; --bad:#B23A2E;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:760px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:21px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.8; white-space:pre-line; }
+  .verdict.pass{ background:#E4F0EC; } .verdict.fail{ background:#FBE9E7; }
+  table.dt{ border-collapse:collapse; margin:14px 0; font-family:"IBM Plex Mono",monospace; font-size:13px; width:100%; }
+  table.dt th, table.dt td{ border:1px solid var(--line); padding:8px 10px; text-align:left; }
+  table.dt th{ background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  svg{ width:100%; max-width:640px; height:auto; display:block; margin:10px auto; background:#F8F6F2; border-radius:10px; }
+  label.field{ font-size:12.5px; color:var(--ink-soft); display:block; margin-bottom:4px; }
+  input[type=range]{ width:220px; vertical-align:middle; }
+  .statgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:14px 0; }
+  .stat{ background:var(--accent-soft); border-radius:10px; padding:12px 14px; }
+  .stat .n{ font-family:"IBM Plex Mono",monospace; font-size:20px; font-weight:600; color:var(--accent); }
+  .stat .l{ font-size:11.5px; color:var(--ink-soft); margin-top:2px; }
+  .presetgrid{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+  .flex2{ display:flex; gap:18px; flex-wrap:wrap; }
+  .flex2 > div{ flex:1; min-width:260px; }
+  .dots{ display:flex; gap:4px; flex-wrap:wrap; margin-top:10px; }
+  .dot{ width:16px; height:16px; border-radius:50%; background:#D8D2C8; display:inline-block; }
+  .dot.hit{ background:var(--bad); }
+  .dot.safe{ background:var(--good); }
+  .chainlink{ display:inline-flex; align-items:center; justify-content:center; width:44px; height:26px; border-radius:6px; background:var(--accent); color:#fff; font-family:"IBM Plex Mono",monospace; font-size:11px; margin-right:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Logical Fallacies</div>
+    <h1>Where Arguments Secretly Break</h1>
+    <p>Six live labs, one per family of fallacy — pick a tab, drag a slider, or fire a fresh random draw, and watch the exact numbers the tutorial quotes compute themselves in front of you instead of being asserted.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="syllogism">Syllogism Checker</button>
+    <button class="tab" data-tab="gambler">Gambler's Fallacy</button>
+    <button class="tab" data-tab="hothand">Hot Hand Small-Sample Trap</button>
+    <button class="tab" data-tab="baserate">Base Rate / Prosecutor's Fallacy</button>
+    <button class="tab" data-tab="sharpshooter">Texas Sharpshooter</button>
+    <button class="tab" data-tab="slope">Slippery Slope & Regression</button>
+  </div>
+
+  <!-- ============ TAB: SYLLOGISM ============ -->
+  <div class="panel active" id="panel-syllogism">
+    <div class="card">
+      <h2>Is the Syllogism's Middle Term Doing Its Job?</h2>
+      <p class="sub"><b>What's happening:</b> pick a categorical argument form below. The three circles are a real, consistent finite model that satisfies every premise — watch whether the conclusion's region is automatically forced, or whether the model can dodge it.</p>
+      <div class="presetgrid" id="sylPresets"></div>
+      <svg id="sylSvg" viewBox="0 0 640 320"></svg>
+      <div class="verdict" id="sylVerdict"></div>
+      <div class="caption">Green shading = the region every premise + the conclusion jointly agree must exist. Red shading = a region the premises allow but the conclusion says can't exist — a live counterexample, not a hand-picked one.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: GAMBLER ============ -->
+  <div class="panel" id="panel-gambler">
+    <div class="card">
+      <h2>Does a Streak Change the Next Flip?</h2>
+      <p class="sub"><b>What's happening:</b> flip a fair virtual coin. Every time the last <i>k</i> flips were all heads, this checks what the very next flip actually was. If the coin truly has no memory, that ratio should hover at 0.5 no matter how long the streak.</p>
+      <div class="row">
+        <label class="field" style="margin:0;">Streak length k:
+          <select id="gStreakK" style="margin-left:6px;">
+            <option value="3">3</option><option value="4" selected>4</option><option value="5">5</option>
+          </select>
+        </label>
+        <button class="op" onclick="flipCoins(1)">Flip 1</button>
+        <button class="op" onclick="flipCoins(1000)">Flip 1,000</button>
+        <button class="op" onclick="flipCoins(100000)">Flip 100,000</button>
+        <button class="op" onclick="resetGambler()">Reset</button>
+      </div>
+      <div class="statgrid">
+        <div class="stat"><div class="n" id="gTotalFlips">0</div><div class="l">total flips</div></div>
+        <div class="stat"><div class="n" id="gCurStreak">0</div><div class="l">current heads streak</div></div>
+        <div class="stat"><div class="n" id="gStreakCount">0</div><div class="l">times streak-of-k occurred</div></div>
+        <div class="stat"><div class="n" id="gAfterHeads">—</div><div class="l">P(next = heads | after streak)</div></div>
+      </div>
+      <div class="verdict" id="gVerdict">Flip some coins to begin.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: HOT HAND ============ -->
+  <div class="panel" id="panel-hothand">
+    <div class="card">
+      <h2>The Estimator That's Biased Even Though the Coin Isn't</h2>
+      <p class="sub"><b>What's happening:</b> for EVERY possible sequence of n fair flips, compute that one sequence's own empirical "P(heads | right after a k-streak)," then average that number across every sequence containing the streak at least once. The coin's true probability is exactly 0.5 on every single flip — watch how far the average of this natural estimator drifts from 0.5 anyway, and how that gap shrinks as n grows.</p>
+      <div class="row">
+        <label class="field" style="margin:0;">Sequence length n = <b id="hhNVal">10</b><input type="range" id="hhN" min="4" max="16" value="10" oninput="updateHotHand()"></label>
+        <label class="field" style="margin:0;">Streak length k = <b id="hhKVal">3</b><input type="range" id="hhK" min="2" max="4" value="3" oninput="updateHotHand()"></label>
+      </div>
+      <div class="statgrid">
+        <div class="stat"><div class="n" id="hhAvg">—</div><div class="l">average estimator</div></div>
+        <div class="stat"><div class="n" id="hhTrue">0.5000</div><div class="l">true probability, always</div></div>
+        <div class="stat"><div class="n" id="hhGap">—</div><div class="l">gap from truth</div></div>
+        <div class="stat"><div class="n" id="hhCount">—</div><div class="l">sequences containing the streak</div></div>
+      </div>
+      <svg id="hhSvg" viewBox="0 0 640 90"></svg>
+      <div class="caption">The bar compares the average estimator (dark) against the true, known-in-advance 0.5 (dashed line) — the gap is the Miller–Sanjurjo small-sample bias, computed by brute force, not simulated.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BASE RATE ============ -->
+  <div class="panel" id="panel-baserate">
+    <div class="card">
+      <h2>A Rare Match Isn't the Same as a Sure Thing</h2>
+      <p class="sub"><b>What's happening:</b> a trait matches only 1-in-N people if they're innocent. Assume exactly one truly guilty match exists in the whole population. Drag the sliders and watch how few of the "matches" are actually guilty — even when the trait sounds damning.</p>
+      <div class="row">
+        <label class="field" style="margin:0;">Population = <b id="brPopVal">60,000,000</b><input type="range" id="brPop" min="6" max="8" step="0.05" value="7.78" oninput="updateBaseRate()"></label>
+        <label class="field" style="margin:0;">Trait rarity: 1 in <b id="brNVal">1,000,000</b><input type="range" id="brN" min="3" max="8" step="0.1" value="6" oninput="updateBaseRate()"></label>
+      </div>
+      <div class="statgrid">
+        <div class="stat"><div class="n" id="brInnocent">—</div><div class="l">expected innocent matches</div></div>
+        <div class="stat"><div class="n" id="brNaive">—</div><div class="l">the fallacious reading: "P(guilty) ≈ this"</div></div>
+        <div class="stat"><div class="n" id="brCorrect">—</div><div class="l">actual P(guilty | match), by Bayes</div></div>
+      </div>
+      <div class="verdict" id="brVerdict"></div>
+      <div class="caption">The fallacious reading treats "1 in N, if innocent" as if it were "P(guilty)" directly. The correct number instead asks: of everyone who matches (guilty <i>and</i> innocent), what share is actually guilty?</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: SHARPSHOOTER ============ -->
+  <div class="panel" id="panel-sharpshooter">
+    <div class="card">
+      <h2>Fire Enough Shots, Something Looks Like a Bullseye</h2>
+      <p class="sub"><b>What's happening:</b> run k completely independent tests where nothing real is happening anywhere (pure noise). At the usual 5% significance line, drag k and watch the chance that at least one test "lights up" purely by luck.</p>
+      <div class="row">
+        <label class="field" style="margin:0;">Number of independent tests k = <b id="ssKVal">20</b><input type="range" id="ssK" min="1" max="50" value="20" oninput="updateSharpshooter()"></label>
+        <button class="op" onclick="fireVolley()">Fire a volley of k tests</button>
+      </div>
+      <div class="statgrid">
+        <div class="stat"><div class="n" id="ssFormula">—</div><div class="l">P(at least one false hit) = 1-(1-.05)^k</div></div>
+      </div>
+      <div class="dots" id="ssDots"></div>
+      <div class="verdict" id="ssVerdict">Drag k, then fire a volley to draw k real random z-scores.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: SLOPE + REGRESSION ============ -->
+  <div class="panel" id="panel-slope">
+    <div class="card">
+      <h2>Slippery Slope: Compounding "Merely Plausible" Steps</h2>
+      <p class="sub"><b>What's happening:</b> each step below is individually plausible on its own. Watch how quickly the WHOLE chain's probability collapses as you add more "obviously fine" steps.</p>
+      <div class="row">
+        <label class="field" style="margin:0;">Per-step probability = <b id="slPVal">0.80</b><input type="range" id="slP" min="0.5" max="0.95" step="0.01" value="0.80" oninput="updateSlope()"></label>
+        <label class="field" style="margin:0;">Chain length = <b id="slNVal">5</b><input type="range" id="slN" min="1" max="8" value="5" oninput="updateSlope()"></label>
+      </div>
+      <div id="slChain" style="margin:10px 0;"></div>
+      <div class="statgrid">
+        <div class="stat"><div class="n" id="slResult">—</div><div class="l">compounded probability of the whole chain</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Regression to the Mean: No One Actually Got Worse</h2>
+      <p class="sub"><b>What's happening:</b> 2,000 simulated people each get a fixed true skill plus fresh random noise on two separate rounds. Select the top scorers by round 1 alone, and watch round 2's average fall back toward the population mean — with an identical generating model both times.</p>
+      <div class="row"><button class="op" onclick="drawRegressionSample()">Draw a fresh random sample</button></div>
+      <div class="statgrid">
+        <div class="stat"><div class="n" id="rmPopMean">—</div><div class="l">population mean skill</div></div>
+        <div class="stat"><div class="n" id="rmR1">—</div><div class="l">top 1%'s avg round-1 score</div></div>
+        <div class="stat"><div class="n" id="rmR2">—</div><div class="l">SAME people's avg round-2 score</div></div>
+        <div class="stat"><div class="n" id="rmTrue">—</div><div class="l">their avg TRUE skill</div></div>
+      </div>
+      <svg id="rmSvg" viewBox="0 0 640 140"></svg>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Logical Fallacies — The Feynman Way</b>, part of
+    <a href="../README.md">Building Mathematical Intuition From First Principles</a>.
+    Open in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+// ---------- tab switching ----------
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ---------- svg helper ----------
+function el(tag, attrs, text){
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  if(text!==undefined) e.textContent = text;
+  return e;
+}
+
+// ================= SYLLOGISM CHECKER =================
+const SYL_PRESETS = {
+  barbara: {
+    label: "Barbara (valid)",
+    premise1: "All M are P", premise2: "All S are M", conclusion: "All S are P",
+    example: "All mammals are warm-blooded. All dogs are mammals. Therefore all dogs are warm-blooded.",
+    valid: true,
+    circles: [ {id:"P", cx:320, cy:170, r:140, color:"var(--c4)"}, {id:"M", cx:320, cy:170, r:95, color:"var(--c2)"}, {id:"S", cx:320, cy:170, r:50, color:"var(--c1)"} ],
+    counter: null
+  },
+  undistributed: {
+    label: "Undistributed Middle (invalid)",
+    premise1: "All A are M", premise2: "All B are M", conclusion: "All B are A",
+    example: "All cats are mammals. All dogs are mammals. Therefore all dogs are cats.",
+    valid: false,
+    circles: [ {id:"M", cx:320, cy:170, r:150, color:"var(--c2)"}, {id:"A (cats)", cx:250, cy:170, r:70, color:"var(--c1)"}, {id:"B (dogs)", cx:400, cy:170, r:70, color:"var(--c3)"} ],
+    counter: {cx:400, cy:170, r:70, note:"B sits inside M, but nowhere near A — the premises never forced them to overlap at all."}
+  },
+  illicitmajor: {
+    label: "Illicit Major (invalid)",
+    premise1: "All S are M", premise2: "No P are M", conclusion: "No P are S",
+    example: "All dogs are mammals. No fish are mammals. Therefore no fish are dogs. (True here, but not FORCED by the pattern — the premises never rule out P overlapping S through some other route.)",
+    valid: false,
+    circles: [ {id:"M (+S)", cx:250, cy:170, r:110, color:"var(--c2)"}, {id:"S", cx:250, cy:170, r:55, color:"var(--c1)"}, {id:"P", cx:470, cy:170, r:90, color:"var(--c3)"} ],
+    counter: {cx:470, cy:170, r:90, note:"Nothing in the premises stops a P-circle from also reaching in and overlapping S through territory outside M — the conclusion's 'no overlap, ever' is stronger than what was actually proven."}
+  },
+  fourterms: {
+    label: "Four Terms (invalid)",
+    premise1: "All banks₁ are financial institutions", premise2: "The riverbank is a bank₂", conclusion: "The riverbank is a financial institution",
+    example: "\"Bank\" secretly means two different things — there were never really three shared terms to reason about.",
+    valid: false,
+    circles: [ {id:"Fin. Inst.", cx:230, cy:150, r:110, color:"var(--c4)"}, {id:"bank₁ (money)", cx:230, cy:150, r:55, color:"var(--c1)"}, {id:"bank₂ (river)", cx:460, cy:230, r:70, color:"var(--c3)"} ],
+    counter: {cx:460, cy:230, r:70, note:"bank₂ (riverbank) was never inside bank₁'s circle to begin with — it's a different word wearing the same spelling."}
+  }
+};
+let sylCurrent = "barbara";
+function buildSylPresets(){
+  const grid = document.getElementById("sylPresets");
+  grid.innerHTML = "";
+  Object.keys(SYL_PRESETS).forEach(key=>{
+    const b = document.createElement("button");
+    b.className = "op" + (key===sylCurrent ? " active" : "");
+    b.textContent = SYL_PRESETS[key].label;
+    b.onclick = ()=>{ sylCurrent = key; buildSylPresets(); renderSyllogism(); };
+    grid.appendChild(b);
+  });
+}
+function renderSyllogism(){
+  const p = SYL_PRESETS[sylCurrent];
+  const svg = document.getElementById("sylSvg");
+  svg.innerHTML = "";
+  svg.appendChild(el("rect",{x:0,y:0,width:640,height:320,fill:"#F8F6F2"}));
+  p.circles.forEach(c=>{
+    svg.appendChild(el("circle",{cx:c.cx,cy:c.cy,r:c.r,fill:c.color,opacity:0.22,stroke:c.color,"stroke-width":2}));
+  });
+  // label each circle along its own edge to avoid overlap
+  const positions = [ [40,40], [40,300-10], [600,40] ];
+  p.circles.forEach((c,i)=>{
+    const pos = positions[i % positions.length];
+    svg.appendChild(el("text",{x:pos[0], y:pos[1], "font-family":"IBM Plex Mono, monospace", "font-size":13, "font-weight":600, fill:c.color, "text-anchor": i===2?"end":"start"}, c.id));
+  });
+  if(p.counter){
+    svg.appendChild(el("circle",{cx:p.counter.cx, cy:p.counter.cy, r:p.counter.r, fill:"none", stroke:"var(--bad)", "stroke-width":3, "stroke-dasharray":"6,5"}));
+    svg.appendChild(el("text",{x:320, y:305, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace", "font-size":11, fill:"var(--bad)"}, "dashed = the region the conclusion wrongly rules out"));
+  }
+  const v = document.getElementById("sylVerdict");
+  v.className = "verdict " + (p.valid ? "pass" : "fail");
+  v.textContent =
+`Premise 1: ${p.premise1}
+Premise 2: ${p.premise2}
+Conclusion: ${p.conclusion}
+
+Verdict: ${p.valid ? "VALID — no finite model can satisfy both premises and deny the conclusion." : "INVALID — the model shown satisfies both premises while the conclusion still fails."}
+
+Example: ${p.example}`;
+}
+buildSylPresets(); renderSyllogism();
+
+// ================= GAMBLER'S FALLACY =================
+let gTotal=0, gCurStreak=0, gStreakHits=0, gAfterStreakHeads=0, gAfterStreakTotal=0;
+function resetGambler(){ gTotal=0; gCurStreak=0; gStreakHits=0; gAfterStreakHeads=0; gAfterStreakTotal=0; renderGambler(); }
+function flipCoins(n){
+  const k = parseInt(document.getElementById("gStreakK").value,10);
+  for(let i=0;i<n;i++){
+    const isHeads = Math.random() < 0.5;
+    // BEFORE updating streak, check: was there already a streak of k heads? if so, this flip is "the flip after the streak"
+    if(gCurStreak >= k){
+      gAfterStreakTotal++;
+      if(isHeads) gAfterStreakHeads++;
+    }
+    if(isHeads){ gCurStreak++; } else { gCurStreak = 0; }
+    gTotal++;
+  }
+  renderGambler();
+}
+function renderGambler(){
+  document.getElementById("gTotalFlips").textContent = gTotal.toLocaleString();
+  document.getElementById("gCurStreak").textContent = gCurStreak;
+  document.getElementById("gStreakCount").textContent = gAfterStreakTotal.toLocaleString();
+  const ratio = gAfterStreakTotal>0 ? (gAfterStreakHeads/gAfterStreakTotal) : null;
+  document.getElementById("gAfterHeads").textContent = ratio!==null ? ratio.toFixed(4) : "—";
+  const v = document.getElementById("gVerdict");
+  if(ratio===null){ v.textContent = "No streak has occurred yet — flip more coins."; return; }
+  v.textContent = `Out of ${gAfterStreakTotal.toLocaleString()} times a heads-streak of that length occurred, the very next flip was heads ${(ratio*100).toFixed(2)}% of the time — the coin has no memory, so this should sit near 50% no matter how long the streak, and it does.`;
+}
+resetGambler();
+
+// ================= HOT HAND =================
+function hotHandBias(n,k){
+  let totalEstimate=0, sequencesWithStreak=0;
+  const total = 1<<n;
+  for(let mask=0; mask<total; mask++){
+    let hits=0, opportunities=0;
+    // bit i (0-indexed) = flip i+1; 1=heads
+    const bits = [];
+    for(let i=0;i<n;i++) bits.push((mask>>i)&1);
+    for(let i=k;i<n;i++){
+      let streak=true;
+      for(let j=i-k;j<i;j++){ if(bits[j]===0){ streak=false; break; } }
+      if(streak){
+        opportunities++;
+        if(bits[i]===1) hits++;
+      }
+    }
+    if(opportunities>0){
+      totalEstimate += hits/opportunities;
+      sequencesWithStreak++;
+    }
+  }
+  return { avg: sequencesWithStreak>0 ? totalEstimate/sequencesWithStreak : null, count: sequencesWithStreak };
+}
+function updateHotHand(){
+  const n = parseInt(document.getElementById("hhN").value,10);
+  const k = parseInt(document.getElementById("hhK").value,10);
+  document.getElementById("hhNVal").textContent = n;
+  document.getElementById("hhKVal").textContent = k;
+  const {avg, count} = hotHandBias(n,k);
+  document.getElementById("hhAvg").textContent = avg!==null ? avg.toFixed(4) : "n/a";
+  document.getElementById("hhCount").textContent = count.toLocaleString();
+  const gap = avg!==null ? (0.5-avg) : 0;
+  document.getElementById("hhGap").textContent = avg!==null ? (gap>=0?"−":"+")+Math.abs(gap).toFixed(4) : "—";
+  const svg = document.getElementById("hhSvg");
+  svg.innerHTML = "";
+  const W=640,H=90, barX=30, barW=560;
+  svg.appendChild(el("line",{x1:barX+barW*0.5, y1:10, x2:barX+barW*0.5, y2:70, stroke:"var(--ink-soft)", "stroke-width":1.5, "stroke-dasharray":"4,4"}));
+  svg.appendChild(el("text",{x:barX+barW*0.5, y:84, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace", "font-size":11, fill:"var(--ink-soft)"}, "true = 0.500"));
+  if(avg!==null){
+    const x = barX + barW*avg;
+    svg.appendChild(el("rect",{x:barX, y:25, width:barW, height:20, fill:"#E9E4DC", rx:6}));
+    svg.appendChild(el("rect",{x:barX, y:25, width: barW*avg, height:20, fill:"var(--accent)", rx:6}));
+    svg.appendChild(el("circle",{cx:x, cy:35, r:5, fill:"var(--ink)"}));
+    svg.appendChild(el("text",{x:x, y:20, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace", "font-size":12, "font-weight":600, fill:"var(--accent)"}, avg.toFixed(4)));
+  }
+}
+updateHotHand();
+
+// ================= BASE RATE / PROSECUTOR =================
+function updateBaseRate(){
+  const popExp = parseFloat(document.getElementById("brPop").value);
+  const rarityExp = parseFloat(document.getElementById("brN").value);
+  const pop = Math.pow(10, popExp);
+  const rarity = Math.pow(10, rarityExp);
+  document.getElementById("brPopVal").textContent = Math.round(pop).toLocaleString();
+  document.getElementById("brNVal").textContent = Math.round(rarity).toLocaleString();
+  const innocentMatches = pop / rarity;
+  const pGuiltyCorrect = 1/(innocentMatches+1);
+  const pNaive = 1 - 1/rarity; // "1 in a million chance if innocent" misread as "99.9999% guilty"
+  document.getElementById("brInnocent").textContent = innocentMatches.toFixed(1);
+  document.getElementById("brNaive").textContent = (pNaive*100).toFixed(4)+"%";
+  document.getElementById("brCorrect").textContent = (pGuiltyCorrect*100).toFixed(2)+"%";
+  const v = document.getElementById("brVerdict");
+  v.className = "verdict " + (pGuiltyCorrect < 0.5 ? "fail" : "pass");
+  v.textContent = `Expected innocent matches in this population: ${innocentMatches.toFixed(1)}. Assuming exactly one truly guilty match exists, P(guilty | matches the trait) = 1 / (${innocentMatches.toFixed(1)} + 1) ≈ ${(pGuiltyCorrect*100).toFixed(2)}% — a world away from the naive "${(pNaive*100).toFixed(4)}%" reading of the trait's own rarity.`;
+}
+updateBaseRate();
+
+// ================= TEXAS SHARPSHOOTER =================
+function updateSharpshooter(){
+  const k = parseInt(document.getElementById("ssK").value,10);
+  document.getElementById("ssKVal").textContent = k;
+  const p = 1 - Math.pow(0.95, k);
+  document.getElementById("ssFormula").textContent = (p*100).toFixed(2)+"%";
+}
+function fireVolley(){
+  const k = parseInt(document.getElementById("ssK").value,10);
+  const dotsDiv = document.getElementById("ssDots");
+  dotsDiv.innerHTML = "";
+  let anyHit = false;
+  for(let i=0;i<k;i++){
+    // Box-Muller for a standard normal z-score
+    const u1 = Math.random(), u2 = Math.random();
+    const z = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+    const hit = Math.abs(z) > 1.96;
+    if(hit) anyHit = true;
+    const d = document.createElement("div");
+    d.className = "dot " + (hit ? "hit" : "safe");
+    d.title = "z = "+z.toFixed(2);
+    dotsDiv.appendChild(d);
+  }
+  const v = document.getElementById("ssVerdict");
+  v.className = "verdict " + (anyHit ? "fail" : "pass");
+  v.textContent = anyHit
+    ? "At least one test just crossed the significance line purely by chance, out of "+k+" real, freshly-drawn random z-scores with NO real effect in any of them. Rerun it — the false 'hit' lands somewhere different almost every time."
+    : "No false hits this time — rerun a few more volleys and one will show up, at roughly the rate the formula above predicts.";
+}
+updateSharpshooter();
+
+// ================= SLIPPERY SLOPE =================
+function updateSlope(){
+  const p = parseFloat(document.getElementById("slP").value);
+  const n = parseInt(document.getElementById("slN").value,10);
+  document.getElementById("slPVal").textContent = p.toFixed(2);
+  document.getElementById("slNVal").textContent = n;
+  const compounded = Math.pow(p,n);
+  document.getElementById("slResult").textContent = (compounded*100).toFixed(2)+"%";
+  const chain = document.getElementById("slChain");
+  chain.innerHTML = "";
+  for(let i=1;i<=n;i++){
+    const link = document.createElement("span");
+    link.className = "chainlink";
+    const opacity = Math.pow(p,i);
+    link.style.opacity = Math.max(opacity, 0.12);
+    link.textContent = "step "+i;
+    chain.appendChild(link);
+  }
+}
+updateSlope();
+
+// ================= REGRESSION TO THE MEAN =================
+function gaussianRandom(mean, sd){
+  const u1 = Math.random(), u2 = Math.random();
+  const z = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+  return mean + z*sd;
+}
+function drawRegressionSample(){
+  const N = 2000;
+  const people = [];
+  for(let i=0;i<N;i++){
+    const trueSkill = gaussianRandom(100,10);
+    const r1 = trueSkill + gaussianRandom(0,15);
+    const r2 = trueSkill + gaussianRandom(0,15);
+    people.push({trueSkill, r1, r2});
+  }
+  const popMean = people.reduce((s,p)=>s+p.trueSkill,0)/N;
+  people.sort((a,b)=>b.r1-a.r1);
+  const topCount = Math.max(1, Math.round(N*0.01));
+  const top = people.slice(0, topCount);
+  const avgR1 = top.reduce((s,p)=>s+p.r1,0)/top.length;
+  const avgR2 = top.reduce((s,p)=>s+p.r2,0)/top.length;
+  const avgTrue = top.reduce((s,p)=>s+p.trueSkill,0)/top.length;
+  document.getElementById("rmPopMean").textContent = popMean.toFixed(2);
+  document.getElementById("rmR1").textContent = avgR1.toFixed(2);
+  document.getElementById("rmR2").textContent = avgR2.toFixed(2);
+  document.getElementById("rmTrue").textContent = avgTrue.toFixed(2);
+
+  const svg = document.getElementById("rmSvg");
+  svg.innerHTML = "";
+  const W=640,H=140, base=120, scale=1.6, x0=90;
+  const bars = [ {label:"Round 1", val:avgR1, color:"var(--c3)"}, {label:"Round 2", val:avgR2, color:"var(--accent)"}, {label:"True skill", val:avgTrue, color:"var(--c2)"}, {label:"Pop. mean", val:popMean, color:"var(--ink-soft)"} ];
+  bars.forEach((b,i)=>{
+    const x = x0 + i*140;
+    const h = Math.max(2, b.val*scale*0.5);
+    svg.appendChild(el("rect",{x:x, y:base-h, width:60, height:h, fill:b.color, rx:4}));
+    svg.appendChild(el("text",{x:x+30, y:base-h-8, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace", "font-size":12, "font-weight":600, fill:b.color}, b.val.toFixed(1)));
+    svg.appendChild(el("text",{x:x+30, y:base+16, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace", "font-size":11, fill:"var(--ink-soft)"}, b.label));
+  });
+  svg.appendChild(el("line",{x1:20,y1:base,x2:620,y2:base, stroke:"var(--ink-soft)", "stroke-width":1}));
+}
+drawRegressionSample();
+</script>
+</body>
+</html>

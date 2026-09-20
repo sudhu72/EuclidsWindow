@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Memorylessness — the bus that never learns</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  svg{width:100%;height:auto;display:block;}
+
+  .axis{stroke:var(--chalk-dim);stroke-width:1px;}
+  .axis-label{font-size:11px;fill:var(--chalk-dim);}
+
+  .op-row{display:flex;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  button.op{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op.primary{background:var(--amber);color:#26210f;border-color:var(--amber);font-weight:700;}
+
+  .readout-row{display:flex;justify-content:center;gap:24px;margin:16px 0 6px;flex-wrap:wrap;}
+  .readout{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 18px;min-width:170px;}
+  .readout .lbl{font-size:11px;color:var(--chalk-dim);}
+  .readout .num{font-family:'Kalam',cursive;font-size:20px;margin-top:2px;}
+  .readout.fresh .num{color:var(--blue);}
+  .readout.cond .num{color:var(--amber);}
+
+  .flag-banner{text-align:center;font-size:13px;padding:8px;border-radius:6px;margin-top:14px;min-height:20px;}
+  .flag-banner.matches{background:rgba(143,209,158,.1);color:var(--green);}
+  .flag-banner.mismatches{background:rgba(255,130,102,.15);color:var(--coral);}
+
+  .slider-wrap{max-width:520px;margin:16px auto 4px;text-align:center;}
+  .slider-wrap input[type=range]{width:100%;accent-color:var(--amber);}
+  .slider-caption{font-size:12px;color:var(--chalk-dim);margin-top:6px;}
+
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Memorylessness — the bus that never learns</h1>
+  <p class="sub">Two kinds of "waiting for the bus," both averaging 10 minutes. Only one of them has no memory of how long you've already waited.</p>
+
+  <div class="panel">
+    <div class="op-row">
+      <button class="op active" id="btnExp">Random arrivals (exponential)</button>
+      <button class="op" id="btnUnif">Scheduled-ish (uniform, 0–20 min)</button>
+    </div>
+
+    <svg viewBox="0 0 900 220" id="densitySvg">
+      <line class="axis" x1="60" y1="180" x2="860" y2="180"/>
+      <text class="axis-label" x="860" y="200" text-anchor="end">minutes waited →</text>
+      <path id="densityPath" fill="none" stroke="var(--chalk-dim)" stroke-width="2"/>
+      <rect id="shadeS" y="20" height="160" fill="var(--blue)" opacity="0.14"/>
+      <rect id="shadeST" y="20" height="160" fill="var(--amber)" opacity="0.22"/>
+      <line id="lineS" class="axis" x1="0" y1="20" x2="0" y2="180" stroke="var(--blue)" stroke-width="2"/>
+      <line id="lineST" class="axis" x1="0" y1="20" x2="0" y2="180" stroke="var(--amber)" stroke-width="2"/>
+      <text id="labelS" x="0" y="14" text-anchor="middle" font-size="11" fill="var(--blue)">S</text>
+      <text id="labelST" x="0" y="196" text-anchor="middle" font-size="11" fill="var(--amber)">S+T</text>
+    </svg>
+
+    <div class="slider-wrap">
+      <input type="range" id="sSlider" min="0" max="15" step="1" value="9">
+    </div>
+    <div class="slider-caption">already waited <b id="sOut">9</b> minutes (further wait threshold T is fixed at 5 minutes)</div>
+
+    <div class="op-row" style="margin-top:14px;">
+      <button class="op primary" id="btnSim">Simulate 20,000 waits</button>
+    </div>
+
+    <div class="readout-row">
+      <div class="readout fresh"><div class="lbl">fresh arrival: P(wait &gt; 5 min)</div><div class="num" id="freshOut">–</div></div>
+      <div class="readout cond"><div class="lbl">already waited S: P(wait &gt; S+5 | wait &gt; S)</div><div class="num" id="condOut">–</div></div>
+    </div>
+    <div class="flag-banner" id="flagBanner"></div>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why does one match and the other doesn't? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Exponential arrivals have no schedule to be "due" against.</strong> By construction, every instant carries the exact same tiny chance of the bus arriving, regardless of history — that's the one assumption that generates the exponential shape in the first place, so conditioning on "already waited S" changes nothing about what happens next.</p>
+      <p><strong>Scheduled-ish arrivals carry real information in how long you've waited.</strong> If the bus is known to arrive somewhere in a fixed window and it hasn't shown up after most of that window has elapsed, it's now "due" — the odds of a long further wait actually drop, exactly the opposite of memorylessness.</p>
+      <p><strong>Drag S toward 15</strong> on the scheduled-ish setting and watch the conditional probability keep falling — the closer you get to the end of the window, the more certain the bus becomes. The exponential setting's conditional probability stays flat at every S, no matter how high you drag it.</p>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../shapes_of_data_feynman_tutorial.md">Shapes of Data</a>, Part 5.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const T = 5; // fixed further-wait threshold, minutes
+  const MEAN = 10;
+  let mode = "exp"; // "exp" or "unif"
+
+  const plotX0=60, plotX1=860, xMin=0, xMax=25;
+  function toX(v){ return plotX0 + (v-xMin)/(xMax-xMin)*(plotX1-plotX0); }
+
+  function densityPathFor(m){
+    const N = 200;
+    let d = "";
+    for (let i=0;i<=N;i++){
+      const x = xMin + (xMax-xMin)*i/N;
+      let y;
+      if (m === "exp"){ y = (1/MEAN)*Math.exp(-x/MEAN); }
+      else { y = (x>=0 && x<=20) ? (1/20) : 0; }
+      const plotY = 180 - Math.min(y*MEAN*140, 140); // scaled so exponential's peak and uniform's flat both read sensibly
+      d += (i===0 ? "M" : "L") + toX(x) + "," + plotY + " ";
+    }
+    return d;
+  }
+
+  function exactFresh(m, t){
+    if (m === "exp") return Math.exp(-t/MEAN);
+    return Math.max(0, (20-t))/20;
+  }
+  function exactCond(m, s, t){
+    if (m === "exp") return Math.exp(-t/MEAN); // memoryless, exactly
+    const pS = Math.max(0,(20-s))/20;
+    const pST = Math.max(0,(20-(s+t)))/20;
+    return pS>0 ? pST/pS : NaN;
+  }
+  function sampleExp(){ return -Math.log(Math.max(Math.random(),1e-12))*MEAN; }
+  function sampleUnif(){ return Math.random()*20; }
+
+  function render(){
+    const s = parseInt(document.getElementById("sSlider").value,10);
+    document.getElementById("sOut").textContent = s;
+    document.getElementById("densityPath").setAttribute("d", densityPathFor(mode));
+    const xS = toX(s), xST = toX(s+T);
+    document.getElementById("lineS").setAttribute("x1", xS); document.getElementById("lineS").setAttribute("x2", xS);
+    document.getElementById("lineST").setAttribute("x1", xST); document.getElementById("lineST").setAttribute("x2", xST);
+    document.getElementById("labelS").setAttribute("x", xS);
+    document.getElementById("labelST").setAttribute("x", xST);
+    document.getElementById("shadeS").setAttribute("x", xS); document.getElementById("shadeS").setAttribute("width", Math.max(0, plotX1-xS));
+    document.getElementById("shadeST").setAttribute("x", xST); document.getElementById("shadeST").setAttribute("width", Math.max(0, plotX1-xST));
+
+    const fresh = exactFresh(mode, T);
+    const cond = exactCond(mode, s, T);
+    document.getElementById("freshOut").textContent = fresh.toFixed(4);
+    document.getElementById("condOut").textContent = isNaN(cond) ? "n/a" : cond.toFixed(4);
+
+    const banner = document.getElementById("flagBanner");
+    if (isNaN(cond)){
+      banner.className = "flag-banner"; banner.textContent = "";
+    } else {
+      const diff = Math.abs(fresh-cond);
+      const matches = diff < 0.02;
+      banner.className = "flag-banner " + (matches ? "matches" : "mismatches");
+      banner.textContent = matches
+        ? "Matches — having already waited " + s + " minutes told you nothing new."
+        : "Does NOT match — already having waited " + s + " minutes changed the odds by " + (diff*100).toFixed(1) + " percentage points.";
+    }
+  }
+
+  function simulate(){
+    const s = parseInt(document.getElementById("sSlider").value,10);
+    const N = 20000;
+    let freshHits=0, condTotal=0, condHits=0;
+    for (let i=0;i<N;i++){
+      const w = mode==="exp" ? sampleExp() : sampleUnif();
+      if (w > T) freshHits++;
+      if (w > s){ condTotal++; if (w > s+T) condHits++; }
+    }
+    const freshEmp = freshHits/N;
+    const condEmp = condTotal ? condHits/condTotal : NaN;
+    document.getElementById("freshOut").textContent = freshEmp.toFixed(4);
+    document.getElementById("condOut").textContent = isNaN(condEmp) ? "n/a (no simulated waits exceeded S)" : condEmp.toFixed(4);
+    const banner = document.getElementById("flagBanner");
+    if (isNaN(condEmp)){
+      banner.className = "flag-banner"; banner.textContent = "Too few simulated waits exceeded S — drag S down or re-run.";
+    } else {
+      const diff = Math.abs(freshEmp-condEmp);
+      const matches = diff < 0.03;
+      banner.className = "flag-banner " + (matches ? "matches" : "mismatches");
+      banner.textContent = (matches
+        ? "Simulated match — "
+        : "Simulated mismatch — ") + N.toLocaleString() + " waits simulated, " + condTotal.toLocaleString() + " of them exceeded " + s + " minutes.";
+    }
+  }
+
+  document.getElementById("btnExp").addEventListener("click", function(){
+    mode="exp"; this.classList.add("active"); document.getElementById("btnUnif").classList.remove("active"); render();
+  });
+  document.getElementById("btnUnif").addEventListener("click", function(){
+    mode="unif"; this.classList.add("active"); document.getElementById("btnExp").classList.remove("active"); render();
+  });
+  document.getElementById("sSlider").addEventListener("input", render);
+  document.getElementById("btnSim").addEventListener("click", simulate);
+  document.getElementById("btnFaq").addEventListener("click", () => {
+    const c = document.getElementById("faqContent");
+    const open = c.classList.toggle("open");
+    document.getElementById("btnFaq").textContent = 'Why does one match and the other doesn\'t? ' + (open?'▴':'▾');
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

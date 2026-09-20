@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Anscombe's Quartet — same stats, different realities</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  svg{width:100%;height:auto;display:block;}
+
+  .toggle-row{display:flex;justify-content:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  .toggle-row button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:9px 16px;border-radius:6px;cursor:pointer;}
+  .toggle-row button.active{border-color:var(--amber);color:var(--amber);}
+
+  .axis{stroke:var(--chalk-dim);stroke-width:1px;}
+  .axis-label{font-size:11px;fill:var(--chalk-dim);}
+  .fit-line{stroke:var(--coral);stroke-width:2px;stroke-dasharray:5 4;opacity:.8;}
+  .data-point{fill:var(--amber);stroke:var(--bg);stroke-width:1.5px;}
+
+  .stats-row{display:flex;justify-content:center;gap:26px;margin:14px 0 4px;flex-wrap:wrap;}
+  .stat{text-align:center;border:1px solid var(--border);border-radius:8px;padding:8px 14px;min-width:110px;}
+  .stat .lbl{font-size:10px;color:var(--chalk-dim);}
+  .stat .num{font-family:'Kalam',cursive;font-size:15px;margin-top:2px;color:var(--green);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:14px;min-height:36px;}
+
+  button.faqbtn{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 16px;border-radius:6px;cursor:pointer;}
+  button.faqbtn:hover{border-color:var(--chalk-dim);}
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Anscombe's Quartet — same stats, different realities</h1>
+  <p class="sub">Four datasets. Nearly identical mean, variance, correlation, and best-fit line. Look at what those numbers hid.</p>
+
+  <div class="panel">
+    <div class="toggle-row">
+      <button id="btn0" class="active">Dataset I — a real linear trend</button>
+      <button id="btn1">Dataset II — a curve, not a line</button>
+      <button id="btn2">Dataset III — one outlier distorts the fit</button>
+      <button id="btn3">Dataset IV — one point manufactures the whole correlation</button>
+    </div>
+
+    <svg viewBox="0 0 700 500" id="plotSvg">
+      <line class="axis" x1="60" y1="440" x2="660" y2="440"/>
+      <line class="axis" x1="60" y1="440" x2="60" y2="40"/>
+      <text class="axis-label" x="660" y="462" text-anchor="end">x →</text>
+      <line class="fit-line" id="fitLine" x1="0" y1="0" x2="0" y2="0"/>
+      <g id="pointsGroup"></g>
+    </svg>
+
+    <div class="stats-row" id="statsRow"></div>
+    <div class="story-line" id="storyLine"></div>
+  </div>
+
+  <div class="panel">
+    <button class="faqbtn" id="btnFaq">Why does the fitted line look "right" even when it's clearly wrong? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Linear regression and the correlation coefficient only ever measure one specific thing: how well a straight line fits, and how strong a LINEAR relationship is.</strong> Neither one has any way to notice a curve (Dataset II), a single influential outlier (Dataset III), or a relationship built almost entirely by one far-away point (Dataset IV) — because none of those situations are inherently linear-relationship questions. The math did exactly what it was asked; the question itself just wasn't broad enough to catch what was actually going on.</p>
+      <p><strong>This is the entire, permanent case for "always plot your data" before trusting any summary statistic</strong> — not as a platitude, but because Francis Anscombe specifically constructed these four datasets in 1973 to prove, with real numbers, that a summary table alone cannot distinguish four genuinely different situations that demand four genuinely different responses.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const datasets = [
+  {
+    name: 'Dataset I',
+    x: [10,8,13,9,11,14,6,4,12,7,5],
+    y: [8.04,6.95,7.58,8.81,8.33,9.96,7.24,4.26,10.84,4.82,5.68],
+    story: 'An honest, noisy linear relationship — exactly the situation linear regression is built for. The fitted line is a genuinely good summary here.'
+  },
+  {
+    name: 'Dataset II',
+    x: [10,8,13,9,11,14,6,4,12,7,5],
+    y: [9.14,8.14,8.74,8.77,9.26,8.10,6.13,3.10,9.13,7.26,4.74],
+    story: 'A clean, obvious CURVE — not a line at all. The correlation coefficient only measures linear relationship strength, so it is completely blind to this real, strong, curved pattern.'
+  },
+  {
+    name: 'Dataset III',
+    x: [10,8,13,9,11,14,6,4,12,7,5],
+    y: [7.46,6.77,12.74,7.11,7.81,8.84,6.08,5.39,8.15,6.42,5.73],
+    story: 'Ten points sit almost perfectly on a tight line — and one single outlier drags the fitted slope away from where the other ten clearly want it to go.'
+  },
+  {
+    name: 'Dataset IV',
+    x: [8,8,8,8,8,8,8,19,8,8,8],
+    y: [6.58,5.76,7.71,8.84,8.47,7.04,5.25,12.50,5.56,7.91,6.89],
+    story: 'Ten points stacked at a single x-value, with NO relationship among them at all. One single far-away point is manufacturing the entire reported correlation — remove it, and there is nothing left.'
+  }
+];
+
+const plotX0=60, plotX1=660, plotY0=440, plotY1=40;
+const xMin=2, xMax=20, yMin=2, yMax=14;
+
+function toX(x){ return plotX0 + (x-xMin)/(xMax-xMin)*(plotX1-plotX0); }
+function toY(y){ return plotY0 - (y-yMin)/(yMax-yMin)*(plotY0-plotY1); }
+
+function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+function variance(arr){ const m=mean(arr); return arr.reduce((a,b)=>a+(b-m)**2,0)/(arr.length-1); }
+function correlation(x,y){
+  const mx=mean(x), my=mean(y);
+  const cov = x.reduce((a,xi,i)=>a+(xi-mx)*(y[i]-my),0)/(x.length-1);
+  return cov/Math.sqrt(variance(x)*variance(y));
+}
+function linfit(x,y){
+  const mx=mean(x), my=mean(y);
+  const num = x.reduce((a,xi,i)=>a+(xi-mx)*(y[i]-my),0);
+  const den = x.reduce((a,xi)=>a+(xi-mx)**2,0);
+  const slope = num/den;
+  const intercept = my - slope*mx;
+  return {slope, intercept};
+}
+
+function render(idx){
+  const d = datasets[idx];
+  const pg = document.getElementById('pointsGroup');
+  pg.innerHTML = '';
+  d.x.forEach((xv,i) => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', toX(xv));
+    c.setAttribute('cy', toY(d.y[i]));
+    c.setAttribute('r', 7);
+    c.setAttribute('class','data-point');
+    pg.appendChild(c);
+  });
+
+  const {slope, intercept} = linfit(d.x, d.y);
+  document.getElementById('fitLine').setAttribute('x1', toX(xMin));
+  document.getElementById('fitLine').setAttribute('y1', toY(slope*xMin+intercept));
+  document.getElementById('fitLine').setAttribute('x2', toX(xMax));
+  document.getElementById('fitLine').setAttribute('y2', toY(slope*xMax+intercept));
+
+  const statsRow = document.getElementById('statsRow');
+  statsRow.innerHTML = '';
+  const stats = [
+    ['mean(x)', mean(d.x).toFixed(2)],
+    ['mean(y)', mean(d.y).toFixed(2)],
+    ['var(x)', variance(d.x).toFixed(2)],
+    ['correlation', correlation(d.x,d.y).toFixed(3)],
+    ['fit line', `y=${slope.toFixed(2)}x+${intercept.toFixed(2)}`],
+  ];
+  stats.forEach(([lbl,val]) => {
+    const s = document.createElement('div'); s.className='stat';
+    s.innerHTML = `<div class="lbl">${lbl}</div><div class="num">${val}</div>`;
+    statsRow.appendChild(s);
+  });
+
+  document.getElementById('storyLine').textContent = d.story;
+}
+
+['btn0','btn1','btn2','btn3'].forEach((id, idx) => {
+  document.getElementById(id).addEventListener('click', () => {
+    document.querySelectorAll('.toggle-row button').forEach(b=>b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    render(idx);
+  });
+});
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why does the fitted line look "right" even when it\'s clearly wrong? ' + (open?'▴':'▾');
+});
+
+render(0);
+</script>
+</body>
+</html>

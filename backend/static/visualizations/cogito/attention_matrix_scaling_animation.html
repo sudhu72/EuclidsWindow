@@ -124,13 +124,17 @@
 </div>
 
 <script>
+// Real numbers, not illustrative placeholders: one-hot embeddings for "The","animal","street","it"
+// (d_model=4), toy W^Q=[[0,0],[0,0],[0,0],[3,0]], W^K=W^V=[[0,0],[1,0],[0,1],[0,0]] (d_k=d_v=2).
+// exp(raw)[i][j] = exp(Q[i]·K[j] / sqrt(d_k)); norm is the row-normalized softmax weights.
+// See ml_deep_learning_llm_feynman_tutorial.md, §3.2.0 for the full derivation.
 const heatRawByStep = {
-  1: [[2.1,0.3,0.5],[0.4,3.2,1.1],[0.2,1.4,2.8]],
+  1: [[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,8.3421,1,1]],
 };
 const heatNormByStep = {
-  2: [[0.724,0.103,0.172],[0.085,0.681,0.234],[0.045,0.318,0.636]]
+  2: [[0.25,0.25,0.25,0.25],[0.25,0.25,0.25,0.25],[0.25,0.25,0.25,0.25],[0.0882,0.7355,0.0882,0.0882]]
 };
-const tokens = ["The","cat","sat"];
+const tokens = ["The","animal","street","it"];
 
 function renderHeat(mode){
   const table = document.getElementById('heatTable');
@@ -142,7 +146,7 @@ function renderHeat(mode){
   tokens.forEach((rowTok, i) => {
     const tr = document.createElement('tr');
     const th = document.createElement('th'); th.textContent = rowTok; tr.appendChild(th);
-    for(let j=0;j<3;j++){
+    for(let j=0;j<tokens.length;j++){
       const td = document.createElement('td');
       if(mode === 'raw'){ td.textContent = heatRawByStep[1][i][j].toFixed(1); td.classList.add('filled'); }
       else if(mode === 'norm'){ td.textContent = heatNormByStep[2][i][j].toFixed(3); td.classList.add('norm'); }
@@ -224,11 +228,11 @@ function renderMultihead(stage){
 
 const steps = [
   { scene:'recipe', box:null, heat:'none',
-    recipeCaption:'Setup — three tokens, self-attention. Watch the general recipe: score, normalize, blend.', heatCaption:'',
-    text:'Setup — self-attention over "The cat sat." Every query compares against every key; the general recipe has three stages.' },
+    recipeCaption:'Setup — four real tokens, self-attention. Watch the general recipe: score, normalize, blend.', heatCaption:'',
+    text:'Setup — self-attention over "The animal ... street ... it," using real toy embeddings and weight matrices (not illustrative numbers — see the tutorial\'s §3.2.0 for the exact matrices). Every query compares against every key; the general recipe has three stages.' },
   { scene:'recipe', box:'boxKernel', heat:'raw',
-    recipeCaption:'Stage 1 — score every query against every key with a kernel κ.', heatCaption:'Raw similarity scores A[i,j] = κ(Q[i],K[j])',
-    text:'Stage 1 — compute a raw similarity score for every query/key pair. Any similarity function κ could go here; this is the generic step.' },
+    recipeCaption:'Stage 1 — score every query against every key with a kernel κ.', heatCaption:'κ(Q[i],K[j]) = exp(Q[i]·K[j] / √d_k) — only "it" vs. "animal" stands out',
+    text:'Stage 1 — compute a raw similarity score for every query/key pair. "The," "animal," and "street" all have a zero Query vector in this toy example, so their rows are flat; "it"\'s Query lines up sharply with "animal"\'s Key.' },
   { scene:'recipe', box:'boxNorm', heat:'norm',
     recipeCaption:'Stage 2 — normalize each row so it sums to 1 (divide by Z, the row-sum).', heatCaption:'Normalized weights: each row now sums to 1',
     text:'Stage 2 — divide each row by its own total (that\'s the diagonal matrix Z). Now every row is a valid probability distribution over the keys.' },

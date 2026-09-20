@@ -58,7 +58,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Companion to the Feynman Math Tutorial · Part 14</div>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Euler's Identity</div>
     <h1>Our Jewel</h1>
     <p>A rotation, repeated forever, traces a perfect circle — and lands, at exactly the halfway point, on one of the strangest-looking true statements in mathematics.</p>
   </header>
@@ -73,7 +73,7 @@
   <div class="panel active" id="panel-powers">
     <div class="card">
       <h2>Multiply by i, Again and Again</h2>
-      <p class="sub">Each click rotates the vector 90°. Four clicks, and you're back where you started — the same cyclic group as Part 11's square.</p>
+      <p class="sub">Each click rotates the vector 90°. Four clicks and you're back where you started — the same 4-step repeating cycle you get by turning a square a quarter-turn at a time.</p>
       <svg id="powersSvg" viewBox="0 0 260 260"></svg>
       <div class="row" style="justify-content:center;">
         <button class="op" id="btnMulI">× i</button>
@@ -104,7 +104,7 @@
   <div class="panel" id="panel-compound">
     <div class="card">
       <h2>(1 + iθ/n)<sup>n</sup> — Compounding a Rotation</h2>
-      <p class="sub">The same continuous-compounding idea from Part 8, with an imaginary (rotational) rate instead of a real one. Watch it spiral into the exact circle as n grows.</p>
+      <p class="sub">The same continuous-compounding idea behind <em>e</em> — interest added every instant — but with an imaginary (rotational) growth rate instead of a real one. Watch it spiral into the exact circle as n grows.</p>
       <div class="row"><label>n (steps)</label><input type="range" id="nSlider" min="1" max="60" step="1" value="4"><span class="readout" id="nOut">4</span></div>
       <svg id="compoundSvg" viewBox="0 0 300 300"></svg>
       <div class="bignum" id="compoundResult"></div>
@@ -112,7 +112,7 @@
   </div>
 
   <footer>
-    <p><b>Where this connects:</b> multiplying by i is the exact [[0,-1],[1,0]] rotation matrix from Part 1's "Rotate 90°" preset — its complex eigenvalues, reported there as having no real counterpart, are exactly ±i. The compounding tab is Part 8's continuous-compounding construction of e, pointed sideways into a rotation instead of a stretch.</p>
+    <p><b>Where this connects:</b> multiplying by i is the exact [[0,-1],[1,0]] rotation matrix from the linear-algebra tutorial's "Rotate 90°" preset — its complex eigenvalues, which have no real counterpart, are exactly ±i. The compounding tab is the continuous-compounding construction of e (from calculus), pointed sideways into a rotation instead of a stretch.</p>
   </footer>
 </div>
 

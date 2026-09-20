@@ -2,12 +2,12 @@
 
 **Learn math from first principles** — like Euclid's *Elements*: start from self-evident axioms, derive everything step by step.
 
-Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, seven interactive labs (matrix algebra, calculus, music theory, signal processing, cryptology, formal logic, and FFT), dynamic 3Blue1Brown-style Manim animations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 140+ curated topics and 104 concept-graph nodes spanning arithmetic through orbital mechanics.
+Euclid's Window is a local-first math tutoring platform that combines structured AI tutoring, seven interactive labs (matrix algebra, calculus, music theory, signal processing, cryptology, formal logic, and FFT), dynamic 3Blue1Brown-style Manim animations, and a curated concept graph. Content is adapted to four learner levels (kids, teen, college, adult) with 146+ curated topics and 110 concept-graph nodes spanning arithmetic through orbital mechanics — and, beyond mathematics narrowly, the language of rational argument itself: how to construct, formalize, and evaluate a real argument.
 
 ## What You Get
 
 - **Generative Tutor (3-tier architecture)**
-  - **Tier 1 — Curated content** (instant): 140+ hand-written topics with 4 learner-level variants, served on first question
+  - **Tier 1 — Curated content** (instant): 146+ hand-written topics with 4 learner-level variants, served on first question
   - **Tier 2 — LLM reasoning** (conversational): Follow-up questions and uncurated topics routed to a local LLM (Ollama) with level-aware prompts and curated context as grounding
   - **Tier 3 — Multi-agent / legacy planner**: JSON-plan LLM path with visualization code generation
   - Context-aware with response modes (`plain`, `axiomatic`, `both`)
@@ -43,8 +43,8 @@ Euclid's Window is a local-first math tutoring platform that combines structured
   - **FFT Lab (Audio)** — record/load audio, forward FFT (Cooley-Tukey), 10-band frequency editor, inverse FFT, playback of original vs. modified signal
   - **FFT Lab (Image)** — load/upload image, 2D FFT (row-column decomposition), magnitude spectrum + phase display, frequency-domain filtering (low-pass / high-pass / band-pass / band-stop with adjustable radius), inverse 2D FFT with side-by-side comparison
   - **Cryptology Lab** — four games built on real math: Caesar Cipher with interactive SVG wheel (modular arithmetic), Frequency Analysis (statistics breaks codes), RSA Playground (public-key encryption with real number theory), Diffie-Hellman Key Exchange (discrete logarithms). Each game starts with a math prerequisite brief linking to relevant topics
-  - **Formal Logic Lab** — four interactive puzzles: Truth Table Builder (propositional formula evaluator), Syllogism Validator (Aristotle's engine of reason with classic and fallacy examples), Knights & Knaves puzzles (proof by contradiction), Logic Gate Circuit Builder (wire AND/OR/NOT gates to build XOR, NAND, majority vote, half adder, multiplexer). Includes historical anecdotes from mathematics and social usage
-  - **Cogito Gallery** — a browsable collection of 26 self-contained interactive visualizations adapted from the Feynman-method "cogito" tutorials, across three tracks: **Mathematics** (Euler's identity, math notation, normalization, number theory, transforms, structure), **ML & Deep Learning** (forward/backward pass, chain rule, attention matrix math, KV-cache/GQA/MLA, cross-entropy, L2 regularization, precision/recall, Simpson's paradox), and **Algorithms** (binary search, two pointers/sliding window, monotonic stack & heap, BFS/DFS, DP grid, pattern decision tree). Each card opens the animation in an in-app viewer or sends its concept to the tutor via an "Explore in Tutor" deep-link
+  - **Formal Logic Lab** — six interactive tools: Truth Table Builder (propositional formula evaluator), Syllogism Validator (Aristotle's engine of reason with classic and fallacy examples), Knights & Knaves puzzles (proof by contradiction), Logic Gates (type a formula to match a target truth table: XOR from AND/OR/NOT, NAND universal, majority vote, half adder, multiplexer), **Circuit Builder** — place AND/OR/NOT/XOR/NAND/NOR gates and wire them together on a live SVG diagram, with signal color flowing through every wire as you toggle inputs, plus three built-in challenges (build XOR from AND/OR/NOT, build NOT from NAND alone, build a 2-of-3 majority vote) that check your circuit against the target truth table automatically, and **Argument Builder** — the Toulmin model (claim/grounds/warrant/backing/qualifier/rebuttal) applied to 8 real arguments spanning math, ethics, science, sociology, history, philosophy, and education policy (Beccaria vs. Kant on capital punishment, Semmelweis, Nightingale's rose diagram, Madison's Federalist No. 10, Pascal's Wager, and a common causal fallacy), each checked symbolically against a live propositional-logic truth table, plus an interactive stacking-blocks visualization of the Toulmin model, or build your own. Includes historical anecdotes from mathematics and social usage
+  - **Cogito Gallery** — a browsable collection of 103 self-contained interactive visualizations adapted from the Feynman-method "cogito" tutorials, across three tracks: **Mathematics** — a ladder from the elementary toolkit (order of operations, sign rules, fractions, exponents, logarithms) through algebra, geometry, trigonometry, complex numbers, sequences & series, calculus, probability, statistics and formal logic, then on to Markov chains, symmetry & invariance, Euler's identity, math notation, normalization, number theory, transforms and structure, continuity & extrema, eigenvalues & eigenvectors, abstract algebra & real analysis, set theory, the Jacobian & SVD, graph theory, compression & hashing, mutual information, a notation rosetta stone, PDFs/CDFs, proof & the axiomatic method, Gödel's incompleteness theorem (Hilbert's program, the Liar's Paradox, Gödel numbering, the diagonal lemma), logical fallacies, the philosophy of mathematics (Platonism, formalism, intuitionism), power laws & scale-free networks, the abacus & place value, classification & completeness (Platonic solids, crystallographic restriction), matrix factorization (LU, Cholesky, NMF), and game theory (the Prisoner's Dilemma, Nash equilibrium) — **ML & Deep Learning** (forward/backward pass, backprop as reuse, chain rule, attention matrix math, KV-cache/GQA/MLA, cross-entropy, L2/L1/elastic-net regularization, precision/recall, ROC/AUC, Simpson's paradox, Anscombe's quartet, the Galton board & CLT, bias-variance tradeoff, empirical vs. true risk, PAC learning, cross-validation, bootstrap resampling, feature scaling & data leakage, frequentist vs. Bayesian statistics (with A/B test sample-size/power planning), discriminant analysis, k-nearest neighbors, the LLM engineering roadmap, the ReAct agent loop, reinforcement learning, the correlation matrix, Global Workspace Theory, calibration metrics, measurement theory, latent Dirichlet allocation, log loss vs. Brier score, LoRA/TinyLoRA/QLoRA, model quantization, multi-class cross-entropy, ranking metrics, tree-based methods, speech recognition, wav2vec 2.0, Whisper's training objective, naive Bayes, support vector machines, clustering, dimensionality reduction, the shape of a distribution (histograms, box/violin/Q-Q plots), time series forecasting, agent harness engineering, agentic eval engine architecture, text embeddings, and matrix completion (the Netflix Prize)), and **Algorithms** (binary search, two pointers/sliding window, monotonic stack & heap, BFS/DFS, DP grid, pattern decision tree). Each card opens the animation in an in-app viewer or sends its concept to the tutor via an "Explore in Tutor" deep-link
   - Each lab step includes tabbed math explanations for all four learner levels
 
 - **Mathematical Symbols Explorer**
@@ -58,7 +58,7 @@ Euclid's Window is a local-first math tutoring platform that combines structured
 - **On-demand visuals & dynamic animation pipeline**
   - Instant Plotly charts via deterministic visual planner (keyword-matched)
   - VizAgent auto-generation from LLM answer text (Plotly, Mermaid, geometric SVG)
-  - **Dynamic Manim animation pipeline**: heuristic template matching for 14+ math topics (derivatives, integrals, linear transforms, Taylor series, Fourier, complex numbers, etc.) with LLM-driven code generation fallback for novel topics, sandboxed rendering, and iterative error recovery
+  - **Dynamic Manim animation pipeline**: heuristic template matching for 14+ math topics (derivatives, integrals, linear transforms, Taylor series, Fourier, complex numbers, etc.); for novel topics, a lightweight scene-planning pass storyboards the animation's beats before any code is written, code generation is grounded with a known-good worked example and adapts to the learner's level (kids/teen/college/adult), and generated code goes through static validation — including a LaTeX brace-balance check — plus iterative error recovery before an expensive render is attempted. The plan-then-code split and few-shot grounding are adapted from [Math-To-Manim](https://github.com/HarleyCoops/Math-To-Manim)'s staged reasoning pipeline and the ["Manimator" paper](https://arxiv.org/abs/2507.14306) (arXiv:2507.14306), scaled down to a single optional, best-effort planning call so it still runs well on CPU-only local models
   - Matrix Lab animation generator — renders user-defined matrix transformations as Manim GIFs directly from the lab UI
   - Animation rendering via Manim (background jobs with progress polling)
   - Diffusion image generation (Stable Diffusion, optional GPU)
@@ -97,14 +97,14 @@ flowchart TB
     U[User Browser]
 
     subgraph FE[Frontend]
-      UI[index.html + app.js + styles.css]
-      MM[mathmap.html + mathmap.js]
-      ML[musiclab.js]
-      CL[calclab.js]
-      FL[fftlab.js + fftlab-image.js]
-      CRYPTO[cryptolab.js]
-      LOGIC[logiclab.js]
-      SYM[symbols.js]
+      UI[React app at / — Learn, Discover, Solve, Chat, Labs, Library, Explore]
+      MM[Concept graph + Map of Mathematics]
+      ML[Embed shell at /embed — Music Lab]
+      CL[Calculus, Matrix, Logic, Crypto labs — native React]
+      FL[Embed shell at /embed — FFT audio + image]
+      CRYPTO[Cogito Gallery + Euclid's Elements]
+      LOGIC[Settings + Evaluation]
+      SYM[Symbols, Resources, Prompt Library]
       D3[D3 Concept Graph]
       PLT[Plotly + KaTeX Renderers]
       MER[Mermaid.js Diagrams]
@@ -132,7 +132,7 @@ flowchart TB
     subgraph DATA[Data + Persistence]
       SQLITE[(SQLite DB)]
       CHROMA[(ChromaDB Vector Store)]
-      JSON[(JSON Seeds: 140+ topics, 104 concepts, resources)]
+      JSON[(JSON Seeds: 146+ topics, 110 concepts, resources)]
       STATIC[(backend/static visualizations/media)]
     end
 
@@ -262,7 +262,7 @@ EuclidsWindow/
 │   │   ├── db/
 │   │   └── manim_scenes/
 │   ├── data/
-│   │   ├── demo_topics.json         # 140+ topics with 4 learner-level variants
+│   │   ├── demo_topics.json         # 146+ topics with 4 learner-level variants
 │   │   ├── math_map.json            # Categories + topic prompts for Math Map
 │   │   ├── seed_concepts.json       # Concept graph nodes + prerequisites
 │   │   ├── seed_euclid.json         # Euclid's Elements references
@@ -271,22 +271,25 @@ EuclidsWindow/
 │   │   └── seed_db.py               # Database seeding utility
 │   ├── tests/
 │   └── requirements*.txt
-├── frontend/
-│   ├── index.html                   # Main multi-tab app UI
-│   ├── app.js                       # UI behavior, tab navigation, API integration
-│   ├── styles.css                   # Monochrome scholarly theme
-│   ├── musiclab.js                  # Music & Mathematics Lab (5 games)
-│   ├── calclab.js                   # Calculus Lab (6 interactive visualizations)
-│   ├── fftlab.js                    # FFT Lab: audio mode + mode switcher
+├── frontend-react/                  # The application (React + Vite)
+│   └── src/
+│       ├── App.tsx                  # Six primary tabs + an Explore menu
+│       ├── Lesson.tsx               # Learn: lessons, grounded tutor, scratchpad, export
+│       ├── Discover.tsx  Solve.tsx  Chat.tsx  Library.tsx
+│       ├── LogicLab.tsx  CryptoLab.tsx  CalculusLab.tsx  MatrixLab.tsx  AiByHand.tsx
+│       ├── logic.ts  crypto.ts  calculus.ts  matrix.ts   # lab maths, no UI
+│       ├── ConceptGraph.tsx  MathMap.tsx  Gallery.tsx  Euclid.tsx  Symbols.tsx
+│       ├── Settings.tsx  Evaluation.tsx  Resources.tsx  Prompts.tsx
+│       ├── Plot.tsx  Visualization.tsx  VizPanel.tsx  RenderJobs.tsx
+│       └── styles.css
+├── frontend/                        # Embed shell for the labs kept in vanilla JS
+│   ├── embed.html                   # Serves Music + FFT labs at /embed?tab=<id>
+│   ├── embed.css                    # Only the styles those labs still need
+│   ├── musiclab.js                  # Music & Mathematics Lab (Web Audio + VexFlow)
+│   ├── music_core.js  mozart_notes.js
+│   ├── fftlab.js                    # FFT Lab: audio mode (Web Audio recording)
 │   ├── fftlab-image.js              # FFT Lab: image mode (2D FFT)
-│   ├── cryptolab.js                 # Cryptology Lab (4 crypto games)
-│   ├── logiclab.js                  # Formal Logic Lab (4 logic puzzles)
-│   ├── cogito.js                    # Cogito Gallery (26 interactive visualizations)
-│   ├── symbols.js                   # Mathematical Symbols Explorer
-│   ├── mathmap.html                 # Dedicated map page
-│   ├── mathmap.js
-│   ├── mathmap.css
-│   └── euclids-window-logo.png      # B&W logo
+│   └── vendor/                      # Plotly, VexFlow, KaTeX, fonts
 ├── docs/
 │   ├── OLLAMA_TUNING.md
 │   └── LORA_TUNING_PLAYBOOK.md
@@ -308,7 +311,7 @@ EuclidsWindow/
 
 ## Topic Coverage
 
-Content in `demo_topics.json` spans 140+ curated topics across 15 categories. The concept graph (`seed_concepts.json`) contains 104 nodes with prerequisite chains. Each topic has 4-level (kids/teen/college/adult) explanations:
+Content in `demo_topics.json` spans 146+ curated topics across 16 categories. The concept graph (`seed_concepts.json`) contains 110 nodes with prerequisite chains. Each topic has 4-level (kids/teen/college/adult) explanations:
 
 | Category | Example Topics |
 |---|---|
@@ -329,6 +332,7 @@ Content in `demo_topics.json` spans 140+ curated topics across 15 categories. Th
 | **Famous Mathematicians** | Euler, Ramanujan, Emmy Noether, Fermat |
 | **Chaos & Fractals** | Chaos Theory, Fractals, Differential Equations |
 | **Mathematical Logic** | Axioms, Proofs, Set Theory, Mathematical Logic |
+| **Rational Argument** | The Language of Mathematics, Constructing Rational Arguments (Toulmin model), History of Rational Argument (Aristotle to Boole), Case Study: the Death-Penalty Debate, Case Study: Semmelweis/Nightingale/Lincoln, Case Study: Madison/Pascal's Wager/a Fallacy in the Wild |
 
 ## Quick Start
 
@@ -536,8 +540,8 @@ or set it in the UI under **Settings → Local LLM Model**.
 5. **FFT Lab (Audio)**: Record voice or load a sample tone → Run FFT → Edit frequency bands with sliders → Reconstruct with IFFT → Play original vs. modified
 6. **FFT Lab (Image)**: Upload an image or load a sample → Run 2D FFT → View magnitude spectrum + phase → Apply low-pass/high-pass/band-pass/band-stop filters → Reconstruct with inverse 2D FFT → Compare original vs. filtered
 7. **Crypto Lab**: Encrypt with the Caesar Cipher (interactive alphabet wheel), crack codes with frequency analysis, build RSA keys from primes, watch Diffie-Hellman key exchange unfold — each game starts with a math prerequisite brief
-8. **Logic Lab**: Build truth tables from propositional formulas, validate syllogisms (spot the fallacy!), solve Knights & Knaves puzzles, wire logic gate circuits to build XOR, NAND, and half adders
-9. **Cogito Gallery**: Browse 26 interactive visualizations across Math, ML, and Algorithms → click **Open ▸** to play with one in-app, or **Explore in Tutor** to learn its concept in words
+8. **Logic Lab**: Build truth tables from propositional formulas, validate syllogisms (spot the fallacy!), solve Knights & Knaves puzzles, type formulas to match XOR/NAND/half-adder truth tables, wire an actual gate circuit together and watch the signal propagate in the Circuit Builder, or take apart a real historical argument (or build your own) in the Argument Builder
+9. **Cogito Gallery**: Browse 103 interactive visualizations across Math, ML, and Algorithms → click **Open ▸** to play with one in-app, or **Explore in Tutor** to learn its concept in words
 10. Each step has inline math explanations for Kids, Teen, College, and Adult levels
 
 ### 3) Scratchpad answer checking

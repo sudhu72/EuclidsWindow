@@ -232,6 +232,7 @@
       <div class="presetbar">
         <button class="preset" id="presetSkew">Load: one big outlier</button>
         <button class="preset" id="presetFlat">Load: nearly equal values</button>
+        <button class="preset" id="presetSoftmaxExample">Load: softmax worked example (2.0, 1.0, 0.1)</button>
         <button class="preset" id="presetReset">Reset</button>
       </div>
 
@@ -242,7 +243,7 @@
   </section>
 
   <footer>
-    <p><b>Where this connects:</b> unit vectors (Part 1) are "divide by the vector's own length" — the same recipe with the vector's norm as the scale reference. Probabilities summing to 1 (Part 3) are "fraction of total." Softmax is exactly what turns a network's raw output scores into the probability distribution that cross-entropy (Part 6) needs as input. Combinatorics is not the same toolkit — it counts arrangements; normalization is the separate step of turning any raw values (counts or otherwise) into comparable form. The one place they meet: dividing a combinatorial count by a total count is precisely how counting becomes probability.</p>
+    <p><b>Where this connects:</b> unit vectors (linear algebra) are "divide by the vector's own length" — the same recipe with the vector's length as the scale reference. Probabilities summing to 1 (probability) are "fraction of total." Softmax is exactly what turns a network's raw output scores into the probability distribution that cross-entropy needs as input. Combinatorics is not the same toolkit — it counts arrangements; normalization is the separate step of turning any raw values (counts or otherwise) into comparable form. The one place they meet: dividing a combinatorial count by a total count is precisely how counting becomes probability.</p>
   </footer>
 
 </div>
@@ -306,23 +307,27 @@
 
   // ---------- build sliders ----------
   const slidersEl = document.getElementById("sliders");
-  data.forEach((v,i) => {
-    const item = document.createElement("div");
-    item.className = "slider-item";
-    item.innerHTML = `
-      <div class="tag">
-        <span><span class="swatch" style="background:${COLORS[i]}"></span>Value ${i+1}</span>
-        <span id="val-${i}">${v}</span>
-      </div>
-      <input type="range" min="0" max="20" step="0.5" value="${v}" id="slider-${i}">
-    `;
-    slidersEl.appendChild(item);
-    item.querySelector("input").addEventListener("input", (e)=>{
-      data[i] = parseFloat(e.target.value);
-      document.getElementById(`val-${i}`).textContent = data[i];
-      render();
+  function buildSliders(){
+    slidersEl.innerHTML = "";
+    data.forEach((v,i) => {
+      const item = document.createElement("div");
+      item.className = "slider-item";
+      item.innerHTML = `
+        <div class="tag">
+          <span><span class="swatch" style="background:${COLORS[i%COLORS.length]}"></span>Value ${i+1}</span>
+          <span id="val-${i}">${v}</span>
+        </div>
+        <input type="range" min="-5" max="20" step="0.1" value="${v}" id="slider-${i}">
+      `;
+      slidersEl.appendChild(item);
+      item.querySelector("input").addEventListener("input", (e)=>{
+        data[i] = parseFloat(e.target.value);
+        document.getElementById(`val-${i}`).textContent = data[i];
+        render();
+      });
     });
-  });
+  }
+  buildSliders();
 
   // ---------- build lens panels ----------
   const gridEl = document.getElementById("lensGrid");
@@ -403,15 +408,21 @@
 
   // ---------- presets ----------
   function setData(newData){
+    const lengthChanged = newData.length !== data.length;
     data = newData.slice();
-    data.forEach((v,i) => {
-      document.getElementById(`slider-${i}`).value = v;
-      document.getElementById(`val-${i}`).textContent = v;
-    });
+    if (lengthChanged){
+      buildSliders();
+    } else {
+      data.forEach((v,i) => {
+        document.getElementById(`slider-${i}`).value = v;
+        document.getElementById(`val-${i}`).textContent = v;
+      });
+    }
     render();
   }
   document.getElementById("presetSkew").addEventListener("click", () => setData([1,1.5,2,1,14]));
   document.getElementById("presetFlat").addEventListener("click", () => setData([5,5.5,4.5,5,5.2]));
+  document.getElementById("presetSoftmaxExample").addEventListener("click", () => setData([2.0,1.0,0.1]));
   document.getElementById("presetReset").addEventListener("click", () => setData([3,7,2,9,5]));
 
   render();

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Matrix Completion, live</title>
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'Trebuchet MS','Segoe UI',sans-serif;padding:32px 24px 60px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-weight:700;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  code, .mono{font-family:'Courier New',monospace;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:120px;}
+  input[type=range]{flex:1;min-width:160px;accent-color:var(--amber);}
+  .readout{font-family:'Courier New',monospace;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:50px;text-align:center;}
+
+  button.op{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  table.matrix{border-collapse:collapse;margin:14px auto;font-family:'Courier New',monospace;font-size:13px;}
+  table.matrix th, table.matrix td{border:1px solid var(--border);padding:8px 12px;text-align:center;min-width:56px;}
+  table.matrix th{color:var(--chalk-dim);font-weight:400;}
+  td.hidden{background:rgba(255,206,84,0.12); color:var(--amber); font-weight:700;}
+  td.observed{color:var(--chalk-dim);}
+
+  .metric-row{display:flex;justify-content:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Courier New',monospace;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Matrix Completion, live</h1>
+  <p class="sub">The tutorial's exact 6-user, 5-movie ratings matrix, with the same 6 entries hidden (amber). Watch the alternating rank-k imputation algorithm converge from a naive column-mean guess toward the true, hidden values.</p>
+
+  <div class="panel">
+    <h2>Alternating Imputation</h2>
+    <div class="row">
+      <label>rank k</label>
+      <input type="range" id="mcK" min="1" max="5" step="1" value="2"><span class="readout" id="mcKOut">2</span>
+      <button class="op" id="mcReset">Reset</button>
+      <button class="op" id="mcStep">Step (one round)</button>
+      <button class="op" id="mcRun">Run to convergence</button>
+      <button class="op" id="mcReveal">Reveal true values</button>
+    </div>
+    <table class="matrix" id="mcTable"></table>
+    <div class="metric-row">
+      <div class="metric amber"><div class="lbl">iteration</div><div class="num" id="mcIter">0</div></div>
+      <div class="metric coral"><div class="lbl">naive column-mean MAE</div><div class="num" id="mcNaiveMAE">&mdash;</div></div>
+      <div class="metric green"><div class="lbl">rank-k reconstruction MAE</div><div class="num" id="mcRankMAE">&mdash;</div></div>
+    </div>
+    <div class="story-line" id="mcStory"></div>
+  </div>
+
+  <footer>
+    Companion to <code>matrix_completion_feynman.md</code>. Self-contained — no external requests, opens directly from disk.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var TRUE_R = [
+    [5.00,5.00,4.858,1.831,4.374],
+    [4.820,5.00,2.843,1.00,2.231],
+    [4.332,5.00,2.569,1.00,2.024],
+    [5.00,5.00,5.00,2.577,5.00],
+    [4.650,5.000,3.117,1.129,2.673],
+    [5.00,5.00,4.999,1.920,4.554]
+  ];
+  // hidden entries (row,col), matching the tutorial's own six missing cells
+  var HIDDEN = [[0,2],[1,4],[2,0],[3,3],[4,1],[5,2]];
+  var ROWS = 6, COLS = 5;
+
+  function isHidden(i,j){
+    for (var h=0;h<HIDDEN.length;h++) if (HIDDEN[h][0]===i && HIDDEN[h][1]===j) return true;
+    return false;
+  }
+
+  function colMeans(observed, mask){
+    var means = [];
+    for (var j=0;j<COLS;j++){
+      var s=0, n=0;
+      for (var i=0;i<ROWS;i++){ if (mask[i][j]){ s+=observed[i][j]; n++; } }
+      means.push(n>0 ? s/n : 0);
+    }
+    return means;
+  }
+
+  // ---- tiny SVD via power iteration + deflation (top-k components) ----
+  function matVec(A,v){ var out=[]; for (var i=0;i<A.length;i++){ var s=0; for (var j=0;j<v.length;j++) s+=A[i][j]*v[j]; out.push(s); } return out; }
+  function matVecT(A,u){ var n=A[0].length; var out=new Array(n).fill(0); for (var i=0;i<A.length;i++) for (var j=0;j<n;j++) out[j]+=A[i][j]*u[i]; return out; }
+  function norm(v){ var s=0; for (var i=0;i<v.length;i++) s+=v[i]*v[i]; return Math.sqrt(s); }
+  function normalize(v){ var n=norm(v)||1; for (var i=0;i<v.length;i++) v[i]/=n; return v; }
+
+  function topKSVD(A, k){
+    var m=A.length, n=A[0].length;
+    var Ak = A.map(function(row){ return row.slice(); });
+    var Us=[], Ss=[], Vs=[];
+    for (var comp=0; comp<k; comp++){
+      var v = [];
+      for (var i=0;i<n;i++) v.push(Math.sin(i*1.37+comp*2.1+1)+1.3);
+      normalize(v);
+      var u = [];
+      for (var iter=0; iter<300; iter++){
+        u = matVec(Ak, v); normalize(u);
+        v = matVecT(Ak, u); normalize(v);
+      }
+      u = matVec(Ak, v);
+      var sigma = norm(u);
+      if (sigma < 1e-9) sigma = 0;
+      var uNorm = u.map(function(x){ return sigma>0 ? x/sigma : 0; });
+      Us.push(uNorm); Ss.push(sigma); Vs.push(v);
+      for (var i2=0;i2<m;i2++) for (var j2=0;j2<n;j2++) Ak[i2][j2] -= sigma*uNorm[i2]*v[j2];
+    }
+    return {U:Us, S:Ss, V:Vs};
+  }
+  function reconstruct(svd, k, m, n){
+    var R = [];
+    for (var i=0;i<m;i++){
+      var row=[];
+      for (var j=0;j<n;j++){
+        var s=0;
+        for (var c=0;c<k;c++) s += svd.S[c]*svd.U[c][i]*svd.V[c][j];
+        row.push(s);
+      }
+      R.push(row);
+    }
+    return R;
+  }
+
+  var mcState = null;
+
+  function mcInit(){
+    var mask = [];
+    for (var i=0;i<ROWS;i++){ var r=[]; for (var j=0;j<COLS;j++) r.push(!isHidden(i,j)); mask.push(r); }
+    var observed = TRUE_R.map(function(row){ return row.slice(); });
+    var means = colMeans(observed, mask);
+    var X = observed.map(function(row,i){ return row.map(function(v,j){ return mask[i][j] ? v : means[j]; }); });
+    mcState = { mask:mask, X:X, means:means, iter:0, revealed:false };
+  }
+
+  function mcStep(k){
+    var svd = topKSVD(mcState.X, k);
+    var recon = reconstruct(svd, k, ROWS, COLS);
+    var newX = mcState.X.map(function(row){ return row.slice(); });
+    for (var i=0;i<ROWS;i++) for (var j=0;j<COLS;j++){
+      if (!mcState.mask[i][j]) newX[i][j] = recon[i][j];
+      else newX[i][j] = TRUE_R[i][j];
+    }
+    mcState.X = newX;
+    mcState.iter++;
+  }
+
+  function mae(a){
+    var s=0,n=0;
+    for (var h=0;h<HIDDEN.length;h++){ var i=HIDDEN[h][0], j=HIDDEN[h][1]; s+=Math.abs(a[i][j]-TRUE_R[i][j]); n++; }
+    return s/n;
+  }
+
+  function renderMC(){
+    var k = parseInt(document.getElementById("mcK").value,10);
+    document.getElementById("mcKOut").textContent = k;
+    var t = document.getElementById("mcTable");
+    var html = "<tr><th></th>";
+    for (var j=0;j<COLS;j++) html += "<th>movie "+(j+1)+"</th>";
+    html += "</tr>";
+    for (var i=0;i<ROWS;i++){
+      html += "<tr><th>user "+(i+1)+"</th>";
+      for (var j2=0;j2<COLS;j2++){
+        var hidden = isHidden(i,j2);
+        var val = hidden
+          ? (mcState.revealed ? TRUE_R[i][j2].toFixed(2)+" (true)" : mcState.X[i][j2].toFixed(2))
+          : TRUE_R[i][j2].toFixed(2);
+        html += "<td class=\"" + (hidden?"hidden":"observed") + "\">"+val+"</td>";
+      }
+      html += "</tr>";
+    }
+    t.innerHTML = html;
+
+    var naiveX = TRUE_R.map(function(row,i){ return row.map(function(v,j){ return mcState.mask[i][j] ? v : mcState.means[j]; }); });
+    document.getElementById("mcIter").textContent = mcState.iter;
+    document.getElementById("mcNaiveMAE").textContent = mae(naiveX).toFixed(4);
+    document.getElementById("mcRankMAE").textContent = mae(mcState.X).toFixed(4);
+    document.getElementById("mcStory").textContent = mcState.iter===0
+      ? "Starting from the naive column-mean guess (amber cells) -- press Step or Run to let the rank-k structure correct them."
+      : "After "+mcState.iter+" round(s): rank-"+k+" reconstruction error is "+(mae(naiveX)/Math.max(mae(mcState.X),1e-9)).toFixed(2)+"x better than the naive column-mean baseline.";
+  }
+
+  document.getElementById("mcK").addEventListener("input", function(){ mcInit(); renderMC(); });
+  document.getElementById("mcReset").addEventListener("click", function(){ mcInit(); renderMC(); });
+  document.getElementById("mcStep").addEventListener("click", function(){
+    mcState.revealed=false;
+    var k = parseInt(document.getElementById("mcK").value,10);
+    mcStep(k); renderMC();
+  });
+  document.getElementById("mcRun").addEventListener("click", function(){
+    mcState.revealed=false;
+    var k = parseInt(document.getElementById("mcK").value,10);
+    for (var i=0;i<30;i++) mcStep(k);
+    renderMC();
+  });
+  document.getElementById("mcReveal").addEventListener("click", function(){
+    mcState.revealed = !mcState.revealed;
+    renderMC();
+  });
+
+  mcInit();
+  renderMC();
+})();
+</script>
+</body>
+</html>

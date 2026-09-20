@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What Refuses to Change — Symmetry &amp; Invariance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --light:#E7DCC2; --dark:#7C6A57; --removed:#C9403F; --domino:#463A73;
+    --good:#0F8B8D; --bad:#D9636B; --gold:#D9A62E;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); }
+  input[type=range]{ accent-color:var(--accent); }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:12px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; background:var(--accent-soft); }
+  .verdict.good{ background:rgba(15,139,141,0.12); }
+  .verdict.bad{ background:rgba(217,99,107,0.14); }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:20px; font-weight:700; }
+  .good-t{ color:var(--good); } .bad-t{ color:var(--bad); }
+  /* chessboard */
+  .board{ display:grid; grid-template-columns:repeat(8,1fr); gap:0; width:100%; max-width:400px; border:2px solid var(--ink); border-radius:6px; overflow:hidden; aspect-ratio:1; }
+  .cell{ aspect-ratio:1; cursor:pointer; position:relative; transition:background .12s; display:flex; align-items:center; justify-content:center; }
+  .cell.light{ background:var(--light); } .cell.dark{ background:var(--dark); }
+  .cell.removed{ background:var(--removed) !important; }
+  .cell.removed::after{ content:"✕"; color:#fff; font-size:14px; font-weight:700; }
+  .cell.dom{ }
+  .cell.sel{ outline:3px solid var(--gold); outline-offset:-3px; z-index:2; }
+  .pill{ position:absolute; background:var(--domino); border-radius:20px; z-index:1; }
+  legend, .leg{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--ink-soft); margin-top:12px; }
+  .leg span{ display:inline-flex; align-items:center; gap:6px; }
+  .sw{ width:13px; height:13px; border-radius:3px; display:inline-block; border:1px solid var(--line); }
+  canvas{ width:100%; height:auto; display:block; background:#0E1524; border-radius:10px; border:1px solid var(--line); }
+  .stat{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:var(--accent-soft); border-radius:8px; padding:10px 12px; margin-top:10px; }
+  .areabars{ display:flex; gap:5px; align-items:flex-end; height:60px; margin-top:8px; }
+  .areabars > div{ flex:1; background:var(--gold); border-radius:3px 3px 0 0; min-height:2px; transition:height .2s; }
+  .chamchip{ display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:10px; font-family:"IBM Plex Mono",monospace; font-size:15px; font-weight:600; }
+  .chamdot{ width:12px; height:12px; border-radius:50%; display:inline-block; }
+  .chamlog{ font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); margin-top:10px; max-height:90px; overflow-y:auto; white-space:pre; background:#F5F4F0; border-radius:8px; padding:8px 10px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Symmetry &amp; Invariance</div>
+    <h1>What Refuses to Change</h1>
+    <p><b>Symmetry</b> sounds like it's about pretty, balanced shapes — but its real meaning is a <em>verb</em>: an action you can perform that changes nothing (spin a square 90°, mirror a face). And wherever you can change something without effect, a quantity is secretly locked in place — an <b>invariant</b>. These three toys let you <em>feel</em> that pairing: a counting trick that proves a puzzle can't be solved, a planet whose locked quantity you can watch on a dial, and a perfectly balanced ball forced to pick a side.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="board">Mutilated Chessboard</button>
+    <button class="tab" data-tab="noether">Noether Orbit</button>
+    <button class="tab" data-tab="break">Symmetry Breaking</button>
+    <button class="tab" data-tab="chameleons">Chameleons of Camelot</button>
+  </div>
+
+  <!-- ============ TAB 1: MUTILATED CHESSBOARD ============ -->
+  <div class="panel active" id="panel-board">
+    <div class="card">
+      <h2>The Counting Trick That Proves the Impossible</h2>
+      <p class="sub"><b>What's happening:</b> a domino has a hidden rule — dropped <em>anywhere</em>, it always covers exactly <b>one light square and one dark square</b>. It literally can't do otherwise. So the count of leftover light vs. dark squares is something no move can cheat (that's the <b>invariant</b>). If you remove squares until light and dark no longer match, the rest can <em>never</em> be fully tiled — and you know it without trying a single arrangement.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click <em>Remove opposite corners</em> — they're the same color, leaving 32 vs 30 — and the counter turns red and calls the board impossible before you place one piece. Then switch to <em>Place dominoes</em> and see you always end up with two same-colored squares stranded apart.</p>
+      <div class="cols">
+        <div class="col" style="max-width:400px;">
+          <div class="board" id="board"></div>
+          <div class="leg">
+            <span><span class="sw" style="background:var(--light)"></span>light</span>
+            <span><span class="sw" style="background:var(--dark)"></span>dark</span>
+            <span><span class="sw" style="background:var(--removed)"></span>removed</span>
+            <span><span class="sw" style="background:var(--domino)"></span>domino</span>
+          </div>
+        </div>
+        <div class="col">
+          <div class="row" style="gap:6px;">
+            <button class="op active" id="modeRemove">Mode: Remove squares</button>
+            <button class="op" id="modePlace">Mode: Place dominoes</button>
+          </div>
+          <div class="caption" style="margin-top:2px;" id="modeHint">Click any square to remove or restore it.</div>
+          <div class="row" style="gap:6px; margin-top:14px;">
+            <button class="op" id="presetCorners">✂ Remove opposite corners</button>
+            <button class="op" id="clearDom">Clear dominoes</button>
+            <button class="op" id="resetBoard">Reset board</button>
+          </div>
+          <div class="verdict" id="boardVerdict"></div>
+          <div class="caption"><b>Why it matters:</b> matched counts don't <em>guarantee</em> a tiling exists — but a mismatch is an <b>airtight proof that it doesn't.</b> Finding a quantity every move preserves, then showing your goal would have to break it, is exactly how mathematicians prove something is impossible instead of just failing to find it.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: NOETHER ORBIT ============ -->
+  <div class="panel" id="panel-noether">
+    <div class="card">
+      <h2>A Conservation Law You Can Watch</h2>
+      <p class="sub"><b>What's happening:</b> a planet feels gravity pointing straight at the Sun. Because that setup looks the same no matter how you rotate it — no direction is special — a quantity called <b>angular momentum</b> gets frozen: it can't change. You can see this two ways at once. The dial holds a steady number, and the planet sweeps out <b>equal areas in equal times</b> — racing when close to the Sun, dawdling when far, so every gold pie-slice comes out the same size.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> watch the gold slices come out equal and the L reading hold steady (green). Then press <em>Break the symmetry</em> — now space has a preferred direction, like a steady sideways wind. The slices grow lopsided and L drifts (red). The symmetry and the frozen quantity live or die together.</p>
+      <div class="cols">
+        <div class="col" style="min-width:300px;">
+          <canvas id="orbitCanvas" width="440" height="360"></canvas>
+        </div>
+        <div class="col">
+          <div class="row" style="gap:6px;">
+            <button class="op" id="orbitToggle">⏸ Pause</button>
+            <button class="op" id="orbitReset">Reset</button>
+          </div>
+          <div class="row" style="gap:6px;">
+            <button class="op active" id="symOn">Symmetry intact</button>
+            <button class="op" id="symOff">Break the symmetry ⚡</button>
+          </div>
+          <div class="stat" id="orbitStat"></div>
+          <div class="caption" style="margin:12px 0 4px;">Each bar = area the planet sweeps during one equal stretch of time. <b>Equal bars = angular momentum conserved.</b></div>
+          <div class="areabars" id="areaBars"></div>
+          <div class="caption"><b>The big idea — Noether's theorem:</b> every symmetry of the laws of nature hides a conserved quantity. Rotational symmetry ⟺ angular momentum. It rhymes elsewhere too: the laws being the same yesterday and today ⟺ energy is conserved; the same here and over there ⟺ momentum is conserved.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: SYMMETRY BREAKING ============ -->
+  <div class="panel" id="panel-break">
+    <div class="card">
+      <h2>Perfectly Balanced — Until It Isn't</h2>
+      <p class="sub"><b>What's happening:</b> the landscape is a perfect mirror image — the two valleys are identical and the peak in the middle favors neither side. A ball balanced <em>exactly</em> on the peak should be able to sit there forever. But that balance is unstable: the faintest wobble tips it into <b>one</b> valley, and which one is pure luck. The rules never choose a side — the outcome always does.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> the ball starts on the peak. Give it a <em>Nudge</em>, or just wait — a microscopic jiggle is enough to tip it. Note which valley it lands in, then <em>Reset</em> and watch it possibly fall the other way. Same symmetric setup every time; different result.</p>
+      <div class="cols">
+        <div class="col" style="min-width:300px;">
+          <canvas id="breakCanvas" width="440" height="300"></canvas>
+        </div>
+        <div class="col">
+          <div class="row" style="gap:6px;">
+            <button class="op" id="breakNudge">Nudge it ⚡</button>
+            <button class="op" id="breakReset">Reset to balanced top</button>
+          </div>
+          <div class="stat" id="breakStat"></div>
+          <div class="caption" style="margin-top:12px;"><b>Why it matters — this is spontaneous symmetry breaking:</b> the same mechanism behind a cooling magnet choosing a north pole, the Higgs field giving particles their mass, and matter barely out-surviving antimatter so that anything exists at all. <b>Structure is broken symmetry.</b> Reset a few times — the choice is never predictable.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: CHAMELEONS OF CAMELOT ============ -->
+  <div class="panel" id="panel-chameleons">
+    <div class="card">
+      <h2>The Invariant Hiding in Modular Arithmetic</h2>
+      <p class="sub"><b>What's happening:</b> whenever two <em>differently</em>-colored chameleons meet, both switch to the <em>third</em> color. Set starting counts for red, green, and blue, then let meetings happen. Watch the three counts change — and watch their differences <em>mod 3</em>, which never do.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> with the default 13/15/17, run meetings for a while — the counts wander all over the place, but the mod-3 residues shown below stay frozen exactly where they started. Since they start all different, no two counts can ever become equal to each other, which is exactly what "all one color" would require. Then try 13/16/17 (two residues now match) and watch the verdict flip to <em>possible</em>.</p>
+      <div class="row"><label>Red</label><input type="range" id="chamR" min="0" max="30" step="1" value="13"><span class="readout" id="chamROut">13</span></div>
+      <div class="row"><label>Green</label><input type="range" id="chamG" min="0" max="30" step="1" value="15"><span class="readout" id="chamGOut">15</span></div>
+      <div class="row"><label>Blue</label><input type="range" id="chamB" min="0" max="30" step="1" value="17"><span class="readout" id="chamBOut">17</span></div>
+      <div class="row" style="gap:6px; margin-top:6px;">
+        <button class="op active" id="chamMeet">One meeting ▶</button>
+        <button class="op" id="chamRun">Run 20 meetings ⏩</button>
+        <button class="op" id="chamReset">Reset to sliders</button>
+      </div>
+      <div class="row" style="gap:14px; margin-top:14px;">
+        <span class="chamchip" style="background:rgba(217,99,107,0.14);"><span class="chamdot" style="background:#D9636B;"></span><span id="chamRCount">13</span></span>
+        <span class="chamchip" style="background:rgba(15,139,141,0.14);"><span class="chamdot" style="background:#0F8B8D;"></span><span id="chamGCount">15</span></span>
+        <span class="chamchip" style="background:rgba(217,166,46,0.16);"><span class="chamdot" style="background:#D9A62E;"></span><span id="chamBCount">17</span></span>
+      </div>
+      <div class="stat" id="chamVerdict"></div>
+      <div class="chamlog" id="chamLog"></div>
+      <div class="caption"><b>Why it matters:</b> this is the mutilated-chessboard move again, wearing modular arithmetic instead of a checkerboard coloring — find the quantity every legal move preserves, then check whether the goal would require breaking it. No simulation, however long you let it run, can ever overturn what the invariant already proved.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../symmetry-and-invariance.md">Symmetry &amp; Invariance</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- tab switching ---------- */
+  var activeTab = "board";
+  var tabs = document.querySelectorAll(".tab");
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){
+      tabs.forEach(function(x){ x.classList.remove("active"); });
+      t.classList.add("active");
+      document.querySelectorAll(".panel").forEach(function(p){ p.classList.remove("active"); });
+      document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+      activeTab = t.dataset.tab;
+    });
+  });
+
+  /* =========================================================
+     TAB 1 — MUTILATED CHESSBOARD (parity invariant)
+     ========================================================= */
+  var N = 8;
+  var boardEl = document.getElementById("board");
+  var cells = [];          // {removed:bool, dom:int|null}
+  var mode = "remove";     // "remove" | "place"
+  var selIdx = null;
+  var domCounter = 0;
+
+  function isLight(i){ var r=Math.floor(i/N), c=i%N; return (r+c)%2===0; }
+  function initBoard(){
+    cells = [];
+    for(var i=0;i<N*N;i++){ cells.push({removed:false, dom:null}); }
+    selIdx = null; domCounter = 0;
+    renderBoard();
+  }
+  function renderBoard(){
+    var html = "";
+    for(var i=0;i<N*N;i++){
+      var cl = "cell " + (isLight(i)?"light":"dark");
+      if(cells[i].removed) cl += " removed";
+      if(cells[i].dom!==null) cl += " dom";
+      if(i===selIdx) cl += " sel";
+      var inner = "";
+      if(cells[i].dom!==null && !cells[i].removed){
+        inner = '<span style="width:62%;height:62%;background:var(--domino);border-radius:50%;opacity:.85"></span>';
+      }
+      html += '<div class="'+cl+'" data-i="'+i+'">'+inner+'</div>';
+    }
+    boardEl.innerHTML = html;
+    boardEl.querySelectorAll(".cell").forEach(function(el){
+      el.addEventListener("click", function(){ onCell(parseInt(el.dataset.i,10)); });
+    });
+    updateVerdict();
+  }
+  function adjacent(a,b){
+    var ra=Math.floor(a/N), ca=a%N, rb=Math.floor(b/N), cb=b%N;
+    return (Math.abs(ra-rb)+Math.abs(ca-cb))===1;
+  }
+  function onCell(i){
+    if(mode==="remove"){
+      if(cells[i].dom!==null) return;      // can't remove a covered square
+      cells[i].removed = !cells[i].removed;
+      renderBoard();
+    } else {
+      if(cells[i].removed) return;
+      if(cells[i].dom!==null){              // click a domino to remove it
+        var d = cells[i].dom;
+        cells.forEach(function(c){ if(c.dom===d) c.dom=null; });
+        selIdx = null; renderBoard(); return;
+      }
+      if(selIdx===null){ selIdx = i; renderBoard(); return; }
+      if(selIdx===i){ selIdx=null; renderBoard(); return; }
+      if(adjacent(selIdx,i) && cells[selIdx].dom===null){
+        domCounter++;
+        cells[selIdx].dom = domCounter; cells[i].dom = domCounter;
+        selIdx = null; renderBoard();
+      } else {
+        selIdx = i; renderBoard();          // reselect
+      }
+    }
+  }
+  function updateVerdict(){
+    var freeL=0, freeD=0, coveredL=0, coveredD=0, removed=0, doms=0;
+    var seen={};
+    for(var i=0;i<N*N;i++){
+      var lt = isLight(i);
+      if(cells[i].removed){ removed++; continue; }
+      if(cells[i].dom!==null){ if(lt)coveredL++; else coveredD++; if(!seen[cells[i].dom]){seen[cells[i].dom]=1;doms++;} }
+      else { if(lt)freeL++; else freeD++; }
+    }
+    var v = document.getElementById("boardVerdict");
+    var covered = coveredL+coveredD;
+    var uncovered = freeL+freeD;
+    var head = 'Squares removed: <b>'+removed+'</b> &nbsp;·&nbsp; Dominoes placed: <b>'+doms+'</b> (covering '+covered+' squares)<br>'+
+               'Still uncovered → light: <b>'+freeL+'</b> &nbsp; dark: <b>'+freeD+'</b><br>';
+    if(uncovered===0 && covered>0){
+      v.className="verdict good";
+      v.innerHTML = head + '<span class="big good-t">✓ Fully tiled!</span> Every square is covered, and light matched dark the whole way — exactly as the invariant requires.';
+    } else if(freeL!==freeD){
+      var diff = Math.abs(freeL-freeD);
+      v.className="verdict bad";
+      v.innerHTML = head + '<span class="big bad-t">✗ This board can never be fully tiled.</span> The leftovers are <b>'+freeL+' light vs '+freeD+' dark</b> (off by '+diff+'). Every domino must take one of each color, so '+diff+' square'+(diff>1?'s':'')+' can never find a partner. Impossible — and you didn\'t have to try a single layout.';
+    } else {
+      v.className="verdict";
+      v.innerHTML = head + '<span class="big">So far so good: light = dark ('+freeL+' = '+freeD+').</span> The invariant doesn\'t forbid a tiling here — matched counts are necessary, though not a guarantee. Keep placing dominoes.';
+    }
+  }
+  document.getElementById("modeRemove").addEventListener("click", function(){
+    mode="remove"; this.classList.add("active"); document.getElementById("modePlace").classList.remove("active");
+    document.getElementById("modeHint").textContent="Click any square to snip it out (or click again to put it back).";
+    selIdx=null; renderBoard();
+  });
+  document.getElementById("modePlace").addEventListener("click", function(){
+    mode="place"; this.classList.add("active"); document.getElementById("modeRemove").classList.remove("active");
+    document.getElementById("modeHint").textContent="Click two neighboring squares to lay a domino across them. Click a placed domino to pick it back up.";
+    selIdx=null; renderBoard();
+  });
+  document.getElementById("presetCorners").addEventListener("click", function(){
+    initBoard(); cells[0].removed=true; cells[N*N-1].removed=true; renderBoard();
+  });
+  document.getElementById("clearDom").addEventListener("click", function(){
+    cells.forEach(function(c){ c.dom=null; }); selIdx=null; domCounter=0; renderBoard();
+  });
+  document.getElementById("resetBoard").addEventListener("click", initBoard);
+  initBoard();
+
+  /* =========================================================
+     TAB 2 — NOETHER ORBIT (angular momentum from rotational symmetry)
+     ========================================================= */
+  var oc = document.getElementById("orbitCanvas"), octx = oc.getContext("2d");
+  var W=oc.width, H=oc.height, cx=W/2, cy=H/2, SCALE=78;
+  var mu=1.0;                       // GM
+  var planet, running=true, symmetric=true;
+  var trail=[], sweepPts=[], sectorAreas=[], sectorColors=[];
+  var areaAccum=0, frameCount=0, sectorFrames=52, colorTick=0;
+  var L0=null;
+
+  function resetOrbit(){
+    planet = { x:1.7, y:0, vx:0, vy:0.72 };
+    trail=[]; sweepPts=[[planet.x,planet.y]]; sectorAreas=[]; sectorColors=[];
+    areaAccum=0; frameCount=0; colorTick=0;
+    L0 = planet.x*planet.vy - planet.y*planet.vx;
+  }
+  function stepOrbit(){
+    var sub=6, dt=0.012;
+    for(var s=0;s<sub;s++){
+      var r2 = planet.x*planet.x + planet.y*planet.y;
+      var r = Math.sqrt(r2);
+      var ax = -mu*planet.x/(r2*r), ay = -mu*planet.y/(r2*r);
+      if(!symmetric){ ax += 0.16; }      // uniform field = a preferred direction in space
+      planet.vx += ax*dt; planet.vy += ay*dt;
+      planet.x  += planet.vx*dt; planet.y += planet.vy*dt;
+      areaAccum += 0.5*Math.abs(planet.x*planet.vy - planet.y*planet.vx)*dt;
+      // reset if it flies off (broken-symmetry case can unbind)
+      if(planet.x*planet.x+planet.y*planet.y > 12){ resetOrbit(); return; }
+    }
+    trail.push([planet.x,planet.y]); if(trail.length>1400) trail.shift();
+    sweepPts.push([planet.x,planet.y]);
+    frameCount++;
+    if(frameCount>=sectorFrames){
+      sectorAreas.push(areaAccum); if(sectorAreas.length>8) sectorAreas.shift();
+      sectorColors.push(colorTick%2); if(sectorColors.length>8) sectorColors.shift();
+      colorTick++; areaAccum=0; frameCount=0;
+      // keep only current sector's points for the fan
+      sweepPts = [[planet.x,planet.y]];
+    }
+  }
+  function toPx(p){ return [cx + p[0]*SCALE, cy - p[1]*SCALE]; }
+  function drawOrbit(){
+    octx.clearRect(0,0,W,H);
+    octx.fillStyle="#0E1524"; octx.fillRect(0,0,W,H);
+    // current swept sector fan
+    if(sweepPts.length>1){
+      octx.beginPath(); octx.moveTo(cx,cy);
+      for(var i=0;i<sweepPts.length;i++){ var q=toPx(sweepPts[i]); octx.lineTo(q[0],q[1]); }
+      octx.closePath();
+      octx.fillStyle="rgba(217,166,46,0.28)"; octx.fill();
+    }
+    // trail
+    octx.beginPath();
+    for(var j=0;j<trail.length;j++){ var t=toPx(trail[j]); if(j===0)octx.moveTo(t[0],t[1]); else octx.lineTo(t[0],t[1]); }
+    octx.strokeStyle="rgba(120,150,200,0.55)"; octx.lineWidth=1.4; octx.stroke();
+    // sun
+    octx.beginPath(); octx.arc(cx,cy,9,0,7); octx.fillStyle="#F2C14E"; octx.fill();
+    octx.shadowColor="#F2C14E"; octx.shadowBlur=18; octx.fill(); octx.shadowBlur=0;
+    // planet
+    var p=toPx([planet.x,planet.y]);
+    octx.beginPath(); octx.arc(p[0],p[1],6,0,7); octx.fillStyle="#7FB2D9"; octx.fill();
+    // radius vector
+    octx.beginPath(); octx.moveTo(cx,cy); octx.lineTo(p[0],p[1]);
+    octx.strokeStyle="rgba(255,255,255,0.35)"; octx.lineWidth=1; octx.stroke();
+  }
+  function updateOrbitStat(){
+    var L = planet.x*planet.vy - planet.y*planet.vx;
+    var drift = L0!==null ? Math.abs(L-L0) : 0;
+    var conserved = drift < 0.02;
+    document.getElementById("orbitStat").innerHTML =
+      'The "locked" quantity — angular momentum L = <b>'+L.toFixed(4)+'</b><br>'+
+      (symmetric
+        ? '<span class="good-t">● Symmetry intact — L is holding steady (conserved).</span>'
+        : '<span class="bad-t">● Symmetry broken — L is drifting ('+(L-L0>=0?"+":"")+(L-L0).toFixed(3)+' and counting), no longer conserved.</span>');
+    // area bars
+    var bars = document.getElementById("areaBars");
+    var maxA = Math.max.apply(null, sectorAreas.concat([0.001]));
+    var h="";
+    for(var i=0;i<sectorAreas.length;i++){
+      var pct = Math.min(100, sectorAreas[i]/maxA*100);
+      var col = sectorColors[i]===0 ? "var(--gold)" : "rgba(217,166,46,0.55)";
+      h += '<div style="height:'+pct+'%; background:'+col+'" title="'+sectorAreas[i].toFixed(3)+'"></div>';
+    }
+    bars.innerHTML = h;
+  }
+  document.getElementById("orbitToggle").addEventListener("click", function(){
+    running=!running; this.textContent = running ? "⏸ Pause" : "▶ Resume";
+  });
+  document.getElementById("orbitReset").addEventListener("click", resetOrbit);
+  document.getElementById("symOn").addEventListener("click", function(){
+    symmetric=true; this.classList.add("active"); document.getElementById("symOff").classList.remove("active"); resetOrbit();
+  });
+  document.getElementById("symOff").addEventListener("click", function(){
+    symmetric=false; this.classList.add("active"); document.getElementById("symOn").classList.remove("active"); resetOrbit();
+  });
+  document.getElementById("symOn").classList.add("active");
+  resetOrbit();
+
+  /* =========================================================
+     TAB 3 — SYMMETRY BREAKING (Mexican-hat potential)
+     ========================================================= */
+  var bc = document.getElementById("breakCanvas"), bctx = bc.getContext("2d");
+  var BW=bc.width, BH=bc.height;
+  var ball, settled;
+  var XMIN=-1.9, XMAX=1.9;
+  function V(x){ return (x*x-1)*(x*x-1); }              // minima at x=±1, max at 0
+  function dV(x){ return 4*x*(x*x-1); }
+  function resetBreak(){
+    // start at the exact symmetric top, with a microscopic random seed (spontaneous)
+    ball = { x:0, v: (Math.random()<0.5?-1:1) * 0.0009 };
+    settled=false;
+  }
+  function nudge(){ ball.v += (Math.random()<0.5?-1:1) * 0.06; }
+  function stepBreak(){
+    var sub=8, dt=0.016, damp=0.55;
+    for(var s=0;s<sub;s++){
+      var a = -dV(ball.x) - damp*ball.v;
+      ball.v += a*dt; ball.x += ball.v*dt;
+      if(ball.x<XMIN){ball.x=XMIN;ball.v*=-0.4;} if(ball.x>XMAX){ball.x=XMAX;ball.v*=-0.4;}
+    }
+    if(!settled && Math.abs(ball.v)<0.02 && Math.abs(Math.abs(ball.x)-1)<0.06){ settled=true; }
+  }
+  function bx(x){ return (x-XMIN)/(XMAX-XMIN)*(BW-40)+20; }
+  function drawBreak(){
+    bctx.clearRect(0,0,BW,BH);
+    bctx.fillStyle="#0E1524"; bctx.fillRect(0,0,BW,BH);
+    // potential curve (a valley-hill-valley "hat" cross-section): draw y = scaled V, with valleys low
+    var vmax=V(0)||1;
+    bctx.beginPath();
+    for(var px=0;px<=BW-40;px+=2){
+      var x = XMIN + px/(BW-40)*(XMAX-XMIN);
+      var y = 40 + (V(x)/vmax)*(BH-100);   // small V (=0 at valleys) near top? -> invert to look like hat
+      // invert so valleys are at the BOTTOM:
+      y = (BH-30) - (V(x)/vmax)*(BH-90);
+      if(px===0) bctx.moveTo(px+20,y); else bctx.lineTo(px+20,y);
+    }
+    bctx.strokeStyle="rgba(150,175,215,0.8)"; bctx.lineWidth=2.5; bctx.stroke();
+    // valley markers
+    [-1,1].forEach(function(xm){
+      var yy=(BH-30)-(V(xm)/vmax)*(BH-90);
+      bctx.beginPath(); bctx.arc(bx(xm),yy,3,0,7); bctx.fillStyle="rgba(15,139,141,0.9)"; bctx.fill();
+    });
+    // ball
+    var yb=(BH-30)-(V(ball.x)/vmax)*(BH-90) - 9;
+    bctx.beginPath(); bctx.arc(bx(ball.x),yb,9,0,7);
+    bctx.fillStyle = settled ? "#D9A62E" : "#7FB2D9"; bctx.fill();
+    bctx.shadowColor=bctx.fillStyle; bctx.shadowBlur=12; bctx.fill(); bctx.shadowBlur=0;
+  }
+  function updateBreakStat(){
+    var el=document.getElementById("breakStat");
+    if(Math.abs(ball.x)<0.08){
+      el.innerHTML='<span class="big">⚖ Balanced on the peak</span><br>Neither side is preferred — the setup is perfectly symmetric. But this perch is <em>unstable</em>, so it won\'t last. Nudge it, or just wait.';
+    } else if(!settled){
+      el.innerHTML='<span class="big">↘ Tipping over…</span><br>The symmetry is breaking right now — the ball is committing to the <b>'+(ball.x<0?"LEFT":"RIGHT")+'</b>.';
+    } else {
+      el.innerHTML='<span class="big">✔ Settled in the '+(ball.x<0?"LEFT":"RIGHT")+' valley</span><br>Two identical valleys were on offer; chance picked this one. Hit <em>Reset</em> — it may fall the other way.';
+    }
+  }
+  document.getElementById("breakNudge").addEventListener("click", nudge);
+  document.getElementById("breakReset").addEventListener("click", resetBreak);
+  resetBreak();
+
+  /* =========================================================
+     TAB 4 — CHAMELEONS OF CAMELOT (modular invariant)
+     ========================================================= */
+  var chamR = document.getElementById("chamR"), chamG = document.getElementById("chamG"), chamB = document.getElementById("chamB");
+  var cham = { R:13, G:15, B:17 }, chamLogArr = [], chamTimer = null;
+
+  function colorsAvailable(){ return ["R","G","B"].filter(function(k){ return cham[k]>0; }); }
+  function doMeeting(){
+    var avail = colorsAvailable();
+    if(avail.length<2) return false;
+    var shuffled = avail.slice().sort(function(){ return Math.random()-0.5; });
+    var c1=shuffled[0], c2=shuffled[1];
+    var c3 = ["R","G","B"].filter(function(c){ return c!==c1 && c!==c2; })[0];
+    cham[c1]--; cham[c2]--; cham[c3]+=2;
+    chamLogArr.unshift(c1+"+"+c2+" meet -> both become "+c3+"   (R="+cham.R+", G="+cham.G+", B="+cham.B+")");
+    if(chamLogArr.length>12) chamLogArr.pop();
+    return true;
+  }
+  function mod3(x){ return ((x%3)+3)%3; }
+  function renderCham(){
+    document.getElementById("chamRCount").textContent = cham.R;
+    document.getElementById("chamGCount").textContent = cham.G;
+    document.getElementById("chamBCount").textContent = cham.B;
+    var dRG=mod3(cham.R-cham.G), dGB=mod3(cham.G-cham.B), dRB=mod3(cham.R-cham.B);
+    var anyZero = (dRG===0)||(dGB===0)||(dRB===0);
+    document.getElementById("chamVerdict").innerHTML =
+      "Pairwise differences mod 3 &mdash; (R&minus;G)&equiv;"+dRG+", (G&minus;B)&equiv;"+dGB+", (R&minus;B)&equiv;"+dRB+
+      " <b>— frozen by every single meeting, no matter how many run</b> (try it — the raw counts above wander freely, these three numbers never do)<br>" +
+      (anyZero
+        ? '<b class="good-t">One difference is ≡0 mod 3 — two colors are congruent, so monochrome is not ruled out by this invariant.</b>'
+        : '<b class="bad-t">All three differences are nonzero mod 3 — no two colors can ever become equal, so monochrome is impossible, provably, forever.</b>');
+    document.getElementById("chamLog").textContent = chamLogArr.length ? chamLogArr.join("\n") : "No meetings yet.";
+  }
+  function pauseChamRun(){ if(chamTimer){ clearInterval(chamTimer); chamTimer=null; } }
+  function chamReset(){
+    pauseChamRun();
+    cham = { R: parseInt(chamR.value,10), G: parseInt(chamG.value,10), B: parseInt(chamB.value,10) };
+    chamLogArr = [];
+    renderCham();
+  }
+  [chamR,chamG,chamB].forEach(function(inp){
+    inp.addEventListener("input", function(){ document.getElementById(inp.id+"Out").textContent = inp.value; });
+  });
+  document.getElementById("chamMeet").addEventListener("click", function(){
+    var ok = doMeeting();
+    if(!ok) chamLogArr.unshift("No meeting possible — fewer than two colors remain.");
+    renderCham();
+  });
+  document.getElementById("chamRun").addEventListener("click", function(){
+    if(chamTimer) return;
+    var i=0;
+    chamTimer = setInterval(function(){
+      var ok = doMeeting();
+      renderCham();
+      i++;
+      if(!ok || i>=20){ clearInterval(chamTimer); chamTimer=null; }
+    }, 110);
+  });
+  document.getElementById("chamReset").addEventListener("click", chamReset);
+  renderCham();
+
+  /* ---------- master animation loop ---------- */
+  function loop(){
+    if(activeTab==="noether"){ if(running){ stepOrbit(); } drawOrbit(); updateOrbitStat(); }
+    else if(activeTab==="break"){ stepBreak(); drawBreak(); updateBreakStat(); }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiply Down, Add Across — Probability &amp; Cross-Entropy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --pA:#0F8B8D; --pB:#D9A62E; --true:#0F8B8D; --pred:#463A73; --bad:#D9636B; --good:#0F8B8D;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op.primary:hover{ background:var(--accent); opacity:.9; }
+  .doorwrap{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .door{ width:38px; height:52px; border-radius:6px; border:2px solid var(--line); background:#F5F4F0; display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-soft); transition:all .2s ease; }
+  .door.opened{ background:#EDEAE3; color:var(--ink-soft); opacity:.55; }
+  .door.pick{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); color:var(--accent); font-weight:700; }
+  .door.survivor{ border-color:var(--pB); box-shadow:0 0 0 2px rgba(217,166,46,0.25); color:var(--pB); font-weight:700; }
+  .door.reveal-car{ background:var(--good); color:#fff; border-color:var(--good); opacity:1; }
+  .door.reveal-goat{ background:#fff; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:120px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:52px; text-align:center; }
+  .cols{ display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  svg{ width:100%; height:auto; display:block; }
+  canvas{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:20px; font-weight:700; }
+  .bar{ height:34px; border-radius:8px; display:flex; overflow:hidden; border:1px solid var(--line); background:#F5F4F0; }
+  .bar > div{ display:flex; align-items:center; justify-content:center; color:#fff; font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; transition:width .3s ease; white-space:nowrap; overflow:hidden; }
+  .stat-line{ position:relative; height:20px; margin-top:6px; }
+  .stat-tick{ position:absolute; top:0; width:2px; height:14px; background:var(--ink); }
+  .stat-tick::after{ content:attr(data-l); position:absolute; top:14px; left:50%; transform:translateX(-50%); font-size:10.5px; color:var(--ink-soft); white-space:nowrap; font-family:"IBM Plex Mono",monospace; }
+  .surptable{ width:100%; border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-top:10px; }
+  .surptable th, .surptable td{ text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); }
+  .surptable th{ color:var(--ink-soft); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Probability &amp; Cross-Entropy</div>
+    <h1>Multiply Down, Add Across</h1>
+    <p>Two events branching into four outcomes, a forecaster graded on confidently-wrong beliefs, and one die rolled ten thousand times — three ways to feel the Operation-Choice Framework's "same unit adds, for-every multiplies" rule doing all the real work in probability.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="tree">AND / OR Tree</button>
+    <button class="tab" data-tab="monty">Monty Hall</button>
+    <button class="tab" data-tab="birthday">Birthday Paradox</button>
+    <button class="tab" data-tab="conditional">Conditional Probability</button>
+    <button class="tab" data-tab="xent">Cross-Entropy Grader</button>
+    <button class="tab" data-tab="lln">Law of Large Numbers</button>
+    <button class="tab" data-tab="baserate">Base-Rate Explorer</button>
+    <button class="tab" data-tab="variance">Variance Comparer</button>
+    <button class="tab" data-tab="binompois">Binomial &amp; Poisson</button>
+  </div>
+
+  <!-- ============ TAB 1: AND/OR TREE ============ -->
+  <div class="panel active" id="panel-tree">
+    <div class="card">
+      <h2>Two Events, Four Outcomes, Two Operations</h2>
+      <p class="sub"><b>What's happening:</b> event A and event B each either happen or don't. Multiplying <em>down</em> a path gives one leaf's probability (an AND); adding several leaves <em>across</em> gives an OR. Toggle whether B's odds depend on A to see conditional probability enter the same tree.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> with "Independent" selected, set P(A)=50%, P(B)=50%, and click <em>Highlight P(A or B)</em> — watch it total 75%, not 100%, because the AB leaf would otherwise be double-counted. Then switch to "B depends on A" and push P(B|A) high while P(B|¬A) stays low — watch the tree stop looking symmetric, exactly what dependence means.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="treeIndep">Independent</button>
+        <button class="op" id="treeDep">B depends on A</button>
+      </div>
+      <div class="row"><label>P(A)</label><input type="range" id="trPA" min="1" max="99" step="1" value="50"><span class="readout" id="trPAOut">50%</span></div>
+      <div class="row" id="rowIndepB"><label>P(B)</label><input type="range" id="trPB" min="1" max="99" step="1" value="50"><span class="readout" id="trPBOut">50%</span></div>
+      <div class="row" id="rowDepB1" style="display:none;"><label>P(B | A)</label><input type="range" id="trPBgA" min="1" max="99" step="1" value="80"><span class="readout" id="trPBgAOut">80%</span></div>
+      <div class="row" id="rowDepB2" style="display:none;"><label>P(B | ¬A)</label><input type="range" id="trPBgNA" min="1" max="99" step="1" value="20"><span class="readout" id="trPBgNAOut">20%</span></div>
+      <svg id="treeSvg" viewBox="0 0 760 320" role="img" aria-label="AND/OR probability tree"></svg>
+      <div class="row" style="gap:6px; margin-top:10px;">
+        <button class="op" id="btnShowAnd">Highlight P(A and B)</button>
+        <button class="op" id="btnShowOr">Highlight P(A or B)</button>
+        <button class="op" id="btnClearHi">Clear</button>
+      </div>
+      <div class="verdict" id="treeVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every probability formula you'll meet is one of these two moves — multiply down a single path (AND, an independent-events "for every" scaling), or add across several non-overlapping paths (OR) — occasionally with a double-counted overlap subtracted back out once.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: MONTY HALL ============ -->
+  <div class="panel" id="panel-monty">
+    <div class="card">
+      <h2>Should You Switch?</h2>
+      <p class="sub"><b>What's happening:</b> you always pick door 1. The host — who knows where the car is — opens every other door except one, leaving your pick and exactly one "survivor" door closed. The doors below show one live round; the tally underneath comes from repeating it thousands of times, for both the "always stay" and "always switch" strategies.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> run a batch of rounds at 3 doors and watch switching settle near 2/3. Then drag the door count up toward 100 and run another batch — watch "always switch" climb toward a near-certain win, the scaled-up gut check from the tutorial, live.</p>
+      <div class="row"><label>number of doors</label><input type="range" id="montyN" min="3" max="100" step="1" value="3"><span class="readout" id="montyNOut">3</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="montyRound">Run 1 round</button>
+        <button class="op" id="montyBatch">Run 2,000 rounds</button>
+        <button class="op" id="montyReset">Reset tally</button>
+      </div>
+      <div class="doorwrap" id="montyDoors"></div>
+      <div class="caption" id="montyRoundCaption" style="margin-top:8px;"></div>
+      <div class="cols" style="margin-top:14px;">
+        <div class="col">
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Always STAY — win rate</div>
+          <div class="bar" id="montyStayBar"></div>
+        </div>
+        <div class="col">
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">Always SWITCH — win rate</div>
+          <div class="bar" id="montySwitchBar"></div>
+        </div>
+      </div>
+      <div class="verdict" id="montyVerdict"></div>
+      <table class="surptable" style="margin-top:16px;">
+        <tr><th>where the car actually is (3-door case)</th><th>probability</th><th>host's opened door(s)</th><th>stay</th><th>switch</th></tr>
+        <tr><td>door 1 (your pick)</td><td>1/3</td><td>either 2 or 3 — a real choice</td><td>win</td><td>lose</td></tr>
+        <tr><td>door 2</td><td>1/3</td><td>door 3 only — forced</td><td>lose</td><td>win</td></tr>
+        <tr><td>door 3</td><td>1/3</td><td>door 2 only — forced</td><td>lose</td><td>win</td></tr>
+      </table>
+      <div class="caption"><b>Why it matters:</b> the host's reveal is never a coin flip — it's forced in two of the three worlds above — and that forced move is exactly where switching's extra 1/3 of winning odds comes from.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BIRTHDAY PARADOX ============ -->
+  <div class="panel" id="panel-birthday">
+    <div class="card">
+      <h2>How Few People Does It Take?</h2>
+      <p class="sub"><b>What's happening:</b> drag the room size and watch the <em>exact</em> probability that at least two people share a birthday — computed the honest way, one person at a time, not by the "count the pairs" shortcut. The simulation alongside confirms the formula by actually rolling thousands of random rooms.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set the room to 23 and run a batch of simulated rooms — watch the empirical match rate land right on the formula's 50.7%. Then compare 10 people against 50: the curve climbs far faster than "365 days in a year" makes it feel like it should.</p>
+      <div class="row"><label>people in the room</label><input type="range" id="bdayN" min="2" max="100" step="1" value="23"><span class="readout" id="bdayNOut">23</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="bdaySim">Simulate 3,000 random rooms at this size</button>
+      </div>
+      <canvas id="bdayCanvas" width="720" height="240"></canvas>
+      <div class="verdict" id="bdayVerdict"></div>
+      <div class="caption" id="bdayFormula" style="font-family:'IBM Plex Mono',monospace; font-size:12px;"></div>
+      <div class="caption"><b>Why it matters:</b> the number of <em>pairs</em> of people grows quadratically as the room fills, while any one pair's own match chance stays fixed at a tiny 1/365 — quadratic growth against a fixed small chance is what makes "surprisingly few people" actually check out.</div>
+    </div>
+    <div class="card">
+      <h2>Pairs Explorer — Everyone Paired With Everyone, Two Ways to Count It</h2>
+      <p class="sub"><b>What's happening:</b> is the birthday paradox about one person checked against everyone else, or about every possible two-person pairing? Step people into the room one at a time and watch: each new arrival draws a line to everyone already there (their "checks"), and the running total of lines always lands exactly on the batch handshake count <span class="formula">n×(n−1)/2</span> — the same 253 pairs, discovered one arrival at a time instead of listed all at once.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set the room to 6 people, click "Reset" then "Next arrival" six times, and watch the running total climb 0 → 1 → 3 → 6 → 10 → 15, always matching the batch count shown alongside. Notice the fraction callout below — that's exactly what "364/365" means in the tutorial, recomputed fresh at every arrival.</p>
+      <div class="row"><label>people in the room</label><input type="range" id="pairN" min="3" max="12" step="1" value="6"><span class="readout" id="pairNOut">6</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="pairNext">Next arrival</button>
+        <button class="op" id="pairReset">Reset</button>
+      </div>
+      <svg id="pairSvg" viewBox="0 0 480 380" role="img" aria-label="Dot diagram of people and the pairs between them"></svg>
+      <div class="verdict" id="pairVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the sequential arrival process and the "count all pairs at once" shortcut are never in tension — they're two orderings of the identical set of pairs, which is why both routes to the birthday paradox agree almost exactly on the final answer.</div>
+    </div>
+    <div class="card">
+      <h2>The Birthday Attack — the Same Math, Aimed at a Hash Function</h2>
+      <p class="sub"><b>What's happening:</b> a hash function with an <span class="formula">n</span>-bit output has <span class="formula">2ⁿ</span> possible "fingerprints" — the birthday room's 365 days, generalized. Drag the bit-length and compare two very different attacks: finding <em>any two</em> inputs that collide (the birthday-paradox effect) versus finding <em>one specific</em> input matching a fingerprint you already have.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set bits to 8 and read both attempt counts — collision-finding needs only ~20 tries, specific-matching needs ~178. Now drag bits up toward 24 or 32 and watch the ratio between them explode — that widening gap is exactly why real hash functions double their output length instead of just matching the target security level.</p>
+      <div class="row"><label>Hash length (bits)</label><input type="range" id="hashBits" min="4" max="32" step="1" value="8"><span class="readout" id="hashBitsOut">8</span></div>
+      <div class="verdict" id="hashVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> collision search only ever needs on the order of <span class="formula">√N</span> attempts, while matching one specific target needs on the order of <span class="formula">N</span> attempts — so making collisions as hard to find as a specific match requires squaring <span class="formula">N</span>, i.e. doubling the bit-length, which is exactly why SHA-256 outputs 256 bits rather than the 128 a naive "128-bit security" target would suggest.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: CONDITIONAL PROBABILITY ============ -->
+  <div class="panel" id="panel-conditional">
+    <div class="card">
+      <h2>Shrink the Universe, Then Re-Ask the Question</h2>
+      <p class="sub"><b>What's happening:</b> 100 equally likely outcomes, laid out as a 10×10 grid. Drag how many belong to A, how many belong to B, and how many belong to <em>both</em> — every other quantity, including P(A|B) and P(B|A), recomputes live from the actual counts.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click "Shrink to B" and watch everything outside B fade away — what's left is the exact "new, shrunken universe" the tutorial describes, and the purple squares within it are precisely the numerator of P(A|B). Then check the symmetry panel below: P(A|B)·P(B) and P(B|A)·P(A) always land on the same number, because both are just P(A and B) written two different ways.</p>
+      <div class="row"><label>Squares in A</label><input type="range" id="condA" min="1" max="99" step="1" value="40"><span class="readout" id="condAOut">40</span></div>
+      <div class="row"><label>Squares in B</label><input type="range" id="condB" min="1" max="99" step="1" value="30"><span class="readout" id="condBOut">30</span></div>
+      <div class="row"><label>Squares in both</label><input type="range" id="condOverlap" min="0" max="30" step="1" value="18"><span class="readout" id="condOverlapOut">18</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="condShrinkB">Shrink to B</button>
+        <button class="op active" id="condShowAll">Show everything</button>
+        <button class="op" id="condCardDeck">Load card-deck example (face cards &amp; Kings)</button>
+      </div>
+      <svg id="condSvg" viewBox="0 0 320 320" role="img" aria-label="100-square grid model of two overlapping events"></svg>
+      <div class="verdict" id="condVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> P(A|B) is never a new kind of probability — it's the exact same favorable-over-total recipe, just recomputed after the "total" shrinks down to B's own count.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: CROSS-ENTROPY GRADER ============ -->
+  <div class="panel" id="panel-xent">
+    <div class="card">
+      <h2>Grading a Forecaster's Honesty</h2>
+      <p class="sub"><b>What's happening:</b> the true chance of rain is <span class="formula">p</span>; the forecaster's stated belief is <span class="formula">q</span>. Cross-entropy <span class="formula">H(p,q)</span> is the average surprise you'd feel living through many days under the <em>true</em> odds while trusting the forecaster's belief — and it's always at least as large as the best-possible <span class="formula">H(p)</span>, the surprise you'd feel if the forecaster were perfectly honest (<span class="formula">q=p</span>). The gap between them, <span class="formula">H(p,q) − H(p)</span>, is the <b>KL divergence</b> — literally the extra average surprise you're paying for the forecaster's dishonesty, on top of the surprise you'd pay anyway even with a perfect belief. Read it live in the verdict box below: it reports <span class="formula">H(p,q)</span>, <span class="formula">H(p)</span>, and that gap all at once.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set true rain-chance <span class="formula">p</span> to 90% and slide the forecaster's belief <span class="formula">q</span> down toward 10% — watch <span class="formula">H(p,q)</span> shoot upward while <span class="formula">H(p)</span> stays put. That's the cost of confident wrongness. Now set <span class="formula">q = p</span> exactly and watch the gap collapse to zero.</p>
+      <div class="row"><label>True P(rain) = p</label><input type="range" id="xeP" min="1" max="99" step="1" value="90"><span class="readout" id="xePOut">90%</span></div>
+      <div class="row"><label>Forecast P(rain) = q</label><input type="range" id="xeQ" min="1" max="99" step="1" value="60"><span class="readout" id="xeQOut">60%</span></div>
+      <div class="cols">
+        <div class="col">
+          <div style="font-size:12px; color:var(--ink-soft); margin-bottom:3px;">True distribution p</div>
+          <div class="bar" id="xeBarP"></div>
+          <div style="font-size:12px; color:var(--ink-soft); margin:10px 0 3px;">Forecast distribution q</div>
+          <div class="bar" id="xeBarQ"></div>
+        </div>
+        <div class="col">
+          <table class="surptable">
+            <tr><th>Outcome</th><th>True p</th><th>Surprise −log(q)</th><th>Contribution p·(−log q)</th></tr>
+            <tbody id="xeTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="verdict" id="xeVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> H(p,q) ≥ H(p) always, with equality only when q=p — this is precisely why training a model to minimize cross-entropy pushes its beliefs toward the truth, never away from it.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: LAW OF LARGE NUMBERS ============ -->
+  <div class="panel" id="panel-lln">
+    <div class="card">
+      <h2>One Die, Rolled Ten Thousand Times</h2>
+      <p class="sub"><b>What's happening:</b> a single die roll is anyone's guess — 1 through 6, no pattern. But track the <em>running average</em> as more rolls pile up, and watch it clamp down onto 3.5, the true expectation, even though no single roll can ever land there.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Roll 1</em> a few times and watch the average swing wildly. Then press <em>Roll 1,000 more</em> repeatedly — the wilder swings vanish, and the trace hugs the dashed 3.5 line tighter with every batch. That narrowing, not any single roll, is what makes probability practically useful.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="llnRollOne">Roll 1 ▶</button>
+        <button class="op" id="llnRollMany">Roll 1,000 more ⏩</button>
+        <button class="op" id="llnReset">Reset</button>
+      </div>
+      <canvas id="llnCanvas" width="720" height="260"></canvas>
+      <div class="verdict" id="llnVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this single fact — averages of independent samples clamp onto the true expectation — is why insurance companies, casinos, and pollsters can be supremely confident about a crowd's behavior while being unable to predict any one individual roll, customer, or voter.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BASE-RATE EXPLORER ============ -->
+  <div class="panel" id="panel-baserate">
+    <div class="card">
+      <h2>Why "99% Accurate" Doesn't Mean What It Sounds Like</h2>
+      <p class="sub"><b>What's happening:</b> drag the condition's true prevalence, the test's true-positive rate, and its false-positive rate — the population breaks down live into four groups, and P(condition | positive result) updates from the actual counts, the same concrete-population trick from the Practice Gallery's Problems 12–13.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set prevalence to 1% with a 99% true-positive / 1% false-positive test (the disease example) and watch P(condition|positive) land near 50%. Then drag prevalence down to 0.02% (Problem 13's rare test, 1-in-5,000) and watch the same "99% accurate" test's positive results become almost entirely false alarms.</p>
+      <div class="row"><label>Prevalence</label><input type="range" id="brPrev" min="0.02" max="50" step="0.02" value="1"><span class="readout" id="brPrevOut">1%</span></div>
+      <div class="row"><label>True-positive rate</label><input type="range" id="brTPR" min="50" max="100" step="1" value="99"><span class="readout" id="brTPROut">99%</span></div>
+      <div class="row"><label>False-positive rate</label><input type="range" id="brFPR" min="0" max="50" step="1" value="1"><span class="readout" id="brFPROut">1%</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnBrProblem12">Load Problem 12 (spam filter)</button>
+        <button class="op" id="btnBrProblem13">Load Problem 13 (rare genetic test)</button>
+      </div>
+      <svg id="brSvg" viewBox="0 0 640 220" role="img" aria-label="Base-rate population breakdown"></svg>
+      <div class="verdict" id="brVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the false-positive bar's height barely looks like the villain of the story until prevalence gets small — at that point it's the one group large enough to swamp the true positives entirely, no matter how "accurate" the test's own headline numbers claim to be.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: VARIANCE COMPARER ============ -->
+  <div class="panel" id="panel-variance">
+    <div class="card">
+      <h2>Same Average Day, Wildly Different Risk</h2>
+      <p class="sub"><b>What's happening:</b> two machines, three equally likely sales days each, both averaging the identical mean — drag the spread slider and watch each machine's variance (the mean-squared-deviation from Part 3.2) update, confirming variance grows with the <em>square</em> of the spread, not the spread itself.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set Machine B's spread to exactly 10× Machine A's (e.g. ±$5 vs ±$50, the Practice Gallery's Problem 19) and watch B's variance land at exactly 100× A's — never 10×.</p>
+      <div class="row"><label>Mean (both machines)</label><input type="range" id="varMean" min="20" max="80" step="5" value="50"><span class="readout" id="varMeanOut">50</span></div>
+      <div class="row"><label>Machine A spread ±</label><input type="range" id="varSpreadA" min="1" max="30" step="1" value="5"><span class="readout" id="varSpreadAOut">5</span></div>
+      <div class="row"><label>Machine B spread ±</label><input type="range" id="varSpreadB" min="1" max="60" step="1" value="50"><span class="readout" id="varSpreadBOut">50</span></div>
+      <svg id="varSvg" viewBox="0 0 640 200" role="img" aria-label="Variance comparison dot plot"></svg>
+      <div class="verdict" id="varVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> a mean alone can make two genuinely very different situations look identical on paper — variance is the number that actually distinguishes "reliably average" from "wildly unpredictable but averages out."</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BINOMIAL & POISSON ============ -->
+  <div class="panel" id="panel-binompois">
+    <div class="card">
+      <h2>n Independent Trials, Counted</h2>
+      <p class="sub"><b>What's happening:</b> drag <code>n</code> (number of trials) and <code>p</code> (success probability per trial) and watch the Binomial distribution's bars, mean, and variance update live -- the two-flip-coin example from 3.2, scaled up to any n.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set n=10, p=0.3 and confirm the readouts land on mean=3.0 and variance=2.1 exactly, matching np and np(1-p). Then push n up while dragging p down so that n&times;p stays fixed near 5 -- watch the bars quietly reshape into the Poisson curve below.</p>
+      <div class="row"><label>n (trials)</label><input type="range" id="bpN" min="1" max="60" step="1" value="10"><span class="readout" id="bpNOut">10</span></div>
+      <div class="row"><label>p (success prob.)</label><input type="range" id="bpP" min="1" max="99" step="1" value="30"><span class="readout" id="bpPOut">0.30</span></div>
+      <svg id="bpSvg" viewBox="0 0 640 220" role="img" aria-label="Binomial distribution bar chart"></svg>
+      <div class="verdict" id="bpVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every A/B test's "number of conversions out of n visitors" is exactly this distribution, and its variance formula is precisely what a significance test needs to judge a real effect from noise.</div>
+    </div>
+    <div class="card">
+      <h2>Rare Events, Many Chances: the Poisson Limit</h2>
+      <p class="sub"><b>What's happening:</b> drag &lambda; (the expected count) and watch the Poisson distribution's bars update, with the matching Binomial(n=2000, p=&lambda;/n) drawn as an outline on top -- confirming the limit is real, not just similar in spirit.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> watch mean and variance below -- for a true Poisson process they are always exactly equal. If real count data's variance is far larger than its mean, that mismatch (called overdispersion) is a real, checkable sign the plain Poisson model doesn't fit.</p>
+      <div class="row"><label>&lambda; (expected count)</label><input type="range" id="bpLam" min="1" max="200" step="1" value="50"><span class="readout" id="bpLamOut">5.0</span></div>
+      <svg id="poisSvg" viewBox="0 0 640 220" role="img" aria-label="Poisson distribution bar chart"></svg>
+      <div class="verdict" id="poisVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> call-center arrivals, typos per page, and radioactive decays are all classically modeled this way -- and the forced mean-equals-variance signature is a real diagnostic real statisticians actually check.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../03-probability.md">Probability &amp; Cross-Entropy</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  /* =========================================================
+     TAB 1 — AND/OR TREE
+     ========================================================= */
+  const trPA=document.getElementById("trPA"), trPB=document.getElementById("trPB"),
+        trPBgA=document.getElementById("trPBgA"), trPBgNA=document.getElementById("trPBgNA");
+  const trPAOut=document.getElementById("trPAOut"), trPBOut=document.getElementById("trPBOut"),
+        trPBgAOut=document.getElementById("trPBgAOut"), trPBgNAOut=document.getElementById("trPBgNAOut");
+  let treeMode = "indep", highlight = null; // highlight: null | "and" | "or"
+
+  function branch(x1,y1,x2,y2,label,color,dim){
+    const mx=(x1+x2)/2, my=(y1+y2)/2;
+    const g = [];
+    g.push(el("line",{x1,y1,x2,y2,stroke:color,["stroke-width"]:2, opacity: dim?0.25:1}));
+    g.push(el("rect",{x:mx-22,y:my-11,width:44,height:19,rx:5,fill:"#fff",stroke:color,["stroke-width"]:1, opacity: dim?0.35:1}));
+    const t = el("text",{x:mx,y:my+3,["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"11",fill:color, opacity: dim?0.4:1});
+    t.textContent = label; g.push(t);
+    return g;
+  }
+  function leaf(x,y,title,prob,active,color){
+    const w=170,h=46;
+    const g=[];
+    g.push(el("rect",{x,y:y-h/2,width:w,height:h,rx:8, fill: active?color:"#F5F4F0", ["fill-opacity"]: active?"0.16":"1", stroke: active?color:"var(--line)", ["stroke-width"]: active?"2":"1"}));
+    const t1 = el("text",{x:x+12,y:y-6,"font-family":"Inter","font-weight": active?"700":"500","font-size":"12",fill:"var(--ink)"});
+    t1.textContent = title; g.push(t1);
+    const t2 = el("text",{x:x+12,y:y+12,"font-family":"IBM Plex Mono, monospace","font-size":"12",fill:"var(--ink-soft)"});
+    t2.textContent = "p = " + prob.toFixed(4); g.push(t2);
+    return g;
+  }
+  function drawTree(){
+    const pA = parseFloat(trPA.value)/100;
+    trPAOut.textContent = trPA.value+"%";
+    let pBgA, pBgNA;
+    if(treeMode==="indep"){
+      pBgA = pBgNA = parseFloat(trPB.value)/100;
+      trPBOut.textContent = trPB.value+"%";
+    } else {
+      pBgA = parseFloat(trPBgA.value)/100; pBgNA = parseFloat(trPBgNA.value)/100;
+      trPBgAOut.textContent = trPBgA.value+"%"; trPBgNAOut.textContent = trPBgNA.value+"%";
+    }
+    const pAB = pA*pBgA, pANB = pA*(1-pBgA), pNAB=(1-pA)*pBgNA, pNANB=(1-pA)*(1-pBgNA);
+    const rootX=30, rootY=150, l1x=250, l2x=560;
+
+    const svg = document.getElementById("treeSvg");
+    svg.innerHTML = "";
+    function activeFor(key){
+      if(highlight==="and") return key==="AB";
+      if(highlight==="or") return key==="AB"||key==="ANB"||key==="NAB";
+      return false;
+    }
+    let parts = [];
+    parts = parts.concat(branch(rootX+8, rootY, l1x, 70, pA.toFixed(2), "var(--pA)", false));
+    parts = parts.concat(branch(rootX+8, rootY, l1x, 230, (1-pA).toFixed(2), "var(--pA)", false));
+    parts = parts.concat(branch(l1x, 70, l2x, 40, pBgA.toFixed(2), "var(--pB)", false));
+    parts = parts.concat(branch(l1x, 70, l2x, 110, (1-pBgA).toFixed(2), "var(--pB)", false));
+    parts = parts.concat(branch(l1x, 230, l2x, 190, pBgNA.toFixed(2), "var(--pB)", false));
+    parts = parts.concat(branch(l1x, 230, l2x, 260, (1-pBgNA).toFixed(2), "var(--pB)", false));
+    parts.push(el("circle",{cx:rootX,cy:rootY,r:6,fill:"var(--accent)"}));
+    const tA = el("text",{x:l1x,y:70-16,["text-anchor"]:"middle","font-family":"Inter","font-weight":"600","font-size":"12",fill:"var(--pA)"}); tA.textContent="A"; parts.push(tA);
+    const tNA = el("text",{x:l1x,y:230+22,["text-anchor"]:"middle","font-family":"Inter","font-weight":"600","font-size":"12",fill:"var(--pA)"}); tNA.textContent="¬A"; parts.push(tNA);
+    // second-layer B/¬B labels, one per branch tip, matching the A/¬A labeling style above
+    function lblB(y, text){
+      const t = el("text",{x:l2x-16,y:y+4,["text-anchor"]:"end","font-family":"Inter","font-weight":"600","font-size":"12",fill:"var(--pB)"});
+      t.textContent = text; return t;
+    }
+    parts.push(lblB(40, "B")); parts.push(lblB(110, "¬B")); parts.push(lblB(190, "B")); parts.push(lblB(260, "¬B"));
+    parts = parts.concat(leaf(l2x, 40, "A and B", pAB, activeFor("AB"), "var(--good)"));
+    parts = parts.concat(leaf(l2x, 110, "A and ¬B", pANB, activeFor("ANB"), "var(--good)"));
+    parts = parts.concat(leaf(l2x, 190, "¬A and B", pNAB, activeFor("NAB"), "var(--good)"));
+    parts = parts.concat(leaf(l2x, 260, "¬A and ¬B", pNANB, activeFor("NANB"), "var(--good)"));
+    // color legend explaining the teal (A-layer) vs gold (B-layer) branch coloring
+    const legX = 30, legY = 305;
+    parts.push(el("line",{x1:legX,y1:legY,x2:legX+20,y2:legY,stroke:"var(--pA)",["stroke-width"]:2.4}));
+    const legA = el("text",{x:legX+26,y:legY+4,"font-family":"Inter","font-size":"11.5",fill:"var(--ink-soft)"}); legA.textContent="teal branch = A / ¬A"; parts.push(legA);
+    parts.push(el("line",{x1:legX+180,y1:legY,x2:legX+200,y2:legY,stroke:"var(--pB)",["stroke-width"]:2.4}));
+    const legB = el("text",{x:legX+206,y:legY+4,"font-family":"Inter","font-size":"11.5",fill:"var(--ink-soft)"}); legB.textContent="gold branch = B / ¬B"; parts.push(legB);
+    parts.forEach(p => svg.appendChild(p));
+
+    const v = document.getElementById("treeVerdict");
+    if(highlight==="and"){
+      v.innerHTML = `Multiply <b>down</b> the one path to "A and B": P(A) × P(B|A) = ${pA.toFixed(2)} × ${pBgA.toFixed(2)} = <span class="big">${pAB.toFixed(4)}</span>`;
+    } else if(highlight==="or"){
+      const orVal = pAB+pANB+pNAB;
+      const orAlt = pA + (pA*pBgA + (1-pA)*pBgNA) - pAB;
+      v.innerHTML = `Add <b>across</b> the three non-¬A¬B leaves: ${pAB.toFixed(4)} + ${pANB.toFixed(4)} + ${pNAB.toFixed(4)} = <span class="big">${orVal.toFixed(4)}</span><br>Equivalently: P(A) + P(B) − P(A and B) = ${pA.toFixed(2)} + ${(pAB+pNAB).toFixed(2)} − ${pAB.toFixed(2)} ≈ <b>${orAlt.toFixed(4)}</b> (rounding differences aside — same answer, one subtraction avoiding the double-count of the AB leaf).`;
+    } else {
+      v.innerHTML = `Four leaves sum to <b>${(pAB+pANB+pNAB+pNANB).toFixed(4)}</b> — always 1, since the tree must end somewhere. Pick a highlight button to see AND (multiply) or OR (add) in action.`;
+    }
+  }
+  document.getElementById("treeIndep").addEventListener("click", function(){
+    treeMode="indep"; this.classList.add("active"); document.getElementById("treeDep").classList.remove("active");
+    document.getElementById("rowIndepB").style.display=""; document.getElementById("rowDepB1").style.display="none"; document.getElementById("rowDepB2").style.display="none";
+    drawTree();
+  });
+  document.getElementById("treeDep").addEventListener("click", function(){
+    treeMode="dep"; this.classList.add("active"); document.getElementById("treeIndep").classList.remove("active");
+    document.getElementById("rowIndepB").style.display="none"; document.getElementById("rowDepB1").style.display=""; document.getElementById("rowDepB2").style.display="";
+    drawTree();
+  });
+  document.getElementById("btnShowAnd").addEventListener("click", () => { highlight="and"; drawTree(); });
+  document.getElementById("btnShowOr").addEventListener("click", () => { highlight="or"; drawTree(); });
+  document.getElementById("btnClearHi").addEventListener("click", () => { highlight=null; drawTree(); });
+  [trPA,trPB,trPBgA,trPBgNA].forEach(inp => inp.addEventListener("input", drawTree));
+  drawTree();
+
+  /* =========================================================
+     TAB — MONTY HALL
+     ========================================================= */
+  const montyNSlider = document.getElementById("montyN");
+  let montyN = 3, montyStay = 0, montySwitch = 0, montyTotal = 0, montyLastRound = null;
+
+  function montyRunOneRound(N){
+    const pick = 0;
+    const car = Math.floor(Math.random()*N);
+    let survivor;
+    if (car === pick){
+      const others = []; for (let i=0;i<N;i++) if (i!==pick) others.push(i);
+      survivor = others[Math.floor(Math.random()*others.length)];
+    } else {
+      survivor = car;
+    }
+    return {N, pick, car, survivor};
+  }
+
+  function montyRenderDoors(round){
+    const wrap = document.getElementById("montyDoors");
+    wrap.innerHTML = "";
+    for (let i=0; i<round.N; i++){
+      const d = document.createElement("div");
+      const classes = ["door"];
+      if (i === round.pick) classes.push("pick");
+      else if (i === round.survivor) classes.push("survivor");
+      else classes.push("opened");
+      if (i === round.car) classes.push("reveal-car");
+      d.className = classes.join(" ");
+      d.textContent = String(i+1);
+      wrap.appendChild(d);
+    }
+    const stayWon = round.car === round.pick;
+    const switchWon = round.car === round.survivor;
+    document.getElementById("montyRoundCaption").innerHTML =
+      `Door <b>${round.pick+1}</b> = your pick &nbsp;·&nbsp; door <b>${round.survivor+1}</b> = the survivor (host opened all other ${round.N-2} goat doors) &nbsp;·&nbsp; car is actually behind door <b>${round.car+1}</b>. `+
+      `<span style="color:${stayWon?'var(--good)':'var(--bad)'}">Staying ${stayWon?"wins":"loses"}.</span> `+
+      `<span style="color:${switchWon?'var(--good)':'var(--bad)'}">Switching ${switchWon?"wins":"loses"}.</span>`;
+  }
+
+  function montyRenderTally(){
+    const stayPct = montyTotal ? (montyStay/montyTotal*100) : 0;
+    const switchPct = montyTotal ? (montySwitch/montyTotal*100) : 0;
+    document.getElementById("montyStayBar").innerHTML =
+      `<div style="background:var(--good); width:${stayPct}%">${stayPct>10?stayPct.toFixed(1)+"%":""}</div>`+
+      `<div style="background:rgba(217,99,107,0.35); width:${100-stayPct}%"></div>`;
+    document.getElementById("montySwitchBar").innerHTML =
+      `<div style="background:var(--good); width:${switchPct}%">${switchPct>10?switchPct.toFixed(1)+"%":""}</div>`+
+      `<div style="background:rgba(217,99,107,0.35); width:${100-switchPct}%"></div>`;
+    const theory = ((montyN-1)/montyN*100).toFixed(1);
+    document.getElementById("montyVerdict").innerHTML =
+      `Across <b>${montyTotal}</b> tallied round${montyTotal===1?"":"s"} at ${montyN} doors: stay wins <b>${stayPct.toFixed(1)}%</b>, switch wins <b>${switchPct.toFixed(1)}%</b> `+
+      `&nbsp;·&nbsp; theory says stay → <b>${(100/montyN).toFixed(1)}%</b>, switch → <b>${theory}%</b> (= (N−1)/N).`;
+  }
+
+  function montyRunRound(){
+    const round = montyRunOneRound(montyN);
+    montyLastRound = round;
+    montyTotal++;
+    if (round.car === round.pick) montyStay++;
+    if (round.car === round.survivor) montySwitch++;
+    montyRenderDoors(round);
+    montyRenderTally();
+  }
+  function montyRunBatch(){
+    let batchStay=0, batchSwitch=0;
+    for (let i=0;i<2000;i++){
+      const round = montyRunOneRound(montyN);
+      if (round.car === round.pick) batchStay++;
+      if (round.car === round.survivor) batchSwitch++;
+    }
+    montyStay += batchStay; montySwitch += batchSwitch; montyTotal += 2000;
+    montyRenderTally();
+  }
+  function montyResetTally(){
+    montyStay=0; montySwitch=0; montyTotal=0; montyRenderTally();
+  }
+  montyNSlider.addEventListener("input", () => {
+    montyN = parseInt(montyNSlider.value,10);
+    document.getElementById("montyNOut").textContent = montyN;
+    montyResetTally();
+    document.getElementById("montyDoors").innerHTML = "";
+    document.getElementById("montyRoundCaption").textContent = "Run a round to see doors 1.."+montyN+" in action.";
+  });
+  document.getElementById("montyRound").addEventListener("click", montyRunRound);
+  document.getElementById("montyBatch").addEventListener("click", montyRunBatch);
+  document.getElementById("montyReset").addEventListener("click", montyResetTally);
+  montyRenderTally();
+  document.getElementById("montyRoundCaption").textContent = "Run a round to see doors 1..3 in action.";
+
+  /* =========================================================
+     TAB — BIRTHDAY PARADOX
+     ========================================================= */
+  const bdayNSlider = document.getElementById("bdayN");
+  const bdayCanvas = document.getElementById("bdayCanvas"), bctx = bdayCanvas.getContext("2d");
+  const BW = bdayCanvas.width, BH = bdayCanvas.height;
+  let bdaySimResult = null; // {n, empirical}
+
+  function bdayExactProb(n){
+    let noMatch = 1;
+    for (let i=0;i<n;i++) noMatch *= (365-i)/365;
+    return 1-noMatch;
+  }
+  function bdaySimulate(n, trials){
+    let matches = 0;
+    for (let t=0;t<trials;t++){
+      const seen = new Set();
+      let hasMatch = false;
+      for (let p=0;p<n;p++){
+        const bday = Math.floor(Math.random()*365);
+        if (seen.has(bday)){ hasMatch = true; break; }
+        seen.add(bday);
+      }
+      if (hasMatch) matches++;
+    }
+    return matches/trials;
+  }
+  function bdayDraw(){
+    bctx.clearRect(0,0,BW,BH);
+    const pad = 40;
+    function px(n){ return pad + (n/100)*(BW-2*pad); }
+    function py(p){ return BH-pad - p*(BH-2*pad); }
+    // gridlines at 0,25,50,75,100%
+    bctx.strokeStyle = "rgba(27,36,48,0.10)"; bctx.lineWidth = 1;
+    bctx.font = '11px "IBM Plex Mono",monospace'; bctx.fillStyle = "var(--ink-soft)";
+    [0,0.25,0.5,0.75,1].forEach(p => {
+      bctx.beginPath(); bctx.moveTo(pad,py(p)); bctx.lineTo(BW-pad,py(p)); bctx.stroke();
+      bctx.fillText((p*100).toFixed(0)+"%", 4, py(p)+4);
+    });
+    // exact curve
+    bctx.beginPath(); bctx.strokeStyle = "var(--pred)"; bctx.lineWidth = 2.2;
+    for (let n=1;n<=100;n++){
+      const X = px(n), Y = py(bdayExactProb(n));
+      if (n===1) bctx.moveTo(X,Y); else bctx.lineTo(X,Y);
+    }
+    bctx.stroke();
+    // 50% dashed line
+    bctx.strokeStyle = "var(--accent)"; bctx.setLineDash([5,4]); bctx.lineWidth = 1.4;
+    bctx.beginPath(); bctx.moveTo(pad,py(0.5)); bctx.lineTo(BW-pad,py(0.5)); bctx.stroke(); bctx.setLineDash([]);
+    // current-N marker
+    const n = parseInt(bdayNSlider.value,10);
+    const exact = bdayExactProb(n);
+    bctx.beginPath(); bctx.arc(px(n), py(exact), 5, 0, 7); bctx.fillStyle = "var(--pred)"; bctx.fill();
+    bctx.strokeStyle="#fff"; bctx.lineWidth=1.5; bctx.stroke();
+    // simulated marker, if available for this n
+    if (bdaySimResult && bdaySimResult.n === n){
+      bctx.beginPath(); bctx.arc(px(n), py(bdaySimResult.empirical), 5, 0, 7);
+      bctx.fillStyle = "var(--pB)"; bctx.fill(); bctx.strokeStyle="#fff"; bctx.lineWidth=1.5; bctx.stroke();
+    }
+    bctx.fillStyle = "var(--ink-soft)"; bctx.font = '11px "IBM Plex Mono",monospace';
+    bctx.fillText("people in the room →", BW-pad-118, BH-10);
+
+    document.getElementById("bdayVerdict").innerHTML =
+      `At <b>${n}</b> people: exact P(at least one shared birthday) = <span class="big">${(exact*100).toFixed(1)}%</span>`+
+      (bdaySimResult && bdaySimResult.n===n ? ` &nbsp;·&nbsp; simulated (3,000 rooms): <b>${(bdaySimResult.empirical*100).toFixed(1)}%</b>` : "");
+    let formulaStr = "";
+    if (n>1){
+      const shownHead = Math.min(n-1, 4); // i = 1..shownHead shown explicitly
+      const terms = []; for (let i=1;i<=shownHead;i++) terms.push(`${365-i}/365`);
+      const needsEllipsis = n-1 > shownHead+1; // there's a real gap between the head and the last term
+      const lastTerm = `${365-(n-1)}/365`;
+      let tail = "";
+      if (needsEllipsis) tail = ` × ... × ${lastTerm}`;
+      else if (n-1 === shownHead+1) tail = ` × ${lastTerm}`; // exactly one more term, show it plainly
+      formulaStr = `P(no match) = (365/365) × ${terms.join(" × ")}${tail} = ${(1-exact).toFixed(4)}`;
+    }
+    document.getElementById("bdayFormula").textContent = formulaStr;
+  }
+  bdayNSlider.addEventListener("input", () => {
+    document.getElementById("bdayNOut").textContent = bdayNSlider.value;
+    bdayDraw();
+  });
+  document.getElementById("bdaySim").addEventListener("click", () => {
+    const n = parseInt(bdayNSlider.value,10);
+    bdaySimResult = {n, empirical: bdaySimulate(n, 3000)};
+    bdayDraw();
+  });
+  bdayDraw();
+
+  /* =========================================================
+     PAIRS EXPLORER (inside the Birthday Paradox tab)
+     ========================================================= */
+  const pairSvg = document.getElementById("pairSvg");
+  const pairNSlider = document.getElementById("pairN");
+  let pairArrived = 1; // how many people have "walked in" so far (starts at 1: person 1 is already there)
+
+  function pairDraw(){
+    pairSvg.innerHTML = "";
+    const n = parseInt(pairNSlider.value, 10);
+    if (pairArrived > n) pairArrived = n;
+    const cx = 240, cy = 190, radius = 130;
+    const pts = [];
+    for (let i=0;i<n;i++){
+      const angle = -Math.PI/2 + i*(2*Math.PI/n);
+      pts.push({ x: cx + radius*Math.cos(angle), y: cy + radius*Math.sin(angle) });
+    }
+    // settled (already-drawn) pairs: every pair among the first (pairArrived-1) people
+    for (let i=0;i<pairArrived-1;i++){
+      for (let j=i+1;j<pairArrived-1;j++){
+        pairSvg.appendChild(el("line",{x1:pts[i].x,y1:pts[i].y,x2:pts[j].x,y2:pts[j].y,
+          stroke:"var(--line)","stroke-width":1.4}));
+      }
+    }
+    // newest arrival's checks: the just-arrived person (index pairArrived-1) against everyone before them
+    let newChecks = 0;
+    if (pairArrived >= 2){
+      const k = pairArrived - 1; // index of newest arrival
+      for (let i=0;i<k;i++){
+        pairSvg.appendChild(el("line",{x1:pts[i].x,y1:pts[i].y,x2:pts[k].x,y2:pts[k].y,
+          stroke:"var(--accent)","stroke-width":2.4}));
+        newChecks++;
+      }
+    }
+    // dots
+    for (let i=0;i<n;i++){
+      const arrived = i < pairArrived;
+      pairSvg.appendChild(el("circle",{cx:pts[i].x, cy:pts[i].y, r:14,
+        fill: arrived ? (i===pairArrived-1 && pairArrived>=2 ? "var(--accent)" : "var(--pB)") : "#fff",
+        stroke: arrived ? "none" : "var(--line)", "stroke-width":2}));
+      pairSvg.appendChild(el("text",{x:pts[i].x, y:pts[i].y+4, "text-anchor":"middle",
+        "font-size":11,"font-family":"IBM Plex Mono,monospace",
+        fill: arrived ? "#fff" : "var(--ink-soft)"}, String(i+1)));
+    }
+    const cumulative = pairArrived*(pairArrived-1)/2;
+    const batchTotal = n*(n-1)/2;
+    const daysAlreadyClaimed = pairArrived - 1;
+    const daysOpen = 365 - daysAlreadyClaimed;
+    let fractionLine = "";
+    if (pairArrived >= 2){
+      fractionLine = ` &nbsp;·&nbsp; person ${pairArrived}'s own no-clash chance right now: days already claimed = <b>${daysAlreadyClaimed}</b>, days still open = <b>${daysOpen}</b>, so <b>${daysOpen}/365</b>`;
+    }
+    document.getElementById("pairVerdict").innerHTML =
+      (pairArrived < 2
+        ? `Person 1 is in the room. No one to check against yet — <b>0</b> pairs so far.`
+        : `Person <b>${pairArrived}</b> just walked in and checked against the <b>${newChecks}</b> people already there (the highlighted lines) — <b>${newChecks}</b> new pairs this arrival.`)
+      + `<br>Running total of pairs discovered so far: <b>${cumulative}</b> &nbsp;·&nbsp; full-room batch count once all ${n} arrive: <b>${batchTotal}</b> = ${n}×${n-1}/2`
+      + fractionLine;
+  }
+  pairNSlider.addEventListener("input", () => {
+    document.getElementById("pairNOut").textContent = pairNSlider.value;
+    pairArrived = 1;
+    pairDraw();
+  });
+  document.getElementById("pairNext").addEventListener("click", () => {
+    const n = parseInt(pairNSlider.value, 10);
+    if (pairArrived < n) pairArrived++;
+    pairDraw();
+  });
+  document.getElementById("pairReset").addEventListener("click", () => {
+    pairArrived = 1;
+    pairDraw();
+  });
+  pairDraw();
+
+  /* =========================================================
+     HASH COLLISION ATTACK (inside the Birthday Paradox tab)
+     ========================================================= */
+  const hashBitsSlider = document.getElementById("hashBits");
+  function attemptsForCollision50(N){
+    let noMatch = 1, k = 0;
+    while (1 - noMatch < 0.5) {
+      noMatch *= (N - k) / N;
+      k++;
+      if (k > N) break;
+    }
+    return k;
+  }
+  function attemptsForSpecificMatch50(N){
+    return Math.ceil(Math.log(0.5) / Math.log(1 - 1/N));
+  }
+  function drawHash(){
+    const bits = parseInt(hashBitsSlider.value, 10);
+    document.getElementById("hashBitsOut").textContent = bits;
+    const N = Math.pow(2, bits);
+    const kColl = attemptsForCollision50(N);
+    const kSpec = attemptsForSpecificMatch50(N);
+    const ratio = kSpec / kColl;
+    document.getElementById("hashVerdict").innerHTML =
+      `Possible fingerprints: 2^${bits} = <b>${N.toLocaleString()}</b><br>`+
+      `Attempts for a 50% chance of <b>any</b> collision: <span class="big">${kColl.toLocaleString()}</span> (≈1.1774×√N)<br>`+
+      `Attempts for a 50% chance of matching <b>one specific</b> fingerprint: <span class="big">${kSpec.toLocaleString()}</span> (≈0.6931×N)<br>`+
+      `Specific-match search needs <b>${ratio.toFixed(1)}×</b> more attempts than collision search, at this bit-length.`;
+  }
+  hashBitsSlider.addEventListener("input", drawHash);
+  drawHash();
+
+  /* =========================================================
+     CONDITIONAL PROBABILITY — 10x10 GRID MODEL
+     ========================================================= */
+  const condASlider = document.getElementById("condA"), condBSlider = document.getElementById("condB"), condOverlapSlider = document.getElementById("condOverlap");
+  const condAOut = document.getElementById("condAOut"), condBOut = document.getElementById("condBOut"), condOverlapOut = document.getElementById("condOverlapOut");
+  let condShrunk = false;
+  function clampOverlap(){
+    const A = parseInt(condASlider.value,10), B = parseInt(condBSlider.value,10);
+    const maxOverlap = Math.min(A,B);
+    const minOverlap = Math.max(0, A+B-100);
+    condOverlapSlider.max = maxOverlap;
+    let ov = parseInt(condOverlapSlider.value,10);
+    if (ov > maxOverlap) ov = maxOverlap;
+    if (ov < minOverlap) ov = minOverlap;
+    condOverlapSlider.value = ov;
+  }
+  function drawConditional(){
+    clampOverlap();
+    const A = parseInt(condASlider.value,10), B = parseInt(condBSlider.value,10), ov = parseInt(condOverlapSlider.value,10);
+    condAOut.textContent = A; condBOut.textContent = B; condOverlapOut.textContent = ov;
+    const aOnly = A - ov, bOnly = B - ov, neither = 100 - A - bOnly;
+
+    // assign 100 grid cells to regions in fixed order: both, A-only, B-only, neither
+    const regionOf = new Array(100);
+    let idx = 0;
+    for (let i=0;i<ov;i++) regionOf[idx++] = "both";
+    for (let i=0;i<aOnly;i++) regionOf[idx++] = "aOnly";
+    for (let i=0;i<bOnly;i++) regionOf[idx++] = "bOnly";
+    while (idx<100) regionOf[idx++] = "neither";
+
+    const svg = document.getElementById("condSvg");
+    svg.innerHTML = "";
+    const cell = 30, pad = 10;
+    for (let r=0;r<10;r++) for (let c=0;c<10;c++){
+      const i = r*10+c;
+      const region = regionOf[i];
+      let fill = "#F5F4F0", opacity = 1;
+      if (region==="both") fill = "var(--accent)";
+      else if (region==="aOnly") fill = "var(--pA)";
+      else if (region==="bOnly") fill = "var(--pB)";
+      if (condShrunk && region!=="both" && region!=="bOnly") opacity = 0.08;
+      svg.appendChild(el("rect",{x:pad+c*cell, y:pad+r*cell, width:cell-2, height:cell-2, rx:2, fill, opacity}));
+    }
+
+    const pA = A/100, pB = B/100, pAB = ov/100;
+    const pAgivenB = B>0 ? ov/B : 0;
+    const pBgivenA = A>0 ? ov/A : 0;
+    document.getElementById("condVerdict").innerHTML =
+      `P(A) = ${A}/100 = <b>${pA.toFixed(2)}</b> &nbsp;·&nbsp; P(B) = ${B}/100 = <b>${pB.toFixed(2)}</b> &nbsp;·&nbsp; P(A and B) = ${ov}/100 = <b>${pAB.toFixed(2)}</b><br>`+
+      `P(A|B) = ${ov}/${B} = <span class="big">${pAgivenB.toFixed(4)}</span> &nbsp;·&nbsp; P(B|A) = ${ov}/${A} = <span class="big">${pBgivenA.toFixed(4)}</span><br>`+
+      `Symmetry check: P(A|B)×P(B) = ${(pAgivenB*pB).toFixed(4)} &nbsp;=&nbsp; P(B|A)×P(A) = ${(pBgivenA*pA).toFixed(4)} &nbsp;=&nbsp; P(A and B) = ${pAB.toFixed(4)}`;
+  }
+  [condASlider, condBSlider, condOverlapSlider].forEach(inp => inp.addEventListener("input", drawConditional));
+  document.getElementById("condShrinkB").addEventListener("click", function(){
+    condShrunk = true; this.classList.add("active");
+    document.getElementById("condShowAll").classList.remove("active");
+    drawConditional();
+  });
+  document.getElementById("condShowAll").addEventListener("click", function(){
+    condShrunk = false; this.classList.add("active");
+    document.getElementById("condShrinkB").classList.remove("active");
+    drawConditional();
+  });
+  document.getElementById("condCardDeck").addEventListener("click", function(){
+    // A = face cards (12), B = Kings (4), overlap = 4 (every King is a face card) --
+    // P(A|B)=4/4=1 and P(B|A)=4/12=1/3 match the tutorial's exact ratios regardless of grid total.
+    condASlider.value = 12; condBSlider.value = 4; condOverlapSlider.value = 4;
+    drawConditional();
+  });
+  drawConditional();
+
+  /* =========================================================
+     TAB 2 — CROSS-ENTROPY GRADER
+     ========================================================= */
+  const xeP = document.getElementById("xeP"), xeQ = document.getElementById("xeQ");
+  const xePOut = document.getElementById("xePOut"), xeQOut = document.getElementById("xeQOut");
+  function renderXent(){
+    const p1 = parseFloat(xeP.value)/100, q1 = parseFloat(xeQ.value)/100;
+    const p2 = 1-p1, q2 = 1-q1;
+    xePOut.textContent = xeP.value+"%"; xeQOut.textContent = xeQ.value+"%";
+
+    document.getElementById("xeBarP").innerHTML =
+      `<div style="background:var(--true); width:${p1*100}%">${p1>0.12?"rain "+(p1*100).toFixed(0)+"%":""}</div>`+
+      `<div style="background:rgba(15,139,141,0.35); width:${p2*100}%">${p2>0.12?"no-rain "+(p2*100).toFixed(0)+"%":""}</div>`;
+    document.getElementById("xeBarQ").innerHTML =
+      `<div style="background:var(--pred); width:${q1*100}%">${q1>0.12?"rain "+(q1*100).toFixed(0)+"%":""}</div>`+
+      `<div style="background:rgba(70,58,115,0.35); width:${q2*100}%">${q2>0.12?"no-rain "+(q2*100).toFixed(0)+"%":""}</div>`;
+
+    const s1 = -Math.log(q1), s2 = -Math.log(q2);
+    const c1 = p1*s1, c2 = p2*s2;
+    const Hpq = c1+c2;
+    const sp1 = -Math.log(p1), sp2 = -Math.log(p2);
+    const Hp = p1*sp1 + p2*sp2;
+    const KL = Hpq - Hp;
+
+    document.getElementById("xeTable").innerHTML =
+      `<tr><td>Rain</td><td>${p1.toFixed(2)}</td><td>${s1.toFixed(3)}</td><td>${c1.toFixed(3)}</td></tr>`+
+      `<tr><td>No rain</td><td>${p2.toFixed(2)}</td><td>${s2.toFixed(3)}</td><td>${c2.toFixed(3)}</td></tr>`;
+
+    document.getElementById("xeVerdict").innerHTML =
+      `H(p,q) = <b>${Hpq.toFixed(3)}</b> nats &nbsp;·&nbsp; H(p) (best possible) = <b>${Hp.toFixed(3)}</b> nats &nbsp;·&nbsp; KL(p‖q) = <span class="big">${KL.toFixed(3)}</span> nats<br>`+
+      (KL < 0.01
+        ? `<b style="color:var(--good)">Forecast matches truth — the gap has collapsed to zero.</b>`
+        : `The forecaster's average surprise is running <b>${KL.toFixed(3)} nats higher</b> than a perfectly honest forecaster's would.`);
+  }
+  [xeP,xeQ].forEach(inp => inp.addEventListener("input", renderXent));
+  renderXent();
+
+  /* =========================================================
+     TAB 3 — LAW OF LARGE NUMBERS
+     ========================================================= */
+  const llnCanvas = document.getElementById("llnCanvas"), lctx = llnCanvas.getContext("2d");
+  const LW = llnCanvas.width, LH = llnCanvas.height;
+  let llnRolls = 0, llnSum = 0, llnTrace = []; // trace stores {n, avg} sampled logarithmically for a smooth plot
+
+  function llnRoll(){
+    llnRolls++;
+    llnSum += 1 + Math.floor(Math.random()*6);
+    if(llnRolls<=200 || llnRolls%Math.max(1,Math.floor(llnRolls/400))===0){
+      llnTrace.push([llnRolls, llnSum/llnRolls]);
+      if(llnTrace.length>500) llnTrace.splice(0, llnTrace.length-500);
+    }
+  }
+  function drawLln(){
+    lctx.clearRect(0,0,LW,LH);
+    const pad=36;
+    const maxN = Math.max(llnRolls, 10);
+    function px(n){ return pad + (n/maxN)*(LW-2*pad); }
+    function py(v){ return LH-pad - ((v-1)/5)*(LH-2*pad); } // v in [1,6]
+    // gridlines 1..6
+    lctx.strokeStyle="rgba(27,36,48,0.10)"; lctx.lineWidth=1;
+    for(let v=1;v<=6;v++){ lctx.beginPath(); lctx.moveTo(pad,py(v)); lctx.lineTo(LW-pad,py(v)); lctx.stroke(); }
+    lctx.fillStyle="var(--ink-soft)"; lctx.font='11px "IBM Plex Mono",monospace';
+    for(let v=1;v<=6;v++){ lctx.fillText(v, 8, py(v)+4); }
+    // dashed 3.5 line
+    lctx.strokeStyle="var(--accent)"; lctx.setLineDash([5,4]); lctx.lineWidth=1.6;
+    lctx.beginPath(); lctx.moveTo(pad,py(3.5)); lctx.lineTo(LW-pad,py(3.5)); lctx.stroke(); lctx.setLineDash([]);
+    lctx.fillStyle="var(--accent)"; lctx.fillText("expectation = 3.5", LW-pad-118, py(3.5)-6);
+    // trace
+    lctx.beginPath(); lctx.strokeStyle="var(--pred)"; lctx.lineWidth=2.2;
+    llnTrace.forEach((pt,i) => { const X=px(pt[0]), Y=py(pt[1]); if(i===0) lctx.moveTo(X,Y); else lctx.lineTo(X,Y); });
+    lctx.stroke();
+    if(llnTrace.length){
+      const last = llnTrace[llnTrace.length-1];
+      lctx.beginPath(); lctx.arc(px(last[0]), py(last[1]), 4, 0, 7); lctx.fillStyle="var(--pred)"; lctx.fill();
+    }
+    const avg = llnRolls ? (llnSum/llnRolls) : 0;
+    document.getElementById("llnVerdict").innerHTML =
+      `Rolls so far: <b>${llnRolls}</b> &nbsp;·&nbsp; running average: <span class="big">${avg.toFixed(4)}</span> &nbsp;·&nbsp; distance from 3.5: <b>${Math.abs(avg-3.5).toFixed(4)}</b>`;
+  }
+  document.getElementById("llnRollOne").addEventListener("click", () => { llnRoll(); drawLln(); });
+  document.getElementById("llnRollMany").addEventListener("click", () => { for(let i=0;i<1000;i++) llnRoll(); drawLln(); });
+  document.getElementById("llnReset").addEventListener("click", () => { llnRolls=0; llnSum=0; llnTrace=[]; drawLln(); });
+  drawLln();
+
+  /* =========================================================
+     TAB — BASE-RATE EXPLORER
+     ========================================================= */
+  const brPrev = document.getElementById("brPrev"), brTPR = document.getElementById("brTPR"), brFPR = document.getElementById("brFPR");
+  function drawBaseRate(){
+    const prevPercent = parseFloat(brPrev.value);
+    const prev = prevPercent/100; // fraction
+    const tpr = parseFloat(brTPR.value)/100;
+    const fpr = parseFloat(brFPR.value)/100;
+    document.getElementById("brPrevOut").textContent = (prev*100).toFixed(2)+"%";
+    document.getElementById("brTPROut").textContent = (tpr*100).toFixed(0)+"%";
+    document.getElementById("brFPROut").textContent = (fpr*100).toFixed(0)+"%";
+
+    const N = 1000000; // fixed large population so every count is stable and precise
+    const positive = N*prev, negative = N*(1-prev);
+    const truePos = positive*tpr, falseNeg = positive*(1-tpr);
+    const falsePos = negative*fpr, trueNeg = negative*(1-fpr);
+    const totalFlagged = truePos + falsePos;
+    const ppv = totalFlagged>0 ? truePos/totalFlagged : 0;
+
+    const svg = document.getElementById("brSvg");
+    svg.innerHTML = "";
+    const W=640,H=220,pad=50;
+    const bars = [
+      {label:"True positives", val: truePos, color:"var(--pB)"},
+      {label:"False positives", val: falsePos, color:"var(--bad)"},
+      {label:"False negatives", val: falseNeg, color:"#C9B98A"},
+      {label:"True negatives", val: trueNeg, color:"var(--good)"},
+    ];
+    const maxVal = Math.max(...bars.map(b=>b.val), 1);
+    const gap = (W-2*pad)/bars.length, bw = gap*0.6;
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--line)"}));
+    bars.forEach((b,i) => {
+      const x = pad + i*gap + (gap-bw)/2;
+      const hgt = Math.sqrt(b.val/maxVal)*(H-2*pad); // sqrt scale so small-but-nonzero bars stay visible
+      svg.appendChild(el("rect",{x, y:H-pad-hgt, width:bw, height:hgt, fill:b.color, opacity:0.88}));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad-hgt-8, "text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono,monospace", fill:"var(--ink)"}, Math.round(b.val).toLocaleString()));
+      svg.appendChild(el("text",{x:x+bw/2, y:H-pad+18, "text-anchor":"middle","font-size":10.5,"font-family":"IBM Plex Mono,monospace", fill:"var(--ink-soft)"}, b.label));
+    });
+
+    document.getElementById("brVerdict").innerHTML =
+      `Out of a population of 1,000,000: <b>${Math.round(positive).toLocaleString()}</b> actually have the condition, <b>${Math.round(negative).toLocaleString()}</b> don't.<br>`+
+      `Flagged positive: <b>${Math.round(truePos).toLocaleString()}</b> true + <b>${Math.round(falsePos).toLocaleString()}</b> false = <b>${Math.round(totalFlagged).toLocaleString()}</b> total.<br>`+
+      `P(condition | positive) = ${Math.round(truePos)}/${Math.round(totalFlagged)} = <span class="big">${(ppv*100).toFixed(2)}%</span>`;
+  }
+  [brPrev,brTPR,brFPR].forEach(inp => inp.addEventListener("input", drawBaseRate));
+  document.getElementById("btnBrProblem12").addEventListener("click", () => {
+    brPrev.value = 20; brTPR.value = 95; brFPR.value = 2;
+    drawBaseRate();
+  });
+  document.getElementById("btnBrProblem13").addEventListener("click", () => {
+    brPrev.value = 0.02; brTPR.value = 98; brFPR.value = 3;
+    drawBaseRate();
+  });
+  drawBaseRate();
+
+  /* =========================================================
+     TAB — VARIANCE COMPARER
+     ========================================================= */
+  const varMean = document.getElementById("varMean"), varSpreadA = document.getElementById("varSpreadA"), varSpreadB = document.getElementById("varSpreadB");
+  const varMeanOut = document.getElementById("varMeanOut"), varSpreadAOut = document.getElementById("varSpreadAOut"), varSpreadBOut = document.getElementById("varSpreadBOut");
+  function variance3(mean, spread){
+    const vals = [mean-spread, mean, mean+spread];
+    return vals.reduce((s,v)=>s+((v-mean)**2),0)/3;
+  }
+  function drawVariance(){
+    const mean = parseFloat(varMean.value), sA = parseFloat(varSpreadA.value), sB = parseFloat(varSpreadB.value);
+    varMeanOut.textContent = mean; varSpreadAOut.textContent = sA; varSpreadBOut.textContent = sB;
+    const vA = variance3(mean, sA), vB = variance3(mean, sB);
+
+    const svg = document.getElementById("varSvg");
+    svg.innerHTML = "";
+    const W=640,H=200,pad=50;
+    const maxSpread = Math.max(sA,sB,1);
+    const axisMin = mean-maxSpread-5, axisMax = mean+maxSpread+5;
+    function px(v){ return pad + (v-axisMin)/(axisMax-axisMin)*(W-2*pad); }
+    const rowA = 70, rowB = 150;
+    svg.appendChild(el("line",{x1:pad,y1:rowA,x2:W-pad,y2:rowA,stroke:"var(--line)"}));
+    svg.appendChild(el("line",{x1:pad,y1:rowB,x2:W-pad,y2:rowB,stroke:"var(--line)"}));
+    svg.appendChild(el("line",{x1:px(mean),y1:30,x2:px(mean),y2:180,stroke:"var(--accent)","stroke-dasharray":"4,4","stroke-width":1.2}));
+    svg.appendChild(el("text",{x:px(mean),y:20,"text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono,monospace",fill:"var(--accent)"}, "mean = "+mean));
+    [[mean-sA,rowA,"var(--pred)"],[mean,rowA,"var(--pred)"],[mean+sA,rowA,"var(--pred)"]].forEach(([v,y,c]) => {
+      svg.appendChild(el("circle",{cx:px(v),cy:y,r:7,fill:c}));
+    });
+    [[mean-sB,rowB,"var(--pB)"],[mean,rowB,"var(--pB)"],[mean+sB,rowB,"var(--pB)"]].forEach(([v,y,c]) => {
+      svg.appendChild(el("circle",{cx:px(v),cy:y,r:7,fill:c}));
+    });
+    svg.appendChild(el("text",{x:pad-8,y:rowA+4,"text-anchor":"end","font-size":11,"font-family":"IBM Plex Mono,monospace",fill:"var(--ink-soft)"}, "A"));
+    svg.appendChild(el("text",{x:pad-8,y:rowB+4,"text-anchor":"end","font-size":11,"font-family":"IBM Plex Mono,monospace",fill:"var(--ink-soft)"}, "B"));
+
+    document.getElementById("varVerdict").innerHTML =
+      `Machine A: values ${mean-sA}, ${mean}, ${mean+sA} &nbsp;·&nbsp; Var(A) = <b>${vA.toFixed(2)}</b><br>`+
+      `Machine B: values ${mean-sB}, ${mean}, ${mean+sB} &nbsp;·&nbsp; Var(B) = <b>${vB.toFixed(2)}</b><br>`+
+      `Spread ratio (B÷A): <b>${(sB/sA).toFixed(2)}×</b> &nbsp;·&nbsp; Variance ratio (B÷A): <span class="big">${(vB/vA).toFixed(2)}×</span>`;
+  }
+  [varMean,varSpreadA,varSpreadB].forEach(inp => inp.addEventListener("input", drawVariance));
+  drawVariance();
+
+  /* =========================================================
+     TAB — BINOMIAL & POISSON
+     ========================================================= */
+  function combC(n,k){
+    if (k<0 || k>n) return 0;
+    let r = 1;
+    for (let i=0;i<k;i++) r = r*(n-i)/(i+1);
+    return r;
+  }
+  function binomPMF(n,p){
+    const out = [];
+    for (let k=0;k<=n;k++) out.push(combC(n,k)*Math.pow(p,k)*Math.pow(1-p,n-k));
+    return out;
+  }
+  function poissonPMF(lam, kmax){
+    const out = [];
+    let term = Math.exp(-lam); // k=0 term
+    out.push(term);
+    for (let k=1;k<=kmax;k++){ term = term*lam/k; out.push(term); }
+    return out;
+  }
+  function drawBars(svgId, pmf, color, outlinePmf){
+    const svg = document.getElementById(svgId);
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    const W=640,H=220,padL=30,padB=24,padT=10;
+    const n = pmf.length;
+    const maxP = Math.max(...pmf, outlinePmf ? Math.max(...outlinePmf) : 0) || 1;
+    const barW = (W-padL-10)/n;
+    svg.appendChild(el("line",{x1:padL,y1:H-padB,x2:W-10,y2:H-padB,stroke:"var(--line)"}));
+    pmf.forEach((v,k)=>{
+      const h = (v/maxP)*(H-padB-padT);
+      svg.appendChild(el("rect",{x:padL+k*barW+1, y:H-padB-h, width:Math.max(barW-2,1), height:h, fill:color, opacity:0.85}));
+    });
+    if (outlinePmf){
+      let pts = "";
+      outlinePmf.forEach((v,k)=>{
+        const h = (v/maxP)*(H-padB-padT);
+        const cx = padL+k*barW+barW/2;
+        pts += (cx)+","+(H-padB-h)+" ";
+      });
+      svg.appendChild(el("polyline",{points:pts.trim(), fill:"none", stroke:"var(--accent)", "stroke-width":2}));
+    }
+    // x-axis ticks every ~5 counts
+    const step = n<=20 ? 1 : Math.ceil(n/20)*5;
+    for (let k=0;k<n;k+=step){
+      svg.appendChild(el("text",{x:padL+k*barW+barW/2, y:H-8, "text-anchor":"middle", "font-size":10, fill:"var(--ink-soft)"}, String(k)));
+    }
+  }
+  const bpN = document.getElementById("bpN"), bpP = document.getElementById("bpP");
+  function renderBinom(){
+    const n = parseInt(bpN.value,10);
+    const p = parseInt(bpP.value,10)/100;
+    document.getElementById("bpNOut").textContent = n;
+    document.getElementById("bpPOut").textContent = p.toFixed(2);
+    const pmf = binomPMF(n,p);
+    drawBars("bpSvg", pmf, "var(--pA)");
+    const mean = n*p, variance = n*p*(1-p);
+    document.getElementById("bpVerdict").innerHTML =
+      `mean = n&middot;p = <b>${mean.toFixed(2)}</b> &nbsp;&middot;&nbsp; variance = n&middot;p&middot;(1-p) = <b>${variance.toFixed(2)}</b>`;
+  }
+  [bpN,bpP].forEach(inp=>inp.addEventListener("input", renderBinom));
+  renderBinom();
+
+  const bpLam = document.getElementById("bpLam");
+  function renderPoisson(){
+    const lam = parseInt(bpLam.value,10)/10;
+    document.getElementById("bpLamOut").textContent = lam.toFixed(1);
+    const kmax = Math.max(20, Math.ceil(lam*3));
+    const pmf = poissonPMF(lam, kmax);
+    // matching Binomial(n=2000, p=lam/n) overlay to show the limit is real
+    const nApprox = 2000, pApprox = lam/nApprox;
+    const binomOverlay = [];
+    for (let k=0;k<=kmax;k++) binomOverlay.push(combC(nApprox,k)*Math.pow(pApprox,k)*Math.pow(1-pApprox,nApprox-k));
+    drawBars("poisSvg", pmf, "var(--pB)", binomOverlay);
+    document.getElementById("poisVerdict").innerHTML =
+      `mean = &lambda; = <b>${lam.toFixed(2)}</b> &nbsp;&middot;&nbsp; variance = <b>${lam.toFixed(2)}</b> (always equal) &nbsp;&middot;&nbsp; purple outline: Binomial(n=2000, p=&lambda;/n) -- the limit this distribution comes from`;
+  }
+  bpLam.addEventListener("input", renderPoisson);
+  renderPoisson();
+})();
+</script>
+</body>
+</html>

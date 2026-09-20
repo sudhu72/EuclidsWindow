@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Galton board — watching the bell curve assemble itself</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  svg{width:100%;height:auto;display:block;}
+
+  .peg{fill:var(--chalk-dim);opacity:.55;}
+  .ball{fill:var(--coral);}
+  .bar{fill:var(--amber);transition:height .25s ease, y .25s ease;}
+  .bin-divider{stroke:var(--border);stroke-width:1px;}
+
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:12px;}
+  button{background:var(--bg-panel);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:9px 16px;border-radius:6px;cursor:pointer;}
+  button:hover{border-color:var(--chalk-dim);}
+  .counter{text-align:center;font-family:'Kalam',cursive;font-size:15px;color:var(--chalk-dim);margin-top:10px;}
+  .counter .n{color:var(--green);}
+
+  .faq-content{display:none;margin-top:16px;font-size:13px;line-height:1.7;color:var(--chalk-dim);}
+  .faq-content.open{display:block;}
+  .faq-content p{margin:0 0 14px;} .faq-content p:last-child{margin-bottom:0;}
+  .faq-content strong{color:var(--chalk);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>The Galton board</h1>
+  <p class="sub">Every single bounce is a 50/50 coin flip. Watch what the coin flips build anyway.</p>
+
+  <div class="panel">
+    <svg viewBox="0 0 900 560" id="boardSvg"></svg>
+
+    <div class="controls">
+      <button id="btnDrop1">Drop 1 ball</button>
+      <button id="btnDrop50">Drop 50 balls</button>
+      <button id="btnDrop500">Drop 500 balls</button>
+      <button id="btnReset">Reset</button>
+    </div>
+    <div class="counter">balls dropped: <span class="n" id="counterVal">0</span></div>
+  </div>
+
+  <div class="panel">
+    <button id="btnFaq">Why does a pile of coin flips form a bell curve? ▾</button>
+    <div class="faq-content" id="faqContent">
+      <p><strong>Each single bounce is genuinely as far from bell-shaped as a distribution gets</strong> — a coin flip is exactly 50/50, a flat, two-outcome distribution with no curve to it at all.</p>
+      <p><strong>But a ball's FINAL bin is the sum of 12 independent bounces</strong>, not just one. There's only one way to bounce right all 12 times (landing at the far-right bin), and only one way to bounce left all 12 times — but there are far more ways to end up with, say, 6 rights and 6 lefts in some order, since those can happen in many different sequences. More possible sequences land you in the middle bins than the edge bins, purely from counting — and that counting fact alone is what sculpts the coin flips into a bell shape.</p>
+      <p><strong>This is the Central Limit Theorem, felt rather than proven:</strong> add up enough small independent random effects, and their sum trends toward a bell curve, regardless of how unlike a bell curve any single effect was on its own. A person's height, built from hundreds of small independent genetic and environmental nudges, follows the exact same logic as this pegboard.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const svgns = 'http://www.w3.org/2000/svg';
+const ROWS = 12;
+const BINS = ROWS + 1;
+const svg = document.getElementById('boardSvg');
+
+const boardTop = 30, boardBottom = 330, boardLeft = 100, boardRight = 800;
+const rowHeight = (boardBottom - boardTop) / ROWS;
+const colWidth = (boardRight - boardLeft) / ROWS;
+const centerX = (boardLeft + boardRight) / 2;
+
+function el(tag, attrs){
+  const e = document.createElementNS(svgns, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+// Draw the peg triangle: row r has r+1 pegs
+for(let r=0; r<ROWS; r++){
+  for(let i=0; i<=r; i++){
+    const x = centerX + (i - r/2) * colWidth;
+    const y = boardTop + r*rowHeight;
+    svg.appendChild(el('circle', {cx:x, cy:y, r:4, class:'peg'}));
+  }
+}
+
+// Bin dividers and bar container area
+const binAreaTop = boardBottom + 20, binAreaBottom = 540;
+const binWidth = (boardRight - boardLeft) / BINS;
+for(let b=0; b<=BINS; b++){
+  const x = boardLeft + b*binWidth;
+  svg.appendChild(el('line', {x1:x, y1:binAreaTop, x2:x, y2:binAreaBottom, class:'bin-divider'}));
+}
+
+const bars = [];
+for(let b=0; b<BINS; b++){
+  const x = boardLeft + b*binWidth;
+  const bar = el('rect', {x:x+2, y:binAreaBottom, width:binWidth-4, height:0, class:'bar'});
+  svg.appendChild(bar);
+  bars.push(bar);
+}
+
+let counts = new Array(BINS).fill(0);
+let totalDropped = 0;
+
+function binX(binIndex){
+  // matches the ball's zigzag final horizontal position at the bottom of the peg triangle
+  return centerX + (binIndex - ROWS/2) * colWidth;
+}
+
+function updateBars(){
+  const maxCount = Math.max(1, ...counts);
+  const maxBarHeight = binAreaBottom - binAreaTop;
+  counts.forEach((c, b) => {
+    const h = (c/maxCount) * maxBarHeight;
+    bars[b].setAttribute('height', h);
+    bars[b].setAttribute('y', binAreaBottom - h);
+  });
+  document.getElementById('counterVal').textContent = totalDropped;
+}
+
+function dropBallSilent(){
+  let rightCount = 0;
+  for(let i=0;i<ROWS;i++) if(Math.random() < 0.5) rightCount++;
+  counts[rightCount]++;
+  totalDropped++;
+}
+
+function animateBallDrop(callback){
+  const path = [];
+  let rightCount = 0;
+  path.push({x: centerX, y: boardTop - 15});
+  for(let r=0; r<ROWS; r++){
+    if(Math.random() < 0.5) rightCount++;
+    const x = centerX + (rightCount - (r+1)/2) * colWidth;
+    const y = boardTop + (r+1)*rowHeight;
+    path.push({x, y});
+  }
+  // final fall into the bin
+  path.push({x: binX(rightCount), y: binAreaTop + 10});
+
+  const ball = el('circle', {cx:path[0].x, cy:path[0].y, r:7, class:'ball'});
+  svg.appendChild(ball);
+
+  let step = 0;
+  function nextStep(){
+    if(step >= path.length){
+      svg.removeChild(ball);
+      counts[rightCount]++;
+      totalDropped++;
+      updateBars();
+      if(callback) callback();
+      return;
+    }
+    ball.setAttribute('cx', path[step].x);
+    ball.setAttribute('cy', path[step].y);
+    step++;
+    setTimeout(nextStep, 90);
+  }
+  nextStep();
+}
+
+document.getElementById('btnDrop1').addEventListener('click', () => {
+  animateBallDrop();
+});
+
+document.getElementById('btnDrop50').addEventListener('click', () => {
+  for(let i=0;i<50;i++) dropBallSilent();
+  updateBars();
+});
+
+document.getElementById('btnDrop500').addEventListener('click', () => {
+  for(let i=0;i<500;i++) dropBallSilent();
+  updateBars();
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  counts = new Array(BINS).fill(0);
+  totalDropped = 0;
+  updateBars();
+});
+
+document.getElementById('btnFaq').addEventListener('click', () => {
+  const c = document.getElementById('faqContent');
+  const open = c.classList.toggle('open');
+  document.getElementById('btnFaq').textContent = 'Why does a pile of coin flips form a bell curve? ' + (open?'▴':'▾');
+});
+
+updateBars();
+</script>
+</body>
+</html>

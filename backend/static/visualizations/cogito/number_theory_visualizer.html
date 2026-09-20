@@ -80,6 +80,27 @@
   .scell.prime{ background:var(--c1); color:#fff; border-color:var(--c1); }
   .scell.current{ outline:2px solid var(--c2); }
 
+  /* ---- Atoms ---- */
+  .atomsteps{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; margin-top:14px; }
+  .astep{ padding:6px 12px; border-radius:8px; background:#F5F4F0; margin-bottom:5px; opacity:0.3; transition:opacity .2s; }
+  .astep.shown{ opacity:1; }
+  .astep.final{ background:var(--accent-soft); font-weight:600; }
+  .atomcols{ display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; }
+  .atomcol{ flex:1; min-width:220px; border:1px solid var(--line); border-radius:10px; padding:14px 16px; text-align:center; }
+  .atomcol .big{ font-family:"Fraunces", serif; font-size:28px; font-weight:600; margin:6px 0; }
+  .atomcol.frozen .big{ color:var(--c1); }
+  .atomcol.growing .big{ color:var(--c4); }
+  .atomcol .lbl{ font-size:12px; color:var(--ink-soft); }
+
+  /* ---- Fermat / RSA ---- */
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:12px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .keybox{ border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .keybox h4{ margin:0 0 4px; font-family:"Fraunces",serif; font-size:14px; }
+  .rsaflow{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:#F5F4F0; border-radius:8px; padding:12px 14px; line-height:1.8; }
+  .cols2{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .col2{ flex:1; min-width:260px; }
+
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer b{ color:var(--ink); }
 </style>
@@ -87,7 +108,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Companion to the Feynman Math Tutorial · Part 13</div>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Number Theory</div>
     <h1>The Clock and the Atoms</h1>
     <p>Remainders that wrap around forever, and numbers that refuse to break apart — click, drag, and step through the exact machinery underneath your credit card's check digit.</p>
   </header>
@@ -96,13 +117,17 @@
     <button class="tab active" data-tab="clock">Modular Clock</button>
     <button class="tab" data-tab="euclid">Euclidean Algorithm</button>
     <button class="tab" data-tab="sieve">Sieve of Eratosthenes</button>
+    <button class="tab" data-tab="atoms">Atoms of Multiplication</button>
+    <button class="tab" data-tab="fermat">Fermat's Chairs</button>
+    <button class="tab" data-tab="rsa">RSA Round Trip</button>
+    <button class="tab" data-tab="dh">Diffie–Hellman / ECDH</button>
   </div>
 
   <!-- ============ MODULAR CLOCK ============ -->
   <div class="panel active" id="panel-clock">
     <div class="card">
       <h2>Pick a Modulus, Then Two Numbers</h2>
-      <p class="sub">Faded numbers have no multiplicative inverse for this modulus — try a prime modulus and watch every faded number disappear.</p>
+      <p class="sub">Faded numbers can't be "divided by" in this clock arithmetic — they have no <em>multiplicative inverse</em> (no partner that multiplies with them back to 1). Try a prime modulus and watch every faded number light up.</p>
       <div class="row"><label>Modulus n</label><input type="range" id="modSlider" min="2" max="16" value="12"><span class="readout" id="modOut">12</span></div>
       <div class="clockwrap">
         <div class="clockbox"><svg id="clockSvg" viewBox="0 0 260 260"></svg></div>
@@ -143,8 +168,95 @@
     </div>
   </div>
 
+  <!-- ============ ATOMS OF MULTIPLICATION ============ -->
+  <div class="panel" id="panel-atoms">
+    <div class="card">
+      <h2>One Recipe, Forever — No Matter How You Look</h2>
+      <p class="sub"><b>What's happening:</b> drag N and watch two counts race apart: how many ways to write N as a sum of two smaller positive numbers (order ignored) — versus how many ways to write N as a product of primes (order ignored). One column keeps climbing. The other is frozen at 1, always, by the Fundamental Theorem of Arithmetic itself.</p>
+      <div class="row"><label>N</label><input type="range" id="atomN" min="4" max="400" value="12"><span class="readout" id="atomNOut">12</span></div>
+      <div class="atomcols">
+        <div class="atomcol growing">
+          <div class="lbl">ways to write N = a + b (a ≤ b, both &gt; 0)</div>
+          <div class="big" id="atomSumCount">6</div>
+          <div class="lbl" id="atomSumSample">1+11, 2+10, 3+9, ...</div>
+        </div>
+        <div class="atomcol frozen">
+          <div class="lbl">ways to write N as a product of primes</div>
+          <div class="big" id="atomPrimeCount">1</div>
+          <div class="lbl" id="atomPrimeRecipe">2² × 3</div>
+        </div>
+      </div>
+      <button class="op" id="btnAtomStep" style="margin-top:14px;">Show the factoring steps</button>
+      <button class="op" id="btnAtomReset">Reset</button>
+      <div class="atomsteps" id="atomSteps"></div>
+      <div class="caption"><b>Why it matters:</b> the left column grows because addition doesn't care about a number's internal structure — any two numbers summing correctly will do. The right column can't move because prime multiplication <em>is</em> a number's actual architecture, and there's only one true architecture for any given number.</div>
+    </div>
+  </div>
+
+  <!-- ============ FERMAT'S CHAIRS ============ -->
+  <div class="panel" id="panel-fermat">
+    <div class="card">
+      <h2>The "Musical Chairs" Proof, Made Visible</h2>
+      <p class="sub"><b>What's happening:</b> pick a prime <span class="formula">p</span> and a multiplier <span class="formula">a</span>. The top row is the chairs <span class="formula">1, 2, ..., p−1</span> in order; the bottom row is what happens when you multiply every chair by <span class="formula">a</span>, mod <span class="formula">p</span>. The lines show where each chair lands.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> for any prime <span class="formula">p</span> and any <span class="formula">a</span> not divisible by it, notice the bottom row is always a <em>reshuffle</em> of the exact same numbers — no chair vanishes, none repeats, none is new. That's the whole proof: since multiplying just permutes the chairs, the product of all of them can't change, and cancelling that shared product from both sides leaves <span class="formula">a^(p−1) ≡ 1 (mod p)</span> — verified live below.</p>
+      <div class="row"><label>Prime p</label><input type="range" id="fermP" min="5" max="13" step="2" value="7"><span class="readout" id="fermPOut">7</span></div>
+      <div class="row"><label>Multiplier a</label><input type="range" id="fermA" min="1" max="6" step="1" value="3"><span class="readout" id="fermAOut">3</span></div>
+      <svg id="fermSvg" viewBox="0 0 640 170" style="width:100%; height:auto;"></svg>
+      <div class="verdict" id="fermVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this "same set, different order" argument — a genuine <em>symmetry</em> of the chair set — is the entire content of Fermat's Little Theorem, and it's what RSA's decrypt-undoes-encrypt guarantee is ultimately built on (next tab).</div>
+    </div>
+  </div>
+
+  <!-- ============ RSA ROUND TRIP ============ -->
+  <div class="panel" id="panel-rsa">
+    <div class="card">
+      <h2>Encrypt, Then Decrypt — Watch It Actually Work</h2>
+      <p class="sub"><b>What's happening:</b> the exact toy RSA recipe from the tutorial — primes <span class="formula">p=3, q=11</span>, so <span class="formula">n=33</span> and <span class="formula">φ(n)=20</span>. Pick a public exponent <span class="formula">e</span>; its private partner <span class="formula">d</span> is computed automatically so that <span class="formula">e×d ≡ 1 (mod 20)</span>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> slide the message <span class="formula">m</span> and watch it get scrambled into a ciphertext <span class="formula">c</span> by the public key, then unscrambled back to the exact original by the private key — every single time, for every message and every valid <span class="formula">e</span> you pick. That reliability is Fermat's theorem, at work behind the scenes.</p>
+      <div class="row" style="gap:6px;">
+        <label style="width:auto;">Public exponent e</label>
+        <button class="op active" data-e="7">e = 7</button>
+        <button class="op" data-e="3">e = 3</button>
+        <button class="op" data-e="13">e = 13</button>
+        <button class="op" data-e="17">e = 17</button>
+      </div>
+      <div class="row"><label>Message m</label><input type="range" id="rsaM" min="1" max="32" step="1" value="4"><span class="readout" id="rsaMOut">4</span></div>
+      <div class="cols2">
+        <div class="col2">
+          <div class="keybox"><h4>Public key (share freely)</h4><span class="formula" id="rsaPub">(e=7, n=33)</span></div>
+          <div class="keybox"><h4>Private key (kept secret)</h4><span class="formula" id="rsaPriv">(d=3, n=33)</span></div>
+        </div>
+        <div class="col2">
+          <div class="rsaflow" id="rsaFlow"></div>
+        </div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> factoring <span class="formula">n=33</span> back into <span class="formula">3 × 11</span> is trivial at this toy size — real RSA is this identical four-step recipe with <span class="formula">p</span> and <span class="formula">q</span> hundreds of digits long, where factoring <span class="formula">n</span> back apart is the computationally infeasible step that keeps the private key private.</div>
+    </div>
+  </div>
+
+  <!-- ============ DIFFIE-HELLMAN / ECDH ============ -->
+  <div class="panel" id="panel-dh">
+    <div class="card">
+      <h2>Two Secrets In, One Shared Secret Out — Never Transmitted</h2>
+      <p class="sub"><b>What's happening:</b> Alice and Bob each pick a private number and publish only a "mixed" version of it. Both computations land on the identical shared secret — top row does it with modular exponentiation (classic Diffie–Hellman), bottom row does the exact same trick with points on an elliptic curve (ECDH).</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> load the preset, then change just Alice's private number in either row — both "public" values and the final shared secret update, but the *other side's* math still lands on the same answer, because exponents (and scalars) commute regardless of which number changed.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="dhPreset">Load tutorial's verified example</button>
+      </div>
+      <h4 style="margin:14px 0 4px;">Classic Diffie–Hellman &mdash; public p=23, g=5</h4>
+      <div class="row"><label>Alice's private a</label><input type="range" id="dhA" min="1" max="21" step="1" value="6"><span class="readout" id="dhAOut">6</span></div>
+      <div class="row"><label>Bob's private b</label><input type="range" id="dhB" min="1" max="21" step="1" value="15"><span class="readout" id="dhBOut">15</span></div>
+      <div class="rsaflow" id="dhFlow"></div>
+      <h4 style="margin:16px 0 4px;">ECDH &mdash; curve y&sup2;=x&sup3;+2x+3 mod 97, base point G=(0,10)</h4>
+      <div class="row"><label>Alice's private a</label><input type="range" id="ecA" min="1" max="49" step="1" value="11"><span class="readout" id="ecAOut">11</span></div>
+      <div class="row"><label>Bob's private b</label><input type="range" id="ecB" min="1" max="49" step="1" value="19"><span class="readout" id="ecBOut">19</span></div>
+      <div class="rsaflow" id="ecFlow"></div>
+      <div class="caption"><b>Why it matters:</b> neither row ever sends the private number itself — only a one-way "mixed" public value — and both rows reach the identical shared secret purely because the underlying operation (modular exponentiation, or elliptic-curve point addition) commutes. ECDH reaches the same security with far smaller numbers, which is why TLS 1.3 uses it, not classic DH, on almost every HTTPS connection today.</div>
+    </div>
+  </div>
+
   <footer>
-    <p><b>Where this connects:</b> the clock here is the same cyclic group from Part 11, now with multiplication added — watch how a prime modulus lights up every number as invertible at once. The Euclidean Algorithm's "shrink without losing the answer" move echoes Pascal's Triangle's recursion (Part 10). The sieve is the combinatorial (Part 10) machinery underneath the primes that Fermat's Little Theorem and RSA both depend on.</p>
+    <p><b>Where this connects:</b> the clock here is the same repeating cyclic structure from group theory, now with multiplication added — watch how a prime modulus makes every number invertible at once. The Euclidean Algorithm's "shrink without losing the answer" move echoes the recursion in Pascal's Triangle (combinatorics). The sieve is the counting machinery underneath the primes that Fermat's Little Theorem and RSA both depend on.</p>
   </footer>
 </div>
 
@@ -306,6 +418,235 @@
   document.getElementById("btnSieveStep").addEventListener("click", sieveStep);
   document.getElementById("btnSieveReset").addEventListener("click", resetSieve);
   resetSieve();
+
+  // ================= ATOMS OF MULTIPLICATION =================
+  const atomN = document.getElementById("atomN");
+  let atomFactorSteps = [], atomStepIndex = 0;
+
+  function primeFactorSteps(n){
+    const steps = [];
+    let d = 2, m = n;
+    while (d*d <= m){
+      if (m % d === 0){
+        const before = m;
+        m = m/d;
+        steps.push({d, before, after:m});
+      } else {
+        d++;
+      }
+    }
+    if (m>1) steps.push({d:m, before:m, after:1});
+    return steps;
+  }
+  function factorsToRecipe(steps){
+    const counts = {};
+    steps.forEach(s => counts[s.d] = (counts[s.d]||0)+1);
+    return Object.entries(counts).map(([p,c]) => c>1 ? `${p}^${c}` : `${p}`).join(" × ");
+  }
+  function sumPairsSample(n){
+    const pairs = [];
+    for (let a=1; a<=Math.floor(n/2) && pairs.length<3; a++) pairs.push(`${a}+${n-a}`);
+    return pairs.join(", ") + (Math.floor(n/2)>3 ? ", ..." : "");
+  }
+  function renderAtoms(){
+    const n = parseInt(atomN.value,10);
+    document.getElementById("atomNOut").textContent = n;
+    document.getElementById("atomSumCount").textContent = Math.floor(n/2);
+    document.getElementById("atomSumSample").textContent = sumPairsSample(n);
+    atomFactorSteps = primeFactorSteps(n);
+    document.getElementById("atomPrimeRecipe").textContent = factorsToRecipe(atomFactorSteps);
+    document.getElementById("atomPrimeCount").textContent = "1";
+    atomStepIndex = 0;
+    renderAtomSteps();
+  }
+  function renderAtomSteps(){
+    const container = document.getElementById("atomSteps");
+    container.innerHTML = "";
+    atomFactorSteps.forEach((s,i) => {
+      const div = document.createElement("div");
+      div.className = "astep" + (i < atomStepIndex ? " shown" : "");
+      div.textContent = `${s.before} ÷ ${s.d} = ${s.after}  (${s.d} divides evenly — peel it off as a prime factor)`;
+      container.appendChild(div);
+    });
+    if (atomStepIndex >= atomFactorSteps.length && atomFactorSteps.length>0){
+      const done = document.createElement("div");
+      done.className = "astep final shown";
+      done.textContent = `Fully factored: ${document.getElementById("atomNOut").textContent} = ${factorsToRecipe(atomFactorSteps)} — and no other prime recipe reaches the same number.`;
+      container.appendChild(done);
+    }
+  }
+  document.getElementById("btnAtomStep").addEventListener("click", () => {
+    if (atomStepIndex < atomFactorSteps.length) atomStepIndex++;
+    renderAtomSteps();
+  });
+  document.getElementById("btnAtomReset").addEventListener("click", () => { atomStepIndex=0; renderAtomSteps(); });
+  atomN.addEventListener("input", renderAtoms);
+  renderAtoms();
+
+  // ================= SHARED: fast modular exponentiation =================
+  function modPow(base, exp, mod){
+    base = ((base % mod) + mod) % mod;
+    let result = 1;
+    while(exp > 0){
+      if(exp & 1) result = (result*base) % mod;
+      exp = Math.floor(exp/2);
+      base = (base*base) % mod;
+    }
+    return result;
+  }
+
+  // ================= FERMAT'S CHAIRS =================
+  const fermP = document.getElementById("fermP"), fermA = document.getElementById("fermA");
+  function renderFermat(){
+    let p = parseInt(fermP.value);
+    fermA.max = p-1;
+    let a = Math.min(parseInt(fermA.value), p-1);
+    fermA.value = a;
+    document.getElementById("fermPOut").textContent = p;
+    document.getElementById("fermAOut").textContent = a;
+
+    const chairs = []; for(let i=1;i<p;i++) chairs.push(i);
+    const perm = {}; chairs.forEach(i => perm[i] = (a*i) % p);
+
+    const svg = document.getElementById("fermSvg");
+    svg.innerHTML = "";
+    const margin=40, W=640, yTop=40, yBottom=130;
+    const step = chairs.length>1 ? (W-2*margin)/(chairs.length-1) : 0;
+    const xOf = k => margin + (k-1)*step;
+
+    chairs.forEach((i,idx) => {
+      const hue = (i*47) % 360;
+      const color = `hsl(${hue},60%,45%)`;
+      svg.appendChild(el("line",{x1:xOf(i), y1:yTop+14, x2:xOf(perm[i]), y2:yBottom-14, stroke:color, ["stroke-width"]:2, opacity:0.75}));
+    });
+    chairs.forEach(i => {
+      const ct = el("circle",{cx:xOf(i), cy:yTop, r:14, fill:"#fff", stroke:"var(--accent)", ["stroke-width"]:1.6});
+      svg.appendChild(ct);
+      const tt = el("text",{x:xOf(i), y:yTop+4, ["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"12","fill":"var(--ink)"});
+      tt.textContent = i; svg.appendChild(tt);
+      const cb = el("circle",{cx:xOf(i), cy:yBottom, r:14, fill:"#fff", stroke:"var(--c1)", ["stroke-width"]:1.6});
+      svg.appendChild(cb);
+      const tb = el("text",{x:xOf(i), y:yBottom+4, ["text-anchor"]:"middle","font-family":"IBM Plex Mono, monospace","font-size":"12","fill":"var(--ink)"});
+      tb.textContent = i; svg.appendChild(tb);
+    });
+    svg.appendChild((()=>{ const t=el("text",{x:margin, y:yTop-20, "font-family":"IBM Plex Mono, monospace","font-size":"11","fill":"var(--ink-soft)"}); t.textContent="chairs 1..p−1"; return t; })());
+    svg.appendChild((()=>{ const t=el("text",{x:margin, y:yBottom+28, "font-family":"IBM Plex Mono, monospace","font-size":"11","fill":"var(--ink-soft)"}); t.textContent=`after multiplying by a=${a}, mod ${p}`; return t; })());
+
+    let prodBefore = 1; chairs.forEach(i => prodBefore *= i);
+    let prodAfter = 1; chairs.forEach(i => prodAfter *= perm[i]);
+    const beforeMod = prodBefore % p, afterMod = prodAfter % p;
+    const fermatCheck = modPow(a, p-1, p);
+    document.getElementById("fermVerdict").innerHTML =
+      `Same multiset check: {${chairs.join(",")}} and {${chairs.map(i=>perm[i]).join(",")}} — identical numbers, just reshuffled.<br>` +
+      `Product of chairs mod p = <b>${beforeMod}</b> &nbsp;·&nbsp; product after shuffling mod p = <b>${afterMod}</b> (equal, as they must be)<br>` +
+      `Cancelling that shared product leaves: a^(p−1) mod p = ${a}^${p-1} mod ${p} = <b>${fermatCheck}</b> ${fermatCheck===1 ? "✓" : ""}`;
+  }
+  fermP.addEventListener("input", renderFermat);
+  fermA.addEventListener("input", renderFermat);
+  renderFermat();
+
+  // ================= RSA ROUND TRIP =================
+  const RSA_N = 33, RSA_PHI = 20;
+  let rsaE = 7;
+  const rsaM = document.getElementById("rsaM");
+  document.querySelectorAll('#panel-rsa [data-e]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      rsaE = parseInt(btn.dataset.e);
+      document.querySelectorAll('#panel-rsa [data-e]').forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderRsa();
+    });
+  });
+  rsaM.addEventListener("input", renderRsa);
+  function renderRsa(){
+    const m = parseInt(rsaM.value);
+    document.getElementById("rsaMOut").textContent = m;
+    const d = modInverse(rsaE, RSA_PHI);
+    document.getElementById("rsaPub").textContent = `(e=${rsaE}, n=${RSA_N})`;
+    document.getElementById("rsaPriv").textContent = `(d=${d}, n=${RSA_N})`;
+    const c = modPow(m, rsaE, RSA_N);
+    const back = modPow(c, d, RSA_N);
+    document.getElementById("rsaFlow").innerHTML =
+      `message m = <b>${m}</b><br>` +
+      `encrypt:  c = m^e mod n = ${m}^${rsaE} mod ${RSA_N} = <b>${c}</b><br>` +
+      `decrypt:  m' = c^d mod n = ${c}^${d} mod ${RSA_N} = <b>${back}</b><br>` +
+      (back===m ? `<b style="color:var(--c1)">✓ recovered exactly — m' = m</b>` : `✗ mismatch`);
+  }
+  renderRsa();
+
+  /* =========================================================
+     DIFFIE-HELLMAN / ECDH
+     ========================================================= */
+  const DH_P = 23, DH_G = 5;
+  const EC_A = 2, EC_B = 3, EC_P = 97, EC_G = [0, 10];
+
+  function invMod(n, p){ n = ((n % p) + p) % p; return modPow(n, p - 2, p); }
+  function pointAdd(P, Q){
+    if (P === null) return Q;
+    if (Q === null) return P;
+    const [x1, y1] = P, [x2, y2] = Q;
+    if (x1 === x2 && ((y1 + y2) % EC_P) === 0) return null;
+    let m;
+    if (x1 === x2 && y1 === y2) {
+      if (y1 === 0) return null;
+      m = ((3 * x1 * x1 + EC_A) % EC_P) * invMod(2 * y1, EC_P) % EC_P;
+    } else {
+      m = ((y2 - y1) % EC_P + EC_P) % EC_P * invMod(x2 - x1, EC_P) % EC_P;
+    }
+    let x3 = ((m * m - x1 - x2) % EC_P + EC_P) % EC_P;
+    let y3 = ((m * (x1 - x3) - y1) % EC_P + EC_P) % EC_P;
+    return [x3, y3];
+  }
+  function scalarMult(k, P){
+    let R = null, Q = P;
+    while (k > 0) {
+      if (k & 1) R = pointAdd(R, Q);
+      Q = pointAdd(Q, Q);
+      k >>= 1;
+    }
+    return R;
+  }
+
+  const dhA = document.getElementById("dhA"), dhB = document.getElementById("dhB");
+  const ecA = document.getElementById("ecA"), ecB = document.getElementById("ecB");
+
+  function renderDH(){
+    const a = parseInt(dhA.value), b = parseInt(dhB.value);
+    dhAOut.textContent = a; dhBOut.textContent = b;
+    const A = modPow(DH_G, a, DH_P);
+    const B = modPow(DH_G, b, DH_P);
+    const aliceShared = modPow(B, a, DH_P);
+    const bobShared = modPow(A, b, DH_P);
+    document.getElementById("dhFlow").innerHTML =
+      `Alice's private a=${a} → publishes A = g^a mod p = ${DH_G}^${a} mod ${DH_P} = <b>${A}</b><br>` +
+      `Bob's private b=${b} → publishes B = g^b mod p = ${DH_G}^${b} mod ${DH_P} = <b>${B}</b><br>` +
+      `Alice computes B^a mod p = ${B}^${a} mod ${DH_P} = <b>${aliceShared}</b><br>` +
+      `Bob computes A^b mod p = ${A}^${b} mod ${DH_P} = <b>${bobShared}</b><br>` +
+      (aliceShared === bobShared ? `<b style="color:var(--c1)">✓ shared secret = ${aliceShared}, never transmitted</b>` : `✗ mismatch`);
+  }
+  function renderEC(){
+    const a = parseInt(ecA.value), b = parseInt(ecB.value);
+    ecAOut.textContent = a; ecBOut.textContent = b;
+    const A = scalarMult(a, EC_G);
+    const B = scalarMult(b, EC_G);
+    const aliceShared = scalarMult(a, B);
+    const bobShared = scalarMult(b, A);
+    const fmt = P => P ? `(${P[0]}, ${P[1]})` : "∞";
+    const match = aliceShared && bobShared && aliceShared[0]===bobShared[0] && aliceShared[1]===bobShared[1];
+    document.getElementById("ecFlow").innerHTML =
+      `Alice's private a=${a} → publishes A = a·G = <b>${fmt(A)}</b><br>` +
+      `Bob's private b=${b} → publishes B = b·G = <b>${fmt(B)}</b><br>` +
+      `Alice computes a·B = <b>${fmt(aliceShared)}</b><br>` +
+      `Bob computes b·A = <b>${fmt(bobShared)}</b><br>` +
+      (match ? `<b style="color:var(--c1)">✓ shared point = ${fmt(aliceShared)} — shared secret is its x = ${aliceShared[0]}</b>` : `✗ mismatch`);
+  }
+  [dhA, dhB].forEach(inp => inp.addEventListener("input", renderDH));
+  [ecA, ecB].forEach(inp => inp.addEventListener("input", renderEC));
+  document.getElementById("dhPreset").addEventListener("click", () => {
+    dhA.value = 6; dhB.value = 15; ecA.value = 11; ecB.value = 19;
+    renderDH(); renderEC();
+  });
+  renderDH(); renderEC();
 
 })();
 </script>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Missing Direction — Complex Numbers, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); min-width:90px; }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  .good-t{ color:var(--c1); font-weight:700; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink-soft); margin-top:10px; max-height:170px; overflow-y:auto; white-space:pre-line; background:#F5F4F0; border-radius:8px; padding:10px 12px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Complex Numbers</div>
+    <h1>The Missing Direction</h1>
+    <p>A point in a plane, a multiplication rule that rotates instead of just scaling, the 450-year-old calculation that actually forced this number system into existence, and the perfectly-spaced roots that were never really missing. Each one built from a picture, not asserted.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel below reads top to bottom: <b>what's happening</b>, a <b>Try this</b> to poke at, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="plane">Complex Plane</button>
+    <button class="tab" data-tab="multiply">Multiplication = Rotate &amp; Scale</button>
+    <button class="tab" data-tab="bombelli">Bombelli's Bridge</button>
+    <button class="tab" data-tab="roots">Roots of Unity</button>
+  </div>
+
+  <!-- ============ TAB 1: COMPLEX PLANE ============ -->
+  <div class="panel active" id="panel-plane">
+    <div class="card">
+      <h2>A Point, Not a Mystery</h2>
+      <p class="sub"><b>What's happening:</b> drag the point. Its horizontal position is the "real part," its vertical position is the "imaginary part" — two ordinary coordinates, nothing more. The distance from the origin is its <b>modulus</b>; the angle from the positive real axis is its <b>argument</b>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> drag the point onto the horizontal axis — it's now an ordinary real number. Drag it onto the vertical axis — it's "purely imaginary," which just means "pointing straight up," nothing spookier.</p>
+      <div class="row"><label>Real part a</label><input type="range" id="planeA" min="-5" max="5" step="0.1" value="3"><span class="readout" id="planeAOut">3.0</span></div>
+      <div class="row"><label>Imag part b</label><input type="range" id="planeB" min="-5" max="5" step="0.1" value="4"><span class="readout" id="planeBOut">4.0</span></div>
+      <svg id="planeSvg" viewBox="0 0 320 320"></svg>
+      <div class="verdict" id="planeVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the modulus is the Pythagorean theorem; the argument is an ordinary angle. Nothing about a complex number is any more abstract than a point on a map.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: MULTIPLICATION ============ -->
+  <div class="panel" id="panel-multiply">
+    <div class="card">
+      <h2>Multiply Two Numbers, Watch the Angles Add</h2>
+      <p class="sub"><b>What's happening:</b> set two complex numbers by their modulus (length) and argument (angle). Their product's length is the two lengths <em>multiplied</em>; its angle is the two angles <em>added</em> — plotted live, and checked against a direct FOIL multiplication.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set z₂'s modulus to 1 and its angle to 90° — multiplying by it rotates z₁ by a perfect quarter turn with no change in size. That's exactly what multiplying by <span class="formula">i</span> does.</p>
+      <div class="row"><label>z₁ modulus</label><input type="range" id="mulR1" min="0.3" max="3" step="0.1" value="2"><span class="readout" id="mulR1Out">2.0</span></div>
+      <div class="row"><label>z₁ angle</label><input type="range" id="mulT1" min="0" max="360" step="1" value="30"><span class="readout" id="mulT1Out">30°</span></div>
+      <div class="row"><label>z₂ modulus</label><input type="range" id="mulR2" min="0.3" max="3" step="0.1" value="1.5"><span class="readout" id="mulR2Out">1.5</span></div>
+      <div class="row"><label>z₂ angle</label><input type="range" id="mulT2" min="0" max="360" step="1" value="45"><span class="readout" id="mulT2Out">45°</span></div>
+      <svg id="mulSvg" viewBox="0 0 320 320"></svg>
+      <div class="verdict" id="mulVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this one fact — lengths multiply, angles add — is the entire mechanism behind AC circuit analysis, 2D graphics rotations, and every root-of-unity picture in this file.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: BOMBELLI'S BRIDGE ============ -->
+  <div class="panel" id="panel-bombelli">
+    <div class="card">
+      <h2>The Calculation That Forced the Issue, in 1572</h2>
+      <p class="sub"><b>What's happening:</b> <span class="formula">x³ − 15x − 4 = 0</span> has a known, checkable real root: <span class="formula">x=4</span>. Watch what happens when you actually run Cardano's formula on it, step by step.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> step all the way through and watch two "impossible" complex numbers, <span class="formula">2+11i</span>'s cube roots, add together and land <em>exactly</em> on the real answer you already knew was correct.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="btnBomPrev">◀ Back</button>
+        <button class="op active" id="btnBomNext">Next step ▶</button>
+        <button class="op" id="btnBomReset">Reset</button>
+      </div>
+      <svg id="bombelliSvg" viewBox="0 0 320 320"></svg>
+      <div class="verdict" id="bombelliVerdict"></div>
+      <div class="steplog" id="bombelliLog"></div>
+      <div class="caption"><b>Why it matters:</b> this is the actual historical reason complex numbers exist — not an abstract itch to solve <span class="formula">x²=−1</span>, but a real, verified answer that had no other known route.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: ROOTS OF UNITY ============ -->
+  <div class="panel" id="panel-roots">
+    <div class="card">
+      <h2>The "Missing" Roots Were Never Missing</h2>
+      <p class="sub"><b>What's happening:</b> <span class="formula">zⁿ = 1</span> always has exactly <span class="formula">n</span> solutions once complex numbers are allowed — equally spaced points around the unit circle, since raising to the n-th power multiplies the angle by n, and landing back on angle 0 needs the starting angle to be an exact 1/n slice of the full circle.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> set n=4 and see the four 4th roots of unity include <span class="formula">1</span> and <span class="formula">−1</span> (the only two <em>real</em> roots of <span class="formula">x⁴−1=0</span>) plus <span class="formula">i</span> and <span class="formula">−i</span> — the two roots real numbers alone could never find.</p>
+      <div class="row"><label>n</label><input type="range" id="rootsN" min="2" max="10" step="1" value="4"><span class="readout" id="rootsNOut">4</span></div>
+      <svg id="rootsSvg" viewBox="0 0 320 320"></svg>
+      <div class="verdict" id="rootsVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is the Fundamental Theorem of Algebra, made visible — every one of the n roots is real and present, just not always on the real number line.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../complex-numbers-toolkit.md">Complex Numbers — The Toolkit</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function txt(x,y,str,color,size,anchor,weight){
+    const t = el("text",{x,y,["text-anchor"]:anchor||"middle","font-family":"IBM Plex Mono, monospace","font-size":size||12,fill:color||"var(--ink)"});
+    if(weight) t.setAttribute("font-weight",weight);
+    t.textContent = str;
+    return t;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+  function fmt(v){
+    if(!isFinite(v)) return "undefined";
+    return Math.abs(v-Math.round(v))<1e-6 ? String(Math.round(v)) : v.toFixed(3).replace(/0+$/,"").replace(/\.$/,"");
+  }
+  // shared plane drawing helper: viewBox 320x320, origin at (160,160), scale px per unit
+  function drawAxes(svg, scale){
+    svg.appendChild(el("line",{x1:20,y1:160,x2:300,y2:160,stroke:"var(--line)",["stroke-width"]:1.4}));
+    svg.appendChild(el("line",{x1:160,y1:20,x2:160,y2:300,stroke:"var(--line)",["stroke-width"]:1.4}));
+    svg.appendChild(txt(295,155,"Re","var(--ink-soft)",11,"end"));
+    svg.appendChild(txt(168,26,"Im","var(--ink-soft)",11,"start"));
+  }
+  function P(x,y,scale){ return [160+x*scale, 160-y*scale]; }
+
+  /* =========================================================
+     TAB 1 — COMPLEX PLANE
+     ========================================================= */
+  const planeA=document.getElementById("planeA"), planeB=document.getElementById("planeB");
+  function renderPlane(){
+    const a=parseFloat(planeA.value), b=parseFloat(planeB.value);
+    planeAOut.textContent=a.toFixed(1); planeBOut.textContent=b.toFixed(1);
+    const scale=26;
+    const svg = document.getElementById("planeSvg");
+    svg.innerHTML = "";
+    drawAxes(svg,scale);
+    const [px,py] = P(a,b,scale);
+    svg.appendChild(el("line",{x1:160,y1:160,x2:px,y2:py,stroke:"var(--accent)",["stroke-width"]:2}));
+    svg.appendChild(el("circle",{cx:px,cy:py,r:6,fill:"var(--c1)"}));
+    svg.appendChild(txt(px+14,py-8,`${fmt(a)}${b>=0?"+":"-"}${fmt(Math.abs(b))}i`,"var(--accent)",13,"start","700"));
+    const modulus = Math.hypot(a,b), argument = Math.atan2(b,a)*180/Math.PI;
+    document.getElementById("planeVerdict").innerHTML =
+      `z = ${fmt(a)} ${b>=0?"+":"−"} ${fmt(Math.abs(b))}i<br>`+
+      `Modulus |z| = √(${fmt(a)}²+${fmt(b)}²) = <b>${fmt(modulus)}</b> &nbsp;·&nbsp; Argument = <b>${fmt(argument)}°</b>`;
+  }
+  [planeA,planeB].forEach(inp => inp.addEventListener("input", renderPlane));
+  renderPlane();
+
+  /* =========================================================
+     TAB 2 — MULTIPLICATION
+     ========================================================= */
+  const mulR1=document.getElementById("mulR1"), mulT1=document.getElementById("mulT1"),
+        mulR2=document.getElementById("mulR2"), mulT2=document.getElementById("mulT2");
+  function renderMul(){
+    const r1=parseFloat(mulR1.value), t1deg=parseFloat(mulT1.value);
+    const r2=parseFloat(mulR2.value), t2deg=parseFloat(mulT2.value);
+    mulR1Out.textContent=r1.toFixed(1); mulT1Out.textContent=t1deg.toFixed(0)+"°";
+    mulR2Out.textContent=r2.toFixed(1); mulT2Out.textContent=t2deg.toFixed(0)+"°";
+    const t1=t1deg*Math.PI/180, t2=t2deg*Math.PI/180;
+    const z1=[r1*Math.cos(t1), r1*Math.sin(t1)], z2=[r2*Math.cos(t2), r2*Math.sin(t2)];
+    const prodDirect = [z1[0]*z2[0]-z1[1]*z2[1], z1[0]*z2[1]+z1[1]*z2[0]];
+    const rProd = r1*r2, tProdDeg = (t1deg+t2deg)%360;
+    const scale=32;
+    const svg = document.getElementById("mulSvg");
+    svg.innerHTML = "";
+    drawAxes(svg,scale);
+    function arrow(z,color,label){
+      const [px,py]=P(z[0],z[1],scale);
+      svg.appendChild(el("line",{x1:160,y1:160,x2:px,y2:py,stroke:color,["stroke-width"]:2.2}));
+      svg.appendChild(el("circle",{cx:px,cy:py,r:5,fill:color}));
+      svg.appendChild(txt(px+10,py-8,label,color,12,"start","700"));
+    }
+    arrow(z1,"var(--c1)","z1");
+    arrow(z2,"var(--c2)","z2");
+    arrow(prodDirect,"var(--accent)","z1·z2");
+    document.getElementById("mulVerdict").innerHTML =
+      `Direct FOIL: z1×z2 = (${fmt(z1[0])}${z1[1]>=0?"+":""}${fmt(z1[1])}i)×(${fmt(z2[0])}${z2[1]>=0?"+":""}${fmt(z2[1])}i) = <b>${fmt(prodDirect[0])}${prodDirect[1]>=0?"+":""}${fmt(prodDirect[1])}i</b><br>`+
+      `Rotate &amp; scale: modulus ${fmt(r1)}×${fmt(r2)} = <b>${fmt(rProd)}</b>, angle ${t1deg.toFixed(0)}°+${t2deg.toFixed(0)}° = <b>${tProdDeg.toFixed(0)}°</b> — <span class="good-t">same point, either way.</span>`;
+  }
+  [mulR1,mulT1,mulR2,mulT2].forEach(inp => inp.addEventListener("input", renderMul));
+  renderMul();
+
+  /* =========================================================
+     TAB 3 — BOMBELLI'S BRIDGE
+     ========================================================= */
+  let bomStep = 0;
+  const BOM_MAX = 5;
+  function cmul(a,b){ return [a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]]; }
+  function ccube(a){ return cmul(cmul(a,a),a); }
+  function renderBombelli(){
+    const svg = document.getElementById("bombelliSvg");
+    svg.innerHTML = "";
+    const scale=26;
+    drawAxes(svg,scale);
+    document.getElementById("btnBomPrev").disabled = bomStep<=0;
+    document.getElementById("btnBomNext").disabled = bomStep>=BOM_MAX;
+    const points = [];
+    if(bomStep>=3){ points.push([[2,11],"var(--c2)","2+11i"]); points.push([[2,-11],"var(--c3)","2-11i"]); }
+    if(bomStep>=4){ points.push([[2,1],"var(--c2)","2+i"]); points.push([[2,-1],"var(--c3)","2-i"]); }
+    if(bomStep>=5){ points.push([[4,0],"var(--accent)","x=4"]); }
+    points.forEach(([z,color,label]) => {
+      const [px,py]=P(z[0],z[1],scale);
+      svg.appendChild(el("circle",{cx:px,cy:py,r:6,fill:color}));
+      svg.appendChild(txt(px+10,py-8,label,color,12,"start","700"));
+    });
+    const v = document.getElementById("bombelliVerdict");
+    const log = document.getElementById("bombelliLog");
+    const lines = [
+      "Step 0: x³ − 15x − 4 = 0. Check x=4 directly: 4³ − 15(4) − 4 = 64 − 60 − 4 = 0. A confirmed real root.",
+      "Step 1: Cardano's formula needs (q/2)² + (p/3)³ with p=−15, q=−4: (−2)² + (−5)³ = 4 − 125 = −121. Negative!",
+      "Step 2: The formula now demands √(−121) = 11i, forcing x = ∛(2+11i) + ∛(2−11i). Plotted: two 'impossible' points.",
+      "Step 3: Check by cubing (2+i): (2+i)³ = 2+11i ✓. Check (2−i)³ = 2−11i ✓ (by the mirror argument). So those are the cube roots.",
+      "Step 4: Add them: (2+i) + (2−i) = 4 — the imaginary parts cancel exactly, landing on the real root confirmed in step 0."
+    ];
+    log.textContent = lines.slice(0, bomStep).join("\n");
+    v.innerHTML = bomStep===0 ? "Press Next step to begin the 1572 calculation." :
+      bomStep>=5 ? `<span class="big good-t">x = 4, reached only by trusting the imaginary detour.</span>` :
+      lines[bomStep-1];
+  }
+  document.getElementById("btnBomNext").addEventListener("click", () => { if(bomStep<BOM_MAX) bomStep++; renderBombelli(); });
+  document.getElementById("btnBomPrev").addEventListener("click", () => { if(bomStep>0) bomStep--; renderBombelli(); });
+  document.getElementById("btnBomReset").addEventListener("click", () => { bomStep=0; renderBombelli(); });
+  renderBombelli();
+
+  /* =========================================================
+     TAB 4 — ROOTS OF UNITY
+     ========================================================= */
+  const rootsN = document.getElementById("rootsN");
+  function renderRoots(){
+    const n = parseInt(rootsN.value,10);
+    rootsNOut.textContent = n;
+    const svg = document.getElementById("rootsSvg");
+    svg.innerHTML = "";
+    const ax=26;
+    drawAxes(svg,ax);
+    const unitRadiusPx = ax*3.2; // pixel radius representing |z|=1
+    svg.appendChild(el("circle",{cx:160,cy:160,r:unitRadiusPx,fill:"none",stroke:"var(--line)",["stroke-width"]:1.4}));
+    let allVerify = true;
+    let lines = [];
+    for(let k=0;k<n;k++){
+      const theta = 2*Math.PI*k/n;
+      const x=Math.cos(theta), y=Math.sin(theta);
+      const px = 160 + x*unitRadiusPx, py = 160 - y*unitRadiusPx;
+      svg.appendChild(el("circle",{cx:px,cy:py,r:6,fill:"var(--c1)"}));
+      // verify z^n = 1
+      const powRe = Math.cos(n*theta), powIm = Math.sin(n*theta);
+      const ok = Math.abs(powRe-1)<1e-6 && Math.abs(powIm)<1e-6;
+      if(!ok) allVerify = false;
+      if(k<8) lines.push(`k=${k}: angle ${(theta*180/Math.PI).toFixed(1)}° → z^n = (${powRe.toFixed(4)}, ${powIm.toFixed(4)})`);
+    }
+    document.getElementById("rootsVerdict").innerHTML =
+      `n = ${n}: <b>${n}</b> equally-spaced points, each ${(360/n).toFixed(1)}° apart.<br>`+
+      `Every one, raised to the ${n}-th power, lands on exactly 1: <span class="${allVerify?'good-t':''}">${allVerify?'✓ verified for all '+n+' roots':'checking...'}</span>`;
+  }
+  rootsN.addEventListener("input", renderRoots);
+  renderRoots();
+})();
+</script>
+</body>
+</html>

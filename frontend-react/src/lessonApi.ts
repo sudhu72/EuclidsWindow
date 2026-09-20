@@ -1,5 +1,6 @@
 // Lesson pipeline client — reuses the backend's parallel build endpoint
 // (outline + all scenes in one call).
+import { authHeaders } from "./auth";
 
 export interface LessonSection {
   title: string;
@@ -24,12 +25,13 @@ export interface LessonBuild {
   level: string;
   sections: LessonSection[];
   scenes: (LessonScene | null)[];
+  conversation_id?: string;
 }
 
 export async function buildLesson(topic: string, level: string): Promise<LessonBuild> {
   const resp = await fetch("/api/ai/lesson/build", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ topic, level }),
   });
   if (!resp.ok) {

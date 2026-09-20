@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Layered Towers — Proof &amp; the Axiomatic Method</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --good:#0F8B8D; --warn:#D9636B; --dim:#C7CDCB;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:960px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  svg{ width:100%; height:auto; display:block; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .quiz-claim{ font-family:"Fraunces", serif; font-size:17px; margin:6px 0 16px; line-height:1.5; }
+  .quiz-choices{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .score{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--ink-soft); }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Proof Building and the Axiomatic Method</div>
+    <h1>Layered Towers</h1>
+    <p>Two towers built the same way, in two completely different branches of mathematics — click a result to see exactly which foundation stones it rests on. Then test yourself: given a claim's shape, which proof technique actually fits?</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="euclid">Euclid's Tower</button>
+    <button class="tab" data-tab="numtheory">Number-Theory Tower</button>
+    <button class="tab" data-tab="quiz">Which Technique Fits?</button>
+  </div>
+
+  <!-- ============ TAB: EUCLID'S TOWER ============ -->
+  <div class="panel active" id="panel-euclid">
+    <div class="card">
+      <h2>Postulates + Common Notions → Proposition I.4 → Proposition I.5</h2>
+      <p class="sub"><b>What's happening:</b> click any node to highlight it and every foundation stone it actually rests on, all the way down. Nothing highlights that wasn't explicitly cited.</p>
+      <svg id="euclidSvg" viewBox="0 0 720 320" role="img" aria-label="Euclid's dependency tower"></svg>
+      <div class="verdict" id="euclidVerdict">Click a node above to see what it rests on.</div>
+      <div class="caption"><b>Why it matters:</b> Proposition I.5 cites exactly one non-obvious fact (SAS) — nothing else — which is what makes it possible to trust the top of the tower without re-checking the whole foundation every time.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: NUMBER-THEORY TOWER ============ -->
+  <div class="panel" id="panel-numtheory">
+    <div class="card">
+      <h2>Definitions → Two Independent Floor-1 Results → RSA</h2>
+      <p class="sub"><b>What's happening:</b> the exact same layering discipline, in an entirely different branch of math. Click any node to trace its dependency chain back to the definitions everything else rests on.</p>
+      <svg id="ntSvg" viewBox="0 0 720 360" role="img" aria-label="Number theory dependency tower"></svg>
+      <div class="verdict" id="ntVerdict">Click a node above to see what it rests on.</div>
+      <div class="caption"><b>Why it matters:</b> RSA's security ultimately traces back through Fermat's Little Theorem to the Euclidean Algorithm and a handful of plain definitions — the same "every floor cites a specific floor below it" shape as Euclid's tower, in a totally unrelated field.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: QUIZ ============ -->
+  <div class="panel" id="panel-quiz">
+    <div class="card">
+      <h2>Match the Claim to the Technique</h2>
+      <p class="sub"><b>What's happening:</b> read the claim, pick the proof technique you'd reach for first, then check your reasoning against the explanation.</p>
+      <div class="quiz-claim" id="quizClaim"></div>
+      <div class="quiz-choices" id="quizChoices"></div>
+      <div class="verdict" id="quizVerdict" style="display:none;"></div>
+      <div class="row" style="margin-top:10px;">
+        <button class="op" id="quizNext">Next claim</button>
+        <span class="score" id="quizScore">Score: 0 / 0</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Fully offline &amp; private — everything runs locally in this page. Companion to <b><a href="../proof-and-axiomatic-method.md">Proof Building and the Axiomatic Method</a></b>.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+
+  // ============ Generic dependency-tower renderer ============
+  function buildTower(svg, nodes, verdictEl){
+    // nodes: [{id, label, x, y, deps: [id,...], note}]
+    const byId = {};
+    nodes.forEach(n => byId[n.id] = n);
+
+    function ancestors(id){
+      const seen = new Set([id]);
+      let frontier = [id];
+      while (frontier.length){
+        const next = [];
+        frontier.forEach(fid => {
+          (byId[fid].deps||[]).forEach(d => { if(!seen.has(d)){ seen.add(d); next.push(d); } });
+        });
+        frontier = next;
+      }
+      return seen;
+    }
+
+    function draw(selectedId){
+      svg.innerHTML = "";
+      const highlighted = selectedId ? ancestors(selectedId) : new Set();
+      // edges first (under nodes)
+      nodes.forEach(n => (n.deps||[]).forEach(d => {
+        const from = byId[d], to = n;
+        const on = highlighted.has(n.id) && highlighted.has(d);
+        svg.appendChild(el("line",{
+          x1:from.x, y1:from.y, x2:to.x, y2:to.y,
+          stroke: on ? "var(--accent)" : "var(--dim)",
+          "stroke-width": on ? 2.6 : 1.4
+        }));
+      }));
+      // nodes
+      nodes.forEach(n => {
+        const on = highlighted.has(n.id);
+        const isSelected = n.id === selectedId;
+        const w = Math.max(110, n.label.length*6.4);
+        const rect = el("rect",{
+          x:n.x-w/2, y:n.y-20, width:w, height:40, rx:10,
+          fill: isSelected ? "var(--accent)" : (on ? "var(--accent-soft)" : "#fff"),
+          stroke: on ? "var(--accent)" : "var(--line)", "stroke-width": isSelected ? 0 : 1.4
+        });
+        rect.style.cursor = "pointer";
+        rect.addEventListener("click", () => draw(n.id));
+        svg.appendChild(rect);
+        const label = el("text",{
+          x:n.x, y:n.y+4, "text-anchor":"middle", "font-size":11.5,
+          "font-family":"IBM Plex Mono,monospace",
+          fill: isSelected ? "#fff" : "var(--ink)"
+        }, n.label);
+        label.style.cursor = "pointer";
+        label.style.pointerEvents = "none";
+        svg.appendChild(label);
+      });
+      if (selectedId){
+        const n = byId[selectedId];
+        const depsList = (n.deps||[]).map(d => byId[d].label).join(", ") || "nothing (this is a foundation stone itself)";
+        verdictEl.innerHTML = `<b>${n.label}</b> — ${n.note}<br>Directly rests on: <b>${depsList}</b><br>Full chain highlighted back to the foundation: <b>${[...highlighted].map(id=>byId[id].label).join(" · ")}</b>`;
+      } else {
+        verdictEl.textContent = "Click a node above to see what it rests on.";
+      }
+    }
+    draw(null);
+  }
+
+  // ---- Euclid's tower ----
+  const euclidNodes = [
+    { id:"p1", label:"Postulate 1", x:100, y:270, deps:[], note:"draw a segment between any two points — accepted without proof." },
+    { id:"p3", label:"Postulate 3", x:260, y:270, deps:[], note:"draw a circle given a center and radius — accepted without proof." },
+    { id:"cn1", label:"Common Notion 1", x:440, y:270, deps:[], note:"things equal to the same thing are equal to each other — accepted without proof." },
+    { id:"i1", label:"Prop I.1: equilateral triangle", x:180, y:170, deps:["p1","p3","cn1"], note:"constructs an equilateral triangle by drawing two circles and citing exactly these three foundation stones." },
+    { id:"i4", label:"Prop I.4 (SAS)", x:460, y:170, deps:["p1","p3","cn1"], note:"two sides + included angle fix a unique triangle — Euclid's own proof used superposition; Hilbert (1899) later made it a stated axiom instead." },
+    { id:"i5", label:"Prop I.5: Pons Asinorum", x:460, y:70, deps:["i4"], note:"isosceles triangle's base angles are equal — built entirely on Prop I.4 (SAS), via Pappus's self-comparison trick." },
+  ];
+  buildTower(document.getElementById("euclidSvg"), euclidNodes, document.getElementById("euclidVerdict"));
+
+  // ---- Number theory tower ----
+  const ntNodes = [
+    { id:"defs", label:"Definitions (divides, prime, coprime)", x:360, y:320, deps:[], note:"the starting vocabulary everything else in this tower is stated in terms of." },
+    { id:"euclid_alg", label:"Euclidean Algorithm", x:180, y:230, deps:["defs"], note:"finds gcd(a,b) by repeated remainder-taking, using only the definitions above." },
+    { id:"fta", label:"Fundamental Theorem of Arithmetic", x:540, y:230, deps:["defs"], note:"every integer > 1 factors into primes in exactly one way." },
+    { id:"primes_inf", label:"Infinitude of Primes", x:540, y:140, deps:["fta"], note:"proved by contradiction, citing the Fundamental Theorem's 'every integer > 1 has a prime factor.'" },
+    { id:"fermat", label:"Fermat's Little Theorem", x:200, y:140, deps:["euclid_alg"], note:"a^(p-1) ≡ 1 (mod p) for prime p — leans on 'every nonzero remainder mod a prime has an inverse,' supplied by the Euclidean Algorithm." },
+    { id:"rsa", label:"RSA Encryption", x:200, y:50, deps:["fermat"], note:"the encrypt/decrypt round-trip works because raising to the e-th then d-th power composes back to the original message, a direct consequence of Fermat's Little Theorem." },
+  ];
+  buildTower(document.getElementById("ntSvg"), ntNodes, document.getElementById("ntVerdict"));
+
+  // ============ Quiz ============
+  const QUIZ = [
+    { claim: "Prove: for every positive integer n, 1+2+...+n = n(n+1)/2.", answer: "Induction", explain: "The shape is 'for every n, [formula holds]' — a base case plus 'true for n implies true for n+1' covers every n at once." },
+    { claim: "Prove: there is no largest prime number.", answer: "Contradiction", explain: "The shape is 'no such object exists.' Assume a largest prime does exist, derive an impossible consequence, and the assumption collapses." },
+    { claim: "Prove: if a·b is irrational, then a is irrational or b is irrational.", answer: "Contrapositive", explain: "Proving the original directly is awkward, but its contrapositive — 'if a and b are both rational, then a·b is rational' — is a straightforward direct computation." },
+    { claim: "Prove: for any integer n, n³ - n is always divisible by 6.", answer: "Cases", explain: "n is either even or odd — an exhaustive, short list of possibilities — and the claim can be checked separately in each." },
+    { claim: "Prove: the sum of two even numbers is even.", answer: "Direct proof", explain: "A straightforward chain: write both numbers using the definition of even, add them, and the result is immediately twice an integer — no detour needed." },
+    { claim: "Prove: if two angles of a triangle are equal, the sides opposite them are equal (the converse of the isosceles triangle theorem).", answer: "Contradiction", explain: "Euclid's own proof (Prop I.6): assume the sides are unequal, construct a smaller triangle that SAS forces to be congruent to the whole triangle, and Common Notion 5 ('the whole is greater than the part') delivers the contradiction." },
+    { claim: "Prove: √2 is irrational.", answer: "Contradiction", explain: "Assume √2 = p/q in lowest terms, derive that p and q must both be even (contradicting 'lowest terms'), and the assumption collapses." },
+  ];
+  const TECHNIQUES = ["Direct proof", "Contrapositive", "Contradiction", "Induction", "Cases"];
+  let quizOrder = [], quizIdx = 0, score = 0, attempts = 0, answered = false;
+
+  function shuffle(arr){
+    const a = [...arr];
+    for (let i=a.length-1;i>0;i--){
+      const j = Math.floor(((i+7)*2654435761 % 2**32) / 2**32 * (i+1)); // deterministic shuffle, no Math.random dependency across reruns
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+  quizOrder = shuffle(QUIZ.map((_,i)=>i));
+
+  function renderQuiz(){
+    answered = false;
+    const q = QUIZ[quizOrder[quizIdx % quizOrder.length]];
+    document.getElementById("quizClaim").textContent = q.claim;
+    document.getElementById("quizVerdict").style.display = "none";
+    const choicesEl = document.getElementById("quizChoices");
+    choicesEl.innerHTML = "";
+    TECHNIQUES.forEach(t => {
+      const btn = document.createElement("button");
+      btn.className = "op";
+      btn.textContent = t;
+      btn.addEventListener("click", () => {
+        if (answered) return;
+        answered = true;
+        attempts++;
+        const correct = t === q.answer;
+        if (correct) score++;
+        document.getElementById("quizScore").textContent = `Score: ${score} / ${attempts}`;
+        const verdict = document.getElementById("quizVerdict");
+        verdict.style.display = "block";
+        verdict.innerHTML = (correct ? "<b>Correct.</b> " : `<b>Not quite</b> — the fitting technique is <b>${q.answer}</b>. `) + q.explain;
+      });
+      choicesEl.appendChild(btn);
+    });
+  }
+  document.getElementById("quizNext").addEventListener("click", () => {
+    quizIdx++;
+    renderQuiz();
+  });
+  renderQuiz();
+})();
+</script>
+</body>
+</html>

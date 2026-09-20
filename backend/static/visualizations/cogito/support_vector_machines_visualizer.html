@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Support Vector Machines: the widest street, live-solved</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 18px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .row label{font-size:12px;color:var(--chalk-dim);min-width:170px;}
+  input[type=range]{flex:1;min-width:160px;accent-color:var(--amber);}
+  .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:52px;text-align:center;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.small{font-size:11.5px;padding:6px 10px;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
+  .cols{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
+
+  .metric-row{display:flex;justify-content:center;gap:22px;margin:16px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:120px;}
+  .metric .lbl{font-size:11px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:20px;margin-top:4px;}
+  .metric.a .num{color:var(--amber);}
+  .metric.g .num{color:var(--green);}
+  .metric.c .num{color:var(--coral);}
+  .metric.b .num{color:var(--blue);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:14px;min-height:20px;}
+  .plot-caption{text-align:center;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+  .hint{font-size:12px;color:var(--chalk-dim);margin:6px 0 0;text-align:center;}
+  .approx-note{font-size:11.5px;color:var(--chalk-dim);border:1px dashed var(--border);border-radius:8px;padding:8px 12px;margin-top:14px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Support Vector Machines: the widest street, live-solved</h1>
+  <p class="sub">Three tabs, one live solver underneath: a simplified but real SMO-style (Sequential Minimal Optimization) quadratic-programming solver, running entirely in this page's JavaScript. It is <b>not</b> scikit-learn's exact solver — it is honest about that everywhere below — but it converges to the same kind of answer on every dataset here.</p>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="margin">Margin &amp; Support Vectors</button>
+    <button class="tabbtn" data-tab="soft">Soft Margin &amp; C</button>
+    <button class="tabbtn" data-tab="kernel">Kernel Trick</button>
+  </div>
+
+  <!-- ============ TAB 1: MARGIN & SUPPORT VECTORS ============ -->
+  <div class="tabpanel active" id="tab-margin">
+    <div class="panel">
+      <h2>The widest street between two neighborhoods</h2>
+      <p class="sub">The same ten-point dataset the tutorial's Part 1 fits with scikit-learn. The solid line is the decision boundary; the dashed lines mark the margin's edges. Points ringed in amber are the <b>support vectors</b> — the only points holding the street's width in place. Click any point to remove or restore it, and watch whether the boundary reacts.</p>
+      <div class="cols">
+        <svg id="marginSvg" width="440" height="380" viewBox="0 0 440 380"></svg>
+      </div>
+      <div class="plot-caption">blue = class 0 &nbsp;·&nbsp; coral = class 1 &nbsp;·&nbsp; amber ring = support vector &nbsp;·&nbsp; faded/×'d point = removed</div>
+      <div class="metric-row">
+        <div class="metric a"><div class="lbl">Margin width (2/‖w‖)</div><div class="num" id="mMarginWidth">-</div></div>
+        <div class="metric g"><div class="lbl">Support vectors</div><div class="num" id="mMarginSV">-</div></div>
+        <div class="metric b"><div class="lbl">w, b</div><div class="num" id="mMarginWb" style="font-size:13px;">-</div></div>
+      </div>
+      <div class="row" style="justify-content:center;">
+        <button class="op small" id="btnMarginReset">Restore all points</button>
+      </div>
+      <div class="story-line" id="marginStory"></div>
+      <div class="approx-note">This tab's live solver, on this exact dataset, converges to <b>w ≈ [0.400, 0.400], b ≈ −3.000, margin ≈ 3.5355</b> — matching scikit-learn's <code>SVC(kernel='linear')</code> fit in the tutorial's Part 1 to four decimal places. That precision is specific to this small, cleanly-separated example; treat the solver elsewhere on this page as approximate.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: SOFT MARGIN & C ============ -->
+  <div class="tabpanel" id="tab-soft">
+    <div class="panel">
+      <h2>Turning the <code>C</code> knob on data that actually overlaps</h2>
+      <p class="sub">Forty points from two overlapping Gaussian blobs — the tutorial's Part 3 dataset, exactly reproduced. No straight line separates these two classes perfectly. Drag <code>C</code> and watch how much the boundary is willing to compromise.</p>
+      <div class="row"><label>C (violation penalty strength)</label><input type="range" id="cSlider" min="-1" max="2" step="0.05" value="0"><span class="readout" id="cSliderOut">1.00</span></div>
+      <div class="cols">
+        <svg id="softSvg" width="440" height="380" viewBox="0 0 440 380"></svg>
+      </div>
+      <div class="plot-caption">shaded band = the margin &nbsp;·&nbsp; amber ring = support vector &nbsp;·&nbsp; red × = a margin violation (inside the margin or on the wrong side)</div>
+      <div class="metric-row">
+        <div class="metric a"><div class="lbl">Margin width</div><div class="num" id="mSoftMargin">-</div></div>
+        <div class="metric g"><div class="lbl">Support vectors</div><div class="num" id="mSoftSV">-</div></div>
+        <div class="metric c"><div class="lbl">Margin violations</div><div class="num" id="mSoftViol">-</div></div>
+      </div>
+      <div class="story-line" id="softStory"></div>
+      <div class="approx-note">Small <code>C</code> ⇒ strongly regularized ⇒ wide, forgiving margin, many violations tolerated. Large <code>C</code> ⇒ weakly regularized ⇒ narrow margin hugging the data, few violations tolerated. (As the tutorial's Part 3 flags: this is <code>1/λ</code>'s direction, not <code>λ</code>'s, compared to the L1/L2 regularization file's convention.)</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: KERNEL TRICK ============ -->
+  <div class="tabpanel" id="tab-kernel">
+    <div class="panel">
+      <h2>What a straight line can't do, a kernel can</h2>
+      <p class="sub">Fifty points arranged as two concentric rings — a subsample of the tutorial's Part 4 dataset. No straight line separates an inner ring from an outer one. Toggle the kernel and watch the decision region change from a half-plane to a closed curve.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="btnKernelLinear">Linear kernel</button>
+        <button class="op" id="btnKernelRbf">RBF kernel</button>
+      </div>
+      <div class="cols">
+        <svg id="kernelSvg" width="440" height="380" viewBox="0 0 440 380"></svg>
+      </div>
+      <div class="plot-caption">shaded region = which class the live solver would predict there &nbsp;·&nbsp; amber ring = support vector</div>
+      <div class="metric-row">
+        <div class="metric a"><div class="lbl">Training accuracy</div><div class="num" id="mKernelAcc">-</div></div>
+        <div class="metric g"><div class="lbl">Support vectors</div><div class="num" id="mKernelSV">-</div></div>
+      </div>
+      <div class="story-line" id="kernelStory"></div>
+      <div class="approx-note">The RBF decision region here is the live solver's own kernel-weighted vote at each pixel — the same mechanism the tutorial's Part 4 describes as "a similarity score, as if the points had been lifted into a higher dimension, without ever building that higher dimension."</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../supervised/support_vector_machines_feynman.md">Support Vector Machines</a>, Parts 1–4.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  document.querySelectorAll(".tabbtn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tabpanel").forEach(p=>p.classList.remove("active"));
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  /* ============================================================
+     SHARED SOLVER — a simplified SMO (Sequential Minimal
+     Optimization) quadratic-programming solver for the soft-margin
+     SVM dual problem. It is honest, working QP, not a toy stand-in
+     — but it is not scikit-learn's production solver, and this page
+     says so at every tab.
+     ============================================================ */
+  function kernelLinear(a,b){ return a[0]*b[0]+a[1]*b[1]; }
+  function makeRbfKernel(gamma){
+    return function(a,b){ const dx=a[0]-b[0], dy=a[1]-b[1]; return Math.exp(-gamma*(dx*dx+dy*dy)); };
+  }
+
+  function trainSVM(X, y, kernelFn, C, seed){
+    const n = X.length;
+    const alpha = new Float64Array(n);
+    const K = [];
+    for(let i=0;i<n;i++){ K.push(new Float64Array(n)); for(let j=0;j<n;j++) K[i][j] = kernelFn(X[i], X[j]); }
+    const tol = 1e-3;
+    const maxPasses = 50;
+    const maxIter = 30000;
+    let b = 0;
+    let s = seed || 12345;
+    function rand(){ s = (s*1103515245 + 12345) & 0x7fffffff; return s/0x7fffffff; }
+    function f(i){ let sum=0; for(let k=0;k<n;k++) sum += alpha[k]*y[k]*K[k][i]; return sum + b; }
+    let passes=0, iter=0;
+    while(passes<maxPasses && iter<maxIter){
+      let numChanged=0;
+      for(let i=0;i<n;i++){
+        const Ei = f(i) - y[i];
+        if((y[i]*Ei < -tol && alpha[i] < C) || (y[i]*Ei > tol && alpha[i] > 0)){
+          let j = Math.floor(rand()*n);
+          if(j===i) j=(j+1)%n;
+          const Ej = f(j) - y[j];
+          const aiOld = alpha[i], ajOld = alpha[j];
+          let L, H;
+          if(y[i] !== y[j]){ L = Math.max(0, alpha[j]-alpha[i]); H = Math.min(C, C+alpha[j]-alpha[i]); }
+          else { L = Math.max(0, alpha[i]+alpha[j]-C); H = Math.min(C, alpha[i]+alpha[j]); }
+          iter++;
+          if(L>=H) continue;
+          const eta = 2*K[i][j] - K[i][i] - K[j][j];
+          if(eta>=0) continue;
+          let newAj = ajOld - y[j]*(Ei-Ej)/eta;
+          newAj = Math.min(H, Math.max(L, newAj));
+          if(Math.abs(newAj-ajOld) < 1e-7) continue;
+          const newAi = aiOld + y[i]*y[j]*(ajOld-newAj);
+          alpha[i]=newAi; alpha[j]=newAj;
+          const b1 = b - Ei - y[i]*(newAi-aiOld)*K[i][i] - y[j]*(newAj-ajOld)*K[i][j];
+          const b2 = b - Ej - y[i]*(newAi-aiOld)*K[i][j] - y[j]*(newAj-ajOld)*K[j][j];
+          b = (b1+b2)/2;
+          numChanged++;
+        } else { iter++; }
+        if(iter>=maxIter) break;
+      }
+      if(numChanged===0) passes++; else passes=0;
+    }
+    return {alpha, b, K};
+  }
+
+  function decisionValue(X, y, alpha, b, kernelFn, x){
+    let s=0;
+    for(let k=0;k<X.length;k++) s += alpha[k]*y[k]*kernelFn(X[k], x);
+    return s+b;
+  }
+  function linearW(X, y, alpha){
+    let w=[0,0];
+    for(let i=0;i<X.length;i++){ w[0]+=alpha[i]*y[i]*X[i][0]; w[1]+=alpha[i]*y[i]*X[i][1]; }
+    return w;
+  }
+
+  /* ============================================================
+     TAB 1 — MARGIN & SUPPORT VECTORS
+     ============================================================ */
+  const marginPointsAll = [
+    {x:1.0,y:1.0,c:0},{x:1.5,y:2.0,c:0},{x:2.0,y:1.0,c:0},{x:1.0,y:2.5,c:0},{x:2.5,y:2.5,c:0},
+    {x:5.0,y:5.0,c:1},{x:5.5,y:6.0,c:1},{x:6.0,y:5.0,c:1},{x:5.0,y:6.5,c:1},{x:6.5,y:6.5,c:1}
+  ];
+  marginPointsAll.forEach(p => p.removed = false);
+
+  const origMarginFit = (function(){
+    const X = marginPointsAll.map(p=>[p.x,p.y]);
+    const y = marginPointsAll.map(p=>p.c===0?-1:1);
+    const r = trainSVM(X, y, kernelLinear, 50, 777);
+    return { w: linearW(X,y,r.alpha), b: r.b };
+  })();
+
+  function renderMargin(){
+    const active = marginPointsAll.filter(p=>!p.removed);
+    const X = active.map(p=>[p.x,p.y]);
+    const y = active.map(p=>p.c===0?-1:1);
+    let w=[0,0], b=0, svSet = new Set();
+    if(active.filter(p=>p.c===0).length>0 && active.filter(p=>p.c===1).length>0){
+      const r = trainSVM(X, y, kernelLinear, 50, 777);
+      w = linearW(X, y, r.alpha);
+      b = r.b;
+      for(let i=0;i<active.length;i++) if(r.alpha[i] > 1e-3) svSet.add(active[i]);
+    }
+    const wn = Math.hypot(w[0],w[1]) || 1e-9;
+    const margin = 2/wn;
+
+    document.getElementById("mMarginWidth").textContent = wn>1e-6 ? margin.toFixed(4) : "n/a";
+    document.getElementById("mMarginSV").textContent = svSet.size;
+    document.getElementById("mMarginWb").textContent = `[${w[0].toFixed(3)}, ${w[1].toFixed(3)}], ${b.toFixed(3)}`;
+
+    const svg = document.getElementById("marginSvg");
+    svg.innerHTML = "";
+    const W=440,H=380,pad=44;
+    const minX=0, maxX=7.5, minY=0, maxY=7.5;
+    function X_(x){ return pad + (x-minX)/(maxX-minX)*(W-2*pad); }
+    function Y_(y){ return H-pad - (y-minY)/(maxY-minY)*(H-2*pad); }
+
+    // decision boundary + margin lines, drawn by solving w.x+b=k at the plot's left/right edges
+    if(wn>1e-6){
+      function lineAtLevel(k, color, dash){
+        // w0*x + w1*y + b = k  =>  y = (k - b - w0*x)/w1  (or solve for x if w1~0)
+        const pts=[];
+        if(Math.abs(w[1]) > 1e-6){
+          for(const xEdge of [minX, maxX]){
+            const yy = (k - b - w[0]*xEdge)/w[1];
+            pts.push([xEdge, yy]);
+          }
+        } else {
+          const xx = (k-b)/w[0];
+          pts.push([xx, minY], [xx, maxY]);
+        }
+        const attrs = {x1:X_(pts[0][0]), y1:Y_(pts[0][1]), x2:X_(pts[1][0]), y2:Y_(pts[1][1]), stroke:color, "stroke-width":k===0?2.6:1.6};
+        if(dash) attrs["stroke-dasharray"]="6 4";
+        svg.appendChild(el("line", attrs));
+      }
+      lineAtLevel(-1, "var(--chalk-dim)", true);
+      lineAtLevel(0, "var(--amber)", false);
+      lineAtLevel(1, "var(--chalk-dim)", true);
+    }
+
+    marginPointsAll.forEach(p => {
+      const cx=X_(p.x), cy=Y_(p.y);
+      const fill = p.c===0 ? "var(--blue)" : "var(--coral)";
+      if(p.removed){
+        svg.appendChild(el("circle",{cx,cy,r:6,fill:"none",stroke:"var(--chalk-dim)","stroke-width":1.2,"stroke-dasharray":"2 2"}));
+        svg.appendChild(el("line",{x1:cx-5,y1:cy-5,x2:cx+5,y2:cy+5,stroke:"var(--chalk-dim)","stroke-width":1.4}));
+        svg.appendChild(el("line",{x1:cx-5,y1:cy+5,x2:cx+5,y2:cy-5,stroke:"var(--chalk-dim)","stroke-width":1.4}));
+      } else {
+        if(svSet.has(p)) svg.appendChild(el("circle",{cx,cy,r:10,fill:"none",stroke:"var(--amber)","stroke-width":2.4}));
+        svg.appendChild(el("circle",{cx,cy,r:6,fill,stroke:"var(--bg)","stroke-width":1.5,"data-clickable":"1"}));
+      }
+      const hit = el("circle",{cx,cy,r:12,fill:"transparent",style:"cursor:pointer;"});
+      hit.addEventListener("click", () => { p.removed = !p.removed; renderMargin(); });
+      svg.appendChild(hit);
+    });
+
+    const story = document.getElementById("marginStory");
+    const boundaryChanged = wn>1e-6 && (Math.abs(w[0]-origMarginFit.w[0])>1e-3 || Math.abs(w[1]-origMarginFit.w[1])>1e-3 || Math.abs(b-origMarginFit.b)>1e-3);
+    const anyRemoved = marginPointsAll.some(p=>p.removed);
+    if(!anyRemoved){
+      story.textContent = "All ten points present — this is the tutorial's Part 1 fit exactly.";
+    } else if(!boundaryChanged){
+      story.textContent = "Boundary unchanged — you removed a non-support-vector point. Exactly Part 2's first result.";
+    } else {
+      story.textContent = "Boundary moved — you removed a support vector, and a new one took its place. Exactly Part 2's second result.";
+    }
+  }
+  document.getElementById("btnMarginReset").addEventListener("click", () => {
+    marginPointsAll.forEach(p=>p.removed=false);
+    renderMargin();
+  });
+  renderMargin();
+
+  /* ============================================================
+     TAB 2 — SOFT MARGIN & C
+     ============================================================ */
+  const softPointsRaw = [
+    [2.4967,1.8617,0],[2.6477,3.5230,0],[1.7658,1.7659,0],[3.5792,2.7674,0],[1.5305,2.5426,0],
+    [1.5366,1.5343,0],[2.2420,0.0867,0],[0.2751,1.4377,0],[0.9872,2.3142,0],[1.0920,0.5877,0],
+    [3.4656,1.7742,0],[2.0675,0.5753,0],[1.4556,2.1109,0],[0.8490,2.3757,0],[1.3994,1.7083,0],
+    [1.3983,3.8523,0],[1.9865,0.9423,0],[2.8225,0.7792,0],[2.2089,0.0403,0],[0.6718,2.1969,0],
+    [4.7385,4.1714,1],[3.8844,3.6989,1],[2.5215,3.2802,1],[3.5394,5.0571,1],[4.3436,2.2370,1],
+    [4.3241,3.6149,1],[3.3231,4.6117,1],[5.0310,4.9313,1],[3.1608,3.6908,1],[4.3313,4.9755,1],
+    [3.5208,3.8143,1],[2.8937,2.8038,1],[4.8125,5.3562,1],[3.9280,5.0035,1],[4.3616,3.3549,1],
+    [4.3614,5.5380,1],[3.9642,5.5646,1],[1.3803,4.8219,1],[4.0870,3.7010,1],[4.0918,2.0124,1]
+  ];
+  const softX = softPointsRaw.map(p=>[p[0],p[1]]);
+  const softY = softPointsRaw.map(p=>p[2]===0?-1:1);
+
+  function renderSoft(){
+    const logC = parseFloat(document.getElementById("cSlider").value);
+    const C = Math.pow(10, logC);
+    document.getElementById("cSliderOut").textContent = C>=1 ? C.toFixed(1) : C.toFixed(2);
+
+    const r = trainSVM(softX, softY, kernelLinear, C, 42);
+    const w = linearW(softX, softY, r.alpha);
+    const wn = Math.hypot(w[0],w[1]) || 1e-9;
+    const margin = 2/wn;
+    let nsv=0, nviol=0;
+    const svFlags = [], violFlags = [];
+    for(let i=0;i<softX.length;i++){
+      const isSv = r.alpha[i] > 1e-3;
+      if(isSv) nsv++;
+      svFlags.push(isSv);
+      const fx = decisionValue(softX, softY, r.alpha, r.b, kernelLinear, softX[i]);
+      const isViol = softY[i]*fx < 1 - 1e-3;
+      if(isViol) nviol++;
+      violFlags.push(isViol);
+    }
+    document.getElementById("mSoftMargin").textContent = margin.toFixed(3);
+    document.getElementById("mSoftSV").textContent = nsv;
+    document.getElementById("mSoftViol").textContent = nviol;
+
+    const svg = document.getElementById("softSvg");
+    svg.innerHTML = "";
+    const W=440,H=380,pad=44;
+    const minX=-0.5, maxX=5.7, minY=-0.5, maxY=6.0;
+    function X_(x){ return pad + (x-minX)/(maxX-minX)*(W-2*pad); }
+    function Y_(y){ return H-pad - (y-minY)/(maxY-minY)*(H-2*pad); }
+
+    if(wn>1e-6){
+      function lineAtLevel(k, color, dash, width){
+        const pts=[];
+        if(Math.abs(w[1]) > 1e-6){
+          for(const xEdge of [minX, maxX]) pts.push([xEdge, (k - r.b - w[0]*xEdge)/w[1]]);
+        } else {
+          const xx=(k-r.b)/w[0]; pts.push([xx,minY],[xx,maxY]);
+        }
+        const attrs={x1:X_(pts[0][0]),y1:Y_(pts[0][1]),x2:X_(pts[1][0]),y2:Y_(pts[1][1]),stroke:color,"stroke-width":width};
+        if(dash) attrs["stroke-dasharray"]="6 4";
+        svg.appendChild(el("line",attrs));
+      }
+      lineAtLevel(-1,"var(--chalk-dim)",true,1.6);
+      lineAtLevel(0,"var(--amber)",false,2.6);
+      lineAtLevel(1,"var(--chalk-dim)",true,1.6);
+    }
+
+    for(let i=0;i<softX.length;i++){
+      const cx=X_(softX[i][0]), cy=Y_(softX[i][1]);
+      const fill = softY[i]===-1 ? "var(--blue)" : "var(--coral)";
+      if(svFlags[i]) svg.appendChild(el("circle",{cx,cy,r:9,fill:"none",stroke:"var(--amber)","stroke-width":2}));
+      svg.appendChild(el("circle",{cx,cy,r:5.5,fill,stroke:"var(--bg)","stroke-width":1.2}));
+      if(violFlags[i]){
+        svg.appendChild(el("line",{x1:cx-4,y1:cy-4,x2:cx+4,y2:cy+4,stroke:"var(--coral)","stroke-width":1.6}));
+        svg.appendChild(el("line",{x1:cx-4,y1:cy+4,x2:cx+4,y2:cy-4,stroke:"var(--coral)","stroke-width":1.6}));
+      }
+    }
+
+    const story = document.getElementById("softStory");
+    if(C < 0.5) story.textContent = "Small C: the solver would rather keep the margin wide than punish every violation — lots of amber rings, a generous margin band.";
+    else if(C > 20) story.textContent = "Large C: the solver punishes every violation heavily — the margin narrows to hug the data as tightly as it can.";
+    else story.textContent = "A middle-ground C: some violations tolerated, some not.";
+  }
+  document.getElementById("cSlider").addEventListener("input", renderSoft);
+  renderSoft();
+
+  /* ============================================================
+     TAB 3 — KERNEL TRICK
+     ============================================================ */
+  const kernelPointsRaw = [
+    [0.4013,0.8858,0],[0.0506,-0.4248,1],[0.6993,0.6793,0],[0.1165,-0.4442,1],[-0.4408,0.8964,0],
+    [0.2448,-0.3522,1],[-0.7604,-0.5074,0],[0.0068,0.4496,1],[-0.4331,0.0353,1],[-0.0578,0.4531,1],
+    [-0.1870,0.2943,1],[-0.1755,-0.3695,1],[0.1729,0.2949,1],[0.3060,-0.3410,1],[-0.3394,0.8728,0],
+    [-0.2420,0.4138,1],[-0.4038,-0.0485,1],[-0.9202,-0.0837,0],[-0.4241,0.2479,1],[0.3502,0.1820,1],
+    [0.3251,-0.2957,1],[0.3416,0.1842,1],[-0.2400,0.3201,1],[0.3729,-0.2264,1],[0.0124,-0.4377,1],
+    [-0.3161,-0.3098,1],[1.0166,-0.2196,0],[-0.1734,-0.3509,1],[-1.0591,0.1965,0],[-0.0137,0.9876,0],
+    [0.5701,0.8918,0],[0.3369,-0.0781,1],[-0.3497,-0.3064,1],[0.4278,-0.8303,0],[-0.4183,-0.0725,1],
+    [0.0726,0.4269,1],[-0.5540,-0.8067,0],[-0.8578,0.5305,0],[0.4694,0.8189,0],[-0.3390,-0.1725,1],
+    [0.3156,0.2851,1],[0.0027,0.2838,1],[-0.1631,-0.4059,1],[0.3707,-0.8922,0],[0.2249,-0.0750,1],
+    [-0.2330,-0.3176,1],[0.3154,-0.1876,1],[0.7817,-0.6596,0],[0.2713,0.8864,0],[0.2579,-0.2280,1]
+  ];
+  const kernelX = kernelPointsRaw.map(p=>[p[0],p[1]]);
+  const kernelY = kernelPointsRaw.map(p=>p[2]===0?-1:1);
+  const RBF_GAMMA = 2.28;
+  let kernelMode = "linear";
+
+  function renderKernel(){
+    const kernelFn = kernelMode === "linear" ? kernelLinear : makeRbfKernel(RBF_GAMMA);
+    const r = trainSVM(kernelX, kernelY, kernelFn, 1.0, 99);
+    let correct=0, nsv=0;
+    const svFlags=[];
+    for(let i=0;i<kernelX.length;i++){
+      const fx = decisionValue(kernelX, kernelY, r.alpha, r.b, kernelFn, kernelX[i]);
+      if(Math.sign(fx || 1) === kernelY[i]) correct++;
+      const isSv = r.alpha[i] > 1e-3;
+      svFlags.push(isSv);
+      if(isSv) nsv++;
+    }
+    document.getElementById("mKernelAcc").textContent = (correct/kernelX.length*100).toFixed(0) + "%";
+    document.getElementById("mKernelSV").textContent = nsv;
+
+    const svg = document.getElementById("kernelSvg");
+    svg.innerHTML = "";
+    const W=440,H=380,pad=44;
+    const minX=-1.3, maxX=1.3, minY=-1.1, maxY=1.1;
+    function X_(x){ return pad + (x-minX)/(maxX-minX)*(W-2*pad); }
+    function Y_(y){ return H-pad - (y-minY)/(maxY-minY)*(H-2*pad); }
+    function dataX(px){ return minX + (px-pad)/(W-2*pad)*(maxX-minX); }
+    function dataY(py){ return minY + (H-pad-py)/(H-2*pad)*(maxY-minY); }
+
+    const cellsX=52, cellsY=44;
+    for(let i=0;i<cellsX;i++){
+      for(let j=0;j<cellsY;j++){
+        const px = pad + (i+0.5)/cellsX*(W-2*pad);
+        const py = pad + (j+0.5)/cellsY*(H-2*pad);
+        const x = [dataX(px), dataY(py)];
+        const fx = decisionValue(kernelX, kernelY, r.alpha, r.b, kernelFn, x);
+        const color = fx >= 0 ? "rgba(255,130,102,0.16)" : "rgba(127,179,213,0.16)";
+        svg.appendChild(el("rect",{x:px-(W-2*pad)/cellsX/2, y:py-(H-2*pad)/cellsY/2, width:(W-2*pad)/cellsX+0.5, height:(H-2*pad)/cellsY+0.5, fill:color}));
+      }
+    }
+    for(let i=0;i<kernelX.length;i++){
+      const cx=X_(kernelX[i][0]), cy=Y_(kernelX[i][1]);
+      const fill = kernelY[i]===-1 ? "var(--blue)" : "var(--coral)";
+      if(svFlags[i]) svg.appendChild(el("circle",{cx,cy,r:9,fill:"none",stroke:"var(--amber)","stroke-width":2}));
+      svg.appendChild(el("circle",{cx,cy,r:5.5,fill,stroke:"var(--bg)","stroke-width":1.2}));
+    }
+
+    const story = document.getElementById("kernelStory");
+    story.textContent = kernelMode === "linear"
+      ? "A linear kernel can only draw a straight boundary — on two concentric rings, that fails almost everywhere; watch nearly every point become a support vector as the solver struggles to find a workable straight line."
+      : "The RBF kernel lets the boundary curve into a ring, following the actual shape of the two classes — using far fewer support vectors, because most points are now comfortably on the correct side.";
+  }
+  document.getElementById("btnKernelLinear").addEventListener("click", function(){
+    kernelMode="linear"; this.classList.add("active"); document.getElementById("btnKernelRbf").classList.remove("active"); renderKernel();
+  });
+  document.getElementById("btnKernelRbf").addEventListener("click", function(){
+    kernelMode="rbf"; this.classList.add("active"); document.getElementById("btnKernelLinear").classList.remove("active"); renderKernel();
+  });
+  renderKernel();
+})();
+</script>
+</body>
+</html>
