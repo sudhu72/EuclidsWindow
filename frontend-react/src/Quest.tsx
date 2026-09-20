@@ -192,7 +192,7 @@ function QuestStartScreen({ onBegin }: { onBegin: (story: QuestStory, level: str
     <div className="qst-start">
       <h3 className="lesson-title">Math Quest</h3>
       <p className="dsub">
-        Learn mathematics as a puzzle-story. Two full cases are ready to play now — more are on the way.
+        Learn mathematics as a puzzle-story. {QUEST_STORIES.filter((s) => s.status === "ready").length} full cases are ready to play now — more are on the way.
       </p>
 
       <StoryGroup title="🕵️ Murder mysteries" skin="detective" stories={mysteries} selected={storyId} onPick={setStoryId} />

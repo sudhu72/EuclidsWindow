@@ -154,6 +154,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "cryptographers-curse",
+    sceneText:
+      "**A wartime codebreaking bureau, housed in a requisitioned country manor, well past curfew.**\n\n" +
+      "Iris, a junior clerk barely six months into the work, meets you at the gate white-faced. \"Dr. Edith Faraday is dead, sir. Found in the code room an hour ago. She'd told me just yesterday she was close to something — a shift in the enemy's cipher method nobody else here had even noticed yet.\" The bureau's chief has already sealed the wing: five people had access tonight, and the killer, whoever they are, is almost certainly still inside these walls.\n\n" +
+      "Iris lays out what's known. Faraday was last seen alive at nine o'clock, locking the code room's door behind her as usual. She kept meticulous logs — shift keys, decoded traffic, personnel numbers — trusting a number that checked out over a colleague's word every time the two disagreed. \"She used to say arithmetic was the only witness in this building that couldn't be bribed, frightened, or mistaken,\" Iris says. \"I think that's exactly why someone needed her gone before she finished writing it down.\"",
+    cast: [
+      {
+        name: "Ashworth",
+        detail: "A senior codebreaker with an old failure in his file — a missed decryption years back that Faraday's own methods had recently, quietly, threatened to expose again.",
+      },
+      {
+        name: "Lindqvist",
+        detail: "Faraday's closest professional rival, publicly still claiming partial credit for a cipher-breaking method that was, in truth, entirely her own.",
+      },
+      {
+        name: "Reyes",
+        detail: "Handles the overnight communications line — long rumored, never proven, to be passing more than official traffic along it.",
+      },
+      {
+        name: "Okonkwo",
+        detail: "Was once engaged to a colleague who died early in the war; something about Faraday's recent work has visibly unsettled her for weeks.",
+      },
+      {
+        name: "Pettigrew",
+        detail: "The night duty officer, walking the same rounds every hour for years. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "sky-chart-expedition",
+    sceneText:
+      "**A mountaintop astronomy camp, above the tree line, the night sky unusually clear.**\n\n" +
+      "Amara has spent two seasons tracking down a legend: an ancient civilization of astronomer-priests who once mapped these peaks, and who are said to have hidden a cache of instruments and records somewhere among them. \"They had exactly one rule,\" she tells you, laying out a weathered star-chart by lantern light. \"Trust only what's true without exception — not true most nights, not true for one star you happened to be watching, but true for every case, always. Everything they built into this mountain tests that same rule.\"\n\n" +
+      "The chart marks a magnitude scale where each step is a factor of roughly **2.5** in brightness, and a calendar that drifts by almost exactly **6 hours** every year against the true seasons — both facts, Amara says, that the priests built directly into the trail's puzzles. \"If the old stories are right,\" she says, \"whatever they hid up here was never meant for a casual traveler — only for someone patient enough to check every claim against the sky itself.\"",
+    cast: [
+      {
+        name: "Amara",
+        detail: "Your expedition guide — she's spent two seasons studying the astronomer-priests' charts and reads their old notation faster than you can work out the mathematics behind it.",
+      },
+      {
+        name: "The Astronomer-Priests",
+        detail: "The ancient civilization that built this trail. Long gone, but their one rule survives in every marker: trust only what's true without exception.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {

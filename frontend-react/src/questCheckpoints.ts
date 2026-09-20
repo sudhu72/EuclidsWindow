@@ -326,6 +326,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The chest at Spot 1 gives way to Finch's crowbar, and the Calypso's Promise reveals herself at last — timbers long since claimed by the reef, but her strongbox intact, exactly where two honest bearings said it would be. Inside, alongside the coin and silver, one final page in Hale's own hand, sealed in oilcloth against a century of seawater: \"A keeper's whole trade is trusting what repeats — the light's own turn, the tide's own hour, a number that never once lies about what it truly is. I hid this where only that same patience could ever find it.\"\n\n" +
       "Finch sits back against the rocks, treasure forgotten for a moment, just reading the old man's hand. \"He wasn't hiding it from thieves at all,\" she says slowly. \"He was hiding it *for* whoever was patient enough to actually check his numbers instead of just believing them.\" Above the cove, right on schedule, the tide has already begun its long, patient turn toward the next low.",
   },
+
+  // ------------------------------------------------------------------
+  // The Cryptographer's Curse
+  // ------------------------------------------------------------------
+  {
+    id: "crypto-mid",
+    storyId: "cryptographers-curse",
+    afterClue: "crypto-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that evening and lay them side by side.\n\n" +
+      "**Ashworth:** \"I was on duty at the front desk from six until midnight — the duty sergeant signed my log himself.\"\n\n" +
+      "**Lindqvist:** \"I left my office at six sharp, straight home. Nothing more to say.\"\n\n" +
+      "**Reyes:** \"I was on the overnight line to the coastal station from seven until well past ten — check the exchange's own records.\"\n\n" +
+      "**Okonkwo:** \"I was alone in the cipher room, working through the backlog. No one else was there to see it.\"\n\n" +
+      "**Pettigrew:** \"I did my rounds as usual, every hour on the hour. Lindqvist's office light was still burning well past nine — I remember thinking it odd, since he'd told me earlier he meant to leave early.\"\n\n" +
+      "You already know Dr. Faraday's body was found at half past ten, and that whoever reached her had to pass directly beneath Pettigrew's own rounds route.",
+    entities: ["Ashworth", "Lindqvist", "Reyes", "Okonkwo", "Pettigrew"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      Ashworth: "Alibi Holds",
+      Lindqvist: "Alibi Breaks",
+      Reyes: "Alibi Holds",
+      Okonkwo: "Alibi Breaks",
+      Pettigrew: "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and a full day's lead slips away chasing it. Look again at who has independent corroboration from someone with nothing at stake, and who is only vouching for themselves — an unwitnessed account isn't proof of guilt, but it isn't proof of anything else either.",
+    explain:
+      "Ashworth's log is countersigned by the duty sergeant, so it holds. Reyes's account is confirmed independently by the exchange's own phone records. Pettigrew has no motive at all and is the one supplying the key contradicting detail, so his account holds too. But Lindqvist's claim of leaving at six sharp is directly contradicted by Pettigrew's own rounds — an office light burning three hours after he said he'd already gone. And Okonkwo's account is entirely unwitnessed, alone in the cipher room at exactly the hour that matters.",
+  },
+  {
+    id: "crypto-final",
+    storyId: "cryptographers-curse",
+    afterClue: "crypto-10",
+    kind: "final",
+    title: "The Code Room",
+    scenario:
+      "You confront the two remaining names in the code room itself, the day's traffic still pinned to the board between you.\n\n" +
+      "**Lindqvist:** \"It was Okonkwo. Ask anyone — she never forgave Faraday for what happened with her fiancé, years back. Old wounds don't close, not really.\"\n\n" +
+      "**Okonkwo:** \"Ask instead who stood to lose everything the moment Faraday's real breakthrough went on record under her own name, instead of his.\"\n\n" +
+      "You already know the access code recovered from the final lock matches, digit for digit, a personnel number issued to exactly one person in this room.",
+    entities: ["Lindqvist", "Okonkwo"],
+    options: ["Guilty", "Innocent"],
+    answer: { Lindqvist: "Guilty", Okonkwo: "Innocent" },
+    wrongConsequence:
+      "The code room goes quiet, and nothing more is offered — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually stood to lose their whole career the moment Faraday's name, not theirs, went into the official record.",
+    explain:
+      "Okonkwo's old grief is genuine but years cold, and grief rarely waits for the one night a shift key finally breaks to act. Lindqvist's motive is immediate and professional: Faraday's breakthrough, once decoded, would have credited her alone for the exact cipher method he'd spent months publicly claiming as nearly his own. And the access code recovered from the final lock — decoded digit by digit — matches his personnel number precisely, not hers.",
+    resolution:
+      "You lay it out for the room, piece by piece: the frequency count that cracked her final message before anyone else even tried. The shift that turned nonsense into her own handwriting, describing a cipher method two years ahead of anything published. The day's key, recovered the same way every day's key was recovered — by trusting the remainder, not the guess. The safe's combination, broken open by factoring a number nobody else had bothered to factor properly. The parity check that caught the one deliberately falsified entry in an otherwise honest logbook. And the access code, recovered digit by digit from the counting principle's own arithmetic, matching a personnel number that has never once belonged to anyone but Lindqvist.\n\n" +
+      "Lindqvist doesn't run — there's nowhere in this building left to run to. \"She was going to publish it under her own name,\" he says quietly, \"two years of my own work, credited to her instead.\" Iris looks faintly ill as the duty sergeant is sent for. \"She wasn't stealing anything,\" she says. \"She was just finally about to prove she'd already solved it — and that's exactly what he couldn't survive.\" You close the code room's log gently. In the end, the woman who cracked the bureau's hardest cipher and the arithmetic that finally caught her killer were built from the very same kind of patience — checking the numbers all the way through, however long it took.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Sky Chart Expedition
+  // ------------------------------------------------------------------
+  {
+    id: "sky-mid",
+    storyId: "sky-chart-expedition",
+    afterClue: "sky-5",
+    kind: "mid",
+    title: "Three Star-Paths",
+    scenario:
+      "Before committing to a route up the ridge, three carved trail-markers block three onward paths, each bearing a claim in the astronomer-priests' own hand. Amara reads them aloud:\n\n" +
+      "**Path A:** \"Two triangles with the same three angles always have their corresponding sides in the same ratio, however large or small each triangle is.\"\n\n" +
+      "**Path B:** \"A star's brightness, as it appears to us, always depends only on its true size, never on how far away it is.\"\n\n" +
+      "**Path C:** \"Given any two whole numbers, the larger one is always an exact multiple of the smaller one.\"\n\n" +
+      "\"The true path sits behind whichever claim is actually, provably true,\" Amara says. \"Every time, no exceptions — that was always their one rule.\"",
+    entities: ["Path A", "Path B", "Path C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Path A": "True Claim", "Path B": "False Claim", "Path C": "False Claim" },
+    wrongConsequence:
+      "The wrong path narrows to a sheer drop, and you climb back down with nothing but tired legs for the trouble. \"Test each one the way they would have,\" Amara says. \"Not 'does this sound plausible' — is it true for absolutely every case, or can you think of even one where it breaks?\"",
+    explain:
+      "Path A describes real similar-triangle geometry, and it holds for every matching pair of angles, at any scale. Path B is false — two stars of the same true size can look wildly different in brightness depending on distance alone, which is exactly why brightness alone can't tell you a star's true size. Path C is false too: 7 and 3 are both whole numbers, and 7 is not a multiple of 3 — one clean counterexample is all it takes to break an 'always' claim.",
+  },
+  {
+    id: "sky-final",
+    storyId: "sky-chart-expedition",
+    afterClue: "sky-10",
+    kind: "final",
+    title: "Three Marked Valleys",
+    scenario:
+      "Amara reads each valley marker's carved inscription aloud:\n\n" +
+      "**Valley 1:** \"A triangle's exterior angle always equals the sum of the two interior angles that aren't next to it.\"\n\n" +
+      "**Valley 2:** \"Squaring a negative number always gives a negative result.\"\n\n" +
+      "**Valley 3:** \"The average of a set of numbers must always be one of the numbers in that set.\"\n\n" +
+      "\"One of these is true without a single exception,\" Amara says. \"They built their whole cache's protection on that one rule — no guessing, no 'usually.'\"",
+    entities: ["Valley 1", "Valley 2", "Valley 3"],
+    options: ["Real Valley", "False Valley"],
+    answer: { "Valley 1": "Real Valley", "Valley 2": "False Valley", "Valley 3": "False Valley" },
+    wrongConsequence:
+      "You descend into the wrong valley and find only bare rock for your trouble. \"Check the claim against a real example,\" Amara calls down. \"Work it out with small numbers by hand, not a guess about how it probably goes.\"",
+    explain:
+      "Valley 1 holds exactly, every time — a triangle's exterior angle is what's left once you remove its adjacent interior angle from a straight line, and that leftover always equals the other two interior angles combined. Valley 2 is false: a negative number times itself is a positive, always — (-3) × (-3) = 9, not -9. Valley 3 is false because an average frequently lands on a number that isn't in the original set at all — the average of 1 and 3 is 2, and 2 was never one of the numbers you started with.",
+    resolution:
+      "The real valley opens onto a shallow basin, and there it is — the astronomer-priests' true cache, sun-bleached instruments and star-charts sealed in stone for longer than any nearby nation has kept written records. Beneath the charts, wrapped in oiled cloth, one final tablet in a steadier hand: \"We trusted the sky because it never once lied to us about what was true — a shadow's angle, a star's true brightness once distance is accounted for, a ratio that holds however far you scale it. We hid this where only that same patience could ever find it.\"\n\n" +
+      "Amara sits back against the rock, chart forgotten for a moment, turning the tablet over in her hands. \"They weren't hiding this from thieves,\" she says slowly. \"They were hiding it *for* whoever was patient enough to check their numbers instead of just admiring the sky.\" Above the valley, the stars are already wheeling toward morning, exactly on schedule, exactly as they always were.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

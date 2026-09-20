@@ -68,7 +68,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "cryptographers-curse",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Cryptographer's Curse",
     blurb: "A wartime codebreaker's final message is a cipher nobody has cracked — until now.",
@@ -182,7 +182,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "sky-chart-expedition",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Sky Chart Expedition",
     blurb: "Ancient astronomers left a star map pointing to a hidden cache — you just have to read the sky the way they did.",

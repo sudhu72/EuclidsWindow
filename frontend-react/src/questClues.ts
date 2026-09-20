@@ -1028,8 +1028,326 @@ const LIGHTHOUSE_CLUES: QuestClue[] = [
   },
 ];
 
+// ======================================================================
+// "The Cryptographer's Curse" — a wartime codebreaker's final message is
+// a cipher nobody has cracked, in a bureau where her own breakthrough may
+// have gotten her killed. Companion: Iris, a junior cryptanalyst. Cast:
+// Ashworth (bureau chief), Lindqvist (a rival cryptographer), Reyes (a
+// liaison officer), Okonkwo (a translator), and Pettigrew (the night
+// cleaner).
+// ======================================================================
+const CRYPTOGRAPHER_CLUES: QuestClue[] = [
+  {
+    id: "crypto-1",
+    storyId: "cryptographers-curse",
+    order: 1,
+    sceneText:
+      "A scrap of coded text sits on Dr. Faraday's desk. Iris counts the letters: the symbol standing in for one particular letter appears twelve times — far more than any other symbol in the note.",
+    puzzle: "In ordinary English text, which letter is normally the most frequent, and so the best first guess for what that overused symbol replaces?",
+    choices: ["E", "Q", "Z", "X"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Don't guess a rare letter,\" you tell Iris. \"A cipher's most common symbol is almost always standing in for whichever letter is most common in ordinary writing — and that's always E, by a wide margin.\"",
+    solvedBeat:
+      "E. You substitute it in, and three other words on the page suddenly look like real English. — Frequency analysis is exactly this: using how often each symbol appears to guess what it's really hiding, before you've broken anything else about the cipher at all.",
+    concept: "Frequency Analysis",
+  },
+  {
+    id: "crypto-2",
+    storyId: "cryptographers-curse",
+    order: 2,
+    sceneText:
+      "Today's shift key, per the office's own duty log, is 7. An intercepted letter reads 'B' — the second letter of the alphabet.",
+    puzzle: "Shifting 'B' forward by 7 positions, wrapping from Z back around to A if needed, what letter does it become?",
+    choices: ["I", "H", "J", "C"],
+    correctIndex: 0,
+    wrongBeat: "\"Count the positions out loud from B,\" you tell Iris. \"B is 2. Add 7 to get 9. The 9th letter of the alphabet is your answer.\"",
+    solvedBeat:
+      "B (2) plus 7 is 9, which is I. \"So the message really does start mid-word,\" Iris says, re-reading the shifted line. — A shift cipher is modular arithmetic wearing a trench coat: numbers wrapping around a fixed alphabet instead of a clock face.",
+    concept: "Modular Arithmetic (Shift Ciphers)",
+  },
+  {
+    id: "crypto-3",
+    storyId: "cryptographers-curse",
+    order: 3,
+    sceneText:
+      "Faraday's one-time pad adds a secret number to each letter's position (A=0 through Z=25), then wraps the result around mod 26. Today's pad value is 15. The coded letter came out numbered 3.",
+    puzzle: "What was the original letter's number before the pad of 15 was added, given that 3 = (original + 15) mod 26?",
+    choices: ["14 (the letter O)", "18 (the letter S)", "12 (the letter M)", "3 (the letter D)"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Undo the addition first,\" you tell Iris. \"3 minus 15 is negative — when that happens, add 26 back on before you read off the letter.\"",
+    solvedBeat:
+      "3 − 15 = −12, and −12 + 26 = 14, which is O. \"The original word was hiding right there the whole time,\" Iris says. — Reversing modular addition just means undoing the wraparound the same careful way it was created.",
+    concept: "Modular Arithmetic (Subtraction)",
+  },
+  {
+    id: "crypto-4",
+    storyId: "cryptographers-curse",
+    order: 4,
+    sceneText:
+      "The office safe's combination is recorded only as a riddle: \"the two prime factors of 391, larger one first.\"",
+    puzzle: "What are the two prime factors of 391, larger first?",
+    choices: ["23, then 17", "17, then 23", "19, then 21", "13, then 30"],
+    correctIndex: 0,
+    wrongBeat: "\"Test small primes against 391 one at a time,\" you tell Iris. \"It won't split evenly by 2, 3, 5, 7, or 11 — but keep going, it does split evenly somewhere.\"",
+    solvedBeat:
+      "391 = 17 × 23 — the safe clicks open on 23, then 17. Inside: a folder of Faraday's own recent breakthrough notes, dated just days before she died. — Breaking a number down into the primes that build it is factorization, the same idea a lock combination just borrowed for its own purposes.",
+    concept: "Prime Factorization",
+  },
+  {
+    id: "crypto-5",
+    storyId: "cryptographers-curse",
+    order: 5,
+    sceneText:
+      "Lindqvist scoffs, looking over your shoulder at a simple substitution cipher. \"There are 26 letters, so there are 26 factorial possible keys,\" he says. \"Far too many to ever try by hand.\"",
+    puzzle: "Which of these best describes what computing \"26 factorial\" (26!) actually means and produces?",
+    choices: [
+      "26 × 25 × 24 × … × 2 × 1, an astronomically large number",
+      "26 × 26, a fairly modest number",
+      "26 + 25 + 24 + … + 1, a few hundred",
+      "Just 26 — 'factorial' simply means the number itself",
+    ],
+    correctIndex: 0,
+    wrongBeat: "\"Factorial means multiplying the number by every whole number smaller than it, all the way down to 1,\" you tell Iris. \"Not adding them, and not just squaring it.\"",
+    solvedBeat:
+      "26 × 25 × 24 × … × 1 — a number with over 26 digits. \"No wonder no one's ever brute-forced this by hand,\" Iris breathes. — A factorial counts every possible ordering of a full set, and it grows almost unimaginably fast once the set gets past a couple dozen items.",
+    concept: "Factorials",
+  },
+  {
+    id: "crypto-6",
+    storyId: "cryptographers-curse",
+    order: 6,
+    sceneText:
+      "A suspect's dead-drop schedule, recovered from a wastebasket: \"every 9th day, starting from day 2.\" Today is day 47 since the schedule's own starting point.",
+    puzzle: "Is today one of the scheduled dead-drop days?",
+    choices: [
+      "Yes — 47 leaves a remainder of 2 when divided by 9, matching the day-2 pattern",
+      "No — 47 isn't anywhere near a multiple of 9",
+      "Yes, but only because 47 happens to be prime",
+      "No — the schedule resets at the start of every calendar month",
+    ],
+    correctIndex: 0,
+    wrongBeat: "\"Divide 47 by 9 and look only at the remainder,\" you tell Iris. \"The schedule cares about that remainder matching 2 — not the number 47 itself.\"",
+    solvedBeat:
+      "47 = 9×5 + 2 — a remainder of exactly 2, matching the pattern precisely. \"Today is a drop day,\" you say. \"Which means whoever this schedule belongs to is active right now, tonight.\" — Checking a fixed remainder against a repeating cycle is exactly what modular arithmetic was built to answer.",
+    concept: "Modular Arithmetic (Remainders)",
+  },
+  {
+    id: "crypto-7",
+    storyId: "cryptographers-curse",
+    order: 7,
+    sceneText:
+      "A row of digits in Faraday's own notebook: 1 0 1 1 0, followed by a blank space for one final digit — the office's own simple error-check, meant to make the total count of 1s always come out even.",
+    puzzle: "What should that final missing digit be?",
+    choices: ["1", "0", "Either digit works equally well", "It depends on the message's length"],
+    correctIndex: 0,
+    wrongBeat: "\"Count the 1s you already have first,\" you tell Iris. \"1, 0, 1, 1, 0 — how many 1s is that, and is it currently odd or even?\"",
+    solvedBeat:
+      "Three 1s so far — odd. Adding one more 1 brings the total to four, an even count. \"So the check digit is a 1,\" you say, filling it in. — That's a parity check: one extra digit, chosen only to make a count come out even, catching simple transmission errors for free.",
+    concept: "Parity & Error-Checking",
+  },
+  {
+    id: "crypto-8",
+    storyId: "cryptographers-curse",
+    order: 8,
+    sceneText:
+      "Faraday's personal key-generator, scrawled in a margin: start at 2, then triple the previous number and subtract 1 each time — 2, 5, 14, 41, ...",
+    puzzle: "Following that same rule, what's the next number in Faraday's sequence?",
+    choices: ["122", "123", "120", "125"],
+    correctIndex: 0,
+    wrongBeat: "\"Apply the rule exactly as written,\" you tell Iris. \"Triple 41 first, then subtract 1 — don't subtract before you triple.\"",
+    solvedBeat:
+      "41 × 3 = 123, minus 1 is 122. \"A private formula, not a memorized list,\" you say. \"Easy for her to regenerate, and nearly impossible for anyone else to guess.\" — A recurrence relation like this defines every new term purely from the one before it, which is exactly what makes it easy to rebuild and hard to reverse-engineer.",
+    concept: "Recurrence Relations",
+  },
+  {
+    id: "crypto-9",
+    storyId: "cryptographers-curse",
+    order: 9,
+    sceneText:
+      "A book from Faraday's shelf, *Principles of Naval Signaling*, feels suspiciously light in your hand: 340 grams, against a genuine copy's listed weight of 400 grams.",
+    puzzle: "What fraction of its proper weight is this copy missing?",
+    choices: ["3/20", "1/4", "1/6", "2/5"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the actual gap in grams first,\" you tell Iris. \"400 minus 340. Then reduce that gap over the full 400 grams down to its simplest fraction.\"",
+    solvedBeat:
+      "400 − 340 = 60, and 60/400 reduces to 3/20. Prying open the spine, you find a hollow just large enough for a strip of microfilm — long since removed. — A fraction only means something once it's been reduced down to its simplest, most honest form.",
+    concept: "Fractions",
+  },
+  {
+    id: "crypto-10",
+    storyId: "cryptographers-curse",
+    order: 10,
+    sceneText:
+      "The code room's own access log uses a 3-digit code with no repeated digits, chosen from 1 through 9. Faraday's final note adds one more constraint: \"the culprit's code begins with an odd digit.\"",
+    puzzle: "Given codes must use 3 different digits from 1–9 with no repeats, and the first digit must be odd, how many such codes are possible in total?",
+    choices: ["280", "120", "504", "45"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Count each position separately, in order,\" you tell Iris. \"Five choices for the first digit, since it must be odd. Then eight digits remain for the second position, and seven for the third. Multiply those three counts together.\"",
+    solvedBeat:
+      "5 × 8 × 7 = 280 possible codes. \"Not narrow enough on its own,\" you admit, \"but the access mechanism's own memory recorded the exact code used that night — and only one staff personnel number matches it precisely.\" — That's the counting principle: multiplying the choices available at each step, in order, to count every possibility at once.",
+    concept: "The Counting Principle",
+  },
+];
+
+// ======================================================================
+// "The Sky Chart Expedition" — an ancient astronomer-priest civilization
+// left a star chart pointing to a hidden cache, readable only by whoever
+// reads the sky exactly the way they did. Companion: Amara, an astronomer.
+// ======================================================================
+const SKY_CHART_CLUES: QuestClue[] = [
+  {
+    id: "sky-1",
+    storyId: "sky-chart-expedition",
+    order: 1,
+    sceneText:
+      "Amara points out two stars on the ancient chart: one marked at magnitude 1, the other at magnitude 6. \"Each single step up in magnitude,\" she says, \"means the star is about two-and-a-half times dimmer than the last.\"",
+    puzzle: "Roughly how much dimmer is the magnitude-6 star than the magnitude-1 star, five steps apart?",
+    choices: [
+      "Roughly 100 times dimmer",
+      "Roughly 12.5 times dimmer (5 × 2.5)",
+      "Roughly 2.5 times dimmer",
+      "Exactly the same brightness",
+    ],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Each step multiplies the dimming again — it doesn't just add another 2.5,\" Amara says. \"Five steps means 2.5 multiplied by itself five times over, not five lots of 2.5 added up.\"",
+    solvedBeat:
+      "2.5 multiplied by itself five times comes out close to 100 — the magnitude-6 star really is roughly a hundred times dimmer. \"The old star-watchers built a whole scale around exactly this kind of repeated multiplying,\" Amara says. — That's a logarithmic scale: equal-looking steps that actually represent repeated multiplication, not repeated addition.",
+    concept: "Logarithmic Scales (Star Magnitude)",
+  },
+  {
+    id: "sky-2",
+    storyId: "sky-chart-expedition",
+    order: 2,
+    sceneText:
+      "The chart notes that a certain star rises exactly at midnight once a year — but the old calendar drifts, so that same star rises 6 hours later each following year, on the same recorded calendar date.",
+    puzzle: "How many years will it take for that 6-hour-per-year drift to accumulate into a full 24-hour realignment?",
+    choices: ["4 years", "6 years", "24 years", "8 years"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the full drift you need by how much it moves each year,\" Amara says. \"24 hours total, divided by 6 hours per year.\"",
+    solvedBeat:
+      "24 ÷ 6 = 4 years exactly. \"So the chart's dates repeat their true meaning every four years,\" Amara says, flipping to a section you'd both skipped past. — Dividing a total by a fixed rate is the plain arithmetic underneath any calendar's drift and correction.",
+    concept: "Division & Rates",
+  },
+  {
+    id: "sky-3",
+    storyId: "sky-chart-expedition",
+    order: 3,
+    sceneText:
+      "A triangle formed by three bright, chart-marked stars has two of its three angles measured precisely: 55° and 65°.",
+    puzzle: "What must the third angle of that star-triangle be?",
+    choices: ["60°", "55°", "65°", "70°"],
+    correctIndex: 0,
+    wrongBeat: "\"All three angles of any triangle add up to exactly 180°, without exception,\" Amara reminds you. \"Add the two you know, then subtract from 180.\"",
+    solvedBeat:
+      "55° + 65° = 120°, and 180° − 120° = 60°. The third angle is 60° exactly — and the chart's next marking sits precisely along that angle's own sightline. — A triangle's angles summing to 180° is one of the oldest, most reliable facts geometry ever proved.",
+    concept: "Triangle Angle Sum",
+  },
+  {
+    id: "sky-4",
+    storyId: "sky-chart-expedition",
+    order: 4,
+    sceneText:
+      "The chart marks two \"wandering stars\" — planets, in modern terms — one completing its circuit around the sky in 12 units of the old calendar's time, the other in 30.",
+    puzzle: "In simplest form, what's the ratio of the first planet's period to the second's?",
+    choices: ["2:5", "1:3", "3:5", "12:30, since it can't be simplified"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the largest number that divides evenly into both 12 and 30 first,\" Amara says. \"Divide both sides of the ratio by that same number.\"",
+    solvedBeat:
+      "Both 12 and 30 divide evenly by 6, leaving 2:5 in simplest form. \"A clean ratio like that is never an accident on this chart,\" Amara says. — Reducing a ratio to its simplest form just means dividing both sides by whatever they genuinely share.",
+    concept: "Simplifying Ratios",
+  },
+  {
+    id: "sky-5",
+    storyId: "sky-chart-expedition",
+    order: 5,
+    sceneText:
+      "A constellation on the chart is drawn as a triangular field of dots, growing row by row: 1, then 3, then 6, then 10, then 15 dots total.",
+    puzzle: "Following that same triangular growth, how many dots would the next row's total be?",
+    choices: ["21", "20", "18", "25"],
+    correctIndex: 0,
+    wrongBeat: "\"Look at how much each total grows by, not the totals themselves,\" Amara says. \"2, then 3, then 4, then 5 more each time — so the next jump should be one more than the last.\"",
+    solvedBeat:
+      "The growth steps are 2, 3, 4, 5, and next comes 6 — so 15 + 6 = 21. \"These are triangular numbers,\" Amara says, \"the same shape as stacking cannonballs into a pyramid, just flattened into dots on old parchment.\" — Each triangular number is simply the sum of all counting numbers up to that point.",
+    concept: "Triangular Numbers",
+  },
+  {
+    id: "sky-6",
+    storyId: "sky-chart-expedition",
+    order: 6,
+    sceneText:
+      "Amara's modern telescope has a 10-centimeter lens; the expedition's larger backup scope has a 20-centimeter lens. \"Light-gathering power,\" she explains, \"scales with the square of the lens diameter, not the diameter itself.\"",
+    puzzle: "How many times more light does the 20-centimeter lens gather compared to the 10-centimeter one?",
+    choices: ["4 times as much", "2 times as much", "8 times as much", "16 times as much"],
+    correctIndex: 0,
+    wrongBeat: "\"Double the diameter, then square that doubling — don't just double the light-gathering power to match,\" Amara says. \"(20/10)² is not the same as 20/10.\"",
+    solvedBeat:
+      "(20/10)² = 2² = 4 — exactly four times the light-gathering power for only double the diameter. \"Which is exactly why astronomers fight so hard over a few extra centimeters of lens,\" Amara says, switching scopes. — A quantity that scales with the square of another grows far faster than the underlying measurement itself.",
+    concept: "Squares & Proportional Scaling",
+  },
+  {
+    id: "sky-7",
+    storyId: "sky-chart-expedition",
+    order: 7,
+    sceneText:
+      "Four separate expeditions, decades apart, each measured this same peak's height differently: 1,200 meters, 1,180 meters, 1,220 meters, and 1,160 meters.",
+    puzzle: "What's the average of these four readings?",
+    choices: ["1,190 meters", "1,200 meters", "1,180 meters", "1,210 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Add all four readings together first, then divide by how many readings there are,\" Amara says. \"Four separate measurements means dividing by 4 at the end, not by 2 or 3.\"",
+    solvedBeat:
+      "1,200 + 1,180 + 1,220 + 1,160 = 4,760, and 4,760 ÷ 4 = 1,190 meters. \"Close enough to trust the old chart's own elevation marking,\" Amara says. — Averaging several imperfect measurements is exactly how you settle on the most trustworthy single estimate.",
+    concept: "Averages",
+  },
+  {
+    id: "sky-8",
+    storyId: "sky-chart-expedition",
+    order: 8,
+    sceneText:
+      "Historical weather records for this altitude show clear night skies on 21 of the last 30 nights.",
+    puzzle: "As a simplified fraction, what does this record suggest is the probability of a clear night here?",
+    choices: ["7/10", "21/30, which can't be simplified further", "3/10", "2/3"],
+    correctIndex: 0,
+    wrongBeat: "\"Find what 21 and 30 both share as a factor before you call it simplified,\" Amara says. \"They both divide evenly by 3.\"",
+    solvedBeat:
+      "21/30 divides down to 7/10 once you factor out the shared 3. \"Good odds for tonight, then,\" Amara says, checking the sky. — A probability estimated from real records is really just a fraction, and it's only genuinely useful once it's reduced to its simplest, clearest form.",
+    concept: "Simplifying Fractions & Probability",
+  },
+  {
+    id: "sky-9",
+    storyId: "sky-chart-expedition",
+    order: 9,
+    sceneText:
+      "The chart marks the cache's exact bearing using the astronomer-priests' own number system — base 60, not base 10, the same system that later gave the world 60 minutes in an hour and 360 degrees in a circle. Their mark reads: \"2, 15,\" meaning 2 full groups of sixty, plus 15 more.",
+    puzzle: "What single ordinary (base-10) number does \"2, 15\" represent in base 60?",
+    choices: ["135", "215", "60", "120"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the first group by 60 first,\" Amara says. \"2 groups of 60, then add the 15 leftover — don't just read the digits side by side like a base-10 number.\"",
+    solvedBeat:
+      "2 × 60 + 15 = 135. \"They were counting in sixties long before anyone drew a clock face,\" Amara says, turning the sighting instrument to exactly that bearing. — Any place-value system works the same way, whether it groups by tens, or by the sixty the sky-watchers happened to prefer.",
+    concept: "Base-60 (Sexagesimal) Numbers",
+  },
+  {
+    id: "sky-10",
+    storyId: "sky-chart-expedition",
+    order: 10,
+    sceneText:
+      "The chart itself is drawn to scale: 1 chart-unit represents 500 real paces on the ground. The cache's own mark sits 3.4 chart-units from your current camp.",
+    puzzle: "How many real paces away from camp is the cache?",
+    choices: ["1,700 paces", "1,500 paces", "1,900 paces", "170 paces"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the chart-distance by the scale factor,\" Amara says. \"3.4 times 500 — don't round the 3.4 down to 3 first.\"",
+    solvedBeat:
+      "3.4 × 500 = 1,700 paces exactly. Amara paces it off herself, counting under her breath, and stops at a shallow depression in the rock exactly on schedule. — A map's scale is just a ratio, and applying it is nothing more than a single multiplication once you trust the number.",
+    concept: "Scale & Proportion",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }
