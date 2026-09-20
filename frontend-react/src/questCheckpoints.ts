@@ -629,6 +629,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real cache gives way at last, and lantern light spills across sacks of spice, bolts of silk still vivid after centuries sealed away, and — tucked beneath them — a merchant's private ledger, its final page covered edge to edge in careful figures.\n\n" +
       "\"They really did trust the ledger over the sword,\" Layla says, running a finger down columns of exchange rates and shipping weights. \"No guard could be bribed around a number that simply doesn't add up.\" The ledger's last line, translated slowly: \"What the road takes in tolls and thieves, arithmetic returns in full to whoever keeps the count honest.\" Outside, the next caravan is already forming up at the gate, indifferent to any of this, exactly as it always has, and exactly as it always will.",
   },
+
+  // ------------------------------------------------------------------
+  // The Carnival of Lost Souls
+  // ------------------------------------------------------------------
+  {
+    id: "carnival-mid",
+    storyId: "carnival-of-lost-souls",
+    afterClue: "carnival-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that closing night and lay them side by side.\n\n" +
+      "**Dexter:** \"I was breaking down the ring-toss same as every night — packed up every prize myself, nobody helped.\"\n\n" +
+      "**Madame Zora:** \"I was in my tent reading cards for a late customer, the last one of the night. Ask him yourself, he tipped generously.\"\n\n" +
+      "**Big Tom:** \"I was hauling the heavy crates to the wagon, same as always — Higgins was right there helping me the whole time.\"\n\n" +
+      "**Ruthie:** \"I was doing the night's cash count in the office trailer, alone, same as any closing night.\"\n\n" +
+      "**Old Higgins:** \"I did my usual rounds checking every ride's brakes before bed. Big Tom's telling the truth — I was right there with him the whole time hauling crates. Though I did notice Ruthie's office light was already dark by the time I passed it, a good hour before she says she was still counting cash.\"\n\n" +
+      "You already know Crane's body was found by Nell just past midnight, and that the fortune-teller's tent sits directly behind the cash office.",
+    entities: ["Dexter", "Madame Zora", "Big Tom", "Ruthie", "Old Higgins"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      Dexter: "Alibi Breaks",
+      "Madame Zora": "Alibi Holds",
+      "Big Tom": "Alibi Holds",
+      Ruthie: "Alibi Breaks",
+      "Old Higgins": "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and the trail goes cold before morning. Look again at which accounts are confirmed by someone with nothing at stake, and which rest only on the speaker's own word — and check whether Higgins's own detail actually matches what someone claimed to be doing.",
+    explain:
+      "Zora's account is confirmed by an actual customer, and Tom's is corroborated directly by Higgins — both hold. Higgins himself has no motive and supplies the key detail, so his account holds too. But Dexter was alone the entire time with no one to vouch for him. And Ruthie's claim of counting cash until late doesn't survive Higgins's own sighting: her office light already dark a full hour before she says she was still working.",
+  },
+  {
+    id: "carnival-final",
+    storyId: "carnival-of-lost-souls",
+    afterClue: "carnival-10",
+    kind: "final",
+    title: "The Midway",
+    scenario:
+      "You confront the two remaining names on the darkened midway.\n\n" +
+      "**Dexter:** \"It was Ruthie. She's the one who inherits this whole carnival outright the moment Crane's gone — ask any lawyer what a will like that is worth.\"\n\n" +
+      "**Ruthie:** \"Ask instead who's been quietly pocketing the ring-toss's real take for months, and who was about to be exposed publicly by Crane's own recount.\"\n\n" +
+      "You already know the true expected-value calculation of the ring-toss booth, worked out honestly, matches almost exactly the extra amount that's gone missing from the nightly totals for months — and that Crane's own audit notebook, recovered from his tent, names the booth specifically, not the office.",
+    entities: ["Dexter", "Ruthie"],
+    options: ["Guilty", "Innocent"],
+    answer: { Dexter: "Guilty", Ruthie: "Innocent" },
+    wrongConsequence:
+      "The midway stays silent, and nothing more is offered — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two the numbers actually point to, versus which one merely has an old motive with nothing new tying them to tonight.",
+    explain:
+      "Ruthie's inheritance motive is real, but nothing beyond guesswork ties her to the tent itself, and the missing money was never traced to the office at all. Dexter's exposure was total and specific: Crane's own audit notebook named the ring-toss booth by name, and the true expected value you calculated yourself matches, almost to the coin, exactly what's been quietly skimmed for months.",
+    resolution:
+      "You lay it out for Nell, piece by piece: the wheel's own honest odds, one in twenty, that first made the ring-toss's actual win rate look impossible. The odds-to-probability conversion, confirming Crane's own suspicion in his own handwriting. The dice booth's vanishing odds of a double six, proving Crane really did check every game on the midway, not just one. The shifting odds of an unreplaced raffle ticket, showing exactly how carefully he'd worked through each booth's numbers. The expected value of the honest game, a clean, provable loss for any player, however the crowd felt about their odds. The complementary probability, telling you exactly how often nothing at all should happen at that booth — and how far the real numbers strayed from it. The two-stage probability tree, mapping out every way a mark could be steered from Zora's tent straight into Dexter's rigged wheel. The percentage deviation between the booth's true odds and its actual results, the very gap Crane had circled twice in red ink. The simplified ratio of wins to losses, cleaner and uglier than any honest game's numbers should ever be. And the true expected value of the rigged version, worked out fully, landing almost exactly on the sum that had gone missing every month for the better part of a year.\n\n" +
+      "Dexter doesn't run — there's nowhere on a closed midway left to run to. \"It was never supposed to be enough to notice,\" he says quietly, staring at his own rigged wheel. \"Just a coin or two, every single night.\" Nell looks at the wheel for a long moment, then gives it one slow, final spin, watching it settle on nothing in particular. \"He built his whole trick on the fact that most people never bother checking the actual math,\" she says. \"Turns out that's exactly the kind of trick honest arithmetic can always catch, eventually.\" Above the silent midway, the carnival's lights are already going dark for the season, one string at a time, precisely on schedule.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Ice Vault Expedition
+  // ------------------------------------------------------------------
+  {
+    id: "ice-vault-mid",
+    storyId: "ice-vault-expedition",
+    afterClue: "ice-vault-5",
+    kind: "mid",
+    title: "Three Passages",
+    scenario:
+      "Beyond the entrance shaft, the tunnel splits into three ice passages, each marked with a claim carved by an unseen hand. Freya reads them aloud:\n\n" +
+      "**Passage A:** \"Ice is less dense than liquid water, which is exactly why it floats.\"\n\n" +
+      "**Passage B:** \"Doubling a rectangular block's length, width, and height all at once only doubles its volume.\"\n\n" +
+      "**Passage C:** \"Water always freezes at exactly the same temperature, regardless of what's dissolved in it.\"\n\n" +
+      "\"The Wardens sealed the false passages behind claims that sound reasonable but fall apart under real arithmetic,\" Freya says. \"Check every one properly before you trust it.\"",
+    entities: ["Passage A", "Passage B", "Passage C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Passage A": "True Claim", "Passage B": "False Claim", "Passage C": "False Claim" },
+    wrongConsequence:
+      "The wrong passage's floor gives way to a cold plunge pool, and you scramble back soaked and shivering rather than trapped. \"Test each claim against real numbers,\" Freya says. \"Not what sounds reasonable — what actually holds up once you calculate it.\"",
+    explain:
+      "Passage A holds exactly: ice genuinely is less dense than liquid water, which is why it floats instead of sinking — a real, provable exception to how most substances behave when they freeze. Passage B is false: doubling every dimension of a block multiplies its volume by 2×2×2, eight times over, not two. Passage C is false too — dissolved salts and other impurities measurably lower water's freezing point, which is exactly why salted roads resist icing at temperatures where plain water would freeze solid.",
+  },
+  {
+    id: "ice-vault-final",
+    storyId: "ice-vault-expedition",
+    afterClue: "ice-vault-10",
+    kind: "final",
+    title: "Three Final Vaults",
+    scenario:
+      "Freya reads each final vault's carved inscription aloud:\n\n" +
+      "**Vault 1:** \"Fresh water is denser at 4°C than it is as ice.\"\n\n" +
+      "**Vault 2:** \"If a substance's temperature in Celsius is doubled, its temperature in Fahrenheit also doubles.\"\n\n" +
+      "**Vault 3:** \"An exponential decay process eventually reaches exactly zero.\"\n\n" +
+      "\"One of these is true without a single exception,\" Freya says. \"The Wardens trusted their whole vault's protection on that one rule.\"",
+    entities: ["Vault 1", "Vault 2", "Vault 3"],
+    options: ["Real Vault", "False Vault"],
+    answer: { "Vault 1": "Real Vault", "Vault 2": "False Vault", "Vault 3": "False Vault" },
+    wrongConsequence:
+      "Ice grinds shut over the wrong vault, sealed for good this time. \"Don't trust the shape of the sentence,\" Freya says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Vault 1 holds exactly: fresh water reaches its greatest density at about 4°C, denser than both colder water and solid ice — a real, measurable exception in how most substances behave as they cool. Vault 2 is false: converting Celsius to Fahrenheit always adds 32 after multiplying, so doubling the Celsius reading never simply doubles the Fahrenheit result. Vault 3 is false too — exponential decay keeps losing the same percentage forever, shrinking closer and closer to zero without ever actually reaching it.",
+    resolution:
+      "The real vault gives way at last, and lantern light spills across gear and journals frozen in place for centuries — not gold, but something the Frost Wardens clearly valued just as highly: measuring rods, sighting glasses, and slate tablets dense with worked calculations on ice, melt, and time.\n\n" +
+      "\"They really did trust the numbers over the cold,\" Freya says, brushing frost from a tablet's edge. \"No lock could be picked around arithmetic that simply doesn't lie.\" The tablet's final line, translated slowly: \"What the ice keeps, it keeps exactly as long as the numbers say it will, and not one day more.\" Outside, the glacier groans softly, indifferent, melting at exactly the rate it always has, and exactly the rate it always will, whether anyone is patient enough to calculate it or not.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

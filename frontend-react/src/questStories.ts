@@ -108,7 +108,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "carnival-of-lost-souls",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Carnival of Lost Souls",
     blurb: "A fortune-teller's rigged booth hides a killer's trick — and the trick is pure, cold mathematics.",
@@ -214,7 +214,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "ice-vault-expedition",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Ice Vault Expedition",
     blurb: "A melting glacier is uncovering a sealed vault no one has seen in centuries — and you're racing the thaw.",

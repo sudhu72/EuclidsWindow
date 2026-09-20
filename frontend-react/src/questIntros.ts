@@ -292,6 +292,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "carnival-of-lost-souls",
+    sceneText:
+      "**A traveling carnival, packed up for the night, one string of lights still burning over an empty midway.**\n\n" +
+      "Nell, the carnival's youngest ticket-taker, meets you by the gate, out of breath. \"Mr. Crane's dead, in Madame Zora's own tent,\" she says. \"He'd been going over every game on this midway for weeks — pen and paper, actual odds, not just the numbers painted on the wheels. He told me himself, just yesterday, that one particular booth's numbers didn't add up to anything close to what an honest game should look like.\"\n\n" +
+      "The midway closed at the usual hour, and five people had reason enough to still be somewhere on these grounds well past that. Crane, everyone agrees, ran the fairest show on this whole circuit for thirty years — which made him exactly the kind of man who'd notice the one booth that wasn't.",
+    cast: [
+      {
+        name: "Dexter",
+        detail: "The ring-toss barker, running the one booth whose actual numbers never quite matched what an honest game should produce — a discrepancy Crane's own careful recount was only days from making public.",
+      },
+      {
+        name: "Madame Zora",
+        detail: "The carnival's fortune-teller, whose late-night readings had a curious habit of steering marks toward one particular booth.",
+      },
+      {
+        name: "Big Tom",
+        detail: "The strongman, publicly humiliated by Crane years ago over an old theft accusation neither of them has ever quite let go.",
+      },
+      {
+        name: "Ruthie",
+        detail: "Crane's business partner and financial backer — set to inherit sole ownership of the whole carnival outright, the moment Crane was gone.",
+      },
+      {
+        name: "Old Higgins",
+        detail: "The carnival's night rigger, checking every ride's brakes by hand before anyone sleeps, every single night. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "ice-vault-expedition",
+    sceneText:
+      "**A retreating glacier, high above the tree line, meltwater running loud beneath the ice all around you.**\n\n" +
+      "Freya has studied this glacier for six field seasons, ever since old survey photographs first convinced her something was sealed deep inside it — something the ice itself had been protecting far longer than anyone thought to look. \"The people who sealed this vault didn't trust stone doors or iron locks,\" she tells you, checking a stake driven into the ice. \"They trusted the ice's own arithmetic — how fast it melts, how much it weighs, how it behaves right up until the moment it doesn't. Get the numbers wrong up here, and the mountain simply keeps its secret a little longer, at your expense.\"\n\n" +
+      "Her instruments already tell you two things worth remembering: the ice is melting at a steady 3 centimeters a day, and the ice core's internal temperature reads a bitter -10°C. \"Every measurement out here is a countdown,\" Freya says, shouldering her pack. \"Whether you trust your own arithmetic, or you guess and hope, we're racing the same thaw either way.\"",
+    cast: [
+      {
+        name: "Freya",
+        detail: "Your expedition's glaciologist — six field seasons on this ice, and the first to take its melt rate as seriously as its history.",
+      },
+      {
+        name: "The Frost Wardens",
+        detail: "The ancient people who sealed this vault. Long gone, but every measurement they left behind still tests the same thing: whether your arithmetic can be trusted completely.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {
