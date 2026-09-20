@@ -1632,8 +1632,283 @@ const PHARAOH_CLUES: QuestClue[] = [
   },
 ];
 
+const CONSERVATORY_CLUES: QuestClue[] = [
+  {
+    id: "conservatory-1",
+    storyId: "conservatory-killing",
+    order: 1,
+    sceneText:
+      "Odile shows you Vale's own tuning notes: a string tuned to 220 Hz, and its octave tuned to exactly double that frequency.",
+    puzzle: "What frequency is the octave string tuned to?",
+    choices: ["440 Hz", "220 Hz", "330 Hz", "880 Hz"],
+    correctIndex: 0,
+    wrongBeat: "\"An octave is always exactly double the frequency below it,\" Odile says. \"Multiply — don't add a fixed amount.\"",
+    solvedBeat:
+      "220 × 2 = 440 Hz — concert pitch A, exactly. \"He tuned by the numbers, not by ear alone,\" Odile says. — An octave is defined by a frequency ratio of exactly 2 to 1, no matter which note you start from.",
+    concept: "Ratios in Music (Octaves)",
+  },
+  {
+    id: "conservatory-2",
+    storyId: "conservatory-killing",
+    order: 2,
+    sceneText: "The score's final page is marked in an unusual time signature: 7 over 8.",
+    puzzle: "In a measure marked 7/8, how many eighth-note beats does each measure actually contain?",
+    choices: ["7 beats", "8 beats", "15 beats", "1 beat"],
+    correctIndex: 0,
+    wrongBeat: "\"The top number of a time signature tells you how many beats per measure,\" Odile says. \"The bottom number just says what kind of note counts as one beat.\"",
+    solvedBeat:
+      "7 eighth-note beats per measure — an odd, lopsided meter Vale clearly chose on purpose. — A time signature is really just a fraction: beats per measure over the note value that equals one beat.",
+    concept: "Time Signatures as Fractions",
+  },
+  {
+    id: "conservatory-3",
+    storyId: "conservatory-killing",
+    order: 3,
+    sceneText: "Vale's metronome marking reads 96 beats per minute. The final passage runs exactly 144 beats long.",
+    puzzle: "How many minutes does that passage take to perform, at that tempo?",
+    choices: ["1.5 minutes", "2 minutes", "1 minute", "2.5 minutes"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total beats by the beats-per-minute rate,\" Odile says. \"Don't multiply them.\"",
+    solvedBeat:
+      "144 ÷ 96 = 1.5 minutes exactly. \"Ninety seconds,\" Odile says, checking it against the rehearsal clock. — Converting a beat count into real time is just dividing by the rate, the same as any other speed calculation.",
+    concept: "Tempo & Duration",
+  },
+  {
+    id: "conservatory-4",
+    storyId: "conservatory-killing",
+    order: 4,
+    sceneText:
+      "A fundamental note vibrates at 110 Hz. Vale's own notes list its overtone series: the second harmonic, the third, and so on, each a whole-number multiple of the fundamental.",
+    puzzle: "What frequency is the fourth harmonic of a 110 Hz fundamental?",
+    choices: ["440 Hz", "220 Hz", "330 Hz", "550 Hz"],
+    correctIndex: 0,
+    wrongBeat: "\"Each harmonic is a whole-number multiple of the fundamental,\" Odile says. \"The fourth harmonic means four times the fundamental frequency.\"",
+    solvedBeat:
+      "110 × 4 = 440 Hz. \"The same note as the octave-tuned string, from a completely different string,\" Odile says, startled. — The harmonic series is just the fundamental frequency multiplied by 1, 2, 3, 4, and onward, forever.",
+    concept: "The Harmonic Series",
+  },
+  {
+    id: "conservatory-5",
+    storyId: "conservatory-killing",
+    order: 5,
+    sceneText:
+      "A dotted quarter note lasts 1.5 beats. Vale's handwritten margin asks how many sixteenth notes — each worth 0.25 of a beat — fit into that same span.",
+    puzzle: "How many sixteenth notes fit exactly into a dotted quarter note's 1.5 beats?",
+    choices: ["6", "4", "3", "8"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total beat length by the length of a single sixteenth note,\" Odile says. \"Don't just guess from the numbers in front of you.\"",
+    solvedBeat:
+      "1.5 ÷ 0.25 = 6 sixteenth notes exactly. \"He rewrote the whole passage that way,\" Odile says, \"note values doing arithmetic instead of just keeping time.\" — Dividing one note's duration by another's is exactly how musicians work out how subdivisions fit together.",
+    concept: "Note-Value Fractions",
+  },
+  {
+    id: "conservatory-6",
+    storyId: "conservatory-killing",
+    order: 6,
+    sceneText:
+      "Vale's own notes record the orchestra's typical volume at 80 decibels. The decibel scale is logarithmic: every added 10 decibels means the sound is 10 times more intense, not just a little louder.",
+    puzzle: "How many times more intense is a 100-decibel fortissimo than the orchestra's usual 80-decibel sound?",
+    choices: ["100 times more intense", "20 times more intense", "2 times more intense", "1,000 times more intense"],
+    correctIndex: 0,
+    wrongBeat: "\"Find how many 10-decibel steps separate the two levels,\" Odile says, \"then multiply by 10 for every single step. Don't just compare the two numbers directly.\"",
+    solvedBeat:
+      "100 − 80 = 20 decibels, or two steps of 10, and 10 × 10 = 100 times more intense. \"No wonder nobody heard anything over a fortissimo passage,\" Odile says grimly. — Decibels are a logarithmic scale, so equal-looking jumps in the number represent repeated multiplying of the actual sound intensity.",
+    concept: "The Decibel Scale (Logarithmic Loudness)",
+  },
+  {
+    id: "conservatory-7",
+    storyId: "conservatory-killing",
+    order: 7,
+    sceneText:
+      "For the season finale, Vale needed to choose exactly 3 soloists to feature, from a shortlist of 7 candidates — the order they're announced in doesn't matter, only who's chosen.",
+    puzzle: "How many different groups of 3 soloists could Vale choose from those 7 candidates?",
+    choices: ["35", "21", "210", "7"],
+    correctIndex: 0,
+    wrongBeat: "\"Since order doesn't matter here, don't just multiply 7×6×5,\" Odile says. \"That counts every group multiple times over — divide by the number of ways to reorder the 3 you picked.\"",
+    solvedBeat:
+      "7×6×5 = 210 ordered picks, divided by 3×2×1 = 6 ways to reorder any 3 of them, giving 35 distinct groups. \"He'd narrowed it to one specific group already,\" Odile says, tapping the margin. — That's a combination: counting groups where order truly doesn't matter, unlike a permutation.",
+    concept: "Combinations",
+  },
+  {
+    id: "conservatory-8",
+    storyId: "conservatory-killing",
+    order: 8,
+    sceneText: "A column of numbers in Vale's audit notes: 4, 8, 16, 32, ...",
+    puzzle: "What's the next number in that same doubling sequence?",
+    choices: ["64", "48", "36", "40"],
+    correctIndex: 0,
+    wrongBeat: "\"Check what's actually happening between each number and the next,\" Odile says. \"It isn't adding a fixed amount — it's multiplying by the same fixed amount every time.\"",
+    solvedBeat:
+      "Each number is exactly double the one before it, so 32 × 2 = 64. \"An account that keeps doubling on its own is not an accident,\" Odile says grimly. — That's a geometric sequence: every term multiplied by the same fixed ratio, rather than added to by a fixed amount.",
+    concept: "Geometric Sequences",
+  },
+  {
+    id: "conservatory-9",
+    storyId: "conservatory-killing",
+    order: 9,
+    sceneText: "In the score's margin, Vale scrawled what looks like a simple equation: 3x + 5 = 20.",
+    puzzle: "Solving for x, what number was Vale working out?",
+    choices: ["5", "15", "25", "3"],
+    correctIndex: 0,
+    wrongBeat: "\"Isolate x by undoing each step in reverse,\" Odile says. \"Subtract 5 from both sides first, then divide by 3.\"",
+    solvedBeat:
+      "20 − 5 = 15, and 15 ÷ 3 = 5. \"Five,\" Odile says slowly. \"The exact number of missing ledger pages Pemberton always claimed were 'still being filed.'\" — Solving an equation for an unknown is just undoing, one careful step at a time, whatever was done to build it.",
+    concept: "Solving a Linear Equation",
+  },
+  {
+    id: "conservatory-10",
+    storyId: "conservatory-killing",
+    order: 10,
+    sceneText: "Vale's tempo notes show the finale needs to speed up from 96 beats per minute to a full 120 beats per minute.",
+    puzzle: "What percentage increase in tempo does that represent?",
+    choices: ["25%", "20%", "24%", "30%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the actual increase first — new minus old,\" Odile says, \"then divide that increase by the original tempo, not the new one.\"",
+    solvedBeat:
+      "120 − 96 = 24, and 24 ÷ 96 = 25%. \"The same rate,\" Odile says, comparing it to a line in the ledger, \"that a certain account has been quietly growing by every single week.\" — A percentage increase always measures the change against the original amount, never the new one.",
+    concept: "Percent Increase",
+  },
+];
+
+const SILK_ROAD_CLUES: QuestClue[] = [
+  {
+    id: "silk-road-1",
+    storyId: "silk-road-cipher",
+    order: 1,
+    sceneText: "At the border post, the moneylender's chart shows 1 gold dinar trades for exactly 12 silver dirhams.",
+    puzzle: "How many silver dirhams would 7 gold dinars be worth, at that same rate?",
+    choices: ["84 dirhams", "19 dirhams", "96 dirhams", "72 dirhams"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the number of dinars by the exchange rate,\" Layla says. \"Don't add the two numbers together.\"",
+    solvedBeat:
+      "12 × 7 = 84 silver dirhams. \"Merchants who couldn't do that in their heads got cheated at every single post,\" Layla says. — An exchange rate is simply a ratio, and converting through it is one multiplication, however many posts you cross.",
+    concept: "Currency Exchange Rates",
+  },
+  {
+    id: "silk-road-2",
+    storyId: "silk-road-cipher",
+    order: 2,
+    sceneText: "The old trade ledgers weigh silk in catties, not kilograms — and one catty equals exactly 0.6 kilograms.",
+    puzzle: "How many kilograms does a shipment of 50 catties of silk weigh?",
+    choices: ["30 kilograms", "50 kilograms", "83.3 kilograms", "20 kilograms"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the number of catties by how many kilograms one catty equals,\" Layla says. \"Don't divide.\"",
+    solvedBeat:
+      "50 × 0.6 = 30 kilograms exactly. \"Every ledger on this route uses a different set of units,\" Layla says, \"and every single one of them converts by simple multiplication once you know the rate.\" — Converting between units is always just multiplying by a fixed conversion factor.",
+    concept: "Unit Conversion",
+  },
+  {
+    id: "silk-road-3",
+    storyId: "silk-road-cipher",
+    order: 3,
+    sceneText: "The caravan travels at a steady 24 kilometers per day. The next waypoint marked on Layla's map sits 180 kilometers ahead.",
+    puzzle: "At that same pace, how many days will it take the caravan to reach the next waypoint?",
+    choices: ["7.5 days", "6 days", "8 days", "9 days"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total distance by the daily distance covered,\" Layla says. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "180 ÷ 24 = 7.5 days. \"Half a day short of eight,\" Layla says, already adjusting the water rationing. — Distance divided by rate always gives you the time needed to cover it, whatever the units.",
+    concept: "Distance, Rate & Time",
+  },
+  {
+    id: "silk-road-4",
+    storyId: "silk-road-cipher",
+    order: 4,
+    sceneText: "A merchant bought a crate of spices for 40 coins and sold it further down the route for 52 coins.",
+    puzzle: "As a percentage of the original cost, what was the merchant's profit margin?",
+    choices: ["30%", "12%", "23%", "25%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the actual profit first — sale price minus cost,\" Layla says, \"then divide that profit by the original cost, not the sale price.\"",
+    solvedBeat:
+      "52 − 40 = 12 coins profit, and 12 ÷ 40 = 30%. \"A fair markup, by this route's standards,\" Layla says. — A profit margin measured this way is a percentage of the original cost, showing how much was gained relative to what was spent.",
+    concept: "Profit Margin (Percentage)",
+  },
+  {
+    id: "silk-road-5",
+    storyId: "silk-road-cipher",
+    order: 5,
+    sceneText:
+      "A merchant blends two grades of silk: 30 kilograms of a grade worth 8 coins per kilogram, and 20 kilograms of a grade worth 13 coins per kilogram.",
+    puzzle: "What's the blend's average value per kilogram, weighted by how much of each grade went in?",
+    choices: ["10 coins per kilogram", "10.5 coins per kilogram", "9 coins per kilogram", "11 coins per kilogram"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply each grade's weight by its own value first, add both totals together, then divide by the combined weight,\" Layla says. \"Don't just average the two prices directly.\"",
+    solvedBeat:
+      "(30 × 8) + (20 × 13) = 240 + 260 = 500 coins total, divided by 50 kilograms, is 10 coins per kilogram. \"Not simply the middle of 8 and 13,\" Layla notes, \"because there was more of the cheaper grade in the mix.\" — A weighted average accounts for how much of each part there actually is, not just how many parts there are.",
+    concept: "Weighted Average",
+  },
+  {
+    id: "silk-road-6",
+    storyId: "silk-road-cipher",
+    order: 6,
+    sceneText:
+      "A merchant invests 100 coins in a trade venture that grows by 10% at each of three successive stops along the route, compounding each time.",
+    puzzle: "How much is that 100-coin investment worth after three stops of 10% compounding growth?",
+    choices: ["about 133 coins", "130 coins", "121 coins", "110 coins"],
+    correctIndex: 0,
+    wrongBeat: "\"Apply the 10% growth three separate times in a row, each time to the new total,\" Layla says. \"Don't just add 10% three times to the original amount.\"",
+    solvedBeat:
+      "100 × 1.1 × 1.1 × 1.1 ≈ 133 coins. \"Compounding, not just adding,\" Layla says. \"Exactly how a small, honest-looking discrepancy in an account grows into a fortune, given enough stops.\" — Compound growth multiplies by the same growth factor repeatedly, so the amount added gets larger at every step.",
+    concept: "Compound Growth",
+  },
+  {
+    id: "silk-road-7",
+    storyId: "silk-road-cipher",
+    order: 7,
+    sceneText: "Three partners funded this leg of the caravan in a ratio of 2 to 3 to 5. The leg's profit comes to exactly 200 coins to split.",
+    puzzle: "How many coins does the partner who contributed the \"3\" share receive?",
+    choices: ["60 coins", "66 coins", "40 coins", "100 coins"],
+    correctIndex: 0,
+    wrongBeat: "\"Add up all the ratio parts first to find what one part is worth,\" Layla says, \"then multiply that single part's value by the share in question.\"",
+    solvedBeat:
+      "2 + 3 + 5 = 10 total parts, so each part is worth 200 ÷ 10 = 20 coins, and 3 parts comes to 60 coins. \"Fair, and provable, down to the coin,\" Layla says. — Dividing something proportionally means splitting it in the exact same ratio as whatever was originally contributed.",
+    concept: "Proportional Division",
+  },
+  {
+    id: "silk-road-8",
+    storyId: "silk-road-cipher",
+    order: 8,
+    sceneText:
+      "Two market entries sit in the same ledger, in different handwriting: \"1 bolt of silk and 2 jars of spice: 20 coins total\" and \"3 bolts of silk and 1 jar of spice: 25 coins total.\"",
+    puzzle: "Working out both prices at once, what does a single bolt of silk cost?",
+    choices: ["6 coins", "7 coins", "5 coins", "8 coins"],
+    correctIndex: 0,
+    wrongBeat: "\"Solve one equation for one item in terms of the other,\" Layla says, \"then substitute that into the second equation before solving.\"",
+    solvedBeat:
+      "From the first entry, silk = 20 − 2×spice. Substituting into the second gives spice = 7 coins, and silk = 20 − 14 = 6 coins. \"Two unknowns, but only one honest answer that satisfies both entries at once,\" Layla says. — A system of two equations pins down two unknowns at the same time, using each equation as a check on the other.",
+    concept: "Systems of Linear Equations",
+  },
+  {
+    id: "silk-road-9",
+    storyId: "silk-road-cipher",
+    order: 9,
+    sceneText: "At the last fair, 5 bolts of silk sold for 40 silver coins.",
+    puzzle: "At that same rate, how many silver coins would 8 bolts of silk sell for?",
+    choices: ["64 coins", "56 coins", "48 coins", "72 coins"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the price of a single bolt first by dividing,\" Layla says, \"then multiply that single price by the new number of bolts.\"",
+    solvedBeat:
+      "40 ÷ 5 = 8 coins per bolt, and 8 × 8 = 64 coins for eight bolts. \"Merchants along this whole route priced everything by that same method,\" Layla says. — That's the rule of three: find the value of one unit first, then scale it up or down to whatever quantity you need.",
+    concept: "The Rule of Three (Direct Proportion)",
+  },
+  {
+    id: "silk-road-10",
+    storyId: "silk-road-cipher",
+    order: 10,
+    sceneText:
+      "The vault's final dial has no numbers on it at all — only an inscription: \"the caravan's silk, and its spice, reduced to their simplest terms,\" beside two empty slots. Tonight's manifest lists 84 bolts of silk and 56 jars of spice.",
+    puzzle: "What's the ratio of silk to spice, 84 to 56, reduced to its simplest form?",
+    choices: ["3 : 2", "2 : 1", "6 : 4", "84 : 56, since it can't be reduced further"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the largest number that divides evenly into both 84 and 56,\" Layla says, \"then divide both sides of the ratio by it.\"",
+    solvedBeat:
+      "Both 84 and 56 divide evenly by 28, leaving 3 : 2 in simplest form. Layla turns the dial to 3, then 2, and the old lock finally gives. — A ratio is never truly in its simplest form until you've divided out everything both numbers genuinely share.",
+    concept: "Simplifying Ratios",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }

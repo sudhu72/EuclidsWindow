@@ -528,6 +528,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real chamber gives way at last, and lantern light spills across a space untouched in millennia — not gold stacked to the ceiling as legend promised, but something the builders clearly valued just as highly: shelf after shelf of measuring rods, sighting instruments, and slate tablets dense with worked calculations, every one checked and rechecked in a careful, ancient hand.\n\n" +
       "\"They really did trust arithmetic over guards,\" Nadia says, running a finger along a tablet's edge. \"No curse, no army — just numbers precise enough that anyone careless would seal themselves out before ever reaching this far.\" Tucked among the tablets, a final inscription, translated slowly by lantern-light: \"What we built, we built to a proportion that never wavers. What we hid, we hid where only the same patience could ever find it.\" Outside, the desert sun is already climbing toward noon, indifferent, exactly on schedule, exactly as the builders' own sundials always promised it would be.",
   },
+
+  // ------------------------------------------------------------------
+  // The Conservatory Killing
+  // ------------------------------------------------------------------
+  {
+    id: "conservatory-mid",
+    storyId: "conservatory-killing",
+    afterClue: "conservatory-5",
+    kind: "mid",
+    title: "Five Musicians",
+    scenario:
+      "You gather the five accounts of the break and lay them side by side.\n\n" +
+      "**Sabrina Lowe:** \"I was warming up alone in my dressing room the entire break — nobody saw me, but I never left.\"\n\n" +
+      "**Dmitri Volkov:** \"I was meeting the hall's board about the guest-conducting post — three board members can vouch for every minute.\"\n\n" +
+      "**Countess Fenwick:** \"I was in my private box the whole time, entertaining out-of-town donors. Ask any of them.\"\n\n" +
+      "**Pemberton:** \"I was in the box office reconciling tonight's count, same as every night — Ravi saw me still there near intermission.\"\n\n" +
+      "**Ravi:** \"I did my usual walk-through before curtain. Pemberton was indeed still in the box office — though the ledger open in front of him wasn't tonight's sales sheet at all. It was last week's.\"\n\n" +
+      "You already know Vale's body was found by Odile just after the break ended, and that the podium is reachable only by crossing directly behind the box office.",
+    entities: ["Sabrina Lowe", "Dmitri Volkov", "Countess Fenwick", "Pemberton", "Ravi"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      "Sabrina Lowe": "Alibi Breaks",
+      "Dmitri Volkov": "Alibi Holds",
+      "Countess Fenwick": "Alibi Holds",
+      Pemberton: "Alibi Breaks",
+      Ravi: "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and the trail goes cold for the night. Look again at which accounts are confirmed by someone with nothing at stake, and which rest only on the speaker's own word — and check whether Ravi's own detail actually matches what someone claimed to be doing.",
+    explain:
+      "Volkov's account is independently confirmed by three board members, and Fenwick's donors place her elsewhere the entire time — both hold. Ravi has no motive and supplies the key detail, so his account holds too. But Sabrina's alibi rests on no one but herself, alone in her dressing room the whole break. And Pemberton's claim of reconciling 'tonight's count' doesn't survive Ravi's own sighting: a ledger from last week, open on the desk, the wrong sheet entirely for a man supposedly counting tonight's receipts.",
+  },
+  {
+    id: "conservatory-final",
+    storyId: "conservatory-killing",
+    afterClue: "conservatory-10",
+    kind: "final",
+    title: "The Podium",
+    scenario:
+      "You confront the two remaining names at the empty podium.\n\n" +
+      "**Sabrina Lowe:** \"It was Pemberton. Vale's own audit was about to expose years of skimmed ticket money — ask anyone who's seen a man protect his own numbers that closely.\"\n\n" +
+      "**Pemberton:** \"Ask instead who's been passed over for concertmaster twice now, and who finally ran out of patience waiting for a promise that was never going to be kept.\"\n\n" +
+      "You already know the geometric-sequence pattern hidden in Vale's own audit notes — each week's discrepancy doubling — traces the fraud precisely to Pemberton's private account. You also know Sabrina's promotion had already been finalized in writing the very morning Vale died, a fact she never knew.",
+    entities: ["Sabrina Lowe", "Pemberton"],
+    options: ["Guilty", "Innocent"],
+    answer: { "Sabrina Lowe": "Innocent", Pemberton: "Guilty" },
+    wrongConsequence:
+      "The podium stays silent, and nothing more is offered — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually had a promise already kept versus one who had everything left to lose.",
+    explain:
+      "Sabrina's grievance evaporates the moment you learn her promotion had already been signed — she had every reason to want Vale alive to see it through properly, not dead. Pemberton's exposure was total: the doubling discrepancy trailing straight back to his own account, and Vale's own meticulous audit closing in by the week's end.",
+    resolution:
+      "You lay it out for Odile, piece by piece: the octave ratio that first showed you Vale trusted numbers as much as notes. The time signature's odd beat count, marking exactly which measure he'd stopped conducting mid-rehearsal. The tempo, converted into real minutes, giving you the precise window Vale went silent. The harmonic series, tracing a hidden second melody buried in his own tuning notes. The note-value fractions, breaking his final passage down into exactly the pieces he meant it to be read in. The decibel scale, explaining why no one in a packed hall heard a single cry over the orchestra's own volume. The combinations, narrowing five possible witnesses down to the ones who could have actually seen anything. The geometric sequence, doubling week after week, in an account that was never supposed to exist. The equation Vale solved in his own margin notes, balancing to exactly the amount missing. And the percentage — a clean, exact rate of increase that Pemberton needed the fraud to keep growing at, just to stay ahead of Vale's own audit.\n\n" +
+      "Pemberton doesn't bother denying it once the ledger's true sheet is laid beside Vale's own final tally. \"He was going to ruin me over arithmetic,\" he mutters, as though the numbers themselves were somehow the crime. Odile looks at the empty podium for a long moment. \"He built his last message out of the very thing he loved,\" she says quietly, \"and he still made sure it could be read properly, if anyone was patient enough to work it out.\" The symphony hall, dark now but for a single work light over the score, keeps its silence — precisely, finally, exactly on time.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Silk Road Cipher
+  // ------------------------------------------------------------------
+  {
+    id: "silk-road-mid",
+    storyId: "silk-road-cipher",
+    afterClue: "silk-road-5",
+    kind: "mid",
+    title: "Three Waypoints",
+    scenario:
+      "Beyond the caravanserai, the trail splits at three waypoints, each carved with a claim. Layla reads them aloud:\n\n" +
+      "**Waypoint A:** \"Converting between two units is always just multiplying by a single fixed conversion factor.\"\n\n" +
+      "**Waypoint B:** \"A 30% markup followed by a 30% markdown always brings a price back to where it started.\"\n\n" +
+      "**Waypoint C:** \"If a caravan doubles its speed, it always covers triple the distance in the same time.\"\n\n" +
+      "\"The old guild sealed the false waypoints behind claims that sound reasonable but fall apart under real arithmetic,\" Layla says. \"Check every one properly before you trust it.\"",
+    entities: ["Waypoint A", "Waypoint B", "Waypoint C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Waypoint A": "True Claim", "Waypoint B": "False Claim", "Waypoint C": "False Claim" },
+    wrongConsequence:
+      "The wrong waypoint's trail narrows to a dead end, and you double back with nothing but lost daylight for the trouble. \"Test each claim against real numbers,\" Layla says. \"Not what sounds reasonable — what actually holds up once you calculate it.\"",
+    explain:
+      "Waypoint A restates exactly what you've already used at every single border post: converting units is one multiplication by a fixed factor, every time. Waypoint B is false — a 30% markup followed by a 30% markdown does not cancel out, because the markdown applies to the new, larger price, leaving you at 91% of the original, not back to 100%. Waypoint C is false too: doubling speed while time stays fixed doubles the distance covered, not triples it — distance is rate times time, and only the rate changed.",
+  },
+  {
+    id: "silk-road-final",
+    storyId: "silk-road-cipher",
+    afterClue: "silk-road-10",
+    kind: "final",
+    title: "Three Final Caches",
+    scenario:
+      "Layla reads each final cache's carved inscription aloud:\n\n" +
+      "**Cache 1:** \"Compounding growth at a fixed rate always grows faster over time than simply adding the same fixed amount each time.\"\n\n" +
+      "**Cache 2:** \"If two ratios have the same difference between their two numbers, they must be equal ratios.\"\n\n" +
+      "**Cache 3:** \"Splitting a profit in proportion to contribution always gives every partner an equal share.\"\n\n" +
+      "\"One of these is true without a single exception,\" Layla says. \"The guild trusted their whole cache's protection on that one rule.\"",
+    entities: ["Cache 1", "Cache 2", "Cache 3"],
+    options: ["Real Cache", "False Cache"],
+    answer: { "Cache 1": "Real Cache", "Cache 2": "False Cache", "Cache 3": "False Cache" },
+    wrongConsequence:
+      "Stone grinds down over the wrong cache, sealed for good this time. \"Don't trust the shape of the sentence,\" Layla says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Cache 1 holds exactly: a fixed percentage compounding over time eventually outpaces any fixed amount added repeatedly, however large that fixed amount starts out. Cache 2 is false — 3:5 and 5:7 share the same difference of 2 between their numbers, but 3/5 = 0.6 while 5/7 ≈ 0.71, so they are not the same ratio at all. Cache 3 is false too, and you proved it yourself already: a 2-3-5 split divides a shared profit unevenly, exactly in proportion to what each partner actually put in.",
+    resolution:
+      "The real cache gives way at last, and lantern light spills across sacks of spice, bolts of silk still vivid after centuries sealed away, and — tucked beneath them — a merchant's private ledger, its final page covered edge to edge in careful figures.\n\n" +
+      "\"They really did trust the ledger over the sword,\" Layla says, running a finger down columns of exchange rates and shipping weights. \"No guard could be bribed around a number that simply doesn't add up.\" The ledger's last line, translated slowly: \"What the road takes in tolls and thieves, arithmetic returns in full to whoever keeps the count honest.\" Outside, the next caravan is already forming up at the gate, indifferent to any of this, exactly as it always has, and exactly as it always will.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

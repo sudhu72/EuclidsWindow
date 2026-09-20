@@ -84,7 +84,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "conservatory-killing",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Conservatory Killing",
     blurb: "A conductor is found dead mid-rehearsal — the last page of the score is written in numbers, not notes.",
@@ -190,7 +190,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "silk-road-cipher",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Silk Road Cipher",
     blurb: "Every waypoint on this old trade route hides a number puzzle left by merchants protecting their route.",

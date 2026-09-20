@@ -246,6 +246,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "conservatory-killing",
+    sceneText:
+      "**A grand symphony hall, the night of the season's final rehearsal.**\n\n" +
+      "Odile, the assistant conductor, meets you backstage clutching a baton that isn't hers. \"Maestro Vale is dead, right at the podium,\" she says, still shaking. \"We broke for intermission at the usual time, and when we came back... he was already gone. The last page of his score isn't music at all — it's numbers. Rows of them, in his own hand.\" She holds up the page; where notes should sit on the staff, there are only figures, ratios, fractions.\n\n" +
+      "The hall's break ran exactly twenty minutes, and five people had reason enough to slip away from the crowd during it. Vale, everyone agrees, was a brilliant conductor and an even more exacting one — precise to the beat, precise with money, precise with people's patience.",
+    cast: [
+      {
+        name: "Sabrina Lowe",
+        detail: "The orchestra's principal violinist, promised the concertmaster's chair two years ago — a promise Vale, as far as she knew, had never once followed through on.",
+      },
+      {
+        name: "Dmitri Volkov",
+        detail: "A rival conductor, locked with Vale in competition for the same prestigious guest-conducting post, to be decided within days.",
+      },
+      {
+        name: "Countess Fenwick",
+        detail: "The hall's principal patron, whose funding Vale depended on completely — and who made no secret of wanting a say in next season's programming that Vale refused to give her.",
+      },
+      {
+        name: "Pemberton",
+        detail: "The hall's box-office manager, quietly skimming from nightly ticket receipts — a discrepancy Vale's own meticulous audits were only weeks from catching.",
+      },
+      {
+        name: "Ravi",
+        detail: "The stage manager, walking the same pre-curtain rounds every night for years. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "silk-road-cipher",
+    sceneText:
+      "**A weathered caravanserai at the edge of the desert, the last stop before the open trade route.**\n\n" +
+      "Layla has guided caravans along this route for twenty years, and has spent the last three chasing a story older than her own family's trading house: that a vanished merchant guild once hid a fortune along these very waypoints, protected by nothing but arithmetic. \"They didn't trust guards with it,\" she tells you, unrolling a ledger brittle with age. \"Guards can be bribed, and roads can be robbed. A number that's wrong is wrong for everyone, the same way, every time — that's the only guard they ever fully trusted.\"\n\n" +
+      "Her own ledger already tells you two things worth remembering: the border post trades 1 gold dinar for exactly 12 silver dirhams, and the caravan makes a steady 24 kilometers a day. \"Every waypoint from here to the old guild's cache tests the exact same thing,\" Layla says, checking the pack straps one last time. \"Whether you trust your own arithmetic, or you guess and hope.\"",
+    cast: [
+      {
+        name: "Layla",
+        detail: "Your caravan guide — twenty years on this route, and the first to take the old merchant-guild stories as seriously as the maps themselves.",
+      },
+      {
+        name: "The Merchant Guild",
+        detail: "The vanished traders who once ran this route. Long gone, but every waypoint they built still tests the same thing: whether your arithmetic can be trusted completely.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {
