@@ -12,12 +12,15 @@ export interface QuestStory {
   title: string;
   blurb: string;
   setting: string;
+  /** "ready" stories are fully hand-authored and playable; "soon" are announced but not yet built. */
+  status: "ready" | "soon";
 }
 
 export const QUEST_STORIES: QuestStory[] = [
   // --- Murder mysteries (deductive logic, detective skin) ------------------
   {
     id: "missing-proof",
+    status: "soon",
     theme: "mystery",
     title: "The Case of the Missing Proof",
     blurb: "Euclid's own lost proof has vanished from the Library of Alexandria the night before it was to be unveiled.",
@@ -25,6 +28,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "observatory-murder",
+    status: "soon",
     theme: "mystery",
     title: "Murder at the Observatory",
     blurb: "An astronomer is found dead beside an unfinished star chart — the killer left a trail of numbers, not words.",
@@ -32,6 +36,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "vanishing-manuscript",
+    status: "soon",
     theme: "mystery",
     title: "The Vanishing Manuscript",
     blurb: "A monastery's only copy of a forbidden theorem disappears the same night a monk is found unconscious in the scriptorium.",
@@ -39,6 +44,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "clockmakers-secret",
+    status: "soon",
     theme: "mystery",
     title: "The Clockmaker's Secret",
     blurb: "A master clockmaker is found dead in a workshop full of gears that shouldn't be able to move the way they do.",
@@ -46,6 +52,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "alexandria-ledger",
+    status: "soon",
     theme: "mystery",
     title: "The Alexandria Ledger",
     blurb: "A merchant's coded ledger is the only evidence of a break-in — and the only motive anyone can find.",
@@ -53,6 +60,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "locked-dome",
+    status: "soon",
     theme: "mystery",
     title: "The Locked Observatory Dome",
     blurb: "A body is found inside a dome that was locked from within, beside a slowly turning brass orrery.",
@@ -60,6 +68,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "cryptographers-curse",
+    status: "soon",
     theme: "mystery",
     title: "The Cryptographer's Curse",
     blurb: "A wartime codebreaker's final message is a cipher nobody has cracked — until now.",
@@ -67,6 +76,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "impossible-angles",
+    status: "soon",
     theme: "mystery",
     title: "The Garden of Impossible Angles",
     blurb: "A landscaper's death hides inside a geometric folly that shouldn't be able to exist on flat ground.",
@@ -74,6 +84,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "conservatory-killing",
+    status: "soon",
     theme: "mystery",
     title: "The Conservatory Killing",
     blurb: "A conductor is found dead mid-rehearsal — the last page of the score is written in numbers, not notes.",
@@ -81,6 +92,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "blood-on-the-chessboard",
+    status: "soon",
     theme: "mystery",
     title: "Blood on the Chessboard",
     blurb: "A grandmaster dies mid-tournament, and the final position on the board is the only statement he left behind.",
@@ -88,6 +100,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "architects-folly",
+    status: "soon",
     theme: "mystery",
     title: "The Architect's Folly",
     blurb: "A building collapses mid-construction — someone tampered with the calculations, and the blueprints don't lie.",
@@ -95,6 +108,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "carnival-of-lost-souls",
+    status: "soon",
     theme: "mystery",
     title: "The Carnival of Lost Souls",
     blurb: "A fortune-teller's rigged booth hides a killer's trick — and the trick is pure, cold mathematics.",
@@ -102,6 +116,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "night-train-murder",
+    status: "ready",
     theme: "mystery",
     title: "Murder on the Night Train",
     blurb: "A passenger is found dead in a locked compartment, and the timetable everyone trusted doesn't add up.",
@@ -109,6 +124,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "statisticians-gambit",
+    status: "ready",
     theme: "mystery",
     title: "The Statistician's Gambit",
     blurb: "An actuary is killed the night after uncovering fraud hidden deep inside a decade of company numbers.",
@@ -116,6 +132,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "museum-heist",
+    status: "soon",
     theme: "mystery",
     title: "The Museum Heist",
     blurb: "A priceless artifact vanishes from behind a security system its own designer called unbreakable.",
@@ -125,6 +142,7 @@ export const QUEST_STORIES: QuestStory[] = [
   // --- Treasure hunts (explorer skin) ---------------------------------------
   {
     id: "euclid-trail",
+    status: "ready",
     theme: "treasure",
     title: "The Euclid Trail",
     blurb: "Follow Euclid's own footsteps across ancient Greece, decoding the landmarks he left behind.",
@@ -132,6 +150,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "lost-city-numbers",
+    status: "soon",
     theme: "treasure",
     title: "The Lost City of Numbers",
     blurb: "A jungle ruin is encoded entirely in mathematics — every doorway is a puzzle, not a lock.",
@@ -139,6 +158,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "pirates-cove",
+    status: "ready",
     theme: "treasure",
     title: "Pirate's Cove",
     blurb: "A pirate captain's treasure map uses angles and ratios instead of words — sloppier crews never made it past the first cove.",
@@ -146,6 +166,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "pharaohs-vault",
+    status: "soon",
     theme: "treasure",
     title: "The Pharaoh's Vault",
     blurb: "A pyramid's inner chambers are sealed by mathematical locks left by builders who trusted numbers more than guards.",
@@ -153,6 +174,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "sunken-library",
+    status: "soon",
     theme: "treasure",
     title: "The Sunken Library",
     blurb: "An underwater ruin holds the last surviving copies of texts everyone thought were lost forever.",
@@ -160,6 +182,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "sky-chart-expedition",
+    status: "soon",
     theme: "treasure",
     title: "The Sky Chart Expedition",
     blurb: "Ancient astronomers left a star map pointing to a hidden cache — you just have to read the sky the way they did.",
@@ -167,6 +190,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "silk-road-cipher",
+    status: "soon",
     theme: "treasure",
     title: "The Silk Road Cipher",
     blurb: "Every waypoint on this old trade route hides a number puzzle left by merchants protecting their route.",
@@ -174,6 +198,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "clockwork-mountain",
+    status: "soon",
     theme: "treasure",
     title: "The Clockwork Mountain",
     blurb: "An old mechanical vault is buried deep inside a mountain, built entirely from gears, ratios, and one very old sense of humor.",
@@ -181,6 +206,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "cartographers-riddle",
+    status: "soon",
     theme: "treasure",
     title: "The Cartographer's Riddle",
     blurb: "A mapmaker died before finishing his final map — the blank corner is exactly where the vault should be.",
@@ -188,6 +214,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "ice-vault-expedition",
+    status: "soon",
     theme: "treasure",
     title: "The Ice Vault Expedition",
     blurb: "A melting glacier is uncovering a sealed vault no one has seen in centuries — and you're racing the thaw.",
@@ -195,6 +222,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "desert-star-compass",
+    status: "soon",
     theme: "treasure",
     title: "The Desert Star Compass",
     blurb: "A nomadic star-reading tradition marks the way to a hidden oasis, if you can read the sky like they did.",
@@ -202,6 +230,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "floating-market-trail",
+    status: "soon",
     theme: "treasure",
     title: "The Floating Market Trail",
     blurb: "Every vendor on this river market holds one piece of a number puzzle, and none of them will simply tell you.",
@@ -209,6 +238,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "vineyards-buried-fortune",
+    status: "soon",
     theme: "treasure",
     title: "The Vineyard's Buried Fortune",
     blurb: "A centuries-old vineyard hides a fortune behind a chain of harvest-record riddles no heir ever solved.",
@@ -216,6 +246,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "lighthouse-keepers-code",
+    status: "soon",
     theme: "treasure",
     title: "The Lighthouse Keeper's Code",
     blurb: "A retired keeper's logbook encodes the exact location of a shipwreck's treasure, one tide table at a time.",
@@ -223,6 +254,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "canyon-of-echoes",
+    status: "soon",
     theme: "treasure",
     title: "The Canyon of Echoes",
     blurb: "A canyon's strange acoustics hide a puzzle that only gives up its answer to careful, patient math.",

@@ -1,14 +1,27 @@
-// Math Quest — top-level: a story + level start screen, then the case-board
-// / treasure-map graph, with a stage panel overlaid when a node is open.
-import { useEffect, useState } from "react";
-import { fetchQuestGraph, fetchProgress, putProgress, type QuestGraph, type QuestNode, type QuestTheme } from "./questApi";
-import { getState, setStoryAndLevel, getCompletedSlugs, markCompleted, mergeCompleted } from "./questProgress";
-import { useAuth } from "./auth";
+// Math Quest — top-level: a story + level start screen, then a hand-authored
+// mystery/treasure-hunt experience (intro -> clue -> deduction checkpoint ->
+// ... -> ending). Only "ready" stories are playable; the rest are shown as a
+// "coming soon" catalog. See questClues.ts/questCheckpoints.ts/questIntros.ts
+// for the actual story content.
+import { useMemo, useState } from "react";
+import type { QuestTheme } from "./questApi";
+import {
+  getState,
+  setStoryAndLevel,
+  getStoryProgress,
+  markClueSolved,
+  markCheckpointPassed,
+} from "./questProgress";
 import { levelLabel } from "./levelLabels";
 import { QUEST_STORIES, storyById, type QuestStory } from "./questStories";
-import QuestMap from "./QuestMap";
-import QuestStage from "./QuestStage";
+import { cluesForStory } from "./questClues";
+import { checkpointsForStory, type QuestCheckpoint as QuestCheckpointData } from "./questCheckpoints";
+import { introForStory } from "./questIntros";
+import QuestClue from "./QuestClue";
+import QuestCheckpoint from "./QuestCheckpoint";
+import QuestCaseFile from "./QuestCaseFile";
 import QuestSprite, { type QuestSkin } from "./QuestSprite";
+import Markdown from "./Markdown";
 
 const LEVELS = ["kids", "teen", "college", "adult"];
 
@@ -17,70 +30,58 @@ const SKIN_BY_THEME: Record<QuestTheme, QuestSkin> = {
   treasure: "explorer",
 };
 
-export default function Quest({ onAsk }: { onAsk?: (question: string) => void }) {
-  const { user } = useAuth();
+type Resolved =
+  | { kind: "checkpoint"; checkpoint: QuestCheckpointData }
+  | { kind: "clue"; clue: ReturnType<typeof cluesForStory>[number] }
+  | { kind: "ended" };
+
+function resolvePhase(storyId: string): Resolved {
+  const clues = cluesForStory(storyId);
+  const checkpoints = checkpointsForStory(storyId);
+  const progress = getStoryProgress(storyId);
+  const solved = new Set(progress.solvedClues);
+  const passed = new Set(progress.passedCheckpoints);
+
+  const pending = checkpoints.find((cp) => solved.has(cp.afterClue) && !passed.has(cp.id));
+  if (pending) return { kind: "checkpoint", checkpoint: pending };
+
+  const nextClue = clues.find((c) => !solved.has(c.id));
+  if (nextClue) return { kind: "clue", clue: nextClue };
+
+  return { kind: "ended" };
+}
+
+export default function Quest() {
   const initial = getState();
   const [storyId, setStoryId] = useState<string | null>(initial.storyId);
   const [level, setLevel] = useState<string | null>(initial.level);
-  const [graph, setGraph] = useState<QuestGraph | null>(null);
-  const [completed, setCompleted] = useState<Set<string>>(getCompletedSlugs());
-  const [selected, setSelected] = useState<QuestNode | null>(null);
-  const [currentSlug, setCurrentSlug] = useState<string | null>(null);
-  const [status, setStatus] = useState("");
+  const [version, setVersion] = useState(0);
 
-  const story = storyId ? storyById(storyId) : undefined;
+  // A storyId left over from before a story was marked "soon" (or before it
+  // existed at all) has no clue/checkpoint/intro content — treat it as
+  // nothing selected rather than rendering a blank screen.
+  const rawStory = storyId ? storyById(storyId) : undefined;
+  const story = rawStory?.status === "ready" ? rawStory : undefined;
+  const progress = story ? getStoryProgress(story.id) : null;
+  const hasStarted = !!progress && (progress.solvedClues.length > 0 || progress.passedCheckpoints.length > 0);
+  const [introDone, setIntroDone] = useState(hasStarted);
 
-  useEffect(() => {
-    if (!story) return;
-    // Clear the previous story's graph/open stage immediately so a switch
-    // never leaves the old view on screen while the new one loads (or if the
-    // fetch fails) — without this, stale state from the prior story just sits
-    // there since this component never unmounts on a story change.
-    setGraph(null);
-    setSelected(null);
-    setCurrentSlug(null);
-    setStatus("Loading the case board…");
-    let cancelled = false;
-    fetchQuestGraph(story.theme)
-      .then((g) => {
-        if (cancelled) return;
-        setGraph(g);
-        setStatus("");
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setStatus(`Couldn't load: ${(e as Error).message}`);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [story]);
-
-  useEffect(() => {
-    if (!user) return;
-    fetchProgress()
-      .then((entries) => {
-        const done = entries.filter((e) => e.status === "completed").map((e) => e.concept_slug);
-        if (done.length) {
-          mergeCompleted(done);
-          setCompleted(getCompletedSlugs());
-        }
-      })
-      .catch(() => {
-        /* anonymous-equivalent fallback — localStorage already has what we have */
-      });
-  }, [user]);
+  const resolved = useMemo(() => (story ? resolvePhase(story.id) : null), [story, version]);
+  const solvedClues = useMemo(
+    () => (story ? cluesForStory(story.id).filter((c) => getStoryProgress(story.id).solvedClues.includes(c.id)) : []),
+    [story, version]
+  );
 
   function begin(s: QuestStory, l: string) {
     setStoryAndLevel(s.id, s.theme, l);
     setStoryId(s.id);
     setLevel(l);
+    setIntroDone(getStoryProgress(s.id).solvedClues.length > 0 || getStoryProgress(s.id).passedCheckpoints.length > 0);
   }
 
-  function onSolved(slug: string, score: number) {
-    markCompleted(slug, score);
-    setCompleted(getCompletedSlugs());
-    if (user) putProgress(slug, "completed", score);
+  function changeStory() {
+    setStoryId(null);
+    setLevel(null);
   }
 
   if (!story || !level) {
@@ -94,6 +95,7 @@ export default function Quest({ onAsk }: { onAsk?: (question: string) => void })
   }
 
   const skin = SKIN_BY_THEME[story.theme];
+  const intro = introForStory(story.id);
 
   return (
     <div className="qst-shell">
@@ -102,40 +104,75 @@ export default function Quest({ onAsk }: { onAsk?: (question: string) => void })
           <h3 className="lesson-title">{story.title}</h3>
           <p className="qst-stage-meta">{story.setting}</p>
         </div>
-        <button
-          className="btn-ghost"
-          onClick={() => {
-            setStoryId(null);
-            setLevel(null);
-          }}
-        >
-          Change story/level
-        </button>
+        <button className="btn-ghost" onClick={changeStory}>Change story/level</button>
       </div>
 
-      {status && <p className="status">{status}</p>}
-
       <div className="qst-scroll">
-        {graph && !selected && (
-          <QuestMap
-            graph={graph}
-            completed={completed}
-            currentSlug={currentSlug}
-            onSelect={(n) => {
-              setCurrentSlug(n.slug);
-              setSelected(n);
+        {!introDone && intro && (
+          <div className="qst-stage">
+            <div className="qst-stage-head">
+              <QuestSprite skin={skin} pose="idle" size={72} />
+            </div>
+            <div className="qst-flavor">
+              <Markdown>{intro.sceneText}</Markdown>
+            </div>
+            <div className="qst-cast">
+              {intro.cast.map((c) => (
+                <p key={c.name}>
+                  <strong>{c.name}.</strong> {c.detail}
+                </p>
+              ))}
+            </div>
+            <button className="send" onClick={() => setIntroDone(true)}>
+              {story.theme === "mystery" ? "Begin the Investigation →" : "Follow the Trail →"}
+            </button>
+          </div>
+        )}
+
+        {introDone && resolved?.kind === "clue" && (
+          <QuestClue
+            key={resolved.clue.id}
+            clue={resolved.clue}
+            index={cluesForStory(story.id).findIndex((c) => c.id === resolved.clue.id)}
+            total={cluesForStory(story.id).length}
+            level={level}
+            skin={skin}
+            onSolved={() => {
+              markClueSolved(story.id, resolved.clue.id);
+              setVersion((v) => v + 1);
             }}
           />
         )}
 
-        {selected && (
-          <QuestStage
-            node={selected}
-            level={level}
+        {introDone && resolved?.kind === "checkpoint" && (
+          <QuestCheckpoint
+            key={resolved.checkpoint.id}
+            checkpoint={resolved.checkpoint}
             skin={skin}
-            onSolved={onSolved}
-            onClose={() => setSelected(null)}
-            onAsk={onAsk}
+            onPassed={() => {
+              markCheckpointPassed(story.id, resolved.checkpoint.id);
+              setVersion((v) => v + 1);
+            }}
+          />
+        )}
+
+        {introDone && resolved?.kind === "ended" && (
+          <div className="qst-stage">
+            <div className="qst-stage-head">
+              <QuestSprite skin={skin} pose="success" size={72} />
+              <h3 className="qst-stage-title">
+                {story.theme === "mystery" ? "Case Closed" : "Treasure Found"}
+              </h3>
+            </div>
+            <p className="qst-flavor">You solved every clue in {story.title}.</p>
+            <button className="send" onClick={changeStory}>Choose another story</button>
+          </div>
+        )}
+
+        {introDone && (
+          <QuestCaseFile
+            title={story.theme === "mystery" ? "Case File" : "Field Notes"}
+            clues={solvedClues}
           />
         )}
       </div>
@@ -155,8 +192,7 @@ function QuestStartScreen({ onBegin }: { onBegin: (story: QuestStory, level: str
     <div className="qst-start">
       <h3 className="lesson-title">Math Quest</h3>
       <p className="dsub">
-        Learn all of mathematics as a story. Pick a case to crack or a trail to follow, then how
-        deep to go — you can change either later.
+        Learn mathematics as a puzzle-story. Two full cases are ready to play now — more are on the way.
       </p>
 
       <StoryGroup title="🕵️ Murder mysteries" skin="detective" stories={mysteries} selected={storyId} onPick={setStoryId} />
@@ -206,12 +242,14 @@ function StoryGroup({
         {stories.map((s) => (
           <button
             key={s.id}
-            className={`qst-theme-card ${selected === s.id ? "active" : ""}`}
-            onClick={() => onPick(s.id)}
+            className={`qst-theme-card ${selected === s.id ? "active" : ""} ${s.status === "soon" ? "qst-soon" : ""}`}
+            onClick={() => s.status === "ready" && onPick(s.id)}
+            disabled={s.status === "soon"}
           >
             <QuestSprite skin={skin} pose="idle" size={56} />
             <strong>{s.title}</strong>
             <span>{s.blurb}</span>
+            {s.status === "soon" && <span className="qst-soon-badge">Coming soon</span>}
           </button>
         ))}
       </div>

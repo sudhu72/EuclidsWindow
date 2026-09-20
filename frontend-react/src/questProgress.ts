@@ -6,15 +6,21 @@ import type { QuestNode, QuestTheme } from "./questApi";
 
 const STORE_KEY = "ew_quest_progress";
 
+export interface QuestStoryProgress {
+  solvedClues: string[];
+  passedCheckpoints: string[];
+}
+
 export interface QuestProgressState {
   theme: QuestTheme | null;
   storyId: string | null;
   level: string | null;
   completed: Record<string, { score?: number; at: string }>;
+  storyProgress: Record<string, QuestStoryProgress>;
 }
 
 function emptyState(): QuestProgressState {
-  return { theme: null, storyId: null, level: null, completed: {} };
+  return { theme: null, storyId: null, level: null, completed: {}, storyProgress: {} };
 }
 
 function load(): QuestProgressState {
@@ -76,4 +82,32 @@ export function mergeCompleted(slugs: string[]): void {
 /** A node is unlocked once every one of its prerequisites is completed. */
 export function isUnlocked(node: QuestNode, completed: Set<string>): boolean {
   return node.prerequisites.every((p) => completed.has(p));
+}
+
+// --- Hand-authored flagship-story progress (questClues.ts/questCheckpoints.ts) ---
+
+export function getStoryProgress(storyId: string): QuestStoryProgress {
+  return load().storyProgress[storyId] ?? { solvedClues: [], passedCheckpoints: [] };
+}
+
+export function markClueSolved(storyId: string, clueId: string): void {
+  const state = load();
+  const sp = state.storyProgress[storyId] ?? { solvedClues: [], passedCheckpoints: [] };
+  if (!sp.solvedClues.includes(clueId)) sp.solvedClues.push(clueId);
+  state.storyProgress[storyId] = sp;
+  save(state);
+}
+
+export function markCheckpointPassed(storyId: string, checkpointId: string): void {
+  const state = load();
+  const sp = state.storyProgress[storyId] ?? { solvedClues: [], passedCheckpoints: [] };
+  if (!sp.passedCheckpoints.includes(checkpointId)) sp.passedCheckpoints.push(checkpointId);
+  state.storyProgress[storyId] = sp;
+  save(state);
+}
+
+export function resetStoryProgress(storyId: string): void {
+  const state = load();
+  state.storyProgress[storyId] = { solvedClues: [], passedCheckpoints: [] };
+  save(state);
 }

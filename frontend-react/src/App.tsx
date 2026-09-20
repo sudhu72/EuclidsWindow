@@ -203,7 +203,7 @@ export default function App() {
         ) : tab === "euclid" ? (
           <Euclid onAsk={askInLearn} />
         ) : tab === "quest" ? (
-          <Quest onAsk={askInLearn} />
+          <Quest />
         ) : tab === "settings" ? (
           <Settings />
         ) : tab === "eval" ? (
