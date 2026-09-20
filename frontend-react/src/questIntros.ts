@@ -200,6 +200,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "clockmakers-secret",
+    sceneText:
+      "**A master clockmaker's workshop, gaslight flickering off a hundred hanging gears.**\n\n" +
+      "Wren, barely a year into her apprenticeship under Josiah Thorne, meets you in the doorway, hands still trembling. \"He's dead, sir. Found him myself, not an hour ago, slumped over the workbench — right beside the Sentinel, the clock he swore would be his masterpiece.\" She glances back at an enormous half-finished clock dominating the workshop's center, its gears arranged in patterns that don't look like any timepiece you've studied. \"He told me last week the gears weren't just for keeping time anymore. He'd built something else into them — a message, he said, that only someone patient enough to actually count could ever read.\"\n\n" +
+      "The night watchman found the workshop's side door unlatched at midnight, though Thorne had wound the Sentinel's mainspring himself at nine, same as every night for thirty years. Five people had a reason to want inside that workshop tonight — and one of them, Wren is certain, never left.",
+    cast: [
+      {
+        name: "Callum",
+        detail: "Thorne's junior apprentice, passed over just last month when Thorne named his own nephew — who has never spent a single day at the bench — as heir to the whole workshop.",
+      },
+      {
+        name: "Mercer",
+        detail: "A rival clockmaker across town, locked with Thorne in competition for the same royal commission, due to be decided within the week.",
+      },
+      {
+        name: "Lady Ashcombe",
+        detail: "A patron who commissioned a custom timepiece months ago and still owes Thorne a considerable balance, due in full the very day he died.",
+      },
+      {
+        name: "Grimsby",
+        detail: "Thorne's business partner of twenty years, quietly skimming from their shared accounts — a discrepancy Thorne's own meticulous ledgers were only days from catching.",
+      },
+      {
+        name: "Pruitt",
+        detail: "The workshop's night watchman, walking the same rounds every hour for a decade. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "pharaohs-vault",
+    sceneText:
+      "**The base of a half-buried pyramid, sand shifting away under a relentless sun.**\n\n" +
+      "Nadia has spent three field seasons proving what her colleagues call a fool's theory: that this minor, unnamed pyramid hides a sealed treasury the ancient builders never wanted grave robbers — or anyone else — to find. \"They didn't guard it with soldiers,\" she tells you, brushing sand from a carved lintel. \"They guarded it with proportion. Every real passage in this place is built to an exact ratio the builders trusted completely; every false one is close, but never quite right. Get sloppy with your arithmetic in here, and the mountain simply keeps its secret.\"\n\n" +
+      "Her measurements already tell you two things worth remembering: the pyramid's full height is 120 meters, and its square base runs exactly 180 meters along each side. \"Whatever's hidden here,\" Nadia says, stepping into the entrance shaft, \"the builders trusted their numbers a great deal more than they trusted the men who might come looking.\"",
+    cast: [
+      {
+        name: "Nadia",
+        detail: "Your expedition's lead archaeologist — three field seasons in, and the first to take this pyramid's numbers as seriously as its inscriptions.",
+      },
+      {
+        name: "The Builders",
+        detail: "The ancient architects who raised this pyramid. Long gone, but every passage they cut still holds to the same exact proportions they trusted over any guard.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {

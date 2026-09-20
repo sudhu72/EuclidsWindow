@@ -44,7 +44,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "clockmakers-secret",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Clockmaker's Secret",
     blurb: "A master clockmaker is found dead in a workshop full of gears that shouldn't be able to move the way they do.",
@@ -166,7 +166,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "pharaohs-vault",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Pharaoh's Vault",
     blurb: "A pyramid's inner chambers are sealed by mathematical locks left by builders who trusted numbers more than guards.",

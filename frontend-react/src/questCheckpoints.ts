@@ -427,6 +427,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real valley opens onto a shallow basin, and there it is — the astronomer-priests' true cache, sun-bleached instruments and star-charts sealed in stone for longer than any nearby nation has kept written records. Beneath the charts, wrapped in oiled cloth, one final tablet in a steadier hand: \"We trusted the sky because it never once lied to us about what was true — a shadow's angle, a star's true brightness once distance is accounted for, a ratio that holds however far you scale it. We hid this where only that same patience could ever find it.\"\n\n" +
       "Amara sits back against the rock, chart forgotten for a moment, turning the tablet over in her hands. \"They weren't hiding this from thieves,\" she says slowly. \"They were hiding it *for* whoever was patient enough to check their numbers instead of just admiring the sky.\" Above the valley, the stars are already wheeling toward morning, exactly on schedule, exactly as they always were.",
   },
+
+  // ------------------------------------------------------------------
+  // The Clockmaker's Secret
+  // ------------------------------------------------------------------
+  {
+    id: "clock-mid",
+    storyId: "clockmakers-secret",
+    afterClue: "clock-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that evening and lay them side by side.\n\n" +
+      "**Callum:** \"I left straight after closing, same as always — the corner baker can vouch, he waves at me most nights on my way home.\"\n\n" +
+      "**Mercer:** \"I was at my own shop preparing tomorrow's commission bid — my journeyman was there with me the whole time.\"\n\n" +
+      "**Lady Ashcombe:** \"I was at a dinner party clear across town. A dozen witnesses, if you need them.\"\n\n" +
+      "**Grimsby:** \"I stayed late doing this month's books, same as any month's end — Pruitt saw my light on past eleven.\"\n\n" +
+      "**Pruitt:** \"I did my rounds as usual, every hour. Grimsby's light was indeed still burning past eleven — though the ledger page open on his desk wasn't this month's at all. It was three months back.\"\n\n" +
+      "You already know Thorne's body was found by Wren just past midnight, and that the workshop's side door is only reachable from inside the building, past both the workbench and Grimsby's own office.",
+    entities: ["Callum", "Mercer", "Lady Ashcombe", "Grimsby", "Pruitt"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      Callum: "Alibi Breaks",
+      Mercer: "Alibi Holds",
+      "Lady Ashcombe": "Alibi Holds",
+      Grimsby: "Alibi Breaks",
+      Pruitt: "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and a full night's lead slips away chasing it. Look again at which claims are corroborated by someone confirming *that specific night*, and which are only corroborated by habit — and check whether Pruitt's own detail actually matches what someone claimed to be doing.",
+    explain:
+      "Mercer's account is independently confirmed by his journeyman, and Lady Ashcombe has a dozen witnesses placing her elsewhere entirely — both hold. Pruitt himself has no motive and supplies the key detail, so his account holds too. But Callum's alibi rests only on a baker who 'waves most nights' — a habit, not a confirmation of this particular one. And Grimsby's claim of doing 'this month's books' doesn't survive Pruitt's own sighting: a ledger three months old, open on his desk, the wrong book entirely for a man supposedly closing out this month's accounts.",
+  },
+  {
+    id: "clock-final",
+    storyId: "clockmakers-secret",
+    afterClue: "clock-10",
+    kind: "final",
+    title: "The Workshop",
+    scenario:
+      "You confront the two remaining names among the Sentinel's silent gears.\n\n" +
+      "**Callum:** \"It was Grimsby. Thorne's own ledgers were about to expose years of skimming — ask anyone in the trade, that kind of secret is worth killing to keep buried.\"\n\n" +
+      "**Grimsby:** \"Ask instead who resented being passed over for the whole workshop just last month. Old wounds like that don't stay quiet forever.\"\n\n" +
+      "You already know the recovered ledger page — the one Pruitt unknowingly spotted, three months out of date — was deliberately left open to a page Grimsby had personally altered, and that Thorne's own precise recalculation would have made the true balance public within the week.",
+    entities: ["Callum", "Grimsby"],
+    options: ["Guilty", "Innocent"],
+    answer: { Callum: "Innocent", Grimsby: "Guilty" },
+    wrongConsequence:
+      "The workshop goes quiet, and nothing more is offered — you've named the wrong man, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually stood to be exposed and ruined, versus which one merely lost a promotion he could still earn back with time.",
+    explain:
+      "Callum's grievance is real but survivable — passed over once doesn't erase thirty years of skill, and nothing suggests the succession was even final. Grimsby's exposure was total and immediate: the altered ledger page, the discrepancy Pruitt himself unknowingly witnessed, and Thorne's own precise bookkeeping closing in within the week. The stamped sequence hidden in the drawer wasn't a threat at all — it was Thorne's own worked calculation of exactly how much Grimsby had taken.",
+    resolution:
+      "You lay it out for Wren, piece by piece: the gear ratio that first hinted the Sentinel's teeth counts were never chosen for timekeeping alone. The least common multiple marking exactly when two marked gears would realign — the same interval, it turns out, as Grimsby's own quarterly reports. The escapement's steady ticking, giving you the precise hour Thorne's heart actually stopped. The compound ratio buried three gears deep, spelling out nothing until multiplied through in the right order. The modular wrap of the secret dial, landing on exactly the hour matching Grimsby's own falsified entry. The scaled-up pendulum, confirming the model matched the real machine down to the centimeter. The stamped arithmetic sequence, leading straight to the hidden drawer's combination. And the percentage itself — a clean, quarter-share of an account slowly bled dry, calculated the same painstaking way Thorne calculated everything else in his life.\n\n" +
+      "Grimsby doesn't bother denying it once the ledger page is laid flat beside Thorne's own final tally. \"He was going to ruin me over arithmetic,\" he says bitterly, as if the numbers themselves were the crime. Wren looks at the Sentinel's still, silent gears for a long moment. \"He built his own death into the very thing he loved most,\" she says finally, \"and he still left it exact enough that we could read it properly.\" Above the workbench, the Sentinel's message-gears sit motionless now, finally, precisely where Thorne left them — telling their true story to whoever was patient enough to count.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Pharaoh's Vault
+  // ------------------------------------------------------------------
+  {
+    id: "pharaoh-mid",
+    storyId: "pharaohs-vault",
+    afterClue: "pharaoh-5",
+    kind: "mid",
+    title: "Three Sealed Passages",
+    scenario:
+      "Beyond the entrance shaft, the corridor splits into three sealed passages, each carved with a claim. Nadia reads them aloud:\n\n" +
+      "**Passage A:** \"A pyramid's volume is always exactly one-third of a rectangular box built to the same base and height.\"\n\n" +
+      "**Passage B:** \"Doubling a square's side length always doubles its area.\"\n\n" +
+      "**Passage C:** \"A triangle can have two obtuse angles.\"\n\n" +
+      "\"The builders sealed the false passages behind claims that sound reasonable but fall apart under real arithmetic,\" Nadia says. \"Check every one properly before you trust it.\"",
+    entities: ["Passage A", "Passage B", "Passage C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Passage A": "True Claim", "Passage B": "False Claim", "Passage C": "False Claim" },
+    wrongConsequence:
+      "Sand pours through a hidden vent and you scramble back before the passage floor drops away entirely — no fall, just lost time and a lungful of dust. \"Test each claim against real numbers,\" Nadia says. \"Not what sounds reasonable — what actually holds up once you calculate it.\"",
+    explain:
+      "Passage A restates exactly what you already proved with your own hands: a pyramid always holds a third of the matching box's volume. Passage B is false — doubling a square's side doesn't double its area, it quadruples it, since area scales with the square of the side, not the side itself. Passage C is false too: any triangle's three angles must sum to exactly 180°, and two angles over 90° each would already exceed that total before the third angle is even counted.",
+  },
+  {
+    id: "pharaoh-final",
+    storyId: "pharaohs-vault",
+    afterClue: "pharaoh-10",
+    kind: "final",
+    title: "Three Final Chambers",
+    scenario:
+      "Nadia reads each final chamber's carved inscription aloud:\n\n" +
+      "**Chamber 1:** \"A square's diagonal is always longer than any one of its own sides.\"\n\n" +
+      "**Chamber 2:** \"If you double a cube's edge length, its volume also just doubles.\"\n\n" +
+      "**Chamber 3:** \"Every rectangle is also a square.\"\n\n" +
+      "\"One of these is true without a single exception,\" Nadia says. \"The builders trusted their whole treasury's protection on that one rule.\"",
+    entities: ["Chamber 1", "Chamber 2", "Chamber 3"],
+    options: ["Real Chamber", "False Chamber"],
+    answer: { "Chamber 1": "Real Chamber", "Chamber 2": "False Chamber", "Chamber 3": "False Chamber" },
+    wrongConsequence:
+      "Stone grinds down over the wrong chamber, sealed for good this time. \"Don't trust the shape of the sentence,\" Nadia says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Chamber 1 holds exactly: a square's diagonal is always side × √2, which is always longer than the side itself, without exception. Chamber 2 is false — doubling a cube's edge doesn't double its volume, it multiplies it by 2³, eight times over, the same trap that catches anyone scaling a solid shape. Chamber 3 is false too: every square happens to be a rectangle, but plenty of rectangles — anything not perfectly equal-sided — are not squares at all.",
+    resolution:
+      "The real chamber gives way at last, and lantern light spills across a space untouched in millennia — not gold stacked to the ceiling as legend promised, but something the builders clearly valued just as highly: shelf after shelf of measuring rods, sighting instruments, and slate tablets dense with worked calculations, every one checked and rechecked in a careful, ancient hand.\n\n" +
+      "\"They really did trust arithmetic over guards,\" Nadia says, running a finger along a tablet's edge. \"No curse, no army — just numbers precise enough that anyone careless would seal themselves out before ever reaching this far.\" Tucked among the tablets, a final inscription, translated slowly by lantern-light: \"What we built, we built to a proportion that never wavers. What we hid, we hid where only the same patience could ever find it.\" Outside, the desert sun is already climbing toward noon, indifferent, exactly on schedule, exactly as the builders' own sundials always promised it would be.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

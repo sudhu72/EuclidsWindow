@@ -1346,8 +1346,294 @@ const SKY_CHART_CLUES: QuestClue[] = [
   },
 ];
 
+const CLOCKMAKER_CLUES: QuestClue[] = [
+  {
+    id: "clock-1",
+    storyId: "clockmakers-secret",
+    order: 1,
+    sceneText:
+      "On the workbench, two meshed gears sit mid-turn: the driver has 40 teeth, the smaller driven gear has 10 teeth.",
+    puzzle: "If the driver gear completes one full turn, how many full turns does the smaller driven gear make?",
+    choices: ["4 turns", "10 turns", "40 turns", "1/4 turn"],
+    correctIndex: 0,
+    wrongBeat: "\"Compare the teeth counts as a ratio,\" you tell Wren. \"Divide the driver's teeth by the driven gear's teeth — not the other way around.\"",
+    solvedBeat:
+      "40 ÷ 10 = 4 — the smaller gear spins four full times for every one turn of the larger one. Wren notes it down carefully. — A gear ratio is simply the ratio of two teeth counts, and it always trades speed for size in exact proportion.",
+    concept: "Gear Ratios",
+  },
+  {
+    id: "clock-2",
+    storyId: "clockmakers-secret",
+    order: 2,
+    sceneText:
+      "Thorne scratched a tiny mark on two gears deep in his private message-train: one with 12 teeth, one with 18 teeth. Both marks point straight up right now, at the same moment.",
+    puzzle: "How many teeth need to pass before both marks point straight up again at the same time?",
+    choices: ["36 teeth", "12 teeth", "18 teeth", "216 teeth"],
+    correctIndex: 0,
+    wrongBeat: "\"Don't just multiply the two counts together,\" you tell Wren. \"Find the smallest number that 12 and 18 both divide into evenly.\"",
+    solvedBeat:
+      "The least common multiple of 12 and 18 is 36 — after 36 teeth pass, both marks realign. \"So the message repeats on a fixed cycle,\" Wren says. — That's exactly what a least common multiple measures: the first point where two repeating patterns line back up together.",
+    concept: "Least Common Multiple",
+  },
+  {
+    id: "clock-3",
+    storyId: "clockmakers-secret",
+    order: 3,
+    sceneText:
+      "The Sentinel's escapement gear ticks once every 2 seconds, exactly, and has done so without fail for thirty years.",
+    puzzle: "How many full ticks does it make in one hour (3,600 seconds)?",
+    choices: ["1,800 ticks", "3,600 ticks", "900 ticks", "7,200 ticks"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total seconds by the seconds each tick takes,\" you tell Wren. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "3,600 ÷ 2 = 1,800 ticks every hour. \"Which means I can time exactly how long he'd been gone,\" Wren says, counting the ticks since the workshop was last seen occupied. — Turning a repeating rate into a total count is just dividing the whole span by the length of one cycle.",
+    concept: "Rate Conversion",
+  },
+  {
+    id: "clock-4",
+    storyId: "clockmakers-secret",
+    order: 4,
+    sceneText:
+      "The Sentinel's minute hand measures 20 centimeters from center to tip.",
+    puzzle: "Using circumference = 2πr, roughly how far (to the nearest centimeter) does the tip travel in one full revolution?",
+    choices: ["about 126 cm", "about 63 cm", "about 40 cm", "about 400 cm"],
+    correctIndex: 0,
+    wrongBeat: "\"Circumference is 2 times π times the radius,\" you tell Wren, \"not π times the radius alone, and not the radius squared.\"",
+    solvedBeat:
+      "2 × π × 20 ≈ 125.7, so about 126 centimeters every single hour. \"An entire meter, near enough, every sixty minutes,\" Wren says, tracing the sweep with a finger. — Circumference is exactly the distance around a full circle, once around, however large that circle is.",
+    concept: "Circumference",
+  },
+  {
+    id: "clock-5",
+    storyId: "clockmakers-secret",
+    order: 5,
+    sceneText:
+      "The message-train links three gears in sequence: the first drives the second at a ratio of 1 to 3, and the second drives the third at a ratio of 1 to 2.",
+    puzzle: "Overall, for every 1 turn of the first gear, how many turns does the third gear make?",
+    choices: ["6 turns", "5 turns", "3.5 turns", "2 turns"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the two ratios together in sequence,\" you tell Wren. \"Don't add them — a chain of gears compounds, it doesn't accumulate.\"",
+    solvedBeat:
+      "3 × 2 = 6 — the last gear spins six times for every single turn of the first. \"That's the multiplier on his whole message,\" Wren says. — Chaining gear ratios through a train means multiplying each stage together, one after another.",
+    concept: "Compound Ratios",
+  },
+  {
+    id: "clock-6",
+    storyId: "clockmakers-secret",
+    order: 6,
+    sceneText:
+      "The Sentinel's secret inner dial currently reads 9. A gear ratio carved into the case adds exactly 29 hours to whatever the dial shows.",
+    puzzle: "Since the dial only runs 1 through 12 before wrapping back around, what hour will it show after those 29 hours pass?",
+    choices: ["2 o'clock", "5 o'clock", "9 o'clock", "11 o'clock"],
+    correctIndex: 0,
+    wrongBeat: "\"Add the hours first,\" you tell Wren, \"then divide by 12 and keep only the remainder — that remainder is the hour the dial actually lands on.\"",
+    solvedBeat:
+      "9 + 29 = 38, and 38 divided by 12 leaves a remainder of 2 — the dial lands on 2 o'clock. — A 12-hour clock face is modular arithmetic in disguise, wrapping back around every twelve counts.",
+    concept: "Modular Arithmetic (Clock Arithmetic)",
+  },
+  {
+    id: "clock-7",
+    storyId: "clockmakers-secret",
+    order: 7,
+    sceneText:
+      "A miniature brass model of the Sentinel sits on a shelf, built to exactly 1/8th the size of the real clock in every dimension. The model's pendulum measures 6 centimeters.",
+    puzzle: "How long is the real Sentinel's actual pendulum?",
+    choices: ["48 cm", "14 cm", "0.75 cm", "56 cm"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the model's measurement by the scale factor,\" you tell Wren. \"The real one is larger, so don't divide.\"",
+    solvedBeat:
+      "6 × 8 = 48 centimeters, full scale. \"Exactly what's swinging in the corner right now,\" Wren says. — Scaling a model up or down means multiplying every one of its measurements by the very same factor.",
+    concept: "Scale & Proportion",
+  },
+  {
+    id: "clock-8",
+    storyId: "clockmakers-secret",
+    order: 8,
+    sceneText:
+      "A row of tiny brass numerals is stamped inside the case, meant to be read in order: 3, 7, 11, 15, ...",
+    puzzle: "What's the next number in Thorne's stamped sequence?",
+    choices: ["19", "18", "21", "23"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the constant gap between each number and the one before it,\" you tell Wren, \"then add that same gap once more to the last one.\"",
+    solvedBeat:
+      "Each term is 4 more than the last, so 15 + 4 = 19. \"He never once broke his own pattern,\" Wren says. — A sequence with the same fixed gap at every step is called an arithmetic sequence.",
+    concept: "Arithmetic Sequences",
+  },
+  {
+    id: "clock-9",
+    storyId: "clockmakers-secret",
+    order: 9,
+    sceneText:
+      "Thorne's own ledger shows a shared workshop account that should hold £1,200. The actual balance on hand is only £900.",
+    puzzle: "What percentage of the expected £1,200 is missing?",
+    choices: ["25%", "20%", "30%", "75%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the missing amount first,\" you tell Wren, \"expected minus actual — then divide that gap by the expected total.\"",
+    solvedBeat:
+      "£1,200 − £900 = £300 missing, and 300 ÷ 1,200 = 25%. \"A quarter of the account, gone,\" Wren says quietly. — A percentage is just a fraction of the whole, rescaled so it's measured out of a hundred.",
+    concept: "Percentages",
+  },
+  {
+    id: "clock-10",
+    storyId: "clockmakers-secret",
+    order: 10,
+    sceneText:
+      "The Sentinel's hidden drawer only opens if four specific gears — already set aside on the bench — are inserted in exactly the right order, one at a time, with no repeats.",
+    puzzle: "How many different orderings of those same four gears are possible in total?",
+    choices: ["24", "16", "12", "4"],
+    correctIndex: 0,
+    wrongBeat: "\"Count the choices at each position, in order,\" you tell Wren. \"Four for the first slot, then three left, then two, then one — multiply them together.\"",
+    solvedBeat:
+      "4 × 3 × 2 × 1 = 24 possible orderings. Wren tries them one at a time, and on the ninth attempt, the drawer clicks free. — That's a factorial: every distinct ordering of a full set, found by shrinking the choices by one at each step.",
+    concept: "Permutations (Factorial Counting)",
+  },
+];
+
+const PHARAOH_CLUES: QuestClue[] = [
+  {
+    id: "pharaoh-1",
+    storyId: "pharaohs-vault",
+    order: 1,
+    sceneText:
+      "Nadia's own measurements: the pyramid's vertical height is 120 meters, and half of the square base runs 90 meters, corner to center-line.",
+    puzzle: "Using the Pythagorean theorem, what's the slant height running up the middle of each face, from base to apex?",
+    choices: ["150 meters", "210 meters", "30 meters", "180 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Square both numbers, add them together, then take the square root of that sum,\" Nadia says. \"Don't just add 120 and 90 directly.\"",
+    solvedBeat:
+      "120² + 90² = 14,400 + 8,100 = 22,500, and the square root of 22,500 is exactly 150. \"A clean number,\" Nadia says. \"They wouldn't have built it any other way.\" — The Pythagorean theorem turns two straight measurements into the length of the diagonal connecting them.",
+    concept: "Pythagorean Theorem",
+  },
+  {
+    id: "pharaoh-2",
+    storyId: "pharaohs-vault",
+    order: 2,
+    sceneText:
+      "An inscription divides the treasury's expected wealth using only unit fractions — the builders' preferred way of writing any fraction, with a numerator of exactly 1. It reads: \"one part in two, and one part in three.\"",
+    puzzle: "Added together, what single ordinary fraction do \"one-half\" and \"one-third\" equal?",
+    choices: ["5/6", "2/5", "1/6", "3/5"],
+    correctIndex: 0,
+    wrongBeat: "\"Give both fractions a common denominator before adding them,\" Nadia says. \"Sixths work for both a half and a third.\"",
+    solvedBeat:
+      "1/2 = 3/6 and 1/3 = 2/6, so together that's 5/6. \"Never a fraction with any numerator but one,\" Nadia says. \"Every other fraction, they simply built out of these.\" — Writing a fraction as a sum of distinct unit fractions is exactly how the real builders of ancient Egypt recorded their arithmetic.",
+    concept: "Egyptian Unit Fractions",
+  },
+  {
+    id: "pharaoh-3",
+    storyId: "pharaohs-vault",
+    order: 3,
+    sceneText:
+      "Nadia plants a 2-meter stick upright in the sand; it casts a shadow exactly 3 meters long. At the very same moment, the pyramid's own shadow stretches a measured 180 meters from its base.",
+    puzzle: "Using the stick's own height-to-shadow ratio, how tall must the pyramid be?",
+    choices: ["120 meters", "270 meters", "90 meters", "135 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Set up the stick's height-to-shadow ratio first,\" Nadia says, \"then apply that exact same ratio to the pyramid's own shadow length.\"",
+    solvedBeat:
+      "The stick's ratio is 2 to 3, and 180 × (2/3) = 120 meters — matching Nadia's own measurement exactly. \"Two completely different methods, one answer,\" she says. \"That's how you know you can trust it.\" — Similar triangles cast by the same sun at the same moment always share the same height-to-shadow ratio, however large one triangle is next to the other.",
+    concept: "Similar Triangles (Shadow-Stick Method)",
+  },
+  {
+    id: "pharaoh-4",
+    storyId: "pharaohs-vault",
+    order: 4,
+    sceneText:
+      "Each triangular face of the pyramid runs 180 meters along its base, rising 150 meters along the slant to the apex.",
+    puzzle: "What's the area of just one triangular face?",
+    choices: ["13,500 square meters", "27,000 square meters", "5,400 square meters", "33,000 square meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Area of a triangle is one-half times base times height,\" Nadia says. \"Don't forget to halve the product.\"",
+    solvedBeat:
+      "½ × 180 × 150 = 13,500 square meters, for just one of the four faces. \"Imagine facing that in solid limestone,\" Nadia says. — A triangle's area is always half of its base times its height, no matter how large the triangle is.",
+    concept: "Area of a Triangle",
+  },
+  {
+    id: "pharaoh-5",
+    storyId: "pharaohs-vault",
+    order: 5,
+    sceneText:
+      "The pyramid's square base measures 180 meters on each side; its full height is 120 meters.",
+    puzzle: "Using volume = one-third times base area times height, what's the pyramid's total volume?",
+    choices: ["1,296,000 cubic meters", "3,888,000 cubic meters", "2,160,000 cubic meters", "648,000 cubic meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the square base's area first — side times side,\" Nadia says, \"multiply by the height, then divide that whole product by 3. Don't skip the one-third.\"",
+    solvedBeat:
+      "180 × 180 = 32,400 square meters of base, times 120 meters of height, divided by 3, comes to 1,296,000 cubic meters. \"An enormous number for an enormous secret,\" Nadia says. — A pyramid always holds exactly one-third the volume of a rectangular box built to the very same base and height.",
+    concept: "Volume of a Pyramid",
+  },
+  {
+    id: "pharaoh-6",
+    storyId: "pharaohs-vault",
+    order: 6,
+    sceneText:
+      "A ceremonial doorway is carved so its full height divided by its width comes out to almost exactly 1.618 — a proportion Nadia has seen carved into doorways across three different sites.",
+    puzzle: "If the doorway's width is 100 centimeters, roughly how tall is it, using that same 1.618 ratio?",
+    choices: ["about 162 cm", "about 200 cm", "about 118 cm", "about 262 cm"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the width by the ratio itself,\" Nadia says. \"Don't just tack the ratio's digits onto the width.\"",
+    solvedBeat:
+      "100 × 1.618 ≈ 162 centimeters. \"The golden ratio,\" Nadia says. \"Turns up again and again in what these builders considered beautiful — and, more usefully for us, in what they considered worth building precisely.\" — That ratio, roughly 1.618, is the proportion where a whole divided by its larger part equals that larger part divided by the smaller.",
+    concept: "The Golden Ratio",
+  },
+  {
+    id: "pharaoh-7",
+    storyId: "pharaohs-vault",
+    order: 7,
+    sceneText:
+      "Nadia's team estimates the pyramid's outer limestone casing, mostly stripped away by centuries of scavenging, once added a full 15 meters to the current height of 120 meters.",
+    puzzle: "As a percentage of the pyramid's current height, how much extra height has been lost?",
+    choices: ["12.5%", "15%", "20%", "8%"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the lost amount by the current height,\" Nadia says, \"then convert that fraction into a percentage.\"",
+    solvedBeat:
+      "15 ÷ 120 = 0.125, or 12.5%. \"Smaller than people assume,\" Nadia says, \"but it's exactly why the old drawings never quite match what's standing today.\" — A percentage is simply a fraction of some whole, rescaled so it's measured out of a hundred.",
+    concept: "Percentages",
+  },
+  {
+    id: "pharaoh-8",
+    storyId: "pharaohs-vault",
+    order: 8,
+    sceneText:
+      "A corridor wall carries a row of carved numerals, evenly spaced apart: 5, 9, 13, 17, ...",
+    puzzle: "What number comes next in that same carved sequence?",
+    choices: ["21", "19", "20", "25"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the fixed gap between each number and the one before it,\" Nadia says, \"then add that same gap once more to the last number.\"",
+    solvedBeat:
+      "Each number is 4 more than the last, so 17 + 4 = 21. \"Consistent, like everything else they built,\" Nadia says. — A sequence that adds the very same amount every step is an arithmetic sequence, and its next term is never a guess.",
+    concept: "Arithmetic Sequences",
+  },
+  {
+    id: "pharaoh-9",
+    storyId: "pharaohs-vault",
+    order: 9,
+    sceneText:
+      "To check the base is still square and true after centuries of shifting sand, Nadia needs a measuring rope cut to fit exactly around all four sides, each running 180 meters.",
+    puzzle: "How long a rope does she need to go all the way around the base once?",
+    choices: ["720 meters", "360 meters", "180 meters", "900 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Add up all four equal sides,\" Nadia says, \"or just multiply one side's length by four.\"",
+    solvedBeat:
+      "4 × 180 = 720 meters of rope, and it fits with nothing left over. \"Still square, after all this time,\" Nadia says, clearly relieved. — A perimeter is just the total distance around a shape's outer edge, all sides added together.",
+    concept: "Perimeter",
+  },
+  {
+    id: "pharaoh-10",
+    storyId: "pharaohs-vault",
+    order: 10,
+    sceneText:
+      "The final vault door has no lock at all — only a dial marked with two empty slots, and an inscription: \"the base, and the height, reduced to their simplest terms.\"",
+    puzzle: "Using the pyramid's own base of 180 meters and height of 120 meters, what's that ratio reduced to its simplest form?",
+    choices: ["3 : 2", "180 : 120, since it can't be reduced further", "9 : 6", "6 : 4"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the largest number that divides evenly into both 180 and 120,\" Nadia says, \"then divide both sides of the ratio by it.\"",
+    solvedBeat:
+      "Both 180 and 120 divide evenly by 60, leaving 3 : 2 in simplest form. Nadia turns the dial to 3, then 2, and something deep in the stone finally shifts. — A ratio is never truly simplified until it's been divided down by everything both sides genuinely share.",
+    concept: "Simplifying Ratios",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }
