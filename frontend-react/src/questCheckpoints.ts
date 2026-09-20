@@ -225,6 +225,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real chest gives way with a groan of old iron, and there it is — Captain Corvin Blackwater's true hoard, exactly as the letters promised, gold and gemstones dulled by a century of salt air but unmistakably real. Tucked beneath the coins, a waterproofed logbook, the captain's own hand: \"A crew will lie to your face for a share. A rope will lie about its own length if you're careless measuring it. But two and two has never once lied to any man who checked it properly, and so I built my whole fortune's protection on nothing else.\"\n\n" +
       "Bess laughs, low and disbelieving, running gold through her fingers. \"Ten years chasing this cove,\" she says, \"and it turns out the old devil trusted arithmetic more than he trusted people — and he wasn't wrong to.\" You seal the logbook carefully; some things are worth more read twice. Above you, the tide is already turning for its next cycle, indifferent, exactly on schedule, exactly as it always was.",
   },
+
+  // ------------------------------------------------------------------
+  // Blood on the Chessboard
+  // ------------------------------------------------------------------
+  {
+    id: "chess-mid",
+    storyId: "blood-on-the-chessboard",
+    afterClue: "chess-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that evening and lay them side by side.\n\n" +
+      "**Olenska:** \"I was resting in my room from eight until ten, alone, preparing for tomorrow's round.\"\n\n" +
+      "**Whitfield:** \"I spent the whole evening in the analysis room, discussing broadcast plans with the arbiters.\"\n\n" +
+      "**Petrov:** \"I left the venue entirely around seven — dinner with my wife, clear across town.\"\n\n" +
+      "**Delacroix:** \"I was interviewing Olenska in the press room until nine. She can confirm it.\"\n\n" +
+      "**Halvorsen:** \"I did my usual rounds all evening, checking every board myself.\"\n\n" +
+      "You already know 23 minutes sit entirely unaccounted for between the last recorded move and Chen's return — and Halvorsen's own rounds log makes no mention of ever seeing Whitfield in the analysis room at all.",
+    entities: ["Olenska", "Whitfield", "Petrov", "Delacroix", "Halvorsen"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      Olenska: "Alibi Holds",
+      Whitfield: "Alibi Breaks",
+      Petrov: "Alibi Breaks",
+      Delacroix: "Alibi Holds",
+      Halvorsen: "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and Halvorsen quietly loses patience with the delay. Look again at which accounts actually confirm *each other* independently, rather than each person simply vouching for themselves — and ask whether anyone else's own account happens to either back up or quietly contradict a claim.",
+    explain:
+      "Olenska and Delacroix confirm each other's account directly, and neither one's story depends only on their own word. Halvorsen has no motive and is the one supplying an independent, consistent record of his own rounds. But Whitfield's claimed evening in the analysis room is never once mentioned in that same rounds log, and Petrov's account is entirely unwitnessed from the moment he says he left — the two accounts with no outside confirmation at all.",
+  },
+  {
+    id: "chess-final",
+    storyId: "blood-on-the-chessboard",
+    afterClue: "chess-10",
+    kind: "final",
+    title: "The Analysis Room",
+    scenario:
+      "You confront the two remaining names where the tournament's real business always happened — the analysis room, boards still set up from the night's broadcast.\n\n" +
+      "**Whitfield:** \"It was Petrov. Everyone in this world knows he never forgave Kessler for that book — ask anyone.\"\n\n" +
+      "**Petrov:** \"Ask instead who had a fortune riding on tonight's result, and go looking for a betting account under a name that isn't his own.\"\n\n" +
+      "You already know the smudged fourth rating decodes to a proxy account, and that Chen's flawless, instant preparation only makes sense if someone leaked Kessler's own intended opening to her in advance.",
+    entities: ["Whitfield", "Petrov"],
+    options: ["Guilty", "Innocent"],
+    answer: { Whitfield: "Guilty", Petrov: "Innocent" },
+    wrongConsequence:
+      "The room goes silent, and nothing more is offered — you've named the wrong man, and whatever composure the real culprit had left settles right back into place. Consider which of these two actually stood to lose real money the moment Kessler's position turned winning again, tonight, of all nights.",
+    explain:
+      "Petrov's grudge is old, public, and years cold — precisely the kind of motive that makes a dramatic headline but rarely a fresh murder. Whitfield's motive is immediate and financial: a leaked opening engineered to make Kessler lose, a betting account hidden behind a proxy name, and a rounds log that quietly places him nowhere near where he claimed to be at the one moment that matters. When Kessler's position turned toward a forced win instead of the loss Whitfield's fortune depended on, the plan stopped being about chess at all.",
+    resolution:
+      "You lay it out plainly: the 23 unaccounted minutes, matching exactly the gap in Halvorsen's own rounds log where Whitfield claims he never left the analysis room. The leaked opening, landing in Chen's hands with a precision no honest preparation explains. The smudged fourth rating, decoding to a proxy account that traces straight back to an underground betting ring — Whitfield's ring, built on Kessler losing tonight, not winning. And Kessler's own final, frozen position: a forced mate in two, the plan already failing before anyone ever touched him.\n\n" +
+      "Whitfield doesn't bother denying it once Mira produces the arbiter's actual rounds log. \"He was going to win anyway,\" he says quietly, as if that were somehow the injustice. \"All of it, gone, over one game.\" Petrov says nothing for a long moment, then simply turns back to the board — his board now, in a final he never expected to reach honestly. \"Kessler would have appreciated the irony,\" he says at last. \"Undone by the same odds he spent his whole life calculating in his opponents' favor.\"",
+  },
+
+  // ------------------------------------------------------------------
+  // The Lighthouse Keeper's Code
+  // ------------------------------------------------------------------
+  {
+    id: "lighthouse-mid",
+    storyId: "lighthouse-keepers-code",
+    afterClue: "light-5",
+    kind: "mid",
+    title: "Three Theories",
+    scenario:
+      "Before trusting the rest of Hale's cipher, Finch proposes three theories about how the old keeper's numbers actually behave, each backed by a claim:\n\n" +
+      "**Theory A:** \"Any two numbers that are both evenly divisible by 7 will always have a difference that's also evenly divisible by 7.\"\n\n" +
+      "**Theory B:** \"A number divisible by both 2 and 3 might still leave a remainder when divided by 6.\"\n\n" +
+      "**Theory C:** \"The remainder when dividing any whole number by 14 can be as large as 14 itself.\"\n\n" +
+      "\"Hale only ever trusted a rule that held every single time,\" Finch says. \"Which of these actually does?\"",
+    entities: ["Theory A", "Theory B", "Theory C"],
+    options: ["Always True", "Not Always True"],
+    answer: { "Theory A": "Always True", "Theory B": "Not Always True", "Theory C": "Not Always True" },
+    wrongConsequence:
+      "You trust the wrong rule for a while, and it costs you a wasted afternoon re-checking work that never needed re-checking. \"Test it against real numbers, not just the shape of the sentence,\" Finch says. \"Try small examples before you decide a rule always holds.\"",
+    explain:
+      "Theory A holds every time: if 7 divides both numbers evenly, it divides their difference evenly too, without exception. Theory B is false — 6 is exactly 2 times 3, so anything divisible by both 2 and 3 is automatically divisible by 6 as well, with nothing left over. Theory C is false because a remainder must always be smaller than what you're dividing by — dividing by 14 can leave at most 13, never 14 itself.",
+  },
+  {
+    id: "lighthouse-final",
+    storyId: "lighthouse-keepers-code",
+    afterClue: "light-10",
+    kind: "final",
+    title: "Three Dive Spots",
+    scenario:
+      "Three possible dive spots sit within the triangulated area, each marked on Hale's chart with a claim:\n\n" +
+      "**Spot 1:** \"A triangle with sides 5, 12, and 13 must be a right triangle.\"\n\n" +
+      "**Spot 2:** \"A prime number can never be one more than a multiple of 4.\"\n\n" +
+      "**Spot 3:** \"Flip a fair coin 10 times, and you're guaranteed exactly 5 heads.\"\n\n" +
+      "\"Only one of these is true without a single exception,\" Finch says. \"Hale built his whole code on that one rule — no guessing, no 'usually.'\"",
+    entities: ["Spot 1", "Spot 2", "Spot 3"],
+    options: ["Real Spot", "False Spot"],
+    answer: { "Spot 1": "Real Spot", "Spot 2": "False Spot", "Spot 3": "False Spot" },
+    wrongConsequence:
+      "You dive the wrong spot and surface with nothing but cold water and lost time. \"Check the claim against a real example,\" Finch calls down. \"Small numbers, worked out by hand, not a guess about how it probably goes.\"",
+    explain:
+      "Spot 1 holds exactly: 5² + 12² = 25 + 144 = 169 = 13², a genuine Pythagorean triple, true every time those three numbers appear together. Spot 2 is false — 5 and 13 are both prime and both exactly one more than a multiple of 4 (4×1+1 and 4×3+1). Spot 3 is false because probability never guarantees a specific outcome, only makes some outcomes more likely than others; ten fair flips could just as easily land 7 heads, or 2.",
+    resolution:
+      "The chest at Spot 1 gives way to Finch's crowbar, and the Calypso's Promise reveals herself at last — timbers long since claimed by the reef, but her strongbox intact, exactly where two honest bearings said it would be. Inside, alongside the coin and silver, one final page in Hale's own hand, sealed in oilcloth against a century of seawater: \"A keeper's whole trade is trusting what repeats — the light's own turn, the tide's own hour, a number that never once lies about what it truly is. I hid this where only that same patience could ever find it.\"\n\n" +
+      "Finch sits back against the rocks, treasure forgotten for a moment, just reading the old man's hand. \"He wasn't hiding it from thieves at all,\" she says slowly. \"He was hiding it *for* whoever was patient enough to actually check his numbers instead of just believing them.\" Above the cove, right on schedule, the tide has already begun its long, patient turn toward the next low.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

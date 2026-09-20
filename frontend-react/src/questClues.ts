@@ -700,8 +700,336 @@ const PIRATES_COVE_CLUES: QuestClue[] = [
   },
 ];
 
+// ======================================================================
+// "Blood on the Chessboard" — a grandmaster dies mid-tournament, and his
+// final position on the board is the only statement he left behind.
+// Cast: you (an investigator with a head for numbers), Mira (the
+// tournament arbiter, your Watson), and five figures from the chess world:
+// Olenska (his chief rival), Whitfield (the tournament's secret backer),
+// Petrov (a bitter former student), Delacroix (a chess journalist), and
+// Halvorsen (the tournament director).
+// ======================================================================
+const CHESSBOARD_CLUES: QuestClue[] = [
+  {
+    id: "chess-1",
+    storyId: "blood-on-the-chessboard",
+    order: 1,
+    sceneText:
+      "Grandmaster Viktor Kessler's opponent, young challenger Aria Chen, says she stepped away from the board at 9:15 to fetch water and returned at 9:30 to find him already dead — gone, she insists, no more than fifteen minutes. But Mira's own arbiter log shows the last move on the scoresheet was recorded at 8:52 PM.",
+    puzzle: "If Chen's account of a fifteen-minute absence is accurate, how many unaccounted minutes lie between the last recorded move (8:52) and her return (9:30)?",
+    choices: ["23 minutes", "38 minutes", "15 minutes", "8 minutes"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Find the total gap first, then subtract what her own story accounts for,\" you tell Mira. \"8:52 to 9:30 is one number. Her claimed fifteen minutes away is a smaller piece of that same window, not the whole thing.\"",
+    solvedBeat:
+      "8:52 to 9:30 is 38 minutes total; subtract her claimed 15 away, and 23 minutes sit completely unaccounted for. \"Someone else was in this hall during that window,\" you say, \"whether Chen realizes it or not.\" — Finding a gap and then subtracting a smaller, known piece out of it is interval arithmetic doing real detective work.",
+    concept: "Elapsed Time & Subtraction",
+  },
+  {
+    id: "chess-2",
+    storyId: "blood-on-the-chessboard",
+    order: 2,
+    sceneText:
+      "Beside the board, a torn page from a book on chess history describes the old wheat-and-chessboard legend: place 1 grain on square 1, double it for square 2, double again for square 3, and so on across all 64 squares.",
+    puzzle: "Following that same doubling pattern, how many grains would be on square 5 alone?",
+    choices: ["16", "32", "10", "8"],
+    correctIndex: 0,
+    wrongBeat: "\"Write out the squares one at a time,\" Mira says. \"1, 2, 4, 8 — then double that last one once more for square 5.\"",
+    solvedBeat:
+      "1, 2, 4, 8, 16 — square 5 holds 16 grains. \"By square 64,\" you murmur, doing the doubling in your head and stopping well short, \"that number would already be larger than anything real.\" — Doubling something a fixed number of times is exponential growth, and it outpaces plain addition faster than intuition ever expects.",
+    concept: "Powers of 2 (Exponential Growth)",
+  },
+  {
+    id: "chess-3",
+    storyId: "blood-on-the-chessboard",
+    order: 3,
+    sceneText:
+      "Kessler's personal notebook lists a private \"trap\" — a sequence he always intended to spring using exactly 3 specific opening moves from a repertoire he'd spent years preparing, played in whatever order the position called for.",
+    puzzle: "In how many different orders could Kessler have played those same 3 prepared moves?",
+    choices: ["6", "3", "9", "27"],
+    correctIndex: 0,
+    wrongBeat: "\"Don't just count the moves — count the orderings,\" you tell Mira. \"3 choices for the first move, then 2 remaining for the second, then only 1 left for the third. Multiply those together.\"",
+    solvedBeat:
+      "3 × 2 × 1 = 6 possible orderings. \"He rehearsed his trap six different ways,\" you say, \"which means whichever one he actually played that night was a deliberate choice, not an accident.\" — Multiplying down from the full count each time you use up one option is exactly how permutations are counted.",
+    concept: "Permutations",
+  },
+  {
+    id: "chess-4",
+    storyId: "blood-on-the-chessboard",
+    order: 4,
+    sceneText:
+      "A scrap of paper hidden in Kessler's coat pocket reads a short string of moves, followed by an odd binary notation scrawled beneath: **1000**.",
+    puzzle: "Reading that scrawled string as a plain binary number, what value does 1000 represent in ordinary base-10?",
+    choices: ["8", "4", "10", "16"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Each binary digit is worth double the one before it, starting from the right,\" you explain. \"1, 2, 4, 8 — line those place-values up under the digits and add only the ones marked with a 1.\"",
+    solvedBeat:
+      "1000 in binary is just an 8 in the eights-place and zeros everywhere else — the number 8. \"Move eight,\" you say. \"He was marking something about his own eighth move.\" — Binary is the same place-value idea as ordinary counting, just built on doubling instead of on tens.",
+    concept: "Binary Numbers",
+  },
+  {
+    id: "chess-5",
+    storyId: "blood-on-the-chessboard",
+    order: 5,
+    sceneText:
+      "A pattern is carved faintly into the underside of the board itself — a shape that, when you mentally turn it a quarter-turn, looks exactly the same as it did before you turned it.",
+    puzzle: "Which of these shapes genuinely looks identical after a 90° turn?",
+    choices: ["A square", "A rectangle that isn't a square", "A regular pentagon", "The letter Z"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"A plain rectangle swaps its long side for its short side on a quarter-turn — it doesn't look the same,\" Mira points out. \"A pentagon repeats every 72°, not 90°. You need a shape built specifically around quarter-turns.\"",
+    solvedBeat:
+      "A square — the one shape here that turns a perfect quarter and looks exactly as it did. Underneath the carving, a small compartment clicks loose. — That's rotational symmetry: a shape that maps back onto itself after less than a full turn.",
+    concept: "Rotational Symmetry",
+  },
+  {
+    id: "chess-6",
+    storyId: "blood-on-the-chessboard",
+    order: 6,
+    sceneText:
+      "The opening Kessler chose tonight — obscure enough that tournament records show it played only 2 times in the last 500 recorded grandmaster games — was met instantly by Chen with its one known, exact refutation. On her very first try.",
+    puzzle: "Statistically speaking, does Chen's instant, exact response suggest advance preparation, or an innocent guess?",
+    choices: [
+      "Almost certainly prepared — the odds of guessing correctly are vanishingly small",
+      "Purely lucky; this could happen to anyone",
+      "Impossible to tell without seeing more of her games",
+      "It doesn't matter, since chess has no randomness in it at all",
+    ],
+    correctIndex: 0,
+    wrongBeat:
+      "\"An opening played twice in five hundred games is already rare,\" you tell Mira. \"Guessing its one exact refutation on the very first try, with no hesitation, isn't the kind of thing luck reliably produces.\"",
+    solvedBeat:
+      "Almost certainly prepared. \"Someone told her exactly what Kessler intended to play tonight,\" you say, \"and told her well before she sat down at this board.\" — When an outcome this specific keeps landing on the unlikely side, probability itself becomes evidence.",
+    concept: "Probability & Prior Preparation",
+  },
+  {
+    id: "chess-7",
+    storyId: "blood-on-the-chessboard",
+    order: 7,
+    sceneText:
+      "An earlier tournament sheet, dated before Kessler's death, lists the ratings of the officially seeded final four: Kessler (2830), Olenska (2795), Petrov (2710), and a fourth name smudged beyond reading — with a handwritten note: \"average rating of all four: 2765.\"",
+    puzzle: "What was the smudged fourth player's rating?",
+    choices: ["2725", "2745", "2700", "2760"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Multiply the average by how many players there are first,\" you tell Mira. \"2765 times 4 gives you the total of all four ratings combined. Subtract the three you already know, and whatever's left is the fourth.\"",
+    solvedBeat:
+      "2765 × 4 = 11,060 total; subtracting 2830, 2795, and 2710 leaves exactly 2725. That rating, you realize, matches no working player currently in the tournament database at all — only a name used once, years ago, by a since-banned proxy account. — An average is just a total in disguise, and multiplying it back out is how you recover what it was hiding.",
+    concept: "Averages & Algebra",
+  },
+  {
+    id: "chess-8",
+    storyId: "blood-on-the-chessboard",
+    order: 8,
+    sceneText:
+      "With Kessler gone, Halvorsen must decide how to pair the three remaining seeded contenders for a shortened final, each playing every other contender exactly once.",
+    puzzle: "How many total games does a complete round-robin between exactly 3 players require?",
+    choices: ["3", "6", "9", "1"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"List the actual pairings instead of guessing,\" you say. \"Player A versus B, A versus C, B versus C — count how many distinct pairs that really is.\"",
+    solvedBeat:
+      "Exactly 3 games — A-B, A-C, and B-C, with no pairing repeated. — Counting how many distinct pairs you can form from a small group, without caring about order, is exactly what a combination counts.",
+    concept: "Combinations",
+  },
+  {
+    id: "chess-9",
+    storyId: "blood-on-the-chessboard",
+    order: 9,
+    sceneText:
+      "The black queen from Kessler's personal set feels wrong in your hand — lighter than its twin from Olenska's set, though identical in size. Kessler's queen weighs 18 grams; a genuine tournament-standard queen of that size should weigh 24 grams.",
+    puzzle: "By what fraction of its proper weight is Kessler's queen underweight?",
+    choices: ["1/4", "1/3", "3/4", "1/6"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Find the actual gap in grams first,\" you tell Mira. \"24 minus 18. Then ask what fraction that gap is of the full 24 grams it should weigh — not of the 18 it does weigh.\"",
+    solvedBeat:
+      "24 minus 18 is 6, and 6 out of 24 reduces to exactly 1/4. Prying the piece open, you find its base hollowed out — just large enough to have once held a tiny transmitter. — A fraction is only meaningful once you're sure what the *whole* actually is.",
+    concept: "Fractions",
+  },
+  {
+    id: "chess-10",
+    storyId: "blood-on-the-chessboard",
+    order: 10,
+    sceneText:
+      "Analysts poring over Kessler's frozen final position agree: it's a forced mate in exactly 2 moves for White, regardless of how Black defends — and White has exactly 20 legal first moves available from the game's starting position in general, though only ever a handful matter this deep into a game.",
+    puzzle:
+      "If a single specific, highly unusual opening choice represents just 1 out of a player's 20 legal first-move options, what percentage of all first-move options does that one specific choice represent?",
+    choices: ["5%", "20%", "50%", "2%"],
+    correctIndex: 0,
+    wrongBeat: "\"Turn the fraction into a percentage properly,\" you say. \"1 out of 20 — divide 1 by 20, then move the decimal to read it as a percent.\"",
+    solvedBeat:
+      "1 divided by 20 is 0.05, or 5%. A rare choice, deliberately made — and rare choices, repeated on cue by someone who'd never played this line before, are exactly what tells you a game was compromised before the first piece ever moved. — Turning a plain fraction into a percentage is just re-expressing the same ratio out of a hundred instead of out of the original whole.",
+    concept: "Percentages",
+  },
+];
+
+// ======================================================================
+// "The Lighthouse Keeper's Code" — a retired keeper's logbook encodes a
+// shipwreck's treasure using the tools of his own trade: light, tides,
+// and numbers. Companion: Finch, a young apprentice keeper.
+// ======================================================================
+const LIGHTHOUSE_CLUES: QuestClue[] = [
+  {
+    id: "light-1",
+    storyId: "lighthouse-keepers-code",
+    order: 1,
+    sceneText:
+      "Old Hale's logbook names three regional lighthouses as candidates for where his cipher truly begins: Lighthouse A flashes every 15 seconds, Lighthouse B every 10 seconds, Lighthouse C every 20 seconds. Hale's own log states plainly: \"her lamp turns and catches the sun's position exactly 4 times in each full minute.\"",
+    puzzle: "Which lighthouse matches Hale's description of exactly 4 flashes per minute?",
+    choices: ["Lighthouse A", "Lighthouse B", "Lighthouse C", "None of them match"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Divide 60 seconds by each interval and see which one lands on 4,\" you tell Finch. \"60 divided by 15, then 60 divided by 10, then 60 divided by 20 — only one of those comes out even to 4.\"",
+    solvedBeat:
+      "60 ÷ 15 = 4 exactly — Lighthouse A is the one. Finch grins and pulls out Hale's old service records for this very tower. — Dividing a full cycle by an interval to see how many times it repeats is the same plain arithmetic behind every rate you'll ever need to check.",
+    concept: "Division & Rates",
+  },
+  {
+    id: "light-2",
+    storyId: "lighthouse-keepers-code",
+    order: 2,
+    sceneText:
+      "Hale's log continues: \"She reveals herself only at the tide's lowest ebb, and the tide runs its full cycle, high to high, in 12 hours and 24 minutes — call it 12.4 hours for figuring.\" Today's high tide was logged at 3:00 AM.",
+    puzzle: "Roughly what time will the next high tide occur?",
+    choices: ["About 3:24 PM", "About 3:00 PM", "About 12:24 PM", "About 12:00 AM (midnight)"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Add the full 12.4 hours onto 3:00 AM,\" you say. \"12 hours gets you to 3:00 PM exactly — the extra 0.4 of an hour is about 24 more minutes on top of that.\"",
+    solvedBeat:
+      "3:00 AM plus 12 hours 24 minutes lands at about 3:24 PM. Finch marks the low tide window for that afternoon in the margin. — Adding a time interval that isn't a clean number of hours just means handling the fraction of an hour as extra minutes, carefully, at the end.",
+    concept: "Adding Time Intervals",
+  },
+  {
+    id: "light-3",
+    storyId: "lighthouse-keepers-code",
+    order: 3,
+    sceneText:
+      "From the lamp room, exactly 30 meters above the waterline, Finch sights the wreck site through Hale's old brass scope at a downward angle of 30° below the horizontal. Hale's own marginal note reads: \"at thirty degrees down, walk out about one-and-seven-tenths times what you stand above the water.\"",
+    puzzle: "Roughly how far out is the wreck site, if the horizontal distance is about 1.7 times the 30-meter height of the lamp room?",
+    choices: ["About 51 meters", "About 30 meters", "About 17 meters", "About 90 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply, don't just repeat the height,\" you tell Finch. \"1.7 times 30, not 1.7 plus 30.\"",
+    solvedBeat:
+      "30 × 1.7 ≈ 51 meters out from the base of the lighthouse. Finch paces off a rough line from the tower toward the water. — That 1.7 figure is the tangent of a 30° angle, quietly doing the same job it always does: turning a sighting angle into an actual distance.",
+    concept: "Trigonometry (Tangent)",
+  },
+  {
+    id: "light-4",
+    storyId: "lighthouse-keepers-code",
+    order: 4,
+    sceneText:
+      "A page of otherwise routine weather notes ends with a string of dots and dashes: •−•• •• −−• •••• −",
+    puzzle: "Decoding each group as Morse code (•−•• = L, •• = I, −−• = G, •••• = H, − = T), what word does the string spell?",
+    choices: ["LIGHT", "NIGHT", "TIDE", "HELP"],
+    correctIndex: 0,
+    wrongBeat: "\"Match each group to its given letter in order, left to right, one at a time,\" you tell Finch. \"Don't guess the whole word before you've decoded every group.\"",
+    solvedBeat:
+      "L-I-G-H-T — \"LIGHT.\" Of course, Finch says: a keeper's whole life was the light. — Morse code is just a fixed dictionary of short and long signals standing in for letters, decoded the same patient way every time.",
+    concept: "Morse Code & Encoding",
+  },
+  {
+    id: "light-5",
+    storyId: "lighthouse-keepers-code",
+    order: 5,
+    sceneText:
+      "Elsewhere, Hale counted gulls landing on the rail each morning for eight days running, jotting the tally each time: 1, 1, 2, 3, 5, 8, 13, ...",
+    puzzle: "Following the pattern, how many gulls would day 9 show?",
+    choices: ["21", "20", "18", "24"],
+    correctIndex: 0,
+    wrongBeat: "\"Each number is the sum of the two right before it,\" you tell Finch. \"8 plus 13, not 13 plus some guess.\"",
+    solvedBeat:
+      "8 + 13 = 21. \"He wasn't just watching birds,\" Finch says, half-amused. \"He was doodling in the one pattern that shows up everywhere from pinecones to seashells.\" — That's the Fibonacci sequence: each term simply the sum of the two terms before it.",
+    concept: "The Fibonacci Sequence",
+  },
+  {
+    id: "light-6",
+    storyId: "lighthouse-keepers-code",
+    order: 6,
+    sceneText:
+      "By surviving account, the merchant vessel Calypso's Promise was making a steady 8 knots — nautical miles per hour — when she struck the rocks, having sailed 20 nautical miles from the harbor mouth.",
+    puzzle: "At a steady 8 knots, how long had she been sailing to cover those 20 nautical miles?",
+    choices: ["2.5 hours", "2 hours", "8 hours", "160 hours"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the distance by the speed, not the other way around,\" you tell Finch. \"20 nautical miles, divided by 8 knots.\"",
+    solvedBeat:
+      "20 ÷ 8 = 2.5 hours — two and a half hours out from harbor when she struck. — Speed, distance, and time are always the same one relationship, just solved for whichever piece you don't already know.",
+    concept: "Speed, Distance & Time",
+  },
+  {
+    id: "light-7",
+    storyId: "lighthouse-keepers-code",
+    order: 7,
+    sceneText:
+      "Hale's own ink recipe, scrawled in a margin: \"lamp oil for shine, mixed 3 parts to every 1 part of the real ink.\"",
+    puzzle: "If oil and ink are mixed 3 parts to 1 part, what percentage of the total mixture is oil?",
+    choices: ["75%", "25%", "33%", "60%"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Add the parts together first to find the whole,\" you say. \"3 parts oil plus 1 part ink is 4 parts total — oil is 3 of those 4 parts, not just '3 out of 3.'\"",
+    solvedBeat:
+      "3 out of 4 total parts is 75%. Finch dabs a test of the recipe onto old paper, and the same faint sheen Hale's other pages have appears instantly. — Turning a ratio into a percentage always starts with finding the true size of the whole first.",
+    concept: "Ratios to Percentages",
+  },
+  {
+    id: "light-8",
+    storyId: "lighthouse-keepers-code",
+    order: 8,
+    sceneText:
+      "The wreck, per Hale's own estimate, rests at a depth of 12 fathoms. Finch has only ever measured depth in feet.",
+    puzzle: "If 1 fathom equals 6 feet, how many feet deep is the wreck?",
+    choices: ["72 feet", "18 feet", "6 feet", "84 feet"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the fathoms by 6, don't add them,\" you tell Finch. \"Each fathom is 6 whole feet, twelve separate times.\"",
+    solvedBeat:
+      "12 × 6 = 72 feet. \"Deep enough that Hale himself could never have dived it,\" you say, \"which means this was always meant to be found by his notes, not his own two hands.\" — Converting between units is nothing more than a multiplication once you know the fixed rate between them.",
+    concept: "Unit Conversion",
+  },
+  {
+    id: "light-9",
+    storyId: "lighthouse-keepers-code",
+    order: 9,
+    sceneText:
+      "Hale's final entry reads: \"she shows herself again only on the lowest tide of the lowest cycle, which the old keepers reckoned comes every 14th cycle. Today marks cycle number 51 since he started counting.\"",
+    puzzle: "Is cycle 51 one of those special low cycles — that is, is 51 evenly divisible by 14?",
+    choices: [
+      "No — the next multiple of 14 is cycle 56, five cycles away",
+      "Yes — 51 is a multiple of 14",
+      "No — cycle 42 was the special one, so we're already 9 cycles late",
+      "It's impossible to know without a calendar",
+    ],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Find the nearest multiples of 14 on either side of 51,\" you tell Finch. \"14 times 3 is 42, and 14 times 4 is 56. 51 sits between those — which one is still ahead of us?\"",
+    solvedBeat:
+      "56 is the next multiple of 14 after 51 — five cycles still to wait. \"Patience was half of Hale's whole trade,\" Finch sighs, marking the date. — Checking divisibility is just asking whether a remainder is exactly zero, and finding the *next* multiple means rounding forward, not backward.",
+    concept: "Divisibility & Remainders",
+  },
+  {
+    id: "light-10",
+    storyId: "lighthouse-keepers-code",
+    order: 10,
+    sceneText:
+      "Standing atop the lighthouse, Finch sights the wreck site at one bearing. Walking 200 meters along the shore to a second marker post Hale himself once built, she sights the very same wreck site again — this time at a different bearing entirely.",
+    puzzle: "Two different bearings to the same fixed point, taken from two different known locations, are enough to do what?",
+    choices: [
+      "Pinpoint the exact location of the point by triangulation",
+      "Only tell you the point's general direction, not its distance",
+      "Tell you nothing more than either bearing alone would",
+      "Only work if both locations are exactly the same distance from the point",
+    ],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Picture each bearing as a straight line drawn out from where you're standing,\" you tell Finch. \"Two different lines, from two different points, that both pass through the same target — where can two straight lines like that possibly meet?\"",
+    solvedBeat:
+      "Exactly one point — wherever the two sighting lines cross. Finch marks both lines on Hale's old chart, and they meet cleanly over a shallow reef just offshore. — That's triangulation: two bearings from two known points is all it ever takes to fix an exact location, no distance measurement required at all.",
+    concept: "Triangulation",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }

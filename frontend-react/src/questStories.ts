@@ -92,7 +92,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "blood-on-the-chessboard",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "Blood on the Chessboard",
     blurb: "A grandmaster dies mid-tournament, and the final position on the board is the only statement he left behind.",
@@ -246,7 +246,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "lighthouse-keepers-code",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Lighthouse Keeper's Code",
     blurb: "A retired keeper's logbook encodes the exact location of a shipwreck's treasure, one tide table at a time.",

@@ -108,6 +108,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "blood-on-the-chessboard",
+    sceneText:
+      "**An international chess championship, tournament hall, well after the crowds have gone.**\n\n" +
+      "Grandmaster Viktor Kessler is found dead at his own board, mid-game, his final position frozen in place. Mira, the tournament's arbiter, met you at the door white-faced. \"He was the best player most of us have ever shared a room with,\" she says. \"And now his own last move might be the only statement he ever gets to make about what happened tonight.\"\n\n" +
+      "Mira lays out what's already known. The game began at the top of the evening round; the last move on the official scoresheet is timestamped **8:52 PM**. Kessler's opponent, a young challenger named Aria Chen, says she stepped away and returned to find him dead — no more than fifteen minutes, by her own account. Five people connected to the tournament had reason to be nearby tonight.",
+    cast: [
+      {
+        name: "Olenska",
+        detail: "Kessler's chief rival for the championship title itself — the one prize now entirely hers to lose.",
+      },
+      {
+        name: "Whitfield",
+        detail: "The tournament's secret financial backer, known in quieter circles to run an underground chess-betting ring.",
+      },
+      {
+        name: "Petrov",
+        detail: "A former student, publicly humiliated by Kessler in a book years ago, and never quiet about the grudge since.",
+      },
+      {
+        name: "Delacroix",
+        detail: "A chess journalist, close to publishing a story about irregularities in Kessler's past results.",
+      },
+      {
+        name: "Halvorsen",
+        detail: "The tournament director. Controls every pairing and every ruling — and, as far as anyone can tell, has nothing personal at stake.",
+      },
+    ],
+  },
+  {
+    storyId: "lighthouse-keepers-code",
+    sceneText:
+      "**A remote coastal lighthouse, the morning after the old keeper's funeral.**\n\n" +
+      "Finch, barely a year into her own apprenticeship, found the logbook tucked behind a loose stone in the lamp room — pages of routine weather notes that don't stay routine for long. \"Everyone always said old Hale was just eccentric,\" she tells you, turning the brittle pages carefully. \"Counting gulls, mixing his own ink, obsessing over tide tables long after he'd memorized them. I don't think any of that was really what it looked like.\"\n\n" +
+      "The logbook, once you both start reading closely, describes the wreck of a merchant vessel — **the Calypso's Promise**, lost on the rocks generations ago — and the location of whatever survived her sinking. Hale never wrote the answer down plainly. He encoded it entirely in the language of his own trade: light intervals, tide cycles, bearings, and numbers, because those, unlike people, had never once lied to him in forty years of keeping this light.",
+    cast: [
+      {
+        name: "Finch",
+        detail: "Your fellow apprentice keeper — quick with a rope and a chart, and utterly unafraid of cold water.",
+      },
+      {
+        name: "Old Thomas Hale",
+        detail: "The lighthouse's keeper for over forty years, recently passed. Trusted numbers over people, and built his final secret entirely out of them.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {
