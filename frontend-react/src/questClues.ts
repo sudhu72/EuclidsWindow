@@ -1907,8 +1907,281 @@ const SILK_ROAD_CLUES: QuestClue[] = [
   },
 ];
 
+const CARNIVAL_CLUES: QuestClue[] = [
+  {
+    id: "carnival-1",
+    storyId: "carnival-of-lost-souls",
+    order: 1,
+    sceneText: "Nell shows you the carousel's prize wheel: 20 equal slots, and only 1 of them marked as the grand prize.",
+    puzzle: "What's the probability of landing on the grand prize in a single honest spin?",
+    choices: ["1/20", "1/5", "1/10", "1/4"],
+    correctIndex: 0,
+    wrongBeat: "\"Count the favorable outcome over the total number of equally likely outcomes,\" Nell says. \"One grand-prize slot out of twenty total.\"",
+    solvedBeat:
+      "1 out of 20 equally likely slots, so the probability is exactly 1/20. \"Which makes what happened at the ring-toss booth even stranger,\" Nell says. — Basic probability is simply the number of favorable outcomes divided by the total number of equally likely outcomes.",
+    concept: "Basic Probability",
+  },
+  {
+    id: "carnival-2",
+    storyId: "carnival-of-lost-souls",
+    order: 2,
+    sceneText: "Crane's own notes describe the ring-toss game's true odds as \"19 to 1 against winning.\"",
+    puzzle: "Converting \"19 to 1 against\" into an ordinary probability, what fraction of the time should a player actually win?",
+    choices: ["1/20", "1/19", "19/20", "1/1"],
+    correctIndex: 0,
+    wrongBeat: "\"Add both numbers in the odds together to find the total number of equal parts,\" Nell says, \"then the winning side's number becomes the numerator over that total.\"",
+    solvedBeat:
+      "19 + 1 = 20 total parts, and the winning side is 1 of them, so the probability of winning is 1/20. \"Exactly what the wheel's own odds say it should be,\" Nell notes. — Odds and probability describe the same thing two different ways; converting between them just means adding both sides together for the total.",
+    concept: "Odds vs. Probability",
+  },
+  {
+    id: "carnival-3",
+    storyId: "carnival-of-lost-souls",
+    order: 3,
+    sceneText: "The dice booth uses two separate, fair six-sided dice. Crane wanted to know how often a player would roll double sixes.",
+    puzzle: "What's the probability of rolling a six on both dice at once?",
+    choices: ["1/36", "1/12", "1/6", "2/6"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the two individual probabilities together for independent events,\" Nell says. \"Don't just add them.\"",
+    solvedBeat:
+      "1/6 × 1/6 = 1/36. \"Rare enough that anyone rolling it twice in a night should raise an eyebrow,\" Nell says. — For independent events, the probability of both happening is the product of each one's own probability.",
+    concept: "The Multiplication Rule (Independent Events)",
+  },
+  {
+    id: "carnival-4",
+    storyId: "carnival-of-lost-souls",
+    order: 4,
+    sceneText:
+      "A raffle drum holds 10 tickets, 2 of them marked as winners. Crane drew one ticket to check it, without putting it back, then wanted the odds for the very next draw.",
+    puzzle: "After removing one non-winning ticket, what's the probability the next ticket drawn is a winner?",
+    choices: ["2/9", "1/5", "2/10", "1/9"],
+    correctIndex: 0,
+    wrongBeat: "\"Update both the total count and, if needed, the winning count based on exactly what was removed,\" Nell says, \"before recalculating the fraction.\"",
+    solvedBeat:
+      "9 tickets remain, still with 2 winners among them, so the probability is 2/9. \"The odds shift every single time something's removed and not replaced,\" Nell says. — Probability without replacement changes at every draw, since the counts can shrink as tickets disappear from the pool.",
+    concept: "Probability Without Replacement",
+  },
+  {
+    id: "carnival-5",
+    storyId: "carnival-of-lost-souls",
+    order: 5,
+    sceneText: "A carnival game costs 2 coins to play and pays out 20 coins on a win. Crane calculated the true win probability at 1 in 20.",
+    puzzle: "What's the expected value of playing this game once, accounting for both the cost and the payout?",
+    choices: ["A loss of 1 coin, on average", "A gain of 1 coin, on average", "Break-even, exactly", "A loss of 2 coins, on average"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the payout by the win probability first to get the average payout,\" Nell says, \"then subtract the fixed cost to play.\"",
+    solvedBeat:
+      "20 × (1/20) = 1 coin average payout, minus the 2-coin cost, comes to a loss of 1 coin on average, every single time it's played. \"No wonder the booth never runs out of takers,\" Nell mutters. \"It just quietly grinds them down.\" — Expected value weighs every possible outcome by its own probability, telling you what a game truly earns or costs over the long run.",
+    concept: "Expected Value",
+  },
+  {
+    id: "carnival-6",
+    storyId: "carnival-of-lost-souls",
+    order: 6,
+    sceneText: "Crane's notebook asks: if the ring-toss's true win probability is 1/20, how often should a player expect to lose instead?",
+    puzzle: "What's the complementary probability of losing, given a 1/20 chance of winning?",
+    choices: ["19/20", "1/20", "9/20", "1/19"],
+    correctIndex: 0,
+    wrongBeat: "\"A probability and its complement always add up to exactly 1,\" Nell says. \"Subtract the winning probability from 1 to get the losing one.\"",
+    solvedBeat:
+      "1 − 1/20 = 19/20. \"Nineteen times out of twenty, nothing at all should happen,\" Nell says. — Complementary probability always fills in the rest of the whole: everything that isn't the outcome you're tracking.",
+    concept: "Complementary Probability",
+  },
+  {
+    id: "carnival-7",
+    storyId: "carnival-of-lost-souls",
+    order: 7,
+    sceneText:
+      "A two-stage game: first a spin that wins 1/4 of the time, and only if that spin wins, a second draw that wins 1/2 of the time.",
+    puzzle: "Mapping out both stages, what's the probability of winning both the spin and the draw?",
+    choices: ["1/8", "1/6", "3/4", "1/4"],
+    correctIndex: 0,
+    wrongBeat: "\"Follow the branch where the first stage actually wins,\" Nell says, \"then multiply that branch's probability by the second stage's own probability.\"",
+    solvedBeat:
+      "1/4 × 1/2 = 1/8. \"Every branch of the tree has to be followed all the way through,\" Nell says, sketching it out. — A probability tree maps every possible path through a multi-stage event, and each full path's probability is just those stages multiplied together.",
+    concept: "Probability Trees",
+  },
+  {
+    id: "carnival-8",
+    storyId: "carnival-of-lost-souls",
+    order: 8,
+    sceneText:
+      "The ring-toss booth's true win probability is 5%. Crane's own month-long tally shows it actually paying out on 12% of all plays.",
+    puzzle: "How many percentage points higher is the booth's actual win rate than its true probability?",
+    choices: ["7 percentage points", "5 percentage points", "12 percentage points", "2.4 percentage points"],
+    correctIndex: 0,
+    wrongBeat: "\"Subtract the true probability from the actual observed rate,\" Nell says. \"Not the other way around, and don't divide them.\"",
+    solvedBeat:
+      "12% − 5% = 7 percentage points higher than it should ever honestly run. \"That's not luck,\" Nell says flatly. \"That's a rigged wheel.\" — Comparing an actual rate to its true probability is exactly how a real discrepancy gets caught.",
+    concept: "Percentage Deviation",
+  },
+  {
+    id: "carnival-9",
+    storyId: "carnival-of-lost-souls",
+    order: 9,
+    sceneText: "Crane's tally for the month: 84 wins recorded against 56 losses at the ring-toss booth.",
+    puzzle: "What's the ratio of wins to losses, 84 to 56, reduced to its simplest form?",
+    choices: ["3 : 2", "2 : 1", "6 : 4", "84 : 56, since it can't be reduced further"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the largest number that divides evenly into both 84 and 56,\" Nell says, \"then divide both sides of the ratio by it.\"",
+    solvedBeat:
+      "Both 84 and 56 divide evenly by 28, leaving 3 : 2 in simplest form. \"A wheel with true one-in-twenty odds should never come anywhere near three wins for every two losses,\" Nell says. — A ratio is never truly in its simplest form until you've divided out everything both numbers genuinely share.",
+    concept: "Simplifying Ratios",
+  },
+  {
+    id: "carnival-10",
+    storyId: "carnival-of-lost-souls",
+    order: 10,
+    sceneText:
+      "Crane's final note works out the ring-toss's real expected value if it actually paid out at that rigged 12% rate instead of the honest 5%, on the same 2-coin cost, 20-coin payout game.",
+    puzzle: "What's the expected value of the game at the rigged 12% win rate?",
+    choices: ["A gain of 0.4 coins for the house's opponent, meaning a steady loss for the booth", "Still a loss of 1 coin, same as before", "Break-even, exactly", "A loss of 2.4 coins"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the payout by the rigged win probability first,\" Nell says, \"then subtract the fixed cost, exactly like before — just with the real rate this time.\"",
+    solvedBeat:
+      "20 × 0.12 = 2.4 coins average payout, minus the 2-coin cost, leaves a gain of 0.4 coins per play for whoever was winning that often — a steady bleed straight out of the booth's own till. \"There's your missing money,\" Nell says quietly. — The same expected-value formula, run honestly on the real numbers, exposes exactly what a rigged game is actually costing someone.",
+    concept: "Expected Value (Rigged Game)",
+  },
+];
+
+const ICE_VAULT_CLUES: QuestClue[] = [
+  {
+    id: "ice-vault-1",
+    storyId: "ice-vault-expedition",
+    order: 1,
+    sceneText: "Freya's stakes in the ice show it melting at a steady rate of 3 centimeters per day.",
+    puzzle: "At that steady rate, how many centimeters will melt away over 12 days?",
+    choices: ["36 cm", "15 cm", "4 cm", "24 cm"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the daily melting rate by the number of days,\" Freya says. \"Don't add the two numbers together.\"",
+    solvedBeat:
+      "3 × 12 = 36 centimeters. \"Which tells us exactly how many days we actually have left,\" Freya says, checking the vault's depth against that same rate. — A steady rate multiplied by time always tells you the total amount changed.",
+    concept: "Rate of Melting",
+  },
+  {
+    id: "ice-vault-2",
+    storyId: "ice-vault-expedition",
+    order: 2,
+    sceneText: "Freya's thermometer reads the ice core's internal temperature at -10°C. Her equipment back home is calibrated in Fahrenheit only.",
+    puzzle: "Using °F = (°C × 9/5) + 32, what is -10°C in Fahrenheit?",
+    choices: ["14°F", "10°F", "-10°F", "22°F"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the Celsius temperature by 9/5 first,\" Freya says, \"then add 32 to that result — don't add 32 before multiplying.\"",
+    solvedBeat:
+      "(-10 × 9/5) + 32 = -18 + 32 = 14°F. \"Cold enough to keep everything exactly as it was left,\" Freya says. — Converting between temperature scales is just a fixed linear formula, applied the same careful way every single time.",
+    concept: "Temperature Conversion",
+  },
+  {
+    id: "ice-vault-3",
+    storyId: "ice-vault-expedition",
+    order: 3,
+    sceneText:
+      "The safest crossing rigs a rope from a point 30 meters straight across a crevasse, anchored 40 meters up the ice wall on the far side.",
+    puzzle: "Using the Pythagorean theorem, how long a rope does Freya need for that diagonal crossing?",
+    choices: ["50 meters", "70 meters", "35 meters", "60 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Square both measurements, add them together, then take the square root of that sum,\" Freya says.",
+    solvedBeat:
+      "30² + 40² = 900 + 1,600 = 2,500, and the square root of 2,500 is exactly 50. \"A clean number,\" Freya says, already measuring out the rope. — The Pythagorean theorem turns two straight measurements into the length of the diagonal connecting them, every time.",
+    concept: "The Pythagorean Theorem",
+  },
+  {
+    id: "ice-vault-4",
+    storyId: "ice-vault-expedition",
+    order: 4,
+    sceneText: "The sealed ice block protecting the vault door measures 4 meters long, 3 meters wide, and 2 meters thick.",
+    puzzle: "What's the total volume of that ice block?",
+    choices: ["24 cubic meters", "9 cubic meters", "14 cubic meters", "48 cubic meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply all three dimensions together,\" Freya says. \"Length times width times height.\"",
+    solvedBeat:
+      "4 × 3 × 2 = 24 cubic meters of solid ice. \"That's what stands between us and the door,\" Freya says grimly. — The volume of any rectangular block is simply its length times its width times its height.",
+    concept: "Volume of a Rectangular Prism",
+  },
+  {
+    id: "ice-vault-5",
+    storyId: "ice-vault-expedition",
+    order: 5,
+    sceneText:
+      "Freya's field guide lists glacial ice at a density of roughly 0.9 grams per cubic centimeter — meaning 0.9 grams of mass in every single cubic centimeter of ice.",
+    puzzle: "Using that density, roughly how many grams does 1,000 cubic centimeters of this ice weigh?",
+    choices: ["900 grams", "1,000 grams", "90 grams", "1,900 grams"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the volume by the density,\" Freya says. \"Don't just add the density value onto the volume.\"",
+    solvedBeat:
+      "1,000 × 0.9 = 900 grams. \"Which is exactly why nobody's simply carving through that block by hand,\" Freya says. — Density multiplied by volume always gives you mass, whatever the material.",
+    concept: "Density",
+  },
+  {
+    id: "ice-vault-6",
+    storyId: "ice-vault-expedition",
+    order: 6,
+    sceneText: "Freya calculates the vault's ice cap has 84 centimeters left before full exposure, melting at the steady rate of 3 centimeters per day you already measured.",
+    puzzle: "At that rate, how many full days remain before the vault is completely exposed?",
+    choices: ["28 days", "24 days", "32 days", "18 days"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the remaining thickness by the daily melting rate,\" Freya says. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "84 ÷ 3 = 28 days exactly. \"Four weeks,\" Freya says, already recalculating the expedition's supply count. — Dividing a remaining amount by a steady rate always tells you how much time is actually left.",
+    concept: "Time Remaining (Division)",
+  },
+  {
+    id: "ice-vault-7",
+    storyId: "ice-vault-expedition",
+    order: 7,
+    sceneText:
+      "Freya's own survey markers show this glacier's edge sat 2,000 meters further out ten years ago. Today it's retreated back to a position only 1,400 meters from where it started.",
+    puzzle: "As a percentage of its original extent, how much has the glacier's edge retreated?",
+    choices: ["30%", "40%", "25%", "60%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the actual distance retreated first — original minus current,\" Freya says, \"then divide that by the original distance.\"",
+    solvedBeat:
+      "2,000 − 1,400 = 600 meters retreated, and 600 ÷ 2,000 = 30%. \"Faster every single year we've measured it,\" Freya says quietly. — A percentage change always measures against the original amount, not the new one.",
+    concept: "Percentage Change",
+  },
+  {
+    id: "ice-vault-8",
+    storyId: "ice-vault-expedition",
+    order: 8,
+    sceneText: "That same 4-by-3-by-2-meter ice block needs to be fully wrapped in insulating cloth before the final approach, to slow its melting.",
+    puzzle: "What's the total surface area of all six faces of that ice block?",
+    choices: ["52 square meters", "24 square meters", "36 square meters", "44 square meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the area of each of the three different face-pairs separately,\" Freya says, \"add those three areas together, then double the whole total for both matching faces on each side.\"",
+    solvedBeat:
+      "(4×3) + (4×2) + (3×2) = 12 + 8 + 6 = 26, and doubling that for both matching faces on every side gives 52 square meters total. \"Every centimeter of that needs covering,\" Freya says, unrolling the cloth. — Surface area adds up every face of a solid, and a rectangular block always has three pairs of matching faces.",
+    concept: "Surface Area of a Rectangular Prism",
+  },
+  {
+    id: "ice-vault-9",
+    storyId: "ice-vault-expedition",
+    order: 9,
+    sceneText: "Freya's notes date the vault's sealing to exactly 3 years before the glacier's retreat was first recorded.",
+    puzzle: "Using 365 days in a year, how many days does that 3-year span come to?",
+    choices: ["1,095 days", "1,000 days", "1,200 days", "900 days"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the number of years by the number of days in a single year,\" Freya says. \"Don't just guess at a round number.\"",
+    solvedBeat:
+      "365 × 3 = 1,095 days exactly. \"Every one of them logged, if the old records are right,\" Freya says. — Converting years into days is just another fixed conversion factor, multiplied straight through.",
+    concept: "Unit Conversion (Years to Days)",
+  },
+  {
+    id: "ice-vault-10",
+    storyId: "ice-vault-expedition",
+    order: 10,
+    sceneText: "The ice core samples show the vault's protective ice cap losing 8% of its remaining thickness every week, compounding as it thins.",
+    puzzle: "If the cap is currently 100 centimeters thick, how many centimeters remain after 3 weeks of that compounding 8% loss?",
+    choices: ["about 78 cm", "76 cm", "84 cm", "92 cm"],
+    correctIndex: 0,
+    wrongBeat: "\"Apply the 8% loss three separate times in a row, each time to the new remaining thickness,\" Freya says. \"Don't just subtract 24% all at once from the original.\"",
+    solvedBeat:
+      "100 × 0.92 × 0.92 × 0.92 ≈ 78 centimeters. \"Compounding, the same as it always does,\" Freya says, checking her instruments again. \"We have less time than a simple subtraction would suggest.\" — Exponential decay shrinks a quantity by the same percentage repeatedly, so the actual amount lost gets smaller each time even as the total keeps dropping.",
+    concept: "Exponential Decay",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }
