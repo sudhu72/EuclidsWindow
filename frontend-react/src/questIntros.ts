@@ -430,6 +430,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "impossible-angles",
+    sceneText:
+      "**A formal garden maze, hedges trimmed into impossible, perfect shapes under a grey morning sky.**\n\n" +
+      "Beatrix, one of the estate's junior gardeners, meets you at the maze's entrance, still shaking. \"Mr. Sorrel is dead, inside the folly itself,\" she says. \"He designed this whole garden using forced perspective — tricks of angle and distance that make it look impossible from certain spots. He told me last week he'd found something wrong with his own math. Not a mistake — a change. Someone had recalculated part of it, on purpose, and he was going to find out who before he told the estate.\"\n\n" +
+      "The garden closes to visitors at the usual hour, and five people had reason enough to still be somewhere on these grounds well past that. Sorrel, everyone agrees, trusted his own careful geometry completely — which made him exactly the kind of man who'd notice the one angle that had been quietly changed.",
+    cast: [
+      {
+        name: "Foreman Callahan",
+        detail: "The estate's head gardener, with more hands-on access to the folly's actual hedges than anyone else on the grounds — and, it turns out, a private buyer for whatever moved unseen through them.",
+      },
+      {
+        name: "Lady Pemberton",
+        detail: "The estate's owner, facing serious financial trouble — trouble everyone assumed, wrongly, had something to do with tonight.",
+      },
+      {
+        name: "Mr. Ainsley",
+        detail: "A rival garden designer, competing with Sorrel for the same prestigious commission, due to be decided within days.",
+      },
+      {
+        name: "Delphine",
+        detail: "Sorrel's own apprentice, publicly corrected by him in front of a client just last month — a humiliation she's never quite gotten over.",
+      },
+      {
+        name: "Old Gerty",
+        detail: "The estate's groundskeeper, watering the same beds in the same order every evening for years. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "lost-city-numbers",
+    sceneText:
+      "**A jungle ruin, vines threading through carved stone doorways that haven't opened in centuries.**\n\n" +
+      "Itzel has spent three field seasons mapping this lost city, ever since local stories first convinced her its builders — a people she calls the Counting Priests — protected their greatest treasury with nothing but arithmetic. \"They didn't trust locks or guards,\" she tells you, brushing moss from a carved lintel. \"They trusted the count itself. Every doorway here checks whether you actually understand their numbers, or you're only guessing at symbols you don't really understand.\"\n\n" +
+      "Her own notes already tell you two things worth remembering: the priests counted in base twenty, not base ten, and they were among the first people anywhere to use a true symbol for zero. \"Every chamber from here to the treasury tests the same thing,\" Itzel says, stepping past the first threshold. \"Whether you trust their arithmetic completely, or you just guess and hope.\"",
+    cast: [
+      {
+        name: "Itzel",
+        detail: "Your guide — three field seasons in this ruin, and the first to take the Counting Priests' numerals as seriously as their architecture.",
+      },
+      {
+        name: "The Counting Priests",
+        detail: "The vanished people who built this city. Long gone, but every doorway they carved still tests the same thing: whether your arithmetic can be trusted completely.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {

@@ -76,7 +76,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "impossible-angles",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Garden of Impossible Angles",
     blurb: "A landscaper's death hides inside a geometric folly that shouldn't be able to exist on flat ground.",
@@ -150,7 +150,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "lost-city-numbers",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Lost City of Numbers",
     blurb: "A jungle ruin is encoded entirely in mathematics — every doorway is a puzzle, not a lock.",

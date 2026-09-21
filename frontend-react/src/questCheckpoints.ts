@@ -932,6 +932,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real plot gives way to Marisol's careful digging, and there it is — Cornelius Drake's true vault, exactly where two independent methods, a triangulation and a map scale, both said it would be. Inside, wrapped against the damp, his real final map: not the blank-cornered one he left behind for the world, but a complete one, filled in with decades of careful, checked measurements no one else was ever meant to see.\n\n" +
       "\"He always said a map you couldn't verify twice wasn't worth trusting once,\" Marisol says, unrolling it carefully. Tucked into the map's corner, a note in Drake's own hand: \"Anyone patient enough to check my numbers twice has earned the right to see where they actually lead.\" Above the plot, the sun is already dropping toward the horizon, and Marisol, for once, isn't worried about finding her way back — she has the bearing for that too.",
   },
+
+  // ------------------------------------------------------------------
+  // The Garden of Impossible Angles
+  // ------------------------------------------------------------------
+  {
+    id: "garden-mid",
+    storyId: "impossible-angles",
+    afterClue: "garden-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that evening and lay them side by side.\n\n" +
+      "**Foreman Callahan:** \"I was trimming the north hedges after hours, same as Lady Pemberton asked — she was right there directing me the whole time.\"\n\n" +
+      "**Lady Pemberton:** \"I was reviewing the estate's accounts in my study, alone, same as any evening.\"\n\n" +
+      "**Mr. Ainsley:** \"I was at a design symposium across town, presenting to at least fifty other architects.\"\n\n" +
+      "**Delphine:** \"I was finishing sketches for tomorrow's client visit in the potting shed — Gerty saw the light on when she passed on her rounds.\"\n\n" +
+      "**Old Gerty:** \"I did my usual evening watering rounds. Callahan was indeed trimming hedges — but alone, no one directing him. Lady Pemberton I saw leaving the estate entirely around that time, in her own car. Delphine's shed light was still on when I passed, just as she says.\"\n\n" +
+      "You already know Sorrel's body was found inside the folly itself, and that the folly sits directly behind the north hedge row.",
+    entities: ["Foreman Callahan", "Lady Pemberton", "Mr. Ainsley", "Delphine", "Old Gerty"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      "Foreman Callahan": "Alibi Breaks",
+      "Lady Pemberton": "Alibi Breaks",
+      "Mr. Ainsley": "Alibi Holds",
+      Delphine: "Alibi Holds",
+      "Old Gerty": "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and a full night's lead slips away chasing it. Look again at which claims are confirmed by someone specifically placing them there tonight, and which are directly contradicted — and check whether Gerty's own detail actually matches what each person claimed.",
+    explain:
+      "Ainsley's account is confirmed by fifty independent witnesses at a public symposium, and Delphine's potting-shed light was independently seen by Gerty — both hold. Gerty herself has no motive and supplies the key detail, so her account holds too. But Callahan's claim that Lady Pemberton was directing him doesn't survive Gerty's own sighting of him working alone. And Pemberton's claim of being in her study falls apart the moment Gerty places her leaving the estate entirely at that exact hour.",
+  },
+  {
+    id: "garden-final",
+    storyId: "impossible-angles",
+    afterClue: "garden-10",
+    kind: "final",
+    title: "The Folly",
+    scenario:
+      "You confront the two remaining names inside the folly itself, its impossible angles closing in on all sides.\n\n" +
+      "**Foreman Callahan:** \"It was Lady Pemberton. She needed that smuggling route to stay hidden — ask anyone who's seen her accounts lately what kind of trouble she's really in.\"\n\n" +
+      "**Lady Pemberton:** \"Ask instead who actually recalculated the hedge angles with his own hands, and who's been quietly selling what comes through that blind spot for months.\"\n\n" +
+      "You already know the perspective calculation Sorrel worked out in his final notebook — the exact height each hedge needed to create the illusion — matches precisely the altered measurements found in Callahan's own work ledger, dated weeks before Sorrel's death, and that Lady Pemberton's own bank records show no unusual deposits at all.",
+    entities: ["Foreman Callahan", "Lady Pemberton"],
+    options: ["Guilty", "Innocent"],
+    answer: { "Foreman Callahan": "Guilty", "Lady Pemberton": "Innocent" },
+    wrongConsequence:
+      "The folly stays silent, and nothing more is offered — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually has hands-on access to the hedge angles and a genuine paper trail, versus a financial motive with no matching evidence.",
+    explain:
+      "Pemberton's financial motive is real, but her own bank records show nothing unusual — no proceeds from any smuggling at all. Callahan's exposure was total and specific: his own work ledger records the exact altered measurements weeks before Sorrel's death, matching Sorrel's own perspective calculations precisely, and it was Callahan's hands, not Pemberton's orders, that actually reshaped the hedges — moving stolen pieces through the blind spot for his own private buyer.",
+    resolution:
+      "You lay it out for Beatrix, piece by piece: the similar triangles that first proved a hedge could grow taller with distance and still look identical, if someone built it that way on purpose. The angle of view spanning the folly's whole width, wider than any honest garden should look from that spot. The inverse proportion an honest hedge obeys, and the one the folly's hedges quietly didn't. The trapezoid bed's own area, precisely large enough to hide what needed hiding beneath it. The golden ratio in the reflecting pool, proving Sorrel built everything else here exactly to specification. The percentage the hedges grew past their design height, row after row, faster than any honest correction would allow. The geometric sequence in their heights, shrinking by the same fraction every row until it suddenly didn't. The reflected symmetry across the maze's own center line, broken in exactly one place. The circumference of the one circular bed that didn't match its own neighbors. And the final perspective calculation, worked out in Sorrel's own hand, landing exactly on the blind spot Callahan had been using for months.\n\n" +
+      "Callahan doesn't run — there's nowhere in a locked garden left to run to. \"A few old pieces, here and there,\" he says quietly, \"nothing anyone would even miss.\" Beatrix looks at the folly for a long moment, hedges still holding their impossible, careful shape. \"He built something beautiful enough that no one thought to check the actual angles,\" she says. \"Sorrel was the one person patient enough to check anyway.\" Above the garden, the hedges keep their illusion perfectly intact, indifferent now to whatever they were built to hide.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Lost City of Numbers
+  // ------------------------------------------------------------------
+  {
+    id: "lost-city-mid",
+    storyId: "lost-city-numbers",
+    afterClue: "lost-city-5",
+    kind: "mid",
+    title: "Three Passages",
+    scenario:
+      "Beyond the first chamber, the ruin splits into three overgrown passages, each carved with a claim. Itzel reads them aloud:\n\n" +
+      "**Passage A:** \"Zero can genuinely function as a placeholder in a positional number system, marking an empty position rather than nothing at all.\"\n\n" +
+      "**Passage B:** \"A cylinder's volume depends only on its height, not its radius.\"\n\n" +
+      "**Passage C:** \"Every whole number greater than 1 is either prime, or divisible by exactly one other prime number.\"\n\n" +
+      "\"The Counting Priests sealed the false passages behind claims that sound reasonable but fall apart under real arithmetic,\" Itzel says. \"Check every one properly before you trust it.\"",
+    entities: ["Passage A", "Passage B", "Passage C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Passage A": "True Claim", "Passage B": "False Claim", "Passage C": "False Claim" },
+    wrongConsequence:
+      "The wrong passage's floor gives way to a hidden pit, and you scramble back with nothing but a scare for the trouble. \"Test each claim against real numbers,\" Itzel says. \"Not what sounds reasonable — what actually holds up once you calculate it.\"",
+    explain:
+      "Passage A restates exactly what the shell symbol proved: zero really can mark an empty position in a place-value system, a genuine mathematical breakthrough. Passage B is false — a cylinder's volume depends on the radius squared just as much as the height; double the radius and the volume quadruples, height unchanged. Passage C is false too: plenty of composite numbers, like 30, break down into three or more different prime factors, not just one.",
+  },
+  {
+    id: "lost-city-final",
+    storyId: "lost-city-numbers",
+    afterClue: "lost-city-10",
+    kind: "final",
+    title: "Three Final Chambers",
+    scenario:
+      "Itzel reads each final chamber's carved inscription aloud:\n\n" +
+      "**Chamber 1:** \"A number written in base 20 can represent exactly the same value as a number written in base 10, just expressed differently.\"\n\n" +
+      "**Chamber 2:** \"Doubling a circle's radius only doubles its area.\"\n\n" +
+      "**Chamber 3:** \"A prime number can always be written as the sum of two smaller prime numbers.\"\n\n" +
+      "\"One of these is true without a single exception,\" Itzel says. \"The Counting Priests trusted their whole treasury's protection on that one rule.\"",
+    entities: ["Chamber 1", "Chamber 2", "Chamber 3"],
+    options: ["Real Chamber", "False Chamber"],
+    answer: { "Chamber 1": "Real Chamber", "Chamber 2": "False Chamber", "Chamber 3": "False Chamber" },
+    wrongConsequence:
+      "Stone grinds down over the wrong chamber, sealed for good this time. \"Don't trust the shape of the sentence,\" Itzel says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Chamber 1 holds exactly: any number has a genuine representation in any base you choose, base 20 included — the value never changes, only how it's written. Chamber 2 is false — doubling a circle's radius quadruples its area, since area scales with the radius squared, not the radius itself. Chamber 3 is false too: the prime number 2 has no smaller prime to add to another smaller prime at all, so it can never be written as a sum of two smaller primes, breaking the claim completely.",
+    resolution:
+      "The real chamber gives way at last, and torchlight spills across shelves of carved stelae, obsidian tools, and — stacked with obvious care — dozens of bark-paper books, their pages dense with the priests' own numerals: counts of harvests, eclipses, and calculations that took centuries to compile.\n\n" +
+      "\"They really did trust the count over the sword,\" Itzel says, running a hand along a stela's edge. \"No invading army could out-argue a number that simply repeats the same way, every single time you check it.\" A final glyph, carved above the doorway, translated slowly: \"What is counted honestly will always add up the same way, in any tongue, in any base, for anyone patient enough to check.\" Outside, the jungle is already reclaiming the plaza a little further, exactly as it always has, indifferent to how carefully anything here was once counted.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

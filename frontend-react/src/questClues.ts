@@ -2722,8 +2722,275 @@ const CARTOGRAPHER_CLUES: QuestClue[] = [
   },
 ];
 
+const GARDEN_CLUES: QuestClue[] = [
+  {
+    id: "garden-1",
+    storyId: "impossible-angles",
+    order: 1,
+    sceneText:
+      "Beatrix shows you Sorrel's own perspective sketch: hedges meant to look identical in height from the garden's entrance, even though they actually get taller the farther back they stand. The nearest hedge is 2 meters tall, sitting 4 meters from the viewing point.",
+    puzzle: "If the next hedge sits 8 meters from the viewing point — twice as far — how tall must it be to appear exactly the same height from that same spot?",
+    choices: ["4 meters (twice as tall)", "2 meters (same height)", "1 meter (half as tall)", "8 meters (four times as tall)"],
+    correctIndex: 0,
+    wrongBeat: "\"The ratio of height to distance has to stay exactly the same for the apparent size to match,\" Beatrix says. \"Set up that same ratio and solve for the new height.\"",
+    solvedBeat:
+      "2/4 = 0.5, and 0.5 × 8 = 4 meters. \"Taller, not shorter, the farther back it stands,\" Beatrix says, startled. \"Everyone assumes distant things always look smaller because they are smaller.\" — Similar triangles keep the same height-to-distance ratio, which is exactly how forced perspective tricks the eye.",
+    concept: "Similar Triangles (Forced Perspective)",
+  },
+  {
+    id: "garden-2",
+    storyId: "impossible-angles",
+    order: 2,
+    sceneText: "From the garden entrance, the sightline to the folly's left edge sits 18° to the left of straight ahead; the sightline to its right edge sits 24° to the right of straight ahead.",
+    puzzle: "What's the folly's total angular width, as seen from the entrance?",
+    choices: ["42°", "6°", "33°", "48°"],
+    correctIndex: 0,
+    wrongBeat: "\"Add the two angles together,\" Beatrix says, \"since one is measured left of center and the other right of center — together they span the object's full width.\"",
+    solvedBeat:
+      "18° + 24° = 42°. \"Wider than it has any right to look from here,\" Beatrix says. — Angles measured on opposite sides of a central sightline simply add together to give the total angle spanned.",
+    concept: "Angle of View",
+  },
+  {
+    id: "garden-3",
+    storyId: "impossible-angles",
+    order: 3,
+    sceneText: "A stone statue, 2 meters tall in reality, appears a certain apparent size when viewed from 10 meters away. Beatrix wants to know its apparent size from twice that distance.",
+    puzzle: "For an object of fixed real size, apparent size is inversely proportional to distance. If you double the viewing distance, what happens to the statue's apparent size?",
+    choices: ["It's cut in half", "It stays exactly the same", "It doubles", "It becomes a quarter of the original"],
+    correctIndex: 0,
+    wrongBeat: "\"Inverse proportion means apparent size and distance move in opposite directions by the exact same factor,\" Beatrix says. \"Doubling one exactly halves the other.\"",
+    solvedBeat:
+      "Doubling the distance exactly halves the apparent size, for any object of fixed real size. \"Which is exactly the rule Sorrel's folly was built to break,\" Beatrix says. — Inverse proportion means two quantities change by the exact same factor, but in opposite directions.",
+    concept: "Inverse Proportion",
+  },
+  {
+    id: "garden-4",
+    storyId: "impossible-angles",
+    order: 4,
+    sceneText: "One of the folly's garden beds is trapezoid-shaped: parallel sides measuring 6 meters and 10 meters, with a height — the distance between them — of 4 meters.",
+    puzzle: "What's the area of that trapezoid-shaped bed?",
+    choices: ["32 square meters", "40 square meters", "24 square meters", "64 square meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Average the two parallel sides first,\" Beatrix says, \"then multiply by the height between them.\"",
+    solvedBeat:
+      "(6+10)/2 = 8, and 8 × 4 = 32 square meters. \"Exactly where the new hedge line was planted last month,\" Beatrix says. — A trapezoid's area is always the average of its two parallel sides, multiplied by the height between them.",
+    concept: "Area of a Trapezoid",
+  },
+  {
+    id: "garden-5",
+    storyId: "impossible-angles",
+    order: 5,
+    sceneText: "Sorrel's own design notes call for the folly's rectangular reflecting pool to follow the golden ratio, roughly 1.618, between its length and width.",
+    puzzle: "If the pool's width is 3 meters, roughly how long should it be, using that same 1.618 ratio?",
+    choices: ["about 4.9 meters", "about 6 meters", "about 3.6 meters", "about 8 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the width by the ratio itself,\" Beatrix says. \"Don't just tack the ratio's digits onto the width.\"",
+    solvedBeat:
+      "3 × 1.618 ≈ 4.9 meters. \"Exactly the pool's real measurement,\" Beatrix says, checking the plans. — That ratio, roughly 1.618, is the proportion designers have trusted for centuries to look naturally pleasing.",
+    concept: "The Golden Ratio",
+  },
+  {
+    id: "garden-6",
+    storyId: "impossible-angles",
+    order: 6,
+    sceneText: "The hedges installed at the illusion's start measure 3 meters, but the design called for the row to shrink to 2.1 meters at that same point.",
+    puzzle: "What percentage below the design height are the installed hedges — or are they above it? Find the size of the difference as a percentage of the design height.",
+    choices: ["About 43% above the design height", "About 30% below the design height", "About 43% below the design height", "Exactly on target"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the actual difference first,\" Beatrix says, \"then divide that difference by the design height, not the installed height.\"",
+    solvedBeat:
+      "3 − 2.1 = 0.9 meters over, and 0.9 ÷ 2.1 ≈ 43% above the design height. \"Someone stopped trimming these rows to spec weeks ago,\" Beatrix says. — A percentage difference always measures the gap against whichever value you're comparing to, so it matters which one that is.",
+    concept: "Percentage Decrease",
+  },
+  {
+    id: "garden-7",
+    storyId: "impossible-angles",
+    order: 7,
+    sceneText: "The illusion's hedges are meant to shrink by the same percentage every row: 8 meters, then 6 meters, then 4.5 meters, ...",
+    puzzle: "Following that same shrinking pattern, what height should the next row be?",
+    choices: ["3.375 meters", "3 meters", "2.5 meters", "3.5 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Check what's actually happening between each height and the next,\" Beatrix says. \"It isn't subtracting a fixed amount — it's multiplying by the same fixed fraction every time.\"",
+    solvedBeat:
+      "Each height is exactly 0.75 times the one before it, so 4.5 × 0.75 = 3.375 meters. \"Consistent, until it suddenly wasn't,\" Beatrix says, checking the real row against it. — That's a geometric sequence: every term multiplied by the same fixed ratio, rather than reduced by a fixed amount.",
+    concept: "Geometric Sequences",
+  },
+  {
+    id: "garden-8",
+    storyId: "impossible-angles",
+    order: 8,
+    sceneText: "The maze is meant to be perfectly symmetric across its central path. One hedge on the left sits at coordinates (3, 5) relative to that center line.",
+    puzzle: "What coordinates should its mirrored twin on the right occupy, reflected across the center line at x = 0?",
+    choices: ["(-3, 5)", "(3, -5)", "(-3, -5)", "(5, 3)"],
+    correctIndex: 0,
+    wrongBeat: "\"Reflecting across a vertical center line flips the sign of the x-coordinate only,\" Beatrix says. \"The y-coordinate stays exactly the same.\"",
+    solvedBeat:
+      "Reflecting (3, 5) across x = 0 gives (-3, 5) — same height, opposite side. \"Which is exactly where a hedge is missing,\" Beatrix says, checking the plan against the real maze. — A reflection across a line flips only the coordinate measured perpendicular to that line, and leaves the other exactly as it was.",
+    concept: "Reflection & Symmetry",
+  },
+  {
+    id: "garden-9",
+    storyId: "impossible-angles",
+    order: 9,
+    sceneText: "One of the folly's garden beds is circular, with a radius of 5 meters.",
+    puzzle: "Using circumference = 2πr (with π ≈ 3.14), what's the distance around that circular bed?",
+    choices: ["31.4 meters", "15.7 meters", "78.5 meters", "10 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Circumference is 2 times π times the radius,\" Beatrix says. \"Not π times the radius alone, and not the radius squared.\"",
+    solvedBeat:
+      "2 × 3.14 × 5 = 31.4 meters. \"Doesn't match its neighbors at all,\" Beatrix says, comparing it to the plan. — Circumference is exactly the distance around a full circle, once around, however large that circle is.",
+    concept: "Circumference",
+  },
+  {
+    id: "garden-10",
+    storyId: "impossible-angles",
+    order: 10,
+    sceneText: "Sorrel's final notebook page works out where a person would need to stand to see straight through the one gap in the hedge illusion: a sightline 2 meters tall at a hedge sitting 6 meters away, matched against the folly's own hidden gap sitting 15 meters away.",
+    puzzle: "Using that same height-to-distance ratio, how tall would an obstruction at 15 meters need to be to close that same sightline?",
+    choices: ["5 meters", "3.6 meters", "4.5 meters", "7.5 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Set up the ratio from the known hedge first — height over distance,\" Beatrix says, \"then apply that same ratio to the new distance.\"",
+    solvedBeat:
+      "2/6 = 1/3, and 15 × (1/3) = 5 meters. \"Which is exactly one meter shorter than the hedge that's actually standing there,\" Beatrix says slowly. \"That's the gap.\" — The same similar-triangle ratio that builds an illusion can also be used to find exactly where it breaks.",
+    concept: "Similar Triangles (Forced Perspective)",
+  },
+];
+
+const LOST_CITY_CLUES: QuestClue[] = [
+  {
+    id: "lost-city-1",
+    storyId: "lost-city-numbers",
+    order: 1,
+    sceneText: "Itzel translates a carved number from the old counting priests' base-20 system: it reads \"3, 12\" — meaning 3 groups of twenty, plus 12 more.",
+    puzzle: "What single ordinary (base-10) number does \"3, 12\" represent in base 20?",
+    choices: ["72", "312", "60", "32"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the first group by 20 first,\" Itzel says, \"then add the second number as the leftover — don't just read the digits side by side like a base-10 number.\"",
+    solvedBeat:
+      "3 × 20 + 12 = 72. \"They counted in twenties, not tens,\" Itzel says. \"Fingers and toes together, most likely.\" — Any place-value system works the same way, whether it groups by tens, or by the twenty these builders happened to prefer.",
+    concept: "Base-20 (Vigesimal) Numbers",
+  },
+  {
+    id: "lost-city-2",
+    storyId: "lost-city-numbers",
+    order: 2,
+    sceneText: "A second carved number reads \"2, 0, 5\" in the priests' three-position system — but the middle position is marked with a special shell symbol, their own sign for nothing at all in that place.",
+    puzzle: "In a base-20 system, what does \"2, 0, 5\" actually equal, given that the shell simply means zero in that position?",
+    choices: ["805", "25", "400", "2005"],
+    correctIndex: 0,
+    wrongBeat: "\"The first position is worth 20×20=400, the middle is worth 20, and the last is worth 1,\" Itzel says. \"Multiply each digit by its own position's value, even when that digit is zero, and add them all together.\"",
+    solvedBeat:
+      "2 × 400 + 0 × 20 + 5 × 1 = 800 + 0 + 5 = 805. \"Without a symbol for zero, that middle position would be impossible to read at all,\" Itzel says. \"They worked that out independently, centuries before anyone in Europe did.\" — Zero as a genuine placeholder is one of the great, quietly revolutionary ideas in the whole history of counting.",
+    concept: "Zero as a Placeholder",
+  },
+  {
+    id: "lost-city-3",
+    storyId: "lost-city-numbers",
+    order: 3,
+    sceneText: "A circular jungle temple stands 6 meters in radius and 10 meters tall.",
+    puzzle: "Using volume = π × radius² × height (with π ≈ 3.14), roughly what's the temple's total volume?",
+    choices: ["about 1,130 cubic meters", "about 360 cubic meters", "about 1,884 cubic meters", "about 600 cubic meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Square the radius first, multiply by π,\" Itzel says, \"then multiply that whole result by the height.\"",
+    solvedBeat:
+      "3.14 × 36 × 10 ≈ 1,130 cubic meters. \"Enormous, even by these builders' standards,\" Itzel says. — The volume of a cylinder is always π times the radius squared, times the height, whatever the actual size.",
+    concept: "Volume of a Cylinder",
+  },
+  {
+    id: "lost-city-4",
+    storyId: "lost-city-numbers",
+    order: 4,
+    sceneText: "A stone door lock only opens when set to the two prime factors of 323, larger one first.",
+    puzzle: "What are the two prime factors of 323, larger first?",
+    choices: ["19, then 17", "23, then 14", "17, then 19", "29, then 11"],
+    correctIndex: 0,
+    wrongBeat: "\"Test small primes against 323 one at a time,\" Itzel says. \"It won't split evenly by 2, 3, 5, 7, 11, or 13 — but keep going, it does split evenly somewhere.\"",
+    solvedBeat:
+      "323 = 17 × 19 — the door clicks open on 19, then 17. \"They trusted arithmetic no guard could ever be bribed around,\" Itzel says. — Breaking a number down into the primes that build it is factorization, the same idea this lock just borrowed for its own purposes.",
+    concept: "Prime Factorization",
+  },
+  {
+    id: "lost-city-5",
+    storyId: "lost-city-numbers",
+    order: 5,
+    sceneText: "A carved relief shows figures in a strict ratio: for every 3 priests carved, there are 5 offerings depicted.",
+    puzzle: "If a longer relief shows 20 offerings carved in that same ratio, how many priests does it show?",
+    choices: ["12 priests", "15 priests", "8 priests", "20 priests"],
+    correctIndex: 0,
+    wrongBeat: "\"Find how many times the offerings' own ratio-part fits into 20,\" Itzel says, \"then apply that same multiple to the priests' ratio-part.\"",
+    solvedBeat:
+      "20 offerings is 4 times the ratio's \"5 parts,\" so priests scale the same way: 3 × 4 = 12. \"Consistent, carving after carving,\" Itzel says. — A ratio holds steady no matter how large the actual scene gets, as long as every part scales by the same multiple.",
+    concept: "Ratio & Proportion",
+  },
+  {
+    id: "lost-city-6",
+    storyId: "lost-city-numbers",
+    order: 6,
+    sceneText: "The vault's final stone door needs a 3-symbol combination chosen from the priests' 5 sacred glyphs, repeats allowed, in a specific order.",
+    puzzle: "How many different combinations are possible?",
+    choices: ["125", "15", "60", "243"],
+    correctIndex: 0,
+    wrongBeat: "\"Count the choices at each position separately, in order,\" Itzel says. \"Five choices each time, since repeats are allowed — multiply them all together.\"",
+    solvedBeat:
+      "5 × 5 × 5 = 125 possible combinations. \"Not narrow enough alone,\" Itzel admits, \"but the door's own wear pattern shows exactly which three glyphs get touched most.\" — That's the counting principle: multiplying the choices available at each step, in order, to count every possibility at once.",
+    concept: "The Counting Principle",
+  },
+  {
+    id: "lost-city-7",
+    storyId: "lost-city-numbers",
+    order: 7,
+    sceneText: "Itzel estimates the central plaza, originally 500 square meters of exposed stone, now has only 320 square meters still visible above the jungle growth.",
+    puzzle: "What percentage of the plaza is now covered by overgrowth?",
+    choices: ["36%", "64%", "18%", "44%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the covered amount first,\" Itzel says, \"original minus what's still visible, then divide that by the original total.\"",
+    solvedBeat:
+      "500 − 320 = 180 square meters covered, and 180 ÷ 500 = 36%. \"More than a third, reclaimed just since the city was abandoned,\" Itzel says. — A percentage like this always measures the covered amount against the original total.",
+    concept: "Percentage",
+  },
+  {
+    id: "lost-city-8",
+    storyId: "lost-city-numbers",
+    order: 8,
+    sceneText: "A stepped pyramid's stone courses are stacked in a triangular pattern: 1, then 3, then 6, then 10 blocks per course, moving up.",
+    puzzle: "Following that same pattern, how many blocks make up the next course?",
+    choices: ["15", "14", "12", "21"],
+    correctIndex: 0,
+    wrongBeat: "\"Look at how much each total grows by, not the totals themselves,\" Itzel says. \"2, then 3, then 4 more each time — so the next jump should be one more than the last.\"",
+    solvedBeat:
+      "The growth steps are 2, 3, 4, and next comes 5 — so 10 + 5 = 15. \"The same shape as stacking cannonballs into a pyramid,\" Itzel says, \"just built centuries before anyone called it that.\" — Each triangular number is simply the sum of all counting numbers up to that point.",
+    concept: "Triangular Numbers",
+  },
+  {
+    id: "lost-city-9",
+    storyId: "lost-city-numbers",
+    order: 9,
+    sceneText: "The city's circular ceremonial plaza measures 14 meters in radius.",
+    puzzle: "Using area = π × radius² (with π ≈ 3.14), roughly what's the plaza's total area?",
+    choices: ["about 615 square meters", "about 88 square meters", "about 1,230 square meters", "about 196 square meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Square the radius first, then multiply by π,\" Itzel says. \"Don't multiply the radius by π first and stop there.\"",
+    solvedBeat:
+      "3.14 × 14² = 3.14 × 196 ≈ 615 square meters. \"Room enough for the whole city to gather at once,\" Itzel says. — The area of a circle is always π times its radius squared, however large the circle actually is.",
+    concept: "Area of a Circle",
+  },
+  {
+    id: "lost-city-10",
+    storyId: "lost-city-numbers",
+    order: 10,
+    sceneText: "The final vault door has no numbers on it at all — only the priests' own glyphs, reading \"4, 15\" in their base-20 notation.",
+    puzzle: "What single ordinary (base-10) number does \"4, 15\" represent in base 20?",
+    choices: ["95", "415", "60", "75"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the first group by 20,\" Itzel says, \"then add the second number as the leftover.\"",
+    solvedBeat:
+      "4 × 20 + 15 = 95. Itzel turns the stone dial to exactly 95, and something ancient finally shifts loose. — The same place-value trick works at any scale, once you trust the numbers instead of guessing at the glyphs.",
+    concept: "Base-20 (Vigesimal) Numbers",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }
