@@ -28,7 +28,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "observatory-murder",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "Murder at the Observatory",
     blurb: "An astronomer is found dead beside an unfinished star chart — the killer left a trail of numbers, not words.",
@@ -198,7 +198,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "clockwork-mountain",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Clockwork Mountain",
     blurb: "An old mechanical vault is buried deep inside a mountain, built entirely from gears, ratios, and one very old sense of humor.",

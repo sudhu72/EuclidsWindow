@@ -3787,8 +3787,300 @@ const VINEYARD_CLUES: QuestClue[] = [
   },
 ];
 
+const OBSERVATORY_CLUES: QuestClue[] = [
+  {
+    id: "observatory-1",
+    storyId: "observatory-murder",
+    order: 1,
+    sceneText:
+      "Wren hands you Kepwright's own logbook, open to the final page. The desk log shows a star's position recorded as \"58 degrees, 30 minutes\" above the horizon — the observatory's own notation, where every degree splits into 60 minutes of arc, exactly the way an hour splits into 60 minutes of time.",
+    puzzle: "Expressed as a plain decimal number of degrees, what angle does 58°30′ actually represent?",
+    choices: ["58.5°", "58.3°", "58.05°", "59.5°"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"An arcminute is a sixtieth of a degree, sir,\" Wren says gently, \"not a hundredth. Thirty of them isn't three-tenths of a degree — divide by sixty, not a hundred.\"",
+    solvedBeat:
+      "30 ÷ 60 = 0.5, so 58°30′ is exactly 58.5°. \"That's the reading he took just before the desk clock stopped,\" Wren says, checking the timestamp beside it. — An arcminute always divides a degree into sixty equal parts, the same base-sixty system the ancient Babylonians used for angles and for time alike.",
+    concept: "Angle Measurement (Degrees, Minutes, Seconds)",
+  },
+  {
+    id: "observatory-2",
+    storyId: "observatory-murder",
+    order: 2,
+    sceneText:
+      "A few pages earlier, Kepwright had underlined a rule twice in his own hand: a star's parallax angle — how much it appears to shift against the background sky as the Earth moves — gives its distance directly, in parsecs, once you divide 1 by that angle in arcseconds. Beside the rule, he'd written a single measured value: 0.5 arcseconds.",
+    puzzle: "Using his own underlined rule, how many parsecs away did Kepwright calculate that star to be?",
+    choices: ["2 parsecs", "0.5 parsecs", "5 parsecs", "1 parsec"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide one by the angle, sir,\" Wren says. \"Don't just carry the number over as though it were the answer already.\"",
+    solvedBeat:
+      "1 ÷ 0.5 = 2 parsecs. \"A closer star than most of what he usually logged,\" Wren notes. — A parallax angle and a distance are always inversely related: the smaller the apparent shift, the farther away the star actually is.",
+    concept: "Parallax Distance",
+  },
+  {
+    id: "observatory-3",
+    storyId: "observatory-murder",
+    order: 3,
+    sceneText:
+      "Pinned above the desk, a comparison chart lists a well-known planet: an orbital period of 8 years, at an average distance of 4 astronomical units from the sun — figures that satisfy Kepler's own rule, that a period squared always equals a distance cubed, measured in years and astronomical units. Below the chart, in Kepwright's own hand, a newly spotted object: measured average distance, 9 astronomical units.",
+    puzzle: "Using that same rule, what should the newly spotted object's orbital period be, in years?",
+    choices: ["27 years", "81 years", "9 years", "18 years"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Cube the distance first, sir,\" Wren says, \"then take the square root of that result. Don't just multiply the distance by itself once and stop there.\"",
+    solvedBeat:
+      "9³ = 729, and the square root of 729 is 27, so the period comes out to 27 years. \"A long, slow orbit indeed,\" Wren murmurs. — Kepler's third law ties every orbiting body's period to its distance the same fixed way, whether it's a familiar planet or something no one has ever properly measured before.",
+    concept: "Kepler's Third Law",
+  },
+  {
+    id: "observatory-4",
+    storyId: "observatory-murder",
+    order: 4,
+    sceneText:
+      "The great refractor's objective lens is stamped with its own focal length: 3,000 millimeters. Beside the eyepiece rack, one eyepiece lies discarded on the floor, its rim marked 25 millimeters.",
+    puzzle: "A telescope's magnification equals its objective's focal length divided by its eyepiece's focal length. What magnification was the telescope set to that night?",
+    choices: ["120×", "12×", "75×", "3,025×"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the two focal lengths, sir,\" Wren says. \"Don't add them together — that number means nothing here.\"",
+    solvedBeat:
+      "3,000 ÷ 25 = 120, so the telescope was magnifying 120 times over. \"High enough for exactly the kind of faint object he was chasing,\" Wren says. — A telescope's magnification is always its objective lens's focal length divided by whichever eyepiece happens to be fitted.",
+    concept: "Telescope Magnification",
+  },
+  {
+    id: "observatory-5",
+    storyId: "observatory-murder",
+    order: 5,
+    sceneText:
+      "Beside the desk, two clocks hang side by side: an ordinary clock keeping solar time, and a specialized sidereal clock built to keep pace with the stars themselves rather than the sun. A small brass plate beneath them reads: a sidereal day runs almost exactly 3 minutes 56 seconds shorter than an ordinary 24-hour solar day.",
+    puzzle: "Over exactly 10 ordinary solar days, roughly how far will the sidereal clock have drifted ahead of the ordinary one?",
+    choices: ["About 40 minutes", "About 4 minutes", "About 6 minutes", "About 24 hours"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Multiply that daily gap by how many days actually pass,\" Wren says, \"not by anything else — and don't mistake a few seconds for a few minutes.\"",
+    solvedBeat:
+      "3 minutes 56 seconds is very close to 4 minutes, and 4 minutes times 10 days comes to roughly 40 minutes of drift. \"Which is exactly why we keep both clocks at all,\" Wren says. — A sidereal clock tracks the stars' own rotation, which finishes very slightly faster than the sun appears to complete its own daily circuit.",
+    concept: "Sidereal vs Solar Time",
+  },
+  {
+    id: "observatory-6",
+    storyId: "observatory-murder",
+    order: 6,
+    sceneText:
+      "A newly logged star's distance comes out, by Kepwright's own calculation, to 4 light-years — and light itself, Wren reminds you, crosses roughly 300,000 kilometers every single second.",
+    puzzle: "Roughly how long ago did the light Kepwright actually observed that night first leave that star?",
+    choices: ["About 4 years ago", "About 4 days ago", "It arrived instantly", "About 300,000 years ago"],
+    correctIndex: 0,
+    wrongBeat:
+      "\"A light-year is a distance, sir, not a shortcut,\" Wren says. \"It's defined as exactly how far light travels in one year — so light from a star that far away always takes that many years to arrive.\"",
+    solvedBeat:
+      "A star 4 light-years away is, by definition, 4 years' worth of light-travel away, so that light left the star roughly 4 years before it ever reached the eyepiece. \"Every star we look at is really a small window into its own past,\" Wren says. — Light-travel time is simply distance measured in the units light itself would need to cross it.",
+    concept: "Light-Travel Time",
+  },
+  {
+    id: "observatory-7",
+    storyId: "observatory-murder",
+    order: 7,
+    sceneText:
+      "Two nearly identical stars sit logged side by side: one at a measured brightness, the other appearing exactly one-quarter as bright, by the same instrument, the same night.",
+    puzzle: "By the inverse-square law, how much farther away is the dimmer of the two stars?",
+    choices: ["Twice as far", "Four times as far", "Half as far", "The same distance"],
+    correctIndex: 0,
+    wrongBeat: "\"Brightness falls off with the square of the distance,\" Wren says, \"not the distance itself. Find whatever distance, squared, gives you a quarter.\"",
+    solvedBeat:
+      "Doubling the distance always divides the brightness by the square of that doubling — two squared is four, so twice the distance leaves exactly one-quarter the brightness. \"Which tells you the dimmer star isn't fainter, sir — it's simply farther,\" Wren says. — The inverse-square law governs how light spreads out from any single point source, stars included.",
+    concept: "Star Brightness (Inverse-Square Law)",
+  },
+  {
+    id: "observatory-8",
+    storyId: "observatory-murder",
+    order: 8,
+    sceneText:
+      "The star chart records the missing object's position by right ascension — celestial longitude measured in hours instead of degrees, where the sky's full circle divides into 24 hours the same way a full day does. Kepwright had logged the reading as 5 hours exactly.",
+    puzzle: "Since a full 360-degree circle divides into 24 hours of right ascension, roughly how many degrees does 5 hours of right ascension represent?",
+    choices: ["75°", "50°", "150°", "300°"],
+    correctIndex: 0,
+    wrongBeat: "\"Find how many degrees a single hour is worth first,\" Wren says. \"Three hundred sixty divided by twenty-four — then multiply that by the actual number of hours.\"",
+    solvedBeat:
+      "360 ÷ 24 = 15 degrees per hour, and 5 hours × 15 = 75 degrees. \"Astronomers split the sky in hours out of habit, not necessity,\" Wren says. — Right ascension is only ever ordinary degrees, measured in a borrowed unit that happens to match the length of a day.",
+    concept: "Celestial Coordinates (Right Ascension)",
+  },
+  {
+    id: "observatory-9",
+    storyId: "observatory-murder",
+    order: 9,
+    sceneText:
+      "A final margin note, half-finished, mentions the slow wobble of the Earth's own axis: the equinox point drifts roughly 1 degree every 72 years, a motion far too slow for any one lifetime to notice directly.",
+    puzzle: "At that same rate, roughly how many years would it take the equinox point to drift a full 30 degrees?",
+    choices: ["2,160 years", "720 years", "72 years", "30 years"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the rate by however many degrees you actually need,\" Wren says, \"not the other way around.\"",
+    solvedBeat:
+      "72 years per degree, times 30 degrees, comes to 2,160 years. \"Long enough that entire civilizations rise and fall before it ever completes one lap,\" Wren says. — Precession is real motion, just spread across a timescale far longer than any single set of observations could ever directly confirm.",
+    concept: "Precession Rate",
+  },
+  {
+    id: "observatory-10",
+    storyId: "observatory-murder",
+    order: 10,
+    sceneText:
+      "The final unfinished line in Kepwright's own hand logs a particular star, due to cross the observatory's fixed meridian line — its one exact transit — at precisely 12:47 in the morning. The transit instrument itself, a telescope built to track only that single fixed line in the sky, was found still locked in position, aimed exactly where that star should have crossed at that exact moment.",
+    puzzle: "Since a transit instrument only ever points at one fixed line, and this one was found aimed and ready exactly where that star should cross at 12:47 AM, what does that tell you about Kepwright himself?",
+    choices: [
+      "He was alive and working at the eyepiece at 12:47 AM",
+      "He had already been dead for hours by 12:47 AM",
+      "The instrument's position tells you nothing useful",
+      "He must have died the following morning",
+    ],
+    correctIndex: 0,
+    wrongBeat:
+      "\"Someone set that instrument precisely for that one moment, sir,\" Wren says. \"An old, undisturbed setting doesn't explain a fresh, exact aim — someone was still actively working right up to that transit.\"",
+    solvedBeat:
+      "A transit instrument has to be aimed deliberately, in advance, by someone who knows exactly which star crosses the line and exactly when — and it was found ready precisely for 12:47 AM, meaning Kepwright, or whoever last touched that dial, was still actively at work right up to that very moment. \"Which means whatever happened to him happened after that, not before,\" Wren says quietly. — A fixed instrument's exact aim is itself a kind of timestamp, as reliable as anything written down in a logbook.",
+    concept: "Transit Timing",
+  },
+];
+
+const CLOCKWORK_CLUES: QuestClue[] = [
+  {
+    id: "clockwork-1",
+    storyId: "clockwork-mountain",
+    order: 1,
+    sceneText:
+      "The vault's outer door is sealed by a single massive stone lever. An engraved plate beside it reads: effort arm, 6 meters; load arm, 1.5 meters.",
+    puzzle: "What's this lever's mechanical advantage — how many times over does it multiply your actual pushing force?",
+    choices: ["4×", "1.5×", "6×", "0.25×"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the effort arm by the load arm,\" Petra says, \"not the other way around — the longer arm is always doing the multiplying.\"",
+    solvedBeat:
+      "6 ÷ 1.5 = 4, so the lever multiplies your force four times over. The great stone door groans open at last. \"Exactly the kind of arithmetic Toribio expected out of anyone serious,\" Petra says. — A lever's mechanical advantage is always its effort arm's length divided by its load arm's length.",
+    concept: "Mechanical Advantage (Lever)",
+  },
+  {
+    id: "clockwork-2",
+    storyId: "clockwork-mountain",
+    order: 2,
+    sceneText:
+      "Beyond the door, a pulley system waits to lift a section of the stone floor. Petra counts the rope carefully: 5 separate segments run between the fixed frame and the moving pulley block.",
+    puzzle: "With 5 supporting rope segments, how many times over does this pulley system multiply your lifting effort?",
+    choices: ["5×", "10×", "2.5×", "1×"],
+    correctIndex: 0,
+    wrongBeat: "\"Count the rope segments actually holding the moving block up,\" Petra says, \"not the number of pulleys themselves.\"",
+    solvedBeat:
+      "Five supporting segments multiply your effort five times over. The floor section rises smoothly, far lighter than it has any right to feel. \"He never used more rope than the job actually needed,\" Petra says. — A pulley system's mechanical advantage always equals the number of rope segments actually supporting the moving load.",
+    concept: "Mechanical Advantage (Pulley)",
+  },
+  {
+    id: "clockwork-3",
+    storyId: "clockwork-mountain",
+    order: 3,
+    sceneText: "A stone ramp beyond the pulley chamber rises 3 meters over a slanted length of 12 meters.",
+    puzzle: "What's this ramp's mechanical advantage — its slanted length divided by its actual rise?",
+    choices: ["4×", "3×", "9×", "0.25×"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the slanted length by the rise,\" Petra says, \"the same trade every ramp ever makes — an easier push, over a longer distance.\"",
+    solvedBeat:
+      "12 ÷ 3 = 4, so the ramp trades a fourfold longer walk for a fourfold easier climb. \"He built this whole mountain out of that same trade, over and over,\" Petra says. — An inclined plane's mechanical advantage is always its slanted length divided by the height it actually climbs.",
+    concept: "Mechanical Advantage (Inclined Plane)",
+  },
+  {
+    id: "clockwork-4",
+    storyId: "clockwork-mountain",
+    order: 4,
+    sceneText:
+      "A heavy screw mechanism turns a hidden shaft deeper into the rock. Each full turn of its handle sweeps out a circle 2 meters around, and Petra measures the screw advancing just 0.1 meters into the mountain per turn — its \"pitch.\"",
+    puzzle: "What's this screw's mechanical advantage — its handle's circumference divided by its pitch?",
+    choices: ["20×", "2×", "0.2×", "200×"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the circumference by the pitch,\" Petra says, \"not the pitch by the circumference — a small pitch is exactly what makes a screw so powerful.\"",
+    solvedBeat:
+      "2 ÷ 0.1 = 20, so the screw multiplies your turning effort twenty times over. \"The smaller that pitch, the harder it turns, and the harder it pulls,\" Petra says. — A screw is really just an inclined plane wrapped around a shaft, and its mechanical advantage follows exactly the same arithmetic.",
+    concept: "Mechanical Advantage (Screw)",
+  },
+  {
+    id: "clockwork-5",
+    storyId: "clockwork-mountain",
+    order: 5,
+    sceneText: "A stuck valve wheel needs a full 40 newton-meters of torque to budge at all. Petra can apply only 100 newtons of force by hand.",
+    puzzle: "Using torque = force × distance, how far from the wheel's center must she grip the spoke to generate exactly 40 newton-meters?",
+    choices: ["0.4 meters", "4 meters", "40 meters", "2.5 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the torque you need by the force you actually have,\" Petra says, \"that gap is exactly the distance you're missing.\"",
+    solvedBeat:
+      "40 ÷ 100 = 0.4 meters. Petra shifts her grip out to that exact spoke, and the valve finally turns. — Torque always equals force times the distance from the pivot, so the same torque can come from a small force applied far out, or a large force applied close in.",
+    concept: "Torque",
+  },
+  {
+    id: "clockwork-6",
+    storyId: "clockwork-mountain",
+    order: 6,
+    sceneText:
+      "Two connected wheels turn together deeper in the passage: the large drive wheel has a circumference of 6 meters, and the smaller wheel it turns, linked by a taut belt, has a circumference of 2 meters.",
+    puzzle: "If the large wheel completes exactly 1 full turn, how many full turns does the smaller wheel complete?",
+    choices: ["3 turns", "2 turns", "1/3 of a turn", "6 turns"],
+    correctIndex: 0,
+    wrongBeat: "\"The belt travels the same distance over both wheels,\" Petra says. \"Divide the large wheel's circumference by the small one's to find how many times the small one has to spin to keep up.\"",
+    solvedBeat:
+      "6 ÷ 2 = 3, so the small wheel spins three full turns for every one turn of the large wheel. \"Smaller wheels always spin faster, tied to a bigger one this way,\" Petra says. — Two connected wheels always travel the same linear distance at their rims, however differently their own rotation speeds end up.",
+    concept: "Linear vs Rotational Speed",
+  },
+  {
+    id: "clockwork-7",
+    storyId: "clockwork-mountain",
+    order: 7,
+    sceneText:
+      "A pendulum swings steadily inside a sealed glass case. A brass plate beneath it, in Toribio's own hand, reads: \"A pendulum's period is proportional to the square root of its length — quadruple the length, and you only double the swing, never quadruple it.\" Petra confirms a 1-meter pendulum nearby swings with a period of exactly 2 seconds.",
+    puzzle: "By that same rule, what period would a pendulum 4 meters long — four times as long — actually have?",
+    choices: ["4 seconds", "8 seconds", "2 seconds", "16 seconds"],
+    correctIndex: 0,
+    wrongBeat: "\"Don't just multiply the period by four,\" Petra says. \"The period only scales with the square root of however much the length changes — and the square root of four is two, not four.\"",
+    solvedBeat:
+      "Length quadruples, but the period only doubles: 2 × 2 = 4 seconds. \"Which is exactly why the old escapements never needed enormous pendulums to keep good time,\" Petra says. — A pendulum's period always grows with the square root of its length, never in direct proportion to it.",
+    concept: "Pendulum Period",
+  },
+  {
+    id: "clockwork-8",
+    storyId: "clockwork-mountain",
+    order: 8,
+    sceneText: "To slide the vault's next inner slab aside, a constant force of 250 newtons has to be applied over the slab's full 8-meter travel.",
+    puzzle: "Using work = force × distance, how much total work does it take to slide the slab all the way open?",
+    choices: ["2,000 joules", "258 joules", "31.25 joules", "20,000 joules"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the force by the distance it actually travels,\" Petra says, \"not add the two together — those are entirely different kinds of numbers.\"",
+    solvedBeat:
+      "250 × 8 = 2,000 joules of work, start to finish. The slab grinds slowly aside. \"However you get there — one big push or many small ones — the total work is always the same,\" Petra says. — Work always equals force times the distance over which that force actually acts.",
+    concept: "Work (Force × Distance)",
+  },
+  {
+    id: "clockwork-9",
+    storyId: "clockwork-mountain",
+    order: 9,
+    sceneText: "An old escapement wheel ticks once every time it advances by exactly 15 degrees.",
+    puzzle: "How many ticks does it take this escapement wheel to complete one full 360-degree rotation?",
+    choices: ["24 ticks", "15 ticks", "36 ticks", "12 ticks"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the full circle by however many degrees each tick actually covers,\" Petra says.",
+    solvedBeat:
+      "360 ÷ 15 = 24 ticks per full rotation. \"Steady, patient, and exactly regular — just like grandfather always insisted a good escapement had to be,\" Petra says. — Any wheel that advances the same fixed angle with every tick divides its full rotation evenly by that angle.",
+    concept: "Escapement Ratio",
+  },
+  {
+    id: "clockwork-10",
+    storyId: "clockwork-mountain",
+    order: 10,
+    sceneText:
+      "The innermost vault door carries a dial stamped with two numbers instead of one: 84 and 126, and a line of engraving beneath them: \"the true combination is the largest number that divides them both evenly, and nothing more.\"",
+    puzzle: "What's the greatest common divisor of 84 and 126?",
+    choices: ["42", "21", "84", "6"],
+    correctIndex: 0,
+    wrongBeat: "\"Break both numbers down into their prime factors,\" Petra says, \"then keep only what they genuinely share.\"",
+    solvedBeat:
+      "84 = 2² × 3 × 7, and 126 = 2 × 3² × 7 — the shared factors are 2 × 3 × 7 = 42, so 42 is the greatest common divisor. The dial clicks into place. — A greatest common divisor is always built only from whatever prime factors two numbers actually share, and nothing either one has on its own.",
+    concept: "Greatest Common Divisor",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES, ...LEDGER_CLUES, ...LIBRARY_CLUES, ...MANUSCRIPT_CLUES, ...MARKET_CLUES, ...PROOF_CLUES, ...VINEYARD_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES, ...LEDGER_CLUES, ...LIBRARY_CLUES, ...MANUSCRIPT_CLUES, ...MARKET_CLUES, ...PROOF_CLUES, ...VINEYARD_CLUES, ...OBSERVATORY_CLUES, ...CLOCKWORK_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }

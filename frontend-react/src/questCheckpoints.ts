@@ -1336,6 +1336,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real plot gives way to Rosa's spade, and there it is — her great-grandfather's true buried fortune, coins and a small chest of deeds, wrapped in oiled cloth beneath the old parallelogram-shaped plot exactly where the numbers said it would be.\n\n" +
       "\"He really did trust the harvest's own arithmetic over any map,\" Rosa says, brushing soil from the chest's lid. \"Yields, ratios, rates — numbers that never once lied to him, the way a person eventually might.\" Tucked inside, a final note in her great-grandfather's own hand: \"What grows honestly can always be counted honestly, season after season, however long you're patient enough to keep track.\" Above the vineyard, the next season's vines are already budding, indifferent to how carefully this one harvest's numbers were finally checked.",
   },
+
+  // ------------------------------------------------------------------
+  // Murder at the Observatory
+  // ------------------------------------------------------------------
+  {
+    id: "observatory-mid",
+    storyId: "observatory-murder",
+    afterClue: "observatory-5",
+    kind: "mid",
+    title: "Five Testimonies",
+    scenario:
+      "You gather what each of the five people claim about that night, matching times against Kepwright's own desk clock.\n\n" +
+      "**Prof. Ashworth Vane:** \"I never left my own observatory across town all evening — my night assistant logged the very same star at the very same recorded times as I did, cross-referenced against my own notebook.\"\n\n" +
+      "**Lord Bertram Ashcombe:** \"I was in the library reviewing this year's accounts with the accountant, start to finish, until well past one in the morning. Ask him yourself.\"\n\n" +
+      "**Miss Iris Halloway:** \"I recalibrated the transit instrument early in the evening, then caught the last train home at half past ten, same as I always do.\"\n\n" +
+      "**Old Corwin:** \"I did my usual rounds. I passed the transit instrument at nine o'clock, and it hadn't been touched all evening — still sitting in its old resting position. But I also saw Dr. Rundgren's carriage still standing in the yard well past midnight, long after he claims to have already gone.\"\n\n" +
+      "**Dr. Rundgren:** \"I paid my respects briefly around nine, then drove straight back to my own institution before ten. I never went anywhere near the dome itself.\"\n\n" +
+      "You already know the transit instrument was found freshly aimed and locked in position for a very specific stellar crossing — a setting that has to be made deliberately, by someone who actually knows what they're doing.",
+    entities: ["Vane", "Ashcombe", "Halloway", "Corwin", "Rundgren"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      Vane: "Alibi Holds",
+      Ashcombe: "Alibi Holds",
+      Halloway: "Alibi Breaks",
+      Corwin: "Alibi Holds",
+      Rundgren: "Alibi Breaks",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and whatever trail existed in the yard and at the station goes cold by morning. Look again at which claims are actually confirmed by an independent second person for the entire window that matters, and which are only confirmed for part of the evening — or contradicted outright by someone else's own account.",
+    explain:
+      "Vane's account is confirmed independently by his own night assistant's simultaneous, cross-referenced log entries — he genuinely could not have been in two places at once. Ashcombe's alibi holds the same way, confirmed directly by the accountant for the entire night. Corwin has no motive of his own and supplies the one detail that actually breaks someone else's story, so his own account holds. But Rundgren's claim of leaving before ten doesn't survive Corwin's own sighting of his carriage, still in the yard well past midnight. And Halloway's alibi covers only her claimed departure — nobody actually saw her board that last train, and the transit instrument itself was recalibrated sometime after nine, by someone who plainly knew exactly what they were doing.",
+  },
+  {
+    id: "observatory-final",
+    storyId: "observatory-murder",
+    afterClue: "observatory-10",
+    kind: "final",
+    title: "The Transit Line",
+    scenario:
+      "You confront the two remaining names, standing beneath the great fixed transit instrument itself, still aimed exactly where Kepwright's own notes said it should be.\n\n" +
+      "**Miss Halloway:** \"It was Dr. Rundgren. Corwin saw his carriage himself — sitting in the yard well past midnight, exactly when this whole thing happened. What more do you need?\"\n\n" +
+      "**Dr. Rundgren:** \"I came back briefly, yes — to collect a paper I'd left behind, and to argue with Kepwright, again, about a discovery he insisted was entirely his own work. I left angry, not a murderer. Ask yourself who actually knows how to reset that instrument in the first place.\"\n\n" +
+      "You already know the transit instrument's aim has to be corrected for precession — the same slow drift you calculated yourself — before it can be set precisely for a specific star's crossing, and that particular correction is not something every visiting astronomer would know how to do at all, let alone well enough to do it correctly in the dark.",
+    entities: ["Halloway", "Rundgren"],
+    options: ["Guilty", "Innocent"],
+    answer: { Halloway: "Guilty", Rundgren: "Innocent" },
+    wrongConsequence:
+      "The transit line stays silent, and the truth settles right back into the dark with it — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually had the specific technical skill the freshly reset instrument required, versus who merely had an embarrassing but innocent reason to be seen that night.",
+    explain:
+      "Rundgren's carriage really was in the yard past midnight, but by his own account — and by the argument Kepwright's own notes independently mention — he came back only to retrieve a paper and air an old grievance, not to touch a delicate instrument he'd left specialized positional astronomy behind years ago. Halloway's train ticket was never actually punched, and she was the one person on the grounds that night who could correct the transit instrument's aim for precession precisely enough to set it for a specific star's crossing — the same skill Kepwright himself relied on her for constantly, and the same recognition she was never once given credit for.",
+    resolution:
+      "You lay it out for Wren, piece by piece: the angle converted cleanly from degrees and minutes, the parallax that placed a star's true distance, Kepler's own rule linking a period to a distance, the magnification that a simple ratio of two focal lengths could always explain, the sidereal clock quietly outpacing the ordinary one by four minutes a day, the light that reached the dome years after it had actually left its star, the brightness that fell away with the square of distance, the coordinates converted from hours into degrees, and the slow, patient drift of the equinox itself — each fact narrowing the field of who could have reset that final, precise instrument at all.\n\n" +
+      "Halloway doesn't run — there's nowhere on a mountain observatory left to run to. \"He was going to publish it under his name alone,\" she says quietly. \"Every calculation I ever checked for him, every correction I ever caught before it became an embarrassment — and none of it was ever going to have my name on it.\" Wren closes the logbook gently. \"He never once said the work didn't matter,\" Wren says. \"Only that finishing it correctly mattered more — and he never once thought to ask who was actually finishing it for him.\" Outside, the great refractor keeps turning slowly on its mount, indifferent to the careful, patient arithmetic that finally caught the one person who understood it best.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Clockwork Mountain
+  // ------------------------------------------------------------------
+  {
+    id: "clockwork-mid",
+    storyId: "clockwork-mountain",
+    afterClue: "clockwork-5",
+    kind: "mid",
+    title: "Three Chambers",
+    scenario:
+      "Beyond the torque-locked valve, three narrow chambers branch off into the mountain, each sealed behind a claim etched into its own stone lintel. Petra reads them aloud:\n\n" +
+      "**Chamber 1:** \"A lever's mechanical advantage always equals its effort arm's length divided by its load arm's length.\"\n\n" +
+      "**Chamber 2:** \"Adding more supporting ropes to a pulley system always lets you pull the rope a shorter total distance to lift the load the same height.\"\n\n" +
+      "**Chamber 3:** \"Torque only depends on how much force you apply, never on how far from the pivot you apply it.\"\n\n" +
+      "\"Toribio never sealed a door behind a claim that was actually true and false at the same time,\" Petra says. \"Exactly one of these opens. Check the arithmetic properly before you commit.\"",
+    entities: ["Chamber 1", "Chamber 2", "Chamber 3"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Chamber 1": "True Claim", "Chamber 2": "False Claim", "Chamber 3": "False Claim" },
+    wrongConsequence:
+      "The wrong chamber seals itself back shut with a heavy mechanical click, and you're left backtracking through the dark with nothing to show for it. \"Test each claim against real numbers,\" Petra says, \"not whatever sounds mechanically reasonable.\"",
+    explain:
+      "Chamber 1 restates exactly what you calculated yourself — a lever's mechanical advantage is always its effort arm divided by its load arm, at any scale. Chamber 2 is false: more supporting ropes multiply your force, but you always pay for that by pulling a longer total length of rope for the same lift, never a shorter one — the trade-off never disappears. Chamber 3 is false too, and you proved it yourself with the valve wheel: torque depends on both the force applied and exactly how far from the pivot you apply it.",
+  },
+  {
+    id: "clockwork-final",
+    storyId: "clockwork-mountain",
+    afterClue: "clockwork-10",
+    kind: "final",
+    title: "Three Final Vaults",
+    scenario:
+      "Three last vault doors stand side by side, each stamped with one final claim in Toribio's own unmistakable engraving. Petra reads them aloud:\n\n" +
+      "**Vault 1:** \"A screw's mechanical advantage is its handle's circumference divided by how far it advances into the wall per turn.\"\n\n" +
+      "**Vault 2:** \"If a pendulum's length quadruples, its swing period also quadruples.\"\n\n" +
+      "**Vault 3:** \"The greatest common divisor of two different numbers is always smaller than both of those numbers.\"\n\n" +
+      "\"Only one of these actually holds up,\" Petra says. \"Grandfather trusted the whole fortune's protection on that one claim being true, and every other visitor's impatience to prove the wrong two.\"",
+    entities: ["Vault 1", "Vault 2", "Vault 3"],
+    options: ["Real Vault", "False Vault"],
+    answer: { "Vault 1": "Real Vault", "Vault 2": "False Vault", "Vault 3": "False Vault" },
+    wrongConsequence:
+      "The wrong vault door grinds open onto solid mountain rock, nothing behind it at all, and you're left resetting your search by lantern light. \"Don't trust how reasonable a sentence sounds,\" Petra says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Vault 1 holds exactly: a screw's mechanical advantage really is its handle's circumference divided by its pitch, precisely as you calculated. Vault 2 is false — you proved it yourself: quadrupling a pendulum's length only doubles its period, since the period scales with the square root of the length, not the length itself. Vault 3 is false too: whenever one number divides the other evenly, their greatest common divisor equals the smaller number itself, not something smaller than it — as with 6 and 3, whose greatest common divisor is 3.",
+    resolution:
+      "The real vault door swings open onto a small stone chamber, and there it is — Old Toribio's true fortune, a chest of coins and uncut gems, sitting exactly where a hundred years of careful mechanical logic said it would be.\n\n" +
+      "\"He really did mean every bit of it as a lesson, not just a lock,\" Petra says, running a hand along the chest's engraved lid. \"Levers, pulleys, ramps, screws — every simple machine he ever loved, built into one mountain, just to see who'd actually bother calculating their way through instead of forcing it.\" Tucked beneath the coins, a final note in Toribio's own hand: \"Any fool can force a door. It takes an engineer to know exactly how much force it actually takes — and then use precisely that much, and not one bit more.\" Deep in the mountain, the old pendulum keeps swinging patiently on, indifferent to how long it took anyone to finally work out its exact rhythm.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

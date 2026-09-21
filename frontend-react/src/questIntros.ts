@@ -614,6 +614,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "observatory-murder",
+    sceneText:
+      "**An Observatory atop a windswept hill, sometime in the age of great refracting telescopes.**\n\n" +
+      "Wren, the observatory's young night clerk, meets you at the dome's iron stairs, lantern trembling slightly in hand. \"It's Dr. Kepwright, sir — dead at his own desk, right beneath the great telescope. He'd spent weeks finishing the calculations on something new, out past Saturn's own orbit, and swore the figures would finally settle who actually found it first. He told me only yesterday the last numbers were finally coming together.\"\n\n" +
+      "The observatory keeps only a small staff and fewer regular visitors, and five people had good enough reason to have still been somewhere on these grounds well past the hour his desk clock stopped. Kepwright, everyone agrees, trusted a properly finished calculation over any rival's claim to the contrary — which, in an age of astronomers racing each other for credit, made him exactly the kind of man someone might not be willing to let finish.",
+    cast: [
+      {
+        name: "Prof. Ashworth Vane",
+        detail: "A rival astronomer at a neighboring observatory, desperate to publish first and claim the discovery's credit for himself.",
+      },
+      {
+        name: "Lord Bertram Ashcombe",
+        detail: "The observatory's own patron, increasingly uneasy about where his funding was actually going and what a scandal might do to his name.",
+      },
+      {
+        name: "Miss Iris Halloway",
+        detail: "Kepwright's own junior assistant astronomer, quietly resentful after years of uncredited work correcting his every calculation.",
+      },
+      {
+        name: "Old Corwin",
+        detail: "The night watchman, walking these same grounds every evening for decades. As far as anyone can tell, entirely without motive.",
+      },
+      {
+        name: "Dr. Rundgren",
+        detail: "A former student, now at a rival institution, still bitter over an old academic dispute about whose idea a discovery years ago had actually been.",
+      },
+    ],
+  },
+  {
+    storyId: "clockwork-mountain",
+    sceneText:
+      "**Deep inside a mountain honeycombed with a century-old mechanical works.**\n\n" +
+      "Petra, whose family has minded this mountain's machinery for five generations, meets you at the outer gate with a lantern and a grin she can't quite suppress. \"My own great-great-grandfather built all of this,\" she says. \"Old Toribio — half engineer, half prankster, by every account anyone in my family ever passed down. He never trusted a lock that couldn't also teach you something on the way in. Every single mechanism in here does exactly what it looks like it does — you just actually have to work out the numbers instead of guessing, or forcing your way through.\"\n\n" +
+      "Toribio, by Petra's own account, built this entire mountain's mechanism as one very long, very deliberate joke on anyone impatient enough to try forcing a door instead of calculating their way through it properly.",
+    cast: [
+      {
+        name: "Petra",
+        detail: "Your guide — the vault-builder's great-great-granddaughter, the latest in five generations to mind this mountain's old machinery.",
+      },
+      {
+        name: "Old Toribio",
+        detail: "The mountain vault's original builder, a legendary engineer with a reputation for mechanical jokes nobody ever quite appreciated at the time. Long gone now, but every mechanism he ever built still works exactly as he left it.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {
