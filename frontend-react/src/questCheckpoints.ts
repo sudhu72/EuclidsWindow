@@ -1134,6 +1134,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real chamber gives way at last, and lantern light spills across shelf after submerged shelf, sealed scroll-cases still intact after all this time, protected by nothing but careful engineering and the Archivists' own trust in exact measurement.\n\n" +
       "\"They really did trust the pressure over any lock,\" Delia says, running a gloved hand along a sealed case. \"Get the depth wrong by even a few meters, and you'd never find this place at all.\" A final tablet, propped against the shelf, translated slowly by dive light: \"What the sea keeps, it keeps exactly as deep as the numbers say, and not one meter less.\" Above the chamber, sunlight filters down faintly through sixty meters of water, patient and indifferent, exactly as it always has.",
   },
+
+  // ------------------------------------------------------------------
+  // The Vanishing Manuscript
+  // ------------------------------------------------------------------
+  {
+    id: "manuscript-mid",
+    storyId: "vanishing-manuscript",
+    afterClue: "manuscript-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that evening and lay them side by side.\n\n" +
+      "**Brother Ignatius:** \"I was closing the treasury's ledgers for the night, alone, same as always at this hour.\"\n\n" +
+      "**Abbot Werner:** \"I was at evening prayers with the full brotherhood, the entire congregation as witness.\"\n\n" +
+      "**Giacomo:** \"I was at the inn in the village earlier in the evening, sharing a cup with a few other merchants — though I couldn't tell you exactly when I turned in for the night.\"\n\n" +
+      "**Brother Faustus:** \"I was in the scriptorium myself, finishing my own copying work — Brother Hugh saw me still at my desk when he passed.\"\n\n" +
+      "**Old Brother Hugh:** \"I did my usual gate rounds. Faustus was indeed still at his desk, just as he says. But Ignatius — his ledger claim doesn't sit right. The treasury's own candle stub from that night was barely burned down at all, nowhere near enough for a full night's closing work.\"\n\n" +
+      "You already know Brother Teodor's body was found by Aldric at his own writing desk, and that the desk sits directly across the hall from the treasury.",
+    entities: ["Brother Ignatius", "Abbot Werner", "Giacomo", "Brother Faustus", "Old Brother Hugh"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      "Brother Ignatius": "Alibi Breaks",
+      "Abbot Werner": "Alibi Holds",
+      Giacomo: "Alibi Breaks",
+      "Brother Faustus": "Alibi Holds",
+      "Old Brother Hugh": "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and a full night's lead slips away chasing it. Look again at which claims are confirmed by someone specifically placing them there for the whole window that matters, and which cover only part of the evening — and check whether Hugh's own detail actually matches what someone claimed to be doing.",
+    explain:
+      "Werner's account is confirmed by the entire congregation at prayers, and Faustus's is corroborated directly by Hugh — both hold. Hugh himself has no motive and supplies the key detail, so his account holds too. But Ignatius's claim of a full night's ledger work doesn't survive Hugh's own observation: the candle stub barely burned down at all. And Giacomo's account only covers the early evening — he has no one to vouch for the later hour when it actually mattered.",
+  },
+  {
+    id: "manuscript-final",
+    storyId: "vanishing-manuscript",
+    afterClue: "manuscript-10",
+    kind: "final",
+    title: "The Scriptorium",
+    scenario:
+      "You confront the two remaining names in the scriptorium itself, the recovered manuscript page still spread on the desk.\n\n" +
+      "**Brother Ignatius:** \"It was Giacomo. He wanted that manuscript's secrets to sell to rival merchant houses — ask anyone what an advantage like that is worth in trade.\"\n\n" +
+      "**Giacomo:** \"Ask instead who's spent years watching the treasury's own numbers slip further behind every merchant house that's already switched to the new counting, and who couldn't stand watching Teodor prove him wrong in writing.\"\n\n" +
+      "You already know the final Fibonacci calculation, worked out in Teodor's own hand, points to a hollow compartment behind the treasury's own ledger shelf — a hiding place only someone with Ignatius's own daily access would ever think to use.",
+    entities: ["Brother Ignatius", "Giacomo"],
+    options: ["Guilty", "Innocent"],
+    answer: { "Brother Ignatius": "Guilty", Giacomo: "Innocent" },
+    wrongConsequence:
+      "The scriptorium stays silent, and nothing more is offered — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually had daily access to the hiding place the calculation points to, versus who merely had a trade motive with no way to reach it.",
+    explain:
+      "Giacomo's trade motive is real, but nothing places him anywhere near the treasury itself, and a traveling merchant rarely knows a monastery's own hiding places well enough to use one. Ignatius's exposure was total and specific: the final calculation, worked out in Teodor's own careful hand, points directly to a hollow compartment behind the treasury's own shelves — a hiding place only the treasurer himself would ever think to use.",
+    resolution:
+      "You lay it out for Aldric, piece by piece: the rabbit sequence that first proved Teodor's manuscript was no idle exercise. The golden ratio, hidden in plain sight in ratios anyone could check for themselves. The two numbers, written two different ways, that finally made the whole argument concrete. The place value that explained exactly why the new numerals worked so much better. The long multiplication that proved it beyond any real argument. The extended sequence, and the percentage, and the manuscript's own careful page proportions, each one built the same deliberate way. The doubling pattern that Teodor used to contrast against his own rabbits, showing two very different kinds of growth side by side. And the final Fibonacci calculation, worked out in his own hand, pointing directly to a hollow shelf only the treasury's own keeper would ever think to check.\n\n" +
+      "Brother Ignatius doesn't run — there's nowhere in a locked monastery left to run to. \"Everything I'd built my whole life on those old numerals,\" he says quietly, \"and he was going to prove, in writing, that it was simply the harder way to do it.\" Aldric closes the manuscript's cover gently. \"He never said the old way was wrong,\" he says. \"Only that the new way was better — and he was patient enough to actually prove it.\" Outside, the monastery bells are already ringing for morning prayers, indifferent to the manuscript's own quiet, careful arithmetic, safe now, finally, where it can be read.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Floating Market Trail
+  // ------------------------------------------------------------------
+  {
+    id: "market-mid",
+    storyId: "floating-market-trail",
+    afterClue: "market-5",
+    kind: "mid",
+    title: "Three Passages",
+    scenario:
+      "Beyond the main dock, three narrow channels branch off, each marked with a claim carved into a floating post. Sula reads them aloud:\n\n" +
+      "**Passage A:** \"Connecting every point in a group to every other point once each always follows the same n times n-minus-one, divided by two, formula, no matter how many points there are.\"\n\n" +
+      "**Passage B:** \"The shortest route between two points is always the one with the fewest stops along the way.\"\n\n" +
+      "**Passage C:** \"Choosing a group where order doesn't matter always gives the same count as choosing a group where order does matter.\"\n\n" +
+      "\"The old Riverkeeper marked the false channels with claims that sound reasonable but fall apart under real arithmetic,\" Sula says. \"Check every one properly before you trust it.\"",
+    entities: ["Passage A", "Passage B", "Passage C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Passage A": "True Claim", "Passage B": "False Claim", "Passage C": "False Claim" },
+    wrongConsequence:
+      "The wrong channel narrows to a reed-choked dead end, and you pole back with nothing but lost time for the trouble. \"Test each claim against real numbers,\" Sula says. \"Not what sounds reasonable — what actually holds up once you calculate it.\"",
+    explain:
+      "Passage A restates exactly what you calculated yourself: connecting every point to every other point always follows that same formula, regardless of how many points are involved. Passage B is false — you proved it yourself: the winding three-stop route actually came out shorter than the single straight crossing, fewer stops guaranteeing nothing about total distance. Passage C is false too: combinations and permutations of the very same group give completely different counts, since permutations count every possible order separately and combinations don't.",
+  },
+  {
+    id: "market-final",
+    storyId: "floating-market-trail",
+    afterClue: "market-10",
+    kind: "final",
+    title: "Three Final Stalls",
+    scenario:
+      "Sula reads each final stall's carved marker aloud:\n\n" +
+      "**Vendor 1:** \"In a fully connected network, the total number of routes grows much faster than the number of points itself.\"\n\n" +
+      "**Vendor 2:** \"A weighted average is always exactly halfway between the two original values, no matter how much of each there is.\"\n\n" +
+      "**Vendor 3:** \"The shortest path between two points is always a perfectly straight line, even when only certain routes are actually available.\"\n\n" +
+      "\"One of these is true without a single exception,\" Sula says. \"The old Riverkeeper trusted his whole fortune's protection on that one rule.\"",
+    entities: ["Vendor 1", "Vendor 2", "Vendor 3"],
+    options: ["Real Vendor", "False Vendor"],
+    answer: { "Vendor 1": "Real Vendor", "Vendor 2": "False Vendor", "Vendor 3": "False Vendor" },
+    wrongConsequence:
+      "The wrong stall yields nothing but empty crates, and you're left re-checking the map by lantern light. \"Don't trust the shape of the sentence,\" Sula says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Vendor 1 holds exactly: as you calculated yourself, going from 6 points to 8 points didn't just add a few routes, it jumped from 15 to 28 — the total grows much faster than the points themselves. Vendor 2 is false: a weighted average leans toward whichever quantity has more weight behind it, and only lands exactly in the middle when both quantities are equal. Vendor 3 is false too, and you proved it yourself: when only certain routes are actually available, the shortest real path can easily be a longer-looking one with more turns, not a straight line at all.",
+    resolution:
+      "The real stall gives way at last, and Sula's lantern catches a small, waterproofed chest tucked beneath false floorboards — coins, and a single scrap of oiled paper covered in the same careful network diagrams you've been following all afternoon.\n\n" +
+      "\"The old Riverkeeper really did trust the river's own paths over any lock,\" Sula says, turning the coins over in her hands. \"Enough routes through this market to hide anything, if you know which ones actually connect.\" The paper's final line, written in a careful, faded hand: \"What connects honestly will always connect the same way, however many paths you draw between two points.\" Above the market, boats are already threading their way home along routes they've never once needed to count, indifferent to how carefully this one was worked out.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

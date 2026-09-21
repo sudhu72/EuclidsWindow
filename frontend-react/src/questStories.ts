@@ -36,7 +36,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "vanishing-manuscript",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Vanishing Manuscript",
     blurb: "A monastery's only copy of a forbidden theorem disappears the same night a monk is found unconscious in the scriptorium.",
@@ -230,7 +230,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "floating-market-trail",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Floating Market Trail",
     blurb: "Every vendor on this river market holds one piece of a number puzzle, and none of them will simply tell you.",

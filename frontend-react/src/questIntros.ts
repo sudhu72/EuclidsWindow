@@ -522,6 +522,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "vanishing-manuscript",
+    sceneText:
+      "**A medieval monastery, candles guttering low in the scriptorium.**\n\n" +
+      "Brother Aldric, a young novice copyist, meets you at the scriptorium door, ink-stained hands trembling. \"Brother Teodor is dead, right at his own writing desk,\" he says. \"His manuscript is gone — the one he'd been guarding for months. Some of the older brothers called it forbidden, just for what it argued: that our own numerals, the ones we've used for centuries, aren't actually the best way to count at all. He told me just last week he'd finally finished proving it, page by page.\"\n\n" +
+      "The monastery settles into silence at the usual hour, and five people had reason enough to still be somewhere in these halls well past that. Teodor, everyone agrees, trusted his own careful proofs completely — which made him exactly the kind of man who'd eventually convince someone dangerous that he was right.",
+    cast: [
+      {
+        name: "Brother Ignatius",
+        detail: "The monastery's treasurer, keeping every ledger in the old Roman numerals for thirty years — numerals Teodor's manuscript was about to prove badly outdated.",
+      },
+      {
+        name: "Abbot Werner",
+        detail: "The monastery's head, quietly afraid the manuscript's ideas will draw the Church's suspicion down on the whole community.",
+      },
+      {
+        name: "Giacomo",
+        detail: "A traveling merchant, well aware that whoever masters the new numerals first gains a real advantage over every rival trading house.",
+      },
+      {
+        name: "Brother Faustus",
+        detail: "A rival copyist, passed over when Teodor was chosen to transcribe this particular manuscript.",
+      },
+      {
+        name: "Old Brother Hugh",
+        detail: "The monastery's gatekeeper, walking the same rounds every night for decades. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "floating-market-trail",
+    sceneText:
+      "**A river floating market, boats and stalls lashed together in a maze of waterways.**\n\n" +
+      "Sula has poled a boat through this market since she was a child, and has spent the last two years chasing a story her grandmother swore was true: that a vanished riverkeeper hid a small fortune somewhere among these very stalls, protected by nothing but the market's own tangled network of routes. \"He didn't trust any single lock,\" she tells you, checking the map's edge against the real waterways. \"He trusted the routes themselves — how many connect, which ones are actually shorter, which vendor's word you can actually trust completely.\"\n\n" +
+      "Her own map already marks two things worth remembering: six main stalls, each one connected directly to every other by its own route, and a spice stall reachable two completely different ways. \"Every stall from here to the treasure tests the same thing,\" Sula says, pushing off from the dock. \"Whether you trust the actual numbers a route gives you, or you just guess at which path is shorter.\"",
+    cast: [
+      {
+        name: "Sula",
+        detail: "Your boat guide — poling these waterways since childhood, and the first to take the market's own network of routes as seriously as its gossip.",
+      },
+      {
+        name: "The Old Riverkeeper",
+        detail: "The vanished trader who once ran this market. Long gone, but every route through it still tests the same thing: whether your arithmetic can be trusted completely.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {

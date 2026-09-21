@@ -3255,8 +3255,274 @@ const LIBRARY_CLUES: QuestClue[] = [
   },
 ];
 
+const MANUSCRIPT_CLUES: QuestClue[] = [
+  {
+    id: "manuscript-1",
+    storyId: "vanishing-manuscript",
+    order: 1,
+    sceneText: "Brother Teodor's manuscript begins with a sequence he calls \"the rabbit problem\": 1, 1, 2, 3, 5, 8, 13, ...",
+    puzzle: "Following that same pattern — each number the sum of the two before it — what comes next after 13?",
+    choices: ["21", "18", "20", "26"],
+    correctIndex: 0,
+    wrongBeat: "\"Add the two most recent numbers together to get the next one,\" Aldric says, \"not the two before those.\"",
+    solvedBeat:
+      "8 + 13 = 21. \"He called this his rabbit problem,\" Aldric says, tracing the numbers. \"Counting how quickly a single pair could multiply.\" — Each term in this sequence is simply the sum of the two terms right before it, a pattern that turns up again and again throughout the natural world.",
+    concept: "The Fibonacci Sequence",
+  },
+  {
+    id: "manuscript-2",
+    storyId: "vanishing-manuscript",
+    order: 2,
+    sceneText: "Teodor's margin notes divide consecutive pairs from his sequence: 13 divided by 8, then 21 divided by 13, each landing closer and closer to the very same number.",
+    puzzle: "Roughly what number do those ratios keep approaching, the further along the sequence you go?",
+    choices: ["about 1.618", "about 1.5", "about 2", "about 1.414"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide a few consecutive pairs yourself,\" Aldric says, \"and watch where the results start to settle — they get closer to the same value the further into the sequence you go.\"",
+    solvedBeat:
+      "13/8 ≈ 1.625, and 21/13 ≈ 1.615 — both closing in on roughly 1.618. \"The same proportion carved into half the cathedrals in Europe,\" Aldric says, awed. — The ratio between consecutive Fibonacci numbers approaches the golden ratio more and more closely the further along the sequence you look.",
+    concept: "The Golden Ratio",
+  },
+  {
+    id: "manuscript-3",
+    storyId: "vanishing-manuscript",
+    order: 3,
+    sceneText: "Teodor's manuscript compares two ways of writing the very same number: \"MCMXCVIII\" beside a simpler mark, \"1998.\"",
+    puzzle: "What does MCMXCVIII actually equal?",
+    choices: ["1,998", "1,898", "1,988", "1,908"],
+    correctIndex: 0,
+    wrongBeat: "\"Work through the numerals left to right,\" Aldric says, \"subtracting a smaller value placed before a larger one — M is 1000, CM is 900, XC is 90, VIII is 8.\"",
+    solvedBeat:
+      "1,000 + 900 + 90 + 8 = 1,998. \"Nine separate symbols,\" Aldric says, \"against just four with the new numerals. He wrote whole pages proving the new way was simply better.\" — The very same number, written two completely different ways, is exactly the comparison that made this manuscript so controversial.",
+    concept: "Roman Numeral Conversion",
+  },
+  {
+    id: "manuscript-4",
+    storyId: "vanishing-manuscript",
+    order: 4,
+    sceneText: "Teodor's notes explain the new numerals' real advantage: in \"4,725,\" the digit 7 doesn't just mean seven — its position tells you it actually means seven hundred.",
+    puzzle: "In the number 4,725, what does the digit 2 actually represent?",
+    choices: ["Twenty (2 tens)", "Two", "Two hundred", "Two thousand"],
+    correctIndex: 0,
+    wrongBeat: "\"Look at exactly which position the 2 sits in,\" Aldric says. \"The tens place, not the ones place or the hundreds place.\"",
+    solvedBeat:
+      "The 2 sits in the tens place, so it represents twenty. \"Roman numerals never worked this way,\" Aldric says. \"Every symbol always meant the same fixed amount, no matter where you put it.\" — Place value means the very same digit can represent wildly different amounts, purely depending on where it sits.",
+    concept: "Place Value",
+  },
+  {
+    id: "manuscript-5",
+    storyId: "vanishing-manuscript",
+    order: 5,
+    sceneText: "Teodor's manuscript walks through multiplying 24 by 13 using the new numerals, step by step.",
+    puzzle: "What's 24 times 13?",
+    choices: ["312", "288", "302", "324"],
+    correctIndex: 0,
+    wrongBeat: "\"Break the multiplication into parts using place value,\" Aldric says, \"24 times 10, plus 24 times 3, then add the two results together.\"",
+    solvedBeat:
+      "24 × 10 = 240, and 24 × 3 = 72, so 240 + 72 = 312. \"Try that same multiplication in Roman numerals sometime,\" Aldric says, half-laughing. \"He included that comparison too, for exactly this reason.\" — Place value makes even fairly large multiplications straightforward, breaking them down into simple, manageable steps.",
+    concept: "Multiplication",
+  },
+  {
+    id: "manuscript-6",
+    storyId: "vanishing-manuscript",
+    order: 6,
+    sceneText: "Further into the manuscript, Teodor's sequence continues past where the torn page picks back up: ..., 34, 55, 89, ...",
+    puzzle: "Following that same pattern, what number comes right after 89?",
+    choices: ["144", "134", "124", "154"],
+    correctIndex: 0,
+    wrongBeat: "\"Add the two most recent numbers together,\" Aldric says. \"55 and 89, this time.\"",
+    solvedBeat:
+      "55 + 89 = 144. \"It never once breaks its own rule,\" Aldric says, checking the torn edge against the next surviving page. — The same simple rule — each term the sum of the two before it — carries the sequence forward indefinitely, however far you extend it.",
+    concept: "The Fibonacci Sequence",
+  },
+  {
+    id: "manuscript-7",
+    storyId: "vanishing-manuscript",
+    order: 7,
+    sceneText: "The monastery's own grain stores should hold 600 measures. After the winter count, only 522 measures remain.",
+    puzzle: "What percentage of the grain stores is missing?",
+    choices: ["13%", "22%", "87%", "10%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the missing amount first,\" Aldric says, \"the expected total minus what's actually there, then divide that gap by the expected total.\"",
+    solvedBeat:
+      "600 − 522 = 78 measures missing, and 78 ÷ 600 = 13%. \"More than anyone accounted for at harvest,\" Aldric says. — A percentage like this always measures the missing amount against the total it was supposed to be part of.",
+    concept: "Percentage",
+  },
+  {
+    id: "manuscript-8",
+    storyId: "vanishing-manuscript",
+    order: 8,
+    sceneText: "The manuscript's own illuminated border follows a strict proportion: for every 5 units of height, the border runs 8 units wide.",
+    puzzle: "If a smaller illustration follows that same ratio and measures 15 units tall, how wide should it be?",
+    choices: ["24 units", "20 units", "18 units", "27 units"],
+    correctIndex: 0,
+    wrongBeat: "\"Find how many times the height's own ratio-part fits into 15,\" Aldric says, \"then apply that same multiple to the width's ratio-part.\"",
+    solvedBeat:
+      "15 is 3 times the ratio's \"5 parts,\" so width scales the same way: 8 × 3 = 24 units. \"The same careful proportion, page after page,\" Aldric says. — A ratio holds steady no matter how large the actual illustration gets, as long as every part scales by the same multiple.",
+    concept: "Ratio & Proportion",
+  },
+  {
+    id: "manuscript-9",
+    storyId: "vanishing-manuscript",
+    order: 9,
+    sceneText: "Teodor's final chapter contrasts his rabbit sequence against a very different pattern: a single debt doubling every year — 10, 20, 40, 80 gold coins, ...",
+    puzzle: "Following that same doubling pattern, what would the debt be after one more year?",
+    choices: ["160 gold coins", "120 gold coins", "100 gold coins", "150 gold coins"],
+    correctIndex: 0,
+    wrongBeat: "\"Check what's actually happening between each amount and the next,\" Aldric says. \"It isn't adding a fixed amount — it's multiplying by the same fixed amount every time.\"",
+    solvedBeat:
+      "Each year is exactly double the last, so 80 × 2 = 160 gold coins. \"He wanted to show how differently two patterns can grow,\" Aldric says, \"even starting from numbers that don't look so different.\" — That's a geometric sequence, growing by repeated multiplication rather than repeated addition, and it can outpace almost anything remarkably fast.",
+    concept: "Geometric Sequences",
+  },
+  {
+    id: "manuscript-10",
+    storyId: "vanishing-manuscript",
+    order: 10,
+    sceneText: "The manuscript's final page hides its true location in one last rabbit-sequence riddle: the missing page number is the sequence's own next term after 144, 233.",
+    puzzle: "Following the same pattern — each term the sum of the two before it — what page number comes next?",
+    choices: ["377", "367", "357", "387"],
+    correctIndex: 0,
+    wrongBeat: "\"Add the two most recent numbers together,\" Aldric says. \"144 and 233, this time.\"",
+    solvedBeat:
+      "144 + 233 = 377. Aldric turns straight to page 377, and there, tucked into the binding, the manuscript's own missing final leaf. — The same rule that built the whole sequence from its very first pair still holds, no matter how far along you carry it.",
+    concept: "The Fibonacci Sequence",
+  },
+];
+
+const MARKET_CLUES: QuestClue[] = [
+  {
+    id: "market-1",
+    storyId: "floating-market-trail",
+    order: 1,
+    sceneText: "Sula counts 6 vendor stalls scattered across the floating market, and every single stall connects to every other stall by its own direct boat route.",
+    puzzle: "How many direct boat routes connect all 6 stalls to each other, counting each route only once?",
+    choices: ["15 routes", "30 routes", "6 routes", "12 routes"],
+    correctIndex: 0,
+    wrongBeat: "\"Count how many routes lead out from each stall,\" Sula says, \"multiply by the number of stalls, then divide by 2 so you're not counting each route twice.\"",
+    solvedBeat:
+      "6 × 5 ÷ 2 = 15 distinct routes. \"More paths through here than most people ever notice,\" Sula says. — Connecting every point to every other point once each is exactly the classic handshake problem, and it always works out to n times n-minus-one, divided by two.",
+    concept: "Graph Theory (Counting Connections)",
+  },
+  {
+    id: "market-2",
+    storyId: "floating-market-trail",
+    order: 2,
+    sceneText: "Two routes lead to the spice vendor's stall: one running 3 stops of 40 meters each, the other running straight across in a single 150-meter crossing.",
+    puzzle: "Which route is shorter, and by how much?",
+    choices: ["The 3-stop route, by 30 meters", "The straight crossing, by 30 meters", "They're exactly equal", "The 3-stop route, by 10 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the total distance of each route separately first,\" Sula says, \"then compare the two totals directly.\"",
+    solvedBeat:
+      "3 × 40 = 120 meters for the winding route, which is 30 meters shorter than the single 150-meter crossing. \"Longer looking doesn't always mean longer,\" Sula says, steering that way instead. — Comparing routes always comes down to adding up each one's own total distance and setting them side by side.",
+    concept: "Shortest Path",
+  },
+  {
+    id: "market-3",
+    storyId: "floating-market-trail",
+    order: 3,
+    sceneText: "Sula needs to visit exactly 3 of the market's 7 spice stalls today, in any order — order doesn't matter, only which three she picks.",
+    puzzle: "How many different groups of 3 stalls could she choose from those 7?",
+    choices: ["35", "21", "210", "7"],
+    correctIndex: 0,
+    wrongBeat: "\"Since order doesn't matter here, don't just multiply 7×6×5,\" Sula says. \"That counts every group multiple times over — divide by the number of ways to reorder the 3 you picked.\"",
+    solvedBeat:
+      "7×6×5 = 210 ordered picks, divided by 3×2×1 = 6 ways to reorder any 3 of them, giving 35 distinct groups. \"Even narrowing it down, there's no shortage of choices,\" Sula says. — That's a combination: counting groups where order truly doesn't matter, unlike a permutation.",
+    concept: "Combinations",
+  },
+  {
+    id: "market-4",
+    storyId: "floating-market-trail",
+    order: 4,
+    sceneText: "The market's main loop runs along four connected docks: 80 meters, 65 meters, 90 meters, and 55 meters.",
+    puzzle: "What's the total distance all the way around that loop?",
+    choices: ["290 meters", "270 meters", "310 meters", "300 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Add up all four dock lengths together,\" Sula says. \"The full trip around covers every single one of them.\"",
+    solvedBeat:
+      "80 + 65 + 90 + 55 = 290 meters, all the way around. \"A long paddle, if you're doing the whole loop,\" Sula says. — A perimeter is just the total distance around a shape's outer edge, all sides added together.",
+    concept: "Perimeter",
+  },
+  {
+    id: "market-5",
+    storyId: "floating-market-trail",
+    order: 5,
+    sceneText: "Upriver, goods are priced in copper rings; downriver, the same goods are priced in silver beads, exchanged at a rate of 6 copper rings to 1 silver bead.",
+    puzzle: "How many silver beads would a price of 42 copper rings be worth, at that same rate?",
+    choices: ["7 silver beads", "36 silver beads", "48 silver beads", "252 silver beads"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide by the exchange rate,\" Sula says, \"since you're converting from copper rings to silver beads, not the other way around.\"",
+    solvedBeat:
+      "42 ÷ 6 = 7 silver beads. \"Traders who mix that up get cheated at every stall on this river,\" Sula says. — An exchange rate is simply a ratio, and converting through it correctly depends on which direction you're actually converting.",
+    concept: "Ratio & Proportion",
+  },
+  {
+    id: "market-6",
+    storyId: "floating-market-trail",
+    order: 6,
+    sceneText: "Five small market islands are connected by bridges: enough bridges that every island connects directly to every other island, exactly once each.",
+    puzzle: "How many bridges does that take in total?",
+    choices: ["10 bridges", "20 bridges", "5 bridges", "25 bridges"],
+    correctIndex: 0,
+    wrongBeat: "\"Count how many bridges lead out from each island,\" Sula says, \"multiply by the number of islands, then divide by 2 so you're not counting each bridge twice.\"",
+    solvedBeat:
+      "5 × 4 ÷ 2 = 10 bridges. \"Every one of them worth crossing at least once,\" Sula says. — The same handshake formula works for bridges between islands as it does for routes between stalls: n times n-minus-one, divided by two.",
+    concept: "Graph Theory (Counting Connections)",
+  },
+  {
+    id: "market-7",
+    storyId: "floating-market-trail",
+    order: 7,
+    sceneText: "A boat arrives with 150 units of cargo. By the time it reaches the far stall, 18 units have spoiled in the heat.",
+    puzzle: "What percentage of the cargo spoiled along the way?",
+    choices: ["12%", "18%", "15%", "8%"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the amount that spoiled by the original total cargo,\" Sula says, \"then convert that fraction into a percentage.\"",
+    solvedBeat:
+      "18 ÷ 150 = 0.12, or 12%. \"Better than most boats manage on a hot day,\" Sula says. — A percentage like this always measures the spoiled amount against the original total.",
+    concept: "Percentage",
+  },
+  {
+    id: "market-8",
+    storyId: "floating-market-trail",
+    order: 8,
+    sceneText: "A row of numbered buoys marking the channel reads: 6, 13, 20, 27, ...",
+    puzzle: "Following that same pattern, what number should the next buoy carry?",
+    choices: ["34", "33", "31", "36"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the fixed gap between each buoy's number and the one before it,\" Sula says, \"then add that same gap once more.\"",
+    solvedBeat:
+      "Each buoy is 7 more than the last, so 27 + 7 = 34. \"Whoever set these never once broke the pattern,\" Sula says. — A sequence with the same fixed gap at every step is an arithmetic sequence, and its next term is never a guess.",
+    concept: "Arithmetic Sequences",
+  },
+  {
+    id: "market-9",
+    storyId: "floating-market-trail",
+    order: 9,
+    sceneText: "One stall sells 25 kilograms of rice at 4 coins per kilogram; another sells 75 kilograms at 8 coins per kilogram.",
+    puzzle: "What's the weighted average price per kilogram across both stalls combined?",
+    choices: ["7 coins per kilogram", "6 coins per kilogram", "6.5 coins per kilogram", "8 coins per kilogram"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply each stall's weight by its own price first,\" Sula says, \"add both totals together, then divide by the combined weight. Don't just average the two prices directly.\"",
+    solvedBeat:
+      "(25 × 4) + (75 × 8) = 100 + 600 = 700 coins total, divided by 100 kilograms, is 7 coins per kilogram. \"Closer to the busier stall's price, since there was so much more of it,\" Sula notes. — A weighted average accounts for how much of each part there actually is, not just how many parts there are.",
+    concept: "Weighted Average",
+  },
+  {
+    id: "market-10",
+    storyId: "floating-market-trail",
+    order: 10,
+    sceneText: "The final marker gives only a network: 8 stalls, connected so that every stall reaches every other stall by exactly one direct route.",
+    puzzle: "Using that same connection formula, how many total routes make up this final network?",
+    choices: ["28 routes", "56 routes", "8 routes", "64 routes"],
+    correctIndex: 0,
+    wrongBeat: "\"Apply the same formula as before,\" Sula says. \"Number of points times one less than that number, divided by two.\"",
+    solvedBeat:
+      "8 × 7 ÷ 2 = 28 routes. Sula counts them off on the map, one by one, until the twenty-eighth leads somewhere new entirely. — The same handshake formula scales to any number of connected points, however large the network gets.",
+    concept: "Graph Theory (Counting Connections)",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES, ...LEDGER_CLUES, ...LIBRARY_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES, ...LEDGER_CLUES, ...LIBRARY_CLUES, ...MANUSCRIPT_CLUES, ...MARKET_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }
