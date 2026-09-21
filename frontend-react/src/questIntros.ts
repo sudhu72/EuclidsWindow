@@ -568,6 +568,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "missing-proof",
+    sceneText:
+      "**The Library of Alexandria, lamps burning low in the geometry hall.**\n\n" +
+      "Cleo, a young scholar's assistant, meets you at the hall's entrance, a scroll case clutched tightly in both hands. \"Master Straton is dead, right here in the geometry hall,\" she says. \"He was going to unveil a proof tomorrow — one he swore Euclid himself had worked out but never published. The scroll is gone now, and so is he. He told me just yesterday the whole argument finally held together, start to finish, without a single weak step.\"\n\n" +
+      "The Library settles into quiet at the usual hour, and five people had reason enough to still be somewhere in these halls well past that. Straton, everyone agrees, trusted a properly finished argument over anything else in the world — which made him exactly the kind of man who'd eventually finish one that mattered enough to someone else to stop him.",
+    cast: [
+      {
+        name: "Nikandros",
+        detail: "A rival geometer, eager to claim credit for \"rediscovering\" whatever Straton was about to unveil.",
+      },
+      {
+        name: "Zenodotus",
+        detail: "The Library's chief librarian, watching his own authority over the collection slowly eclipsed by a single scholar's growing reputation.",
+      },
+      {
+        name: "Kallias",
+        detail: "A wealthy private collector, known to pay extraordinary sums for genuine, unpublished works.",
+      },
+      {
+        name: "Demetria",
+        detail: "Straton's own student, quietly resentful at being passed over as his co-presenter for tomorrow's unveiling.",
+      },
+      {
+        name: "Old Philon",
+        detail: "The Library's night watchman, walking the same halls every evening for decades. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "vineyards-buried-fortune",
+    sceneText:
+      "**An old hillside vineyard, rows of vines climbing toward a fading sky.**\n\n" +
+      "Rosa has spent the summer going through her great-grandfather's harvest ledgers, ever since her grandmother mentioned, almost in passing, that he'd never fully trusted a bank with what this vineyard actually earned him. \"He kept his own records his whole life,\" she tells you, brushing dust from a leather-bound ledger. \"Yields, ratios, rates — every harvest, checked and rechecked by hand. I don't think that habit ever stopped just because he decided to hide something.\"\n\n" +
+      "Her grandfather's own notes already mark two things worth remembering: one plot averaged exactly 3 kilograms of grapes per vine, and the old blend he swore by mixed two grape varieties in a fixed 3-to-2 ratio. \"Every record from here to wherever he hid it tests the same thing,\" Rosa says, flipping to the ledger's final pages. \"Whether you trust the actual numbers a harvest gives you, or you just guess at what a good year looks like.\"",
+    cast: [
+      {
+        name: "Rosa",
+        detail: "Your host — the vineyard owner's great-granddaughter, going through decades of harvest ledgers for the first time since he passed.",
+      },
+      {
+        name: "Rosa's Great-Grandfather",
+        detail: "The vineyard's original owner, meticulous about every harvest record he ever kept. Long gone now, but every number he wrote down still checks out exactly as he left it.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {

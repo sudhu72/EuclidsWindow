@@ -3521,8 +3521,274 @@ const MARKET_CLUES: QuestClue[] = [
   },
 ];
 
+const PROOF_CLUES: QuestClue[] = [
+  {
+    id: "proof-1",
+    storyId: "missing-proof",
+    order: 1,
+    sceneText: "Cleo shows you Straton's own notes: he begins by assuming the opposite of what he wants to prove — that the square root of 2 can be written as a fraction in lowest terms, a/b.",
+    puzzle: "This technique — assuming the opposite of what you want to prove, then showing that assumption leads to something impossible — is called what?",
+    choices: ["Proof by contradiction", "Proof by induction", "Direct proof", "A counterexample"],
+    correctIndex: 0,
+    wrongBeat: "\"The method that starts by assuming the opposite is true,\" Cleo says, \"then shows that assumption breaks down into something impossible, has a very specific name.\"",
+    solvedBeat:
+      "Proof by contradiction. \"Straton always said it was the sharpest tool in the whole book,\" Cleo says. — Assuming the opposite of what you want to prove, and showing that assumption collapses into nonsense, proves the original claim was true all along.",
+    concept: "Proof by Contradiction",
+  },
+  {
+    id: "proof-2",
+    storyId: "missing-proof",
+    order: 2,
+    sceneText: "Straton's proof next tackles a claim about every whole number at once: \"1 + 3 + 5 + ... up to the nth odd number always equals n squared.\" He proves it true for n=1, then shows that if it's true for any one case, it must be true for the very next case too.",
+    puzzle: "That two-step method — prove a starting case, then show each case forces the next one to be true — is called what?",
+    choices: ["Mathematical induction", "Proof by contradiction", "A counterexample", "Direct proof"],
+    correctIndex: 0,
+    wrongBeat: "\"A proof that establishes a starting point,\" Cleo says, \"then shows every case automatically triggers the next one, is a specific, named technique — think of toppling dominoes.\"",
+    solvedBeat:
+      "Mathematical induction. \"Prove the first domino falls, then prove each domino always knocks over the next,\" Cleo says, \"and the whole row falls, however long it is.\" — Induction proves something true for every whole number at once, without ever having to check them one by one.",
+    concept: "Mathematical Induction",
+  },
+  {
+    id: "proof-3",
+    storyId: "missing-proof",
+    order: 3,
+    sceneText: "A simpler page proves: \"the sum of any two even numbers is always even,\" by writing both numbers as 2 times some whole number, adding them, and showing the result is still 2 times a whole number.",
+    puzzle: "A proof that starts directly from the definitions and works forward, step by step, straight to the conclusion, is called what?",
+    choices: ["A direct proof", "Proof by contradiction", "Mathematical induction", "A counterexample"],
+    correctIndex: 0,
+    wrongBeat: "\"A proof that starts from what you already know,\" Cleo says, \"and reasons forward in a straight line to the conclusion, has the simplest name of them all.\"",
+    solvedBeat:
+      "A direct proof. \"No detours, no assuming the opposite,\" Cleo says. \"Just the plain truth, one step after another.\" — A direct proof reasons straight from known facts to the conclusion, without any trick or roundabout method.",
+    concept: "Direct Proof",
+  },
+  {
+    id: "proof-4",
+    storyId: "missing-proof",
+    order: 4,
+    sceneText: "Straton's margin notes flip a statement around: \"If a shape is a square, it has four equal sides\" becomes \"If a shape does not have four equal sides, it is not a square.\"",
+    puzzle: "That second version — reversing and negating both parts of the original statement — is called the statement's what?",
+    choices: ["Contrapositive", "Converse", "Inverse", "Counterexample"],
+    correctIndex: 0,
+    wrongBeat: "\"Reversing and negating both halves of a statement together,\" Cleo says, \"rather than just swapping them, has its own specific name — and it always shares the same truth value as the original.\"",
+    solvedBeat:
+      "The contrapositive. \"Always exactly as true as the original claim, never more, never less,\" Cleo says. — A statement and its contrapositive always match in truth value, which makes the contrapositive a genuinely useful way to prove the original.",
+    concept: "Converse & Contrapositive",
+  },
+  {
+    id: "proof-5",
+    storyId: "missing-proof",
+    order: 5,
+    sceneText: "A rival scholar once claimed \"every odd number is prime.\" Straton simply wrote \"9\" in the margin and circled it.",
+    puzzle: "Disproving a general claim by pointing to just one case where it fails is called what?",
+    choices: ["A counterexample", "A direct proof", "Proof by contradiction", "Mathematical induction"],
+    correctIndex: 0,
+    wrongBeat: "\"Finding just a single case where a supposedly universal claim actually fails,\" Cleo says, \"has a simple, specific name — it takes only one to break an 'always.'\"",
+    solvedBeat:
+      "A counterexample. \"9 is odd, and 9 is definitely not prime,\" Cleo says. \"One example was all it ever took.\" — A single counterexample is enough to disprove any claim that something is true in every single case.",
+    concept: "Counterexample",
+  },
+  {
+    id: "proof-6",
+    storyId: "missing-proof",
+    order: 6,
+    sceneText: "Straton's notes distinguish two kinds of conditions: \"being a square\" requires \"having four sides\" (you can't be a square without it), but \"having four sides\" alone doesn't guarantee \"being a square\" (a rectangle has four sides too).",
+    puzzle: "A condition that must be true for something to happen, but doesn't by itself guarantee it, is called what kind of condition?",
+    choices: ["Necessary but not sufficient", "Sufficient but not necessary", "Both necessary and sufficient", "Neither necessary nor sufficient"],
+    correctIndex: 0,
+    wrongBeat: "\"Ask yourself two separate questions,\" Cleo says. \"Does the square need this condition to be true? And does this condition, alone, guarantee the square?\"",
+    solvedBeat:
+      "\"Having four sides\" is necessary for being a square — you can't be a square without it — but it isn't sufficient on its own, since a rectangle also has four sides without being a square. — Necessary and sufficient are two separate questions, and a condition can satisfy one without satisfying the other.",
+    concept: "Necessary & Sufficient Conditions",
+  },
+  {
+    id: "proof-7",
+    storyId: "missing-proof",
+    order: 7,
+    sceneText: "Straton's notes compare two kinds of claims: \"there exists a prime number that is even\" against \"every prime number greater than two is odd.\"",
+    puzzle: "The first claim, which only requires finding one example to be true, is called what kind of statement?",
+    choices: ["An existential statement", "A universal statement", "A contrapositive", "A counterexample"],
+    correctIndex: 0,
+    wrongBeat: "\"A claim that only needs one example to hold true,\" Cleo says, \"is a completely different kind of statement than one that needs to hold for every single case.\"",
+    solvedBeat:
+      "An existential statement. \"True the moment you find just one example — 2 is even and prime, and that settles it,\" Cleo says. — Existential statements need only one true case, while universal statements need to hold for every case without exception.",
+    concept: "Universal & Existential Statements",
+  },
+  {
+    id: "proof-8",
+    storyId: "missing-proof",
+    order: 8,
+    sceneText: "Straton proves another claim by assuming its opposite: he assumes there are only finitely many prime numbers, lists them all, then constructs a new number that must be prime and isn't on the list — an impossibility.",
+    puzzle: "What technique is Straton using here?",
+    choices: ["Proof by contradiction", "Direct proof", "Mathematical induction", "A counterexample"],
+    correctIndex: 0,
+    wrongBeat: "\"He's assuming the opposite of what he wants to prove,\" Cleo says, \"then showing that assumption leads somewhere impossible — the exact same shape as before.\"",
+    solvedBeat:
+      "Proof by contradiction, again. \"The same trick, the same power, twice in one notebook,\" Cleo says, awed. — A single technique, used well, can prove wildly different claims, from irrational numbers to the infinitude of primes.",
+    concept: "Proof by Contradiction",
+  },
+  {
+    id: "proof-9",
+    storyId: "missing-proof",
+    order: 9,
+    sceneText: "A final simple page proves: \"the product of any two odd numbers is always odd,\" by writing both numbers in the form 2k+1, multiplying them out, and showing the result still has that same odd form.",
+    puzzle: "Reasoning straight from that definition to the conclusion, without assuming anything false along the way, is what kind of proof?",
+    choices: ["A direct proof", "Proof by contradiction", "Mathematical induction", "A counterexample"],
+    correctIndex: 0,
+    wrongBeat: "\"No opposite assumption here,\" Cleo says. \"Just the definition, followed straight through to the answer.\"",
+    solvedBeat:
+      "A direct proof, plain and simple. \"He always said the simplest proofs were often the most convincing,\" Cleo says. — Not every true claim needs a clever trick; sometimes reasoning straight from the definitions is more than enough.",
+    concept: "Direct Proof",
+  },
+  {
+    id: "proof-10",
+    storyId: "missing-proof",
+    order: 10,
+    sceneText: "The manuscript's final page hides the scroll's true location behind one last argument: assume the scroll is NOT in the west reading room. Straton's own notes show that assumption leads to a contradiction with everything else recorded in the ledger.",
+    puzzle: "Since assuming the scroll is not in the west reading room leads to a contradiction, what technique tells you where the scroll actually is?",
+    choices: ["Proof by contradiction — it must be in the west reading room", "A counterexample — it could be anywhere", "Direct proof — it's definitely lost", "Mathematical induction — check every room one by one"],
+    correctIndex: 0,
+    wrongBeat: "\"If assuming it's NOT there leads to something impossible,\" Cleo says, \"then the opposite has to be true instead — that's the whole shape of the argument.\"",
+    solvedBeat:
+      "Proof by contradiction, one final time. Cleo leads you straight to the west reading room, and there, tucked behind a shelf of unrelated scrolls, the missing proof itself. — The very technique Straton spent his whole career championing turns out to be exactly what finds his own final work.",
+    concept: "Proof by Contradiction",
+  },
+];
+
+const VINEYARD_CLUES: QuestClue[] = [
+  {
+    id: "vineyard-1",
+    storyId: "vineyards-buried-fortune",
+    order: 1,
+    sceneText: "Rosa's grandfather's ledger records this year's harvest: 480 vines, producing a total of 1,440 kilograms of grapes.",
+    puzzle: "What's the average yield per vine?",
+    choices: ["3 kilograms per vine", "4.8 kilograms per vine", "2 kilograms per vine", "1,440 kilograms per vine"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total harvest weight by the number of vines,\" Rosa says. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "1,440 ÷ 480 = 3 kilograms per vine. \"A solid year, by his own notes,\" Rosa says. — A yield rate is always the total harvest divided by however many plants produced it.",
+    concept: "Yield Rate",
+  },
+  {
+    id: "vineyard-2",
+    storyId: "vineyards-buried-fortune",
+    order: 2,
+    sceneText: "One of the vineyard's oldest plots is shaped like a parallelogram: a base of 60 meters, with a height of 25 meters measured straight up from that base.",
+    puzzle: "What's the area of that plot?",
+    choices: ["1,500 square meters", "850 square meters", "1,200 square meters", "1,700 square meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the base by the height,\" Rosa says, \"the same as a rectangle, as long as the height is measured straight up, not along the slanted side.\"",
+    solvedBeat:
+      "60 × 25 = 1,500 square meters. \"The oldest plot on the whole property,\" Rosa says. — A parallelogram's area is always its base times its height, measured perpendicular to that base.",
+    concept: "Area of a Parallelogram",
+  },
+  {
+    id: "vineyard-3",
+    storyId: "vineyards-buried-fortune",
+    order: 3,
+    sceneText: "A late frost hit the vineyard hard one year: the ledger shows an expected 2,000 kilograms of grapes, but only 1,560 kilograms were actually harvested.",
+    puzzle: "What percentage of the expected harvest was lost to the frost?",
+    choices: ["22%", "44%", "78%", "18%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the amount actually lost first,\" Rosa says, \"expected minus actual, then divide that loss by the expected total.\"",
+    solvedBeat:
+      "2,000 − 1,560 = 440 kilograms lost, and 440 ÷ 2,000 = 22%. \"The worst frost he ever recorded,\" Rosa says, checking the date. — A percentage loss always measures the missing amount against the original expected total.",
+    concept: "Percentage",
+  },
+  {
+    id: "vineyard-4",
+    storyId: "vineyards-buried-fortune",
+    order: 4,
+    sceneText: "Rosa's grandfather tested the grape juice's sugar concentration: 220 grams of sugar dissolved in exactly 1,000 grams of juice.",
+    puzzle: "What percentage of the juice, by weight, is sugar?",
+    choices: ["22%", "2.2%", "220%", "78%"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the sugar's weight by the total juice weight,\" Rosa says, \"then convert that fraction into a percentage.\"",
+    solvedBeat:
+      "220 ÷ 1,000 = 0.22, or 22%. \"Ripe enough to bottle, by his own standards,\" Rosa says, checking the old notes. — A concentration like this is simply a percentage: the amount of one substance measured against the total weight it's dissolved in.",
+    concept: "Density & Concentration",
+  },
+  {
+    id: "vineyard-5",
+    storyId: "vineyards-buried-fortune",
+    order: 5,
+    sceneText: "Rosa's grandfather tracked the wine's alcohol content rising during fermentation, roughly doubling every 3 days early on: 1%, then 2%, then 4%, then 8%, ...",
+    puzzle: "Following that same doubling pattern, what would the alcohol content be after one more measurement?",
+    choices: ["16%", "12%", "10%", "14%"],
+    correctIndex: 0,
+    wrongBeat: "\"Check what's actually happening between each measurement and the next,\" Rosa says. \"It isn't adding a fixed amount — it's multiplying by the same fixed amount every time.\"",
+    solvedBeat:
+      "Each measurement is exactly double the one before it, so 8% × 2 = 16%. \"Though it never actually kept doubling forever, thankfully,\" Rosa says, laughing. — That's a geometric sequence, growing by repeated multiplication rather than repeated addition, at least for a little while.",
+    concept: "Exponential Growth",
+  },
+  {
+    id: "vineyard-6",
+    storyId: "vineyards-buried-fortune",
+    order: 6,
+    sceneText: "A prized old blend mixes two grape varieties in a ratio of 3 parts Sangiovese to 2 parts Merlot.",
+    puzzle: "If a batch uses 40 kilograms of Merlot, how many kilograms of Sangiovese does that same ratio call for?",
+    choices: ["60 kilograms", "80 kilograms", "30 kilograms", "100 kilograms"],
+    correctIndex: 0,
+    wrongBeat: "\"Find how many times the Merlot's own ratio-part fits into 40,\" Rosa says, \"then apply that same multiple to the Sangiovese's ratio-part.\"",
+    solvedBeat:
+      "40 kilograms is 20 times the ratio's \"2 parts,\" so Sangiovese scales the same way: 3 × 20 = 60 kilograms. \"The exact blend he swore by for thirty years,\" Rosa says. — A ratio holds steady no matter how large the actual batch gets, as long as every part scales by the same multiple.",
+    concept: "Ratio & Proportion",
+  },
+  {
+    id: "vineyard-7",
+    storyId: "vineyards-buried-fortune",
+    order: 7,
+    sceneText: "A row of numbered vine posts along the old plot reads: 7, 15, 23, 31, ...",
+    puzzle: "Following that same pattern, what number should the next post carry?",
+    choices: ["39", "38", "36", "41"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the fixed gap between each post's number and the one before it,\" Rosa says, \"then add that same gap once more.\"",
+    solvedBeat:
+      "Each post is 8 more than the last, so 31 + 8 = 39. \"He numbered every single row himself,\" Rosa says. — A sequence with the same fixed gap at every step is an arithmetic sequence, and its next term is never a guess.",
+    concept: "Arithmetic Sequences",
+  },
+  {
+    id: "vineyard-8",
+    storyId: "vineyards-buried-fortune",
+    order: 8,
+    sceneText: "One plot yielded 3 kilograms per vine across 300 vines; another yielded 5 kilograms per vine across 700 vines.",
+    puzzle: "What's the weighted average yield per vine across both plots combined?",
+    choices: ["4.4 kilograms per vine", "4 kilograms per vine", "4.5 kilograms per vine", "5 kilograms per vine"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply each plot's vine count by its own yield first,\" Rosa says, \"add both totals together, then divide by the combined number of vines. Don't just average the two rates directly.\"",
+    solvedBeat:
+      "(300 × 3) + (700 × 5) = 900 + 3,500 = 4,400 kilograms total, divided by 1,000 vines, is 4.4 kilograms per vine. \"Closer to the larger plot's own yield, since there were so many more of those vines,\" Rosa notes. — A weighted average accounts for how much of each part there actually is, not just how many parts there are.",
+    concept: "Weighted Average",
+  },
+  {
+    id: "vineyard-9",
+    storyId: "vineyards-buried-fortune",
+    order: 9,
+    sceneText: "A crew of workers can harvest 1 row of vines every 15 minutes.",
+    puzzle: "At that same rate, how long would it take to harvest all 12 rows in the old plot?",
+    choices: ["3 hours", "2 hours", "2.5 hours", "4 hours"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the time per row by the total number of rows,\" Rosa says. \"Don't divide the two.\"",
+    solvedBeat:
+      "12 × 15 = 180 minutes, or exactly 3 hours. \"A full morning's work, same as he always said,\" Rosa says. — Multiplying a rate by the total quantity always tells you the total time a job actually takes.",
+    concept: "Rate & Time",
+  },
+  {
+    id: "vineyard-10",
+    storyId: "vineyards-buried-fortune",
+    order: 10,
+    sceneText: "The final riddle gives only an area: a hidden plot shaped like a parallelogram, base 45 meters, covering exactly 900 square meters total.",
+    puzzle: "Using area = base times height, what's that hidden plot's height?",
+    choices: ["20 meters", "25 meters", "18 meters", "22.5 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total area by the known base,\" Rosa says. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "900 ÷ 45 = 20 meters. Rosa paces out exactly that distance from the base, and her spade strikes something solid underground. — Reversing an area calculation just means dividing instead of multiplying, once you already know one of the two measurements.",
+    concept: "Area of a Parallelogram",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES, ...LEDGER_CLUES, ...LIBRARY_CLUES, ...MANUSCRIPT_CLUES, ...MARKET_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES, ...LEDGER_CLUES, ...LIBRARY_CLUES, ...MANUSCRIPT_CLUES, ...MARKET_CLUES, ...PROOF_CLUES, ...VINEYARD_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }

@@ -20,7 +20,7 @@ export const QUEST_STORIES: QuestStory[] = [
   // --- Murder mysteries (deductive logic, detective skin) ------------------
   {
     id: "missing-proof",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Case of the Missing Proof",
     blurb: "Euclid's own lost proof has vanished from the Library of Alexandria the night before it was to be unveiled.",
@@ -238,7 +238,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "vineyards-buried-fortune",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Vineyard's Buried Fortune",
     blurb: "A centuries-old vineyard hides a fortune behind a chain of harvest-record riddles no heir ever solved.",

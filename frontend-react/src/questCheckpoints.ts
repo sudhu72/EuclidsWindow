@@ -1235,6 +1235,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real stall gives way at last, and Sula's lantern catches a small, waterproofed chest tucked beneath false floorboards — coins, and a single scrap of oiled paper covered in the same careful network diagrams you've been following all afternoon.\n\n" +
       "\"The old Riverkeeper really did trust the river's own paths over any lock,\" Sula says, turning the coins over in her hands. \"Enough routes through this market to hide anything, if you know which ones actually connect.\" The paper's final line, written in a careful, faded hand: \"What connects honestly will always connect the same way, however many paths you draw between two points.\" Above the market, boats are already threading their way home along routes they've never once needed to count, indifferent to how carefully this one was worked out.",
   },
+
+  // ------------------------------------------------------------------
+  // The Case of the Missing Proof
+  // ------------------------------------------------------------------
+  {
+    id: "proof-mid",
+    storyId: "missing-proof",
+    afterClue: "proof-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that evening and lay them side by side.\n\n" +
+      "**Nikandros:** \"I was at my own writing table across the hall, working on my own commentary — three other scholars were with me the whole evening.\"\n\n" +
+      "**Zenodotus:** \"I was cataloguing new arrivals in the west wing, alone, same as any evening.\"\n\n" +
+      "**Kallias:** \"I was dining with two other collectors at my own villa earlier in the evening — though I couldn't tell you exactly when everyone left.\"\n\n" +
+      "**Demetria:** \"I was reviewing my own notes in the reading hall — Philon saw me still there when he passed on his rounds.\"\n\n" +
+      "**Old Philon:** \"I did my usual rounds. Demetria was indeed still in the reading hall, just as she says. But Zenodotus — his cataloguing claim doesn't sit right. The scroll racks in the west wing hadn't been touched at all that night, still exactly as I'd left them on my earlier round.\"\n\n" +
+      "You already know Master Straton's body was found by Cleo in the geometry hall, and that the hall sits directly beside the west wing's own catalog room.",
+    entities: ["Nikandros", "Zenodotus", "Kallias", "Demetria", "Old Philon"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      Nikandros: "Alibi Holds",
+      Zenodotus: "Alibi Breaks",
+      Kallias: "Alibi Breaks",
+      Demetria: "Alibi Holds",
+      "Old Philon": "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and a full night's lead slips away chasing it. Look again at which claims are confirmed by someone specifically placing them there for the whole window that matters, and which cover only part of the evening — and check whether Philon's own detail actually matches what someone claimed to be doing.",
+    explain:
+      "Nikandros's account is confirmed by three independent scholars, and Demetria's is corroborated directly by Philon — both hold. Philon himself has no motive and supplies the key detail, so his account holds too. But Zenodotus's claim of cataloguing all evening doesn't survive Philon's own observation: the scroll racks hadn't been touched since his earlier round. And Kallias's account only covers the early evening — he has no one to vouch for exactly when the gathering actually ended.",
+  },
+  {
+    id: "proof-final",
+    storyId: "missing-proof",
+    afterClue: "proof-10",
+    kind: "final",
+    title: "The Geometry Hall",
+    scenario:
+      "You confront the two remaining names in the geometry hall itself, the recovered scroll still spread across the desk.\n\n" +
+      "**Zenodotus:** \"It was Kallias. He's been quietly building a private collection for years — ask any dealer what a genuine lost proof from Euclid's own hand would be worth.\"\n\n" +
+      "**Kallias:** \"Ask instead who's spent years watching scholars from rival cities gain the Library's favor over him, and who couldn't stand watching Straton become the next name everyone remembered instead of his own.\"\n\n" +
+      "You already know the final proof-by-contradiction argument, worked out in Straton's own hand, when applied to the missing scroll's actual hiding place, points to a specific shelf in the west wing's own catalog room — a place Zenodotus alone controlled access to.",
+    entities: ["Zenodotus", "Kallias"],
+    options: ["Guilty", "Innocent"],
+    answer: { Zenodotus: "Guilty", Kallias: "Innocent" },
+    wrongConsequence:
+      "The geometry hall stays silent, and nothing more is offered — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually had standing access to the hiding place the argument points to, versus who merely had a collector's motive with no way to reach it.",
+    explain:
+      "Kallias's collector's motive is real, but nothing places him anywhere near the geometry hall that night, and a private collector rarely has the standing access a stolen scroll's hiding place actually required. Zenodotus's exposure was total and specific: the final logical argument, worked out in Straton's own hand, points directly to a shelf in the west wing's own catalog room — a place only the chief librarian himself controlled.",
+    resolution:
+      "You lay it out for Cleo, piece by piece: the contradiction that first proved a number couldn't be written the way everyone assumed. The induction that proved a whole infinite family of cases at once, without ever checking them one by one. The direct proof, reasoning straight through without a single trick. The contrapositive, exactly as true as the claim it mirrored. The counterexample that needed only one case to break an entire claim wide open. The necessary and sufficient conditions, and the universal and existential claims, each one narrowing the field of who could have actually done this. The second contradiction, and the second direct proof, both holding up exactly as cleanly as the first. And the final argument, worked out in Straton's own hand, pointing straight at a shelf only the Library's own chief librarian ever controlled.\n\n" +
+      "Zenodotus doesn't run — there's nowhere in a locked library left to run to. \"Everyone was going to remember his name instead of mine,\" he says quietly, \"after all the years I spent actually running this place.\" Cleo closes Straton's notebook gently. \"He never once said credit didn't matter,\" she says. \"Only that the proof itself mattered more — and he was patient enough to actually finish it.\" Outside, the Library's lamps are already being lit for the morning's scholars, indifferent to the careful, patient logic that finally caught the one person who forgot to check his own argument properly.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Vineyard's Buried Fortune
+  // ------------------------------------------------------------------
+  {
+    id: "vineyard-mid",
+    storyId: "vineyards-buried-fortune",
+    afterClue: "vineyard-5",
+    kind: "mid",
+    title: "Three Passages",
+    scenario:
+      "Beyond the old cellar, three narrow rows branch off between the vines, each marked with a claim carved into a wooden post. Rosa reads them aloud:\n\n" +
+      "**Passage A:** \"A yield rate is always the total harvest divided by however many plants produced it, regardless of how large the vineyard is.\"\n\n" +
+      "**Passage B:** \"Doubling a parallelogram's base and height both at once only doubles its area.\"\n\n" +
+      "**Passage C:** \"A quantity that doubles every few days will keep doubling at exactly that same rate forever.\"\n\n" +
+      "\"Grandfather sealed his false notes behind claims that sound reasonable but fall apart under real arithmetic,\" Rosa says. \"Check every one properly before you trust it.\"",
+    entities: ["Passage A", "Passage B", "Passage C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Passage A": "True Claim", "Passage B": "False Claim", "Passage C": "False Claim" },
+    wrongConsequence:
+      "The wrong row narrows to a dead end between the vines, and you double back with nothing but lost daylight for the trouble. \"Test each claim against real numbers,\" Rosa says. \"Not what sounds reasonable — what actually holds up once you calculate it.\"",
+    explain:
+      "Passage A restates exactly what you calculated yourself: a yield rate is always total harvest divided by plant count, at any scale. Passage B is false — doubling both a parallelogram's base and height multiplies its area by four, not two, the same trap that catches any two-dimensional scaling. Passage C is false too, and Rosa's own grandfather proved it: real growth that doubles for a while always eventually slows down, whether it's alcohol content, a population, or anything else in the real world.",
+  },
+  {
+    id: "vineyard-final",
+    storyId: "vineyards-buried-fortune",
+    afterClue: "vineyard-10",
+    kind: "final",
+    title: "Three Final Plots",
+    scenario:
+      "Rosa reads each final plot's carved marker aloud:\n\n" +
+      "**Plot 1:** \"A weighted average always leans toward whichever quantity contributes more to the total, never landing exactly between the two original values unless they're weighted equally.\"\n\n" +
+      "**Plot 2:** \"Reversing an area calculation to find a missing measurement always requires knowing both the base and the height already.\"\n\n" +
+      "**Plot 3:** \"A percentage loss and a percentage concentration are calculated using completely different formulas.\"\n\n" +
+      "\"One of these is true without a single exception,\" Rosa says. \"Grandfather trusted his whole fortune's protection on that one rule.\"",
+    entities: ["Plot 1", "Plot 2", "Plot 3"],
+    options: ["Real Plot", "False Plot"],
+    answer: { "Plot 1": "Real Plot", "Plot 2": "False Plot", "Plot 3": "False Plot" },
+    wrongConsequence:
+      "The wrong plot yields nothing but bare, undisturbed soil, and you're left resetting your search by lantern light. \"Don't trust the shape of the sentence,\" Rosa says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Plot 1 holds exactly: a weighted average always leans toward whichever quantity has more weight behind it, and only lands exactly in the middle when both are weighted equally. Plot 2 is false — you proved it yourself: knowing the area and just one dimension is enough to find the other, no need to already know both. Plot 3 is false too: a percentage loss and a percentage concentration are actually the very same calculation underneath, a part divided by a whole, just applied to different quantities.",
+    resolution:
+      "The real plot gives way to Rosa's spade, and there it is — her great-grandfather's true buried fortune, coins and a small chest of deeds, wrapped in oiled cloth beneath the old parallelogram-shaped plot exactly where the numbers said it would be.\n\n" +
+      "\"He really did trust the harvest's own arithmetic over any map,\" Rosa says, brushing soil from the chest's lid. \"Yields, ratios, rates — numbers that never once lied to him, the way a person eventually might.\" Tucked inside, a final note in her great-grandfather's own hand: \"What grows honestly can always be counted honestly, season after season, however long you're patient enough to keep track.\" Above the vineyard, the next season's vines are already budding, indifferent to how carefully this one harvest's numbers were finally checked.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {
