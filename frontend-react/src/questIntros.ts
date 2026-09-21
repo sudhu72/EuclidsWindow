@@ -660,6 +660,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "locked-dome",
+    sceneText:
+      "**A planetarium dome, sealed from within, the small brass orrery at its center still catching lamplight.**\n\n" +
+      "Finch, the dome's young apprentice, meets you just outside the bolted door, badge still pinned crooked from being woken at this hour. \"Curator Weylin is dead in there, and the door was bolted from the inside — we had to force it ourselves. He's been building that orrery by hand for eleven years, tuning every arm to match the real planets' own motion. He always said it would outlive every argument anyone ever had about who deserved credit for it.\"\n\n" +
+      "Only a handful of people had any real reason to be near the dome that late, and Weylin, everyone agrees, trusted the orrery's own patient, exact motion over anyone's word — which, among people who'd spent years arguing about who actually owned his life's work, made him exactly the kind of man someone might stop trusting to keep arguing with.",
+    cast: [
+      {
+        name: "Dr. Celestine Marrow",
+        detail: "A rival curator from a competing museum, long convinced Weylin's post and collection should have been hers.",
+      },
+      {
+        name: "Alderman Grey",
+        detail: "The museum's board patron, furious after Weylin refused, more than once, to sell the orrery's prize piece to cover a budget shortfall.",
+      },
+      {
+        name: "Mina",
+        detail: "Weylin's own apprentice, the only other person alive who actually understood how to maintain the orrery, quietly passed over in his will.",
+      },
+      {
+        name: "Old Higgins",
+        detail: "The night porter, walking these same halls for thirty years. As far as anyone can tell, entirely without motive.",
+      },
+      {
+        name: "Edmund",
+        detail: "The curator's estranged nephew, and his sole surviving heir.",
+      },
+    ],
+  },
+  {
+    storyId: "desert-star-compass",
+    sceneText:
+      "**A vast, star-crowded desert night, the caravan's fires long since banked to embers.**\n\n" +
+      "Amara has led caravans across this same stretch of desert her whole life, the way her grandmother taught her, and her grandmother's grandmother before that. \"There's an oasis out here somewhere,\" she tells you, \"marked only in the old star-readings my family's kept for six generations. No map ever drawn shows it — just the sky itself, read properly, the whole way there.\"\n\n" +
+      "Her family's oldest teaching is blunt about it: the stars never lie, but they also never do the arithmetic for you. \"Every reading from here to the oasis tests the same thing,\" Amara says, tightening her pack. \"Whether you trust what the sky is actually telling you, or you just guess at which way looks right.\"",
+    cast: [
+      {
+        name: "Amara",
+        detail: "Your guide — a desert caravan leader, the latest in six generations to carry her family's star-reading tradition.",
+      },
+      {
+        name: "Amara's Grandmother",
+        detail: "The tradition's most recent keeper before Amara, said to have crossed this same stretch of desert by starlight alone more times than anyone could count. Long passed now, but every reading she ever recorded still checks out exactly as she left it.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {

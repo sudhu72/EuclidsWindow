@@ -1437,6 +1437,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real vault door swings open onto a small stone chamber, and there it is — Old Toribio's true fortune, a chest of coins and uncut gems, sitting exactly where a hundred years of careful mechanical logic said it would be.\n\n" +
       "\"He really did mean every bit of it as a lesson, not just a lock,\" Petra says, running a hand along the chest's engraved lid. \"Levers, pulleys, ramps, screws — every simple machine he ever loved, built into one mountain, just to see who'd actually bother calculating their way through instead of forcing it.\" Tucked beneath the coins, a final note in Toribio's own hand: \"Any fool can force a door. It takes an engineer to know exactly how much force it actually takes — and then use precisely that much, and not one bit more.\" Deep in the mountain, the old pendulum keeps swinging patiently on, indifferent to how long it took anyone to finally work out its exact rhythm.",
   },
+
+  // ------------------------------------------------------------------
+  // The Locked Observatory Dome
+  // ------------------------------------------------------------------
+  {
+    id: "dome-mid",
+    storyId: "locked-dome",
+    afterClue: "dome-5",
+    kind: "mid",
+    title: "The Night Watch",
+    scenario:
+      "You gather what each of the five people claim about that night, matching times against the dome's own record book.\n\n" +
+      "**Dr. Marrow:** \"I was at my own museum's gala all evening, in front of two hundred guests — half the city can vouch for me.\"\n\n" +
+      "**Alderman Grey:** \"I was dining with the full board of trustees until well past midnight. Ask any one of them.\"\n\n" +
+      "**Mina:** \"I wound the orrery's crank early in the evening, checked the maintenance log same as always, then went straight home.\"\n\n" +
+      "**Old Higgins:** \"I did my usual rounds. I saw Mr. Edmund Weylin's carriage still outside the dome gates well past midnight — long after he claims he'd already gone.\"\n\n" +
+      "**Edmund:** \"I visited briefly to pay my respects, signed the guestbook, and left before eleven. I never went back inside.\"\n\n" +
+      "You already know the orrery was found frozen mid-turn, its two innermost arms jolted still in an alignment the maintenance log says only recurs once every three years.",
+    entities: ["Marrow", "Grey", "Mina", "Higgins", "Edmund"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      Marrow: "Alibi Holds",
+      Grey: "Alibi Holds",
+      Mina: "Alibi Breaks",
+      Higgins: "Alibi Holds",
+      Edmund: "Alibi Breaks",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and whatever trail existed at the gates that night goes cold by morning. Look again at which claims are actually confirmed by an independent second person for the entire window that matters, and which are only confirmed for part of the evening — or contradicted outright by someone else's own account.",
+    explain:
+      "Marrow's alibi holds under two hundred independent witnesses at her own gala — she genuinely could not have been in two places at once. Grey's holds the same way, confirmed by the entire board of trustees. Higgins has no motive of his own and supplies the detail that actually breaks someone else's story, so his own account holds. But Edmund's claim of leaving before eleven doesn't survive Higgins's own sighting of his carriage, still at the gates well past midnight. And Mina's alibi covers only her claimed departure — nobody actually saw her leave, and she was the one person besides Weylin himself who could touch that orrery's mechanism without leaving it visibly disturbed.",
+  },
+  {
+    id: "dome-final",
+    storyId: "locked-dome",
+    afterClue: "dome-10",
+    kind: "final",
+    title: "The Rare Alignment",
+    scenario:
+      "You confront the two remaining names, standing over the orrery itself, its arms still locked in that same rare alignment.\n\n" +
+      "**Mina:** \"It was Edmund. Higgins saw his carriage himself, still at the gates well past midnight — exactly when the maintenance log says this alignment last happened before tonight. What more do you need?\"\n\n" +
+      "**Edmund:** \"I came back, yes — to look one more time at something that was going to be mine soon enough anyway, and to argue with him, again, about selling it. I left angry, not a murderer. Ask yourself who actually knows how to touch that mechanism without breaking it.\"\n\n" +
+      "You already know the orrery's crank is delicate enough that jolting it to a dead stop, without shattering a single one of its hand-fitted arms, takes exactly the kind of care only someone who'd spent years personally maintaining it would know how to manage, even by accident.",
+    entities: ["Mina", "Edmund"],
+    options: ["Guilty", "Innocent"],
+    answer: { Mina: "Guilty", Edmund: "Innocent" },
+    wrongConsequence:
+      "The dome stays silent, and the truth settles right back into the dark with it — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two actually had the specific technical familiarity the orrery's delicate mechanism required, versus who merely had an embarrassing but innocent reason to be seen that night.",
+    explain:
+      "Edmund's carriage really was at the gates past midnight, but by his own account he only returned to look at his inheritance and argue, again, about selling it — an ugly, honest motive, but not one that requires knowing a single thing about the orrery's own delicate mechanism. Mina's departure was never actually confirmed by anyone, and she was the only person besides Weylin who could have been jostling that crank during a struggle without shattering it outright — the same care she'd spent years learning, and the same recognition Weylin's own will never once gave her credit for.",
+    resolution:
+      "You lay it out for Finch, piece by piece: the angular velocity that gave a planet its own patient pace, the synodic period that timed two worlds' return to the same alignment, the average that always sat exactly between a closest approach and a farthest point, the eccentricity that measured just how stretched an orbit really was, the circumference and the speed that followed from it, the equal areas that made a planet race at its closest pass and idle at its farthest, the relative angular speed that let one world lap another, the apparent backward drift that motion like that always produces — and finally, the rare alignment itself, precise enough on its own to name the exact night this happened, three years to the day since the last time anyone alive had seen it.\n\n" +
+      "Mina doesn't run — there's nowhere in a locked dome left to run to. \"He was going to leave every bit of it to a nephew who never once wound that crank himself,\" she says quietly. \"Eleven years of my own hands on that mechanism, and not one line of his will ever mentioned my name.\" Finch closes the maintenance log gently. \"He never once said the work didn't matter,\" Finch says. \"Only that finishing it right mattered more — and he never thought to ask who was actually going to keep it running after him.\" Above the dome, the orrery's frozen arms catch the last of the night's lamplight, indifferent to the careful, patient arithmetic that finally named the one person who understood it best.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Desert Star Compass
+  // ------------------------------------------------------------------
+  {
+    id: "compass-mid",
+    storyId: "desert-star-compass",
+    afterClue: "compass-5",
+    kind: "mid",
+    title: "Three Star-Readings",
+    scenario:
+      "Amara pauses the caravan at a bend in the dunes, three old readings from her family's own notes carved onto a weathered marker post. She reads them aloud:\n\n" +
+      "**Reading A:** \"Polaris's height above the horizon always equals your latitude, no matter where on Earth you're standing.\"\n\n" +
+      "**Reading B:** \"The night sky's steady rotation rate stays constant year-round, in every season.\"\n\n" +
+      "**Reading C:** \"A closed fist held at arm's length spans exactly 10 degrees, however far out you happen to hold your arm.\"\n\n" +
+      "\"My grandmother never trusted a reading that only sounded true,\" Amara says. \"Exactly one of these actually is. Check it properly before you trust it with our lives out here.\"",
+    entities: ["Reading A", "Reading B", "Reading C"],
+    options: ["True Reading", "False Reading"],
+    answer: { "Reading A": "False Reading", "Reading B": "True Reading", "Reading C": "False Reading" },
+    wrongConsequence:
+      "The caravan wastes a full watch backtracking on a false reading, precious water gone for nothing. \"Test each claim against real conditions,\" Amara says, \"not whatever sounds like old wisdom.\"",
+    explain:
+      "Reading A is false as a blanket claim: Polaris is only visible from the Northern Hemisphere at all, so its altitude can't equal a Southern Hemisphere traveler's latitude — the rule only works where the star is actually overhead to begin with. Reading B is true: the sky's rotation rate is set by the Earth's own steady spin, which doesn't change with the seasons. Reading C is false: the whole rule depends on holding your fist at a genuine, full arm's length — bring it closer, and the very same fist suddenly covers far more of the sky.",
+  },
+  {
+    id: "compass-final",
+    storyId: "desert-star-compass",
+    afterClue: "compass-10",
+    kind: "final",
+    title: "Three Final Bearings",
+    scenario:
+      "At the oasis's edge, three final claims are etched into an old stone marker, the last of Amara's family's readings. She reads them aloud:\n\n" +
+      "**Bearing 1:** \"Dead reckoning gives your true position only if your pace and direction both stay perfectly constant the whole way.\"\n\n" +
+      "**Bearing 2:** \"The average speed for a round trip made at two different speeds is always just the plain average of those two speeds.\"\n\n" +
+      "**Bearing 3:** \"Triangulating a position from two bearings works even when both bearings are taken from the very same point.\"\n\n" +
+      "\"One of these is true without a single exception,\" Amara says. \"My family trusted six generations of safe crossings to that one rule being right.\"",
+    entities: ["Bearing 1", "Bearing 2", "Bearing 3"],
+    options: ["True Bearing", "False Bearing"],
+    answer: { "Bearing 1": "True Bearing", "Bearing 2": "False Bearing", "Bearing 3": "False Bearing" },
+    wrongConsequence:
+      "The wrong bearing leads the caravan in a wide, wasted circle back to open sand, nothing at the end of it. \"Don't trust how reasonable a sentence sounds,\" Amara says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Bearing 1 holds exactly: dead reckoning is only ever as good as how steadily you actually kept your pace and direction — its one real limitation, and also its one real strength. Bearing 2 is false — you proved it yourself: a round trip's true average speed is a harmonic mean, not a plain average, always leaning toward whichever speed you spent more time traveling at. Bearing 3 is false too: two bearings taken from the very same point give you only one single line, never a crossing, and a crossing is the entire trick behind triangulation.",
+    resolution:
+      "The final bearing gives way to open water at last, palms rustling overhead, exactly where six generations of careful star-readings always said it would be.\n\n" +
+      "\"She never once wrote down a feeling,\" Amara says, kneeling at the water's edge. \"Only what the sky actually measured, night after night, crossing after crossing.\" Tucked into the oldest fold of her family's star-map, a final note in her grandmother's own hand: \"The desert doesn't reward confidence. It rewards whoever actually did the arithmetic.\" Overhead, the same patient stars wheel on toward dawn, indifferent to how many generations it took anyone to finally read them properly.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {

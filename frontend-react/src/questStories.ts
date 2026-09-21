@@ -60,7 +60,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "locked-dome",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Locked Observatory Dome",
     blurb: "A body is found inside a dome that was locked from within, beside a slowly turning brass orrery.",
@@ -222,7 +222,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "desert-star-compass",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Desert Star Compass",
     blurb: "A nomadic star-reading tradition marks the way to a hidden oasis, if you can read the sky like they did.",

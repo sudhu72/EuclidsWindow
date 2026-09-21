@@ -4079,8 +4079,304 @@ const CLOCKWORK_CLUES: QuestClue[] = [
   },
 ];
 
+const LOCKED_DOME_CLUES: QuestClue[] = [
+  {
+    id: "dome-1",
+    storyId: "locked-dome",
+    order: 1,
+    sceneText:
+      "The orrery's outer arm — representing a slow-moving outer planet — completes one full 360-degree circuit around the sun every 12 years.",
+    puzzle: "What's this planet's angular velocity, in degrees per year?",
+    choices: ["30° per year", "12° per year", "3° per year", "360° per year"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the full circle by however many years the orbit actually takes,\" Finch says, \"not the other way around.\"",
+    solvedBeat:
+      "360 ÷ 12 = 30 degrees per year. \"Slow, steady, and exactly regular,\" Finch says, checking the arm's own worn brass teeth. — Angular velocity is always the full circle divided by however long a complete orbit actually takes.",
+    concept: "Angular Velocity (Orbital)",
+  },
+  {
+    id: "dome-2",
+    storyId: "locked-dome",
+    order: 2,
+    sceneText:
+      "A brass card beside the orrery lists Earth's own orbital period as exactly 1 year, and Mars's as exactly 2 years. A note beneath explains the rule for how often the two worlds return to the very same alignment — their synodic period: 1 divided by that synodic period equals 1 divided by Earth's period minus 1 divided by Mars's period.",
+    puzzle: "Using that rule, how many years pass between one Earth-Mars alignment and the next?",
+    choices: ["2 years", "1.5 years", "3 years", "0.5 years"],
+    correctIndex: 0,
+    wrongBeat: "\"Work out one divided by one, minus one divided by two, first,\" Finch says. \"Then flip that result over to get the actual period back.\"",
+    solvedBeat:
+      "1 ÷ 1 − 1 ÷ 2 = 0.5, and flipping that back over gives 2 years. \"Every two years, like clockwork, the old astronomers used to say,\" Finch notes. — A synodic period always comes from the difference between two worlds' own orbital speeds, not either speed alone.",
+    concept: "Synodic Period",
+  },
+  {
+    id: "dome-3",
+    storyId: "locked-dome",
+    order: 3,
+    sceneText:
+      "A brass label on one orbit ring reads: semi-major axis, 200 million kilometers — and a note explains that this figure is always exactly the average of a planet's closest approach (perihelion) and farthest point (aphelion). This particular planet's aphelion is logged at 210 million kilometers.",
+    puzzle: "Using that average, what's this planet's perihelion distance?",
+    choices: ["190 million km", "195 million km", "205 million km", "10 million km"],
+    correctIndex: 0,
+    wrongBeat: "\"If two numbers average to 200, and one of them is 210,\" Finch says, \"the other has to be exactly as far below 200 as 210 is above it.\"",
+    solvedBeat:
+      "2 × 200 − 210 = 190 million kilometers. \"The closest this world ever swings to the sun,\" Finch says. — A semi-major axis is always exactly the midpoint between an orbit's closest and farthest points.",
+    concept: "Aphelion & Perihelion",
+  },
+  {
+    id: "dome-4",
+    storyId: "locked-dome",
+    order: 4,
+    sceneText:
+      "Still using that same aphelion of 210 million kilometers and perihelion of 190 million kilometers, a separate formula measures how elliptical — how far from a perfect circle — that same orbit actually is: eccentricity equals the difference between aphelion and perihelion, divided by their sum.",
+    puzzle: "What's this orbit's eccentricity?",
+    choices: ["0.05", "0.5", "0.1", "5"],
+    correctIndex: 0,
+    wrongBeat: "\"Subtract the two distances first,\" Finch says, \"then divide that difference by their sum — not the other way around.\"",
+    solvedBeat:
+      "(210 − 190) ÷ (210 + 190) = 20 ÷ 400 = 0.05. \"Nearly a perfect circle, by orbital standards,\" Finch says. — Eccentricity is always the gap between an orbit's two extremes, measured against how large those extremes are to begin with.",
+    concept: "Orbital Eccentricity",
+  },
+  {
+    id: "dome-5",
+    storyId: "locked-dome",
+    order: 5,
+    sceneText: "Treating that same orbit as a near-perfect circle of radius 200 million kilometers — its semi-major axis — and using π ≈ 3.14 for the arithmetic.",
+    puzzle: "Roughly what's the total distance this planet travels in one full orbit?",
+    choices: ["about 1,256 million km", "about 628 million km", "about 400 million km", "about 2,512 million km"],
+    correctIndex: 0,
+    wrongBeat: "\"A circle's circumference is two times pi times the radius,\" Finch says. \"Don't forget that leading two.\"",
+    solvedBeat:
+      "2 × 3.14 × 200 ≈ 1,256 million kilometers. \"A very long way to travel, just to end up back where you started,\" Finch says. — Any near-circular orbit's total distance follows the same ordinary circumference formula as any other circle.",
+    concept: "Orbital Circumference",
+  },
+  {
+    id: "dome-6",
+    storyId: "locked-dome",
+    order: 6,
+    sceneText: "That same orbit takes exactly 8 years to complete, door to door.",
+    puzzle: "Using distance ÷ time, roughly what's this planet's average orbital speed, in million kilometers per year?",
+    choices: ["about 157 million km/year", "about 1,256 million km/year", "about 8 million km/year", "about 200 million km/year"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total distance you just found by however long the whole trip actually takes,\" Finch says.",
+    solvedBeat:
+      "1,256 ÷ 8 ≈ 157 million kilometers per year. \"Faster than it looks, from way out here,\" Finch says. — Average speed is always the full distance traveled divided by the total time it actually took.",
+    concept: "Orbital Speed",
+  },
+  {
+    id: "dome-7",
+    storyId: "locked-dome",
+    order: 7,
+    sceneText:
+      "A second note beside the orrery explains Kepler's own second law: a planet sweeps out equal areas of its orbit in equal amounts of time, no matter where along that orbit it happens to be.",
+    puzzle: "Given that rule, at which point in its orbit is a planet actually moving fastest?",
+    choices: [
+      "At perihelion, its closest approach to the sun",
+      "At aphelion, its farthest point from the sun",
+      "Its speed never changes anywhere in the orbit",
+      "Exactly halfway between the two extremes",
+    ],
+    correctIndex: 0,
+    wrongBeat: "\"Sweeping the same area in the same time means covering more distance wherever the orbit itself is narrowest,\" Finch says. \"Where's an ellipse narrowest — near the sun, or far from it?\"",
+    solvedBeat:
+      "Close to the sun, the orbit's path is tightest, so covering the same swept area in the same time means moving fastest right there, at perihelion. \"Which is exactly why a comet whips past the sun and crawls back out again,\" Finch says. — Equal areas in equal times always mean faster motion wherever an orbit's own path draws in tightest.",
+    concept: "Kepler's Second Law (Equal Areas)",
+  },
+  {
+    id: "dome-8",
+    storyId: "locked-dome",
+    order: 8,
+    sceneText: "Two planets on the orrery move at different angular speeds: the inner one turns at 90 degrees per year, the outer one at 30 degrees per year.",
+    puzzle: "How many years does it take the faster inner planet to lap the outer one by a full 360 degrees, relative to it?",
+    choices: ["6 years", "3 years", "12 years", "2 years"],
+    correctIndex: 0,
+    wrongBeat: "\"Find how much faster the inner planet gains on the outer one each year first,\" Finch says, \"then divide a full 360 degrees by that gain.\"",
+    solvedBeat:
+      "90 − 30 = 60 degrees gained per year, and 360 ÷ 60 = 6 years to lap it fully. \"Exactly how often the two of them line up again the same way,\" Finch says. — A faster body always laps a slower one at a rate set by the difference between their two speeds, not either speed alone.",
+    concept: "Relative Angular Speed",
+  },
+  {
+    id: "dome-9",
+    storyId: "locked-dome",
+    order: 9,
+    sceneText:
+      "Because the inner, faster planet periodically overtakes the outer, slower one, the outer planet briefly appears — to an observer riding along on the inner planet — to drift backward against the fixed stars, before resuming its usual forward path once the faster planet has pulled far enough ahead.",
+    puzzle: "What's this apparent backward drift actually called?",
+    choices: ["Retrograde motion", "Precession", "Parallax", "Transit"],
+    correctIndex: 0,
+    wrongBeat: "\"The other three are all real things, too,\" Finch says, \"just not this one. This is specifically about an inner world lapping an outer one.\"",
+    solvedBeat:
+      "That apparent backward drift is retrograde motion — real, and entirely explainable, once you know it's really just one world overtaking another. \"Confused astronomers for centuries before anyone worked that out properly,\" Finch says. — Retrograde motion is only ever an illusion of relative speed, never an actual reversal of any planet's own real direction.",
+    concept: "Retrograde Motion",
+  },
+  {
+    id: "dome-10",
+    storyId: "locked-dome",
+    order: 10,
+    sceneText:
+      "The orrery itself was found frozen mid-turn, evidently jolted still during some kind of struggle. Its two innermost arms are locked exactly 180 degrees apart — an alignment that, by the crank's own steady, constant turning rate, only recurs once every 3 years, and the maintenance log records the exact date of the last time anyone recorded seeing it before tonight.",
+    puzzle: "Given that this exact alignment only recurs once every 3 years, and the log gives you the date it last happened, what does the frozen orrery actually let you determine?",
+    choices: [
+      "The exact date this alignment occurred tonight, and therefore precisely which night the struggle happened",
+      "Nothing at all — the orrery's position is just decoration",
+      "Only the general season, not the exact night",
+      "The identity of the culprit directly, with no further reasoning needed",
+    ],
+    correctIndex: 0,
+    wrongBeat: "\"A rare, recurring alignment is exactly the kind of fact you can count forward from,\" Finch says. \"It doesn't name anyone by itself — but it does pin down exactly when.\"",
+    solvedBeat:
+      "A recurring alignment lets you count forward in fixed, regular steps from the last recorded date, landing on tonight's exact date with real confidence — narrowing every alibi down to one specific night, not a vague window. \"Which is more than any witness's memory alone was ever going to give us,\" Finch says quietly. — A rare periodic event, once its recurrence is known, becomes as reliable a timestamp as any clock.",
+    concept: "Conjunction Timing",
+  },
+];
+
+const DESERT_COMPASS_CLUES: QuestClue[] = [
+  {
+    id: "compass-1",
+    storyId: "desert-star-compass",
+    order: 1,
+    sceneText:
+      "Amara's oldest teaching: the North Star, Polaris, sits almost exactly above the true north pole, and its height above the horizon, measured in degrees, always equals your own latitude on Earth. Tonight, she measures Polaris sitting exactly 27 degrees above the horizon.",
+    puzzle: "What's your approximate latitude tonight?",
+    choices: ["27° North", "27° South", "63° North", "54° North"],
+    correctIndex: 0,
+    wrongBeat: "\"Polaris's height above the horizon is the latitude,\" Amara says. \"Not something you subtract from ninety, and not something you double.\"",
+    solvedBeat:
+      "Polaris sits 27 degrees up, so you're at 27 degrees North latitude — plainly, directly, no further arithmetic required. \"The sky already did the measuring for you,\" Amara says. — Polaris's altitude above the horizon is always, almost exactly, equal to the observer's own latitude in the Northern Hemisphere.",
+    concept: "Latitude from Polaris",
+  },
+  {
+    id: "compass-2",
+    storyId: "desert-star-compass",
+    order: 2,
+    sceneText: "Amara explains the old star-clock: the whole sky appears to rotate a full 360 degrees around Polaris every 24 hours, turning at a steady, constant rate all night long.",
+    puzzle: "At that steady rate, how many degrees does the sky rotate in a single hour?",
+    choices: ["15° per hour", "24° per hour", "12° per hour", "30° per hour"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the full circle by however many hours it takes to complete,\" Amara says, \"not by anything else.\"",
+    solvedBeat:
+      "360 ÷ 24 = 15 degrees per hour. \"Read that rotation properly, and the sky is as good as any clock,\" Amara says. — Any full, steady rotation always divides evenly across however long that rotation actually takes.",
+    concept: "Sky Rotation Rate",
+  },
+  {
+    id: "compass-3",
+    storyId: "desert-star-compass",
+    order: 3,
+    sceneText: "Your caravan has walked at a steady pace of 5 kilometers per hour for exactly 6 hours since the last well.",
+    puzzle: "Using distance = rate × time, how far have you walked since the last well?",
+    choices: ["30 kilometers", "11 kilometers", "1.2 kilometers", "5 kilometers"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the pace by the hours actually walked,\" Amara says. \"Don't add the two together — those are entirely different kinds of numbers.\"",
+    solvedBeat:
+      "5 × 6 = 30 kilometers. \"A solid stretch, for one night's walking,\" Amara says. — Distance is always a steady rate multiplied by however long you keep moving at it.",
+    concept: "Dead Reckoning",
+  },
+  {
+    id: "compass-4",
+    storyId: "desert-star-compass",
+    order: 4,
+    sceneText:
+      "Amara's family calendar counts a full cycle of the moon — from one full moon to the next — as almost exactly 29.5 days. Tonight's full moon falls exactly 3 full cycles after the calendar's very first recorded full moon.",
+    puzzle: "How many days after that first recorded full moon does tonight's full moon fall?",
+    choices: ["88.5 days", "29.5 days", "59 days", "96 days"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the length of one cycle by however many full cycles have actually passed,\" Amara says.",
+    solvedBeat:
+      "29.5 × 3 = 88.5 days. \"My grandmother could count that out in her head before I'd even finished asking,\" Amara says. — A repeating cycle's total elapsed time is always the length of one cycle times however many full cycles have passed.",
+    concept: "Lunar Month Cycle",
+  },
+  {
+    id: "compass-5",
+    storyId: "desert-star-compass",
+    order: 5,
+    sceneText: "Each traveler in the caravan drinks 2 liters of water per day, and the caravan carries 7 travelers in all.",
+    puzzle: "How many liters of water does the whole caravan need to cross a stretch that takes exactly 4 days?",
+    choices: ["56 liters", "28 liters", "14 liters", "8 liters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the daily amount per person by the number of people, then by the number of days,\" Amara says. \"Skip any one of those three and you'll run dry out there.\"",
+    solvedBeat:
+      "2 × 7 × 4 = 56 liters, start to finish. \"Which is exactly why we never guess at this number,\" Amara says. — A total consumption is always a per-person rate multiplied by both the number of people and the number of days.",
+    concept: "Water Consumption Rate",
+  },
+  {
+    id: "compass-6",
+    storyId: "desert-star-compass",
+    order: 6,
+    sceneText: "Amara holds her fist at arm's length against the night sky, the old way: a closed fist held at true arm's length always spans almost exactly 10 degrees of sky, whoever's hand it happens to be.",
+    puzzle: "If a landmark constellation spans exactly 3 of Amara's fist-widths, roughly how many degrees wide is it?",
+    choices: ["30°", "10°", "13°", "3°"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the width of one fist by how many fists it actually takes to span it,\" Amara says.",
+    solvedBeat:
+      "3 × 10 = 30 degrees. \"Rough, but rough is often all you need out here,\" Amara says. — A fixed angular unit, once you know its size, measures anything you can count in multiples of it.",
+    concept: "Angular Size Estimation",
+  },
+  {
+    id: "compass-7",
+    storyId: "desert-star-compass",
+    order: 7,
+    sceneText: "The caravan travels out to a distant well at 4 kilometers per hour, and returns along the very same path at 6 kilometers per hour.",
+    puzzle: "What's the caravan's average speed for the entire round trip — not simply the average of 4 and 6?",
+    choices: ["4.8 km/h", "5 km/h", "10 km/h", "2.4 km/h"],
+    correctIndex: 0,
+    wrongBeat: "\"You can't just average the two speeds themselves,\" Amara says. \"You spend more time at the slower pace than the faster one, so the true average leans toward it — double the product of the two speeds, divided by their sum.\"",
+    solvedBeat:
+      "(2 × 4 × 6) ÷ (4 + 6) = 48 ÷ 10 = 4.8 kilometers per hour. \"Slower than either leg alone felt, which always surprises people,\" Amara says. — A round trip's true average speed always weighs the slower leg more heavily, since you spend more time traveling at it.",
+    concept: "Average Speed (Round Trip)",
+  },
+  {
+    id: "compass-8",
+    storyId: "desert-star-compass",
+    order: 8,
+    sceneText: "From camp, Amara takes a bearing to a distant, unseen oasis. Then, from a second camp a known distance away, she takes a second bearing to that very same oasis.",
+    puzzle: "Why does taking a bearing from two different, known points actually let you locate the oasis, when one bearing alone never could?",
+    choices: [
+      "Because the oasis must lie exactly where the two sightlines cross, and two lines fix a single point",
+      "Because two bearings always point in the exact same direction",
+      "Because a single bearing already gives you the oasis's exact distance",
+      "It doesn't actually help — you'd need at least five separate bearings",
+    ],
+    correctIndex: 0,
+    wrongBeat: "\"One bearing only gives you a whole line the oasis could sit anywhere along,\" Amara says. \"It takes a second line, from somewhere else entirely, to pin down one exact point on it.\"",
+    solvedBeat:
+      "A single bearing narrows the oasis down to one entire line, but a second bearing, taken from a different known point, crosses that line at exactly one place. \"Two lines, one crossing — that's the whole trick,\" Amara says. — Triangulating a position always needs two distinct vantage points, never just one.",
+    concept: "Triangulation (Position Fixing)",
+  },
+  {
+    id: "compass-9",
+    storyId: "desert-star-compass",
+    order: 9,
+    sceneText: "The star-clock shows the sky has rotated 150 degrees since sunset, and dawn always arrives once that same steady rotation has completed a full 180 degrees.",
+    puzzle: "At the sky's own steady rate of 15 degrees per hour, how many more hours remain until dawn?",
+    choices: ["2 hours", "1 hour", "10 hours", "30 hours"],
+    correctIndex: 0,
+    wrongBeat: "\"Find how many degrees are actually left first,\" Amara says, \"then divide that remainder by the sky's own steady hourly rate.\"",
+    solvedBeat:
+      "180 − 150 = 30 degrees remaining, and 30 ÷ 15 = 2 hours left until dawn. \"Time enough to reach the last ridge before first light,\" Amara says. — Time remaining is always the remaining distance divided by the same steady rate covering it.",
+    concept: "Hours Until Dawn",
+  },
+  {
+    id: "compass-10",
+    storyId: "desert-star-compass",
+    order: 10,
+    sceneText:
+      "Your final reckoning: the caravan has walked at a steady 5 kilometers per hour, on the bearing fixed by your triangulation, for exactly 9 hours since that fix. Amara's oldest family map marks the oasis at exactly 45 kilometers along that very same bearing.",
+    puzzle: "Using distance = rate × time, have you walked far enough yet to reach the oasis — and if not, how much farther?",
+    choices: [
+      "Exactly far enough — 45 kilometers, right on the mark",
+      "5 kilometers short of the oasis",
+      "9 kilometers past the oasis",
+      "Not even halfway there yet",
+    ],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the pace by the hours walked, one more time,\" Amara says, \"and compare it honestly against what the map actually says.\"",
+    solvedBeat:
+      "5 × 9 = 45 kilometers — exactly the distance the map marks. Ahead, palm fronds catch the last starlight over open water. \"Six generations of readings, and not one of them was ever wrong,\" Amara says, smiling for the first time all night. — The same simple arithmetic that got you every step of the way here is the same arithmetic that tells you when you've finally arrived.",
+    concept: "Dead Reckoning",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES, ...LEDGER_CLUES, ...LIBRARY_CLUES, ...MANUSCRIPT_CLUES, ...MARKET_CLUES, ...PROOF_CLUES, ...VINEYARD_CLUES, ...OBSERVATORY_CLUES, ...CLOCKWORK_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES, ...LEDGER_CLUES, ...LIBRARY_CLUES, ...MANUSCRIPT_CLUES, ...MARKET_CLUES, ...PROOF_CLUES, ...VINEYARD_CLUES, ...OBSERVATORY_CLUES, ...CLOCKWORK_CLUES, ...LOCKED_DOME_CLUES, ...DESERT_COMPASS_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }
