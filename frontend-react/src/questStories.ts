@@ -52,7 +52,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "alexandria-ledger",
-    status: "soon",
+    status: "ready",
     theme: "mystery",
     title: "The Alexandria Ledger",
     blurb: "A merchant's coded ledger is the only evidence of a break-in — and the only motive anyone can find.",
@@ -174,7 +174,7 @@ export const QUEST_STORIES: QuestStory[] = [
   },
   {
     id: "sunken-library",
-    status: "soon",
+    status: "ready",
     theme: "treasure",
     title: "The Sunken Library",
     blurb: "An underwater ruin holds the last surviving copies of texts everyone thought were lost forever.",

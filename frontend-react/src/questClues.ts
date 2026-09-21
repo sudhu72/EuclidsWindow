@@ -2989,8 +2989,274 @@ const LOST_CITY_CLUES: QuestClue[] = [
   },
 ];
 
+const LEDGER_CLUES: QuestClue[] = [
+  {
+    id: "ledger-1",
+    storyId: "alexandria-ledger",
+    order: 1,
+    sceneText: "Nefret points to a column heading in Philemon's ledger, written the old way: \"MCDXLVII\" denarii.",
+    puzzle: "What's MCDXLVII in ordinary numbers?",
+    choices: ["1,447", "1,497", "1,400", "1,543"],
+    correctIndex: 0,
+    wrongBeat: "\"Work through the numerals left to right,\" Nefret says. \"Subtract a smaller value placed before a larger one, add otherwise — M is 1000, CD is 400, XL is 40, VII is 7.\"",
+    solvedBeat:
+      "M (1000) + CD (400) + XL (40) + VII (7) = 1,447. \"Exactly the sum missing from last month's tally,\" Nefret says. — Roman numerals combine addition and subtraction depending on which symbol comes first, smaller before larger meaning subtract.",
+    concept: "Roman Numeral Conversion",
+  },
+  {
+    id: "ledger-2",
+    storyId: "alexandria-ledger",
+    order: 2,
+    sceneText: "Two entries in the ledger need to be added together: \"CCXLIV\" denarii from one shipment, and \"CXVIII\" from another.",
+    puzzle: "What's CCXLIV plus CXVIII, in ordinary numbers?",
+    choices: ["362", "352", "372", "342"],
+    correctIndex: 0,
+    wrongBeat: "\"Convert each Roman numeral to an ordinary number first,\" Nefret says, \"then add the two ordinary numbers together — don't try to add the numerals symbol by symbol.\"",
+    solvedBeat:
+      "244 + 118 = 362. \"The safest way to add these old numerals is to translate first, and only then add,\" Nefret says. — Roman numerals were never really built for arithmetic — converting to a place-value system first makes any calculation far more reliable.",
+    concept: "Roman Numeral Arithmetic",
+  },
+  {
+    id: "ledger-3",
+    storyId: "alexandria-ledger",
+    order: 3,
+    sceneText: "Philemon's own bookkeeping rule: total debits must always exactly equal total credits. Today's page lists debits of 850 denarii, but credits sum to only 790.",
+    puzzle: "How many denarii are missing to bring the page back into balance?",
+    choices: ["60 denarii", "140 denarii", "790 denarii", "850 denarii"],
+    correctIndex: 0,
+    wrongBeat: "\"Subtract the smaller total from the larger one,\" Nefret says. \"The gap between them is exactly what's unaccounted for.\"",
+    solvedBeat:
+      "850 − 790 = 60 denarii unaccounted for. \"The first page where it doesn't balance,\" Nefret says grimly. — A ledger only tells the truth when both sides genuinely match; any gap between them is real money that needs explaining.",
+    concept: "Balancing an Equation",
+  },
+  {
+    id: "ledger-4",
+    storyId: "alexandria-ledger",
+    order: 4,
+    sceneText: "Philemon lent 500 denarii to a client at a simple interest rate of 8% per year.",
+    puzzle: "Using simple interest = principal × rate × time, how much interest would that loan earn over 3 years?",
+    choices: ["120 denarii", "40 denarii", "540 denarii", "1,200 denarii"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply the principal by the rate first,\" Nefret says, \"then multiply that result by the number of years — don't apply the rate more than once per year on its own.\"",
+    solvedBeat:
+      "500 × 0.08 × 3 = 120 denarii. \"Which matches exactly what Berenice still owes, interest included,\" Nefret says. — Simple interest grows by the very same fixed amount every year, unlike compounding, which builds on itself.",
+    concept: "Simple Interest",
+  },
+  {
+    id: "ledger-5",
+    storyId: "alexandria-ledger",
+    order: 5,
+    sceneText: "The counting-house's total holdings should be 4,000 denarii. After today's count, only 3,760 denarii can actually be found.",
+    puzzle: "What percentage of the total holdings is missing?",
+    choices: ["6%", "24%", "4%", "94%"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the missing amount first,\" Nefret says, \"the expected total minus what's actually there, then divide that gap by the expected total.\"",
+    solvedBeat:
+      "4,000 − 3,760 = 240 denarii missing, and 240 ÷ 4,000 = 6%. \"Small enough to hide, if no one ever checked closely,\" Nefret says. — A percentage like this always measures the missing amount against the total it was supposed to be part of.",
+    concept: "Percentage",
+  },
+  {
+    id: "ledger-6",
+    storyId: "alexandria-ledger",
+    order: 6,
+    sceneText: "A shipment paid partly in Alexandrian drachmas and partly in Roman denarii, exchanged at a rate of 4 drachmas to every 1 denarius.",
+    puzzle: "If a payment comes to 60 drachmas, how many denarii is that worth at the same rate?",
+    choices: ["15 denarii", "240 denarii", "64 denarii", "56 denarii"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide by the exchange rate, since you're converting from drachmas back to denarii,\" Nefret says. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "60 ÷ 4 = 15 denarii. \"Merchants who mixed that up got cheated at every counting-house on this coast,\" Nefret says. — An exchange rate is simply a ratio, and converting through it correctly depends on which direction you're actually converting.",
+    concept: "Ratio & Proportion",
+  },
+  {
+    id: "ledger-7",
+    storyId: "alexandria-ledger",
+    order: 7,
+    sceneText: "One entry reads \"CCCXII\" denarii received, and a second entry below it reads \"LXXV\" denarii returned as a refund.",
+    puzzle: "What's CCCXII minus LXXV, in ordinary numbers?",
+    choices: ["237", "247", "227", "387"],
+    correctIndex: 0,
+    wrongBeat: "\"Convert both numerals to ordinary numbers first,\" Nefret says, \"then subtract the smaller amount from the larger one.\"",
+    solvedBeat:
+      "312 − 75 = 237. \"The true net amount, once you actually do the subtraction,\" Nefret says. — Just like addition, subtracting Roman numerals directly is far riskier than converting them first.",
+    concept: "Roman Numeral Arithmetic",
+  },
+  {
+    id: "ledger-8",
+    storyId: "alexandria-ledger",
+    order: 8,
+    sceneText: "Two shipments arrive: 40 amphorae worth 12 denarii each, and 60 amphorae worth 20 denarii each.",
+    puzzle: "What's the weighted average value per amphora across both shipments combined?",
+    choices: ["16.8 denarii", "16 denarii", "18 denarii", "15 denarii"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply each shipment's count by its own value first, add both totals together, then divide by the combined count,\" Nefret says. \"Don't just average the two prices directly.\"",
+    solvedBeat:
+      "(40 × 12) + (60 × 20) = 480 + 1,200 = 1,680 denarii total, divided by 100 amphorae, is 16.8 denarii each. \"Not simply the middle of 12 and 20,\" Nefret notes, \"because there were more of the pricier ones.\" — A weighted average accounts for how much of each part there actually is, not just how many parts there are.",
+    concept: "Weighted Average",
+  },
+  {
+    id: "ledger-9",
+    storyId: "alexandria-ledger",
+    order: 9,
+    sceneText: "Kaeso's own small accounts, month by month, show a suspicious pattern: 15, 22, 29, 36 denarii \"adjusted\" each month.",
+    puzzle: "Following that same pattern, how many denarii would next month's entry show?",
+    choices: ["43", "42", "40", "45"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the fixed gap between each month's amount and the one before it,\" Nefret says, \"then add that same gap once more to the last one.\"",
+    solvedBeat:
+      "Each month is 7 denarii more than the last, so 36 + 7 = 43. \"Steady, deliberate, month after month,\" Nefret says. \"Not a mistake anyone makes by accident.\" — A sequence with the same fixed gap at every step is called an arithmetic sequence.",
+    concept: "Arithmetic Sequences",
+  },
+  {
+    id: "ledger-10",
+    storyId: "alexandria-ledger",
+    order: 10,
+    sceneText: "Philemon's final page works out an equation for the true embezzled total: 4x + 60 = 232, where x represents years of steady skimming.",
+    puzzle: "Solving for x, what number was Philemon working out?",
+    choices: ["43", "58", "73", "35"],
+    correctIndex: 0,
+    wrongBeat: "\"Isolate x by undoing each step in reverse,\" Nefret says. \"Subtract 60 from both sides first, then divide by 4.\"",
+    solvedBeat:
+      "232 − 60 = 172, and 172 ÷ 4 = 43. \"Forty-three denarii, skimmed the same way, year after year,\" Nefret says quietly. — Solving an equation for an unknown is just undoing, one careful step at a time, whatever was done to build it.",
+    concept: "Solving a Linear Equation",
+  },
+];
+
+const LIBRARY_CLUES: QuestClue[] = [
+  {
+    id: "library-1",
+    storyId: "sunken-library",
+    order: 1,
+    sceneText: "Delia's dive computer confirms the old rule: water pressure increases by 1 atmosphere for every 10 meters of depth, on top of the 1 atmosphere already pressing down at the surface.",
+    puzzle: "What's the total pressure, in atmospheres, at a depth of 30 meters?",
+    choices: ["4 atmospheres", "3 atmospheres", "30 atmospheres", "10 atmospheres"],
+    correctIndex: 0,
+    wrongBeat: "\"Start from the 1 atmosphere already present at the surface,\" Delia says, \"then add one more atmosphere for every 10 meters of depth.\"",
+    solvedBeat:
+      "1 + (30 ÷ 10) = 4 atmospheres. \"Four times what your lungs are used to,\" Delia says, checking her gauge. — Pressure underwater builds steadily and predictably with depth, the same relationship at any dive site.",
+    concept: "Pressure at Depth",
+  },
+  {
+    id: "library-2",
+    storyId: "sunken-library",
+    order: 2,
+    sceneText: "Delia's tank holds 200 units of air. At this depth, she's using it at a steady rate of 25 units per minute.",
+    puzzle: "How many minutes of air does she have remaining?",
+    choices: ["8 minutes", "25 minutes", "175 minutes", "5 minutes"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total air remaining by the rate it's being used,\" Delia says. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "200 ÷ 25 = 8 minutes. \"Which is exactly how long we have to find this chamber,\" Delia says, checking the clock. — Dividing a total supply by its rate of use always tells you how much time is actually left.",
+    concept: "Air Consumption Rate",
+  },
+  {
+    id: "library-3",
+    storyId: "sunken-library",
+    order: 3,
+    sceneText: "Seawater has a density of about 1.03 grams per cubic centimeter. A carved stone tablet Delia recovers has a density of 2.7 grams per cubic centimeter.",
+    puzzle: "Since the tablet's density is greater than seawater's, what should happen if it's released underwater?",
+    choices: ["It sinks", "It floats", "It stays exactly where it's released", "It dissolves"],
+    correctIndex: 0,
+    wrongBeat: "\"An object denser than the fluid around it always sinks,\" Delia says. \"An object less dense always floats — compare the two densities directly.\"",
+    solvedBeat:
+      "2.7 is greater than 1.03, so the tablet sinks, exactly as it should. \"Which is exactly why it's still down here after all this time,\" Delia says. — Buoyancy always comes down to comparing an object's density to the fluid around it.",
+    concept: "Buoyancy",
+  },
+  {
+    id: "library-4",
+    storyId: "sunken-library",
+    order: 4,
+    sceneText: "The first submerged chamber measures 8 meters long, 5 meters wide, and 3 meters tall.",
+    puzzle: "What's the total volume of that chamber?",
+    choices: ["120 cubic meters", "40 cubic meters", "16 cubic meters", "96 cubic meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Multiply all three dimensions together,\" Delia says. \"Length times width times height.\"",
+    solvedBeat:
+      "8 × 5 × 3 = 120 cubic meters. \"Enough room to have held an entire archive,\" Delia says. — The volume of any rectangular room is simply its length times its width times its height.",
+    concept: "Volume of a Rectangular Chamber",
+  },
+  {
+    id: "library-5",
+    storyId: "sunken-library",
+    order: 5,
+    sceneText: "Delia's notes give a chamber's pressure reading as 5.5 atmospheres total.",
+    puzzle: "Using the same rule — 1 atmosphere at the surface, plus 1 more for every 10 meters of depth — how deep is that chamber?",
+    choices: ["45 meters", "55 meters", "50 meters", "40 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Subtract the 1 surface atmosphere first,\" Delia says, \"then multiply the remainder by 10 meters per atmosphere.\"",
+    solvedBeat:
+      "5.5 − 1 = 4.5, and 4.5 × 10 = 45 meters. \"Deeper than anyone's ever dived here safely,\" Delia says, checking her equipment. — Reversing a rate calculation just means undoing each step in the opposite order it was built.",
+    concept: "Unit Conversion (Pressure to Depth)",
+  },
+  {
+    id: "library-6",
+    storyId: "sunken-library",
+    order: 6,
+    sceneText: "Delia's tank started this dive with 200 units of air. She now has 55 units left.",
+    puzzle: "What percentage of her original air supply remains?",
+    choices: ["27.5%", "55%", "72.5%", "45%"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide what's left by the original full amount,\" Delia says, \"then convert that fraction into a percentage.\"",
+    solvedBeat:
+      "55 ÷ 200 = 0.275, or 27.5%. \"Barely a quarter left,\" Delia says, checking the gauge twice. — A percentage remaining is always the current amount divided by the original total.",
+    concept: "Percentage",
+  },
+  {
+    id: "library-7",
+    storyId: "sunken-library",
+    order: 7,
+    sceneText: "Safe diving practice limits ascent to no more than 9 meters per minute. Delia is currently at 45 meters and needs to surface.",
+    puzzle: "At that maximum safe rate, what's the minimum time her ascent should take?",
+    choices: ["5 minutes", "9 minutes", "45 minutes", "4 minutes"],
+    correctIndex: 0,
+    wrongBeat: "\"Divide the total depth by the maximum safe rate per minute,\" Delia says. \"Don't multiply the two together.\"",
+    solvedBeat:
+      "45 ÷ 9 = 5 minutes, minimum. \"Rushing it is exactly how divers get hurt,\" Delia says, checking her own dive plan. — Dividing a distance by a rate always tells you the time needed to safely cover it.",
+    concept: "Rate & Time",
+  },
+  {
+    id: "library-8",
+    storyId: "sunken-library",
+    order: 8,
+    sceneText: "Delia's light meter shows brightness halving every 5 meters of depth: 800, then 400, then 200, then 100 units, ...",
+    puzzle: "Following that same halving pattern, what reading comes next?",
+    choices: ["50", "75", "25", "60"],
+    correctIndex: 0,
+    wrongBeat: "\"Check what's actually happening between each reading and the next,\" Delia says. \"It isn't subtracting a fixed amount — it's multiplying by the same fixed fraction every time.\"",
+    solvedBeat:
+      "Each reading is exactly half the one before it, so 100 ÷ 2 = 50. \"Which is why we brought our own light down here at all,\" Delia says. — That's a geometric sequence: every term multiplied by the same fixed ratio, rather than reduced by a fixed amount.",
+    concept: "Geometric Sequences",
+  },
+  {
+    id: "library-9",
+    storyId: "sunken-library",
+    order: 9,
+    sceneText: "A row of numbered archive shelves, carved into the chamber wall, reads: 4, 9, 14, 19, ...",
+    puzzle: "Following that same pattern, what number should the next shelf carry?",
+    choices: ["24", "23", "22", "26"],
+    correctIndex: 0,
+    wrongBeat: "\"Find the fixed gap between each shelf's number and the one before it,\" Delia says, \"then add that same gap once more.\"",
+    solvedBeat:
+      "Each shelf is 5 more than the last, so 19 + 5 = 24. \"They numbered everything, right down to the last scroll,\" Delia says. — A sequence with the same fixed gap at every step is an arithmetic sequence, and its next term is never a guess.",
+    concept: "Arithmetic Sequences",
+  },
+  {
+    id: "library-10",
+    storyId: "sunken-library",
+    order: 10,
+    sceneText: "The final chamber's marker carves an equation directly into the stone: 1 + d ÷ 10 = 6.8, where d is the depth in meters.",
+    puzzle: "Solving for d, how deep is the final chamber?",
+    choices: ["58 meters", "68 meters", "60 meters", "48 meters"],
+    correctIndex: 0,
+    wrongBeat: "\"Isolate d by undoing each step in reverse,\" Delia says. \"Subtract 1 from both sides first, then multiply by 10.\"",
+    solvedBeat:
+      "6.8 − 1 = 5.8, and 5.8 × 10 = 58 meters. Delia checks her gauge one final time before the descent. — Solving an equation for an unknown is just undoing, one careful step at a time, whatever was done to build it.",
+    concept: "Solving a Linear Equation",
+  },
+];
+
 export function cluesForStory(storyId: string): QuestClue[] {
-  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES]
+  return [...QUEST_CLUES, ...STATISTICIAN_CLUES, ...PIRATES_COVE_CLUES, ...CHESSBOARD_CLUES, ...LIGHTHOUSE_CLUES, ...CRYPTOGRAPHER_CLUES, ...SKY_CHART_CLUES, ...CLOCKMAKER_CLUES, ...PHARAOH_CLUES, ...CONSERVATORY_CLUES, ...SILK_ROAD_CLUES, ...CARNIVAL_CLUES, ...ICE_VAULT_CLUES, ...ARCHITECT_CLUES, ...CANYON_CLUES, ...MUSEUM_CLUES, ...CARTOGRAPHER_CLUES, ...GARDEN_CLUES, ...LOST_CITY_CLUES, ...LEDGER_CLUES, ...LIBRARY_CLUES]
     .filter((c) => c.storyId === storyId)
     .sort((a, b) => a.order - b.order);
 }

@@ -476,6 +476,52 @@ export const QUEST_INTROS: QuestIntro[] = [
       },
     ],
   },
+  {
+    storyId: "alexandria-ledger",
+    sceneText:
+      "**A merchant's counting-house near the Alexandria harbor, lamp oil burning low.**\n\n" +
+      "Nefret, Philemon's young apprentice bookkeeper, meets you at the door, ledger still clutched to her chest. \"Master Philemon is dead, right at his own desk,\" she says. \"He'd been going back through a whole year of accounts, page by page, convinced something wasn't balancing the way it should. He told me just yesterday he'd nearly found it — the exact page, the exact sum.\"\n\n" +
+      "The counting-house closed at the usual hour, and five people had reason enough to still be somewhere nearby well past that. Philemon, everyone agrees, trusted his own ledger completely — which made him exactly the kind of man who'd eventually notice the one page that didn't add up.",
+    cast: [
+      {
+        name: "Kaeso",
+        detail: "Philemon's senior clerk, trusted with the smaller accounts for over a decade — accounts that, page by page, never seem to balance quite as cleanly as they should.",
+      },
+      {
+        name: "Drusus",
+        detail: "Philemon's business partner, standing to inherit full ownership of the counting-house outright.",
+      },
+      {
+        name: "Berenice",
+        detail: "A wealthy client, deeply in debt to Philemon — a debt his death would conveniently leave uncollected.",
+      },
+      {
+        name: "Xanthus",
+        detail: "A rival merchant, competing for the same warehouse contract Philemon was about to win.",
+      },
+      {
+        name: "Rufus",
+        detail: "The dock's night watchman, walking the same rounds every evening for years. As far as anyone can tell, entirely without motive.",
+      },
+    ],
+  },
+  {
+    storyId: "sunken-library",
+    sceneText:
+      "**A sunken ruin, sunlight fading fast the deeper you descend.**\n\n" +
+      "Delia has spent three diving seasons mapping this drowned library, ever since sonar first revealed chambers far too regular to be natural. \"Whoever built this didn't trust locks against thieves,\" she tells you, checking her gauges one last time before the descent. \"They trusted the sea itself — pressure, depth, air. Get any of those numbers wrong down here, and the ocean simply keeps its own secret, no matter how badly you want it.\"\n\n" +
+      "Her own dive computer already confirms two things worth remembering: pressure builds by exactly 1 atmosphere for every 10 meters of depth, and her tank holds 200 units of air, used up at a steady, countable rate. \"Every chamber from here to the deep archive tests the same thing,\" Delia says, checking her line one final time. \"Whether you trust the numbers a dive computer gives you, or you just guess at how deep is too deep.\"",
+    cast: [
+      {
+        name: "Delia",
+        detail: "Your dive guide — three seasons mapping this ruin, and the first to take its depth and pressure readings as seriously as its architecture.",
+      },
+      {
+        name: "The Archivists",
+        detail: "The vanished people who built this drowned library. Long gone, but every chamber they sealed still tests the same thing: whether your arithmetic can be trusted completely.",
+      },
+    ],
+  },
 ];
 
 export function introForStory(storyId: string): QuestIntro | undefined {

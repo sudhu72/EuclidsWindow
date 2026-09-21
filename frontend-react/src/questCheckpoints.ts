@@ -1033,6 +1033,107 @@ export const QUEST_CHECKPOINTS: QuestCheckpoint[] = [
       "The real chamber gives way at last, and torchlight spills across shelves of carved stelae, obsidian tools, and — stacked with obvious care — dozens of bark-paper books, their pages dense with the priests' own numerals: counts of harvests, eclipses, and calculations that took centuries to compile.\n\n" +
       "\"They really did trust the count over the sword,\" Itzel says, running a hand along a stela's edge. \"No invading army could out-argue a number that simply repeats the same way, every single time you check it.\" A final glyph, carved above the doorway, translated slowly: \"What is counted honestly will always add up the same way, in any tongue, in any base, for anyone patient enough to check.\" Outside, the jungle is already reclaiming the plaza a little further, exactly as it always has, indifferent to how carefully anything here was once counted.",
   },
+
+  // ------------------------------------------------------------------
+  // The Alexandria Ledger
+  // ------------------------------------------------------------------
+  {
+    id: "ledger-mid",
+    storyId: "alexandria-ledger",
+    afterClue: "ledger-5",
+    kind: "mid",
+    title: "Five Accounts",
+    scenario:
+      "You gather the five accounts of that evening and lay them side by side.\n\n" +
+      "**Kaeso:** \"I was reconciling the smaller accounts in the back room, same as every evening — nobody helped me, nobody needed to.\"\n\n" +
+      "**Drusus:** \"I was dining with two other merchants at the harbor tavern, the whole evening.\"\n\n" +
+      "**Berenice:** \"I was at home entertaining guests — a dozen of them, easily, until well past midnight.\"\n\n" +
+      "**Xanthus:** \"I was inspecting a new shipment at my own warehouse, alone, checking the manifests myself.\"\n\n" +
+      "**Rufus:** \"I did my usual dock rounds. Kaeso was indeed in the back room — but the lamp oil he'd need for that much reconciling was never touched. And Xanthus I saw leaving the district entirely, well before the shipment he claims to have inspected even arrived at the dock.\"\n\n" +
+      "You already know Philemon's body was found by Nefret at his own desk, and that the desk sits directly beside the back room where Kaeso claims to have worked all evening.",
+    entities: ["Kaeso", "Drusus", "Berenice", "Xanthus", "Rufus"],
+    options: ["Alibi Holds", "Alibi Breaks"],
+    answer: {
+      Kaeso: "Alibi Breaks",
+      Drusus: "Alibi Holds",
+      Berenice: "Alibi Holds",
+      Xanthus: "Alibi Breaks",
+      Rufus: "Alibi Holds",
+    },
+    wrongConsequence:
+      "You clear the wrong people, and a full night's lead slips away chasing it. Look again at which claims are confirmed by someone specifically placing them there tonight, and which are directly contradicted — and check whether Rufus's own detail actually matches what each person claimed.",
+    explain:
+      "Drusus's account is confirmed by two independent merchants, and Berenice's by a dozen guests at her own home — both hold. Rufus himself has no motive and supplies the key detail, so his account holds too. But Kaeso's claim of reconciling accounts all evening doesn't survive Rufus's own observation: the lamp oil he'd need for that much work was never touched. And Xanthus's claim of inspecting a shipment falls apart the moment Rufus places him leaving the district before that very shipment ever arrived.",
+  },
+  {
+    id: "ledger-final",
+    storyId: "alexandria-ledger",
+    afterClue: "ledger-10",
+    kind: "final",
+    title: "The Counting-House",
+    scenario:
+      "You confront the two remaining names in the counting-house itself, the ledger still open on the desk.\n\n" +
+      "**Kaeso:** \"It was Xanthus. He wanted Philemon's warehouse contract badly enough — ask anyone in the trade what that contract is actually worth.\"\n\n" +
+      "**Xanthus:** \"Ask instead who's been quietly skimming from these very accounts for years, and who Philemon's own ledger was about to name by name.\"\n\n" +
+      "You already know solving the final balancing equation in Philemon's own hand reveals the exact embezzled total, and it matches, denarius for denarius, a private account opened under a false name that traces directly back to Kaeso.",
+    entities: ["Kaeso", "Xanthus"],
+    options: ["Guilty", "Innocent"],
+    answer: { Kaeso: "Guilty", Xanthus: "Innocent" },
+    wrongConsequence:
+      "The counting-house stays silent, and nothing more is offered — you've named the wrong name, and whatever nerve the real culprit had left settles right back into place. Consider which of these two the arithmetic actually points to, versus which one merely has an old business motive with nothing new tying them to tonight.",
+    explain:
+      "Xanthus's business motive is real, but nothing beyond ambition ties him to the counting-house that night, and losing a contract rarely drives a man to murder over arithmetic. Kaeso's exposure was total and specific: the final balancing equation, solved honestly, lands exactly on the sum missing from the accounts, and that sum traces directly to a private account under a name that was never his own to use.",
+    resolution:
+      "You lay it out for Nefret, piece by piece: the Roman numeral conversion that first revealed how large the missing sum really was. The numeral addition, confirming Philemon's own careful cross-checks weren't a mistake at all. The ledger's own balance, refusing to close no matter how many times anyone recounted it. The simple interest calculation, matching a debt everyone assumed was the real motive, until it wasn't. The percentage missing, small enough to hide for years if no one ever looked closely. The currency exchange ratio, tracing coins through three different hands before they vanished for good. The numeral subtraction, isolating the exact discrepancy month by month. The weighted average across shipments, and the steady arithmetic sequence of skimmed amounts, growing the same small amount every single month. And the final balancing equation, solved in Philemon's own hand, landing exactly on the sum hidden in an account under a name that was never Kaeso's to use.\n\n" +
+      "Kaeso doesn't run — there's nowhere in a locked counting-house left to run to. \"A little every month,\" he says quietly. \"Never enough to notice. Until he actually looked.\" Nefret closes the ledger's cover gently. \"He trusted the numbers to always tell the truth eventually,\" she says. \"He just didn't expect to run out of time before they did.\" Outside, the harbor is already stirring for the morning's trade, indifferent to the ledger's own quiet, careful arithmetic, still balancing itself out, one honest page at a time.",
+  },
+
+  // ------------------------------------------------------------------
+  // The Sunken Library
+  // ------------------------------------------------------------------
+  {
+    id: "library-mid",
+    storyId: "sunken-library",
+    afterClue: "library-5",
+    kind: "mid",
+    title: "Three Passages",
+    scenario:
+      "Beyond the entrance hall, three submerged passages branch off, each marked with a claim carved into the stone. Delia reads them aloud:\n\n" +
+      "**Passage A:** \"Water pressure increases steadily and predictably with depth, the same relationship at any dive site on Earth.\"\n\n" +
+      "**Passage B:** \"An object's buoyancy depends only on its weight, not its volume.\"\n\n" +
+      "**Passage C:** \"Doubling a rectangular chamber's length, width, and height all at once only doubles its volume.\"\n\n" +
+      "\"The Archivists sealed the false passages behind claims that sound reasonable but fall apart under real arithmetic,\" Delia says. \"Check every one properly before you trust it.\"",
+    entities: ["Passage A", "Passage B", "Passage C"],
+    options: ["True Claim", "False Claim"],
+    answer: { "Passage A": "True Claim", "Passage B": "False Claim", "Passage C": "False Claim" },
+    wrongConsequence:
+      "The wrong passage's floor gives way to a silt-choked dead end, and you retreat with nothing but lost air for the trouble. \"Test each claim against real numbers,\" Delia says. \"Not what sounds reasonable — what actually holds up once you calculate it.\"",
+    explain:
+      "Passage A restates exactly what your own dive computer proved: pressure builds steadily and predictably with depth, everywhere. Passage B is false — buoyancy depends on density, which is mass divided by volume; two objects of the same weight but different volumes can behave completely differently in water. Passage C is false too: doubling every dimension of a chamber multiplies its volume by eight, not two, the same trap that catches any three-dimensional scaling.",
+  },
+  {
+    id: "library-final",
+    storyId: "sunken-library",
+    afterClue: "library-10",
+    kind: "final",
+    title: "Three Final Chambers",
+    scenario:
+      "Delia reads each final chamber's carved inscription aloud:\n\n" +
+      "**Chamber 1:** \"Fresh water and seawater have slightly different densities, which can change whether the exact same object floats or sinks in each.\"\n\n" +
+      "**Chamber 2:** \"Air consumption rate stays exactly the same no matter how deep a diver goes.\"\n\n" +
+      "**Chamber 3:** \"A geometric sequence that keeps halving will eventually reach exactly zero.\"\n\n" +
+      "\"One of these is true without a single exception,\" Delia says. \"The Archivists trusted their whole archive's protection on that one rule.\"",
+    entities: ["Chamber 1", "Chamber 2", "Chamber 3"],
+    options: ["Real Chamber", "False Chamber"],
+    answer: { "Chamber 1": "Real Chamber", "Chamber 2": "False Chamber", "Chamber 3": "False Chamber" },
+    wrongConsequence:
+      "Stone grinds shut over the wrong chamber, sealed for good this time. \"Don't trust the shape of the sentence,\" Delia says. \"Work the actual numbers, small and concrete, before you decide.\"",
+    explain:
+      "Chamber 1 holds exactly: seawater's higher density, from dissolved salt, really can make the same object float in the sea while it would sink in a freshwater lake — a real, measurable difference. Chamber 2 is false: air consumption actually increases with depth, since compressed air is used up faster under greater pressure, not the same rate throughout a dive. Chamber 3 is false too — a sequence that keeps halving gets closer and closer to zero forever, without ever actually reaching it.",
+    resolution:
+      "The real chamber gives way at last, and lantern light spills across shelf after submerged shelf, sealed scroll-cases still intact after all this time, protected by nothing but careful engineering and the Archivists' own trust in exact measurement.\n\n" +
+      "\"They really did trust the pressure over any lock,\" Delia says, running a gloved hand along a sealed case. \"Get the depth wrong by even a few meters, and you'd never find this place at all.\" A final tablet, propped against the shelf, translated slowly by dive light: \"What the sea keeps, it keeps exactly as deep as the numbers say, and not one meter less.\" Above the chamber, sunlight filters down faintly through sixty meters of water, patient and indifferent, exactly as it always has.",
+  },
 ];
 
 export function checkpointsForStory(storyId: string): QuestCheckpoint[] {
