@@ -70,7 +70,9 @@
     <button class="tab" data-tab="span">Span Builder</button>
     <button class="tab" data-tab="basis">Change of Basis</button>
     <button class="tab" data-tab="qr">QR / Gram-Schmidt</button>
+    <button class="tab" data-tab="orth">Orthogonal Matrices</button>
     <button class="tab" data-tab="calc">Tangent Line &amp; Riemann Sum</button>
+    <button class="tab" data-tab="ibp">By Parts &amp; Substitution</button>
     <button class="tab" data-tab="ode">Direction Fields</button>
     <button class="tab" data-tab="osc">Oscillator</button>
   </div>
@@ -212,6 +214,77 @@
       <button class="op" id="btnOscReset">Reset</button>
       <svg id="oscSvg" viewBox="0 0 400 300"></svg>
       <p class="caption">Left: the mass on its spring, oscillating around the center line. Right: <span class="formula">x(t)</span> traced live — undamped, it repeats forever; damped, it decays toward zero, the same "restoring force wins in the end" shape as Newton's cooling law.</p>
+    </div>
+  </div>
+
+  <!-- ============ ORTHOGONAL MATRICES ============ -->
+  <div class="panel" id="panel-orth">
+    <div class="card">
+      <h2>Orthogonal Matrices: Turn or Mirror, Never Squash</h2>
+      <p class="sub"><b>What's happening:</b> a matrix <span class="formula">Q</span> is <b>orthogonal</b> when its columns are perpendicular and each has length 1. That's the one-line test <span class="formula">QᵀQ = I</span>. The grey arrows are <span class="formula">x = (3,4)</span> and <span class="formula">y = (1,0)</span>; the coloured arrows are where the matrix sends them. The dashed circle is the unit circle and its image.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>Rotate 30°</em> and <em>Reflect across 30° line</em>. The length stays 5, the angle stays 53.13°, and <span class="formula">Q⁻¹</span> matches <span class="formula">Qᵀ</span>. Then press <em>Shear (fails)</em>: its determinant is still 1, but the length jumps to 8.0623 and the angle shrinks to 29.74°. Finally, <em>QR least squares (4 points)</em> runs the tutorial's regression step by step in the card below.</p>
+      <div class="presetbar">
+        <button class="op" data-orpreset="rot30">Rotate 30°</button>
+        <button class="op" data-orpreset="refl30">Reflect across 30° line</button>
+        <button class="op" data-orpreset="swap">Swap coordinates</button>
+        <button class="op" data-orpreset="shear">Shear (fails)</button>
+        <button class="op" data-orpreset="scaled">Scaled rotation 2× (fails)</button>
+        <button class="op" data-orpreset="lsq">QR least squares (4 points)</button>
+      </div>
+      <div class="row"><label>rotate by</label><input type="range" id="orAng" min="-180" max="180" step="1" value="30"><span class="readout" id="orAngOut">30°</span></div>
+      <div class="matrixgrid">
+        <input type="number" id="orA" value="0.8660" step="0.1"><input type="number" id="orB" value="-0.5" step="0.1">
+        <input type="number" id="orC" value="0.5" step="0.1"><input type="number" id="orD" value="0.8660" step="0.1">
+      </div>
+      <svg id="orSvg" viewBox="-160 -160 320 320"></svg>
+      <div class="statrow">
+        <div class="stat" id="orStatQQ">QᵀQ = —</div>
+        <div class="stat" id="orStatDet">det = —</div>
+      </div>
+      <div class="statrow">
+        <div class="stat" id="orStatInv">Q⁻¹ vs Qᵀ: —</div>
+      </div>
+      <div class="statrow">
+        <div class="stat" id="orStatLen">length: —</div>
+        <div class="stat" id="orStatAng">angle: —</div>
+      </div>
+      <div class="stat" id="orVerdict" style="margin-top:6px;">—</div>
+      <p class="caption"><b>Why it matters:</b> grey = before, teal = Q·x, gold = Q·y, purple dashed = image of the unit circle. If the purple circle stays a circle of radius 1, every length survives. That is exactly what <span class="formula">QᵀQ = I</span> guarantees, and what a shear (which turns the circle into an ellipse) breaks.</p>
+    </div>
+    <div class="card" id="orLsqCard" style="margin-top:18px;">
+      <h2>Why QR Least Squares Works: QᵀQ = I Makes XᵀX Disappear</h2>
+      <p class="sub"><b>What's happening:</b> fit <span class="formula">y = β₀ + β₁t</span> through (1,2), (2,3), (3,5), (4,6). Press <em>QR least squares (4 points)</em> above to run each step.</p>
+      <svg id="orLsqSvg" viewBox="0 0 400 240" style="max-width:520px;height:auto;"></svg>
+      <div class="stat" id="orLsqSteps" style="white-space:pre-wrap; line-height:1.7;">Press “QR least squares (4 points)”.</div>
+    </div>
+  </div>
+
+  <!-- ============ BY PARTS & SUBSTITUTION ============ -->
+  <div class="panel" id="panel-ibp">
+    <div class="card">
+      <h2>By Parts and Substitution: Derivative Rules, Run Backward</h2>
+      <p class="sub"><b>What's happening:</b> <b>integration by parts</b> is the product rule run backward, <span class="formula">∫u dv = [u·v] − ∫v du</span>. Its picture is a rectangle split by a curve into two regions. <b>Substitution</b> is the chain rule run backward, <span class="formula">∫f(g(x))·g'(x)dx = ∫f(u)du</span>: the same slivers, re-measured along a new axis. Every number below is computed live by numerical integration.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press each preset in turn. For the by-parts presets, check that the teal and gold areas add up to the big rectangle minus the small corner. For <em>Exponential mean</em>, drag the cutoff and watch the boundary toll shrink to 0. For <em>substitution</em>, check that the two different-looking curves enclose the same area.</p>
+      <div class="presetbar">
+        <button class="op" data-ibpreset="xex">∫₀¹ x·eˣ (by parts)</button>
+        <button class="op" data-ibpreset="lnx">∫₁ᵉ ln x (by parts)</button>
+        <button class="op" data-ibpreset="expmean">Exponential mean, λ = 0.5</button>
+        <button class="op" data-ibpreset="subst">∫₀¹ 2x·e^(x²) (substitution)</button>
+        <button class="op" data-ibpreset="normal">Normal → z-table</button>
+      </div>
+      <div id="ibExpCtl" style="display:none;">
+        <div class="row"><label>λ</label><input type="range" id="ibLam" min="0.2" max="2" step="0.05" value="0.5"><span class="readout" id="ibLamOut">0.50</span></div>
+        <div class="row"><label>cutoff T</label><input type="range" id="ibT" min="1" max="40" step="0.5" value="10"><span class="readout" id="ibTOut">10.0</span></div>
+      </div>
+      <div id="ibSubCtl" style="display:none;">
+        <div class="row"><label>slivers</label><input type="range" id="ibN" min="2" max="20" step="1" value="5"><span class="readout" id="ibNOut">5</span></div>
+      </div>
+      <div id="ibNormCtl" style="display:none;">
+        <div class="row"><label>cutoff x</label><input type="range" id="ibX" min="55" max="145" step="1" value="130"><span class="readout" id="ibXOut">130</span></div>
+      </div>
+      <svg id="ibSvg" viewBox="0 0 640 300" style="max-width:640px;height:auto;"></svg>
+      <div class="stat" id="ibStat" style="white-space:pre-wrap; line-height:1.7; margin-top:10px;">Pick a preset.</div>
+      <p class="caption" id="ibCaption"><b>Why it matters:</b> there's no forward "product rule" for integrals. Instead, each derivative rule, read backward, is an integration rule. These two cover a huge share of the integrals in probability and machine learning, from means and variances to standardizing a bell curve.</p>
     </div>
   </div>
 
@@ -717,6 +790,278 @@
   renderOsc();
   startOsc();
 
+})();
+</script>
+<script>
+/* ===== Orthogonal Matrices + By Parts & Substitution tabs (self-contained) ===== */
+(function(){
+  "use strict";
+  const NS="http://www.w3.org/2000/svg";
+  function el(tag, attrs, text){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(text!==undefined) e.textContent=text; return e; }
+  function f4(v){ const r=Math.round(v*10000)/10000; return (Math.abs(r)<5e-5?0:r).toFixed(4); }
+  function setActive(sel, btn){ document.querySelectorAll(sel).forEach(b=>b.classList.remove("active")); if(btn) btn.classList.add("active"); }
+
+  /* ---------------- ORTHOGONAL MATRICES ---------------- */
+  const orA=document.getElementById("orA"), orB=document.getElementById("orB"), orC=document.getElementById("orC"), orD=document.getElementById("orD");
+  const orAng=document.getElementById("orAng"), orSvg=document.getElementById("orSvg");
+  const S=26;
+  function ang(ax,ay,bx,by){ const c=(ax*bx+ay*by)/(Math.hypot(ax,ay)*Math.hypot(bx,by)); return Math.acos(Math.max(-1,Math.min(1,c)))*180/Math.PI; }
+  function renderOrth(){
+    const a=parseFloat(orA.value)||0, b=parseFloat(orB.value)||0, c=parseFloat(orC.value)||0, d=parseFloat(orD.value)||0;
+    orSvg.innerHTML="";
+    for(let g=-6; g<=6; g++){
+      orSvg.appendChild(el("line",{x1:g*S,y1:-160,x2:g*S,y2:160,stroke:"var(--line)","stroke-width":g===0?1.4:0.6}));
+      orSvg.appendChild(el("line",{x1:-160,y1:g*S,x2:160,y2:g*S,stroke:"var(--line)","stroke-width":g===0?1.4:0.6}));
+    }
+    // unit circle (scaled x3 for visibility) and its image
+    const R=3;
+    let p0="", p1="";
+    for(let k=0;k<=96;k++){ const t=2*Math.PI*k/96, cx=R*Math.cos(t), cy=R*Math.sin(t);
+      p0+=(k?"L":"M")+(cx*S).toFixed(1)+","+(-cy*S).toFixed(1);
+      p1+=(k?"L":"M")+((a*cx+b*cy)*S).toFixed(1)+","+(-(c*cx+d*cy)*S).toFixed(1); }
+    orSvg.appendChild(el("path",{d:p0,fill:"none",stroke:"#B8BEC6","stroke-width":1.2,"stroke-dasharray":"3,3"}));
+    orSvg.appendChild(el("path",{d:p1,fill:"none",stroke:"var(--accent)","stroke-width":1.8,"stroke-dasharray":"5,3"}));
+    function arrow(x,y,color,w,label){
+      orSvg.appendChild(el("line",{x1:0,y1:0,x2:x*S,y2:-y*S,stroke:color,"stroke-width":w}));
+      orSvg.appendChild(el("circle",{cx:x*S,cy:-y*S,r:4,fill:color}));
+      if(label) orSvg.appendChild(el("text",{x:x*S+6,y:-y*S-6,"font-size":11,fill:color,"font-family":"IBM Plex Mono, monospace"},label));
+    }
+    const x=[3,4], y=[1,0];
+    const Qx=[a*x[0]+b*x[1], c*x[0]+d*x[1]], Qy=[a*y[0]+b*y[1], c*y[0]+d*y[1]];
+    arrow(x[0],x[1],"#9AA1AA",2,"x"); arrow(y[0]*3,y[1]*3,"#9AA1AA",2,"y (×3)");
+    arrow(Qx[0],Qx[1],"var(--c1)",3,"Qx"); arrow(Qy[0]*3,Qy[1]*3,"var(--c2)",3,""); orSvg.appendChild(el("text",{x:Qy[0]*3*S+6,y:-Qy[1]*3*S+16,"font-size":11,fill:"var(--c2)","font-family":"IBM Plex Mono, monospace"},"Qy (×3)"));
+    // stats
+    const m11=a*a+c*c, m12=a*b+c*d, m22=b*b+d*d;
+    const det=a*d-b*c;
+    const isI = Math.abs(m11-1)<1e-3 && Math.abs(m22-1)<1e-3 && Math.abs(m12)<1e-3;
+    document.getElementById("orStatQQ").innerHTML=`QᵀQ = [[${f4(m11)}, ${f4(m12)}], [${f4(m12)}, ${f4(m22)}]] ${isI?"= I ✓":"≠ I ✗"}`;
+    document.getElementById("orStatDet").innerHTML=`det(Q) = ${f4(det)}` + (isI? (det>0?" (rotation)":" (reflection)") : "");
+    if(Math.abs(det)<1e-9){ document.getElementById("orStatInv").innerHTML="Q⁻¹ does not exist (det = 0)"; }
+    else {
+      const ia=d/det, ib=-b/det, ic=-c/det, id=a/det;
+      document.getElementById("orStatInv").innerHTML=`Q⁻¹ = [[${f4(ia)}, ${f4(ib)}], [${f4(ic)}, ${f4(id)}]] &nbsp;·&nbsp; Qᵀ = [[${f4(a)}, ${f4(c)}], [${f4(b)}, ${f4(d)}]] &nbsp;${isI?"→ identical ✓":"→ different ✗"}`;
+    }
+    const lx=Math.hypot(Qx[0],Qx[1]);
+    document.getElementById("orStatLen").innerHTML=`‖x‖ = 5 → ‖Qx‖ = ${f4(lx)} &nbsp;(Qx = (${f4(Qx[0])}, ${f4(Qx[1])}))`;
+    const a0=ang(x[0],x[1],y[0],y[1]), a1=(Math.hypot(Qy[0],Qy[1])<1e-9||lx<1e-9)?NaN:ang(Qx[0],Qx[1],Qy[0],Qy[1]);
+    document.getElementById("orStatAng").innerHTML=`angle(x, y) = ${a0.toFixed(2)}° → angle(Qx, Qy) = ${isFinite(a1)?a1.toFixed(2)+"°":"—"}`;
+    document.getElementById("orVerdict").innerHTML = isI
+      ? `<b>Orthogonal.</b> Columns are perpendicular and length 1, so lengths, angles and dot products all survive, and the inverse is just the transpose.`
+      : `<b>Not orthogonal.</b> ${Math.abs(m12)>1e-3?"The columns are not perpendicular (column 1 · column 2 = "+f4(m12)+"). ":""}${(Math.abs(m11-1)>1e-3||Math.abs(m22-1)>1e-3)?"The columns are not length 1 (squared lengths "+f4(m11)+", "+f4(m22)+"). ":""}Lengths and angles are not guaranteed to survive.`;
+  }
+  function setMat(a,b,c,d){ const k=v=>String(Math.round(v*1e10)/1e10); orA.value=k(a); orB.value=k(b); orC.value=k(c); orD.value=k(d); renderOrth(); }
+  orAng.addEventListener("input",()=>{ const t=parseFloat(orAng.value)*Math.PI/180; document.getElementById("orAngOut").textContent=orAng.value+"°"; setActive("[data-orpreset]",null); setMat(Math.cos(t),-Math.sin(t),Math.sin(t),Math.cos(t)); });
+  [orA,orB,orC,orD].forEach(i=>i.addEventListener("input",renderOrth));
+
+  // ---- QR least squares ----
+  const T=[1,2,3,4], Y=[2,3,5,6];
+  function runLsq(){
+    // Gram-Schmidt on columns of X = [1, t]
+    const c1=[1,1,1,1], c2=T.slice();
+    const dot=(u,v)=>u.reduce((s,ui,i)=>s+ui*v[i],0);
+    const r11=Math.sqrt(dot(c1,c1)); const q1=c1.map(v=>v/r11);
+    const r12=dot(c2,q1); const w=c2.map((v,i)=>v-r12*q1[i]); const r22=Math.sqrt(dot(w,w)); const q2=w.map(v=>v/r22);
+    const QtQ=[[dot(q1,q1),dot(q1,q2)],[dot(q2,q1),dot(q2,q2)]];
+    const Qty=[dot(q1,Y),dot(q2,Y)];
+    const b1=Qty[1]/r22, b0=(Qty[0]-r12*b1)/r11;
+    // normal equations
+    const XtX=[[4,dot(c1,c2)],[dot(c1,c2),dot(c2,c2)]], Xty=[dot(c1,Y),dot(c2,Y)];
+    const dd=XtX[0][0]*XtX[1][1]-XtX[0][1]*XtX[1][0];
+    const n0=(XtX[1][1]*Xty[0]-XtX[0][1]*Xty[1])/dd, n1=(XtX[0][0]*Xty[1]-XtX[1][0]*Xty[0])/dd;
+    const RtR=[[r11*r11, r11*r12],[r11*r12, r12*r12+r22*r22]];
+    const res=Y.map((y,i)=>y-(b0+b1*T[i])); const rn=Math.sqrt(dot(res,res));
+    // condition numbers: cond(X)=sqrt(eig ratio of XtX)
+    const tr=XtX[0][0]+XtX[1][1], disc=Math.sqrt(tr*tr/4-dd), l1=tr/2+disc, l2=tr/2-disc;
+    const condXtX=l1/l2, condX=Math.sqrt(condXtX);
+    document.getElementById("orLsqSteps").innerHTML=
+`<b>1 · Gram-Schmidt on X's columns</b>
+q₁ = (${q1.map(f4).join(", ")})
+q₂ = (${q2.map(f4).join(", ")})
+R  = [[${f4(r11)}, ${f4(r12)}], [0, ${f4(r22)}]]
+<b>2 · The key fact (Q is 4×2, tall)</b>
+QᵀQ = [[${f4(QtQ[0][0])}, ${f4(QtQ[0][1])}], [${f4(QtQ[1][0])}, ${f4(QtQ[1][1])}]] = I ✓
+so XᵀX = Rᵀ(QᵀQ)R = RᵀR:  XᵀX = [[${f4(XtX[0][0])}, ${f4(XtX[0][1])}], [${f4(XtX[1][0])}, ${f4(XtX[1][1])}]],  RᵀR = [[${f4(RtR[0][0])}, ${f4(RtR[0][1])}], [${f4(RtR[1][0])}, ${f4(RtR[1][1])}]]
+<b>3 · Solve Rβ = Qᵀy by back-substitution</b>
+Qᵀy = (${f4(Qty[0])}, ${f4(Qty[1])})
+β₁ = ${f4(Qty[1])} / ${f4(r22)} = ${f4(b1)}
+β₀ = (${f4(Qty[0])} − ${f4(r12)}×${f4(b1)}) / ${f4(r11)} = ${f4(b0)}
+<b>4 · Cross-check</b>
+normal equations give β = (${f4(n0)}, ${f4(n1)}) — the same line
+residual length = ${f4(rn)}
+cond(X) = ${f4(condX)},  cond(XᵀX) = ${f4(condXtX)} (= cond(X)²),  cond(Q) = 1.0000`;
+    // plot
+    const sv=document.getElementById("orLsqSvg"); sv.innerHTML="";
+    const mx=t=>40+(t/5)*340, my=v=>210-(v/7)*190;
+    for(let g=0; g<=5; g++){ sv.appendChild(el("line",{x1:mx(g),y1:my(0),x2:mx(g),y2:my(7),stroke:"var(--line)"})); sv.appendChild(el("text",{x:mx(g)-3,y:my(0)+16,"font-size":11,fill:"var(--ink-soft)"},String(g))); }
+    for(let g=0; g<=7; g++){ sv.appendChild(el("line",{x1:mx(0),y1:my(g),x2:mx(5),y2:my(g),stroke:"var(--line)"})); sv.appendChild(el("text",{x:mx(0)-16,y:my(g)+4,"font-size":11,fill:"var(--ink-soft)"},String(g))); }
+    sv.appendChild(el("line",{x1:mx(0),y1:my(b0),x2:mx(5),y2:my(b0+5*b1),stroke:"var(--accent)","stroke-width":2.5}));
+    T.forEach((t,i)=>{ sv.appendChild(el("line",{x1:mx(t),y1:my(Y[i]),x2:mx(t),y2:my(b0+b1*t),stroke:"var(--c2)","stroke-width":1.5,"stroke-dasharray":"3,2"}));
+      sv.appendChild(el("circle",{cx:mx(t),cy:my(Y[i]),r:5,fill:"var(--c1)"})); });
+    sv.appendChild(el("text",{x:mx(0.2),y:my(6.6),"font-size":12,fill:"var(--accent)","font-family":"IBM Plex Mono, monospace"},`y = ${f4(b0)} + ${f4(b1)}·t`));
+  }
+  const OR_PRESETS={
+    rot30:()=>{ orAng.value=30; document.getElementById("orAngOut").textContent="30°"; const t=Math.PI/6; setMat(Math.cos(t),-Math.sin(t),Math.sin(t),Math.cos(t)); },
+    refl30:()=>setMat(0.5,Math.sqrt(3)/2,Math.sqrt(3)/2,-0.5),
+    swap:()=>setMat(0,1,1,0),
+    shear:()=>setMat(1,1,0,1),
+    scaled:()=>{ const t=Math.PI/6; setMat(2*Math.cos(t),-2*Math.sin(t),2*Math.sin(t),2*Math.cos(t)); },
+    lsq:()=>{ runLsq(); document.getElementById("orLsqCard").scrollIntoView({block:"nearest"}); }
+  };
+  document.querySelectorAll("[data-orpreset]").forEach(btn=>btn.addEventListener("click",()=>{ setActive("[data-orpreset]",btn); OR_PRESETS[btn.dataset.orpreset](); }));
+  renderOrth();
+
+  /* ---------------- BY PARTS & SUBSTITUTION ---------------- */
+  const ibSvg=document.getElementById("ibSvg"), ibStat=document.getElementById("ibStat");
+  function simpson(f,a,b,n){ n=n||2000; if(n%2) n++; const h=(b-a)/n; let s=f(a)+f(b); for(let i=1;i<n;i++) s+=(i%2?4:2)*f(a+i*h); return s*h/3; }
+  function erfcdf(z){ return simpson(t=>Math.exp(-t*t/2)/Math.sqrt(2*Math.PI), -12, z, 4000); }
+  let ibMode=null;
+  function axes(x0,y0,w,h,xmin,xmax,ymin,ymax,xl,yl){
+    const X=v=>x0+(v-xmin)/(xmax-xmin)*w, Yf=v=>y0+h-(v-ymin)/(ymax-ymin)*h;
+    ibSvg.appendChild(el("rect",{x:x0,y:y0,width:w,height:h,fill:"#FBFBF8",stroke:"var(--line)"}));
+    ibSvg.appendChild(el("line",{x1:x0,y1:Yf(Math.max(ymin,0)),x2:x0+w,y2:Yf(Math.max(ymin,0)),stroke:"var(--ink-soft)"}));
+    ibSvg.appendChild(el("line",{x1:X(Math.max(xmin,0)),y1:y0,x2:X(Math.max(xmin,0)),y2:y0+h,stroke:"var(--ink-soft)"}));
+    if(xl) ibSvg.appendChild(el("text",{x:x0+w-4,y:y0+h+30,"text-anchor":"end","font-size":12,fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace"},xl));
+    if(yl) ibSvg.appendChild(el("text",{x:x0+4,y:y0-6,"font-size":12,fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace"},yl));
+    return {X,Y:Yf};
+  }
+  function tick(m,xv,yv,txt,dx,dy){ ibSvg.appendChild(el("text",{x:m.X(xv)+(dx||0),y:m.Y(yv)+(dy||0),"font-size":11,fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace"},txt)); }
+  function pathOf(m,pts){ return pts.map((p,i)=>(i?"L":"M")+m.X(p[0]).toFixed(1)+","+m.Y(p[1]).toFixed(1)).join(""); }
+
+  // by parts picture: parametric (u(x), v(x)) for x in [a,b]
+  function drawParts(cfg){
+    ibSvg.innerHTML="";
+    const N=200, pts=[];
+    for(let i=0;i<=N;i++){ const x=cfg.a+(cfg.b-cfg.a)*i/N; pts.push([cfg.u(x),cfg.v(x)]); }
+    const u0=pts[0][0], v0=pts[0][1], u1=pts[N][0], v1=pts[N][1];
+    const m=axes(90,20,300,236,0,u1*1.15,0,v1*1.12,"u = "+cfg.uName,"v = "+cfg.vName);
+    // under curve region: between curve and u-axis (∫v du)
+    ibSvg.appendChild(el("path",{d:pathOf(m,[[u0,0]].concat(pts,[[u1,0]]))+"Z",fill:"rgba(15,139,141,0.28)",stroke:"none"}));
+    // left region: between curve and v-axis, above v0 (∫u dv)
+    ibSvg.appendChild(el("path",{d:pathOf(m,[[0,v0]].concat(pts,[[0,v1]]))+"Z",fill:"rgba(217,166,46,0.32)",stroke:"none"}));
+    // small corner rectangle u0*v0
+    if(u0*v0>0) ibSvg.appendChild(el("rect",{x:m.X(0),y:m.Y(v0),width:m.X(u0)-m.X(0),height:m.Y(0)-m.Y(v0),fill:"rgba(107,114,128,0.18)",stroke:"#9AA1AA","stroke-dasharray":"3,2"}));
+    ibSvg.appendChild(el("rect",{x:m.X(0),y:m.Y(v1),width:m.X(u1)-m.X(0),height:m.Y(0)-m.Y(v1),fill:"none",stroke:"var(--accent)","stroke-width":1.5,"stroke-dasharray":"5,3"}));
+    ibSvg.appendChild(el("path",{d:pathOf(m,pts),fill:"none",stroke:"var(--accent)","stroke-width":2.5}));
+    tick(m,u1,0,f4(u1).replace(/0+$/,"").replace(/\.$/,""),-6,16); tick(m,0,v1,f4(v1),-62,4); tick(m,0,v0,f4(v0),-62,4);
+    const vdu=cfg.vdu(), udv=cfg.udv();
+    // legend
+    const lg=[["rgba(15,139,141,0.5)","teal: ∫ v du = "+f4(vdu)],["rgba(217,166,46,0.6)","gold: ∫ u dv = "+f4(udv)],["#9AA1AA","grey corner: u(a)·v(a) = "+f4(u0*v0)]];
+    lg.forEach((L,i)=>{ ibSvg.appendChild(el("rect",{x:410,y:40+i*26,width:16,height:12,fill:L[0]})); ibSvg.appendChild(el("text",{x:432,y:51+i*26,"font-size":12,fill:"var(--ink)","font-family":"IBM Plex Mono, monospace"},L[1])); });
+    ibSvg.appendChild(el("text",{x:410,y:140,"font-size":12,fill:"var(--accent)","font-family":"IBM Plex Mono, monospace"},"dashed box: u(b)·v(b) = "+f4(u1*v1)));
+    ibSvg.appendChild(el("text",{x:410,y:166,"font-size":12,fill:"var(--ink)","font-family":"IBM Plex Mono, monospace"},"teal + gold = "+f4(vdu+udv)));
+    ibSvg.appendChild(el("text",{x:410,y:186,"font-size":12,fill:"var(--ink)","font-family":"IBM Plex Mono, monospace"},"box − corner = "+f4(u1*v1-u0*v0)));
+    ibStat.innerHTML=cfg.text(vdu,udv,u0,v0,u1,v1);
+  }
+  function showCtl(id){ ["ibExpCtl","ibSubCtl","ibNormCtl"].forEach(c=>document.getElementById(c).style.display=(c===id?"block":"none")); }
+
+  function drawExpMean(){
+    ibSvg.innerHTML="";
+    const lam=parseFloat(document.getElementById("ibLam").value), Tc=parseFloat(document.getElementById("ibT").value);
+    document.getElementById("ibLamOut").textContent=lam.toFixed(2); document.getElementById("ibTOut").textContent=Tc.toFixed(1);
+    const f=x=>x*lam*Math.exp(-lam*x), xmax=Math.max(20,Tc*1.05), ymax=1/Math.E*1.25;
+    const m=axes(50,20,560,240,0,xmax,0,ymax,"x","x·λe^(−λx)");
+    const shade=[[0,0]]; for(let i=0;i<=300;i++){ const x=Tc*i/300; shade.push([x,f(x)]); } shade.push([Tc,0]);
+    ibSvg.appendChild(el("path",{d:pathOf(m,shade)+"Z",fill:"rgba(15,139,141,0.25)"}));
+    const cur=[]; for(let i=0;i<=500;i++){ const x=xmax*i/500; cur.push([x,f(x)]); }
+    ibSvg.appendChild(el("path",{d:pathOf(m,cur),fill:"none",stroke:"var(--accent)","stroke-width":2.5}));
+    ibSvg.appendChild(el("line",{x1:m.X(Tc),y1:m.Y(0),x2:m.X(Tc),y2:m.Y(ymax),stroke:"var(--c2)","stroke-width":1.5,"stroke-dasharray":"4,3"}));
+    tick(m,Tc,ymax,"T = "+Tc.toFixed(1),4,14);
+    for(let g=0; g<=xmax; g+=5) tick(m,g,0,String(g),-4,14);
+    const toll=-Tc*Math.exp(-lam*Tc), rest=simpson(x=>Math.exp(-lam*x),0,Tc), direct=simpson(f,0,Tc), full=simpson(f,0,60/lam,6000);
+    ibStat.innerHTML=
+`<b>By parts:</b> u = x, v' = λe^(−λx), so v = −e^(−λx)
+∫₀ᵀ x·λe^(−λx) dx = [−x·e^(−λx)]₀ᵀ + ∫₀ᵀ e^(−λx) dx
+boundary toll  −T·e^(−λT) = ${f4(toll)}
+leftover       ∫₀ᵀ e^(−λx) dx = ${f4(rest)}
+sum            = ${f4(toll+rest)}   (direct integral up to T: ${f4(direct)})
+<b>As T → ∞ the toll → 0</b> (decay beats the factor x), leaving E[X] = 1/λ = ${f4(1/lam)}
+numerical E[X] over (0, ∞) = ${f4(full)}
+second round (u = x²): E[X²] = (2/λ)·E[X] = 2/λ² = ${f4(2/lam/lam)}, numerical ${f4(simpson(x=>x*x*lam*Math.exp(-lam*x),0,60/lam,6000))}`;
+  }
+
+  function drawSubst(){
+    ibSvg.innerHTML="";
+    const n=parseInt(document.getElementById("ibN").value,10); document.getElementById("ibNOut").textContent=n;
+    const f=x=>2*x*Math.exp(x*x), g=u=>Math.exp(u);
+    const mL=axes(40,20,260,240,0,1,0,6,"x","2x·e^(x²)"), mR=axes(360,20,260,240,0,1,0,6,"u = x²","eᵘ");
+    const cols=["rgba(15,139,141,0.35)","rgba(217,166,46,0.40)"];
+    for(let i=0;i<n;i++){
+      const xa=i/n, xb=(i+1)/n, ua=xa*xa, ub=xb*xb;
+      const pl=[[xa,0]]; for(let k=0;k<=30;k++){ const x=xa+(xb-xa)*k/30; pl.push([x,f(x)]); } pl.push([xb,0]);
+      const pr=[[ua,0]]; for(let k=0;k<=30;k++){ const u=ua+(ub-ua)*k/30; pr.push([u,g(u)]); } pr.push([ub,0]);
+      ibSvg.appendChild(el("path",{d:pathOf(mL,pl)+"Z",fill:cols[i%2],stroke:"#fff","stroke-width":0.8}));
+      ibSvg.appendChild(el("path",{d:pathOf(mR,pr)+"Z",fill:cols[i%2],stroke:"#fff","stroke-width":0.8}));
+    }
+    const cl=[],cr=[]; for(let k=0;k<=200;k++){ const t=k/200; cl.push([t,f(t)]); cr.push([t,g(t)]); }
+    ibSvg.appendChild(el("path",{d:pathOf(mL,cl),fill:"none",stroke:"var(--accent)","stroke-width":2.5}));
+    ibSvg.appendChild(el("path",{d:pathOf(mR,cr),fill:"none",stroke:"var(--accent)","stroke-width":2.5}));
+    [0,0.5,1].forEach(t=>{ tick(mL,t,0,String(t),-6,14); tick(mR,t,0,String(t),-6,14); });
+    const A=simpson(f,0,1), B=simpson(g,0,1);
+    let first="", last="";
+    { const xa=0, xb=1/n; first=`first sliver: x ∈ [0, ${f4(xb)}] → u ∈ [0, ${f4(xb*xb)}], area ${f4(simpson(f,xa,xb))} on both sides`; }
+    { const xa=(n-1)/n, xb=1; last=`last sliver:  x ∈ [${f4(xa)}, 1] → u ∈ [${f4(xa*xa)}, 1], area ${f4(simpson(f,xa,xb))} on both sides`; }
+    ibStat.innerHTML=
+`<b>Substitution:</b> u = x², so du = 2x dx, and x: 0 → 1 becomes u: 0 → 1
+left  (x-world):  ∫₀¹ 2x·e^(x²) dx = ${f4(A)}
+right (u-world):  ∫₀¹ eᵘ du        = ${f4(B)}
+exact: e − 1 = ${f4(Math.E-1)}
+${first}
+${last}
+Each matching pair of coloured slivers has the same area. Widths get re-measured by du = 2x·dx: squeezed near x = 0, stretched near x = 1.`;
+  }
+
+  function drawNormal(){
+    ibSvg.innerHTML="";
+    const xc=parseFloat(document.getElementById("ibX").value); document.getElementById("ibXOut").textContent=xc;
+    const mu=100, sd=15, zc=(xc-mu)/sd;
+    const fx=x=>Math.exp(-(x-mu)*(x-mu)/(2*sd*sd))/(sd*Math.sqrt(2*Math.PI)), fz=z=>Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);
+    const mL=axes(40,20,260,240,40,160,0,0.03,"x","N(100, 15²)"), mR=axes(360,20,260,240,-4,4,0,0.45,"z = (x−100)/15","N(0, 1)");
+    const sl=[[40,0]]; for(let k=0;k<=200;k++){ const x=40+(xc-40)*k/200; sl.push([x,fx(x)]); } sl.push([xc,0]);
+    const sr=[[-4,0]]; for(let k=0;k<=200;k++){ const z=-4+(zc+4)*k/200; sr.push([z,fz(z)]); } sr.push([zc,0]);
+    ibSvg.appendChild(el("path",{d:pathOf(mL,sl)+"Z",fill:"rgba(15,139,141,0.3)"}));
+    ibSvg.appendChild(el("path",{d:pathOf(mR,sr)+"Z",fill:"rgba(15,139,141,0.3)"}));
+    const cl=[],cr=[]; for(let k=0;k<=300;k++){ const x=40+120*k/300, z=-4+8*k/300; cl.push([x,fx(x)]); cr.push([z,fz(z)]); }
+    ibSvg.appendChild(el("path",{d:pathOf(mL,cl),fill:"none",stroke:"var(--accent)","stroke-width":2.5}));
+    ibSvg.appendChild(el("path",{d:pathOf(mR,cr),fill:"none",stroke:"var(--accent)","stroke-width":2.5}));
+    [55,100,145].forEach(t=>tick(mL,t,0,String(t),-8,14)); [-3,0,3].forEach(t=>tick(mR,t,0,String(t),-4,14));
+    tick(mL,xc,0.028,"x = "+xc,-20,0); tick(mR,zc,0.42,"z = "+zc.toFixed(3),-24,0);
+    const PL=simpson(fx,mu-12*sd,xc,4000), PR=erfcdf(zc);
+    ibStat.innerHTML=
+`<b>Substitution:</b> z = (x − 100)/15, so dz = dx/15, and the cutoff x = ${xc} becomes z = ${zc.toFixed(4)}
+left:  P(X ≤ ${xc}) = ∫ N(100,15²) density dx = ${f4(PL)}
+right: P(Z ≤ ${zc.toFixed(4)}) = ∫ N(0,1) density dz = ${f4(PR)}
+Same area, so one standard-normal table serves every bell curve.
+(also by substitution, u = x²/2: ∫₀^∞ x·e^(−x²/2) dx = ${f4(simpson(x=>x*Math.exp(-x*x/2),0,14,4000))}, so E|Z| = √(2/π) = ${f4(Math.sqrt(2/Math.PI))})`;
+  }
+
+  const IB={
+    xex:()=>{ showCtl(null); ibMode="xex"; drawParts({a:0,b:1,u:x=>x,v:x=>Math.exp(x),uName:"x",vName:"eˣ",
+      vdu:()=>simpson(x=>Math.exp(x),0,1), udv:()=>simpson(x=>x*Math.exp(x),0,1),
+      text:(vdu,udv,u0,v0,u1,v1)=>
+`<b>By parts:</b> u = x (differentiates to 1), v' = eˣ (so v = eˣ)
+∫₀¹ x·eˣ dx = [x·eˣ]₀¹ − ∫₀¹ eˣ dx = e − (e − 1) = 1
+numerical ∫₀¹ x·eˣ dx (gold) = ${f4(udv)}
+numerical ∫₀¹ eˣ dx  (teal) = ${f4(vdu)}
+gold + teal = ${f4(udv+vdu)} = u(1)·v(1) − u(0)·v(0) = 1·e − 0·1 = ${f4(u1*v1-u0*v0)}
+wrong guess "(x²/2)·eˣ" would give ${f4(0.5*Math.E)}, not 1`}); },
+    lnx:()=>{ showCtl(null); ibMode="lnx"; drawParts({a:1,b:Math.E,u:x=>Math.log(x),v:x=>x,uName:"ln x",vName:"x",
+      vdu:()=>simpson(x=>x*(1/x),1,Math.E), udv:()=>simpson(Math.log,1,Math.E),
+      text:(vdu,udv,u0,v0,u1,v1)=>
+`<b>By parts:</b> u = ln x (differentiates to 1/x), v' = 1 (so v = x)
+∫₁ᵉ ln x dx = [x·ln x]₁ᵉ − ∫₁ᵉ x·(1/x) dx = e − (e − 1) = 1
+numerical ∫₁ᵉ ln x dx         (gold) = ${f4(udv)}
+numerical ∫₁ᵉ x·(1/x) dx       (teal) = ${f4(vdu)}
+gold + teal = ${f4(udv+vdu)} = u(e)·v(e) − u(1)·v(1) = 1·e − 0·1 = ${f4(u1*v1-u0*v0)}`}); },
+    expmean:()=>{ showCtl("ibExpCtl"); ibMode="expmean"; document.getElementById("ibLam").value=0.5; document.getElementById("ibT").value=10; drawExpMean(); },
+    subst:()=>{ showCtl("ibSubCtl"); ibMode="subst"; document.getElementById("ibN").value=5; drawSubst(); },
+    normal:()=>{ showCtl("ibNormCtl"); ibMode="normal"; document.getElementById("ibX").value=130; drawNormal(); }
+  };
+  document.querySelectorAll("[data-ibpreset]").forEach(btn=>btn.addEventListener("click",()=>{ setActive("[data-ibpreset]",btn); IB[btn.dataset.ibpreset](); }));
+  ["ibLam","ibT"].forEach(id=>document.getElementById(id).addEventListener("input",drawExpMean));
+  document.getElementById("ibN").addEventListener("input",drawSubst);
+  document.getElementById("ibX").addEventListener("input",drawNormal);
+  // default view
+  setActive("[data-ibpreset]",document.querySelector('[data-ibpreset="xex"]')); IB.xex();
 })();
 </script>
 </body>

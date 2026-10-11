@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Four Fundamental Subspaces</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --row:#5B4B95; --null:#C2413B; --col:#0F8B8D; --lnull:#B7861C;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  header code{ font-family:"IBM Plex Mono",monospace; font-size:13.5px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; min-width:0; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  h3{ font-family:"Fraunces",serif; font-size:16px; margin:0 0 8px; font-weight:600; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .sub code, .caption code, .stat code, td code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  .caption{ font-size:13.5px; color:var(--ink); margin-top:12px; line-height:1.6; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op.view{ font-weight:500; font-size:12.5px; padding:6px 11px; }
+  .presetbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .presetlabel{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:4px 0 8px; }
+  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .layout > .plot{ flex:1 1 420px; min-width:0; }
+  .layout > .side{ flex:1 1 260px; min-width:0; }
+  .twin{ display:flex; gap:16px; flex-wrap:wrap; }
+  .twin > div{ flex:1 1 320px; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  svg.rot{ cursor:grab; }
+  svg text{ font-family:"IBM Plex Mono", monospace; paint-order:stroke; stroke:#FBFCFC; stroke-width:3.5px; stroke-linejoin:round; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; overflow-wrap:anywhere; }
+  .stat .k{ color:var(--ink-soft); font-size:11.5px; letter-spacing:.03em; display:block; }
+  .stat b{ color:var(--accent); }
+  .ok, .stat b.ok{ color:var(--good); } .bad, .stat b.bad{ color:var(--bad); }
+  .test.ok, .test.bad{ color:var(--ink); }
+  .verdict{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin-top:12px; }
+  .verdict.ok{ color:var(--good); } .verdict.bad{ color:var(--bad); }
+  .legend{ display:flex; gap:12px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:8px; }
+  .legend span::before{ content:""; display:inline-block; width:14px; height:4px; margin-right:6px; vertical-align:middle; background:currentColor; border-radius:2px; }
+  .lg-row{ color:var(--row); } .lg-null{ color:var(--null); } .lg-col{ color:var(--col); } .lg-lnull{ color:var(--lnull); } .lg-ink{ color:var(--ink); } .lg-gold{ color:var(--c2); }
+  .hint{ font-size:12px; color:var(--ink-soft); margin-top:6px; }
+  .tablewrap{ overflow-x:auto; max-width:100%; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  th, td{ padding:7px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  th{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:none; color:var(--ink-soft); font-weight:600; }
+  #lsTable th, #manyTable th{ text-align:right; } #manyTable th:nth-child(2), #manyTable th:nth-child(3){ text-align:left; }
+  td.num{ font-family:"IBM Plex Mono",monospace; text-align:right; white-space:nowrap; }
+  td.mono{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  tr.sum td{ font-weight:600; background:#F5F4F0; }
+  .sw{ display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:middle; }
+  .test{ display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .test:last-child{ border-bottom:none; }
+  .test .mark{ font-family:"IBM Plex Mono",monospace; font-weight:600; width:18px; flex-shrink:0; }
+  .test.ok .mark{ color:var(--good); } .test.bad .mark{ color:var(--bad); }
+  .test .detail{ font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); overflow-wrap:anywhere; }
+  .mat{ display:inline-grid; gap:2px 12px; padding:6px 10px; border-left:2px solid var(--ink); border-right:2px solid var(--ink); border-radius:4px; font-family:"IBM Plex Mono",monospace; font-size:12.5px; vertical-align:middle; }
+  .mat div{ text-align:right; }
+  .bigout{ font-family:"IBM Plex Mono",monospace; font-size:20px; font-weight:600; color:var(--good); }
+  .slider{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:4px 0 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; }
+  .slider input{ flex:1 1 200px; min-width:0; accent-color:var(--accent); }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; }
+  @media (max-width:520px){ .card{ padding:18px 14px; } .wrap{ padding-top:28px; } .tab{ padding:8px 13px; font-size:13px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to The Four Fundamental Subspaces</div>
+    <h1>What a Matrix Can Reach, What It Kills</h1>
+    <p>One matrix all the way through: <code>A = [[1,0,2],[0,1,3],[1,1,5]]</code>, rank 2. Every worked example from the file is a one-click preset below, and every number is computed live on this page. The 3-D pictures turn with the view buttons (no dragging needed; mouse-dragging also works).</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="four">1 · The four spaces</button>
+    <button class="tab" data-tab="solve">2 · Can Ax = b be solved?</button>
+    <button class="tab" data-tab="many">3 · Many solutions</button>
+    <button class="tab" data-tab="proj">4 · Projection</button>
+    <button class="tab" data-tab="ls">5 · Least squares as a shadow</button>
+  </div>
+
+  <!-- ============ TAB 1 ============ -->
+  <div class="panel active" id="panel-four">
+    <div class="card">
+      <h2>Two pictures, four spaces, two right angles</h2>
+      <p class="sub">Left: <b>input space</b>, where <code>x</code> lives. The row-space plane (purple) and the null-space line (red) meet at a right angle. Right: <b>output space</b>, where <code>Ax</code> lives. The column-space plane (teal) and the left-null-space line (gold) meet at a right angle. Pick a view; both pictures turn together.</p>
+      <div class="presetlabel">view presets (both pictures)</div>
+      <div class="presetbar" id="fourViews"></div>
+      <div class="twin">
+        <div><h3>Input space ℝ³ (x lives here)</h3><svg id="inSvg" class="rot" role="img" aria-label="Row space plane and null space line"></svg>
+          <div class="legend"><span class="lg-row">row space (plane)</span><span class="lg-null">null space (line)</span></div></div>
+        <div><h3>Output space ℝ³ (Ax lives here)</h3><svg id="outSvg" class="rot" role="img" aria-label="Column space plane and left null space line"></svg>
+          <div class="legend"><span class="lg-col">column space (plane)</span><span class="lg-lnull">left null space (line)</span></div></div>
+      </div>
+      <div class="caption" id="fourCaption"></div>
+    </div>
+    <div class="card">
+      <h2>Counting the dimensions</h2>
+      <p class="sub">For an <code>m × n</code> matrix of rank <code>r</code>. Here <code>m = n = 3</code> and the rank is computed below.</p>
+      <div class="tablewrap"><table id="dimTable"></table></div>
+      <div class="layout" style="margin-top:16px">
+        <div class="side"><div class="presetlabel">right angles, checked by dot product</div><div id="perpTests"></div></div>
+        <div class="side"><div class="presetlabel">spot checks</div><div id="fourChecks"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2 ============ -->
+  <div class="panel" id="panel-solve">
+    <div class="card">
+      <h2>Is b on the column-space plane?</h2>
+      <p class="sub"><code>Ax = b</code> has a solution exactly when <code>b</code> lies in the column space. Because the column space is perpendicular to the left null space, one dot product decides it: is <code>(1, 1, −1)·b = 0</code>?</p>
+      <div class="presetlabel">worked examples</div>
+      <div class="presetbar" id="solvePresets"></div>
+      <div class="presetlabel">view</div>
+      <div class="presetbar" id="solveViews"></div>
+      <div class="layout">
+        <div class="plot"><svg id="solveSvg" class="rot" role="img" aria-label="Vector b relative to the column space plane"></svg>
+          <div class="legend"><span class="lg-col">column space</span><span class="lg-lnull">left null line</span><span class="lg-ink">b</span></div></div>
+        <div class="side" id="solveSide"></div>
+      </div>
+      <div class="caption" id="solveCaption"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3 ============ -->
+  <div class="panel" id="panel-many">
+    <div class="card">
+      <h2>Slide along the null space: the output never moves</h2>
+      <p class="sub">Every solution of <code>Ax = (1, 2, 3)</code> is <code>x = (1, 2, 0) + t·(−2, −3, 1)</code>. The gold point is <code>x</code>. It splits into a purple row-space part that never changes and a red null-space part that the machine destroys, so <code>Ax</code> stays fixed.</p>
+      <div class="presetlabel">one-click values of t</div>
+      <div class="presetbar" id="manyPresets"></div>
+      <div class="slider"><label for="tSlider">t =</label><input type="range" id="tSlider" min="-1" max="2" step="0.05" value="0"><span id="tVal">0</span></div>
+      <div class="presetlabel">view</div>
+      <div class="presetbar" id="manyViews"></div>
+      <div class="layout">
+        <div class="plot"><svg id="manySvg" class="rot" role="img" aria-label="Solution line parallel to the null space"></svg>
+          <div class="legend"><span class="lg-ink">all solutions (a line)</span><span class="lg-null">null-space part</span><span class="lg-row">row-space part</span><span class="lg-gold">x</span></div></div>
+        <div class="side" id="manySide"></div>
+      </div>
+      <div class="caption" id="manyCaption"></div>
+    </div>
+    <div class="card">
+      <h2>Different inputs, same output</h2>
+      <div class="tablewrap"><table id="manyTable"></table></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4 ============ -->
+  <div class="panel" id="panel-proj">
+    <div class="card">
+      <h2>Drop the perpendicular: the closest reachable point</h2>
+      <p class="sub"><code>b = (1, 2, 4)</code> is off the column-space plane. Its shadow <code>p</code> on the plane is the closest reachable point, and the leftover <code>b − p</code> points straight along the left null space.</p>
+      <div class="presetlabel">worked examples</div>
+      <div class="presetbar" id="projPresets"></div>
+      <div class="presetlabel">view</div>
+      <div class="presetbar" id="projViews"></div>
+      <div class="layout">
+        <div class="plot"><svg id="projSvg" class="rot" role="img" aria-label="Projection of b onto the column space"></svg>
+          <div class="legend"><span class="lg-col">column space</span><span class="lg-ink">vector projected</span><span class="lg-gold">its shadow p</span><span class="lg-lnull">residual b − p</span></div></div>
+        <div class="side" id="projSide"></div>
+      </div>
+      <div class="caption" id="projCaption"></div>
+    </div>
+    <div class="card">
+      <h2>The projection matrix P = C(CᵀC)⁻¹Cᵀ</h2>
+      <p class="sub"><code>C</code> holds the two independent columns <code>(1, 0, 1)</code> and <code>(0, 1, 1)</code>.</p>
+      <div id="pMatrix"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5 ============ -->
+  <div class="panel" id="panel-ls">
+    <div class="card">
+      <h2>Least squares: project y onto the columns of X</h2>
+      <p class="sub">Five points, <code>x = 0…4</code>, <code>y = 1, 3, 2, 5, 4</code>. <code>X</code> has two columns, the feature <code>x</code> and a column of 1s. The best line makes the residual perpendicular to both columns: <code>Xᵀr = 0</code>.</p>
+      <div class="presetlabel">worked examples</div>
+      <div class="presetbar" id="lsPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="lsSvg" viewBox="0 0 460 340" role="img" aria-label="Scatter plot with fitted line and residuals"></svg>
+          <div class="legend"><span class="lg-ink">data</span><span class="lg-col">line ŷ = w·x + b</span><span class="lg-lnull">residuals</span></div></div>
+        <div class="side">
+          <div class="stat" id="lsFit"></div>
+          <h3>The shadow triangle</h3>
+          <svg id="triSvg" viewBox="0 0 320 200" role="img" aria-label="Triangle of y, y-hat and residual drawn to scale"></svg>
+          <div class="hint">ŷ, r and y = ŷ + r drawn to scale in the flat plane they share (inside ℝ⁵).</div>
+        </div>
+      </div>
+      <div class="caption" id="lsCaption"></div>
+    </div>
+    <div class="card">
+      <h2>Residuals vs. the two columns</h2>
+      <div class="tablewrap"><table id="lsTable"></table></div>
+      <div id="lsChecks" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>The hat matrix H = X(XᵀX)⁻¹Xᵀ</h2>
+      <p class="sub">It puts the hat on y: <code>ŷ = Hy</code>. It depends only on <code>X</code>, not on which line you try.</p>
+      <div id="hatBox"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>math/four-fundamental-subspaces.md</code>. Every number here is computed in the page and matches the values checked in that file: rank 2, null space <code>(−2, −3, 1)</code>, left null space <code>(1, 1, −1)</code>, projection <code>p = (1.3333, 2.3333, 3.6667)</code> at distance <code>0.5774</code>, regression <code>w = 0.8, b = 1.4</code> with <code>Xᵀr = (0, 0)</code> and <code>55 = 51.4 + 3.6</code>, hat-matrix trace 2, singular values <code>6.4012, 1.0124, 0</code>.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+  (TAB_SCENES[t.dataset.tab] || []).forEach(sc => sc.draw());   // redraw so label sizes can be measured
+}));
+const TAB_SCENES = {};
+
+/* ---------------- linear algebra helpers ---------------- */
+const add = (a, b) => a.map((x, i) => x + b[i]);
+const sub = (a, b) => a.map((x, i) => x - b[i]);
+const scl = (a, k) => a.map(x => x * k);
+const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+const cross = (a, b) => [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]];
+const norm = a => Math.sqrt(dot(a, a));
+const unit = a => scl(a, 1 / norm(a));
+const matVec = (M, x) => M.map(r => dot(r, x));
+const tr = M => M[0].map((_, j) => M.map(r => r[j]));
+const matMul = (A, B) => A.map(r => B[0].map((_, j) => r.reduce((s, x, k) => s + x * B[k][j], 0)));
+const eye = n => Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => i === j ? 1 : 0));
+const maxAbsDiff = (A, B) => Math.max(...A.map((r, i) => Math.max(...r.map((x, j) => Math.abs(x - B[i][j])))));
+function inv(M){
+  const n = M.length, A = M.map((r, i) => r.concat(eye(n)[i]));
+  for (let c = 0; c < n; c++){
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    [A[c], A[p]] = [A[p], A[c]];
+    const d = A[c][c]; for (let j = 0; j < 2*n; j++) A[c][j] /= d;
+    for (let r = 0; r < n; r++) if (r !== c){ const f = A[r][c]; for (let j = 0; j < 2*n; j++) A[r][j] -= f * A[c][j]; }
+  }
+  return A.map(r => r.slice(n));
+}
+function eigSym(M){ // Jacobi rotations; returns eigenvalues (descending) and eigenvectors (as rows)
+  const n = M.length, A = M.map(r => r.slice()), V = eye(n);
+  for (let sweep = 0; sweep < 100; sweep++){
+    let off = 0; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += A[i][j] * A[i][j];
+    if (off < 1e-24) break;
+    for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++){
+      if (Math.abs(A[p][q]) < 1e-18) continue;
+      const th = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+      const t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th*th + 1));
+      const c = 1 / Math.sqrt(t*t + 1), s = t * c;
+      for (let k = 0; k < n; k++){ const a = A[k][p], b = A[k][q]; A[k][p] = c*a - s*b; A[k][q] = s*a + c*b; }
+      for (let k = 0; k < n; k++){ const a = A[p][k], b = A[q][k]; A[p][k] = c*a - s*b; A[q][k] = s*a + c*b; }
+      for (let k = 0; k < n; k++){ const a = V[k][p], b = V[k][q]; V[k][p] = c*a - s*b; V[k][q] = s*a + c*b; }
+    }
+  }
+  const idx = [...Array(n).keys()].sort((i, j) => A[j][j] - A[i][i]);
+  return { values: idx.map(i => A[i][i]), vectors: idx.map(i => V.map(r => r[i])) };
+}
+function gramSchmidt(a, b){ const u = unit(a); const v = unit(sub(b, scl(u, dot(b, u)))); return [u, v]; }
+
+/* ---------------- formatting ---------------- */
+function fmt(x, d = 4){
+  let r = Math.round(x * Math.pow(10, d)) / Math.pow(10, d);
+  if (Math.abs(r) < Math.pow(10, -d) / 2 || Object.is(r, -0)) r = 0;
+  let s = r.toFixed(d).replace(/\.?0+$/, "");
+  return s.replace("-", "−");
+}
+const vec = (p, d) => "(" + p.map(x => fmt(x, d)).join(", ") + ")";
+function matHTML(M, d = 4){
+  return `<div class="mat" style="grid-template-columns:repeat(${M[0].length}, auto)">` + M.map(r => r.map(x => `<div>${typeof x === "string" ? x : fmt(x, d)}</div>`).join("")).join("") + `</div>`;
+}
+const testRow = (ok, label, detail) => `<div class="test ${ok ? "ok" : "bad"}"><div class="mark">${ok ? "✓" : "✗"}</div><div>${label}<div class="detail">${detail}</div></div></div>`;
+const near0 = x => Math.abs(x) < 1e-9;
+const deg = x => x * Math.PI / 180;
+
+/* ---------------- the running example ---------------- */
+const A = [[1,0,2],[0,1,3],[1,1,5]];
+const AT = tr(A);
+const COL = [0,1,2].map(j => A.map(r => r[j]));      // columns
+const ROW = A.map(r => r.slice());                     // rows
+const NULLV = [-2, -3, 1];
+const LNULLV = [1, 1, -1];
+const eAtA = eigSym(matMul(AT, A));
+const SING = eAtA.values.map(v => Math.sqrt(Math.max(0, v)));
+const RANK = SING.filter(s => s > 1e-6 * SING[0]).length;   // round-off-sized singular values count as 0
+const [ROW_U, ROW_V] = gramSchmidt(ROW[0], ROW[1]);
+const [COL_U, COL_V] = gramSchmidt(COL[0], COL[1]);
+const C2 = tr([COL[0], COL[1]]);                       // 3x2
+const PMAT = matMul(matMul(C2, inv(matMul(tr(C2), C2))), tr(C2));
+
+/* ---------------- tiny orthographic 3-D engine (SVG) ---------------- */
+function rotAbout(v, axis, ang){ // Rodrigues rotation of v about a unit axis
+  const c = Math.cos(ang), sn = Math.sin(ang);
+  return add(add(scl(v, c), scl(cross(axis, v), sn)), scl(axis, dot(axis, v) * (1 - c)));
+}
+function Scene(svg, cfg){
+  this.svg = svg; this.W = cfg.W || 440; this.H = cfg.H || 400; this.extent = cfg.extent || 7;
+  this.Dv = cfg.view.D; this.Uv = cfg.view.U; this.center = cfg.center || [0,0,0]; this.render = cfg.render; this.token = 0;
+  svg.setAttribute("viewBox", `0 0 ${this.W} ${this.H}`);
+  const self = this; let drag = null;
+  svg.addEventListener("pointerdown", e => { if (e.pointerType === "touch") return; drag = [e.clientX, e.clientY]; self.token++; svg.setPointerCapture(e.pointerId); });
+  svg.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const dx = e.clientX - drag[0], dy = e.clientY - drag[1]; drag = [e.clientX, e.clientY];
+    self.basis();
+    const U = self.U, R = self.R;
+    self.Dv = rotAbout(rotAbout(self.Dv, U, -dx * 0.01), R, dy * 0.01);
+    self.Uv = rotAbout(self.Uv, R, dy * 0.01);
+    self.draw();
+  });
+  const stop = () => { drag = null; };
+  svg.addEventListener("pointerup", stop); svg.addEventListener("pointercancel", stop);
+}
+Scene.prototype.basis = function(){
+  // D points from the scene toward the viewer, U is screen-up, R = U × D is screen-right
+  this.D = unit(this.Dv); this.U = unit(sub(this.Uv, scl(this.D, dot(this.Uv, this.D)))); this.R = cross(this.U, this.D);
+  this.k = Math.min(this.W, this.H) / 2 / this.extent;
+};
+Scene.prototype.P = function(p){ const q = sub(p, this.center); return [this.W/2 + dot(q, this.R) * this.k, this.H/2 - dot(q, this.U) * this.k]; };
+Scene.prototype.facing = function(n){ return Math.abs(dot(this.D, unit(n))); };   // 0 = plane edge-on, 1 = face-on
+Scene.prototype.el_ = function(tag, attrs){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); this.svg.appendChild(e); return e; };
+Scene.prototype.draw = function(){ this.svg.innerHTML = ""; this.planes = []; this.basis(); this.render(this); };
+Scene.prototype.hidden = function(q){
+  for (const pl of this.planes){
+    const rel = sub(q, pl.c), s = dot(rel, pl.n), dn = dot(this.D, pl.n);
+    if (s * dn >= -1e-6 || Math.abs(dn) < 1e-9) continue;
+    const r = add(rel, scl(this.D, -s / dn));
+    if (Math.abs(dot(r, pl.u)) <= pl.R && Math.abs(dot(r, pl.v)) <= pl.R) return true;
+  }
+  return false;
+};
+Scene.prototype.plane = function(u, v, o){
+  const R = o.R, c = o.c || [0,0,0];
+  const pt = (s, t) => this.P(add(c, add(scl(u, s), scl(v, t))));
+  const corners = [pt(-R,-R), pt(R,-R), pt(R,R), pt(-R,R)];
+  this.el_("polygon", { points: corners.map(q => q.map(z => z.toFixed(1)).join(",")).join(" "), fill: o.color, "fill-opacity": o.fillOpacity || 0.16, stroke: o.color, "stroke-width": 1.4, "stroke-opacity": 0.7 });
+  const n = 4;
+  for (let i = 1; i < n; i++){
+    const s = -R + 2*R*i/n;
+    const a = pt(s, -R), b = pt(s, R), a2 = pt(-R, s), b2 = pt(R, s);
+    this.el_("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: o.color, "stroke-opacity": 0.22, "stroke-width": 1 });
+    this.el_("line", { x1: a2[0], y1: a2[1], x2: b2[0], y2: b2[1], stroke: o.color, "stroke-opacity": 0.22, "stroke-width": 1 });
+  }
+  this.planes.push({ u, v, n: unit(cross(u, v)), R, c });
+  if (o.label){
+    let at = o.labelAt;
+    if (o.labelAvoid){ // pick the candidate spot farthest (on screen) from the thing we must not cover
+      const av = this.P(o.labelAvoid); let best = -1;
+      [[0.75,0.75],[0.75,-0.75],[-0.75,0.75],[-0.75,-0.75]].forEach(c => { const q = pt(c[0]*R, c[1]*R), d = Math.hypot(q[0]-av[0], q[1]-av[1]); if (d > best){ best = d; at = c; } });
+    }
+    const q = pt(at[0] * R, at[1] * R); this.text(q, o.label, { color: o.color, weight: 600, size: 12, anchor: "middle", dy: o.labelDy || 0 }); }
+};
+Scene.prototype.text = function(q, s, o = {}){
+  const t = this.el_("text", { x: q[0] + (o.dx || 0), y: q[1] + (o.dy || 0), "font-size": o.size || 12, fill: o.color || "#1B2430", "font-weight": o.weight || 500, "text-anchor": o.anchor || "start" });
+  t.textContent = s;
+  try { const bb = t.getBBox(); let sh = 0;          // keep labels inside the picture
+    if (bb.x < 4) sh = 4 - bb.x; else if (bb.x + bb.width > this.W - 4) sh = this.W - 4 - bb.x - bb.width;
+    if (sh) t.setAttribute("x", parseFloat(t.getAttribute("x")) + sh);
+    if (bb.y < 2) t.setAttribute("y", parseFloat(t.getAttribute("y")) + 2 - bb.y);
+    if (bb.y + bb.height > this.H - 2) t.setAttribute("y", parseFloat(t.getAttribute("y")) - (bb.y + bb.height - this.H + 2));
+  } catch (e) {}
+  return t;
+};
+Scene.prototype.label3 = function(p, s, o = {}){ return this.text(this.P(p), s, o); };
+/* label placed just beyond the tip of a vector, in the direction the vector points on screen */
+Scene.prototype.tipLabel = function(p, s, o = {}, from = [0,0,0]){
+  const q = this.P(p), q0 = this.P(from); let dx = q[0] - q0[0], dy = q[1] - q0[1]; const L = Math.hypot(dx, dy);
+  if (L < 4){ dx = 0.7; dy = -0.7; } else { dx /= L; dy /= L; }
+  const gap = o.gap || 12;
+  if (o.side){ let px = -dy, py = dx; if (px < 0){ px = -px; py = -py; } if (o.side === "left"){ px = -px; py = -py; }
+    return this.text([q[0] + px * 10, q[1] + py * 10 + 4], s, Object.assign({ anchor: o.side === "left" ? "end" : "start" }, o)); }
+  return this.text([q[0] + dx * gap, q[1] + dy * gap + 4 + dy * 4], s, Object.assign({ anchor: dx > 0.35 ? "start" : dx < -0.35 ? "end" : "middle" }, o));
+};
+Scene.prototype.seg = function(a, b, o = {}){
+  const N = o.samples || 60, color = o.color || "#1B2430", w = o.width || 2;
+  let runStart = 0, runHidden = null; const pts = [];
+  for (let i = 0; i <= N; i++) pts.push(add(a, scl(sub(b, a), i / N)));
+  const flush = (i0, i1, hid) => {
+    const p0 = this.P(pts[i0]), p1 = this.P(pts[i1]);
+    this.el_("line", { x1: p0[0], y1: p0[1], x2: p1[0], y2: p1[1], stroke: color, "stroke-width": hid ? Math.max(1, w * 0.75) : w,
+      "stroke-opacity": (o.opacity || 1) * (hid ? 0.45 : 1), "stroke-dasharray": hid ? "4 4" : (o.dash || "none"), "stroke-linecap": "round" });
+  };
+  for (let i = 0; i < N; i++){
+    const hid = this.hidden(scl(add(pts[i], pts[i+1]), 0.5));
+    if (runHidden === null){ runHidden = hid; runStart = i; }
+    else if (hid !== runHidden){ flush(runStart, i, runHidden); runStart = i; runHidden = hid; }
+  }
+  flush(runStart, N, runHidden);
+  if (o.arrow){
+    const tip = this.P(b), back = this.P(add(b, scl(sub(a, b), 0.001)));
+    let dx = tip[0] - back[0], dy = tip[1] - back[1]; const L = Math.hypot(dx, dy);
+    const shown = norm(sub(b, a)) * this.k;
+    const hid = this.hidden(b);
+    if (L < 1e-9 || Math.hypot(...sub(this.P(b), this.P(a))) < 0.18 * shown){
+      this.el_("circle", { cx: tip[0], cy: tip[1], r: 4.5, fill: "#fff", stroke: color, "stroke-width": 2 });   // seen end-on
+      this.el_("circle", { cx: tip[0], cy: tip[1], r: 1.6, fill: color });
+    } else {
+      dx /= L; dy /= L; const h = o.head || 10, wd = h * 0.45;
+      const p1 = [tip[0] - dx*h - dy*wd, tip[1] - dy*h + dx*wd], p2 = [tip[0] - dx*h + dy*wd, tip[1] - dy*h - dx*wd];
+      this.el_("polygon", { points: `${tip[0]},${tip[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]}`, fill: color, "fill-opacity": (o.opacity || 1) * (hid ? 0.5 : 1) });
+    }
+  }
+};
+Scene.prototype.point = function(p, o = {}){
+  const q = this.P(p);
+  this.el_("circle", { cx: q[0], cy: q[1], r: o.r || 5, fill: o.color || "#1B2430", stroke: "#fff", "stroke-width": 1.5, "fill-opacity": this.hidden(p) ? 0.55 : 1 });
+};
+Scene.prototype.axes = function(L){
+  const names = ["x₁", "x₂", "x₃"];
+  for (let i = 0; i < 3; i++){
+    const e = [0,0,0]; e[i] = L; const m = [0,0,0]; m[i] = -L * 0.55;
+    this.seg(m, e, { color: "#9AA3AD", width: 1.1, samples: 30 });
+    this.label3(e, names[i], { color: "#7A838E", size: 11, dx: 4, dy: 4 });
+  }
+};
+Scene.prototype.rightAngle = function(at, d1, d2, size, color){
+  const a = add(at, scl(d1, size)), b = add(at, add(scl(d1, size), scl(d2, size))), c = add(at, scl(d2, size));
+  const pts = [a, b, c].map(p => this.P(p));
+  this.el_("polyline", { points: pts.map(q => q.join(",")).join(" "), fill: "none", stroke: color || "#1B2430", "stroke-width": 1.6 });
+};
+/* in-plane direction that is as visible as possible from the current view (for right-angle marks) */
+Scene.prototype.visibleInPlane = function(n, fallback){
+  const w = cross(n, this.D); return norm(w) < 0.15 ? fallback : unit(w);
+};
+Scene.prototype.goTo = function(view, ms = 750){
+  const my = ++this.token, D0 = this.Dv, U0 = this.Uv, x0 = this.extent, x1 = view.extent || this.extent;
+  let D1 = view.D; if (dot(unit(D0), unit(D1)) < -0.999) D1 = add(D1, scl(unit(U0), 0.05));   // avoid a degenerate half-turn
+  const steps = Math.max(1, Math.round(ms / 25)); let i = 0;
+  const tick = () => {
+    if (my !== this.token) return;
+    i++; const t = i / steps, e = t*t*(3 - 2*t);
+    this.Dv = add(scl(unit(D0), 1 - e), scl(unit(D1), e)); this.Uv = add(scl(unit(U0), 1 - e), scl(unit(view.U), e));
+    this.extent = x0 + (x1 - x0) * e;
+    if (i === steps){ this.Dv = view.D; this.Uv = view.U; this.extent = x1; }
+    this.draw();
+    if (i < steps) setTimeout(tick, 25);
+  };
+  tick();
+};
+Scene.prototype.spin = function(ms = 4000){
+  this.basis();
+  const my = ++this.token, D0 = this.D, U0 = this.U, axis = this.spinAxis || U0, steps = Math.round(ms / 30); let i = 0;
+  const tick = () => { if (my !== this.token) return; i++; const a = 2*Math.PI * i / steps;
+    this.Dv = rotAbout(D0, axis, a); this.Uv = rotAbout(U0, axis, a); this.draw(); if (i < steps) setTimeout(tick, 30); };
+  tick();
+};
+/* three standard views of a plane with unit normal n: tilted (plane as a floor, normal pointing up),
+   edge-on (plane seen almost as a line), and down the normal (plane face-on) */
+function planeViews(nRaw, ref, turn = 50, tilt = 38){
+  // ref: an in-plane direction the viewer should look (roughly) along, so vectors near it fan out on screen
+  const n = unit(nRaw[2] < 0 ? scl(nRaw, -1) : nRaw);
+  const r0 = unit(sub(ref, scl(n, dot(ref, n)))), m0 = cross(n, r0);
+  const h = unit(add(scl(r0, -Math.cos(deg(turn))), scl(m0, Math.sin(deg(turn)))));   // viewer sits on the -ref side
+  const mk = a => ({ D: unit(add(scl(h, Math.cos(deg(a))), scl(n, Math.sin(deg(a))))), U: unit(add(scl(h, -Math.sin(deg(a))), scl(n, Math.cos(deg(a))))) });
+  return { tilt: mk(tilt), edge: mk(5), down: { D: n, U: r0 }, n };
+}
+function viewBar(sel, scenes, views){
+  const btns = [];
+  views.forEach((v, i) => {
+    const b = document.createElement("button"); b.className = "op view" + (i === 0 ? " active" : ""); b.textContent = v.t;
+    b.addEventListener("click", () => {
+      btns.forEach(x => x.classList.remove("active")); b.classList.add("active");
+      scenes.forEach((s, k) => { const vv = v.per ? v.per[k] : v; if (vv.spin) s.spin(); else s.goTo(vv); });
+      if (v.onPick) v.onPick();
+    });
+    $(sel).appendChild(b); btns.push(b);
+  });
+  return btns;
+}
+function presetBar(sel, defs){
+  const btns = [];
+  defs.forEach((d, i) => {
+    const b = document.createElement("button"); b.className = "op"; b.textContent = d.t;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); d.run(); });
+    $(sel).appendChild(b); btns.push(b);
+  });
+  return btns;
+}
+const ROW_N = unit(NULLV), COL_N = unit(LNULLV);
+const VIN = planeViews(NULLV, add(unit(ROW[0]), unit(ROW[1]))), VOUT = planeViews(LNULLV, add(unit(COL[0]), unit(COL[1])));
+const TILT_IN = VIN.tilt, EDGE_IN = VIN.edge, DOWN_IN = VIN.down;
+const TILT_OUT = VOUT.tilt, EDGE_OUT = VOUT.edge, DOWN_OUT = VOUT.down;
+
+/* =================== TAB 1: the four spaces =================== */
+function drawSpacePair(s, P){
+  // P: { u, v, n, color, lineColor, name, lineName, vecs:[[vec,label,main]], lineVec, lineVecLabel, lineExt }
+  const face = s.facing(P.n), edge = face < 0.25, endOn = face > 0.95;
+  s.plane(P.u, P.v, { R: 4.3, color: P.color, label: P.name + (edge ? " (edge-on)" : ""), labelAt: edge ? [0.75, 0.75] : [-0.75, 0.8], labelDy: edge ? 22 : 0 });
+  s.axes(4.6);
+  s.seg(scl(P.lineVec, -P.lineExt), scl(P.lineVec, P.lineExt), { color: P.lineColor, width: 2.4 });
+  s.seg([0,0,0], P.lineVec, { color: P.lineColor, width: 3.2, arrow: true });
+  P.vecs.forEach(([v, lab, main]) => {
+    s.seg([0,0,0], v, main ? { color: P.color, width: 3, arrow: true } : { color: P.color, width: 1.5, opacity: 0.6, arrow: true, head: 8 });
+    if (!edge) s.tipLabel(v, lab, { color: P.color, weight: main ? 600 : 500, size: main ? 12 : 11 });
+  });
+  if (endOn){
+    s.label3([0,0,0], P.lineName + ", end-on", { color: P.lineColor, weight: 600, dy: 26, anchor: "middle" });
+  } else {
+    s.tipLabel(P.lineVec, P.lineVecLabel, { color: P.lineColor, weight: 600, side: true });
+    s.tipLabel(scl(P.lineVec, -P.lineExt), P.lineName, { color: P.lineColor, weight: 600, side: true });
+    s.rightAngle([0,0,0], unit(P.n), s.visibleInPlane(unit(P.n), P.u), 0.6, "#1B2430");
+  }
+  s.point([0,0,0], { r: 3.5 });
+}
+const inScene = new Scene($("#inSvg"), { W: 420, H: 400, extent: 5.6, view: TILT_IN, center: scl(add(ROW[0], ROW[1]), 0.18), render: s => drawSpacePair(s, {
+  u: ROW_U, v: ROW_V, n: NULLV, color: "#5B4B95", lineColor: "#C2413B", name: "row space", lineName: "null space",
+  vecs: [[ROW[2], "row 3 = row 1 + row 2", false], [ROW[0], "row 1 (1, 0, 2)", true], [ROW[1], "row 2 (0, 1, 3)", true]],
+  lineVec: NULLV, lineVecLabel: "(−2, −3, 1)", lineExt: 1.35 }) });
+const outScene = new Scene($("#outSvg"), { W: 420, H: 400, extent: 5.6, view: TILT_OUT, center: scl(add(COL[0], COL[1]), 0.3), render: s => drawSpacePair(s, {
+  u: COL_U, v: COL_V, n: LNULLV, color: "#0F8B8D", lineColor: "#B7861C", name: "column space", lineName: "left null space",
+  vecs: [[COL[2], "col 3 = 2·col 1 + 3·col 2", false], [COL[0], "col 1 (1, 0, 1)", true], [COL[1], "col 2 (0, 1, 1)", true]],
+  lineVec: scl(LNULLV, 2), lineVecLabel: "2·(1, 1, −1)", lineExt: 1.2 }) });
+const FOUR_CAPS = [
+  "A tilted view. The null-space line pierces the row-space plane at the origin; the dashed parts are behind the plane. The small square marks the right angle.",
+  "Edge-on: each plane collapses to a line and you can see the right angle directly. Anything A destroys (red) is perpendicular to every row; anything A can't reach (gold) is perpendicular to every column.",
+  "Looking straight down the red and gold lines: they shrink to a dot (the ring), and each plane is seen face-on. Every direction in 3-D is either in the plane or along the line.",
+  "One full turn. Watch the dashed (hidden) parts of each line switch sides as the plane passes in front.",
+];
+viewBar("#fourViews", [inScene, outScene], [
+  { t: "Tilted view", per: [TILT_IN, TILT_OUT], onPick: () => $("#fourCaption").textContent = FOUR_CAPS[0] },
+  { t: "Edge-on: see the right angles", per: [EDGE_IN, EDGE_OUT], onPick: () => $("#fourCaption").textContent = FOUR_CAPS[1] },
+  { t: "Look down the lines", per: [DOWN_IN, DOWN_OUT], onPick: () => $("#fourCaption").textContent = FOUR_CAPS[2] },
+  { t: "Spin 360°", spin: true, onPick: () => $("#fourCaption").textContent = FOUR_CAPS[3] },
+]);
+$("#fourCaption").textContent = FOUR_CAPS[0];
+inScene.draw(); outScene.draw();
+
+(function fillFour(){
+  const m = 3, n = 3, r = RANK;
+  const rows = [
+    ["#0F8B8D", "column space", "output ℝ³", "(1, 0, 1), (0, 1, 1)", "r", r, "which b are reachable (existence)"],
+    ["#C2413B", "null space", "input ℝ³", "(−2, −3, 1)", "n − r", n - r, "how many x give the same b (uniqueness)"],
+    ["#5B4B95", "row space", "input ℝ³", "(1, 0, 2), (0, 1, 3)", "r", r, "the part of x that A actually uses"],
+    ["#B7861C", "left null space", "output ℝ³", "(1, 1, −1)", "m − r", m - r, "the test b must pass: y·b = 0"],
+  ];
+  $("#dimTable").innerHTML = `<tr><th>subspace</th><th>lives in</th><th>spanned by</th><th>formula</th><th>dim</th><th>tells you</th></tr>` +
+    rows.map(q => `<tr><td><span class="sw" style="background:${q[0]}"></span><b>${q[1]}</b></td><td>${q[2]}</td><td class="mono">${q[3]}</td><td class="mono">${q[4]}</td><td class="num"><b>${q[5]}</b></td><td>${q[6]}</td></tr>`).join("") +
+    `<tr class="sum"><td colspan="6">rank + nullity = ${r} + ${n - r} = ${r + n - r} = number of columns ✓ &nbsp;·&nbsp; column space + left null space: ${r} + ${m - r} = ${m} = number of rows ✓</td></tr>`;
+  const pairs = [
+    [ROW[0], NULLV, "row 1 · null", "(1,0,2)·(−2,−3,1)"], [ROW[1], NULLV, "row 2 · null", "(0,1,3)·(−2,−3,1)"],
+    [COL[0], LNULLV, "col 1 · left null", "(1,0,1)·(1,1,−1)"], [COL[1], LNULLV, "col 2 · left null", "(0,1,1)·(1,1,−1)"],
+  ];
+  $("#perpTests").innerHTML = pairs.map(p => { const d = dot(p[0], p[1]); return testRow(near0(d), p[2] + " = 0", `${p[3]} = ${fmt(d)}`); }).join("");
+  const An = matVec(A, NULLV), ATy = matVec(AT, LNULLV);
+  const c3 = add(scl(COL[0], 2), scl(COL[1], 3)), r3 = add(ROW[0], ROW[1]);
+  const vN = eAtA.vectors[2], sgn = vN[2] < 0 ? -1 : 1;
+  $("#fourChecks").innerHTML =
+    testRow(An.every(near0), "A·(−2, −3, 1) = 0", `= ${vec(An)}`) +
+    testRow(ATy.every(near0), "Aᵀ·(1, 1, −1) = 0", `= ${vec(ATy)}`) +
+    testRow(maxAbsDiff([c3], [COL[2]]) < 1e-12, "column 3 = 2·col 1 + 3·col 2", `${vec(c3)} = ${vec(COL[2])}`) +
+    testRow(maxAbsDiff([r3], [ROW[2]]) < 1e-12, "row 3 = row 1 + row 2", `${vec(r3)} = ${vec(ROW[2])}`) +
+    testRow(RANK === 2, `SVD: singular values ${SING.map(x => fmt(x)).join(", ")}`, `one zero, so rank = ${RANK}. Last row of Vᵀ = ${vec(scl(vN, sgn), 3)} = (−2, −3, 1)/√14`);
+})();
+
+/* =================== TAB 2: solvability =================== */
+let solveB = [1, 2, 3];
+const solveScene = new Scene($("#solveSvg"), { W: 460, H: 400, extent: 3.3, view: TILT_OUT, center: [0.55, 1.1, 1.8], render: s => {
+  const edge = s.facing(LNULLV) < 0.25;
+  s.plane(COL_U, COL_V, { R: 3.9, color: "#0F8B8D", label: "column space" + (edge ? " (edge-on)" : ""), labelAt: [-0.7, 0.75], labelAvoid: solveB, labelDy: edge ? 22 : 0 });
+  s.axes(3.6);
+  s.seg(scl(LNULLV, -1.5), scl(LNULLV, 1.5), { color: "#B7861C", width: 1.6, opacity: 0.7 });
+  s.tipLabel(scl(LNULLV, -1.5), "(1, 1, −1) direction", { color: "#B7861C", size: 11, side: true });
+  const b = solveB, yb = dot(LNULLV, b), other = near0(yb) ? [1,2,4] : [1,2,3];
+  s.seg([0,0,0], other, { color: "#9AA3AD", width: 1.4, opacity: 0.8, arrow: true, head: 7 });
+  s.tipLabel(other, vec(other), { color: "#7A838E", size: 10.5, side: true });
+  if (near0(yb)){
+    // the recipe x = (1, 2, 0): 1·col 1 then 2·col 2
+    s.seg([0,0,0], COL[0], { color: "#0F8B8D", width: 2.2, arrow: true, head: 8 });
+    s.seg(COL[0], add(COL[0], scl(COL[1], 2)), { color: "#0F8B8D", width: 2.2, arrow: true, head: 8, dash: "6 4" });
+    if (!edge){
+      s.tipLabel(COL[0], "1·col 1", { color: "#0F8B8D", size: 11, weight: 600 });
+      s.label3(add(COL[0], COL[1]), "+ 2·col 2", { color: "#0F8B8D", size: 11, weight: 600, dx: 10, dy: 4 });
+    }
+  } else {
+    const p = matVec(PMAT, b);
+    s.seg(b, p, { color: "#C2413B", width: 2.4, dash: "5 4" });
+    s.point(p, { r: 4, color: "#0F8B8D" });
+    s.tipLabel(add(p, scl(sub(b, p), 0.5)), `gap ${fmt(norm(sub(b, p)))}`, { color: "#C2413B", weight: 600, size: 11, side: true }, b);
+  }
+  s.seg([0,0,0], b, { color: "#1B2430", width: 3, arrow: true });
+  s.point(b, { r: 5, color: near0(yb) ? "#1E8A5A" : "#C2413B" });
+  s.tipLabel(b, "b = " + vec(b), { weight: 600, size: 13 });
+  s.point([0,0,0], { r: 3.5 });
+}});
+function showSolve(b){
+  solveB = b; solveScene.draw();
+  const y = LNULLV, terms = y.map((yi, i) => `(${fmt(yi)})(${fmt(b[i])})`).join(" + ");
+  const yb = dot(y, b), ok = near0(yb);
+  let html = `<div class="stat"><span class="k">the one-dot-product test</span>(1, 1, −1)·b = ${terms}<br>= <b class="${ok ? "ok" : "bad"}">${fmt(yb)}</b></div>`;
+  html += `<div class="stat"><span class="k">same test, by elimination</span>row 3 − row 1 − row 2 of A is (0, 0, 0), so it forces<br>0 = b₃ − b₁ − b₂ = ${fmt(b[2])} − ${fmt(b[0])} − ${fmt(b[1])} = <b class="${ok ? "ok" : "bad"}">${fmt(b[2] - b[0] - b[1])}</b>${ok ? "" : "  ← impossible"}</div>`;
+  if (ok){
+    const x = [1, 2, 0], Ax = matVec(A, x);
+    html += `<div class="stat"><span class="k">a solution</span>x = (1, 2, 0): A·x = <b class="ok">${vec(Ax)}</b></div>`;
+    html += `<div class="verdict ok">Solvable: b lies on the column-space plane.</div>`;
+    $("#solveCaption").innerHTML = "In the edge-on view the plane is a line and <code>b</code> lies exactly on it. The teal dashed path is the recipe: 1 of column 1, then 2 of column 2.";
+  } else {
+    const p = matVec(PMAT, b);
+    html += `<div class="stat"><span class="k">closest reachable point (Tab 4)</span>p = ${vec(p)}, distance ${fmt(norm(sub(b, p)))}</div>`;
+    html += `<div class="verdict bad">Not solvable: b sticks out of the plane.</div>`;
+    $("#solveCaption").innerHTML = "In the edge-on view, <code>b = (1, 2, 4)</code> visibly leaves the plane. The red dashed gap runs parallel to <code>(1, 1, −1)</code>: that's the component of <code>b</code> along the left null space, and it's why the dot product isn't zero. No recipe <code>x</code> can mix that direction.";
+  }
+  $("#solveSide").innerHTML = html;
+}
+const solveViewBtns = viewBar("#solveViews", [solveScene], [
+  { t: "Edge-on to the plane", ...EDGE_OUT },
+  { t: "Tilted view", ...TILT_OUT },
+  { t: "Spin 360°", spin: true },
+]);
+presetBar("#solvePresets", [
+  { t: "b = (1, 2, 3): on the plane", run: () => { showSolve([1,2,3]); solveViewBtns.forEach((x, i) => x.classList.toggle("active", i === 0)); solveScene.goTo(EDGE_OUT); } },
+  { t: "b = (1, 2, 4): off the plane", run: () => { showSolve([1,2,4]); solveViewBtns.forEach((x, i) => x.classList.toggle("active", i === 0)); solveScene.goTo(EDGE_OUT); } },
+])[0].classList.add("active");
+solveScene.Dv = EDGE_OUT.D; solveScene.Uv = EDGE_OUT.U;
+showSolve([1,2,3]);
+
+/* =================== TAB 3: many solutions =================== */
+const XP = [1, 2, 0], BT = [1, 2, 3];
+const T_MIN = dot(XP, NULLV) / dot(NULLV, NULLV) * -1;           // 4/7: the shortest solution
+const XROW = add(XP, scl(NULLV, T_MIN));
+let tNow = 0;
+const manyScene = new Scene($("#manySvg"), { W: 460, H: 400, extent: 6, view: TILT_IN, center: XROW, render: s => {
+  const face = s.facing(NULLV), edge = face < 0.25, endOn = face > 0.95;
+  s.plane(ROW_U, ROW_V, { R: 4.2, color: "#5B4B95", fillOpacity: 0.1, label: "row space" + (edge ? " (edge-on)" : ""), labelAt: edge ? [0.75, 0.75] : [-0.7, 0.8], labelDy: edge ? 22 : 0 });
+  s.axes(4.4);
+  s.seg(scl(NULLV, -1.2), scl(NULLV, 1.2), { color: "#C2413B", width: 1.3, opacity: 0.55, dash: "2 4" });
+  const L0 = add(XP, scl(NULLV, -1.15)), L1 = add(XP, scl(NULLV, 2.15));
+  s.seg(L0, L1, { color: "#1B2430", width: 2 });
+  const x = add(XP, scl(NULLV, tNow));
+  s.seg([0,0,0], XROW, { color: "#5B4B95", width: 3.2, arrow: true, head: 9 });
+  s.seg(XROW, x, { color: "#C2413B", width: 3, arrow: Math.abs(tNow - T_MIN) > 0.05, head: 9 });
+  s.seg([0,0,0], x, { color: "#D9A62E", width: 1.6, opacity: 0.9, dash: "5 4" });
+  s.point(XROW, { r: 3.5, color: "#5B4B95" });
+  s.point(x, { r: 6, color: "#D9A62E" });
+  s.point([0,0,0], { r: 3.5 });
+  if (endOn){
+    s.label3(XROW, "every solution x lands on this one spot", { weight: 600, size: 12, dy: -16, anchor: "middle" });
+    s.label3([0,0,0], "origin", { color: "#7A838E", size: 11, dy: 20, anchor: "middle" });
+  } else {
+    s.rightAngle(XROW, ROW_N, unit(XROW), 0.3, "#1B2430");
+    s.tipLabel(scl(NULLV, 1.2), "null line", { color: "#C2413B", size: 11, side: true });
+    s.tipLabel(L1, "every solution", { size: 11, weight: 600, side: true });
+    s.tipLabel(x, "x = " + vec(x), { weight: 600, side: true }, XROW);
+  }
+}});
+const MANY_TS = [
+  { t: -1, name: "t = −1" }, { t: 0, name: "t = 0: x = (1, 2, 0)" }, { t: 1, name: "t = 1" },
+  { t: 1.5, name: "t = 1.5: x = (−2, −2.5, 1.5)" }, { t: T_MIN, name: "t = 4/7: the shortest solution" }, { t: 2, name: "t = 2" },
+];
+function setT(t){
+  tNow = t; manyScene.draw();
+  $("#tSlider").value = t; $("#tVal").textContent = fmt(t, 3);
+  const x = add(XP, scl(NULLV, t)), Ax = matVec(A, x), An = matVec(A, NULLV);
+  $("#manySide").innerHTML =
+    `<div class="stat"><span class="k">x = (1, 2, 0) + t·(−2, −3, 1)</span>x = <b>${vec(x)}</b><br>‖x‖ = ${fmt(norm(x))}</div>` +
+    `<div class="stat"><span class="k">A·x</span><span class="bigout">${vec(Ax)}</span><br>= A·(1, 2, 0) + t·A·(−2, −3, 1) = (1, 2, 3) + ${fmt(t, 3)}·${vec(An)}</div>` +
+    `<div class="stat"><span class="k">split into the two input spaces</span>row-space part (never changes): ${vec(XROW)}<br>null-space part: ${fmt(t - T_MIN)}·(−2, −3, 1)</div>`;
+  $("#manyCaption").innerHTML = Math.abs(t - T_MIN) < 1e-9
+    ? "At <code>t = 4/7</code> the null-space part is zero: <code>x</code> is purely in the row space, perpendicular to the null line, and it's the shortest of all the solutions. (That's the solution the pseudo-inverse picks.)"
+    : "Moving <code>t</code> slides <code>x</code> along the black solution line, which is parallel to the red null line. Only the red part changes, and <code>A</code> sends it to zero, so the output stays <code>(1, 2, 3)</code>. Try <b>Look down the null line</b>: every solution lands on the same spot.";
+}
+let sweepTok = 0;
+function sweep(){
+  const my = ++sweepTok, steps = 90; let i = 0;
+  const tick = () => { if (my !== sweepTok) return; setT(-1 + 3 * i / steps); i++; if (i <= steps) setTimeout(tick, 35); else setT(1.5); };
+  tick();
+}
+presetBar("#manyPresets", MANY_TS.map(o => ({ t: o.name, run: () => { sweepTok++; setT(o.t); } })).concat([{ t: "▶ Sweep t from −1 to 2", run: sweep }]))[1].classList.add("active");
+$("#tSlider").addEventListener("input", e => { sweepTok++; setT(parseFloat(e.target.value)); });
+viewBar("#manyViews", [manyScene], [
+  { t: "Tilted view", ...TILT_IN, extent: 6 },
+  { t: "Edge-on to the row space", ...EDGE_IN, extent: 6 },
+  { t: "Look down the null line", ...DOWN_IN, extent: 1.6 },
+  { t: "Spin 360°", spin: true },
+]);
+setT(0);
+$("#manyTable").innerHTML = `<tr><th>t</th><th>x = (1,2,0) + t·(−2,−3,1)</th><th>A·x</th><th>‖x‖</th></tr>` +
+  MANY_TS.map(o => { const x = add(XP, scl(NULLV, o.t)); return `<tr><td class="num">${fmt(o.t)}</td><td class="mono">${vec(x)}</td><td class="mono ok">${vec(matVec(A, x))}</td><td class="num">${fmt(norm(x))}</td></tr>`; }).join("");
+
+/* =================== TAB 4: projection =================== */
+let projV = [1, 2, 4], projFrac = 1, projMode = "b";
+const PROJ_TILT = planeViews(LNULLV, matVec(PMAT, [1,2,4]), 80, 20).tilt;   // p runs across the screen, the residual stands up
+const projScene = new Scene($("#projSvg"), { W: 460, H: 400, extent: 3.1, view: PROJ_TILT, center: [0.5, 1, 2], render: s => {
+  const edge = s.facing(LNULLV) < 0.25, endOn = s.facing(LNULLV) > 0.95;
+  s.plane(COL_U, COL_V, { R: 3.9, color: "#0F8B8D", label: "column space" + (edge ? " (edge-on)" : ""), labelAt: [-0.7, 0.75], labelAvoid: scl(projV, 0.5), labelDy: edge ? 64 : 0 });
+  s.axes(3.6);
+  s.seg(scl(LNULLV, -1.5), scl(LNULLV, 1.5), { color: "#B7861C", width: 1.2, opacity: 0.5, dash: "2 4" });
+  if (!endOn) s.tipLabel(scl(LNULLV, -1.5), "left null line", { color: "#B7861C", size: 11, side: true });
+  const v = projV, p = matVec(PMAT, v), foot = add(v, scl(sub(p, v), projFrac)), nm = projMode === "b" ? "b" : "v";
+  if (projFrac > 0 && norm(sub(v, p)) > 1e-9){
+    s.seg(v, foot, { color: "#B7861C", width: 2.8, dash: "6 4" });
+    if (projFrac >= 1){
+      s.rightAngle(p, unit(sub(v, p)), s.visibleInPlane(COL_N, COL_U), 0.25, "#1B2430");
+      if (!endOn && norm(p) > 1e-9) s.label3(p, `${nm} − p = ${fmt(dot(sub(v, p), LNULLV) / 3, 4)}·(1, 1, −1)`.replace("−0.3333·", "−⅓·"), { color: "#8A6512", weight: 600, size: 11, dy: 20, dx: 4, anchor: "start" });
+    }
+  }
+  if (projFrac >= 1 && norm(p) > 1e-9){
+    s.seg([0,0,0], p, { color: "#D9A62E", width: 3, arrow: true });
+    s.point(p, { r: 5, color: "#D9A62E" });
+    if (projMode !== "twice") s.label3(scl(p, 0.62), "p = " + vec(p), { color: "#8A6512", weight: 600, dy: 44, anchor: "middle" });
+  }
+  if (projFrac >= 1 && norm(p) <= 1e-9){ s.point([0,0,0], { r: 6, color: "#D9A62E" }); s.label3([0,0,0], "p = (0, 0, 0)", { color: "#8A6512", weight: 600, dx: 12, dy: 18 }); }
+  s.seg([0,0,0], v, { color: "#1B2430", width: 2.6, arrow: true, opacity: projMode === "twice" ? 0.35 : 1 });
+  s.tipLabel(v, (projMode === "twice" ? "P·p = p = " : nm + " = ") + vec(v), { weight: 600 });
+  s.point([0,0,0], { r: 3.5 });
+}});
+let projTok = 0;
+function projInfo(){
+  const v = projV, p = matVec(PMAT, v), r = sub(v, p);
+  let html = `<div class="stat"><span class="k">vector projected</span>${vec(v)}<span class="k" style="margin-top:6px">shadow p = P·v</span><b>${vec(p)}</b><span class="k" style="margin-top:6px">residual v − p</span>${vec(r)}${norm(r) > 1e-9 ? ` = ${fmt(dot(r, LNULLV) / 3)}·(1, 1, −1)` : ""}<br>distance ‖v − p‖ = <b>${fmt(norm(r))}</b></div>`;
+  html += testRow(near0(dot(r, COL[0])) && near0(dot(r, COL[1])), "residual ⟂ both columns", `r·(1,0,1) = ${fmt(dot(r, COL[0]))}, r·(0,1,1) = ${fmt(dot(r, COL[1]))}`);
+  html += testRow(norm(cross(r, LNULLV)) < 1e-9, "residual lies along the left null space", `r × (1,1,−1) = ${vec(cross(r, LNULLV))}`);
+  if (projMode === "b") html += testRow(true, "p is the closest reachable point", `e.g. A·(1, 2, 0) = (1, 2, 3) is ${fmt(norm(sub(v, [1,2,3])))} away; p is ${fmt(norm(r))} away`);
+  $("#projSide").innerHTML = html;
+  const caps = {
+    b: "The perpendicular from <code>b = (1, 2, 4)</code> lands at <code>p = (1.3333, 2.3333, 3.6667)</code>. The residual <code>−⅓·(1, 1, −1)</code> is parallel to the left null line (gold dotted): perpendicular to the whole plane. Try <b>Edge-on</b> to see the right angle, or <b>Look down the left null line</b> to see <code>b</code> sitting directly over its shadow, like the sun at noon.",
+    inplane: "<code>(1, 2, 3)</code> is already on the plane, so its shadow is itself and the residual is zero. Every vector in the plane is kept: that's eigenvalue <b>1</b> (twice, because the plane is 2-D).",
+    perp: "<code>(1, 1, −1)</code> is perpendicular to the plane, so its shadow is the origin. That direction is flattened: eigenvalue <b>0</b>.",
+    twice: "Project the shadow <code>p</code> again and nothing moves: <code>P·p = p</code>, so <code>P² = P</code>. The shadow of a shadow is itself.",
+  };
+  $("#projCaption").innerHTML = caps[projMode];
+}
+function playProj(v, mode, animate){
+  const my = ++projTok; projV = v; projMode = mode; projScene.center = scl(v, 0.5);
+  projInfo();
+  if (!animate){ projFrac = 1; projScene.draw(); return; }
+  let i = 0; const steps = 36;
+  const tick = () => { if (my !== projTok) return; projFrac = i / steps; projScene.draw(); i++; if (i <= steps) setTimeout(tick, 30); };
+  projFrac = 0; projScene.draw(); setTimeout(tick, 350);
+}
+const P_B = matVec(PMAT, [1,2,4]);
+presetBar("#projPresets", [
+  { t: "▶ Drop the perpendicular from (1, 2, 4)", run: () => playProj([1,2,4], "b", true) },
+  { t: "Project (1, 2, 3): already on the plane", run: () => playProj([1,2,3], "inplane", true) },
+  { t: "Project (1, 1, −1): perpendicular", run: () => playProj([1,1,-1], "perp", true) },
+  { t: "Project p again: P·p = p", run: () => playProj(P_B, "twice", true) },
+])[0].classList.add("active");
+viewBar("#projViews", [projScene], [
+  { t: "Tilted view", ...PROJ_TILT },
+  { t: "Edge-on: see the right angle", ...EDGE_OUT },
+  { t: "Look down the left null line", ...DOWN_OUT },
+  { t: "Spin 360°", spin: true },
+]);
+playProj([1,2,4], "b", false);
+(function fillP(){
+  const P2 = matMul(PMAT, PMAT), ev = eigSym(PMAT).values;
+  const thirds = PMAT.map(r => r.map(x => { const t = Math.round(x * 3); return (t < 0 ? "−" : "") + Math.abs(t) + "/3"; }));
+  $("#pMatrix").innerHTML =
+    `<div class="layout"><div class="side"><div class="stat"><span class="k">P</span>${matHTML(PMAT)}<br><span class="k" style="margin-top:6px">as fractions</span>${matHTML(thirds)}</div></div>` +
+    `<div class="side">` +
+    testRow(maxAbsDiff(P2, PMAT) < 1e-12, "P·P = P (idempotent)", `largest |P² − P| entry = ${maxAbsDiff(P2, PMAT).toExponential(1)}`) +
+    testRow(maxAbsDiff(tr(PMAT), PMAT) < 1e-12, "P is symmetric (Pᵀ = P)", "an orthogonal (perpendicular) projection") +
+    testRow(true, `eigenvalues of P: ${ev.map(x => fmt(x)).join(", ")}`, "1, 1 for the plane's two directions; 0 for the perpendicular one") +
+    testRow(true, `trace P = ${fmt(PMAT[0][0] + PMAT[1][1] + PMAT[2][2])}`, "= the plane's dimension, 2") +
+    testRow(maxAbsDiff([matVec(PMAT, [1,2,4])], [[4/3, 7/3, 11/3]]) < 1e-12, "P·(1, 2, 4) = (4/3, 7/3, 11/3)", vec(matVec(PMAT, [1,2,4]))) +
+    `</div></div>`;
+})();
+
+TAB_SCENES.four = [inScene, outScene]; TAB_SCENES.solve = [solveScene]; TAB_SCENES.many = [manyScene]; TAB_SCENES.proj = [projScene];
+
+/* =================== TAB 5: least squares =================== */
+const XS = [0,1,2,3,4], YS = [1,3,2,5,4];
+const X = XS.map(x => [x, 1]);
+const XtX = matMul(tr(X), X), Xty = matVec(tr(X), YS);
+const WB = matVec(inv(XtX), Xty);                              // [w, b]
+const HAT = matMul(matMul(X, inv(XtX)), tr(X));
+let lsW = WB[0], lsB = WB[1];
+const lsSvg = $("#lsSvg");
+const LV = { W: 460, H: 340, x0: -0.5, x1: 4.6, y0: 0, y1: 6, l: 40, r: 14, t: 14, b: 34 };
+const sx = x => LV.l + (x - LV.x0) / (LV.x1 - LV.x0) * (LV.W - LV.l - LV.r);
+const sy = y => LV.H - LV.b - (y - LV.y0) / (LV.y1 - LV.y0) * (LV.H - LV.t - LV.b);
+function mk(svg, tag, attrs, txt){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (txt !== undefined) e.textContent = txt; svg.appendChild(e); return e; }
+function drawLS(){
+  const svg = lsSvg; svg.innerHTML = "";
+  for (let y = 0; y <= 6; y++){ mk(svg, "line", { x1: sx(LV.x0), x2: sx(LV.x1), y1: sy(y), y2: sy(y), stroke: "#E3E7EA" }); mk(svg, "text", { x: LV.l - 8, y: sy(y) + 4, "font-size": 11, fill: "#7A838E", "text-anchor": "end" }, y); }
+  XS.forEach(x => mk(svg, "text", { x: sx(x), y: LV.H - LV.b + 18, "font-size": 11, fill: "#7A838E", "text-anchor": "middle" }, x));
+  mk(svg, "line", { x1: sx(LV.x0), x2: sx(LV.x1), y1: sy(0), y2: sy(0), stroke: "#9AA3AD" });
+  mk(svg, "text", { x: sx(4.5), y: LV.H - 4, "font-size": 11, fill: "#7A838E", "text-anchor": "end" }, "x");
+  mk(svg, "line", { x1: sx(LV.x0), x2: sx(LV.x1), y1: sy(lsB + lsW * LV.x0), y2: sy(lsB + lsW * LV.x1), stroke: "#0F8B8D", "stroke-width": 2.5 });
+  XS.forEach((x, i) => {
+    const yh = lsW * x + lsB, r = YS[i] - yh;
+    mk(svg, "line", { x1: sx(x), x2: sx(x), y1: sy(YS[i]), y2: sy(yh), stroke: "#B7861C", "stroke-width": 2.5, "stroke-dasharray": "5 3" });
+    mk(svg, "circle", { cx: sx(x), cy: sy(yh), r: 3.5, fill: "#0F8B8D" });
+    mk(svg, "circle", { cx: sx(x), cy: sy(YS[i]), r: 6, fill: "#1B2430", stroke: "#fff", "stroke-width": 1.5 });
+    mk(svg, "text", { x: sx(x) + 9, y: (sy(YS[i]) + sy(yh)) / 2 + 4, "font-size": 11, fill: "#8A6512", "font-weight": 600 }, (r >= 0 ? "+" : "") + fmt(r).replace("−", "−"));
+  });
+  mk(svg, "text", { x: sx(0.1), y: sy(5.6), "font-size": 12.5, fill: "#0F8B8D", "font-weight": 600 }, `ŷ = ${fmt(lsW, 3)}·x + ${fmt(lsB, 3)}`);
+}
+function drawTri(yh, r){
+  const svg = $("#triSvg"); svg.innerHTML = "";
+  const a = norm(yh), c = norm(r), cosT = dot(yh, r) / (a * c || 1), ang = Math.acos(Math.max(-1, Math.min(1, cosT)));
+  // yhat along +x from O; r from its tip, turned by the angle between the vectors
+  const kx = 250 / Math.max(a + Math.max(0, c * cosT), 1e-9), s = Math.min(kx, 120 / Math.max(c * Math.sin(ang), 1e-9));
+  const O = [30, 170], T = [O[0] + a * s, O[1]], E = [T[0] + c * s * Math.cos(ang), T[1] - c * s * Math.sin(ang)];
+  mk(svg, "line", { x1: O[0], y1: O[1], x2: E[0], y2: E[1], stroke: "#1B2430", "stroke-width": 2.4 });
+  mk(svg, "line", { x1: O[0], y1: O[1], x2: T[0], y2: T[1], stroke: "#0F8B8D", "stroke-width": 3 });
+  mk(svg, "line", { x1: T[0], y1: T[1], x2: E[0], y2: E[1], stroke: "#B7861C", "stroke-width": 3 });
+  if (Math.abs(ang - Math.PI/2) < 1e-6){ const q = 9; mk(svg, "polyline", { points: `${T[0]-q},${T[1]} ${T[0]-q},${T[1]-q} ${T[0]},${T[1]-q}`, fill: "none", stroke: "#1B2430", "stroke-width": 1.4 }); }
+  mk(svg, "text", { x: (O[0] + T[0]) / 2, y: O[1] + 18, "font-size": 12, fill: "#0F8B8D", "font-weight": 600, "text-anchor": "middle" }, `‖ŷ‖² = ${fmt(a*a)}`);
+  mk(svg, "text", { x: Math.max(T[0], E[0]) + 6, y: (T[1] + E[1]) / 2, "font-size": 12, fill: "#8A6512", "font-weight": 600, "text-anchor": "end", dx: -12 }, `‖r‖² = ${fmt(c*c)}`);
+  mk(svg, "text", { x: (O[0] + E[0]) / 2 - 10, y: (O[1] + E[1]) / 2 - 8, "font-size": 12, fill: "#1B2430", "font-weight": 600, "text-anchor": "end" }, `‖y‖² = ${fmt(norm(add(yh, r)) ** 2)}`);
+  mk(svg, "text", { x: 10, y: 18, "font-size": 11.5, fill: "#5B6572" }, `angle between ŷ and r: ${fmt(ang * 180 / Math.PI, 1)}°`);
+}
+function showLS(){
+  drawLS();
+  const yh = XS.map(x => lsW * x + lsB), r = YS.map((y, i) => y - yh[i]);
+  const Xtr = matVec(tr(X), r), best = Xtr.every(v => Math.abs(v) < 1e-9);
+  const ny = dot(YS, YS), nyh = dot(yh, yh), nr = dot(r, r);
+  drawTri(yh, r);
+  $("#lsFit").innerHTML = `<span class="k">line</span>w = <b>${fmt(lsW)}</b>, b = <b>${fmt(lsB)}</b><br>ŷ = ${vec(yh)}<br>r = ${vec(r)}<br>‖r‖² = <b class="${best ? "ok" : "bad"}">${fmt(nr)}</b>`;
+  $("#lsTable").innerHTML = `<tr><th>i</th><th>x (col 1)</th><th>1 (col 2)</th><th>y</th><th>ŷ</th><th>r = y − ŷ</th><th>x·r</th><th>1·r</th></tr>` +
+    XS.map((x, i) => `<tr><td class="num">${i + 1}</td><td class="num">${x}</td><td class="num">1</td><td class="num">${YS[i]}</td><td class="num">${fmt(yh[i])}</td><td class="num">${fmt(r[i])}</td><td class="num">${fmt(x * r[i])}</td><td class="num">${fmt(r[i])}</td></tr>`).join("") +
+    `<tr class="sum"><td colspan="6">Xᵀr = (Σ x·r, Σ 1·r)</td><td class="num ${best ? "ok" : "bad"}">${fmt(Xtr[0])}</td><td class="num ${best ? "ok" : "bad"}">${fmt(Xtr[1])}</td></tr>`;
+  $("#lsChecks").innerHTML =
+    testRow(best, "Xᵀr = (0, 0): residual ⟂ both columns (the normal equations)", `Xᵀr = ${vec(Xtr)}`) +
+    testRow(near0(dot(yh, r)), "ŷ ⟂ r", `ŷ·r = ${fmt(dot(yh, r))}`) +
+    testRow(Math.abs(ny - nyh - nr) < 1e-9, `Pythagoras: ‖y‖² = ‖ŷ‖² + ‖r‖²`, `${fmt(ny)} vs ${fmt(nyh)} + ${fmt(nr)} = ${fmt(nyh + nr)}`);
+  $("#lsCaption").innerHTML = best
+    ? `The best line <code>w = 0.8, b = 1.4</code>. Its residual vector is perpendicular to both columns of <code>X</code>, so <code>ŷ</code> is the shadow of <code>y</code> on the column space and the triangle has a right angle: <code>55 = 51.4 + 3.6</code>.`
+    : `A worse line. Its residual still has a component along a column of <code>X</code> (<code>Xᵀr ≠ 0</code>), so the triangle isn't right-angled and <code>‖r‖²</code> is bigger. Click <b>▶ Slide to the best line</b> and watch <code>Xᵀr</code> go to <code>(0, 0)</code>.`;
+}
+let lsTok = 0;
+function slideLS(){
+  const my = ++lsTok, steps = 40; let i = 0; const w0 = 1, b0 = 1;
+  const tick = () => { if (my !== lsTok) return; const t = i / steps, e = t*t*(3 - 2*t); lsW = w0 + (WB[0] - w0) * e; lsB = b0 + (WB[1] - b0) * e; if (i === steps){ lsW = WB[0]; lsB = WB[1]; } showLS(); i++; if (i <= steps) setTimeout(tick, 40); };
+  tick();
+}
+presetBar("#lsPresets", [
+  { t: "Best fit: w = 0.8, b = 1.4", run: () => { lsTok++; lsW = WB[0]; lsB = WB[1]; showLS(); } },
+  { t: "Compare: a worse line (w = 1, b = 1)", run: () => { lsTok++; lsW = 1; lsB = 1; showLS(); } },
+  { t: "▶ Slide to the best line", run: slideLS },
+])[0].classList.add("active");
+showLS();
+(function fillHat(){
+  const H2 = matMul(HAT, HAT), ev = eigSym(HAT).values, trace = HAT.reduce((s, r, i) => s + r[i], 0);
+  const yh = matVec(HAT, YS);
+  $("#hatBox").innerHTML =
+    `<div class="layout"><div class="side"><div class="stat"><span class="k">H (5 × 5)</span><div class="tablewrap">${matHTML(HAT, 2)}</div><span class="k" style="margin-top:6px">diagonal = leverage of each point</span>${HAT.map((r, i) => fmt(r[i], 2)).join(", ")}</div></div>` +
+    `<div class="side">` +
+    testRow(maxAbsDiff([yh], [[1.4, 2.2, 3.0, 3.8, 4.6]]) < 1e-9, "H·y = ŷ", vec(yh)) +
+    testRow(maxAbsDiff(H2, HAT) < 1e-12, "H·H = H", `largest |H² − H| entry = ${maxAbsDiff(H2, HAT).toExponential(1)}`) +
+    testRow(true, `eigenvalues: ${ev.map(x => fmt(x)).join(", ")}`, "only 0s and 1s: keep the 2 column directions, flatten the other 3") +
+    testRow(Math.abs(trace - 2) < 1e-9, `trace H = ${fmt(trace)}`, "= number of fitted parameters (w and b)") +
+    `</div></div>`;
+})();
+
+})();
+</script>
+</body>
+</html>

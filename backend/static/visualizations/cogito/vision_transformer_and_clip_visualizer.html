@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vision Transformer and CLIP, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:230px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:90px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  table.datatable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  table.datatable td.diag{border:2px solid var(--amber);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:640px;height:auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin:6px 0;}
+  .bar-row .name{width:170px;font-size:12.5px;text-align:right;}
+  .bar-row .track{flex:1;background:rgba(244,241,232,0.06);border-radius:6px;height:20px;position:relative;overflow:hidden;}
+  .bar-row .fill{height:100%;border-radius:6px;}
+  .bar-row .pct{width:70px;font-size:12px;color:var(--chalk-dim);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Vision Transformer and CLIP, live</h1>
+  <p class="sub">Three companion demos: patchify an image into a Transformer-ready sequence and watch compute cost scale; drag temperature on a real CLIP similarity batch; and rank a never-trained-on image against a brand-new zero-shot text prompt.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="patch">Patchify &amp; Sequence Length</button>
+    <button class="tab-btn" data-tab="clip">CLIP Similarity Matrix</button>
+    <button class="tab-btn" data-tab="zeroshot">Zero-Shot Classification</button>
+  </div>
+
+  <!-- ==================== TAB 1: PATCHIFY ==================== -->
+  <div class="tabpage active" id="tab-patch">
+    <div class="panel">
+      <h2>An Image Becomes a Sequence</h2>
+      <div class="slider-row"><label for="pImg">Image size (H=W)</label><input type="range" id="pImg" min="64" max="512" step="16" value="224"><output id="pImgOut">224</output></div>
+      <div class="slider-row"><label for="pPatch">Patch size</label><input type="range" id="pPatch" min="8" max="56" step="8" value="16"><output id="pPatchOut">16</output></div>
+
+      <svg id="pSvg" viewBox="0 0 320 320"></svg>
+
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">patches per side</div><div class="num" id="pPerSide">—</div></div>
+        <div class="metric coral"><div class="lbl">patch count</div><div class="num" id="pCount">—</div></div>
+        <div class="metric green"><div class="lbl">sequence length (+ CLS)</div><div class="num" id="pSeqLen">—</div></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">self-attention cost vs. 224/16 baseline (~N²)</div><div class="num" id="pAttnCost">—</div></div>
+        <div class="metric blue"><div class="lbl">convolution cost vs. same baseline (~N)</div><div class="num" id="pConvCost">—</div></div>
+      </div>
+      <div class="story-line" id="pStory"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: CLIP MATRIX ==================== -->
+  <div class="tabpage" id="tab-clip">
+    <div class="panel">
+      <h2>A Real, Hand-Designed Batch: Cat, Dog, Fish, Car</h2>
+      <p class="sub">Cat and dog are deliberately built close together (both furry, four-legged); fish and car are far from everything. Drag temperature and watch both directions' softmax — and the final symmetric loss — respond live.</p>
+      <div class="slider-row"><label for="cTemp">Temperature (CLIP's real default ≈ 0.07)</label><input type="range" id="cTemp" min="0.02" max="0.5" step="0.005" value="0.07"><output id="cTempOut">0.070</output></div>
+
+      <table class="datatable" id="cMatrix"></table>
+
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">image→text loss</div><div class="num" id="cLossI2T">—</div></div>
+        <div class="metric coral"><div class="lbl">text→image loss</div><div class="num" id="cLossT2I">—</div></div>
+        <div class="metric amber"><div class="lbl">symmetric CLIP loss</div><div class="num" id="cLossFinal">—</div></div>
+      </div>
+      <div class="story-line" id="cStory"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: ZERO-SHOT ==================== -->
+  <div class="tabpage" id="tab-zeroshot">
+    <div class="panel">
+      <h2>A Bicycle Image, Ranked Against a Caption It Never Trained On</h2>
+      <p class="sub">The image is new. The caption "a photo of a bicycle" is new. Neither was in Tab 2's training batch — the ranking below comes entirely from geometry in the shared space.</p>
+      <div class="slider-row"><label for="zTemp">Temperature</label><input type="range" id="zTemp" min="0.02" max="0.5" step="0.005" value="0.07"><output id="zTempOut">0.070</output></div>
+      <div id="zBars"></div>
+      <div class="story-line" id="zStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Vision Transformer and CLIP — The Feynman Way</b>
+    (<a href="../deep_learning/vision_transformer_and_clip_feynman.md">vision_transformer_and_clip_feynman.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ==================== TAB 1: PATCHIFY ====================
+  function drawPatchGrid(perSide){
+    const svg = document.getElementById("pSvg");
+    svg.innerHTML = "";
+    const W=320,H=320;
+    svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"rgba(244,241,232,0.04)"}));
+    const cell = W/perSide;
+    for(let i=0;i<perSide;i++){
+      for(let j=0;j<perSide;j++){
+        const hue = (i*perSide+j) % 2 === 0 ? "var(--blue)" : "var(--green)";
+        svg.appendChild(el("rect",{x:j*cell+1,y:i*cell+1,width:cell-2,height:cell-2,fill:hue,opacity:0.35,stroke:"rgba(244,241,232,0.25)","stroke-width":1}));
+      }
+    }
+  }
+  const BASELINE_N = (224/16)*(224/16); // 196
+  function updatePatch(){
+    const imgSize = parseInt(document.getElementById("pImg").value,10);
+    const patchSize = parseInt(document.getElementById("pPatch").value,10);
+    document.getElementById("pImgOut").textContent = imgSize;
+    document.getElementById("pPatchOut").textContent = patchSize;
+    const perSide = Math.floor(imgSize/patchSize);
+    const count = perSide*perSide;
+    document.getElementById("pPerSide").textContent = perSide + " x " + perSide;
+    document.getElementById("pCount").textContent = count;
+    document.getElementById("pSeqLen").textContent = (count+1) + " (" + count + " patches + 1 CLS)";
+    const attnRatio = (count*count)/(BASELINE_N*BASELINE_N);
+    const convRatio = count/BASELINE_N;
+    document.getElementById("pAttnCost").textContent = attnRatio.toFixed(2) + "x";
+    document.getElementById("pConvCost").textContent = convRatio.toFixed(2) + "x";
+    document.getElementById("pStory").textContent =
+      `Relative to the standard 224x224 / 16x16-patch baseline (196 patches): self-attention cost scales with patches², convolution cost scales with patches.`;
+    drawPatchGrid(Math.min(perSide, 40)); // cap grid drawing for very small patch sizes so it stays legible
+  }
+  ["pImg","pPatch"].forEach(id => document.getElementById(id).addEventListener("input", updatePatch));
+  updatePatch();
+
+  // ==================== TAB 2: CLIP MATRIX ====================
+  const CLASS_NAMES = ["cat","dog","fish","car"];
+  // exact verified cosine-similarity matrix from the tutorial (rows=images, cols=captions)
+  const SIM = [
+    [ 0.978,  0.993,  0.060,  0.064],
+    [ 0.971,  0.994,  0.065,  0.063],
+    [ 0.045,  0.011,  0.990,  0.052],
+    [-0.069,  0.056, -0.018,  0.996],
+  ];
+  function softmaxRow(row){
+    const m = Math.max(...row);
+    const ex = row.map(v=>Math.exp(v-m));
+    const s = ex.reduce((a,b)=>a+b,0);
+    return ex.map(v=>v/s);
+  }
+  function updateClip(){
+    const temp = parseFloat(document.getElementById("cTemp").value);
+    document.getElementById("cTempOut").textContent = temp.toFixed(3);
+    const logits = SIM.map(row => row.map(v => v/temp));
+    const pI2T = logits.map(row => softmaxRow(row));
+    // column softmax = softmax of each column across rows
+    const n = SIM.length;
+    const pT2I = [];
+    for(let i=0;i<n;i++) pT2I.push(new Array(n).fill(0));
+    for(let j=0;j<n;j++){
+      const col = logits.map(row => row[j]);
+      const sm = softmaxRow(col);
+      for(let i=0;i<n;i++) pT2I[i][j] = sm[i];
+    }
+    let lossI2T = 0, lossT2I = 0;
+    for(let i=0;i<n;i++){ lossI2T += -Math.log(Math.max(pI2T[i][i],1e-12)); }
+    lossI2T /= n;
+    for(let j=0;j<n;j++){ lossT2I += -Math.log(Math.max(pT2I[j][j],1e-12)); }
+    lossT2I /= n;
+    document.getElementById("cLossI2T").textContent = lossI2T.toFixed(4);
+    document.getElementById("cLossT2I").textContent = lossT2I.toFixed(4);
+    document.getElementById("cLossFinal").textContent = ((lossI2T+lossT2I)/2).toFixed(4);
+
+    // render matrix table: show P(image->text) with diagonal highlighted
+    let html = "<tr><th>image \\ caption</th>" + CLASS_NAMES.map(c=>`<th>"${c}"</th>`).join("") + "</tr>";
+    for(let i=0;i<n;i++){
+      html += `<tr><th>${CLASS_NAMES[i]}</th>` + pI2T[i].map((p,j)=>{
+        const cls = i===j ? ' class="diag"' : '';
+        return `<td${cls}>${p.toFixed(3)}</td>`;
+      }).join("") + "</tr>";
+    }
+    document.getElementById("cMatrix").innerHTML = html;
+
+    const avgDiag = pI2T.reduce((s,row,i)=>s+row[i],0)/n;
+    document.getElementById("cStory").textContent =
+      `Table shows P(caption | image) at this temperature. Average diagonal (correct-match) confidence: ${(avgDiag*100).toFixed(1)}%. Lower temperature sharpens the softmax — pushes confident matches toward 1.0 and unsure ones toward 0 faster.`;
+  }
+  document.getElementById("cTemp").addEventListener("input", updateClip);
+  updateClip();
+
+  // ==================== TAB 3: ZERO-SHOT ====================
+  // exact verified similarities: bicycle image vs 5 candidate captions
+  const ZS_CANDIDATES = [
+    {name:"a photo of a bicycle (never trained on)", sim:0.9973, color:"var(--green)"},
+    {name:"a photo of a car", sim:0.7542, color:"var(--blue)"},
+    {name:"a photo of a cat", sim:0.0213, color:"var(--chalk-dim)"},
+    {name:"a photo of a fish", sim:-0.0070, color:"var(--chalk-dim)"},
+    {name:"a photo of a dog", sim:-0.0098, color:"var(--chalk-dim)"},
+  ];
+  function updateZeroShot(){
+    const temp = parseFloat(document.getElementById("zTemp").value);
+    document.getElementById("zTempOut").textContent = temp.toFixed(3);
+    const logits = ZS_CANDIDATES.map(c => c.sim/temp);
+    const probs = softmaxRow(logits);
+    const withP = ZS_CANDIDATES.map((c,i)=>({...c, p:probs[i]})).sort((a,b)=>b.p-a.p);
+    const container = document.getElementById("zBars");
+    container.innerHTML = "";
+    withP.forEach(c=>{
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      const name = document.createElement("div"); name.className="name"; name.textContent = c.name;
+      const track = document.createElement("div"); track.className="track";
+      const fill = document.createElement("div"); fill.className="fill";
+      fill.style.width = (c.p*100).toFixed(2)+"%";
+      fill.style.background = c.color;
+      track.appendChild(fill);
+      const pct = document.createElement("div"); pct.className="pct"; pct.textContent = (c.p*100).toFixed(1)+"%";
+      row.appendChild(name); row.appendChild(track); row.appendChild(pct);
+      container.appendChild(row);
+    });
+    document.getElementById("zStory").textContent =
+      `"bicycle" wins with no training label of its own — it beat every trained-on caption purely because it sits closest to this image in the shared space.`;
+  }
+  document.getElementById("zTemp").addEventListener("input", updateZeroShot);
+  updateZeroShot();
+})();
+</script>
+</body>
+</html>

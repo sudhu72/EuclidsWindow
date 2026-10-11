@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BERT vs. GPT Masking, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  .tok-row{display:flex;justify-content:center;gap:6px;margin:16px 0;flex-wrap:wrap;}
+  .tok{border:1px solid var(--border);border-radius:6px;padding:8px 12px;cursor:pointer;font-size:13px;background:var(--bg-panel);}
+  .tok.query{border-color:var(--amber);color:var(--amber);font-weight:700;}
+  .tok.visible{background:rgba(143,209,158,0.25);color:var(--green);}
+  .tok.blocked{background:rgba(255,130,102,0.08);color:var(--chalk-dim);}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:480px;height:auto;}
+
+  input[type="text"]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--chalk);font-family:'JetBrains Mono',monospace;font-size:13px;padding:10px 12px;border-radius:8px;}
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  .legend{display:flex;justify-content:center;gap:16px;font-size:12px;color:var(--chalk-dim);margin-top:10px;flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>BERT vs. GPT Masking, live</h1>
+  <p class="sub">Two demos: click a token to see exactly which other positions it's allowed to attend to under GPT's causal mask versus BERT's bidirectional one, then run BERT's real 80/10/10 corruption recipe on your own sentence.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="mask">Causal vs. Bidirectional Mask</button>
+    <button class="tab-btn" data-tab="recipe">BERT's 80/10/10 Recipe</button>
+  </div>
+
+  <!-- ==================== TAB 1: MASK ==================== -->
+  <div class="tabpage active" id="tab-mask">
+    <div class="panel">
+      <h2>Click a Token to Query It</h2>
+      <div class="row">
+        <button class="op active" id="btnCausal" onclick="setMode('causal')">Causal (GPT-style)</button>
+        <button class="op" id="btnBidir" onclick="setMode('bidir')">Bidirectional (BERT-style)</button>
+      </div>
+      <div class="tok-row" id="tokRow"></div>
+      <svg id="maskSvg" viewBox="0 0 420 460"></svg>
+      <div class="story-line" id="maskStory"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: RECIPE ==================== -->
+  <div class="tabpage" id="tab-recipe">
+    <div class="panel">
+      <h2>Run the Real Masking Recipe on Your Own Sentence</h2>
+      <input type="text" id="sentenceInput" value="The animal didn't cross the street because it was too tired">
+      <div class="row" style="margin-top:14px;"><button class="op" onclick="corrupt()">Corrupt this sentence (15% selected, then 80/10/10)</button></div>
+      <div id="corruptedRow" class="tok-row"></div>
+      <div id="labelRow" class="tok-row"></div>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--coral);"></span>[MASK] (80%)</span>
+        <span><span class="swatch" style="background:var(--amber);"></span>random swap (10%)</span>
+        <span><span class="swatch" style="background:var(--green);"></span>unchanged but still scored (10%)</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">tokens selected</div><div class="num" id="recipeSelected">—</div></div>
+      </div>
+      <div class="story-line" id="recipeStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>§3.6.1 of ml_deep_learning_llm_feynman_tutorial.md</b>
+    (<a href="../deep_learning/ml_deep_learning_llm_feynman_tutorial.md">ml_deep_learning_llm_feynman_tutorial.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ==================== TAB 1: MASK ====================
+  const TOKENS = ["The","animal","didn't","cross","the","street"];
+  let mode = "causal";
+  let queryIdx = 1;
+  function buildTokRow(){
+    const row = document.getElementById("tokRow");
+    row.innerHTML = "";
+    TOKENS.forEach((t,i)=>{
+      const d = document.createElement("div");
+      d.className = "tok" + (i===queryIdx ? " query" : "");
+      d.textContent = t;
+      d.onclick = () => { queryIdx = i; render(); };
+      row.appendChild(d);
+    });
+  }
+  function canAttend(i,j){
+    return mode==="causal" ? (j<=i) : true;
+  }
+  function drawMaskGrid(){
+    const svg = document.getElementById("maskSvg");
+    svg.innerHTML = "";
+    const n = TOKENS.length;
+    const cell = 400/n;
+    for(let i=0;i<n;i++){
+      for(let j=0;j<n;j++){
+        const allowed = canAttend(i,j);
+        const isQueryRow = i===queryIdx;
+        let fill = allowed ? "rgba(143,209,158,0.35)" : "rgba(255,130,102,0.10)";
+        if(isQueryRow) fill = allowed ? "rgba(143,209,158,0.75)" : "rgba(255,130,102,0.35)";
+        svg.appendChild(el("rect",{x:10+j*cell,y:10+i*cell,width:cell-3,height:cell-3,fill,stroke:"rgba(244,241,232,0.15)"}));
+      }
+    }
+    svg.appendChild(el("text",{x:210,y:428,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"columns = keys being attended to;"));
+    svg.appendChild(el("text",{x:210,y:445,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"highlighted row = the token you clicked"));
+  }
+  function render(){
+    buildTokRow();
+    drawMaskGrid();
+    const visible = TOKENS.filter((_,j)=>canAttend(queryIdx,j));
+    const blocked = TOKENS.filter((_,j)=>!canAttend(queryIdx,j));
+    document.getElementById("maskStory").innerHTML = mode==="causal"
+      ? `"${TOKENS[queryIdx]}" can attend to: <b>${visible.join(", ")}</b>. Blocked from: <b>${blocked.length? blocked.join(", ") : "(nothing — it's the last token)"}</b>.`
+      : `"${TOKENS[queryIdx]}" can attend to ALL tokens: <b>${visible.join(", ")}</b>. Nothing is blocked — this is what lets BERT fill in a blank using words that come AFTER it.`;
+  }
+  window.setMode = function(m){
+    mode = m;
+    document.getElementById("btnCausal").classList.toggle("active", m==="causal");
+    document.getElementById("btnBidir").classList.toggle("active", m==="bidir");
+    render();
+  };
+  render();
+
+  // ==================== TAB 2: RECIPE ====================
+  const VOCAB = ["The","animal","didn't","cross","the","street","because","it","was","too","tired","a","dog","ran","fast","quickly","slowly","near","far","home"];
+  window.corrupt = function(){
+    const sentence = document.getElementById("sentenceInput").value.trim().split(/\s+/);
+    const corruptedRow = document.getElementById("corruptedRow");
+    const labelRow = document.getElementById("labelRow");
+    corruptedRow.innerHTML = ""; labelRow.innerHTML = "";
+    let selectedCount = 0;
+    sentence.forEach(tok=>{
+      const selected = Math.random() < 0.15;
+      const dTok = document.createElement("div");
+      const dLabel = document.createElement("div");
+      dLabel.className = "tok";
+      dLabel.style.opacity = "0.7";
+      if(selected){
+        selectedCount++;
+        const r = Math.random();
+        if(r < 0.8){
+          dTok.className = "tok"; dTok.style.background = "rgba(255,130,102,0.35)"; dTok.style.color="var(--coral)";
+          dTok.textContent = "[MASK]";
+        } else if(r < 0.9){
+          dTok.className = "tok"; dTok.style.background = "rgba(255,206,84,0.3)"; dTok.style.color="var(--amber)";
+          dTok.textContent = VOCAB[Math.floor(Math.random()*VOCAB.length)];
+        } else {
+          dTok.className = "tok"; dTok.style.background = "rgba(143,209,158,0.3)"; dTok.style.color="var(--green)";
+          dTok.textContent = tok;
+        }
+        dLabel.textContent = tok;
+        dLabel.style.borderColor = "var(--amber)";
+      } else {
+        dTok.className = "tok";
+        dTok.textContent = tok;
+        dLabel.textContent = "·";
+      }
+      corruptedRow.appendChild(dTok);
+      labelRow.appendChild(dLabel);
+    });
+    document.getElementById("recipeSelected").textContent = selectedCount + " / " + sentence.length + `  (${(100*selectedCount/sentence.length).toFixed(1)}%)`;
+    document.getElementById("recipeStory").textContent =
+      "Top row: what the model actually sees. Bottom row: the true label it must predict at every selected position (· = not selected, no loss computed there). Click again to re-roll.";
+  };
+  corrupt();
+})();
+</script>
+</body>
+</html>

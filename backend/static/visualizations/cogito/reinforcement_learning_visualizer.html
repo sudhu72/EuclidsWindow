@@ -71,12 +71,13 @@
 <body>
 <div class="wrap">
   <h1>Reinforcement Learning, live</h1>
-  <p class="sub">Three tabs, matching the tutorial's three verified experiments.</p>
+  <p class="sub">Four tabs, matching the tutorial's verified experiments.</p>
 
   <div class="tabs">
     <button class="tabbtn active" data-tab="bandit">Multi-Armed Bandit</button>
     <button class="tabbtn" data-tab="vi">Value Iteration</button>
     <button class="tabbtn" data-tab="ql">Q-Learning</button>
+    <button class="tabbtn" data-tab="mdp">Slippery MDP: Value vs Policy Iteration</button>
   </div>
 
   <!-- ============ TAB 1: MULTI-ARMED BANDIT ============ -->
@@ -141,6 +142,36 @@
         <div class="metric green"><div class="lbl">cells matching value iteration</div><div class="num" id="qlMatch">0 / 16</div></div>
       </div>
       <div class="story-line" id="qlStory">Click "Run 500 more episodes" to start learning from scratch.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: SLIPPERY MDP (formal MDP, value iteration vs policy iteration) ============ -->
+  <div class="tabpanel" id="tab-mdp">
+    <div class="panel">
+      <h2>The Same Grid, on Ice: a Full MDP</h2>
+      <p class="sub">Same 4×4 grid, same rewards (+10 goal, −10 pit, −1 per move). Now the floor is slippery: you move the way you meant to 80% of the time, and slide to each side 10% of the time each. That randomness is the transition probability P(s′ | s, a). Pick a preset, then press Step, Play, or Jump to end.</p>
+      <div class="row" style="gap:6px;" id="mdpPresets">
+        <button class="op" data-mp="vi">Value iteration (slip 0.2, γ 0.9)</button>
+        <button class="op" data-mp="pi">Policy iteration (slip 0.2, γ 0.9)</button>
+        <button class="op" data-mp="dry">Dry floor (slip 0) = Part 3</button>
+        <button class="op" data-mp="g50">Short-sighted γ = 0.5</button>
+        <button class="op" data-mp="g99">Far-sighted γ = 0.99</button>
+        <button class="op" data-mp="dryOnIce">Dry-floor plan, used on ice</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="btnMdpStep">Step ▶</button>
+        <button class="op" id="btnMdpPlay">Play ⏯</button>
+        <button class="op" id="btnMdpJump">Jump to end ⏭</button>
+        <button class="op" id="btnMdpReset">Reset</button>
+      </div>
+      <table class="gridtable" id="mdpGrid"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">round</div><div class="num" id="mdpRound">0</div></div>
+        <div class="metric amber"><div class="lbl">max value change</div><div class="num" id="mdpDelta">-</div></div>
+        <div class="metric coral"><div class="lbl">arrows changed</div><div class="num" id="mdpChanged">-</div></div>
+        <div class="metric green"><div class="lbl">V(bottom-left start)</div><div class="num" id="mdpStart">-</div></div>
+      </div>
+      <div class="story-line" id="mdpStory"></div>
     </div>
   </div>
 
@@ -429,6 +460,117 @@
     renderQL();
   })();
 
+})();
+</script>
+<script>
+/* ===== TAB 4: SLIPPERY MDP — value iteration vs policy iteration (added for P3) ===== */
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const N = 4, GOAL = [0,3], PIT = [1,1];
+  const ACT = [[-1,0],[1,0],[0,-1],[0,1]], ARR = ["↑","↓","←","→"];
+  const PERP = [[2,3],[2,3],[0,1],[0,1]]; // the two sideways slides for each action
+  const idx = (r,c) => r*N+c;
+  const isTerm = i => i===idx(GOAL[0],GOAL[1]) || i===idx(PIT[0],PIT[1]);
+  function move(i,a){ const r=Math.floor(i/N), c=i%N; let nr=r+ACT[a][0], nc=c+ACT[a][1]; if(nr<0||nr>=N||nc<0||nc>=N){ nr=r; nc=c; } return idx(nr,nc); }
+  function reward(j){ return j===idx(GOAL[0],GOAL[1]) ? 10 : (j===idx(PIT[0],PIT[1]) ? -10 : -1); }
+  // outcomes(i,a,slip) -> list of [nextState, prob]
+  function outcomes(i,a,slip){
+    const list = [[move(i,a),1-slip]];
+    if(slip>0){ list.push([move(i,PERP[a][0]),slip/2]); list.push([move(i,PERP[a][1]),slip/2]); }
+    return list;
+  }
+  function qValue(i,a,V,slip,g){ let q=0; for(const [j,p] of outcomes(i,a,slip)) q += p*(reward(j)+g*V[j]); return q; }
+  function greedy(V,slip,g){ const pol=new Array(16).fill(-1); for(let i=0;i<16;i++){ if(isTerm(i)) continue; let best=-Infinity,ba=0; for(let a=0;a<4;a++){ const q=qValue(i,a,V,slip,g); if(q>best){best=q;ba=a;} } pol[i]=ba; } return pol; }
+  function viSweep(V,slip,g){ const Vn=new Array(16).fill(0); let d=0; for(let i=0;i<16;i++){ if(isTerm(i)) continue; let best=-Infinity; for(let a=0;a<4;a++) best=Math.max(best,qValue(i,a,V,slip,g)); Vn[i]=best; d=Math.max(d,Math.abs(best-V[i])); } return [Vn,d]; }
+  function evalSweep(V,pol,slip,g){ const Vn=new Array(16).fill(0); let d=0; for(let i=0;i<16;i++){ if(isTerm(i)) continue; Vn[i]=qValue(i,pol[i],V,slip,g); d=Math.max(d,Math.abs(Vn[i]-V[i])); } return [Vn,d]; }
+  // exact policy evaluation: solve (I - g P_pi) V = R_pi
+  function evalExact(pol,slip,g){
+    const A=[], b=[];
+    for(let i=0;i<16;i++){
+      const row=new Array(16).fill(0); row[i]=1; let rhs=0;
+      if(!isTerm(i)){ for(const [j,p] of outcomes(i,pol[i],slip)){ row[j]-=g*p; rhs+=p*reward(j); } }
+      A.push(row); b.push(rhs);
+    }
+    for(let c=0;c<16;c++){
+      let pv=c; for(let r=c+1;r<16;r++) if(Math.abs(A[r][c])>Math.abs(A[pv][c])) pv=r;
+      [A[c],A[pv]]=[A[pv],A[c]]; [b[c],b[pv]]=[b[pv],b[c]];
+      for(let r=c+1;r<16;r++){ const f=A[r][c]/A[c][c]; if(f===0) continue; for(let k=c;k<16;k++) A[r][k]-=f*A[c][k]; b[r]-=f*b[c]; }
+    }
+    const x=new Array(16).fill(0);
+    for(let r=15;r>=0;r--){ let s=b[r]; for(let k=r+1;k<16;k++) s-=A[r][k]*x[k]; x[r]=s/A[r][r]; }
+    return x;
+  }
+  const TOL = 1e-10;
+  const PRESETS = {
+    vi:{mode:"vi", slip:0.2, g:0.9, intro:"Value iteration on ice: every round applies the Bellman optimality update V(s) ← max over a of Σ P(s′|s,a)[R + γV(s′)] to every cell. It settles (change below 10⁻¹⁰) after 40 rounds, against 7 on a dry floor. Randomness makes values leak back and forth, so the error only shrinks by a factor of about γ."},
+    pi:{mode:"pi", slip:0.2, g:0.9, intro:"Policy iteration on ice: start from the silly plan 'always go ↑'. Each round, first <b>evaluate</b> the current plan exactly (one 16×16 linear solve), then <b>improve</b> it by switching each cell to its best action. Rounds change 9, then 2, then 1, then 0 arrows. So it is done in 4 rounds, with the same values and arrows as value iteration."},
+    dry:{mode:"vi", slip:0.0, g:0.9, intro:"Slip 0 is Part 3's deterministic grid. It settles in exactly 7 rounds on the familiar 6.20 / 8.00 / 10.00 table. A deterministic world is just an MDP where every P(s′|s,a) is 0 or 1."},
+    g50:{mode:"vi", slip:0.2, g:0.5, intro:"γ = 0.5: a reward 5 steps away is worth only 0.5⁵ ≈ 3% of its face value. The goal looks small from far away, so cells next to the pit play safe. The cell left of the pit walks into the wall (←) rather than risk sliding in. The cell below the pit walks away (↓)."},
+    g99:{mode:"vi", slip:0.2, g:0.99, intro:"γ = 0.99: the far-sighted agent values the goal almost at face value from anywhere. Every value rises, and the bottom-left start is worth 2.70 instead of 0.02."},
+    dryOnIce:{mode:"eval", slip:0.2, g:0.9, intro:"Take the arrows that were optimal on the dry floor and follow them on ice. Step runs one sweep of policy evaluation (the Bellman <em>expectation</em> equation for a fixed plan). The bottom-left start ends up worth −1.80, against 0.02 for the plan made for ice. That is 1.82 lost by planning for the wrong P(s′|s,a)."}
+  };
+  let cur, V, pol, round, lastDelta, changed, done, timer=null, curKey="vi";
+
+  function buildGrid(){
+    const t=$("mdpGrid"); t.innerHTML="";
+    for(let r=0;r<N;r++){ const tr=document.createElement("tr"); for(let c=0;c<N;c++){ const td=document.createElement("td"); td.id="mdp_"+r+"_"+c; if(r===GOAL[0]&&c===GOAL[1]) td.classList.add("goal"); if(r===PIT[0]&&c===PIT[1]) td.classList.add("pit"); tr.appendChild(td);} t.appendChild(tr); }
+  }
+  function render(){
+    for(let i=0;i<16;i++){
+      const r=Math.floor(i/N), c=i%N, cell=$("mdp_"+r+"_"+c);
+      if(isTerm(i)){ cell.innerHTML = (r===GOAL[0]&&c===GOAL[1]) ? "GOAL<br>+10" : "PIT<br>-10"; continue; }
+      const a = pol ? pol[i] : -1;
+      cell.innerHTML = '<span class="vval">'+V[i].toFixed(2)+'</span><span class="arrow">'+(a>=0?ARR[a]:"")+'</span>';
+    }
+    $("mdpRound").textContent = round;
+    $("mdpDelta").textContent = lastDelta===null ? "-" : (lastDelta<1e-3 ? lastDelta.toExponential(1) : lastDelta.toFixed(4));
+    $("mdpChanged").textContent = changed===null ? "-" : changed;
+    $("mdpStart").textContent = V[idx(3,0)].toFixed(2);
+  }
+  function dryPolicy(){ let Vd=new Array(16).fill(0), d=1; while(d>=TOL){ [Vd,d]=viSweep(Vd,0,0.9); } return greedy(Vd,0,0.9); }
+  function load(key){
+    stop(); curKey=key; cur=PRESETS[key];
+    V=new Array(16).fill(0); round=0; lastDelta=null; changed=null; done=false;
+    if(cur.mode==="vi") pol=greedy(V,cur.slip,cur.g);
+    else if(cur.mode==="pi") pol=new Array(16).fill(0).map((_,i)=>isTerm(i)?-1:0);
+    else pol=dryPolicy();
+    render(); $("mdpStory").innerHTML = cur.intro;
+  }
+  function step(){
+    if(done) return false;
+    if(cur.mode==="vi"){
+      const [Vn,d]=viSweep(V,cur.slip,cur.g); V=Vn; round++; lastDelta=d;
+      const np=greedy(V,cur.slip,cur.g); changed=np.filter((a,i)=>a!==pol[i]).length; pol=np;
+      if(d<TOL){ done=true; }
+    } else if(cur.mode==="pi"){
+      const Vn=evalExact(pol,cur.slip,cur.g); lastDelta=Math.max(...Vn.map((v,i)=>Math.abs(v-V[i]))); V=Vn; round++;
+      const np=pol.slice(); let ch=0;
+      for(let i=0;i<16;i++){ if(isTerm(i)) continue; let best=-Infinity,ba=0; for(let a=0;a<4;a++){ const q=qValue(i,a,V,cur.slip,cur.g); if(q>best){best=q;ba=a;} } if(qValue(i,pol[i],V,cur.slip,cur.g) < best-1e-9){ np[i]=ba; ch++; } }
+      changed=ch; pol=np; if(ch===0) done=true;
+    } else {
+      const [Vn,d]=evalSweep(V,pol,cur.slip,cur.g); V=Vn; round++; lastDelta=d; changed=0; if(d<TOL) done=true;
+    }
+    render();
+    if(done){
+      const msg = cur.mode==="pi" ? ("<b>Policy iteration done after "+round+" rounds</b>: improvement changed nothing, so this plan is optimal.")
+                : cur.mode==="eval" ? ("<b>Evaluation settled after "+round+" sweeps.</b> These are the true values of the dry-floor plan on ice.")
+                : ("<b>Converged after "+round+" rounds</b> (largest change below 10⁻¹⁰).");
+      $("mdpStory").innerHTML = msg+" "+cur.intro;
+    }
+    return !done;
+  }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; } }
+  buildGrid();
+  document.querySelectorAll("#mdpPresets [data-mp]").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("#mdpPresets button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); load(b.dataset.mp);
+  }));
+  $("btnMdpStep").addEventListener("click",()=>{ stop(); step(); });
+  $("btnMdpPlay").addEventListener("click",()=>{ if(timer){ stop(); return; } timer=setInterval(()=>{ if(!step()) stop(); }, 250); });
+  $("btnMdpJump").addEventListener("click",()=>{ stop(); let guard=0; while(step() && guard++<5000){} });
+  $("btnMdpReset").addEventListener("click",()=>load(curKey));
+  document.querySelector('#mdpPresets [data-mp="vi"]').classList.add("active");
+  load("vi");
 })();
 </script>
 </body>

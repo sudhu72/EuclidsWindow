@@ -70,6 +70,34 @@
 
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+  /* ---- Counting Toolkit + Recurrences & Catalan (step-through presets, shared engine) ---- */
+  .sp .sp-presets{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .sp .sp-presets .grp{ width:100%; font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); margin-top:4px; }
+  .sp button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .sp .sp-ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; }
+  .sp .sp-ctrl .sp-count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  .sp .sp-stage{ min-height:160px; padding:4px 0; }
+  .sp .sp-log{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.75; max-height:240px; overflow:auto; }
+  .sp .sp-log div{ color:var(--ink-soft); } .sp .sp-log div.cur{ color:var(--ink); font-weight:600; }
+  .sp .bx{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13.5px; margin-bottom:10px; line-height:1.8; }
+  .sp .bx .k{ display:block; color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+  .sp .bx b{ color:var(--accent); }
+  .sp .chips{ display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 10px; }
+  .sp .chip{ font-family:"IBM Plex Mono",monospace; font-size:14px; padding:5px 9px; border-radius:8px; border:1px solid var(--line); background:#fff; }
+  .sp .chip.hi{ background:var(--accent-soft); border-color:var(--accent); }
+  .sp .chip.ok{ background:#E3F4EC; border-color:#1E8A5A; }
+  .sp .chip.no{ background:#FBE9E8; border-color:#C2413B; opacity:.8; }
+  .sp .chip.dim{ opacity:.35; }
+  .sp table.t{ border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:13px; width:100%; margin:6px 0; }
+  .sp table.t th, .sp table.t td{ border-bottom:1px solid var(--line); padding:4px 8px; text-align:left; }
+  .sp table.t th{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  .sp table.t tr.cur td{ background:var(--accent-soft); }
+  .sp .barc{ display:inline-block; height:13px; background:#0F8B8D; border-radius:3px; vertical-align:middle; }
+  .sp .good{ color:#1E8A5A; font-weight:700; } .sp .bad{ color:#C2413B; font-weight:700; }
+  .sp .minis{ display:flex; flex-wrap:wrap; gap:8px; }
+  .sp .mini{ border:1px solid var(--line); border-radius:8px; padding:4px; background:#fff; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:11px; }
+  .sp .mini.ok{ border-color:#1E8A5A; background:#F1FAF5; } .sp .mini.no{ border-color:#C2413B; background:#FDF3F2; }
+  .sp .star{ color:#D9A62E; } .sp .barch{ color:var(--accent); font-weight:700; }
 </style>
 </head>
 <body>
@@ -85,6 +113,8 @@
     <button class="tab" data-tab="hamming">Hamming Code</button>
     <button class="tab" data-tab="gap">The Rational Gap</button>
     <button class="tab" data-tab="cauchy">Cauchy Convergence</button>
+    <button class="tab" data-tab="quaternion">Quaternions</button>
+    <button class="tab" data-tab="actions">Group Actions</button>
   </div>
 
   <!-- ============ TAB 1: TOWER OF STRUCTURES ============ -->
@@ -148,6 +178,48 @@
       <table class="mono" id="cauchyTable"></table>
       <div class="verdict" id="cauchyVerdict"></div>
       <div class="caption"><b>Why it matters:</b> the "gap shrinking" column is checkable directly from the sequence's own numbers — no reference to √2's value anywhere — and only once that's established does asking "converges to what" become meaningful at all.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: QUATERNIONS ============ -->
+  <div class="panel" id="panel-quaternion">
+    <div class="card">
+      <h2>Four Units, One Non-Commutative Rule</h2>
+      <p class="sub"><b>What's happening:</b> click any two of <span class="formula">{1, i, j, k}</span> below (a "left" unit, then a "right" unit) and watch the actual product compute live, from Hamilton's own <span class="formula">i²=j²=k²=ijk=-1</span> relation — not a memorized table.</p>
+      <div class="row" style="gap:16px; flex-wrap:wrap;">
+        <div>
+          <div class="sub" style="margin-bottom:6px;">Left unit</div>
+          <div class="row" style="gap:6px;" id="quatLeftPicker"></div>
+        </div>
+        <div>
+          <div class="sub" style="margin-bottom:6px;">Right unit</div>
+          <div class="row" style="gap:6px;" id="quatRightPicker"></div>
+        </div>
+      </div>
+      <div class="verdict" id="quatProductVerdict">Pick a left and right unit above.</div>
+      <table class="mono" id="quatTable"></table>
+      <div class="caption"><b>Why it matters:</b> <span class="formula">ij=k</span> but <span class="formula">ji=-k</span> — every off-diagonal pair disagrees depending on order, verified cell by cell, which is the exact non-commutativity that makes a 3D rotation possible at all.</div>
+    </div>
+
+    <div class="card">
+      <h2>Rotate a Real 3D Vector, Two Independent Ways</h2>
+      <p class="sub"><b>What's happening:</b> <span class="formula">v = (1, 2, 3)</span> rotated around the z-axis. Drag the angle and watch the quaternion-conjugation result and the ordinary rotation-matrix result compute side by side, live — always in exact agreement.</p>
+      <div class="row"><label>angle (degrees)</label><input type="range" id="quatAngle" min="0" max="360" step="1" value="90"><span class="readout" id="quatAngleOut">90</span></div>
+      <svg viewBox="0 0 400 400" id="quatSvg"></svg>
+      <div class="verdict" id="quatRotVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> one method comes from an 1843 four-component number system, the other from an ordinary 2×2 matrix — landing on the identical answer at every single angle is the actual proof, not a coincidence at 90°.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: GROUP ACTIONS (§1.9) ============ -->
+  <div class="panel sp" id="panel-actions">
+    <div class="card">
+      <h2>Group Actions: orbits, stabilizers, and counting up to symmetry</h2>
+      <p class="sub"><b>What's happening:</b> every worked example from §1.9 as a one-click preset. Each count is done twice in this page, by Burnside's average and by brute-force sorting of every item into orbits. Use Step, Play, Jump to end or Reset.</p>
+      <div class="sp-presets"></div>
+      <div class="sp-ctrl"><button class="op" data-sp="step">Step ▸</button><button class="op" data-sp="play">▶ Play</button><button class="op" data-sp="end">Jump to end ⏭</button><button class="op" data-sp="reset">↺ Reset</button><span class="sp-count"></span></div>
+      <div class="sp-stage"></div>
+      <div class="sp-log"></div>
     </div>
   </div>
 
@@ -404,7 +476,271 @@
   cauchyStart.addEventListener("input", resetCauchy);
   resetCauchy();
 
+  /* =========================================================
+     TAB 5: QUATERNIONS
+     ========================================================= */
+  function qmul(q1, q2){
+    const [w1,x1,y1,z1] = q1, [w2,x2,y2,z2] = q2;
+    return [
+      w1*w2 - x1*x2 - y1*y2 - z1*z2,
+      w1*x2 + x1*w2 + y1*z2 - z1*y2,
+      w1*y2 - x1*z2 + y1*w2 + z1*x2,
+      w1*z2 + x1*y2 - y1*x2 + z1*w2,
+    ];
+  }
+  function qconj(q){ return [q[0], -q[1], -q[2], -q[3]]; }
+  const QUNITS = ["1","i","j","k"];
+  const BASIS = { "1":[1,0,0,0], "i":[0,1,0,0], "j":[0,0,1,0], "k":[0,0,0,1] };
+  function unitProduct(a,b){
+    const r = qmul(BASIS[a], BASIS[b]);
+    const idx = r.findIndex(v => Math.abs(v) > 0.5);
+    const sign = r[idx] < 0 ? "-" : "";
+    return { label: sign + QUNITS[idx], raw: r };
+  }
+  function buildQuatPicker(id, onPick){
+    const wrap = document.getElementById(id);
+    wrap.innerHTML = "";
+    QUNITS.forEach(u => {
+      const b = document.createElement("button");
+      b.className = "op";
+      b.textContent = u;
+      b.addEventListener("click", () => {
+        wrap.querySelectorAll(".op").forEach(x=>x.classList.remove("active"));
+        b.classList.add("active");
+        onPick(u);
+      });
+      wrap.appendChild(b);
+    });
+  }
+  let quatLeft = null, quatRight = null;
+  function renderQuatTable(){
+    let html = "<tr><th></th>" + QUNITS.map(u=>`<th>${u}</th>`).join("") + "</tr>";
+    QUNITS.forEach(rowU => {
+      html += `<tr><th>${rowU}</th>` + QUNITS.map(colU => {
+        const p = unitProduct(rowU, colU);
+        const isSel = rowU===quatLeft && colU===quatRight;
+        return `<td style="${isSel ? 'background:var(--accent-soft);color:var(--accent);font-weight:700;' : ''}">${p.label}</td>`;
+      }).join("") + "</tr>";
+    });
+    document.getElementById("quatTable").innerHTML = html;
+  }
+  function renderQuatProduct(){
+    if (quatLeft && quatRight){
+      const p = unitProduct(quatLeft, quatRight);
+      document.getElementById("quatProductVerdict").innerHTML =
+        `<b>${quatLeft} &times; ${quatRight} = ${p.label}</b> — computed from Hamilton's relation, not looked up.` +
+        (quatLeft !== quatRight && unitProduct(quatRight, quatLeft).label !== p.label
+          ? ` Reverse the order (${quatRight} &times; ${quatLeft}) and you get <b>${unitProduct(quatRight, quatLeft).label}</b> instead — non-commutative, verified.`
+          : "");
+    }
+    renderQuatTable();
+  }
+  buildQuatPicker("quatLeftPicker", u => { quatLeft = u; renderQuatProduct(); });
+  buildQuatPicker("quatRightPicker", u => { quatRight = u; renderQuatProduct(); });
+  renderQuatTable();
+
+  function rotateVectorByQuaternion(v, axis, angleRad){
+    const norm = Math.sqrt(axis[0]**2 + axis[1]**2 + axis[2]**2);
+    const [ax,ay,az] = [axis[0]/norm, axis[1]/norm, axis[2]/norm];
+    const half = angleRad/2;
+    const q = [Math.cos(half), ax*Math.sin(half), ay*Math.sin(half), az*Math.sin(half)];
+    const qc = qconj(q);
+    const p = [0, v[0], v[1], v[2]];
+    const result = qmul(qmul(q,p), qc);
+    return [result[1], result[2], result[3]];
+  }
+  function rotateVectorByMatrix(v, angleRad){
+    const c = Math.cos(angleRad), s = Math.sin(angleRad);
+    return [c*v[0] - s*v[1], s*v[0] + c*v[1], v[2]];
+  }
+  const QUAT_V = [1,2,3];
+  function renderQuatRotation(){
+    const angleDeg = parseInt(document.getElementById("quatAngle").value, 10);
+    document.getElementById("quatAngleOut").textContent = angleDeg;
+    const angleRad = angleDeg * Math.PI / 180;
+    const viaQuat = rotateVectorByQuaternion(QUAT_V, [0,0,1], angleRad);
+    const viaMatrix = rotateVectorByMatrix(QUAT_V, angleRad);
+    const svg = document.getElementById("quatSvg");
+    svg.innerHTML = "";
+    const cx=200, cy=200, scale=35;
+    svg.appendChild(el("circle",{cx,cy,r:Math.sqrt(QUAT_V[0]**2+QUAT_V[1]**2)*scale, fill:"none", stroke:"var(--line)", "stroke-width":1.5, "stroke-dasharray":"4 4"}));
+    svg.appendChild(el("line",{x1:cx-190,y1:cy,x2:cx+190,y2:cy,stroke:"var(--line)","stroke-width":1}));
+    svg.appendChild(el("line",{x1:cx,y1:cy-190,x2:cx,y2:cy+190,stroke:"var(--line)","stroke-width":1}));
+    // original vector (x,y projection)
+    svg.appendChild(el("line",{x1:cx,y1:cy,x2:cx+QUAT_V[0]*scale,y2:cy-QUAT_V[1]*scale,stroke:"var(--ink-soft)","stroke-width":2.5}));
+    svg.appendChild(el("circle",{cx:cx+QUAT_V[0]*scale,cy:cy-QUAT_V[1]*scale,r:5,fill:"var(--ink-soft)"}));
+    // rotated vector (via quaternion) — drawn thicker, accent color
+    svg.appendChild(el("line",{x1:cx,y1:cy,x2:cx+viaQuat[0]*scale,y2:cy-viaQuat[1]*scale,stroke:"var(--accent)","stroke-width":3}));
+    svg.appendChild(el("circle",{cx:cx+viaQuat[0]*scale,cy:cy-viaQuat[1]*scale,r:6,fill:"var(--accent)"}));
+    document.getElementById("quatRotVerdict").innerHTML =
+      `v = (1, 2, 3) rotated ${angleDeg}&deg; around the z-axis:<br>` +
+      `via quaternion conjugation: <b>(${viaQuat.map(n=>n.toFixed(4)).join(", ")})</b><br>` +
+      `via rotation matrix: <b>(${viaMatrix.map(n=>n.toFixed(4)).join(", ")})</b><br>` +
+      `match: <b style="color:var(--c1)">${viaQuat.every((n,idx)=>Math.abs(n-viaMatrix[idx])<1e-9) ? "yes, exactly" : "NO — check the math"}</b>`;
+  }
+  document.getElementById("quatAngle").addEventListener("input", renderQuatRotation);
+  renderQuatRotation();
+
 })();
 </script>
+<script>
+/* ================= GROUP ACTIONS (presets for abstract-algebra-and-real-analysis.md §1.9) ================= */
+(function(){
+  "use strict";
+  // ---------- shared helpers ----------
+  const C = (n, k) => { if (k < 0 || k > n) return 0; let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return Math.round(r); };
+  const CB = (n, k) => { if (k < 0 || k > n) return 0n; let r = 1n; for (let i = 0; i < k; i++) r = r * BigInt(n - i) / BigInt(i + 1); return r; };
+  const fact = n => { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; };
+  const box = (k, v) => `<div class="bx">${k ? `<span class="k">${k}</span>` : ""}${v}</div>`;
+  const chip = (t, cls) => `<span class="chip${cls ? " " + cls : ""}">${t}</span>`;
+  const sup = x => String(x).replace(/\d/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[d]).replace("-", "⁻");
+  const cum = items => items.map((_, k) => ({ html: items.slice(0, k + 1).map(i => i[0]).join(""), note: items[k][1] }));
+  const ok = b => b ? `<span class="good">✓ match</span>` : `<span class="bad">✗ mismatch</span>`;
+  function* tuples(k, lo, hi){ const t = Array(k).fill(lo); while (true){ yield t.slice(); let i = k - 1; while (i >= 0 && t[i] === hi){ t[i] = lo; i--; } if (i < 0) return; t[i]++; } }
+  function perms(arr){ if (arr.length <= 1) return [arr.slice()]; const out = []; arr.forEach((x, i) => { perms(arr.slice(0, i).concat(arr.slice(i + 1))).forEach(p => out.push([x].concat(p))); }); return out; }
+  const pmul = (a, b) => { const r = Array(a.length + b.length - 1).fill(0); a.forEach((x, i) => b.forEach((y, j) => { r[i + j] += x * y; })); return r; };
+  const polyStr = (c, lo) => c.map((v, i) => v ? `${v === 1 && i ? "" : v}${i ? "x" + (i === 1 ? "" : sup(i)) : ""}` : "").filter(Boolean).join(" + ");
+  const barRow = (lab, v, scale, extra) => `<tr><td>${lab}</td><td>${v}</td><td><span class="barc" style="width:${Math.max(1, v * scale)}px"></span></td>${extra !== undefined ? `<td>${extra}</td>` : ""}</tr>`;
+
+  // ---------- engine: one per panel ----------
+  function makeStepper(panelId, groups){
+    const panel = document.getElementById(panelId);
+    const stage = panel.querySelector(".sp-stage"), log = panel.querySelector(".sp-log"), cnt = panel.querySelector(".sp-count"), pb = panel.querySelector('[data-sp="play"]');
+    const P = { frames: [], i: 0, t: null };
+    P.draw = () => { const f = P.frames[P.i]; if (!f) return; stage.innerHTML = f.html;
+      log.innerHTML = P.frames.slice(0, P.i + 1).map((g, j) => g.note ? `<div class="${j === P.i ? "cur" : ""}">${g.note}</div>` : "").join(""); log.scrollTop = log.scrollHeight;
+      cnt.textContent = `step ${P.i + 1} of ${P.frames.length}`; };
+    P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+    P.play = () => { if (P.t){ P.stop(); return; } if (P.i >= P.frames.length - 1){ P.i = 0; P.draw(); }
+      const tick = () => { if (P.i >= P.frames.length - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, 1000); };
+      P.t = setTimeout(tick, 800); pb.textContent = "❚❚ Pause"; };
+    P.load = (fr, auto) => { P.stop(); P.frames = fr; P.i = 0; P.draw(); if (auto) P.play(); };
+    panel.querySelector(".sp-ctrl").addEventListener("click", e => {
+      const a = e.target.dataset && e.target.dataset.sp; if (!a) return;
+      if (a === "play") return P.play();
+      P.stop(); if (a === "step" && P.i < P.frames.length - 1) P.i++; if (a === "end") P.i = P.frames.length - 1; if (a === "reset") P.i = 0; P.draw();
+    });
+    const bar = panel.querySelector(".sp-presets"), btns = [];
+    groups.forEach(([gname, list]) => {
+      const g = document.createElement("div"); g.className = "grp"; g.textContent = gname; bar.appendChild(g);
+      list.forEach(([name, fn]) => { const b = document.createElement("button"); b.className = "op pre"; b.textContent = name;
+        b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); P.load(fn(), true); });
+        bar.appendChild(b); btns.push(b); });
+    });
+    btns[0].classList.add("active"); P.load(groups[0][1][0][1](), false);
+  }
+
+
+  const COL = { R: "#D9636B", B: "#3B6FB6", G: "#2E9E6A" };
+  const act = (perm, c) => { const out = Array(c.length); perm.forEach((p, i) => { out[p] = c[i]; }); return out.join(""); };
+  const rot = (n, k) => Array.from({ length: n }, (_, i) => (i + k) % n);
+  const refl = (n, k) => Array.from({ length: n }, (_, i) => ((k - i) % n + n) % n);
+  const all = (n, cols) => { const out = []; for (const t of tuples(n, 0, cols.length - 1)) out.push(t.map(i => cols[i]).join("")); return out; };
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  function orbitsOf(G, X){ const seen = new Set(), orbs = []; X.forEach(x => { if (seen.has(x)) return; const o = [...new Set(G.map(g => act(g, x.split(""))))].sort(); o.forEach(y => seen.add(y)); orbs.push(o); }); return orbs; }
+  const fixCount = (g, X) => X.filter(x => act(g, x.split("")) === x).length;
+  // corners clockwise from top-left: 0 TL, 1 TR, 2 BR, 3 BL
+  function sq(c, opt){ opt = opt || {}; const s = opt.size || 44, p = 8, pts = [[p, p], [s - p, p], [s - p, s - p], [p, s - p]];
+    let g = `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="width:${s}px;height:${s}px;display:inline-block;vertical-align:middle"><rect x="${p}" y="${p}" width="${s - 2 * p}" height="${s - 2 * p}" fill="#fff" stroke="#9AA3A0"/>`;
+    pts.forEach((q, i) => { g += `<circle cx="${q[0]}" cy="${q[1]}" r="${s / 8}" fill="${COL[c[i]]}"/>`; }); return g + "</svg>"; }
+  function neck(c, size){ const s = size || 54, n = c.length, R = s / 2 - 8;
+    let g = `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="width:${s}px;height:${s}px;display:inline-block;vertical-align:middle"><circle cx="${s / 2}" cy="${s / 2}" r="${R}" fill="none" stroke="#C7CDCB"/>`;
+    for (let i = 0; i < n; i++){ const a = -Math.PI / 2 + 2 * Math.PI * i / n; g += `<circle cx="${s / 2 + R * Math.cos(a)}" cy="${s / 2 + R * Math.sin(a)}" r="5.5" fill="${COL[c[i]]}"/>`; } return g + "</svg>"; }
+  const C4 = [0, 1, 2, 3].map(k => rot(4, k)), C4n = ["0°", "90°", "180°", "270°"];
+  const D4 = C4.concat([0, 1, 2, 3].map(k => refl(4, k)));
+  const D4n = C4n.concat(["flip across diagonal TL–BR", "flip across the vertical middle line", "flip across diagonal TR–BL", "flip across the horizontal middle line"]);
+  const X16 = all(4, ["R", "B"]);
+  const describe = o => { const b = o[0].split("B").length - 1; if (b === 0) return "all red"; if (b === 4) return "all blue"; if (b === 1) return "one blue"; if (b === 3) return "three blue"; return o.length === 2 ? "two blue, opposite" : "two blue, side by side"; };
+  function coasters(){
+    const orbs = orbitsOf(C4, X16);
+    const head = box("4 corners, red or blue: 2⁴ = 16 paint jobs", `<div class="chips">${X16.map(x => `<span class="chip">${sq(x)}</span>`).join("")}</div>`);
+    const fr = [{ html: head, note: "16 paint jobs." }, { html: head + box("the obvious guess", "4 rotations, so 16 / 4 = <b>4</b> coasters?"), note: "Guess: 16/4 = 4." }];
+    let acc = "";
+    orbs.forEach((o, i) => { acc += `<div class="chips"><span class="chip hi">${describe(o)} · orbit size ${o.length}</span>${o.map(x => `<span class="chip">${sq(x)}</span>`).join("")}</div>`;
+      fr.push({ html: head + box("sort by 'same coaster, turned'", acc), note: `orbit ${i + 1}: ${describe(o)}, ${o.length} paint job(s)` }); });
+    fr.push({ html: head + box("sort by 'same coaster, turned'", acc) + box("so", `<b>${orbs.length}</b> different coasters, not 4: all-red and all-blue appear once, red-blue-red-blue twice, so dividing by 4 under-counts them. Orbit sizes ${orbs.map(o => o.length).join(" + ")} = ${orbs.reduce((a, o) => a + o.length, 0)}`), note: `${orbs.length} orbits` });
+    return fr;
+  }
+  function orbStab(){
+    const orbs = orbitsOf(C4, X16);
+    const items = [[box("orbit × stabilizer = 4 (the number of rotations)", "for one paint job from each orbit, turn it all four ways and see which turns leave it unchanged"), "Orbit–stabilizer."]];
+    orbs.forEach(o => { const x = o[0]; const imgs = C4.map(g => act(g, x.split(""))); const st = C4n.filter((_, k) => imgs[k] === x);
+      items.push([box(describe(o), `${imgs.map((y, k) => `<span class="chip${y === x ? " ok" : ""}">${C4n[k]} ${sq(y, { size: 36 })}</span>`).join(" ")}<br>orbit size <b>${o.length}</b> × stabilizer {${st.join(", ")}} size <b>${st.length}</b> = <b>${o.length * st.length}</b> ${ok(o.length * st.length === 4)}`), `${describe(o)}: ${o.length} × ${st.length} = ${o.length * st.length}`]); });
+    const allOk = X16.every(x => new Set(C4.map(g => act(g, x.split("")))).size * C4.filter(g => act(g, x.split("")) === x).length === 4);
+    items.push([box("every one of the 16", `orbit size × stabilizer size = 4 for all 16 paint jobs ${ok(allOk)}`), "checked all 16"]);
+    return cum(items);
+  }
+  function dotGrid(){
+    const orbs = orbitsOf(C4, X16), order = orbs.flat();
+    const fixed = (g, x) => act(g, x.split("")) === x;
+    const grid = (rows, showCols) => { let h = `<table class="t"><tr><th></th>${order.map(x => `<th>${sq(x, { size: 28 })}</th>`).join("")}<th>row sum</th></tr>`;
+      C4.forEach((g, r) => { const vis = r < rows; h += `<tr${r === rows - 1 && !showCols ? ' class="cur"' : ""}><td>${C4n[r]}</td>${order.map(x => `<td>${vis && fixed(g, x) ? "●" : ""}</td>`).join("")}<td>${vis ? fixCount(g, X16) : ""}</td></tr>`; });
+      if (showCols){ h += `<tr class="cur"><td>column</td>${order.map(x => `<td>${C4.filter(g => fixed(g, x)).length}</td>`).join("")}<td></td></tr>`;
+        h += `<tr><td>per orbit</td>${orbs.map(o => `<td colspan="${o.length}" style="text-align:center;border-left:2px solid #463A73"><b>${o.reduce((a, x) => a + C4.filter(g => fixed(g, x)).length, 0)}</b></td>`).join("")}<td></td></tr>`; }
+      return h + "</table>"; };
+    const head = box("one row per rotation, one column per paint job (grouped by orbit); ● = this rotation leaves it unchanged", "");
+    const fr = []; for (let r = 1; r <= 4; r++) fr.push({ html: head + grid(r, false), note: `${C4n[r - 1]} leaves ${fixCount(C4[r - 1], X16)} unchanged` });
+    fr.push({ html: head + grid(4, true) + box("count the dots two ways", `by rows: 16 + 2 + 4 + 2 = <b>24</b> · by columns: each orbit's columns add up to exactly <b>4</b> (one group's worth), so 24 = 4 × (number of orbits) → <b>${24 / 4}</b> orbits ${ok(orbs.length === 6)}`), note: "24 = 4 × 6" });
+    return fr;
+  }
+  function burnside(G, names, X, label, draw){
+    const items = [[box(label, `${X.length} items, ${G.length} symmetries: count what each symmetry leaves unchanged`), label]];
+    let tot = 0; G.forEach((g, k) => { const f = X.filter(x => act(g, x.split("")) === x); tot += f.length;
+      const shown = f.length <= 16 ? `<div class="chips">${f.map(x => `<span class="chip">${draw(x)}</span>`).join("")}</div>` : "";
+      items.push([box(`${names[k]}: leaves <b>${f.length}</b> unchanged`, shown + `running total ${tot}`), `${names[k]}: ${f.length} fixed (total ${tot})`]); });
+    const orbs = orbitsOf(G, X);
+    items.push([box("Burnside: average the fixed counts", `${tot} / ${G.length} = <b>${tot / G.length}</b> &nbsp; brute-force sorting into orbits: <b>${orbs.length}</b> ${ok(tot / G.length === orbs.length)}`), `${tot}/${G.length} = ${tot / G.length}; brute force ${orbs.length}`]);
+    return cum(items);
+  }
+  const b2 = () => burnside(C4, C4n, X16, "coasters, 2 colours, rotations only", x => sq(x, { size: 32 }));
+  const b3 = () => burnside(C4, C4n, all(4, ["R", "B", "G"]), "coasters, 3 colours, rotations only", x => sq(x, { size: 32 }));
+  const d2 = () => burnside(D4, D4n, X16, "coasters you can also flip: 2 colours, 8 symmetries", x => sq(x, { size: 32 }));
+  const d3 = () => burnside(D4, D4n, all(4, ["R", "B", "G"]), "coasters you can also flip: 3 colours, 8 symmetries", x => sq(x, { size: 32 }));
+  function necklace6(){
+    const X = all(6, ["R", "B"]), G = [0, 1, 2, 3, 4, 5].map(k => rot(6, k));
+    const items = [[box("6 beads, red or blue, up to rotation", "turning by k places splits the beads into gcd(k, 6) cycles; a necklace it leaves alone is one colour along each cycle"), "64 necklaces, 6 rotations."]];
+    let tot = 0; G.forEach((g, k) => { const f = fixCount(g, X); tot += f; items.push([box(`turn by ${k} place${k === 1 ? "" : "s"} (${k * 60}°)`, `gcd(${k}, 6) = ${gcd(k, 6)} cycle${gcd(k, 6) === 1 ? "" : "s"} → 2^${gcd(k, 6)} = <b>${2 ** gcd(k, 6)}</b>; brute force: ${f} ${ok(f === 2 ** gcd(k, 6))}`), `turn ${k}: ${f} fixed`]); });
+    const orbs = orbitsOf(G, X);
+    items.push([box("Burnside", `${tot} / 6 = <b>${tot / 6}</b> necklaces; brute force: ${orbs.length} ${ok(orbs.length === tot / 6)}`), `${tot}/6 = ${tot / 6}`]);
+    items.push([box("one of each (orbit sizes)", `<div class="chips">${orbs.map(o => `<span class="chip">${neck(o[0])} ${o.length}</span>`).join("")}</div>sizes ${orbs.map(o => o.length).sort((a, b) => a - b).join(", ")} add up to ${orbs.reduce((a, o) => a + o.length, 0)}; every size divides 6`), `sizes: ${orbs.map(o => o.length).sort((a, b) => a - b).join(",")}`]);
+    return cum(items);
+  }
+  function moreNecklaces(){
+    const G6 = [0, 1, 2, 3, 4, 5].map(k => rot(6, k)), D6 = G6.concat([0, 1, 2, 3, 4, 5].map(k => refl(6, k))), G5 = [0, 1, 2, 3, 4].map(k => rot(5, k));
+    const X3 = all(6, ["R", "B", "G"]), X2 = all(6, ["R", "B"]), X5 = all(5, ["R", "B"]);
+    const avg = (G, X) => G.reduce((a, g) => a + fixCount(g, X), 0) / G.length;
+    const row = (lab, G, X, formula) => [box(lab, `${formula} = <b>${avg(G, X)}</b> &nbsp; brute force: <b>${orbitsOf(G, X).length}</b> ${ok(avg(G, X) === orbitsOf(G, X).length)}`), `${lab}: ${avg(G, X)}`];
+    return cum([
+      row("6 beads, 3 colours, rotations", G6, X3, "(729 + 3 + 9 + 27 + 9 + 3) / 6"),
+      row("6 beads, 2 colours, rotations and flips (bracelets)", D6, X2, `(${D6.map(g => fixCount(g, X2)).join(" + ")}) / 12`),
+      row("5 beads, 2 colours, rotations", G5, X5, "(32 + 2 + 2 + 2 + 2) / 5"),
+    ]);
+  }
+  function ttt(){
+    const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+    const win = b => lines.some(([a, c, d]) => b[a] !== "." && b[a] === b[c] && b[c] === b[d]);
+    const seen = new Set(["........."]), stack = ["........."];
+    while (stack.length){ const b = stack.pop(); if (win(b) || !b.includes(".")) continue; const p = (b.split("X").length === b.split("O").length) ? "X" : "O";
+      for (let i = 0; i < 9; i++) if (b[i] === "."){ const nb = b.slice(0, i) + p + b.slice(i + 1); if (!seen.has(nb)){ seen.add(nb); stack.push(nb); } } }
+    const r90 = i => { const r = Math.floor(i / 3), c = i % 3; return c * 3 + (2 - r); }, fl = i => { const r = Math.floor(i / 3), c = i % 3; return r * 3 + (2 - c); };
+    const G = []; let p = [0, 1, 2, 3, 4, 5, 6, 7, 8]; for (let k = 0; k < 4; k++){ G.push(p.slice()); G.push(p.map(fl)); p = p.map(r90); }
+    const canon = b => G.map(g => act(g, b.split(""))).sort()[0];
+    const classes = new Set([...seen].map(canon));
+    const ex = "X........", imgs = [...new Set(G.map(g => act(g, ex.split(""))))];
+    const board = b => `<span class="chip" style="font-family:IBM Plex Mono,monospace;line-height:1.1;display:inline-block;text-align:center">${b.slice(0, 3)}<br>${b.slice(3, 6)}<br>${b.slice(6)}</span>`;
+    return cum([
+      [box("every tic-tac-toe position that can come up in real play", `generated by playing every legal move from the empty board (stopping at a win or a full board): <b>${seen.size}</b> positions`), `${seen.size} reachable positions`],
+      [box("the 8 symmetries of the board (4 rotations, 4 flips) act on positions", `X in a corner has an orbit of size ${imgs.length}: <div class="chips">${imgs.map(board).join("")}</div>`), "X in a corner: orbit of 4"],
+      [box("count orbits: keep one canonical form per orbit (the alphabetically smallest of its 8 images)", `<b>${classes.size}</b> essentially different positions ${ok(classes.size === 765)}: a game-search program only has to analyse these`), `${classes.size} up to symmetry`],
+    ]);
+  }
+  makeStepper("panel-actions", [
+    ["coasters (corners of a square, rotations)", [["16 paint jobs → 6, not 16/4", coasters], ["orbit × stabilizer = 4", orbStab], ["the dot grid, counted both ways", dotGrid]]],
+    ["Burnside's lemma", [["2 colours → 6", b2], ["3 colours → 24", b3], ["with flips, 2 colours → 6", d2], ["with flips, 3 colours → 21", d3]]],
+    ["necklaces & games", [["6 beads, 2 colours → 14", necklace6], ["130, bracelets 13, 5 beads 8", moreNecklaces], ["tic-tac-toe 5,478 → 765", ttt]]],
+  ]);
+})();
+</script>
+
 </body>
 </html>

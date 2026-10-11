@@ -64,12 +64,13 @@
 <body>
 <div class="wrap">
   <h1>Model Quantization &amp; Compression, live</h1>
-  <p class="sub">Three companion demos: floating-point/integer precision, weight pruning, and temperature-scaled distillation.</p>
+  <p class="sub">Four companion demos: floating-point/integer precision, weight pruning, temperature-scaled distillation, and mixed-precision training (FP16 vs. bf16, loss scaling, FP32 master weights).</p>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="precision">Bits &amp; Precision</button>
     <button class="tab-btn" data-tab="pruning">Pruning</button>
     <button class="tab-btn" data-tab="distill">Distillation</button>
+    <button class="tab-btn" data-tab="mixed">Mixed Precision</button>
   </div>
 
   <div class="tabpage active" id="tab-precision">
@@ -133,6 +134,87 @@
         <div class="metric coral"><div class="lbl">CE(B, soft)</div><div class="num" id="ceBSoft">-</div></div>
       </div>
       <div class="story-line" id="distillStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-mixed">
+    <div class="panel">
+      <h2>FP32 vs. FP16 vs. bf16: the same number, three rulers</h2>
+      <p class="sub">The exponent bits set how far the ruler reaches; the mantissa bits set how fine its tick marks are. bf16 is computed exactly as the doc does it: round the FP32 value to its top 16 bits (round-to-nearest-even).</p>
+      <div class="row">
+        <button class="op mp-preset" data-v="3.14159265">&pi;</button>
+        <button class="op mp-preset" data-v="1e-8">gradient 1e-8 (FP16 underflow)</button>
+        <button class="op mp-preset" data-v="3e-8">gradient 3e-8 (smallest FP16)</button>
+        <button class="op mp-preset" data-v="1e-7">gradient 1e-7 (subnormal)</button>
+        <button class="op mp-preset" data-v="65504">65,504 (FP16 max)</button>
+        <button class="op mp-preset" data-v="70000">70,000 (FP16 overflow)</button>
+      </div>
+      <div class="slider-row">
+        <label for="mpInput">Value to store</label>
+        <input type="number" id="mpInput" step="any" value="1e-8" style="width:180px;">
+      </div>
+      <table class="datatable" id="mpTable"></table>
+      <svg id="mpBits" width="760" height="150" viewBox="0 0 760 150"></svg>
+      <table class="datatable" id="mpRangeTable"></table>
+    </div>
+
+    <div class="panel">
+      <h2>Loss scaling: turn the gain up, then back down</h2>
+      <p class="sub">Multiply the loss by S, so every gradient is multiplied by S during the FP16 backward pass; convert to FP32 and divide by S before the update.</p>
+      <div class="row">
+        <button class="op ls-preset" data-g="1e-8" data-s="1">1e-8, no scaling (lost)</button>
+        <button class="op ls-preset" data-g="1e-8" data-s="1024">1e-8 &times; 1,024 (rescued)</button>
+        <button class="op ls-preset" data-g="2" data-s="65536">2.0 &times; 65,536 (overflow)</button>
+        <button class="op ls-preset" data-g="2" data-s="1024">2.0 &times; 1,024 (fine)</button>
+      </div>
+      <div class="slider-row">
+        <label for="lsGrad">True gradient</label>
+        <input type="number" id="lsGrad" step="any" value="1e-8" style="width:150px;">
+        <label for="lsScale" style="min-width:100px;">loss scale S</label>
+        <input type="number" id="lsScale" step="any" value="1024" style="width:110px;">
+      </div>
+      <table class="datatable" id="lsTable"></table>
+      <div class="story-line" id="lsStory"></div>
+      <h2 style="margin-top:18px;">A toy batch of 1,000,000 gradients (evenly spaced on a log scale from 1e-10 to 1e-2)</h2>
+      <div class="row">
+        <button class="op batch-preset" data-s="1" data-f="fp16">FP16, S = 1</button>
+        <button class="op batch-preset" data-s="1024" data-f="fp16">FP16, S = 1,024</button>
+        <button class="op batch-preset" data-s="65536" data-f="fp16">FP16, S = 65,536</button>
+        <button class="op batch-preset" data-s="1" data-f="bf16">bf16, S = 1 (no scaling)</button>
+      </div>
+      <svg id="batchSvg" width="700" height="170" viewBox="0 0 700 170"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">became exactly 0 (underflow)</div><div class="num" id="bZero">-</div></div>
+        <div class="metric amber"><div class="lbl">subnormal (kept, fewer digits)</div><div class="num" id="bSub">-</div></div>
+        <div class="metric blue"><div class="lbl">became infinity (overflow)</div><div class="num" id="bInf">-</div></div>
+      </div>
+      <div class="story-line" id="batchStory"></div>
+    </div>
+
+    <div class="panel">
+      <h2>FP32 master weights: tiny updates that add up</h2>
+      <p class="sub">Apply the same update step to a weight over and over, storing the weight in FP16, in bf16, and in an FP32 master copy.</p>
+      <div class="row">
+        <button class="op mw-preset" data-w="1" data-d="1e-4" data-n="1">1.0 + 1e-4, once</button>
+        <button class="op mw-preset" data-w="1" data-d="1e-4" data-n="10000">10,000 steps of +1e-4</button>
+        <button class="op mw-preset" data-w="1" data-d="1e-3" data-n="1">1.0 + 1e-3, once</button>
+      </div>
+      <div class="slider-row">
+        <label for="mwW">Starting weight</label>
+        <input type="number" id="mwW" step="any" value="1">
+        <label for="mwD" style="min-width:60px;">step</label>
+        <input type="number" id="mwD" step="any" value="1e-4">
+        <label for="mwN" style="min-width:60px;">steps</label>
+        <input type="number" id="mwN" step="1" min="1" max="100000" value="10000">
+      </div>
+      <svg id="mwSvg" width="640" height="220" viewBox="0 0 640 220"></svg>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">weight kept in FP16</div><div class="num" id="mw16">-</div></div>
+        <div class="metric amber"><div class="lbl">weight kept in bf16</div><div class="num" id="mwB">-</div></div>
+        <div class="metric green"><div class="lbl">FP32 master weight</div><div class="num" id="mw32">-</div></div>
+        <div class="metric blue"><div class="lbl">exact answer</div><div class="num" id="mwTrue">-</div></div>
+      </div>
+      <div class="story-line" id="mwStory"></div>
     </div>
   </div>
 
@@ -352,6 +434,191 @@
     updateDistill();
   });
   updateDistill();
+  // ==================== TAB 4: Mixed Precision ====================
+  const _f32 = new Float32Array(1), _u32 = new Uint32Array(_f32.buffer);
+  function toF32(x){ _f32[0] = x; return _f32[0]; }
+  function toBF16(x){
+    _f32[0] = x; let u = _u32[0];
+    if ((u & 0x7f800000) === 0x7f800000) return _f32[0];
+    const lsb = (u >>> 16) & 1; u = (u + 0x7FFF + lsb) >>> 0; u = (u >>> 16) << 16;
+    _u32[0] = u >>> 0; return _f32[0];
+  }
+  function toF16(x){
+    if (!isFinite(x) || isNaN(x)) return x;
+    if (x === 0) return 0;
+    const s = x < 0 ? -1 : 1; const a = Math.abs(x);
+    let e = Math.floor(Math.log2(a)); if (Math.pow(2,e) > a) e--; if (Math.pow(2,e+1) <= a) e++;
+    if (e < -14) e = -14;
+    const q = Math.pow(2, e-10); const m = a/q; let r = Math.floor(m); const fr = m - r;
+    if (fr > 0.5 || (fr === 0.5 && (r % 2 === 1))) r += 1;
+    const v = r*q; if (v > 65504) return s*Infinity; return s*v;
+  }
+  const FMT = {
+    FP32:{exp:8, man:23, color:"var(--green)", f:toF32, minNormal:Math.pow(2,-126)},
+    FP16:{exp:5, man:10, color:"var(--coral)", f:toF16, minNormal:Math.pow(2,-14)},
+    bf16:{exp:8, man:7, color:"var(--amber)", f:toBF16, minNormal:Math.pow(2,-126)}
+  };
+  function fmtNum(v){
+    if (!isFinite(v)) return v > 0 ? "Infinity" : "-Infinity";
+    if (v === 0) return "0";
+    const a = Math.abs(v);
+    return (a >= 1e-3 && a < 1e6) ? String(Number(v.toPrecision(9))) : v.toExponential(5);
+  }
+  function note(name, x, v){
+    if (!isFinite(v)) return "OVERFLOW: too big for this format";
+    if (v === 0 && x !== 0) return "UNDERFLOW: rounded to zero";
+    if (v !== 0 && Math.abs(v) < FMT[name].minNormal) return "subnormal: fewer digits kept";
+    return "normal";
+  }
+  function updateMP(){
+    const x = parseFloat(document.getElementById("mpInput").value);
+    if (isNaN(x)) return;
+    let rows = "<tr><th>Format</th><th>sign / exponent / mantissa</th><th>Stored value</th><th>Relative error</th><th>Status</th></tr>";
+    rows += `<tr><td>true value</td><td>-</td><td>${fmtNum(x)}</td><td>-</td><td>-</td></tr>`;
+    ["FP32","FP16","bf16"].forEach(n => {
+      const v = FMT[n].f(x);
+      const rel = !isFinite(v) ? "-" : (x === 0 ? "0" : (Math.abs(v-x)/Math.abs(x)*100).toPrecision(3) + "%");
+      rows += `<tr><td style="color:${FMT[n].color}">${n}</td><td>1 / ${FMT[n].exp} / ${FMT[n].man}</td><td>${fmtNum(v)}</td><td>${rel}</td><td>${note(n,x,v)}</td></tr>`;
+    });
+    document.getElementById("mpTable").innerHTML = rows;
+    const svg = document.getElementById("mpBits"); svg.innerHTML = "";
+    const cw = 21;
+    ["FP32","FP16","bf16"].forEach((n,k) => {
+      const y = 14 + k*44, f = FMT[n];
+      svg.appendChild(el("text",{x:4,y:y+18,"font-size":12,fill:f.color,"font-weight":700}, n));
+      let x0 = 60;
+      const parts = [["sign",1,"var(--chalk-dim)"],["exponent",f.exp,"var(--blue)"],["mantissa",f.man,f.color]];
+      parts.forEach(([lbl,nb,col]) => {
+        for (let i=0;i<nb;i++) svg.appendChild(el("rect",{x:x0+i*cw,y:y,width:cw-2,height:24,fill:col,opacity:0.75}));
+        if (nb*cw > 40) svg.appendChild(el("text",{x:x0+nb*cw/2,y:y+37,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)"}, lbl+" ("+nb+")"));
+        x0 += nb*cw + 4;
+      });
+    });
+    document.getElementById("mpRangeTable").innerHTML = `<tr><th>Format</th><th>largest</th><th>smallest normal</th><th>smallest subnormal</th><th>gap above 1.0</th></tr>
+      <tr><td>FP32</td><td>3.40e+38</td><td>1.18e-38</td><td>1.4e-45</td><td>1.19e-7</td></tr>
+      <tr><td>FP16</td><td>65,504</td><td>6.10e-5</td><td>5.96e-8</td><td>9.77e-4</td></tr>
+      <tr><td>bf16</td><td>3.39e+38</td><td>1.18e-38</td><td>9.2e-41</td><td>7.81e-3</td></tr>`;
+  }
+  document.getElementById("mpInput").addEventListener("input", updateMP);
+  document.querySelectorAll(".mp-preset").forEach(b => b.addEventListener("click", () => {
+    document.getElementById("mpInput").value = b.dataset.v; updateMP();
+  }));
+  updateMP();
+
+  function updateLS(){
+    const g = parseFloat(document.getElementById("lsGrad").value);
+    const S = parseFloat(document.getElementById("lsScale").value);
+    if (isNaN(g) || isNaN(S) || S <= 0) return;
+    const plain = toF16(g);
+    const scaled = toF16(g*S);
+    const back = isFinite(scaled) ? toF32(toF32(scaled)/S) : scaled;
+    const err = v => !isFinite(v) ? "-" : (g === 0 ? "0" : (Math.abs(v-g)/Math.abs(g)*100).toPrecision(3)+"%");
+    document.getElementById("lsTable").innerHTML = `<tr><th>Step</th><th>Value</th><th>Error vs. true gradient</th></tr>
+      <tr><td>gradient computed in FP16, no scaling</td><td>${fmtNum(plain)}</td><td>${err(plain)}</td></tr>
+      <tr><td>gradient &times; S, computed in FP16</td><td>${fmtNum(scaled)}</td><td>-</td></tr>
+      <tr><td>converted to FP32, divided by S</td><td>${fmtNum(back)}</td><td>${err(back)}</td></tr>`;
+    let story;
+    if (!isFinite(scaled)) story = "Overflow: g × S = " + fmtNum(g*S) + " is above FP16's maximum of 65,504, so it became infinity. Dynamic loss scaling would skip this step and halve S.";
+    else if (plain === 0 && back !== 0) story = "Without scaling the gradient underflowed to 0; scaled by " + S + " it survives and comes back with " + err(back) + " error.";
+    else if (back === 0 && S === 1) story = "No scaling: the gradient underflowed to exactly 0 in FP16, so this weight learns nothing from it. Try S = 1,024.";
+    else if (back === 0) story = "Even after scaling, this gradient is too small for FP16. A bigger S would lift it further.";
+    else story = "The scaled gradient stayed inside FP16's range, so dividing by S in FP32 recovers it.";
+    document.getElementById("lsStory").textContent = story;
+  }
+  ["lsGrad","lsScale"].forEach(id => document.getElementById(id).addEventListener("input", updateLS));
+  document.querySelectorAll(".ls-preset").forEach(b => b.addEventListener("click", () => {
+    document.getElementById("lsGrad").value = b.dataset.g;
+    document.getElementById("lsScale").value = b.dataset.s; updateLS();
+  }));
+  updateLS();
+
+  function runBatch(S, fmt){
+    const N = 1000000, f = fmt === "bf16" ? toBF16 : toF16, minN = FMT[fmt === "bf16" ? "bf16" : "FP16"].minNormal;
+    let zero = 0, sub = 0, inf = 0;
+    const bins = new Array(40).fill(0).map(() => ({t:0, z:0}));
+    for (let i=0;i<N;i++){
+      const lg = -10 + 8*i/(N-1);
+      const g = Math.pow(10, lg);
+      const v = f(g*S);
+      const b = Math.min(39, Math.floor((lg+10)/8*40));
+      bins[b].t++;
+      if (v === 0){ zero++; bins[b].z++; }
+      else if (!isFinite(v)) inf++;
+      else if (v < minN) sub++;
+    }
+    document.getElementById("bZero").textContent = (zero/N*100).toFixed(1) + "%";
+    document.getElementById("bSub").textContent = (sub/N*100).toFixed(1) + "%";
+    document.getElementById("bInf").textContent = (inf/N*100).toFixed(1) + "%";
+    const svg = document.getElementById("batchSvg"); svg.innerHTML = "";
+    const W=700, H=170, pad=40, bw=(W-2*pad)/40;
+    bins.forEach((b,i) => {
+      const fz = b.z/b.t;
+      svg.appendChild(el("rect",{x:pad+i*bw, y:30, width:bw-1, height:(H-70)*(1-fz), fill:"var(--green)", opacity:0.8}));
+      svg.appendChild(el("rect",{x:pad+i*bw, y:30+(H-70)*(1-fz), width:bw-1, height:(H-70)*fz, fill:"var(--coral)", opacity:0.85}));
+    });
+    for (let e=-10;e<=-2;e+=2){
+      const x = pad + (e+10)/8*(W-2*pad);
+      svg.appendChild(el("text",{x:x,y:H-24,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)"}, "1e"+e));
+    }
+    svg.appendChild(el("text",{x:W/2,y:18,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"}, fmt.toUpperCase()+", S = "+S+": green = survived, coral = became zero"));
+    svg.appendChild(el("text",{x:W/2,y:H-6,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)"}, "true gradient size (log scale)"));
+    document.getElementById("batchStory").textContent = fmt === "bf16"
+      ? "bf16 has FP32's 8 exponent bits, so even 1e-10 is far above its smallest number: nothing underflows, and no loss scale is needed."
+      : (S === 1 ? "Everything below about 3e-8 (half of FP16's smallest number, 5.96e-8) rounded to zero: these weights learn nothing from this batch."
+                 : "Scaling by " + S + " lifted every gradient above FP16's underflow line" + (inf ? ", but some overflowed." : ", and the largest (1e-2 × " + S + ") is still below 65,504, so nothing overflowed."));
+  }
+  document.querySelectorAll(".batch-preset").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".batch-preset").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    runBatch(parseFloat(b.dataset.s), b.dataset.f);
+  }));
+  runBatch(1, "fp16");
+
+  function updateMW(){
+    const w0 = parseFloat(document.getElementById("mwW").value);
+    const d = parseFloat(document.getElementById("mwD").value);
+    let n = parseInt(document.getElementById("mwN").value, 10);
+    if (isNaN(w0) || isNaN(d) || isNaN(n)) return;
+    n = Math.max(1, Math.min(100000, n));
+    let w16 = toF16(w0), wb = toBF16(w0), w32 = toF32(w0);
+    const d16 = toF16(d), db = toBF16(d), d32 = toF32(d);
+    const samples = [], every = Math.max(1, Math.floor(n/200));
+    samples.push([0, w16, wb, w32]);
+    for (let i=1;i<=n;i++){
+      w16 = toF16(w16 + d16); wb = toBF16(wb + db); w32 = toF32(w32 + d32);
+      if (i % every === 0 || i === n) samples.push([i, w16, wb, w32]);
+    }
+    const exact = w0 + n*d;
+    document.getElementById("mw16").textContent = fmtNum(w16);
+    document.getElementById("mwB").textContent = fmtNum(wb);
+    document.getElementById("mw32").textContent = fmtNum(w32);
+    document.getElementById("mwTrue").textContent = fmtNum(exact);
+    const svg = document.getElementById("mwSvg"); svg.innerHTML = "";
+    const W=640, H=220, pad=46;
+    const lo = Math.min(w0, exact), hi = Math.max(w0, exact) + 1e-12;
+    const span = (hi-lo) || Math.abs(w0)*0.01 || 1;
+    const px = i => pad + i/n*(W-2*pad);
+    const py = v => H-pad - (v-lo)/span*(H-2*pad);
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:"var(--chalk-dim)"}));
+    [[3,"var(--green)",3],[2,"var(--amber)",2.2],[1,"var(--coral)",2.2]].forEach(([k,col,sw]) => {
+      svg.appendChild(el("path",{d:"M "+samples.map(s => px(s[0])+","+py(s[k])).join(" L "), fill:"none", stroke:col, "stroke-width":sw}));
+    });
+    svg.appendChild(el("text",{x:pad-6,y:py(lo)+4,"text-anchor":"end","font-size":10,fill:"var(--chalk-dim)"}, fmtNum(lo)));
+    svg.appendChild(el("text",{x:pad-6,y:py(hi)+4,"text-anchor":"end","font-size":10,fill:"var(--chalk-dim)"}, fmtNum(hi)));
+    svg.appendChild(el("text",{x:W/2,y:H-14,"text-anchor":"middle","font-size":10.5,fill:"var(--chalk-dim)"}, "update step 0 → " + n + "   (green = FP32 master, amber = bf16, coral = FP16)"));
+    const lost16 = w16 === toF16(w0) && d !== 0;
+    document.getElementById("mwStory").textContent = lost16
+      ? "FP16's gap just above " + fmtNum(toF16(w0)) + " is wider than twice the step, so every single update rounded straight back: the FP16 weight never moved. The FP32 master copy accumulates the steps correctly."
+      : "The step is big enough to register in FP16 here. Shrink the step (or grow the weight) and watch FP16 and bf16 freeze while FP32 keeps moving.";
+  }
+  ["mwW","mwD","mwN"].forEach(id => document.getElementById(id).addEventListener("change", updateMW));
+  document.querySelectorAll(".mw-preset").forEach(b => b.addEventListener("click", () => {
+    document.getElementById("mwW").value = b.dataset.w;
+    document.getElementById("mwD").value = b.dataset.d;
+    document.getElementById("mwN").value = b.dataset.n; updateMW();
+  }));
+  updateMW();
 })();
 </script>
 </body>

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One's and Two's Complement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  h3{ font-family:"Fraunces", serif; font-size:16px; font-weight:600; margin:0 0 8px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .sub code, .note code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .presetlabel{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:4px 0 8px; }
+  .ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; }
+  .ctrl .count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  .stage{ min-height:180px; padding:6px 0 4px; }
+  .steplog{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.75; max-height:300px; overflow:auto; }
+  .steplog div{ color:var(--ink-soft); padding:1px 0; }
+  .steplog div.cur{ color:var(--ink); font-weight:600; }
+  .row{ display:flex; align-items:center; gap:4px; margin:4px 0; }
+  .row.tot{ border-top:2px solid var(--ink); padding-top:6px; margin-top:6px; width:max-content; }
+  .lab{ width:118px; flex-shrink:0; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); text-align:right; padding-right:8px; }
+  .narrow .lab{ width:58px; }
+  .val{ margin-left:12px; font-family:"IBM Plex Mono",monospace; font-size:14px; white-space:nowrap; }
+  .val b{ color:var(--accent); }
+  .b{ width:34px; height:40px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; position:relative; border-radius:7px; border:1px solid #C9D1CF; background:#F3F5F4; color:#8A939C; font:600 17px "IBM Plex Mono",monospace; padding-top:8px; }
+  .b::before{ content:""; position:absolute; top:5px; left:50%; width:8px; height:8px; margin-left:-4px; border-radius:50%; background:#C9D1CF; }
+  .b.on{ background:#FCEFC8; border-color:var(--c2); color:var(--ink); }
+  .b.on::before{ background:#F2B705; box-shadow:0 0 6px 2px rgba(242,183,5,.7); }
+  .b.hl{ outline:2.5px solid var(--accent); outline-offset:2px; }
+  .b.sg{ box-shadow:0 0 0 2.5px var(--bad); }
+  .b.nb{ visibility:hidden; }
+  .b.gh{ background:transparent; border-style:dashed; color:#B8C0C8; }
+  .b.gh::before{ display:none; }
+  .b.cy{ height:24px; padding-top:0; font-size:12px; background:#E3F3F2; border-color:#9BD1CF; color:var(--c1); }
+  .b.cy::before{ display:none; }
+  .b.drop{ background:transparent; border-style:dashed; border-color:var(--bad); color:var(--bad); text-decoration:line-through; }
+  .b.drop::before{ background:var(--bad); opacity:.35; box-shadow:none; }
+  .b.wrapc{ background:#E3F3F2; border-color:var(--c1); color:var(--c1); }
+  .b.w{ height:20px; padding-top:0; border:none; background:none; font-size:11px; color:var(--ink-soft); }
+  .b.w::before{ display:none; }
+  .b.w.neg{ color:var(--bad); font-weight:700; }
+  .sm .b{ width:19px; height:28px; font-size:12px; border-radius:4px; padding-top:6px; }
+  .sm .b::before{ width:5px; height:5px; margin-left:-2.5px; top:3px; }
+  .sm .b.cy{ height:18px; padding-top:0; font-size:10px; }
+  .sm .b.g{ margin-right:5px; }
+  .three{ display:flex; gap:14px; }
+  .three > div{ flex:1 1 0; min-width:0; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; padding:12px 10px; }
+  .three .b{ width:30px; height:36px; font-size:15px; }
+  .three .b.cy{ height:22px; } .three .b.w{ height:18px; }
+  .twin{ display:flex; gap:16px; margin-top:10px; }
+  .twin > div{ flex:1 1 0; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; }
+  .stat .k{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; display:block; }
+  .stat b{ color:var(--accent); }
+  .verdict{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin-top:10px; }
+  .verdict.ok{ color:var(--good); } .verdict.bad{ color:var(--bad); } .verdict.meh{ color:var(--c2); }
+  .note{ font-size:13.5px; color:var(--ink); margin-top:8px; line-height:1.6; }
+  .layout{ display:flex; gap:22px; align-items:flex-start; }
+  .layout > .plot{ flex:0 0 430px; }
+  .layout > .side{ flex:1 1 0; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  svg text{ font-family:"IBM Plex Mono", monospace; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to One's and Two's Complement</div>
+    <h1>Negative Numbers With No Minus Sign</h1>
+    <p>Each bit is a switch with a lamp: lit means 1, dark means 0. Every example is a one-click preset that plays itself; use <b>Step</b> to go one move at a time, <b>Play</b> to watch, or <b>Jump to end</b> to see the finished answer. There's nothing to type.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="three">1 · Three attempts</button>
+    <button class="tab" data-tab="wheel">2 · Number wheel</button>
+    <button class="tab" data-tab="neg">3 · Flip and add 1</button>
+    <button class="tab" data-tab="one">4 · One adder, two meanings</button>
+    <button class="tab" data-tab="ov">5 · Overflow</button>
+    <button class="tab" data-tab="ext">6 · Sign extension</button>
+    <button class="tab" data-tab="ck">7 · Internet checksum</button>
+  </div>
+
+  <div class="panel active" id="panel-three"><div class="card">
+    <h2>Same +3 and −3, same adder, three ways to store them</h2>
+    <p class="sub">The adder never knows which scheme you picked. It just adds the patterns, right to left, carrying as it goes.</p>
+    <div class="presetbar" id="pre-three"></div>
+    <div id="pl-three"></div>
+  </div></div>
+
+  <div class="panel" id="panel-wheel"><div class="card">
+    <h2>All 16 four-bit patterns on a clock face</h2>
+    <p class="sub">Counting up goes clockwise, and after <code>1111</code> comes <code>0000</code>. Two's complement just relabels the left half of the wheel as negatives.</p>
+    <div class="presetlabel">how to read the patterns</div>
+    <div class="presetbar" id="mode-wheel"></div>
+    <div class="presetlabel">count up</div>
+    <div class="presetbar" id="pre-wheel"></div>
+    <div id="pl-wheel"></div>
+  </div></div>
+
+  <div class="panel" id="panel-neg"><div class="card">
+    <h2>Negate: flip every bit, then add 1</h2>
+    <p class="sub">Flipping computes <code>15 − x</code> (subtracting from all ones never borrows). Adding 1 makes it <code>16 − x</code>, which is how two's complement stores <code>−x</code>.</p>
+    <div class="presetbar" id="pre-neg"></div>
+    <div id="pl-neg"></div>
+  </div></div>
+
+  <div class="panel" id="panel-one"><div class="card">
+    <h2>One circuit adds signed and unsigned numbers alike</h2>
+    <p class="sub">The adder does exactly the same thing whatever the bits "mean". Subtraction is the same adder with a row of inverters and a carry-in of 1.</p>
+    <div class="presetbar" id="pre-one"></div>
+    <div id="pl-one"></div>
+  </div></div>
+
+  <div class="panel" id="panel-ov"><div class="card">
+    <h2>When the wheel wraps the wrong way</h2>
+    <p class="sub">Overflow happens exactly when both inputs have the same sign and the result has the opposite sign. The sign bits are ringed in red.</p>
+    <div class="presetbar" id="pre-ov"></div>
+    <div id="pl-ov"></div>
+  </div></div>
+
+  <div class="panel" id="panel-ext"><div class="card">
+    <h2>Widening 4 bits to 8: copy the sign bit</h2>
+    <p class="sub">The new places on the left get copies of the sign bit. Padding with zeros instead only works for unsigned numbers.</p>
+    <div class="presetbar" id="pre-ext"></div>
+    <div id="pl-ext"></div>
+  </div></div>
+
+  <div class="panel" id="panel-ck"><div class="card">
+    <h2>RFC 1071's checksum, one word at a time</h2>
+    <p class="sub">Add the 16-bit words; whenever a sum spills past 16 bits, wrap the carry around and add it back in at the bottom (one's complement's end-around carry). Finally flip every bit.</p>
+    <div class="presetbar" id="pre-ck"></div>
+    <div id="pl-ck"></div>
+  </div></div>
+
+  <footer>
+    Companion to <code>math/ones-and-twos-complement.md</code>. Every number on this page is computed live by the page's own adder, and matches the values checked in that file (for example <code>0011 + 1011 = 1110</code> in sign-magnitude, <code>1101 + 0111 = 10100</code>, and the RFC 1071 checksum <code>0x220D</code>).
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+}));
+
+/* ---------- arithmetic (everything shown is computed here) ---------- */
+const P2 = n => 2 ** n;
+const bitsOf = (v, n) => { const m = P2(n); v = ((v % m) + m) % m; return v.toString(2).padStart(n, "0"); };
+const uns = s => parseInt(s, 2);
+const tc = s => s[0] === "1" ? uns(s) - P2(s.length) : uns(s);
+const sm = s => (s[0] === "1" ? -1 : 1) * uns(s.slice(1));
+const oc = s => s[0] === "1" ? -(P2(s.length) - 1 - uns(s)) : uns(s);
+const flip = s => [...s].map(c => c === "1" ? "0" : "1").join("");
+const ocBits = v => v >= 0 ? bitsOf(v, 4) : flip(bitsOf(-v, 4));
+function add(a, b, cin){
+  const n = a.length, c = [cin || 0], s = Array(n);
+  for (let i = 0; i < n; i++){
+    const t = +a[n-1-i] + +b[n-1-i] + c[i];
+    s[n-1-i] = t & 1; c[i+1] = t >> 1;
+  }
+  return { sum: s.join(""), c, cout: c[n] };
+}
+const fN = v => Object.is(v, -0) ? "−0" : (v < 0 ? "−" : "") + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+const pN = v => v < 0 ? "(" + fN(v) + ")" : fN(v);
+const hex = v => "0x" + v.toString(16).toUpperCase().padStart(4, "0");
+const weights = n => Array.from({length:n}, (_, j) => j === 0 ? -P2(n-1) : P2(n-1-j));
+function wsum(s, signed){
+  const w = weights(s.length).map(x => signed ? x : Math.abs(x));
+  const terms = [...s].map((c, j) => c === "1" ? w[j] : 0);
+  const tot = terms.reduce((x, y) => x + y, 0);
+  return terms.map((t, j) => j === 0 ? fN(t) : (t < 0 ? " − " + (-t) : " + " + t)).join("") + " = " + fN(tot);
+}
+const fmtDate = sec => new Date(sec * 1000).toISOString().replace("T", " ").slice(0, 19) + " UTC";
+
+/* ---------- drawing bits ---------- */
+const blank = `<span class="b nb"></span>`;
+const ghost = `<span class="b gh">?</span>`;
+function cells(s, o){
+  o = o || {};
+  return [...s].map((ch, j) => {
+    let c = "b" + (ch === "1" ? " on" : "");
+    if (o.hl && o.hl.includes(j)) c += " hl";
+    if (o.sg && j === 0) c += " sg";
+    if (o.g && j % o.g === o.g - 1 && j < s.length - 1) c += " g";
+    return `<span class="${c}">${ch}</span>`;
+  }).join("");
+}
+const row = (lab, inner, val, cls) => `<div class="row${cls ? " " + cls : ""}"><span class="lab">${lab}</span>${inner}<span class="val">${val || ""}</span></div>`;
+function wrow(n, signed, c0){
+  return row("worth", (c0 ? blank : "") + weights(n).map(w => `<span class="b w${w < 0 && signed ? " neg" : ""}">${signed ? fN(w) : Math.abs(w)}</span>`).join(""));
+}
+const vd = (cls, t) => `<div class="verdict ${cls}">${t}</div>`;
+
+/* An adder drawn as columns: col 0 holds the carry out of the top. o.k = how many bits (from the right) are done. */
+function adderView(o){
+  const n = o.a.length, r = add(o.a, o.b, o.cin), k = o.k == null ? n : o.k, done = k >= n;
+  const hj = (!o.final && k >= 1) ? n - k : -1, hl = hj >= 0 ? [hj] : [], g = o.g;
+  let cy = (done && r.cout) ? `<span class="b cy">1</span>` : blank;
+  for (let j = 0; j < n; j++){
+    const i = n - 1 - j;
+    const show = (i >= 1 && i <= k && r.c[i]) || (i === 0 && o.cin);
+    cy += `<span class="b cy${show ? "" : " nb"}${g && j % g === g-1 && j < n-1 ? " g" : ""}">${i === 0 && o.cin ? "+1" : "1"}</span>`;
+  }
+  let sumCells = "";
+  for (let j = 0; j < n; j++){
+    const gg = g && j % g === g-1 && j < n-1 ? " g" : "";
+    if (j < n - k) sumCells += `<span class="b gh${gg}">?</span>`;
+    else sumCells += `<span class="b${r.sum[j] === "1" ? " on" : ""}${j === hj ? " hl" : ""}${o.sg && j === 0 ? " sg" : ""}${gg}">${r.sum[j]}</span>`;
+  }
+  let c0 = blank;
+  if (done && r.cout){
+    const m = o.cout || "drop";
+    c0 = `<span class="b ${m === "drop" ? "drop" : m === "wrap" ? "wrapc" : "on"}">1</span>`;
+  }
+  return `<div class="${o.small ? "sm" : ""}">` +
+    row(o.cin ? "carries (+ carry-in)" : "carries", cy) +
+    row(o.la || "", blank + cells(o.a, {hl, sg:o.sg, g}), o.va) +
+    row(o.lb || "+", blank + cells(o.b, {hl, sg:o.sg, g}), o.vb) +
+    row(o.ls || "sum", c0 + sumCells, done ? (o.vs || "") : "", "tot") +
+    (done && o.w ? wrow(n, true, true) : "") + `</div>`;
+}
+function stepNote(a, b, cin, k){
+  const n = a.length, r = add(a, b, cin), i = k - 1;
+  const ai = +a[n-1-i], bi = +b[n-1-i], ci = r.c[i], t = ai + bi + ci;
+  return `bit ${i} (worth ${P2(i)}): ${ai} + ${bi}${ci ? " + carry 1" : ""} = ${t.toString(2)} → write ${t & 1}` +
+    (t > 1 ? (i === n - 1 ? ", and a carry 1 comes out of the top" : ", carry 1 to the left") : "");
+}
+/* Frames for a full ripple add, then a final verdict frame. */
+function rippleFrames(o, intro, finish){
+  const n = o.a.length, fr = [];
+  const pre = o.pre || "", post = o.post || "";
+  fr.push({ html: pre + adderView(Object.assign({}, o, {k:0})) + post, note: intro });
+  for (let k = 1; k <= n; k++) fr.push({ html: pre + adderView(Object.assign({}, o, {k})) + post, note: stepNote(o.a, o.b, o.cin, k) });
+  if (finish) fr.push({ html: pre + adderView(Object.assign({}, o, {final:true})) + (finish.html || "") + post, note: finish.note });
+  return fr;
+}
+
+/* ---------- the player: Step / Play / Jump to end / Reset ---------- */
+function Player(id){
+  const root = $("#" + id);
+  root.innerHTML = `<div class="ctrl"><button class="op" data-act="step">Step ▸</button><button class="op" data-act="play">▶ Play</button><button class="op" data-act="end">Jump to end ⏭</button><button class="op" data-act="reset">↺ Reset</button><span class="count"></span></div><div class="stage"></div><div class="steplog"></div>`;
+  const stage = root.querySelector(".stage"), log = root.querySelector(".steplog"), cnt = root.querySelector(".count"), pb = root.querySelector('[data-act="play"]');
+  const P = { frames: [], i: 0, t: null };
+  P.draw = () => {
+    const f = P.frames[P.i]; if (!f) return;
+    stage.innerHTML = typeof f.html === "function" ? f.html() : f.html;
+    log.innerHTML = P.frames.slice(0, P.i + 1).map((g, j) => g.note ? `<div class="${j === P.i ? "cur" : ""}">${g.note}</div>` : "").join("");
+    log.scrollTop = log.scrollHeight;
+    cnt.textContent = `step ${P.i + 1} of ${P.frames.length}`;
+  };
+  P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+  P.play = () => {
+    if (P.t){ P.stop(); return; }
+    if (P.i >= P.frames.length - 1){ P.i = 0; P.draw(); }
+    const tick = () => { if (P.i >= P.frames.length - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, 1100); };
+    P.t = setTimeout(tick, 900); pb.textContent = "❚❚ Pause";
+  };
+  P.load = (fr, auto) => { P.stop(); P.frames = fr; P.i = 0; P.draw(); if (auto) P.play(); };
+  root.querySelector(".ctrl").addEventListener("click", e => {
+    const a = e.target.dataset && e.target.dataset.act; if (!a) return;
+    if (a === "play") return P.play();
+    P.stop();
+    if (a === "step" && P.i < P.frames.length - 1) P.i++;
+    if (a === "end") P.i = P.frames.length - 1;
+    if (a === "reset") P.i = 0;
+    P.draw();
+  });
+  return P;
+}
+function presets(barId, player, list){
+  const btns = [];
+  list.forEach((p, idx) => {
+    const b = document.createElement("button"); b.className = "op pre"; b.textContent = p.name;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); player.load(p.frames(), true); });
+    $("#" + barId).appendChild(b); btns.push(b);
+  });
+  btns[0].classList.add("active"); player.load(list[0].frames(), false);
+}
+
+/* ============ TAB 1: three attempts ============ */
+const SCH = [
+  { name: "Sign-magnitude", made: "sign bit 1 + size 011", read: sm, cout: "drop" },
+  { name: "One's complement", made: "flip every bit of 0011", read: oc, cout: "wrap" },
+  { name: "Two's complement", made: "flip, then add 1 (16 − 3)", read: tc, cout: "drop" },
+];
+SCH[0].neg = "1011"; SCH[1].neg = "1100"; SCH[2].neg = bitsOf(-3, 4);
+function threeFrames(){
+  const fr = [];
+  const col = (S, k, fin) => {
+    const r = add("0011", S.neg, 0);
+    let h = `<div class="narrow"><h3>${S.name}</h3><div class="note" style="margin:0 0 6px">−3 = <code>${S.neg}</code> (${S.made})</div>` +
+      adderView({ a: "0011", b: S.neg, k, final: fin, la: "+3", lb: "−3", ls: "=", cout: S.cout, w: fin && S.read === tc }) ;
+    if (fin){
+      const v = S.read(r.sum);
+      if (S.read === sm) h += vd("bad", `${r.sum} reads as ${fN(v)} ✗`) + `<div class="note">Should be 0. The patterns don't add like the numbers they stand for, so the hardware would need sign checks first.</div>`;
+      else if (S.read === oc) h += vd("meh", `${r.sum} = ${fN(v)}, "negative zero"`) + `<div class="note">No carry came out, so no repair is needed, but the answer is a <b>second</b> zero (the other is <code>0000</code>).</div>`;
+      else h += vd("ok", `${r.sum} = ${fN(v)} ✓`) + `<div class="note">The carry out of the top just falls off (crossed out). By place values: ${wsum(r.sum, true)}. One clean zero, no special cases.</div>`;
+    }
+    return h + `</div>`;
+  };
+  const all = (k, fin) => `<div class="three">${SCH.map(S => col(S, k, fin)).join("")}</div>`;
+  fr.push({ html: all(0), note: "+3 is 0011 in all three schemes. −3 differs: 1011, 1100, 1101." });
+  for (let k = 1; k <= 4; k++) fr.push({ html: all(k), note: `bit ${k-1}: the same adder adds this column in all three schemes, carrying into the next` });
+  fr.push({ html: all(4, true), note: "Sign-magnitude: 1110 = −6 ✗. One's complement: 1111 = −0 (a second zero). Two's complement: 0000 = 0 ✓, the carry falls off." });
+  return fr;
+}
+function ocFrames(x, y){
+  const a = ocBits(x), b = ocBits(y), r = add(a, b, 0), fr = [];
+  const o = { a, b, la: fN(x), lb: "+ " + pN(y), va: `= ${fN(x)}`, vb: `= ${fN(y)}`, cout: "wrap", ls: "raw sum" };
+  const first = rippleFrames(Object.assign({ vs: r.cout ? "carry out of the top!" : `= ${fN(oc(r.sum))}` }, o),
+    `One's complement: ${fN(x)} = ${a}, ${fN(y)} = ${b} (the negative is every bit of the positive, flipped).`);
+  fr.push(...first);
+  if (r.cout){
+    const top = `<h3>Pass 1</h3>` + adderView(Object.assign({ final: true, vs: `raw ${r.sum} = ${fN(oc(r.sum))}, one too small` }, o)) + `<h3 style="margin-top:14px">Pass 2: end-around carry</h3>`;
+    const r2 = add(r.sum, "0001", 0);
+    const o2 = { a: r.sum, b: "0001", la: "raw sum", lb: "+ carry", ls: "answer", pre: top, vs: `= <b>${fN(oc(r2.sum))}</b>` };
+    const sec = rippleFrames(o2, `A carry came out of the top. One's complement wraps at 15, not 16, so the raw answer is one too small: bring the carry around and add it back in at the bottom.`,
+      { html: vd("ok", `${fN(x)} + ${pN(y)} = ${r2.sum} = ${fN(oc(r2.sum))} ✓`) + `<div class="note">Right answer, but it took a second pass through the adder.</div>`, note: `After the end-around carry: ${r2.sum} = ${fN(oc(r2.sum))} ✓` });
+    fr.push(...sec);
+  } else {
+    fr.push({ html: adderView(Object.assign({ final: true, vs: `= ${fN(oc(r.sum))}` }, o)) + vd("meh", `${r.sum} is "negative zero"`) + `<div class="note">No carry out, so no repair step. But <code>1111</code> and <code>0000</code> both mean zero: two zeros.</div>`, note: `No carry out of the top: the answer is ${r.sum} = −0, the "other" zero.` });
+  }
+  return fr;
+}
+function zeroFrames(){
+  const blk = (S, pats, txt, cls) => `<div class="narrow"><h3>${S}</h3>${pats.map(p => row("", cells(p[0]), p[1])).join("")}${vd(cls, txt)}</div>`;
+  const parts = [
+    blk("Sign-magnitude", [["0000", "+0"], ["1000", "−0"]], "two zeros ✗", "bad"),
+    blk("One's complement", [["0000", "+0"], ["1111", "−0"]], "two zeros ✗", "bad"),
+    blk("Two's complement", [["0000", "0"], ["1000", "−8, not a zero"]], "one zero ✓", "ok"),
+  ];
+  const fr = [];
+  for (let k = 1; k <= 3; k++) fr.push({ html: `<div class="three">${parts.slice(0, k).join("")}${"<div></div>".repeat(3 - k)}</div>`,
+    note: ["Sign-magnitude: 0000 is +0 and 1000 is −0, so \"is this zero?\" needs two checks.", "One's complement: 0000 and 1111 (flip of 0000) both mean zero.", "Two's complement: negating 0 gives 1111 + 1 = 0000 (the carry falls off). Only one zero; 1000 is −8."][k-1] });
+  return fr;
+}
+const plThree = Player("pl-three");
+presets("pre-three", plThree, [
+  { name: "+3 + (−3) in all three schemes", frames: threeFrames },
+  { name: "One's complement: 5 + (−3)", frames: () => ocFrames(5, -3) },
+  { name: "One's complement: −2 + (−3)", frames: () => ocFrames(-2, -3) },
+  { name: "One's complement: 3 + (−3)", frames: () => ocFrames(3, -3) },
+  { name: "How many zeros?", frames: zeroFrames },
+]);
+
+/* ============ TAB 2: number wheel ============ */
+let wMode = "t";
+function wheelSvg(pos, prev){
+  const C = 220, R = 148, ang = i => (i * 22.5 - 90) * Math.PI / 180;
+  let g = `<svg viewBox="0 0 440 440" role="img" aria-label="The 16 four-bit patterns on a circle">`;
+  g += `<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#D9E0DE" stroke-width="2"/>`;
+  if (wMode === "t"){
+    [[-0.5, "−1 → 0"], [7.5, "7 → −8"]].forEach(([i, t]) => {
+      const a = ang(i), x1 = C + (R - 60) * Math.cos(a), y1 = C + (R - 60) * Math.sin(a), x2 = C + (R + 64) * Math.cos(a), y2 = C + (R + 64) * Math.sin(a);
+      g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+      g += `<text x="${C + (R - 78) * Math.cos(a)}" y="${C + (R - 78) * Math.sin(a) + 4}" text-anchor="middle" font-size="11" fill="var(--bad)">${t}</text>`;
+    });
+  } else {
+    const a = ang(-0.5);
+    g += `<line x1="${C + (R - 60) * Math.cos(a)}" y1="${C + (R - 60) * Math.sin(a)}" x2="${C + (R + 64) * Math.cos(a)}" y2="${C + (R + 64) * Math.sin(a)}" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+    g += `<text x="${C + (R - 78) * Math.cos(a)}" y="${C + (R - 78) * Math.sin(a) + 4}" text-anchor="middle" font-size="11" fill="var(--bad)">15 → 0</text>`;
+  }
+  for (let i = 0; i < 16; i++){
+    const a = ang(i), x = C + R * Math.cos(a), y = C + R * Math.sin(a), s = bitsOf(i, 4);
+    const neg = wMode === "t" && i >= 8, cur = i === pos, pv = i === prev;
+    const fill = cur ? "#FCEFC8" : neg ? "#EFEBFA" : "#E3F3F2", st = cur ? "var(--c2)" : neg ? "var(--c3)" : "var(--c1)";
+    g += `<circle cx="${x}" cy="${y}" r="24" fill="${fill}" stroke="${st}" stroke-width="${cur ? 3 : 1.4}"${pv ? ' stroke-dasharray="4 3"' : ""}/>`;
+    g += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="11.5" fill="var(--ink)">${s}</text>`;
+    const v = wMode === "t" ? tc(s) : uns(s);
+    g += `<text x="${C + (R + 42) * Math.cos(a)}" y="${C + (R + 42) * Math.sin(a) + 5}" text-anchor="middle" font-size="15" font-weight="600" fill="${neg ? "var(--c3)" : "var(--ink)"}">${fN(v)}</text>`;
+  }
+  const cs = bitsOf(pos, 4);
+  g += `<text x="${C}" y="${C - 12}" text-anchor="middle" font-size="12" fill="var(--ink-soft)">${wMode === "t" ? "two's complement" : "unsigned"}</text>`;
+  g += `<text x="${C}" y="${C + 26}" text-anchor="middle" font-size="34" font-weight="600" fill="var(--ink)">${fN(wMode === "t" ? tc(cs) : uns(cs))}</text>`;
+  return g + `</svg>`;
+}
+function wheelHtml(pos, prev){
+  const s = bitsOf(pos, 4), t = wMode === "t";
+  return `<div class="layout"><div class="plot">${wheelSvg(pos, prev)}</div><div class="side">` +
+    row("pattern", cells(s, {sg: t}), "") + wrow(4, t) +
+    `<div class="stat" style="margin-top:12px"><span class="k">read as unsigned</span>${wsum(s, false)}<span class="k" style="margin-top:6px">read as two's complement</span>${wsum(s, true)}</div>` +
+    `<div class="note">Reading now: <b>${t ? "two's complement" : "unsigned"}</b> = <b>${fN(t ? tc(s) : uns(s))}</b>. ${t ? "The top bit is worth −8, so every pattern starting with 1 is negative. Range −8 to 7." : "The top bit is worth +8. Range 0 to 15."}</div></div></div>`;
+}
+function countFrames(start, steps){
+  const fr = [];
+  for (let s = 0; s <= steps; s++){
+    const pos = (start + s) % 16, pp = (pos + 15) % 16, b = bitsOf(pos, 4), pb = bitsOf(pp, 4);
+    let note;
+    if (s === 0) note = `Start at ${b}: unsigned ${uns(b)}, two's complement ${fN(tc(b))}.`;
+    else note = `+1: ${pb} → ${b}. Unsigned ${uns(pb)} → ${uns(b)}${uns(b) < uns(pb) ? " (wrapped: 15 → 0, the carry fell off)" : ""}; two's complement ${fN(tc(pb))} → ${fN(tc(b))}${tc(b) < tc(pb) ? " (wrapped: largest positive → most negative)" : ""}.`;
+    fr.push({ html: () => wheelHtml(pos, s ? pp : null), note });
+  }
+  return fr;
+}
+const plWheel = Player("pl-wheel");
+(function(){
+  const bs = [];
+  [["Read as two's complement", "t"], ["Read as unsigned", "u"]].forEach(([t, m]) => {
+    const b = document.createElement("button"); b.className = "op mode" + (m === wMode ? " active" : ""); b.textContent = t;
+    b.addEventListener("click", () => { bs.forEach(x => x.classList.remove("active")); b.classList.add("active"); wMode = m; plWheel.draw(); });
+    $("#mode-wheel").appendChild(b); bs.push(b);
+  });
+})();
+presets("pre-wheel", plWheel, [
+  { name: "Count 5, 6, 7, then one more", frames: () => countFrames(5, 3) },
+  { name: "Count −2, −1, then one more", frames: () => countFrames(14, 2) },
+  { name: "Count a full lap from 0000", frames: () => countFrames(0, 16) },
+]);
+
+/* ============ TAB 3: flip and add 1 ============ */
+function negFrames(x){
+  const s = bitsOf(x, 4), f = flip(s), r = add(f, "0001", 0), fr = [];
+  const top = row("x", blank + cells(s, {sg:true}), `= ${fN(x)}`) + wrow(4, true, true);
+  fr.push({ html: `<div>${top}</div>`, note: `Start: x = ${fN(x)} = ${s}. By place values: ${wsum(s, true)}.` });
+  fr.push({ html: `<div>${top}${row("flipped", blank + cells(f, {hl:[0,1,2,3]}), `15 − ${uns(s)} = ${uns(f)}`)}</div>`,
+    note: `Flip every bit: ${s} → ${f}. As unsigned, that's 15 − ${uns(s)} = ${uns(f)}, with no borrowing.` });
+  const res = r.sum, v = tc(res);
+  let fin, fnote;
+  if (x === 0){
+    fin = vd("ok", `−0 = 0000: only one zero ✓`) + `<div class="note">16 − 0 = 16 needs 5 bits (10000). The carry falls off the top, leaving <code>0000</code>. Negating zero gives zero back.</div>`;
+    fnote = "1111 + 1 = 10000; keep 4 bits → 0000. The carry fell off: there's only one zero.";
+  } else if (x === -8){
+    fin = vd("bad", `−(−8) = 1000 = −8 again`) + `<div class="note">+8 doesn't exist in 4 bits (the largest is +7), so there's nowhere for the answer to go and it wraps back. In 32 bits the same thing makes abs(−2,147,483,648) = −2,147,483,648. Check: 16 − 8 = 8 = <code>1000</code>.</div>`;
+    fnote = "0111 + 1 = 1000 = −8. Negating −8 gives −8: the lopsided range (−8 to 7) has no +8.";
+  } else {
+    fin = vd("ok", `−${x} is stored as ${res} ✓`) + `<div class="note">Check: 16 − ${x} = ${16 - x} = <code>${bitsOf(16 - x, 4)}</code>. By place values: ${wsum(res, true)}.</div>`;
+    fnote = `${f} + 1 = ${res} = ${16 - x} as unsigned = 16 − ${x}; by place values ${wsum(res, true)} ✓`;
+  }
+  fr.push(...rippleFrames({ a: f, b: "0001", la: "flipped", lb: "+ 1", ls: "−x", pre: `<div>${top}</div>`, vs: `= <b>${fN(v)}</b>`, w: true, cout: "drop" },
+    `Now add 1 (that turns 15 − x into 16 − x). The carries ripple right to left.`, { html: fin, note: fnote }));
+  return fr;
+}
+const plNeg = Player("pl-neg");
+presets("pre-neg", plNeg, [3, 5, 1, 0, -8].map(x => ({ name: `Negate ${fN(x)}`, frames: () => negFrames(x) })));
+
+/* ============ TAB 4: one adder, two meanings ============ */
+function oneFrames(){
+  const a = "1101", b = "0111", r = add(a, b, 0);
+  const fin = `<div class="twin"><div class="stat"><span class="k">read as unsigned</span>13 + 7 = 20<br>20 doesn't fit in 4 bits; keeping 4 bits is "mod 16":<br>20 − 16 = <b>${uns(r.sum)}</b> ✓</div>` +
+    `<div class="stat"><span class="k">read as two's complement</span>${fN(tc(a))} + ${tc(b)} = <b>${fN(tc(r.sum))}</b> ✓<br>${wsum(r.sum, true)}</div></div>` +
+    `<div class="note">The circuit did exactly the same thing both times. Whether <code>1101</code> "means" 13 or −3 is purely how the program reads it, so a processor needs only one add instruction.</div>`;
+  return rippleFrames({ a, b, la: "1101", lb: "+ 0111", va: `unsigned ${uns(a)} · signed ${fN(tc(a))}`, vb: `unsigned ${uns(b)} · signed ${tc(b)}`, ls: "keep 4 bits", vs: `${r.cout ? "1" : ""}${r.sum} → keep <b>${r.sum}</b>`, cout: "drop" },
+    "Add the patterns 1101 and 0111. The adder doesn't know or care what they mean.",
+    { html: fin, note: `1101 + 0111 = ${r.cout}${r.sum} → keep 4 bits: ${r.sum}. Unsigned: 13 + 7 = 20 mod 16 = 4. Signed: −3 + 7 = 4.` });
+}
+function subFrames(){
+  const a = "0111", b3 = "0011", f = flip(b3), r = add(a, f, 1), fr = [];
+  const head = (st) => `<div>${row("a = 7", blank + cells(a), "")}${row("b = 3", blank + cells(b3, {hl: st ? [0,1,2,3] : []}), "")}${st ? row("inverters", blank + cells(f, {hl:[0,1,2,3]}), "flip(b) = " + f) : ""}</div><div style="height:14px"></div>`;
+  fr.push({ html: head(false) + `<div class="note">To compute 7 − 3, the ALU computes 7 + (−3), and −3 is "flip 3, add 1".</div>`, note: "7 − 3 = 7 + (−3). Start with a = 0111 and b = 0011." });
+  fr.push({ html: head(true), note: "One inverter per wire flips b: 0011 → 1100." });
+  fr.push(...rippleFrames({ a, b: f, cin: 1, la: "a", lb: "+ flip(b)", ls: "a − b", pre: head(true), vs: `= <b>${tc(r.sum)}</b>`, cout: "drop", w: true },
+    "The \"+1\" isn't a separate step: it goes in as the adder's carry-in at the lowest bit.",
+    { html: vd("ok", `7 − 3 = ${r.sum} = ${tc(r.sum)} ✓`) + `<div class="note">An adder, a row of inverters, and a carry-in of 1: that's all an ALU needs to both add and subtract. No sign checks, no end-around carry, one zero.</div>`,
+      note: `0111 + 1100 + carry-in 1 = ${r.cout}${r.sum} → keep ${r.sum} = ${tc(r.sum)} ✓` }));
+  return fr;
+}
+const plOne = Player("pl-one");
+presets("pre-one", plOne, [
+  { name: "1101 + 0111: unsigned and signed", frames: oneFrames },
+  { name: "Subtract: 7 − 3 with the same adder", frames: subFrames },
+]);
+
+/* ============ TAB 5: overflow ============ */
+function ovFrames(x, y, n){
+  const a = bitsOf(x, n), b = bitsOf(y, n), r = add(a, b, 0), s = r.sum, v = tc(s), truth = x + y;
+  const same = a[0] === b[0], ov = same && s[0] !== a[0];
+  const sgn = c => c === "0" ? "positive" : "negative";
+  let msg = ov ? `Overflow: both inputs ${sgn(a[0])}, result ${sgn(s[0])}.` : same ? "No overflow: same signs in, same sign out." : "No overflow: the inputs have different signs, so the sum lies between them.";
+  const lo = -P2(n-1), hi = P2(n-1) - 1;
+  const html = vd(ov ? "bad" : "ok", (ov ? "✗ " : "✓ ") + msg) +
+    `<div class="note">True answer ${fN(truth)}; ${n}-bit range is ${fN(lo)} to ${fN(hi)}. ${ov ? `${fN(truth)} doesn't fit, so the wheel wrapped past its edge and the bits read as <b>${fN(v)}</b>.` : `It fits, and the bits read as <b>${fN(v)}</b>.`}${r.cout ? " (The carry out of the top falls off; that alone is not overflow.)" : ""}</div>`;
+  return rippleFrames({ a, b, la: fN(x), lb: "+ " + pN(y), va: `= ${fN(x)}`, vb: `= ${fN(y)}`, vs: `= <b>${fN(v)}</b>`, sg: true, cout: "drop", w: n === 4 },
+    `${n}-bit: ${fN(x)} = ${a}, ${fN(y)} = ${b}. Watch the sign bits (ringed).`,
+    { html, note: `${a} + ${b} → ${s} = ${fN(v)}. ${msg}` });
+}
+function y2038Frames(){
+  const MAX = P2(31) - 1, fr = [];
+  const view = (t, wrapped) => {
+    const s = bitsOf(t, 32), v = tc(s);
+    return `<div class="sm">${row("32-bit clock", cells(s, {g: 8, sg: true, hl: wrapped ? [0] : []}), "")}</div>` +
+      `<div class="twin"><div class="stat"><span class="k">signed value</span><b>${fN(v)}</b> seconds after 1970-01-01</div><div class="stat"><span class="k">the date it means</span><b>${fmtDate(v)}</b></div></div>`;
+  };
+  for (let t = MAX - 2; t <= MAX + 1; t++){
+    const wrapped = t > MAX, v = tc(bitsOf(t, 32));
+    let note = `tick: ${fN(v)} s → ${fmtDate(v)}`;
+    if (t === MAX) note += ` — the largest 32-bit signed number, 2³¹ − 1`;
+    if (wrapped) note = `one more second: 0111…1 + 1 = 1000…0 = ${fN(v)} → ${fmtDate(v)}. The clock jumped back to 1901.`;
+    fr.push({ html: view(t, wrapped) + (wrapped ? vd("bad", "✗ Overflow: positive + 1 gave a negative") + `<div class="note">Exactly 4-bit 7 + 1 = −8, just 32 bits wide. Moving to 64-bit time pushes the limit about 292 billion years away.</div>` : ""), note });
+  }
+  return fr;
+}
+const plOv = Player("pl-ov");
+presets("pre-ov", plOv, [
+  { name: "4-bit: 7 + 1", frames: () => ovFrames(7, 1, 4) },
+  { name: "8-bit: 127 + 1", frames: () => ovFrames(127, 1, 8) },
+  { name: "4-bit: −8 − 1", frames: () => ovFrames(-8, -1, 4) },
+  { name: "5 + 4", frames: () => ovFrames(5, 4, 4) },
+  { name: "−5 + (−4)", frames: () => ovFrames(-5, -4, 4) },
+  { name: "5 + (−4)", frames: () => ovFrames(5, -4, 4) },
+  { name: "Year 2038 clock", frames: y2038Frames },
+]);
+
+/* ============ TAB 6: sign extension ============ */
+function extFrames(x, zero){
+  const s = bitsOf(x, 4), fillc = zero ? "0" : s[0], fr = [];
+  const four = row("4 bits", `<span style="display:inline-flex;gap:4px;margin-left:${4*38}px">${cells(s, {sg: true})}</span>`, `${wsum(s, true)}`);
+  const w4 = row("worth", `<span style="display:inline-flex;gap:4px;margin-left:${4*38}px">${weights(4).map(w => `<span class="b w${w < 0 ? " neg" : ""}">${fN(w)}</span>`).join("")}</span>`);
+  const eight = k => { let h = ""; for (let j = 0; j < 4; j++) h += j >= 4 - k ? `<span class="b${fillc === "1" ? " on" : ""} hl">${fillc}</span>` : ghost; return h + cells(s); };
+  fr.push({ html: four + w4, note: `Start: ${s} = ${fN(x)} in 4 bits. Its sign bit is ${s[0]}.` });
+  for (let k = 1; k <= 4; k++) fr.push({ html: four + w4 + `<div style="height:12px"></div>` + row("8 bits", eight(k)),
+    note: zero ? `pad bit ${3 + k} with 0` : `copy the sign bit (${s[0]}) into bit ${3 + k}` });
+  const e = fillc.repeat(4) + s, v = tc(e), okk = v === x;
+  fr.push({ html: four + w4 + `<div style="height:12px"></div>` + row("8 bits", cells(e, {sg: true}), `= <b>${fN(v)}</b>`) + wrow(8, true) +
+    vd(okk ? "ok" : "bad", okk ? `${s} → ${e}: still ${fN(x)} ✓` : `${s} → ${e} = ${fN(v)}, not ${fN(x)} ✗`) +
+    `<div class="note">${wsum(e, true)}. ${okk ? (x < 0 ? `Check: 256 − ${-x} = ${256 + x} = <code>${e}</code>.` : "Positive numbers get 0s on the left, which add nothing.") : "Zero-padding is right for an unsigned 13, but wrong for a signed −3. That's why processors have separate \"load signed byte\" and \"load unsigned byte\" instructions."}</div>`,
+    note: `${s} → ${e} = ${fN(v)} ${okk ? "✓" : "✗ (should be " + fN(x) + ")"}` });
+  return fr;
+}
+function whyFrames(){
+  const e = "11111101", fr = [];
+  const base = (hl, txt) => `<div>${row("8 bits", cells(e, {hl}), "")}${wrow(8, true)}</div><div class="stat" style="margin-top:12px">${txt}</div>`;
+  fr.push({ html: base([], "−3 in 8 bits is 256 − 3 = 253 = <b>11111101</b>."), note: "In 8 bits, −3 is 256 − 3 = 253 = 11111101." });
+  fr.push({ html: base([0,1,2,3], "new top four bits: −128 + 64 + 32 + 16 = <b>−16</b>"), note: "The four new bits are worth −128 + 64 + 32 + 16 = −16." });
+  fr.push({ html: base([0,1,2,3,4], "−16 + the old sign bit, now an ordinary +8 = <b>−8</b><br>exactly what the 4-bit sign bit was worth on its own"), note: "Add the old sign bit, now worth +8: −16 + 8 = −8, what the old sign bit was worth alone." });
+  fr.push({ html: base([5,6,7], "−8 + the untouched low bits 101 (= 5) = <b>−3</b> ✓"), note: "The low three bits 101 (worth 5) are untouched: −8 + 5 = −3 ✓" });
+  return fr;
+}
+const plExt = Player("pl-ext");
+presets("pre-ext", plExt, [
+  { name: "Widen −3 (1101)", frames: () => extFrames(-3, false) },
+  { name: "Widen +5 (0101)", frames: () => extFrames(5, false) },
+  { name: "Wrong way: zero-pad 1101", frames: () => extFrames(-3, true) },
+  { name: "Why it works: place values", frames: whyFrames },
+]);
+
+/* ============ TAB 7: Internet checksum ============ */
+const WORDS = [0x0001, 0xF203, 0xF4F5, 0xF6F7];
+const b16 = v => bitsOf(v, 16);
+const r16 = (lab, v, val, o) => row(lab, (o && o.c0 != null ? o.c0 : blank) + cells(b16(v), Object.assign({g: 4}, o || {})), val || hex(v), o && o.tot ? "tot" : "");
+function ocAdd16(s, w){ const raw = s + w; let f = raw; while (f > 0xFFFF) f = (f & 0xFFFF) + (f >>> 16); return { raw, f, carry: raw > 0xFFFF }; }
+function sumFrames(words, recv){
+  const fr = [];
+  fr.push({ html: `<div class="sm">${words.map((w, i) => r16(recv && i === 4 ? "checksum" : "word " + (i + 1), w)).join("")}</div>`,
+    note: recv ? "Receiver: add all five words, including the checksum, with end-around carries." : "Sender: the four 16-bit words of RFC 1071's example." });
+  let s = 0, total = 0;
+  words.forEach((w, i) => {
+    const r = ocAdd16(s, w); total += w;
+    const c0 = r.carry ? `<span class="b wrapc">1</span>` : blank;
+    let h = `<div class="sm">${r16("sum so far", s)}${r16("+ " + (recv && i === 4 ? "checksum" : "word " + (i + 1)), w)}${r16("raw", r.raw & 0xFFFF, hex(r.raw), {c0, tot: true})}`;
+    if (r.carry) h += r16("+ carry", 1, "end-around", {hl: [15]}) + r16("folded", r.f, `<b>${hex(r.f)}</b>`, {tot: true});
+    h += `</div>`;
+    let note = `${hex(s)} + ${hex(w)} = ${hex(r.raw)}` + (r.carry ? ` — 17 bits, so wrap the carry: ${hex(r.raw & 0xFFFF)} + 1 = ${hex(r.f)}` : " — fits, no carry");
+    s = r.f;
+    if (i === words.length - 1 && !recv) note += `. (The plain total is ${hex(total)}; folding it gives the same ${hex(s)}.)`;
+    fr.push({ html: h, note });
+  });
+  if (!recv){
+    const ck = (~s) & 0xFFFF;
+    fr.push({ html: `<div class="sm">${r16("sum", s)}${r16("flip all", ck, `checksum = <b>${hex(ck)}</b>`, {hl: [...Array(16).keys()], tot: true})}</div>` +
+      vd("ok", `checksum = ${hex(ck)}`) + `<div class="note">The sender writes ${hex(ck)} into the packet header.</div>`, note: `Flip every bit of ${hex(s)}: checksum = ${hex(ck)}.` });
+  } else {
+    fr.push({ html: `<div class="sm">${r16("final sum", s, `<b>${hex(s)}</b>`)}</div>` + vd(s === 0xFFFF ? "ok" : "bad", s === 0xFFFF ? "All 16 lamps lit: 0xFFFF, the packet passes ✓" : "Not 0xFFFF: the packet is damaged ✗") +
+      `<div class="note">0xFFFF is all ones, one's complement's "negative zero". A sum plus its own flip is always all ones.</div>`, note: `Final: ${hex(s)} — all ones, so the packet passes.` });
+  }
+  return fr;
+}
+function onceFrames(){
+  const total = WORDS.reduce((a, b) => a + b, 0), hi = total >>> 16, lo = total & 0xFFFF, f = lo + hi, ck = (~f) & 0xFFFF, fr = [];
+  fr.push({ html: `<div class="sm">${WORDS.map((w, i) => r16("word " + (i + 1), w)).join("")}</div><div class="stat" style="margin-top:12px">plain total = <b>${hex(total)}</b> (doesn't fit in 16 bits)</div>`,
+    note: `Add all four words as ordinary numbers: ${WORDS.map(hex).join(" + ")} = ${hex(total)}.` });
+  fr.push({ html: `<div class="sm">${r16("low 16 bits", lo)}${r16("overflow", hi, `${hex(hi)} (the part past 16 bits)`, {hl: [14]})}</div>`,
+    note: `Split ${hex(total)} into the overflow ${hex(hi)} and the low 16 bits ${hex(lo)}.` });
+  fr.push({ html: `<div class="sm">${r16("low 16 bits", lo)}${r16("+ overflow", hi)}${r16("folded", f, `<b>${hex(f)}</b>`, {tot: true})}</div>`,
+    note: `Fold the overflow back in at the bottom: ${hex(lo)} + ${hex(hi)} = ${hex(f)} (same as word by word).` });
+  fr.push({ html: `<div class="sm">${r16("sum", f)}${r16("flip all", ck, `<b>${hex(ck)}</b>`, {hl: [...Array(16).keys()], tot: true})}</div>` + vd("ok", `checksum = ${hex(ck)}`),
+    note: `Flip: checksum = ${hex(ck)}.` });
+  return fr;
+}
+const plCk = Player("pl-ck");
+presets("pre-ck", plCk, [
+  { name: "Sender: add word by word", frames: () => sumFrames(WORDS, false) },
+  { name: "Sum all at once, then fold", frames: onceFrames },
+  { name: "Receiver: check the packet", frames: () => sumFrames(WORDS.concat([(~WORDS.reduce((s, w) => ocAdd16(s, w).f, 0)) & 0xFFFF]), true) },
+]);
+
+window.__tc = { bitsOf, uns, tc, sm, oc, flip, add, ocAdd16, fmtDate, wsum };
+})();
+</script>
+</body>
+</html>

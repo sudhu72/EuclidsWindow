@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interpretability, Made Visible</title>
+<style>
+  :root{
+    --paper:#EEF0F4; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D8DDE5;
+    --accent:#2F5D8A; --accent-soft:#E7EEF6;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95; --c5:#3D8B3D;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{ background:var(--paper); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.5; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:36px 20px 80px; }
+  .eyebrow{ font-family:ui-monospace,Menlo,monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; font-weight:600; }
+  h1{ font-family:Georgia,serif; font-weight:600; font-size:34px; margin:0 0 10px; }
+  header p{ color:var(--ink-soft); max-width:760px; font-size:15px; margin:0 0 22px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
+  .tab{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; margin-bottom:16px; }
+  h2{ font-family:Georgia,serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 14px; }
+  .formula{ font-family:ui-monospace,Menlo,monospace; font-size:13px; color:var(--accent); }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.play{ border-color:var(--c1); color:var(--c1); }
+  .row{ display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .row .lbl{ font-size:12px; color:var(--ink-soft); min-width:110px; }
+  svg{ width:100%; height:auto; display:block; background:#F7F8FA; border-radius:10px; }
+  .log{ font-family:ui-monospace,Menlo,monospace; font-size:12.5px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.75; white-space:pre-wrap; }
+  table.rt{ border-collapse:collapse; width:100%; font-size:13px; margin-top:10px; }
+  table.rt td, table.rt th{ border:1px solid var(--line); padding:6px 9px; text-align:left; background:#fff; }
+  table.rt th{ background:var(--accent-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); }
+  td.good{ color:var(--c5); font-weight:700; } td.bad{ color:var(--c3); font-weight:700; }
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:8px; font-size:12px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:16px; margin-top:22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion visualizer</div>
+    <h1>Interpretability, Made Visible</h1>
+    <p>Five tabs, one per part of <b>Interpretability: Looking Inside a Neural Network</b>. Every worked example is a one-click preset, and every number is computed live in this page by the same algorithm (and the same seeded random numbers) as the tutorial's numpy runs.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="ig">Saliency vs. integrated gradients</button>
+    <button class="tab" data-tab="cam">Grad-CAM</button>
+    <button class="tab" data-tab="probe">Linear probe</button>
+    <button class="tab" data-tab="sae">Superposition &amp; SAE</button>
+    <button class="tab" data-tab="patch">Probe vs. patching</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <div class="panel active" id="panel-ig">
+    <div class="card">
+      <h2>Walk from the baseline to the input, adding up slopes</h2>
+      <p class="sub">Parts 1&ndash;2. The gradient only looks at the end point. Integrated gradients averages the gradient at <span class="formula">m</span> points along the straight path from the baseline (all zeros) and multiplies by (input &minus; baseline). <b>Completeness:</b> the IG bars must add up to <span class="formula">f(x) &minus; f(0)</span>.</p>
+      <div class="row"><span class="lbl">Model preset</span>
+        <button class="op active" id="ig-tanh">Tiny tanh network (x = 1, &minus;0.5, 2)</button>
+        <button class="op" id="ig-sat">Saturated unit (x = 1, 1)</button>
+      </div>
+      <div class="row"><span class="lbl">Steps m</span>
+        <button class="op" data-m="1">m = 1</button><button class="op" data-m="5">m = 5</button><button class="op active" data-m="10">m = 10</button><button class="op" data-m="50">m = 50</button><button class="op" data-m="300">m = 300</button>
+      </div>
+      <div class="row"><span class="lbl">Walk the path</span>
+        <button class="op play" id="ig-step">Step</button><button class="op play" id="ig-play">Play</button><button class="op play" id="ig-end">Jump to end</button><button class="op" id="ig-reset">Reset</button>
+      </div>
+      <div class="two">
+        <svg id="ig-bars" viewBox="0 0 480 300"></svg>
+        <svg id="ig-path" viewBox="0 0 480 300"></svg>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:#D9636B"></span> gradient at x</span>
+        <span><span class="dot" style="background:#D9A62E"></span> gradient &times; input</span>
+        <span><span class="dot" style="background:#0F8B8D"></span> integrated gradients (running)</span>
+        <span style="margin-left:20px">Right: &part;f/&part;x<sub>i</sub> along the path (one line per input); shaded = path points already added.</span>
+      </div>
+      <div class="log" id="ig-log"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div class="panel" id="panel-cam">
+    <div class="card">
+      <h2>Grad-CAM on an 8&times;8 image with two strokes</h2>
+      <p class="sub">Part 3. Filters V (vertical edge) and H (horizontal edge) &rarr; ReLU &rarr; 6&times;6 feature maps &rarr; average &rarr; class scores. <span class="formula">&alpha;<sub>k</sub> = mean &part;y<sub>c</sub>/&part;A<sup>k</sup></span>, heatmap <span class="formula">= ReLU(&Sigma; &alpha;<sub>k</sub>A<sup>k</sup>)</span> (shown &times;36). Each heat cell sits over the centre of its 3&times;3 patch.</p>
+      <div class="row"><span class="lbl">Preset</span>
+        <button class="op active" id="cam-v">Class: vertical bar</button>
+        <button class="op" id="cam-h">Class: horizontal bar</button>
+        <button class="op" id="cam-r">Sanity check: random filters</button>
+      </div>
+      <svg id="cam-svg" viewBox="0 0 1000 300"></svg>
+      <div class="log" id="cam-log"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3 -->
+  <div class="panel" id="panel-probe">
+    <div class="card">
+      <h2>Is "x&#8321; and x&#8322; have the same sign" readable from the hidden layer?</h2>
+      <p class="sub">Part 4. A 4&rarr;8&rarr;1 tanh network learns <span class="formula">z = [x&#8321;&middot;x&#8322; &gt; 0]</span> (1,000 training examples, full-batch gradient descent, learning rate 1.0). Then logistic probes are trained on the raw input, the untrained hidden layer, and the trained hidden layer, for <span class="formula">z</span> and for a control <span class="formula">c = [x&#8323;&middot;x&#8324; &gt; 0]</span> the network never needed.</p>
+      <div class="row"><span class="lbl">Train network</span>
+        <button class="op play" id="pr-step">Step (+100)</button><button class="op play" id="pr-play">Play</button><button class="op play" id="pr-end">Jump to end (2,000)</button><button class="op" id="pr-reset">Reset</button>
+      </div>
+      <div class="row"><span class="lbl">Probe</span>
+        <button class="op" id="pr-run">Run the three probes</button>
+        <button class="op active" id="pr-one">Train and probe (one click)</button>
+      </div>
+      <div class="two">
+        <svg id="pr-curve" viewBox="0 0 480 300"></svg>
+        <svg id="pr-bars" viewBox="0 0 480 300"></svg>
+      </div>
+      <table class="rt" id="pr-table"></table>
+      <div class="log" id="pr-log"></div>
+    </div>
+  </div>
+
+  <!-- TAB 4 -->
+  <div class="panel" id="panel-sae">
+    <div class="card">
+      <h2>Five features in two dimensions, and the SAE that finds them</h2>
+      <p class="sub">Part 5. 2,000 samples; each of 5 features is present 5% of the time with strength in [0, 1], embedded as a pentagon. Grey dashed arrows: true feature directions. Coloured arrows: the SAE's 5 decoder directions (Adam, lr 0.01, &lambda; = 0.3).</p>
+      <div class="row"><span class="lbl">Train SAE</span>
+        <button class="op play" id="sae-step">Step (+10)</button><button class="op play" id="sae-play">Play</button><button class="op play" id="sae-end">Jump to end (1,000)</button><button class="op" id="sae-reset">Reset (step 0)</button>
+      </div>
+      <div class="row"><span class="lbl">Checkpoints</span>
+        <button class="op" data-sae="1">step 1</button><button class="op" data-sae="100">step 100</button><button class="op" data-sae="500">step 500</button><button class="op" data-sae="1000">step 1,000</button>
+      </div>
+      <div class="two">
+        <svg id="sae-svg" viewBox="0 0 480 480"></svg>
+        <div>
+          <table class="rt" id="sae-table"></table>
+          <div class="log" id="sae-log"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5 -->
+  <div class="panel" id="panel-patch">
+    <div class="card">
+      <h2>A probe finds it; patching shows it is never used</h2>
+      <p class="sub">Part 6. <span class="formula">h&#8321; = x&#8321;</span>, <span class="formula">h&#8322; = 0.9&middot;x&#8321; + 0.44&middot;x&#8322;</span>, <span class="formula">y = sigmoid(3&middot;h&#8321; + 0&middot;h&#8322;)</span>. Clean input (1, 0); corrupted input (&minus;1, 0).</p>
+      <div class="row"><span class="lbl">Probe (1,000 inputs)</span>
+        <button class="op" id="pt-p2">Probe h&#8322;</button><button class="op" id="pt-p1">Probe h&#8321;</button>
+      </div>
+      <div class="row"><span class="lbl">Patch into corrupted run</span>
+        <button class="op" id="pt-none">No patch</button><button class="op" id="pt-h2">Patch h&#8322;</button><button class="op" id="pt-h1">Patch h&#8321;</button>
+      </div>
+      <svg id="pt-svg" viewBox="0 0 900 260"></svg>
+      <div class="log" id="pt-log"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Interpretability: Looking Inside a Neural Network</b> (<code>../deep_learning/interpretability_feynman.md</code>). Self-contained: no external scripts. Default presets reproduce the tutorial's numpy-verified numbers.
+  </footer>
+</div>
+
+<script>
+function Rng(seed){ let a=seed>>>0;
+  this.u=function(){ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15), t|1); t^=t+Math.imul(t^(t>>>7), t|61); return ((t^(t>>>14))>>>0)/4294967296; };
+  this.n=function(){ const u1=this.u(), u2=this.u(); return Math.sqrt(-2*Math.log(1-u1))*Math.cos(2*Math.PI*u2); };
+}
+const sig=a=>1/(1+Math.exp(-a));
+// logistic probe on feature matrix (array of arrays), standardized with train stats
+function probe(Ftr,ytr,Fte,yte,steps,lr){
+  const n=Ftr.length,d=Ftr[0].length; const mu=new Array(d).fill(0), sd=new Array(d).fill(0);
+  for(const f of Ftr) for(let j=0;j<d;j++) mu[j]+=f[j]/n;
+  for(const f of Ftr) for(let j=0;j<d;j++) sd[j]+=(f[j]-mu[j])**2/n;
+  for(let j=0;j<d;j++) sd[j]=Math.sqrt(sd[j])+1e-8;
+  const A=Ftr.map(f=>f.map((v,j)=>(v-mu[j])/sd[j])), B=Fte.map(f=>f.map((v,j)=>(v-mu[j])/sd[j]));
+  const w=new Array(d).fill(0); let b=0;
+  for(let s=0;s<steps;s++){
+    const gw=new Array(d).fill(0); let gb=0;
+    for(let i=0;i<n;i++){ let z=b; for(let j=0;j<d;j++) z+=A[i][j]*w[j]; const dd=(sig(z)-ytr[i])/n; gb+=dd; for(let j=0;j<d;j++) gw[j]+=A[i][j]*dd; }
+    for(let j=0;j<d;j++) w[j]-=lr*gw[j]; b-=lr*gb;
+  }
+  let c=0; for(let i=0;i<B.length;i++){ let z=b; for(let j=0;j<d;j++) z+=B[i][j]*w[j]; if((sig(z)>0.5)===(yte[i]===1)) c++; }
+  return c/B.length;
+}
+function probeData(NTR,H){
+  const r=new Rng(7);
+  function data(n){ const X=[],y=[],z=[],c=[]; for(let i=0;i<n;i++){ const x=[r.n(),r.n(),r.n(),r.n()]; X.push(x); const zz=(x[0]*x[1]>0)?1:0; z.push(zz); y.push(zz); c.push((x[2]*x[3]>0)?1:0);} return {X,y,z,c}; }
+  const tr=data(NTR), te=data(1000); const W1=[]; for(let k=0;k<H;k++){ const row=[]; for(let j=0;j<4;j++) row.push(r.n()*0.5); W1.push(row);} const b1=new Array(H).fill(0);
+  const w2=[]; for(let k=0;k<H;k++) w2.push(r.n()*0.5);
+  return {tr,te,H,W1,b1,w2,b2:0,W10:W1.map(r=>r.slice()),b10:b1.slice()};
+}
+function hidden(X,W1,b1){ return X.map(x=>W1.map((row,k)=>Math.tanh(b1[k]+row[0]*x[0]+row[1]*x[1]+row[2]*x[2]+row[3]*x[3]))); }
+function mlpStep(S,lr){ // one full-batch GD step (typed arrays for speed)
+  const X=S.tr.X,y=S.tr.y,n=X.length,H=S.H;
+  if(!S.buf){ S.buf={gW1:new Float64Array(H*4),gb1:new Float64Array(H),gw2:new Float64Array(H),h:new Float64Array(H),W:new Float64Array(H*4)}; }
+  const B=S.buf, gW1=B.gW1, gb1=B.gb1, gw2=B.gw2, h=B.h, W=B.W; gW1.fill(0); gb1.fill(0); gw2.fill(0); let gb2=0;
+  for(let k=0;k<H;k++) for(let j=0;j<4;j++) W[k*4+j]=S.W1[k][j];
+  const b1=S.b1, w2=S.w2;
+  for(let i=0;i<n;i++){ const x=X[i], x0=x[0],x1=x[1],x2=x[2],x3=x[3]; let a=S.b2;
+    for(let k=0;k<H;k++){ const o=k*4; const hk=Math.tanh(b1[k]+W[o]*x0+W[o+1]*x1+W[o+2]*x2+W[o+3]*x3); h[k]=hk; a+=hk*w2[k]; }
+    const d=(sig(a)-y[i])/n; gb2+=d;
+    for(let k=0;k<H;k++){ const hk=h[k]; gw2[k]+=hk*d; const dh=d*w2[k]*(1-hk*hk); gb1[k]+=dh; const o=k*4; gW1[o]+=dh*x0; gW1[o+1]+=dh*x1; gW1[o+2]+=dh*x2; gW1[o+3]+=dh*x3; }
+  }
+  for(let k=0;k<H;k++){ for(let j=0;j<4;j++) S.W1[k][j]-=lr*gW1[k*4+j]; S.b1[k]-=lr*gb1[k]; S.w2[k]-=lr*gw2[k]; } S.b2-=lr*gb2;
+}
+function taskAcc(S){ const Hh=hidden(S.te.X,S.W1,S.b1); let c=0; Hh.forEach((h,i)=>{ let a=S.b2; for(let k=0;k<S.H;k++) a+=h[k]*S.w2[k]; if((sig(a)>0.5)===(S.te.y[i]===1)) c++; }); return c/Hh.length; }
+// SAE
+function saeSetup(p,D){
+  const r=new Rng(3), n=5, N=2000; const ang=[]; for(let i=0;i<n;i++) ang.push(Math.PI/2+2*Math.PI*i/n);
+  const W=[ang.map(Math.cos), ang.map(Math.sin)];
+  const F=[]; for(let s=0;s<N;s++){ const row=[]; for(let i=0;i<n;i++){ row.push((r.u()<p)? r.u():0);} F.push(row);} 
+  const Hd=F.map(f=>[0,1].map(d=>{let s=0; for(let i=0;i<n;i++) s+=f[i]*W[d][i]; return s;}));
+  const We=[]; for(let k=0;k<D;k++) We.push([r.n()*0.5, r.n()*0.5]); const be=new Array(D).fill(0);
+  const Wd=We.map(w=>{const nn=Math.hypot(w[0],w[1]); return [w[0]/nn,w[1]/nn];}); // Wd[k] = column k
+  const z=()=>({We:We.map(()=>[0,0]), be:new Array(D).fill(0), Wd:We.map(()=>[0,0])});
+  return {n,N,D,W,F,Hd,We,be,Wd,M:z(),V:z(),t:0};
+}
+function saeStep(S,lam,lr){
+  const {N,D,Hd}=S; const gWe=S.We.map(()=>[0,0]), gbe=new Array(D).fill(0), gWd=S.We.map(()=>[0,0]);
+  for(let s=0;s<N;s++){ const h=Hd[s]; const Z=new Array(D), A=new Array(D); const R=[0,0];
+    for(let k=0;k<D;k++){ Z[k]=S.We[k][0]*h[0]+S.We[k][1]*h[1]+S.be[k]; A[k]=Z[k]>0?Z[k]:0; R[0]+=A[k]*S.Wd[k][0]; R[1]+=A[k]*S.Wd[k][1]; }
+    const gR=[2*(R[0]-h[0])/N, 2*(R[1]-h[1])/N];
+    for(let k=0;k<D;k++){ gWd[k][0]+=gR[0]*A[k]; gWd[k][1]+=gR[1]*A[k];
+      const gA=gR[0]*S.Wd[k][0]+gR[1]*S.Wd[k][1] + lam*(A[k]>0?1:0)/N;
+      if(Z[k]>0){ gWe[k][0]+=gA*h[0]; gWe[k][1]+=gA*h[1]; gbe[k]+=gA; } }
+  }
+  S.t++; const t=S.t, b1=0.9,b2=0.999;
+  const upd=(P,G,M,V)=>{ const m=b1*M+(1-b1)*G, v=b2*V+(1-b2)*G*G; return [P-lr*(m/(1-Math.pow(b1,t)))/(Math.sqrt(v/(1-Math.pow(b2,t)))+1e-8), m, v]; };
+  for(let k=0;k<D;k++){
+    for(let j=0;j<2;j++){ let o=upd(S.We[k][j],gWe[k][j],S.M.We[k][j],S.V.We[k][j]); S.We[k][j]=o[0]; S.M.We[k][j]=o[1]; S.V.We[k][j]=o[2]; }
+    let o=upd(S.be[k],gbe[k],S.M.be[k],S.V.be[k]); S.be[k]=o[0]; S.M.be[k]=o[1]; S.V.be[k]=o[2];
+    for(let j=0;j<2;j++){ o=upd(S.Wd[k][j],gWd[k][j],S.M.Wd[k][j],S.V.Wd[k][j]); S.Wd[k][j]=o[0]; S.M.Wd[k][j]=o[1]; S.V.Wd[k][j]=o[2]; }
+    const nn=Math.hypot(S.Wd[k][0],S.Wd[k][1]); S.Wd[k][0]/=nn; S.Wd[k][1]/=nn;
+  }
+}
+function saeStats(S){ const {N,D,Hd}=S; let mse=0,l1=0; const act=[];
+  for(let s=0;s<N;s++){ const h=Hd[s]; const A=[]; const R=[0,0]; for(let k=0;k<D;k++){ const z=S.We[k][0]*h[0]+S.We[k][1]*h[1]+S.be[k]; A.push(z>0?z:0); R[0]+=A[k]*S.Wd[k][0]; R[1]+=A[k]*S.Wd[k][1]; l1+=A[k]/N; }
+    mse+=((R[0]-h[0])**2+(R[1]-h[1])**2)/N; act.push(A); }
+  const best=[]; for(let i=0;i<S.n;i++){ let m=-2; for(let k=0;k<D;k++) m=Math.max(m, S.W[0][i]*S.Wd[k][0]+S.W[1][i]*S.Wd[k][1]); best.push(m); }
+  let ns=0, na=0; for(let s=0;s<N;s++){ const c=S.F[s].filter(v=>v>0).length; if(c===1){ ns++; na+=act[s].filter(v=>v>0).length; } }
+  return {mse,l1,best,avgActiveSingle:na/ns,angles:S.Wd.map(w=>Math.atan2(w[1],w[0])*180/Math.PI)};
+}
+</script>
+<script>
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,text){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(text!==undefined) e.textContent=text; return e; }
+function $(id){ return document.getElementById(id); }
+function setActive(btns, on){ btns.forEach(b=>b.classList.remove('active')); if(on) on.classList.add('active'); }
+function makeTimer(){ let id=null; return { running:()=>id!==null, start(fn,ms){ this.stop(); id=setInterval(fn,ms); }, stop(){ if(id!==null){ clearInterval(id); id=null; } } }; }
+function f4(v){ return (v>=0?' ':'')+v.toFixed(4); }
+
+// =================== TAB 1: SALIENCY vs IG ===================
+const IG_W1=[[1.0,-0.5,0.3],[0.2,0.8,-1.0],[-0.7,0.4,0.6],[0.5,0.5,0.5]], IG_b1=[0.1,-0.2,0.0,0.05], IG_w2=[1.2,-0.8,0.5,1.0];
+function fTanh(x){ let s=0; for(let k=0;k<4;k++){ let a=IG_b1[k]; for(let j=0;j<3;j++) a+=IG_W1[k][j]*x[j]; s+=IG_w2[k]*Math.tanh(a); } return s; }
+function gTanh(x){ const g=[0,0,0]; for(let k=0;k<4;k++){ let a=IG_b1[k]; for(let j=0;j<3;j++) a+=IG_W1[k][j]*x[j]; const h=Math.tanh(a); for(let j=0;j<3;j++) g[j]+=IG_W1[k][j]*IG_w2[k]*(1-h*h); } return g; }
+function fSat(x){ return 1-Math.max(0,1-x[0]-x[1]); }
+function gSat(x){ return (1-x[0]-x[1]>0)?[1,1]:[0,0]; }
+const IGMODELS={ tanh:{x:[1.0,-0.5,2.0], f:fTanh, g:gTanh, name:'tiny tanh network'}, sat:{x:[1.0,1.0], f:fSat, g:gSat, name:'saturated unit f = 1 - ReLU(1 - x1 - x2)'} };
+const IG={ model:'tanh', m:10, k:0, sum:null };
+const igTimer=makeTimer();
+function igReset(){ igTimer.stop(); const M=IGMODELS[IG.model]; IG.k=0; IG.sum=M.x.map(()=>0); igRender(); }
+function igStep(){ const M=IGMODELS[IG.model]; if(IG.k>=IG.m) return false; const a=(IG.k+0.5)/IG.m; const g=M.g(M.x.map(v=>a*v)); g.forEach((v,i)=>IG.sum[i]+=v); IG.k++; return true; }
+function igRender(){
+  const M=IGMODELS[IG.model], x=M.x, n=x.length;
+  const g=M.g(x), gx=g.map((v,i)=>v*x[i]);
+  const ig=IG.sum.map((s,i)=>x[i]*s/IG.m);
+  // full IG for scale
+  const full=x.map(()=>0); for(let j=0;j<IG.m;j++){ const a=(j+0.5)/IG.m; const gg=M.g(x.map(v=>a*v)); gg.forEach((v,i)=>full[i]+=x[i]*v/IG.m); }
+  let mx=0.05; [g,gx,full,ig].forEach(arr=>arr.forEach(v=>mx=Math.max(mx,Math.abs(v)))); mx*=1.15;
+  const sv=$('ig-bars'); sv.innerHTML='';
+  const oy=150, H=120, gw=420/n;
+  sv.appendChild(el('line',{x1:40,y1:oy,x2:470,y2:oy,stroke:'#9AA3AE'}));
+  sv.appendChild(el('text',{x:10,y:20,'font-size':12,fill:'#5B6572'},'attribution per input (same scale)'));
+  for(let i=0;i<n;i++){
+    const vals=[[g[i],'#D9636B'],[gx[i],'#D9A62E'],[ig[i],'#0F8B8D']];
+    vals.forEach(([v,c],b)=>{ const bw=gw/4.5, xx=50+i*gw+b*(bw+6); const h=v/mx*H;
+      sv.appendChild(el('rect',{x:xx,y:h>=0?oy-h:oy,width:bw,height:Math.max(0.5,Math.abs(h)),fill:c,rx:2}));
+      sv.appendChild(el('text',{x:xx+bw/2,y:h>=0?oy-h-5:oy-h+13,'text-anchor':'middle','font-size':10.5,fill:'#1B2430'},v.toFixed(3))); });
+    sv.appendChild(el('text',{x:50+i*gw+gw*0.33,y:290,'text-anchor':'middle','font-size':12,fill:'#5B6572'},'input '+(i+1)+' (x='+x[i]+')'));
+  }
+  // path plot
+  const sp=$('ig-path'); sp.innerHTML='';
+  const X0=40,X1=465,Y0=270,Y1=30; const pts=200; const curves=x.map(()=>[]);
+  let lo=0,hi=0; for(let p=0;p<=pts;p++){ const a=p/pts; const gg=M.g(x.map(v=>a*v)); gg.forEach((v,i)=>{ curves[i].push([a,v]); lo=Math.min(lo,v); hi=Math.max(hi,v); }); }
+  hi+=0.1*(hi-lo+0.1); lo-=0.1*(hi-lo+0.1);
+  const px=a=>X0+a*(X1-X0), py=v=>Y0-(v-lo)/(hi-lo)*(Y0-Y1);
+  sp.appendChild(el('rect',{x:X0,y:Y1,width:(X1-X0)*IG.k/IG.m,height:Y0-Y1,fill:'#E7EEF6'}));
+  sp.appendChild(el('line',{x1:X0,y1:py(0),x2:X1,y2:py(0),stroke:'#9AA3AE'}));
+  sp.appendChild(el('line',{x1:X0,y1:Y0,x2:X0,y2:Y1,stroke:'#9AA3AE'}));
+  const cols=['#5B4B95','#D9636B','#0F8B8D'];
+  curves.forEach((cv,i)=>{ sp.appendChild(el('path',{d:cv.map((q,j)=>(j?'L':'M')+px(q[0]).toFixed(1)+' '+py(q[1]).toFixed(1)).join(' '),fill:'none',stroke:cols[i],'stroke-width':2})); });
+  for(let j=0;j<IG.k && j<300;j++){ const a=(j+0.5)/IG.m; const gg=M.g(x.map(v=>a*v)); gg.forEach((v,i)=>sp.appendChild(el('circle',{cx:px(a),cy:py(v),r:IG.m>50?1.6:3,fill:cols[i]}))); }
+  sp.appendChild(el('text',{x:X0,y:292,'font-size':11,fill:'#5B6572'},'alpha = 0 (baseline)'));
+  sp.appendChild(el('text',{x:X1,y:292,'font-size':11,fill:'#5B6572','text-anchor':'end'},'alpha = 1 (the input)'));
+  x.forEach((_,i)=>sp.appendChild(el('text',{x:X0+8+i*95,y:20,'font-size':11.5,fill:cols[i]},'df/dx'+(i+1))));
+  const fx=M.f(x), f0=M.f(x.map(()=>0)), tot=fx-f0, s=ig.reduce((a,b)=>a+b,0);
+  $('ig-log').textContent=
+    'Model: '+M.name+'   f(x) = '+fx.toFixed(4)+'   f(0) = '+f0.toFixed(4)+'   target total f(x) - f(0) = '+tot.toFixed(6)+'\n'+
+    'gradient at x        : ['+g.map(f4).join(', ')+']\n'+
+    'gradient x input     : ['+gx.map(f4).join(', ')+']   sum = '+gx.reduce((a,b)=>a+b,0).toFixed(4)+'\n'+
+    'IG so far ('+IG.k+' of m = '+IG.m+' path points): ['+ig.map(f4).join(', ')+']   sum = '+s.toFixed(6)+'\n'+
+    (IG.k===IG.m ? 'Completeness check: |sum of IG - (f(x) - f(0))| = '+Math.abs(s-tot).toExponential(2)+(Math.abs(s-tot)<1e-3?'  (the receipts add up)':'  (too few steps: raise m)') : 'Press Step / Play / Jump to end to finish the walk.');
+}
+$('ig-tanh').onclick=e=>{ IG.model='tanh'; setActive([$('ig-tanh'),$('ig-sat')],e.target); igReset(); };
+$('ig-sat').onclick=e=>{ IG.model='sat'; setActive([$('ig-tanh'),$('ig-sat')],e.target); igReset(); };
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ IG.m=parseInt(b.dataset.m); setActive([...document.querySelectorAll('[data-m]')],b); igReset(); while(igStep()); igRender(); });
+$('ig-step').onclick=()=>{ igTimer.stop(); igStep(); igRender(); };
+$('ig-play').onclick=()=>{ if(igTimer.running()){ igTimer.stop(); return; } if(IG.k>=IG.m) igReset(); const per=Math.max(1,Math.round(IG.m/40)); igTimer.start(()=>{ let any=false; for(let i=0;i<per;i++) any=igStep()||any; igRender(); if(!any||IG.k>=IG.m) igTimer.stop(); }, 120); };
+$('ig-end').onclick=()=>{ igTimer.stop(); while(igStep()); igRender(); };
+$('ig-reset').onclick=()=>igReset();
+igReset();
+
+// =================== TAB 2: GRAD-CAM ===================
+const IMG=[...Array(8)].map(()=>Array(8).fill(0)); for(let r=1;r<7;r++) IMG[r][5]=1; for(let c=0;c<4;c++) IMG[5][c]=1;
+const FV=[[-1,2,-1],[-1,2,-1],[-1,2,-1]], FH=[[-1,-1,-1],[2,2,2],[-1,-1,-1]];
+const WC=[[1.0,-0.3],[-0.3,1.0]];
+const RF=(()=>{ const r=new Rng(11); return [0,1].map(()=>[0,1,2].map(()=>[0,1,2].map(()=>r.n()))); })();
+function conv(x,k){ const o=[]; for(let i=0;i<6;i++){ const row=[]; for(let j=0;j<6;j++){ let s=0; for(let a=0;a<3;a++) for(let b=0;b<3;b++) s+=x[i+a][j+b]*k[a][b]; row.push(s);} o.push(row);} return o; }
+function camModel(filters){ const pre=filters.map(f=>conv(IMG,f)); const A=pre.map(m=>m.map(r=>r.map(v=>Math.max(0,v)))); const gap=A.map(m=>m.flat().reduce((a,b)=>a+b,0)/36); const y=WC.map(w=>w[0]*gap[0]+w[1]*gap[1]); return {pre,A,gap,y}; }
+function camHeat(A,c){ const al=WC[c].map(w=>w/36); return {al, L:[...Array(6)].map((_,i)=>[...Array(6)].map((_,j)=>Math.max(0,al[0]*A[0][i][j]+al[1]*A[1][i][j])))}; }
+function massNear(L,c){ let tot=0,near=0; for(let i=0;i<6;i++) for(let j=0;j<6;j++){ const pr=i+1,pc=j+1; const inV=(pr>=1&&pr<=6&&pc>=4&&pc<=6), inH=(pr>=4&&pr<=6&&pc>=0&&pc<=3); tot+=L[i][j]; if(c===0?inV:inH) near+=L[i][j]; } return tot>0?near/tot:0; }
+function imGrad(filters,pre,c){ const G=[...Array(8)].map(()=>Array(8).fill(0)); filters.forEach((f,k)=>{ for(let i=0;i<6;i++) for(let j=0;j<6;j++) if(pre[k][i][j]>0) for(let a=0;a<3;a++) for(let b=0;b<3;b++) G[i+a][j+b]+=WC[c][k]/36*f[a][b]; }); return G; }
+function pearson(a,b){ const n=a.length; const ma=a.reduce((s,v)=>s+v,0)/n, mb=b.reduce((s,v)=>s+v,0)/n; let sab=0,saa=0,sbb=0; for(let i=0;i<n;i++){ sab+=(a[i]-ma)*(b[i]-mb); saa+=(a[i]-ma)**2; sbb+=(b[i]-mb)**2; } return sab/Math.sqrt(saa*sbb); }
+function drawGrid(svg,ox,oy,cell,M,title,colorFn,textFn,offset){
+  svg.appendChild(el('text',{x:ox,y:oy-10,'font-size':12.5,fill:'#1B2430','font-weight':600},title));
+  M.forEach((row,i)=>row.forEach((v,j)=>{ const x=ox+(j+(offset||0))*cell, y=oy+(i+(offset||0))*cell;
+    svg.appendChild(el('rect',{x,y,width:cell-1,height:cell-1,fill:colorFn(v,i,j)}));
+    const t=textFn?textFn(v,i,j):''; if(t!=='') svg.appendChild(el('text',{x:x+cell/2,y:y+cell/2+4,'text-anchor':'middle','font-size':cell>30?11:9,fill:'#1B2430'},t)); }));
+}
+function heatColor(v,mx){ const t=mx>0?Math.min(1,v/mx):0; const r=Math.round(255-t*(255-217)), g=Math.round(255-t*(255-99)), b=Math.round(255-t*(255-107)); return 'rgb('+r+','+g+','+b+')'; }
+function camRender(mode){
+  const random=mode==='r', c=(mode==='h')?1:0;
+  const filters=random?RF:[FV,FH];
+  const Mdl=camModel(filters), H=camHeat(Mdl.A,c);
+  const svg=$('cam-svg'); svg.innerHTML='';
+  const L36=H.L.map(r=>r.map(v=>v*36)); const mx=Math.max(1e-9,...L36.flat());
+  // image with heat overlay
+  svg.appendChild(el('text',{x:20,y:18,'font-size':12.5,fill:'#1B2430','font-weight':600},'image (dark = stroke) + heat overlay'));
+  for(let i=0;i<8;i++) for(let j=0;j<8;j++) svg.appendChild(el('rect',{x:20+j*27,y:40+i*27,width:26,height:26,fill:IMG[i][j]?'#1B2430':'#FFFFFF',stroke:'#D8DDE5'}));
+  for(let i=0;i<6;i++) for(let j=0;j<6;j++) if(L36[i][j]>0) svg.appendChild(el('rect',{x:20+(j+1)*27,y:40+(i+1)*27,width:26,height:26,fill:'#D9636B',opacity:(0.25+0.6*L36[i][j]/mx).toFixed(2)}));
+  const amx=Math.max(1e-9,...Mdl.A.flat(2));
+  drawGrid(svg,270,40,34,Mdl.A[0],random?'feature map A1 (random filter 1)':'feature map A_V (vertical filter)',v=>heatColor(v,amx),v=>v?(+v.toFixed(2)).toString():'');
+  drawGrid(svg,500,40,34,Mdl.A[1],random?'feature map A2 (random filter 2)':'feature map A_H (horizontal filter)',v=>heatColor(v,amx),v=>v?(+v.toFixed(2)).toString():'');
+  drawGrid(svg,740,40,34,L36,'Grad-CAM heatmap x36, class '+(c===0?'"vertical"':'"horizontal"'),v=>heatColor(v,mx),v=>v?(+v.toFixed(3)).toString():'0');
+  const G=imGrad(filters,Mdl.pre,c); let gOff=0,gTot=0,giOff=0,giTot=0; for(let i=0;i<8;i++) for(let j=0;j<8;j++){ const a=Math.abs(G[i][j]), b=Math.abs(G[i][j]*IMG[i][j]); gTot+=a; giTot+=b; if(!IMG[i][j]){ gOff+=a; giOff+=b; } }
+  let extra='';
+  if(random){ const T=camHeat(camModel([FV,FH]).A,0).L; extra='\nSanity check: correlation between this heatmap and the trained model\'s "vertical" heatmap = '+pearson(T.flat(),H.L.flat()).toFixed(3)+'  (the explanation changed because the model changed: Grad-CAM passes)'; }
+  $('cam-log').textContent=
+    'filters: '+(random?'random 3x3 (seeded)':'V = rows (-1, 2, -1), H = its transpose')+'\n'+
+    'map averages = ('+Mdl.gap.map(v=>v.toFixed(4)).join(', ')+')   scores: vertical = '+Mdl.y[0].toFixed(4)+', horizontal = '+Mdl.y[1].toFixed(4)+'\n'+
+    'alpha for class '+(c===0?'vertical':'horizontal')+' = ('+H.al.map(v=>v.toFixed(5)).join(', ')+')   [= class weights / 36]\n'+
+    (random?'':'share of heat on or next to the '+(c===0?'vertical':'horizontal')+' bar = '+(100*massNear(H.L,c)).toFixed(1)+'%\n')+
+    'plain gradient: '+(100*gOff/gTot).toFixed(1)+'% of its mass on background pixels;  gradient x input: '+(100*giOff/giTot).toFixed(1)+'% on background (it is 0 wherever the image is 0, for ANY model)'+extra;
+}
+const camBtns=[$('cam-v'),$('cam-h'),$('cam-r')];
+$('cam-v').onclick=e=>{ setActive(camBtns,e.target); camRender('v'); };
+$('cam-h').onclick=e=>{ setActive(camBtns,e.target); camRender('h'); };
+$('cam-r').onclick=e=>{ setActive(camBtns,e.target); camRender('r'); };
+camRender('v');
+
+// =================== TAB 3: LINEAR PROBE ===================
+const PR={ S:null, step:0, curve:[], checkpoints:{}, results:null };
+const prTimer=makeTimer();
+function prReset(){ prTimer.stop(); PR.S=probeData(1000,8); PR.step=0; PR.curve=[[0,taskAcc(PR.S)]]; PR.checkpoints={}; PR.results=null; prRender(); }
+function prAdvance(n){ for(let i=0;i<n && PR.step<2000;i++){ mlpStep(PR.S,1.0); PR.step++; if([1,100,500,1000,2000].includes(PR.step)) PR.checkpoints[PR.step]=taskAcc(PR.S); if(PR.step%20===0||PR.step===1) PR.curve.push([PR.step,taskAcc(PR.S)]); } }
+function prProbes(){ const S=PR.S; const sets=[['raw inputs',S.tr.X,S.te.X],['untrained hidden layer',hidden(S.tr.X,S.W10,S.b10),hidden(S.te.X,S.W10,S.b10)],['trained hidden layer (step '+PR.step+')',hidden(S.tr.X,S.W1,S.b1),hidden(S.te.X,S.W1,S.b1)]];
+  PR.results=sets.map(([nm,a,b])=>[nm,probe(a,S.tr.z,b,S.te.z,300,1.0),probe(a,S.tr.c,b,S.te.c,300,1.0)]);
+  const mz=S.te.z.reduce((a,b)=>a+b,0)/S.te.z.length, mc=S.te.c.reduce((a,b)=>a+b,0)/S.te.c.length; PR.base=[Math.max(mz,1-mz),Math.max(mc,1-mc)]; }
+function prRender(){
+  const sv=$('pr-curve'); sv.innerHTML=''; const X0=45,X1=465,Y0=260,Y1=30; const px=s=>X0+s/2000*(X1-X0), py=a=>Y0-(a-0.4)/0.6*(Y0-Y1);
+  [0.5,0.75,1.0].forEach(a=>{ sv.appendChild(el('line',{x1:X0,y1:py(a),x2:X1,y2:py(a),stroke:'#D8DDE5'})); sv.appendChild(el('text',{x:X0-6,y:py(a)+4,'text-anchor':'end','font-size':10.5,fill:'#5B6572'},a.toFixed(2))); });
+  sv.appendChild(el('path',{d:PR.curve.map((q,i)=>(i?'L':'M')+px(q[0]).toFixed(1)+' '+py(q[1]).toFixed(1)).join(' '),fill:'none',stroke:'#2F5D8A','stroke-width':2}));
+  sv.appendChild(el('text',{x:X0,y:18,'font-size':12,fill:'#1B2430'},'network test accuracy on z, step '+PR.step+' of 2,000'));
+  sv.appendChild(el('text',{x:X1,y:285,'font-size':11,fill:'#5B6572','text-anchor':'end'},'training step'));
+  const sb=$('pr-bars'); sb.innerHTML=''; sb.appendChild(el('text',{x:10,y:18,'font-size':12,fill:'#1B2430'},'probe test accuracy (dashed line = always guess the common answer)'));
+  const tb=$('pr-table');
+  if(PR.results){
+    const by=a=>270-(a-0.4)/0.6*220;
+    PR.results.forEach((r,i)=>{ [[r[1],'#0F8B8D'],[r[2],'#9AA3AE']].forEach(([v,c],b)=>{ const x=40+i*145+b*52; sb.appendChild(el('rect',{x,y:by(v),width:46,height:270-by(v),fill:c,rx:3})); sb.appendChild(el('text',{x:x+23,y:by(v)-5,'text-anchor':'middle','font-size':11,fill:'#1B2430'},v.toFixed(3))); });
+      sb.appendChild(el('text',{x:40+i*145+49,y:290,'text-anchor':'middle','font-size':10.5,fill:'#5B6572'},['raw input','untrained','trained'][i])); });
+    sb.appendChild(el('line',{x1:30,y1:by(PR.base[0]),x2:475,y2:by(PR.base[0]),stroke:'#D9636B','stroke-dasharray':'5 4'}));
+    sb.appendChild(el('rect',{x:300,y:30,width:10,height:10,fill:'#0F8B8D'})); sb.appendChild(el('text',{x:315,y:39,'font-size':11,fill:'#5B6572'},'z (planted)'));
+    sb.appendChild(el('rect',{x:390,y:30,width:10,height:10,fill:'#9AA3AE'})); sb.appendChild(el('text',{x:405,y:39,'font-size':11,fill:'#5B6572'},'c (control)'));
+    tb.innerHTML='<tr><th>probe trained on</th><th>detects z (planted)</th><th>detects c (control)</th></tr>'+PR.results.map(r=>'<tr><td>'+r[0]+'</td><td class="'+(r[1]>0.9?'good':'')+'">'+r[1].toFixed(3)+'</td><td>'+r[2].toFixed(3)+'</td></tr>').join('')+'<tr><td>always guess the common answer</td><td>'+PR.base[0].toFixed(3)+'</td><td>'+PR.base[1].toFixed(3)+'</td></tr>';
+  } else { tb.innerHTML='<tr><th>probe trained on</th><th>detects z (planted)</th><th>detects c (control)</th></tr><tr><td colspan="3">Press "Run the three probes" (or the one-click preset).</td></tr>'; }
+  const cp=Object.keys(PR.checkpoints).map(k=>'step '+k+': '+PR.checkpoints[k].toFixed(3)).join('   ');
+  $('pr-log').textContent='Network test accuracy on z: '+taskAcc(PR.S).toFixed(3)+' at step '+PR.step+'\nCheckpoints: '+(cp||'(none yet)');
+}
+$('pr-step').onclick=()=>{ prTimer.stop(); prAdvance(100); prRender(); };
+$('pr-play').onclick=()=>{ if(prTimer.running()){ prTimer.stop(); return; } prTimer.start(()=>{ prAdvance(20); prRender(); if(PR.step>=2000) prTimer.stop(); }, 40); };
+$('pr-end').onclick=()=>{ prTimer.stop(); prAdvance(2000); prRender(); };
+$('pr-reset').onclick=()=>prReset();
+$('pr-run').onclick=()=>{ prProbes(); prRender(); };
+$('pr-one').onclick=()=>{ prReset(); prAdvance(2000); prProbes(); prRender(); };
+prReset();
+
+// =================== TAB 4: SUPERPOSITION & SAE ===================
+const SAE={ S:null };
+const saeTimer=makeTimer();
+const SAECOLS=['#D9636B','#D9A62E','#0F8B8D','#5B4B95','#3D8B3D'];
+function saeReset(){ saeTimer.stop(); SAE.S=saeSetup(0.05,5); saeRender(); }
+function saeAdvance(n){ for(let i=0;i<n && SAE.S.t<1000;i++) saeStep(SAE.S,0.3,0.01); }
+function saeRender(){
+  const S=SAE.S, st=saeStats(S); const sv=$('sae-svg'); sv.innerHTML='';
+  const c=240, sc=190; const P=(x,y)=>[c+x*sc, c-y*sc];
+  sv.appendChild(el('line',{x1:20,y1:c,x2:460,y2:c,stroke:'#D8DDE5'})); sv.appendChild(el('line',{x1:c,y1:20,x2:c,y2:460,stroke:'#D8DDE5'}));
+  S.Hd.forEach(h=>{ if(h[0]!==0||h[1]!==0){ const [x,y]=P(h[0],h[1]); sv.appendChild(el('circle',{cx:x.toFixed(1),cy:y.toFixed(1),r:1.8,fill:'#5B6572',opacity:0.45})); } });
+  for(let i=0;i<5;i++){ const [x,y]=P(S.W[0][i]*1.1,S.W[1][i]*1.1); sv.appendChild(el('line',{x1:c,y1:c,x2:x,y2:y,stroke:'#9AA3AE','stroke-width':2,'stroke-dasharray':'6 4'})); const [tx,ty]=P(S.W[0][i]*1.2,S.W[1][i]*1.2); sv.appendChild(el('text',{x:tx,y:ty+4,'text-anchor':'middle','font-size':11,fill:'#5B6572'},'f'+(i+1))); }
+  S.Wd.forEach((w,k)=>{ const [x,y]=P(w[0],w[1]); sv.appendChild(el('line',{x1:c,y1:c,x2:x,y2:y,stroke:SAECOLS[k],'stroke-width':3})); sv.appendChild(el('circle',{cx:x,cy:y,r:5,fill:SAECOLS[k]})); });
+  sv.appendChild(el('text',{x:16,y:22,'font-size':12,fill:'#1B2430'},'SAE training step '+S.t+' of 1,000'));
+  const trueAng=[90,162,-126,-54,18];
+  let rows='<tr><th>true feature</th><th>direction</th><th>best learned cosine</th><th>angle error</th></tr>';
+  st.best.forEach((b,i)=>{ rows+='<tr><td>f'+(i+1)+'</td><td>'+trueAng[i]+'&deg;</td><td class="'+(b>0.99?'good':'bad')+'">'+b.toFixed(4)+'</td><td>'+(Math.acos(Math.min(1,b))*180/Math.PI).toFixed(1)+'&deg;</td></tr>'; });
+  $('sae-table').innerHTML=rows;
+  $('sae-log').textContent='step '+S.t+'\nreconstruction error = '+st.mse.toFixed(4)+'\naverage L1 (total latent activity) = '+st.l1.toFixed(4)+'\nlatents firing on single-feature samples = '+st.avgActiveSingle.toFixed(2)+' on average\nlearned directions: '+st.angles.map(a=>a.toFixed(1)+'°').join(', ')+
+    '\n\nWhy the raw neurons are polysemantic: neuron 1 weights on f1..f5 = '+S.W[0].map(v=>v.toFixed(3)).join(', ')+'\nneighbouring features overlap by cos 72° = 0.309; two apart by cos 144° = -0.809';
+}
+$('sae-step').onclick=()=>{ saeTimer.stop(); saeAdvance(10); saeRender(); };
+$('sae-play').onclick=()=>{ if(saeTimer.running()){ saeTimer.stop(); return; } if(SAE.S.t>=1000) saeReset(); saeTimer.start(()=>{ saeAdvance(10); saeRender(); if(SAE.S.t>=1000) saeTimer.stop(); }, 60); };
+$('sae-end').onclick=()=>{ saeTimer.stop(); saeAdvance(1000); saeRender(); };
+$('sae-reset').onclick=()=>saeReset();
+document.querySelectorAll('[data-sae]').forEach(b=>b.onclick=()=>{ saeReset(); saeAdvance(parseInt(b.dataset.sae)); saeRender(); });
+saeReset();
+
+// =================== TAB 5: PROBE vs PATCHING ===================
+function probe1(f,y,steps,lr){ const n=f.length; let mu=0; for(const v of f) mu+=v/n; let sd=0; for(const v of f) sd+=(v-mu)**2/n; sd=Math.sqrt(sd);
+  const a=f.map(v=>(v-mu)/sd); let w=0,b=0;
+  for(let s=0;s<steps;s++){ let gw=0,gb=0; for(let i=0;i<n;i++){ const d=(sig(w*a[i]+b)-y[i])/n; gw+=a[i]*d; gb+=d; } w-=lr*gw; b-=lr*gb; }
+  let c=0; for(let i=0;i<n;i++) if((sig(w*a[i]+b)>0.5)===(y[i]===1)) c++; return c/n; }
+const PT={ X:(()=>{ const r=new Rng(5), X=[]; for(let i=0;i<1000;i++) X.push([r.n(),r.n()]); return X; })(), probe:{}, mode:'none' };
+const hOf=x=>[x[0], 0.9*x[0]+0.44*x[1]], yOf=(h1,h2)=>sig(3*h1+0*h2);
+function ptRender(){
+  const clean=[1,0], corr=[-1,0], hc=hOf(clean), hx=hOf(corr), yc=yOf(hc[0],hc[1]), yx=yOf(hx[0],hx[1]);
+  let h=[hx[0],hx[1]]; if(PT.mode==='h1') h[0]=hc[0]; if(PT.mode==='h2') h[1]=hc[1];
+  const y=yOf(h[0],h[1]), rest=(y-yx)/(yc-yx);
+  const sv=$('pt-svg'); sv.innerHTML='';
+  const box=(x,yy,label,val,hl)=>{ sv.appendChild(el('rect',{x,y:yy,width:150,height:56,rx:10,fill:hl?'#FCE9EA':'#FFFFFF',stroke:hl?'#D9636B':'#9AA3AE','stroke-width':hl?2.5:1.5})); sv.appendChild(el('text',{x:x+75,y:yy+24,'text-anchor':'middle','font-size':13,fill:'#1B2430','font-weight':600},label)); sv.appendChild(el('text',{x:x+75,y:yy+44,'text-anchor':'middle','font-size':12,fill:'#2F5D8A'},val)); };
+  const arrow=(x1,y1,x2,y2,lab,dash)=>{ sv.appendChild(el('line',{x1,y1,x2,y2,stroke:'#5B6572','stroke-width':1.6,'stroke-dasharray':dash||''})); if(lab) sv.appendChild(el('text',{x:(x1+x2)/2,y:(y1+y2)/2-6,'text-anchor':'middle','font-size':11,fill:'#5B6572'},lab)); };
+  box(40,40,'x1','-1 (corrupted)'); box(40,160,'x2','0');
+  box(370,40,'h1 = x1',h[0].toFixed(2)+(PT.mode==='h1'?' (pasted from clean)':''),PT.mode==='h1');
+  box(370,160,'h2 = 0.9x1 + 0.44x2',h[1].toFixed(2)+(PT.mode==='h2'?' (pasted from clean)':''),PT.mode==='h2');
+  box(700,100,'y = sigmoid(3h1 + 0h2)',y.toFixed(4));
+  arrow(190,68,370,68,'1'); arrow(190,80,370,180,'0.9'); arrow(190,188,370,188,'0.44'); arrow(520,68,700,120,'3'); arrow(520,188,700,140,'0 (ignored)','5 4');
+  const pr=Object.keys(PT.probe).map(k=>'probe for "x1 > 0" on '+k+': accuracy '+PT.probe[k].toFixed(3)).join('\n');
+  $('pt-log').textContent='clean run (x = 1, 0): y = '+yc.toFixed(4)+'      corrupted run (x = -1, 0): y = '+yx.toFixed(4)+'\n'+
+    'current: '+(PT.mode==='none'?'corrupted run, no patch':'corrupted run with '+PT.mode+' pasted from the clean run')+'  ->  y = '+y.toFixed(4)+',  restored '+(100*rest).toFixed(0)+'% of the clean output\n'+(pr?'\n'+pr:'\n(press Probe h2 / Probe h1 to train a linear probe on 1,000 random inputs)');
+}
+const ptBtns=[$('pt-none'),$('pt-h2'),$('pt-h1')];
+$('pt-none').onclick=e=>{ PT.mode='none'; setActive(ptBtns,e.target); ptRender(); };
+$('pt-h2').onclick=e=>{ PT.mode='h2'; setActive(ptBtns,e.target); ptRender(); };
+$('pt-h1').onclick=e=>{ PT.mode='h1'; setActive(ptBtns,e.target); ptRender(); };
+const zPT=PT.X.map(x=>x[0]>0?1:0);
+$('pt-p2').onclick=()=>{ PT.probe['h2']=probe1(PT.X.map(x=>hOf(x)[1]),zPT,3000,2.0); ptRender(); };
+$('pt-p1').onclick=()=>{ PT.probe['h1']=probe1(PT.X.map(x=>hOf(x)[0]),zPT,3000,2.0); ptRender(); };
+ptRender();
+</script>
+</body>
+</html>

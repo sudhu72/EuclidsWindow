@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generative models, run live</title>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.55;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;}
+  h3{font-family:'Kalam',cursive;font-size:16px;margin:0 0 4px;font-weight:400;text-align:center;}
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op.play{border-color:var(--amber);color:var(--amber);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .row-label{width:100%;text-align:center;font-size:11.5px;color:var(--chalk-dim);margin-bottom:-4px;}
+  .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11.5px;color:var(--chalk-dim);margin:4px 0 10px;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .sw{width:18px;height:10px;display:inline-block;border-radius:2px;}
+  .plots{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;}
+  .plotcard{border:1px solid var(--border);border-radius:8px;padding:10px 8px 8px;min-width:0;}
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:6px auto;width:100%;height:auto;}
+  svg text{font-family:'JetBrains Mono',monospace;}
+  .formula{text-align:center;font-size:13px;margin:4px 0 14px;line-height:1.6;}
+  .formula b{color:var(--amber);}
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);} .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);} .metric.amber .num{color:var(--amber);} .metric.chalk .num{color:var(--chalk);}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;line-height:1.6;}
+  .story-line b{color:var(--chalk);}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:6px 7px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+  table.datatable tr.hl td{background:rgba(255,206,84,0.12);color:var(--amber);}
+  .ok{color:var(--green);} .bad{color:var(--coral);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Generative models, run live: VAE, GAN, diffusion</h1>
+  <p class="sub">Companion to <i>Generative Models — VAEs, GANs and Diffusion</i>. Each tab checks, live, the key math behind one family: the VAE's KL penalty and reparameterization trick, the GAN's optimal critic, diffusion's noise schedule, and a 1,000-step reverse diffusion run with the exact denoiser for a toy dataset. Every worked example is one click; randomness uses a fixed seed, so every run gives the same numbers.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="vae">1 · VAE</button>
+    <button class="tab-btn" data-tab="gan">2 · GAN</button>
+    <button class="tab-btn" data-tab="fwd">3 · Diffusion forward</button>
+    <button class="tab-btn" data-tab="rev">4 · Diffusion reverse</button>
+  </div>
+
+  <!-- ==================== TAB 1: VAE ==================== -->
+  <div class="tabpage active" id="tab-vae">
+    <div class="panel">
+      <h2>The KL penalty: how far is each code cloud from N(0, 1)?</h2>
+      <div class="formula">KL( N(μ, σ²) ‖ N(0, 1) ) = <b>½ (μ² + σ² − 1 − ln σ²)</b> &nbsp;&nbsp; Monte Carlo: average of ln q(z) − ln p(z) over 400,000 draws z ~ N(μ, σ²)</div>
+      <div class="row">
+        <div class="row-label">One-click worked examples (the tutorial's four rows)</div>
+        <button class="op vp" data-m="0" data-s="1">μ = 0, σ = 1</button>
+        <button class="op vp" data-m="1" data-s="1">μ = 1, σ = 1</button>
+        <button class="op vp" data-m="0" data-s="0.5">μ = 0, σ = 0.5</button>
+        <button class="op vp" data-m="2" data-s="0.3">μ = 2, σ = 0.3</button>
+        <button class="op play" id="vPlay">Play all four</button>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--blue)"></i>the target N(0, 1)</span>
+        <span><i class="sw" style="background:var(--amber)"></i>the encoder's cloud N(μ, σ²)</span>
+      </div>
+      <svg id="vSvg" viewBox="0 0 600 240" style="max-width:720px"></svg>
+      <div class="metric-row">
+        <div class="metric chalk"><div class="lbl">μ, σ</div><div class="num" id="vMS">—</div></div>
+        <div class="metric amber"><div class="lbl">KL by the formula</div><div class="num" id="vKL">—</div></div>
+        <div class="metric blue"><div class="lbl">Monte Carlo (400k, live)</div><div class="num" id="vMC">—</div></div>
+      </div>
+      <div class="story-line" id="vStory"></div>
+      <table class="datatable" id="vTable">
+        <tr><th>μ, σ</th><th>formula (live)</th><th>tutorial formula</th><th>Monte Carlo (live)</th><th>tutorial Monte Carlo</th><th>check</th></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <h2>The reparameterization trick: move the randomness outside</h2>
+      <div class="row">
+        <div class="row-label">One-click: draw one ε and push it through (μ = 1, σ = 0.5)</div>
+        <button class="op rp" data-e="0.8">ε = +0.8</button>
+        <button class="op rp" data-e="-1.5">ε = −1.5</button>
+        <button class="op rp" data-e="rand">Draw a random ε</button>
+      </div>
+      <svg id="rSvg" viewBox="0 0 640 250" style="max-width:760px"></svg>
+      <div class="story-line" id="rStory"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: GAN ==================== -->
+  <div class="tabpage" id="tab-gan">
+    <div class="panel">
+      <h2>The best possible critic, and the value of the game</h2>
+      <div class="formula">D*(x) = <b>p_data(x) / (p_data(x) + p_G(x))</b> &nbsp;&nbsp; V(D*, G) = ∫ p_data ln D* + p_G ln(1 − D*) dx = <b>−ln 4 + 2·JSD</b> &nbsp; (grid x ∈ [−8, 8], step 0.001)</div>
+      <div class="row">
+        <div class="row-label">One-click worked examples: real data N(0, 1), generator N(m, 1)</div>
+        <button class="op gp" data-m="3">m = 3 (far off)</button>
+        <button class="op gp" data-m="1">m = 1</button>
+        <button class="op gp" data-m="0">m = 0 (perfect)</button>
+        <button class="op play" id="gPlay">Play: generator improves</button>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--blue)"></i>real data p_data = N(0, 1)</span>
+        <span><i class="sw" style="background:var(--coral)"></i>generator p_G = N(m, 1)</span>
+        <span><i class="sw" style="background:var(--amber)"></i>D*(x) (right axis, 0 to 1)</span>
+      </div>
+      <svg id="gSvg" viewBox="0 0 600 250" style="max-width:720px"></svg>
+      <div class="metric-row">
+        <div class="metric chalk"><div class="lbl">generator mean m</div><div class="num" id="gM">—</div></div>
+        <div class="metric amber"><div class="lbl">V(D*, G), integrated</div><div class="num" id="gV">—</div></div>
+        <div class="metric blue"><div class="lbl">−ln 4 + 2·JSD</div><div class="num" id="gJ">—</div></div>
+        <div class="metric green"><div class="lbl">D* at x = 0</div><div class="num" id="gD">—</div></div>
+      </div>
+      <div class="story-line" id="gStory"></div>
+      <table class="datatable" id="gTable">
+        <tr><th>m</th><th>V(D*, G)</th><th>−ln 4 + 2·JSD</th><th>D*(0)</th><th>tutorial</th><th>check</th></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: DIFFUSION FORWARD ==================== -->
+  <div class="tabpage" id="tab-fwd">
+    <div class="panel">
+      <h2>Forward process: jump straight to any step</h2>
+      <div class="formula">x_t = <b>√ᾱ_t · x₀ + √(1 − ᾱ_t) · ε</b>, &nbsp; ᾱ_t = ∏(1 − β_s), &nbsp; β linear from 0.0001 to 0.02 over T = 1000 &nbsp; (same ε at every step)</div>
+      <div class="row">
+        <div class="row-label">One-click worked examples (the tutorial's six steps)</div>
+        <button class="op fp" data-t="1">t = 1</button>
+        <button class="op fp" data-t="100">t = 100</button>
+        <button class="op fp" data-t="250">t = 250</button>
+        <button class="op fp" data-t="500">t = 500</button>
+        <button class="op fp" data-t="750">t = 750</button>
+        <button class="op fp" data-t="1000">t = 1000</button>
+      </div>
+      <div class="row">
+        <button class="op play" id="fStep">Step &rarr;</button>
+        <button class="op play" id="fPlay">Play</button>
+        <button class="op play" id="fEnd">Jump to end</button>
+        <button class="op play" id="fCheck">Check the shortcut (simulate 500 steps one by one)</button>
+      </div>
+      <div class="plots">
+        <div class="plotcard"><h3>x₀ (clean)</h3><svg id="fX0" viewBox="0 0 200 200" style="max-width:240px"></svg></div>
+        <div class="plotcard"><h3 id="fTitle">x_t</h3><svg id="fXt" viewBox="0 0 200 200" style="max-width:240px"></svg></div>
+        <div class="plotcard"><h3>Signal kept vs noise added</h3><svg id="fBars" viewBox="0 0 300 200"></svg></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric chalk"><div class="lbl">step t</div><div class="num" id="fT">—</div></div>
+        <div class="metric green"><div class="lbl">signal √ᾱ_t</div><div class="num" id="fS">—</div></div>
+        <div class="metric coral"><div class="lbl">noise √(1 − ᾱ_t)</div><div class="num" id="fN">—</div></div>
+      </div>
+      <div class="story-line" id="fStory"></div>
+      <table class="datatable" id="fTable">
+        <tr><th>step t</th><th>√ᾱ_t (live)</th><th>√(1 − ᾱ_t) (live)</th><th>tutorial</th><th>check</th></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 4: DIFFUSION REVERSE ==================== -->
+  <div class="tabpage" id="tab-rev">
+    <div class="panel">
+      <h2>Reverse process: pure noise → the data, with the exact denoiser</h2>
+      <div class="formula">data: <b>−2 or +2</b> (50/50, spread 0.1). &nbsp; x̂₀ = E[x₀ | x_t] (exact for this mixture). &nbsp; x_{t−1} ~ N( <b>(√ᾱ_{t−1} β_t / (1 − ᾱ_t)) x̂₀ + (√(1 − β_t)(1 − ᾱ_{t−1}) / (1 − ᾱ_t)) x_t</b>, β_t (1 − ᾱ_{t−1}) / (1 − ᾱ_t) )</div>
+      <div class="row">
+        <div class="row-label">One-click: run 4,000 samples down to a checkpoint (from pure noise at t = 1000)</div>
+        <button class="op kp" data-t="1000">t = 1000</button>
+        <button class="op kp" data-t="750">t = 750</button>
+        <button class="op kp" data-t="500">t = 500</button>
+        <button class="op kp" data-t="250">t = 250</button>
+        <button class="op kp" data-t="100">t = 100</button>
+        <button class="op kp" data-t="0">t = 0</button>
+      </div>
+      <div class="row">
+        <button class="op play" id="kStep">Step to next checkpoint &rarr;</button>
+        <button class="op play" id="kPlay">Play all 1,000 steps</button>
+        <button class="op play" id="kEnd">Jump to end</button>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--blue)"></i>histogram of the 4,000 samples</span>
+        <span><i class="sw" style="background:var(--amber);height:3px"></i>exact density of x_t for this data</span>
+        <span><i class="sw" style="background:rgba(143,209,158,0.35)"></i>within 0.4 of −2 or +2</span>
+      </div>
+      <svg id="kSvg" viewBox="0 0 640 260" style="max-width:760px"></svg>
+      <div class="metric-row">
+        <div class="metric chalk"><div class="lbl">step t</div><div class="num" id="kT">—</div></div>
+        <div class="metric green"><div class="lbl">within 0.4 of ±2</div><div class="num" id="kW">—</div></div>
+        <div class="metric blue"><div class="lbl">split −2 / +2</div><div class="num" id="kSp">—</div></div>
+        <div class="metric amber"><div class="lbl">spread around each peak</div><div class="num" id="kSd">—</div></div>
+      </div>
+      <div class="story-line" id="kStory"></div>
+      <table class="datatable" id="kTable">
+        <tr><th>checkpoint t</th><th>within 0.4 of ±2</th><th>split −2 / +2</th><th>spread around each peak</th></tr>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <a href="../deep_learning/generative_models_vae_gan_diffusion_feynman.md">generative_models_vae_gan_diffusion_feynman.md</a> (Part 6). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+/*CORE*/
+const CORE = (function(){
+"use strict";
+function rng(seed){ let a=seed>>>0; return function(){ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; }
+function gauss(r){ let spare=null; return function(){ if(spare!==null){const s=spare; spare=null; return s;} let u=0; while(u===0) u=r(); const v=r(), m=Math.sqrt(-2*Math.log(u)); spare=m*Math.sin(2*Math.PI*v); return m*Math.cos(2*Math.PI*v); }; }
+const npdf=(x,m,s)=>Math.exp(-0.5*((x-m)/s)**2)/(s*Math.sqrt(2*Math.PI));
+// ---- VAE ----
+const klFormula=(m,s)=>0.5*(m*m+s*s-1-Math.log(s*s));
+function klMC(m,s,n,seed){ const g=gauss(rng(seed)); let sum=0; for(let i=0;i<n;i++){ const e=g(), z=m+s*e; sum+= -Math.log(s) - 0.5*e*e + 0.5*z*z; } return sum/n; }
+// ---- GAN ----
+function gan(m){
+const h=0.001, N=16000; let V=0, kl1=0, kl2=0;
+for(let i=0;i<=N;i++){
+const x=-8+i*h, w=(i===0||i===N)?0.5:1, p=npdf(x,0,1), q=npdf(x,m,1), d=p/(p+q), M=0.5*(p+q);
+V+=w*h*(p*Math.log(d)+q*Math.log(1-d)); kl1+=w*h*p*Math.log(p/M); kl2+=w*h*q*Math.log(q/M);
+}
+const jsd=0.5*kl1+0.5*kl2;
+return {V, viaJSD:-Math.log(4)+2*jsd, jsd, d0:npdf(0,0,1)/(npdf(0,0,1)+npdf(0,m,1))};
+}
+// ---- diffusion schedule ----
+const T=1000, beta=new Float64Array(T+1), ab=new Float64Array(T+1); ab[0]=1;
+for(let t=1;t<=T;t++){ beta[t]=1e-4+(0.02-1e-4)*(t-1)/(T-1); ab[t]=ab[t-1]*(1-beta[t]); }
+// forward shortcut check: n copies of x0 simulated step by step
+function fwdCheck(x0,steps,n,seed){ const g=gauss(rng(seed)); let s1=0,s2=0;
+for(let i=0;i<n;i++){ let x=x0; for(let t=1;t<=steps;t++) x=Math.sqrt(1-beta[t])*x+Math.sqrt(beta[t])*g(); s1+=x; s2+=x*x; }
+const mean=s1/n; return {mean, sd:Math.sqrt(s2/n-mean*mean), pMean:Math.sqrt(ab[steps])*x0, pSd:Math.sqrt(1-ab[steps])}; }
+// ---- reverse: exact denoiser for 0.5 N(-2,0.1^2) + 0.5 N(2,0.1^2) ----
+const MUS=[-2,2], S0=0.1;
+function denoise(x,a){ const sa=Math.sqrt(a), v=a*S0*S0+(1-a); let lw=[],pm=[];
+for(const mu of MUS){ const d=x-sa*mu; lw.push(-0.5*d*d/v); pm.push(mu+(sa*S0*S0/v)*d); }
+const mx=Math.max(lw[0],lw[1]), w0=Math.exp(lw[0]-mx), w1=Math.exp(lw[1]-mx); return (w0*pm[0]+w1*pm[1])/(w0+w1); }
+function makeRev(n,seed){ const g=gauss(rng(seed)), xs=new Float64Array(n); for(let i=0;i<n;i++) xs[i]=g(); return {xs,t:T,g}; }
+function revStep(st){ const t=st.t; if(t<=0) return; const a=ab[t], ap=ab[t-1], b=beta[t];
+const c0=Math.sqrt(ap)*b/(1-a), ct=Math.sqrt(1-b)*(1-ap)/(1-a), sd=Math.sqrt(b*(1-ap)/(1-a)), xs=st.xs;
+for(let i=0;i<xs.length;i++){ const x=xs[i], m=c0*denoise(x,a)+ct*x; xs[i]= t>1 ? m+sd*st.g() : m; }
+st.t=t-1; }
+function revStats(xs){ let near=0,pos=0,s=[0,0],s2=[0,0],c=[0,0];
+for(const x of xs){ if(Math.abs(x-2)<0.4||Math.abs(x+2)<0.4) near++; const k=x>0?1:0; if(k) pos++; c[k]++; s[k]+=x; s2[k]+=x*x; }
+let ss=0; for(let k=0;k<2;k++) if(c[k]) ss+=s2[k]-s[k]*s[k]/c[k];
+return {near:near/xs.length, neg:1-pos/xs.length, pos:pos/xs.length, sd:Math.sqrt(ss/xs.length)}; }
+return {rng,gauss,npdf,klFormula,klMC,gan,T,beta,ab,fwdCheck,denoise,makeRev,revStep,revStats};
+})();
+/*END CORE*/
+</script>
+<script>
+(function(){
+"use strict";
+const K=CORE, NS="http://www.w3.org/2000/svg";
+const C={chalk:"#f4f1e8",dim:"#7f8f83",amber:"#ffce54",coral:"#ff8266",green:"#8fd19e",blue:"#7fb3d5",grid:"rgba(244,241,232,0.10)",bg:"#16221c"};
+const $=id=>document.getElementById(id);
+const neg=s=>String(s).replace(/^-/,"−");
+const f=(x,d)=>neg((Math.abs(x)<0.5*Math.pow(10,-d)?0:x).toFixed(d));
+function el(tag,attrs,parent,text){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(text!==undefined) e.textContent=text; if(parent) parent.appendChild(e); return e; }
+function clear(s){ while(s.firstChild) s.removeChild(s.firstChild); }
+function setActive(sel,btn){ document.querySelectorAll(sel).forEach(b=>b.classList.toggle("active",b===btn)); }
+const timers=[]; function stopTimers(){ while(timers.length) clearTimeout(timers.pop()); }
+document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click",()=>{ stopTimers();
+document.querySelectorAll(".tab-btn").forEach(x=>x.classList.toggle("active",x===b));
+document.querySelectorAll(".tabpage").forEach(p=>p.classList.toggle("active",p.id==="tab-"+b.dataset.tab)); }));
+function playSeq(btns,ms){ stopTimers(); btns.forEach((b,i)=>timers.push(setTimeout(()=>b.click(),i*ms))); }
+function axes(svg,W,H,L,R,T,B,X,Y,xs,ys,xlab){
+ys.forEach(v=>{ el("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:C.grid},svg); el("text",{x:L-6,y:Y(v)+4,"text-anchor":"end","font-size":10,fill:C.dim},svg,String(v)); });
+xs.forEach(v=>{ el("line",{x1:X(v),x2:X(v),y1:T,y2:H-B,stroke:C.grid},svg); el("text",{x:X(v),y:H-B+14,"text-anchor":"middle","font-size":10,fill:C.dim},svg,neg(v)); });
+if(xlab) el("text",{x:(L+W-R)/2,y:H-5,"text-anchor":"middle","font-size":10.5,fill:C.dim},svg,xlab);
+}
+function curve(svg,fn,x0,x1,X,Y,attrs){ let d=""; for(let i=0;i<=400;i++){ const x=x0+(x1-x0)*i/400; d+=(i?"L":"M")+X(x).toFixed(1)+","+Y(fn(x)).toFixed(1); } return el("path",Object.assign({d,fill:"none"},attrs),svg); }
+
+// ================= VAE =================
+const VROWS=[{m:0,s:1,tf:"0.0000",tm:"0.0000"},{m:1,s:1,tf:"0.5000",tm:"0.5019"},{m:0,s:0.5,tf:"0.3181",tm:"0.3185"},{m:2,s:0.3,tf:"2.7490",tm:"2.7498"}];
+const mcCache={};
+const mc=(m,s)=>{ const k=m+","+s; if(!(k in mcCache)) mcCache[k]=K.klMC(m,s,400000,12345); return mcCache[k]; };
+function vTable(idx){ const t=$("vTable"); while(t.rows.length>1) t.deleteRow(1);
+VROWS.forEach((r,i)=>{ const kf=f(K.klFormula(r.m,r.s),4), km=f(mc(r.m,r.s),4), ok=kf===r.tf && Math.abs(+km-+r.tm)<0.01;
+const tr=t.insertRow(); if(i===idx) tr.className="hl";
+tr.innerHTML=`<td>${r.m}, ${r.s}</td><td>${kf}</td><td>${r.tf}</td><td>${km}</td><td>${r.tm}</td><td class="${ok?"ok":"bad"}">${ok?"✓ matches":"✗ mismatch"}</td>`; }); }
+document.querySelectorAll(".vp").forEach((btn,i)=>btn.addEventListener("click",()=>{
+setActive(".vp",btn); const m=+btn.dataset.m, s=+btn.dataset.s, kl=K.klFormula(m,s), est=mc(m,s);
+const svg=$("vSvg"); clear(svg); const W=600,H=240,L=40,R=14,T=14,B=34;
+const X=x=>L+(x+4)/8*(W-L-R), Y=y=>T+(1-y/1.4)*(H-T-B);
+axes(svg,W,H,L,R,T,B,X,Y,[-4,-3,-2,-1,0,1,2,3,4],[0,0.4,0.8,1.2],"code value z");
+curve(svg,x=>K.npdf(x,0,1),-4,4,X,Y,{stroke:C.blue,"stroke-width":2.5});
+const p=curve(svg,x=>Math.min(K.npdf(x,m,s),1.4),-4,4,X,Y,{stroke:C.amber,"stroke-width":2.5}); if(m===0&&s===1) p.setAttribute("stroke-dasharray","7 5");
+el("text",{x:W-R-6,y:T+16,"text-anchor":"end","font-size":13,fill:C.amber,"font-weight":700},svg,`KL = ${f(kl,4)}`);
+el("text",{x:L+8,y:T+16,"font-size":11.5,fill:C.chalk},svg,`N(${m}, ${s}²) vs N(0, 1)`);
+$("vMS").textContent=`${m}, ${s}`; $("vKL").textContent=f(kl,4); $("vMC").textContent=f(est,4);
+const st=[
+`The cloud <b>already is</b> N(0, 1) (dashed amber on top of blue), so there is nothing to penalize: KL = <b>0.0000</b>. Monte Carlo agrees exactly, since ln q(z) − ln p(z) is 0 for every draw.`,
+`Same width, shifted by 1: the penalty is ½μ² = <b>0.5000</b>. Moving a cloud away from the centre costs its squared distance, halved.`,
+`Centred but too narrow (σ = 0.5): ½(0.25 − 1 − ln 0.25) = <b>${f(kl,4)}</b>. A cloud that shrinks toward a single point (an ordinary autoencoder's code) is penalized, so codes keep some spread.`,
+`Off-centre <b>and</b> narrow: ½(4 + 0.09 − 1 − ln 0.09) = <b>${f(kl,4)}</b>. This is the code a plain autoencoder would like, and the KL term pulls it back toward the shared bell curve.`];
+$("vStory").innerHTML=st[i]+` Live Monte Carlo (400,000 seeded draws): <b>${f(est,4)}</b>; the tutorial's run gave ${VROWS[i].tm}.`;
+vTable(i); }));
+$("vPlay").addEventListener("click",()=>playSeq([...document.querySelectorAll(".vp")],2200));
+
+// reparameterization diagram
+const rr=K.gauss(K.rng(777));
+function box(svg,x,y,w,h,col,lines,dash){ el("rect",{x,y,width:w,height:h,rx:8,fill:"rgba(244,241,232,0.03)",stroke:col,"stroke-width":1.6,"stroke-dasharray":dash||""},svg);
+lines.forEach((t,i)=>el("text",{x:x+w/2,y:y+h/2+5+(i-(lines.length-1)/2)*15,"text-anchor":"middle","font-size":11.5,fill:i?C.dim:C.chalk},svg,t)); }
+function arrow(svg,x1,y1,x2,y2,col,lab){ el("line",{x1,y1,x2,y2,stroke:col,"stroke-width":1.8},svg);
+const a=Math.atan2(y2-y1,x2-x1); el("path",{d:`M${x2},${y2}L${x2-8*Math.cos(a-0.4)},${y2-8*Math.sin(a-0.4)}L${x2-8*Math.cos(a+0.4)},${y2-8*Math.sin(a+0.4)}Z`,fill:col},svg);
+if(lab) el("text",{x:(x1+x2)/2,y:(y1+y2)/2+15,"text-anchor":"middle","font-size":10.5,fill:col},svg,lab); }
+function rDraw(e){ const svg=$("rSvg"); clear(svg); const mu=1, s=0.5, z=mu+s*e;
+el("text",{x:10,y:18,"font-size":12,fill:C.coral,"font-weight":700},svg,"Before: sample inside the network");
+box(svg,10,30,120,50,C.chalk,["encoder","outputs μ, σ"]); box(svg,200,30,180,50,C.coral,["z ~ N(μ, σ²)","random draw: no slope"],"5 4"); box(svg,450,30,120,50,C.chalk,["decoder","reconstructs x"]);
+arrow(svg,130,55,198,55,C.chalk); arrow(svg,380,55,448,55,C.chalk);
+arrow(svg,448,92,132,92,C.coral,"✗ gradient blocked at the random draw");
+el("text",{x:10,y:136,"font-size":12,fill:C.green,"font-weight":700},svg,"After: z = μ + σ·ε, with ε ~ N(0, 1) drawn outside");
+box(svg,10,150,120,50,C.chalk,["encoder",`μ = ${mu}, σ = ${s}`]); box(svg,250,150,160,50,C.green,[`z = μ + σ·ε = ${f(z,3)}`,"ordinary arithmetic"]); box(svg,490,150,120,50,C.chalk,["decoder","reconstructs x"]);
+box(svg,250,212,160,32,C.amber,[`ε = ${f(e,3)} (outside)`]);
+arrow(svg,130,175,248,175,C.chalk); arrow(svg,410,175,488,175,C.chalk); arrow(svg,330,212,330,202,C.amber);
+el("text",{x:190,y:220,"text-anchor":"middle","font-size":10.5,fill:C.green},svg,"∂z/∂μ = 1");
+el("text",{x:190,y:236,"text-anchor":"middle","font-size":10.5,fill:C.green},svg,`∂z/∂σ = ε = ${f(e,3)}`);
+el("text",{x:550,y:222,"text-anchor":"middle","font-size":10.5,fill:C.green},svg,"✓ gradient flows back");
+el("text",{x:550,y:236,"text-anchor":"middle","font-size":10.5,fill:C.green},svg,"to μ and σ");
+$("rStory").innerHTML=`With ε = <b>${f(e,3)}</b>: z = 1 + 0.5 × ${f(e,3)} = <b>${f(z,3)}</b>. Nudge μ by 0.01 and z moves by exactly 0.01 (∂z/∂μ = <b>1</b>); nudge σ by 0.01 and z moves by ${f(0.01*e,4)} (∂z/∂σ = ε = <b>${f(e,3)}</b>). z still has the distribution N(μ, σ²), but now backprop can pass through it.`; }
+document.querySelectorAll(".rp").forEach(btn=>btn.addEventListener("click",()=>{ setActive(".rp",btn); rDraw(btn.dataset.e==="rand"?rr():+btn.dataset.e); }));
+
+// ================= GAN =================
+const GROWS=[{m:3,v:"−0.3327",d:"0.989"},{m:1,v:"−1.1635",d:"0.622"},{m:0,v:"−1.3863",d:"0.500"}];
+const gCache={}; const gan=m=>gCache[m]||(gCache[m]=K.gan(m));
+function gTable(idx){ const t=$("gTable"); while(t.rows.length>1) t.deleteRow(1);
+GROWS.forEach((r,i)=>{ const g=gan(r.m), ok=f(g.V,4)===r.v && f(g.viaJSD,4)===r.v && f(g.d0,3)===r.d;
+const tr=t.insertRow(); if(i===idx) tr.className="hl";
+tr.innerHTML=`<td>${r.m}</td><td>${f(g.V,4)}</td><td>${f(g.viaJSD,4)}</td><td>${f(g.d0,3)}</td><td>${r.v}, D*(0) = ${r.d}</td><td class="${ok?"ok":"bad"}">${ok?"✓ matches":"✗ mismatch"}</td>`; }); }
+document.querySelectorAll(".gp").forEach((btn,i)=>btn.addEventListener("click",()=>{
+setActive(".gp",btn); const m=+btn.dataset.m, g=gan(m);
+const svg=$("gSvg"); clear(svg); const W=600,H=250,L=40,R=40,T=14,B=34;
+const X=x=>L+(x+4)/11*(W-L-R), Y=y=>T+(1-y/0.45)*(H-T-B), YD=d=>T+(1-d)*(H-T-B);
+axes(svg,W,H,L,R,T,B,X,Y,[-4,-2,0,2,4,6],[0,0.1,0.2,0.3,0.4],"x");
+[0,0.5,1].forEach(d=>el("text",{x:W-R+6,y:YD(d)+4,"font-size":10,fill:C.amber},svg,d.toFixed(1)));
+el("line",{x1:L,x2:W-R,y1:YD(0.5),y2:YD(0.5),stroke:C.amber,"stroke-dasharray":"3 4",opacity:0.5},svg);
+curve(svg,x=>K.npdf(x,0,1),-4,7,X,Y,{stroke:C.blue,"stroke-width":2.5});
+curve(svg,x=>K.npdf(x,m,1),-4,7,X,Y,{stroke:C.coral,"stroke-width":2.5,"stroke-dasharray":m===0?"7 5":""});
+curve(svg,x=>{const p=K.npdf(x,0,1),q=K.npdf(x,m,1);return p/(p+q);},-4,7,X,YD,{stroke:C.amber,"stroke-width":2.5});
+el("circle",{cx:X(0),cy:YD(g.d0),r:5.5,fill:C.amber,stroke:C.bg,"stroke-width":2},svg);
+el("text",{x:X(0)+9,y:YD(g.d0)-8,"font-size":11.5,fill:C.chalk,"font-weight":700},svg,`D*(0) = ${f(g.d0,3)}`);
+$("gM").textContent=m; $("gV").textContent=f(g.V,4); $("gJ").textContent=f(g.viaJSD,4); $("gD").textContent=f(g.d0,3);
+const st=[`The generator is far off (mean 3). Where real data lives, the critic is almost sure: D*(0) = <b>${f(g.d0,3)}</b>. JSD = ${f(g.jsd,4)}, so V = −1.3863 + 2 × ${f(g.jsd,4)} = <b>${f(g.V,4)}</b>, well above −ln 4.`,
+`Closer (mean 1): the curves overlap, so the critic is less sure, D*(0) = <b>${f(g.d0,3)}</b>, and V drops to <b>${f(g.V,4)}</b> (JSD = ${f(g.jsd,4)}).`,
+`Perfect: the generator <b>is</b> the data (dashed coral on top of blue). D*(x) = <b>0.5 everywhere</b>, a coin flip, JSD = 0, and V = <b>${f(g.V,4)} = −ln 4</b>, the lowest the generator can push it.`];
+$("gStory").innerHTML=st[i]; gTable(i); }));
+$("gPlay").addEventListener("click",()=>playSeq([...document.querySelectorAll(".gp")],2400));
+
+// ================= DIFFUSION FORWARD =================
+const FT=[1,100,250,500,750,1000], FDOC={1:["0.9999","0.010"],100:["0.947","0.321"],250:["0.724","0.690"],500:["0.280","0.960"],750:["0.058","0.998"],1000:["0.006","1.000"]};
+const sab=t=>Math.sqrt(K.ab[t]), snz=t=>Math.sqrt(1-K.ab[t]), fmtS=(t,v)=>t===1?f(v,4):f(v,3);
+const X0=[], EPS=[]; { const g=K.gauss(K.rng(2024));
+for(let r=0;r<16;r++) for(let c=0;c<16;c++){ const dx=c-7.5, dy=r-7.5, d=Math.hypot(dx,dy);
+let v=d<7.2?1:-1; if((r===5||r===6)&&(c===5||c===10)) v=-1; if(r===10&&c>=5&&c<=10) v=-1; if(r===9&&(c===4||c===11)) v=-1;
+X0.push(v); EPS.push(g()); } }
+function grid(svg,vals){ clear(svg); vals.forEach((v,i)=>{ const g=Math.max(0,Math.min(1,(v+1.6)/3.2)), c=Math.round(20+g*225);
+el("rect",{x:(i%16)*12.5,y:Math.floor(i/16)*12.5,width:12.5,height:12.5,fill:`rgb(${c},${Math.round(c*0.97)},${Math.round(c*0.9)})`},svg); }); }
+grid($("fX0"),X0);
+function fTable(t){ const tb=$("fTable"); while(tb.rows.length>1) tb.deleteRow(1);
+FT.forEach(s=>{ const a=fmtS(s,sab(s)), b=f(snz(s),3), ok=a===FDOC[s][0]&&b===FDOC[s][1]; const tr=tb.insertRow(); if(s===t) tr.className="hl";
+tr.innerHTML=`<td>${s}</td><td>${a}</td><td>${b}</td><td>${FDOC[s][0]}, ${FDOC[s][1]}</td><td class="${ok?"ok":"bad"}">${ok?"✓ matches":"✗ mismatch"}</td>`; }); }
+let fCur=0;
+function fShow(t){ fCur=FT.indexOf(t); setActive(".fp",document.querySelectorAll(".fp")[fCur]);
+const a=sab(t), n=snz(t); grid($("fXt"),X0.map((x,i)=>a*x+n*EPS[i])); $("fTitle").textContent=`x_t at t = ${t}`;
+const svg=$("fBars"); clear(svg); const L=20, W=260;
+[[`signal √ᾱ = ${fmtS(t,a)}`,a,C.green,40],[`noise √(1−ᾱ) = ${f(n,3)}`,n,C.coral,120]].forEach(([lab,v,c,y])=>{
+el("text",{x:L,y:y-8,"font-size":12,fill:c,"font-weight":700},svg,lab);
+el("rect",{x:L,y,width:W,height:24,rx:3,fill:"rgba(244,241,232,0.06)"},svg);
+el("rect",{x:L,y,width:Math.max(W*v,1),height:24,rx:3,fill:c,opacity:0.85},svg); });
+el("text",{x:L,y:186,"font-size":10.5,fill:C.dim},svg,`variances add to 1: ${f(K.ab[t],4)} + ${f(1-K.ab[t],4)}`);
+$("fT").textContent=t; $("fS").textContent=fmtS(t,a); $("fN").textContent=f(n,3);
+const st={1:"Step 1: almost untouched. The noise amplitude is only 0.010.",100:"Step 100: the face is clearly visible but grainy; a third of the amplitude is noise.",
+250:"Step 250: signal and noise are about equal (0.724 vs 0.690). You can still make out the face.",500:"Step 500: only 28% of the original amplitude survives; the face is barely visible.",
+750:"Step 750: 5.8% signal. To the eye, this is static.",1000:"Step 1000: 0.6% signal. Essentially pure noise, N(0, 1): this is where sampling starts."};
+$("fStory").innerHTML=`<b>${st[t]}</b> One formula, no simulation of the steps before.`; fTable(t); }
+document.querySelectorAll(".fp").forEach(btn=>btn.addEventListener("click",()=>fShow(+btn.dataset.t)));
+$("fStep").addEventListener("click",()=>{ stopTimers(); fShow(FT[(fCur+1)%FT.length]); });
+$("fPlay").addEventListener("click",()=>playSeq([...document.querySelectorAll(".fp")],1600));
+$("fEnd").addEventListener("click",()=>{ stopTimers(); fShow(1000); });
+$("fCheck").addEventListener("click",()=>{ const r=K.fwdCheck(2,500,50000,1);
+$("fStory").innerHTML=`<b>Shortcut check:</b> 50,000 copies of x₀ = 2, noised one step at a time for 500 steps, ended with mean <b>${f(r.mean,4)}</b> and spread <b>${f(r.sd,4)}</b>. The formula predicts √ᾱ₅₀₀ × 2 = <b>${f(r.pMean,4)}</b> and √(1 − ᾱ₅₀₀) = <b>${f(r.pSd,4)}</b>. (Tutorial, 200,000 copies: 0.5630 and 0.9604.)`; });
+
+// ================= DIFFUSION REVERSE =================
+const KP=[1000,750,500,250,100,0], NS_=4000; let st=null, rows={};
+function kReset(){ st=K.makeRev(NS_,4242); rows={1000:K.revStats(st.xs)}; }
+function kDraw(){ const svg=$("kSvg"); clear(svg); const W=640,H=260,L=44,R=14,T=14,B=34, lo=-3.5, hi=3.5, bw=0.1, nb=70;
+const cnt=new Array(nb).fill(0); for(const x of st.xs){ const b=Math.floor((x-lo)/bw); if(b>=0&&b<nb) cnt[b]++; }
+const a=K.ab[st.t], dens=x=>0.5*(K.npdf(x,-2*Math.sqrt(a),Math.sqrt(a*0.01+1-a))+K.npdf(x,2*Math.sqrt(a),Math.sqrt(a*0.01+1-a)));
+const hd=cnt.map(c=>c/(NS_*bw)); let ymax=Math.max(...hd, dens(2*Math.sqrt(a)), dens(0))*1.1;
+const X=x=>L+(x-lo)/(hi-lo)*(W-L-R), Y=y=>T+(1-y/ymax)*(H-T-B);
+[[-2.4,-1.6],[1.6,2.4]].forEach(([u,v])=>el("rect",{x:X(u),y:T,width:X(v)-X(u),height:H-T-B,fill:"rgba(143,209,158,0.13)"},svg));
+const yt=[]; const step=ymax>2?0.5:ymax>0.8?0.2:0.1; for(let y=0;y<ymax;y+=step) yt.push(+y.toFixed(1));
+axes(svg,W,H,L,R,T,B,X,Y,[-3,-2,-1,0,1,2,3],yt,"x (density)");
+hd.forEach((h,b)=>{ if(h>0) el("rect",{x:X(lo+b*bw)+0.5,y:Y(h),width:X(lo+bw)-X(lo)-1,height:Y(0)-Y(h),fill:C.blue,opacity:0.8},svg); });
+curve(svg,dens,lo,hi,X,Y,{stroke:C.amber,"stroke-width":2.2});
+el("text",{x:W-R-6,y:T+16,"text-anchor":"end","font-size":13,fill:C.chalk,"font-weight":700},svg,`t = ${st.t}`);
+const s=K.revStats(st.xs); $("kT").textContent=st.t; $("kW").textContent=(100*s.near).toFixed(1)+"%";
+$("kSp").textContent=`${(100*s.neg).toFixed(1)}% / ${(100-(100*s.neg).toFixed(1)).toFixed(1)}%`; $("kSd").textContent=s.sd.toFixed(3);
+if(KP.includes(st.t)) rows[st.t]=s; const tb=$("kTable"); while(tb.rows.length>1) tb.deleteRow(1);
+KP.forEach(t=>{ const r=rows[t], tr=tb.insertRow(); if(t===st.t) tr.className="hl";
+tr.innerHTML=r?`<td>${t}</td><td>${(100*r.near).toFixed(1)}%</td><td>${(100*r.neg).toFixed(1)}% / ${(100-(100*r.neg).toFixed(1)).toFixed(1)}%</td><td>${r.sd.toFixed(3)}</td>`:`<td>${t}</td><td colspan="3" style="color:var(--chalk-dim)">not reached yet</td>`; });
+const msg = st.t===1000 ? `<b>Pure noise</b>: 4,000 draws from N(0, 1). Only <b>${(100*s.near).toFixed(1)}%</b> sit within 0.4 of −2 or +2 (tutorial, 20,000 samples: 9.7%).`
+: st.t===0 ? `<b>Done.</b> <b>${(100*s.near).toFixed(1)}%</b> within 0.4 of ±2, split <b>${(100*s.neg).toFixed(1)}% / ${(100-(100*s.neg).toFixed(1)).toFixed(1)}%</b>, spread <b>${s.sd.toFixed(3)}</b> around each peak. Tutorial (20,000 samples): 100%, 51% / 49%, 0.097. The data: 50/50 with spread 0.1.`
+: `Step ${st.t}: each sample took small steps toward the denoiser's guess x̂₀, plus a little fresh noise. The histogram tracks the exact density of x_t (amber) as the two peaks emerge.`;
+$("kStory").innerHTML=msg; KP.forEach((t,i)=>document.querySelectorAll(".kp")[i].classList.toggle("active",t===st.t)); }
+function runTo(target){ if(!st||st.t<target) kReset(); while(st.t>target){ K.revStep(st); if(KP.includes(st.t)) rows[st.t]=K.revStats(st.xs); } kDraw(); }
+document.querySelectorAll(".kp").forEach(btn=>btn.addEventListener("click",()=>{ stopTimers(); runTo(+btn.dataset.t); }));
+$("kStep").addEventListener("click",()=>{ stopTimers(); const nx=KP.find(t=>t<st.t); runTo(nx===undefined?1000:nx); });
+$("kEnd").addEventListener("click",()=>{ stopTimers(); runTo(0); });
+$("kPlay").addEventListener("click",()=>{ stopTimers(); kReset(); kDraw();
+const tick=()=>{ for(let i=0;i<20&&st.t>0;i++){ K.revStep(st); if(KP.includes(st.t)) break; } kDraw(); if(st.t>0) timers.push(setTimeout(tick, KP.includes(st.t)?700:40)); };
+timers.push(setTimeout(tick,500)); });
+
+// ---------- initial states ----------
+document.querySelector(".vp").click(); document.querySelector(".rp").click(); document.querySelector(".gp").click();
+fShow(1); kReset(); kDraw();
+})();
+</script>
+</body>
+</html>

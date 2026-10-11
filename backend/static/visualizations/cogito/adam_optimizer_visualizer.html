@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adam Optimizer, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12px; color:var(--ink-soft); min-width:170px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:56px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.8; white-space:pre-line; }
+  table.rt{ border-collapse:collapse; width:100%; font-size:13px; margin-top:8px; }
+  table.rt td, table.rt th{ border:1px solid var(--line); padding:7px 10px; text-align:left; background:#fff; }
+  table.rt th{ background:var(--accent-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); }
+  table.rt td.win{ color:var(--c1); font-weight:700; } table.rt td.lose{ color:var(--c3); font-weight:700; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:8px; font-size:12px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px; margin-top:24px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion visualizer</div>
+    <h1>Adam Optimizer, Made Visible</h1>
+    <p>Four tabs, each reproducing a verified worked example from <b>The Adam Optimizer — The Feynman Way</b>: SGD, Momentum, and Adam racing on an elongated bowl (drag the learning rate past SGD's stability limit and watch it explode while Adam stays put), Nesterov's look-ahead momentum braking before it overshoots, AdaGrad's step size shrinking forever while RMSprop's settles, and the bias-correction fix that stops early training steps from being artificially tiny.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="race">SGD vs. Momentum vs. Adam</button>
+    <button class="tab" data-tab="nag">Nesterov vs. Momentum</button>
+    <button class="tab" data-tab="ada">AdaGrad vs. RMSprop</button>
+    <button class="tab" data-tab="bias">Bias Correction</button>
+  </div>
+
+  <!-- TAB 1: RACE -->
+  <div class="panel active" id="panel-race">
+    <div class="card">
+      <h2>Racing on L(x,y) = x&sup2; + 10y&sup2;</h2>
+      <p class="sub">Steep in y, gentle in x. Part 0's verified fact: plain SGD's stability boundary for y is exactly <span class="formula">lr = 0.1</span>. Drag the learning rate past it and watch SGD's path explode while Adam (and, less dramatically, Momentum) stay bounded.</p>
+      <div class="row">
+        <label>Learning rate</label>
+        <input type="range" id="lr" min="0.01" max="0.5" step="0.005" value="0.09">
+        <span class="readout" id="lr-r">0.090</span>
+      </div>
+      <div class="row">
+        <label>Steps</label>
+        <input type="range" id="steps" min="5" max="60" step="1" value="30">
+        <span class="readout" id="steps-r">30</span>
+      </div>
+      <svg id="racesvg" viewBox="0 0 480 300"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:#D9636B"></span> SGD</span>
+        <span><span class="dot" style="background:#D9A62E"></span> Momentum</span>
+        <span><span class="dot" style="background:#0F8B8D"></span> Adam</span>
+      </div>
+      <div class="steplog" id="race-readout"></div>
+    </div>
+  </div>
+
+  <!-- TAB: NESTEROV -->
+  <div class="panel" id="panel-nag">
+    <div class="card">
+      <h2>Look before you leap: Nesterov vs. classical momentum</h2>
+      <p class="sub">Part 1b. Same update <span class="formula">m = &beta;m + (1&minus;&beta;)g, w = w &minus; lr&middot;m</span>; Nesterov measures <span class="formula">g</span> at the look-ahead point <span class="formula">w &minus; lr&middot;&beta;&middot;m</span>. Start (5, 5); "done" = within 0.01 of the minimum.</p>
+      <div class="row">
+        <button class="op active" id="nag-p1">Part 0 bowl x&sup2;+10y&sup2; (lr 0.09, &beta; 0.9)</button>
+        <button class="op" id="nag-p2">Ill-conditioned bowl &frac12;x&sup2;+50y&sup2;, &kappa; = 100 (lr 0.1, &beta; 0.9)</button>
+      </div>
+      <div class="row">
+        <button class="op" id="nag-step">Step</button><button class="op" id="nag-play">Play</button><button class="op" id="nag-end">Jump to end</button><button class="op" id="nag-reset">Reset</button>
+      </div>
+      <svg id="nag-path" viewBox="0 0 480 300"></svg>
+      <svg id="nag-y" viewBox="0 0 480 220" style="margin-top:10px"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:#D9A62E"></span> classical momentum</span>
+        <span><span class="dot" style="background:#5B4B95"></span> Nesterov</span>
+        <span><span class="dot" style="background:#D9636B"></span> plain GD, same effective step lr&middot;(1&minus;&beta;) (&kappa; = 100 preset)</span>
+      </div>
+      <div class="steplog" id="nag-log"></div>
+    </div>
+  </div>
+
+  <!-- TAB: ADAGRAD -->
+  <div class="panel" id="panel-ada">
+    <div class="card">
+      <h2>AdaGrad's step size can only shrink; RMSprop's settles</h2>
+      <p class="sub">Part 2. AdaGrad: <span class="formula">G = G + g&sup2;</span> (a total). RMSprop: <span class="formula">v = &beta;v + (1&minus;&beta;)g&sup2;</span> (a fading average). Both step <span class="formula">lr&middot;g/&radic;(&middot;)</span>.</p>
+      <div class="row">
+        <button class="op active" id="ada-p1">Constant gradient g = 1, lr 0.1 (RMSprop &beta; = 0.9)</button>
+        <button class="op" id="ada-p2">Part 0 bowl, lr 0.09 (RMSprop &beta; = 0.999)</button>
+        <button class="op" id="ada-p3">Far start (500, 500), lr 1.0 (RMSprop &beta; = 0.999)</button>
+      </div>
+      <div class="row">
+        <button class="op" id="ada-step">Step</button><button class="op" id="ada-play">Play</button><button class="op" id="ada-end">Jump to end</button><button class="op" id="ada-reset">Reset</button>
+      </div>
+      <svg id="ada-svg" viewBox="0 0 480 300"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:#D9636B"></span> AdaGrad</span>
+        <span><span class="dot" style="background:#0F8B8D"></span> RMSprop</span>
+      </div>
+      <div class="steplog" id="ada-log"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: BIAS CORRECTION -->
+  <div class="panel" id="panel-bias">
+    <div class="card">
+      <h2>Why the first few steps need correcting</h2>
+      <p class="sub">A constant true gradient of <span class="formula">g = 20</span>, &beta;&#8321; = 0.9. The raw running average <span class="formula">m</span> badly underestimates it early on; <span class="formula">m&#770; = m/(1-&beta;&#8321;<sup>t</sup>)</span> corrects it exactly, every single step.</p>
+      <div class="row">
+        <label>&beta;&#8321; (momentum decay)</label>
+        <input type="range" id="beta1" min="0.5" max="0.99" step="0.01" value="0.9">
+        <span class="readout" id="beta1-r">0.90</span>
+      </div>
+      <div class="row">
+        <label>True gradient g</label>
+        <input type="range" id="gtrue" min="1" max="50" step="1" value="20">
+        <span class="readout" id="gtrue-r">20</span>
+      </div>
+      <table class="rt" id="biastable"></table>
+      <div class="caption">At every step, the corrected estimate exactly equals the true gradient — verified, not approximated, for a constant gradient.</div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>The Adam Optimizer — The Feynman Way</b> (<code>../deep_learning/adam_optimizer_feynman.md</code>). All defaults reproduce the tutorial's own Python-verified worked examples exactly.
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+const svgNS='http://www.w3.org/2000/svg';
+function el(tag,attrs){ const e=document.createElementNS(svgNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+// ---------- TAB 1: RACE ----------
+function grad(pos){ return [2*pos[0], 20*pos[1]]; }
+
+function runSGD(lr, n){
+  let pos=[5.0,5.0]; const traj=[pos.slice()];
+  for(let i=0;i<n;i++){
+    const g=grad(pos);
+    pos=[pos[0]-lr*g[0], pos[1]-lr*g[1]];
+    if(Math.abs(pos[0])>1e4||Math.abs(pos[1])>1e4){ traj.push(pos.slice()); break; }
+    traj.push(pos.slice());
+  }
+  return traj;
+}
+function runMomentum(lr, n, beta1=0.9){
+  let pos=[5.0,5.0], m=[0,0]; const traj=[pos.slice()];
+  for(let i=0;i<n;i++){
+    const g=grad(pos);
+    m=[beta1*m[0]+(1-beta1)*g[0], beta1*m[1]+(1-beta1)*g[1]];
+    pos=[pos[0]-lr*m[0], pos[1]-lr*m[1]];
+    if(Math.abs(pos[0])>1e4||Math.abs(pos[1])>1e4){ traj.push(pos.slice()); break; }
+    traj.push(pos.slice());
+  }
+  return traj;
+}
+function runAdam(lr, n, beta1=0.9, beta2=0.999, eps=1e-8){
+  let pos=[5.0,5.0], m=[0,0], v=[0,0]; const traj=[pos.slice()];
+  for(let t=1;t<=n;t++){
+    const g=grad(pos);
+    m=[beta1*m[0]+(1-beta1)*g[0], beta1*m[1]+(1-beta1)*g[1]];
+    v=[beta2*v[0]+(1-beta2)*g[0]*g[0], beta2*v[1]+(1-beta2)*g[1]*g[1]];
+    const mhat=[m[0]/(1-Math.pow(beta1,t)), m[1]/(1-Math.pow(beta1,t))];
+    const vhat=[v[0]/(1-Math.pow(beta2,t)), v[1]/(1-Math.pow(beta2,t))];
+    pos=[pos[0]-lr*mhat[0]/(Math.sqrt(vhat[0])+eps), pos[1]-lr*mhat[1]/(Math.sqrt(vhat[1])+eps)];
+    if(Math.abs(pos[0])>1e4||Math.abs(pos[1])>1e4){ traj.push(pos.slice()); break; }
+    traj.push(pos.slice());
+  }
+  return traj;
+}
+
+function renderRace(){
+  const lr=parseFloat(document.getElementById('lr').value);
+  const steps=parseInt(document.getElementById('steps').value);
+  document.getElementById('lr-r').textContent=lr.toFixed(3);
+  document.getElementById('steps-r').textContent=steps;
+
+  const sgd=runSGD(lr,steps);
+  const mom=runMomentum(lr,steps);
+  const adam=runAdam(lr,steps);
+
+  const svg=document.getElementById('racesvg'); svg.innerHTML='';
+  const scale=25, ox=240, oy=150;
+  svg.appendChild(el('line',{x1:0,y1:oy,x2:480,y2:oy,stroke:'#D9E0DE'}));
+  svg.appendChild(el('line',{x1:ox,y1:0,x2:ox,y2:300,stroke:'#D9E0DE'}));
+  svg.appendChild(el('circle',{cx:ox,cy:oy,r:5,fill:'#1B2430'}));
+
+  function clampPt(p){
+    const x=ox+p[0]*scale, y=oy-p[1]*scale;
+    return [Math.max(-40,Math.min(520,x)), Math.max(-40,Math.min(340,y))];
+  }
+  function drawPath(traj,color){
+    let d='';
+    traj.forEach((p,i)=>{
+      const [x,y]=clampPt(p);
+      d += (i===0?'M ':'L ')+x+' '+y+' ';
+    });
+    svg.appendChild(el('path',{d:d.trim(), fill:'none', stroke:color, 'stroke-width':2, opacity:0.85}));
+    const last=clampPt(traj[traj.length-1]);
+    svg.appendChild(el('circle',{cx:last[0],cy:last[1],r:5,fill:color}));
+  }
+  drawPath(sgd,'#D9636B');
+  drawPath(mom,'#D9A62E');
+  drawPath(adam,'#0F8B8D');
+
+  function finalNorm(traj){
+    const p=traj[traj.length-1];
+    return Math.sqrt(p[0]*p[0]+p[1]*p[1]);
+  }
+  function status(traj){
+    const n=finalNorm(traj);
+    if(!isFinite(n) || n>1000) return 'DIVERGED';
+    if(n<0.05) return 'converged';
+    return 'in progress ('+n.toFixed(3)+')';
+  }
+  document.getElementById('race-readout').textContent =
+    'lr = '+lr.toFixed(3)+'  (SGD stability boundary for y: lr < 0.1)\n'+
+    'SGD final:      '+sgd[sgd.length-1].map(v=>v.toFixed(3))+'  -> '+status(sgd)+'\n'+
+    'Momentum final:  '+mom[mom.length-1].map(v=>v.toFixed(3))+'  -> '+status(mom)+'\n'+
+    'Adam final:      '+adam[adam.length-1].map(v=>v.toFixed(3))+'  -> '+status(adam);
+}
+['lr','steps'].forEach(id=>document.getElementById(id).addEventListener('input', renderRace));
+renderRace();
+
+
+// ---------- TAB: NESTEROV vs MOMENTUM ----------
+const NAGP={ p1:{a:2,b:20,lr:0.09,beta:0.9,gd:false,maxT:120,scale:25}, p2:{a:1,b:100,lr:0.1,beta:0.9,gd:true,maxT:650,scale:25} };
+const NAG={ key:'p1', t:0, timer:null };
+function nagGrad(P,p){ return [P.a*p[0], P.b*p[1]]; }
+function nagRun(P,nest,lr,beta,n){ let p=[5,5], m=[0,0]; const tr=[p.slice()]; let done=null;
+  for(let t=1;t<=n;t++){ const q=nest?[p[0]-lr*beta*m[0], p[1]-lr*beta*m[1]]:p; const g=nagGrad(P,q);
+    m=[beta*m[0]+(1-beta)*g[0], beta*m[1]+(1-beta)*g[1]]; p=[p[0]-lr*m[0], p[1]-lr*m[1]]; tr.push(p.slice());
+    if(done===null && Math.hypot(p[0],p[1])<0.01) done=t; }
+  return {tr,done}; }
+function nagRender(){
+  const P=NAGP[NAG.key];
+  const mom=nagRun(P,false,P.lr,P.beta,P.maxT), nag=nagRun(P,true,P.lr,P.beta,P.maxT);
+  const gd=P.gd? nagRun(P,false,P.lr*(1-P.beta),0,P.maxT) : null;
+  const t=NAG.t;
+  const svg=document.getElementById('nag-path'); svg.innerHTML='';
+  const sc=P.scale, ox=240, oy=150;
+  svg.appendChild(el('line',{x1:0,y1:oy,x2:480,y2:oy,stroke:'#D9E0DE'})); svg.appendChild(el('line',{x1:ox,y1:0,x2:ox,y2:300,stroke:'#D9E0DE'}));
+  svg.appendChild(el('circle',{cx:ox,cy:oy,r:5,fill:'#1B2430'}));
+  function path(tr,color){ const pts=tr.slice(0,t+1); if(!pts.length) return; svg.appendChild(el('path',{d:pts.map((p,i)=>(i?'L ':'M ')+(ox+p[0]*sc).toFixed(1)+' '+(oy-p[1]*sc).toFixed(1)).join(' '),fill:'none',stroke:color,'stroke-width':2})); const l=pts[pts.length-1]; svg.appendChild(el('circle',{cx:ox+l[0]*sc,cy:oy-l[1]*sc,r:5,fill:color})); }
+  if(gd) path(gd.tr,'#D9636B'); path(mom.tr,'#D9A62E'); path(nag.tr,'#5B4B95');
+  svg.appendChild(el('text',{x:8,y:16,'font-size':11,fill:'#5B6572'},'paths in the (x, y) plane, step '+t));
+  // y vs step
+  const sy=document.getElementById('nag-y'); sy.innerHTML='';
+  const N=NAG.key==='p1'?100:130, X0=40,X1=470,Y0=200,Y1=15; const px=k=>X0+k/N*(X1-X0), py=v=>Y0-(v+5)/10*(Y0-Y1);
+  sy.appendChild(el('line',{x1:X0,y1:py(0),x2:X1,y2:py(0),stroke:'#D9E0DE'}));
+  [-5,0,5].forEach(v=>sy.appendChild(el('text',{x:X0-6,y:py(v)+4,'text-anchor':'end','font-size':10,fill:'#5B6572'},String(v))));
+  function yl(tr,color){ const pts=tr.slice(0,Math.min(t,N)+1); sy.appendChild(el('path',{d:pts.map((p,i)=>(i?'L ':'M ')+px(i).toFixed(1)+' '+py(Math.max(-5,Math.min(5,p[1]))).toFixed(1)).join(' '),fill:'none',stroke:color,'stroke-width':2})); }
+  yl(mom.tr,'#D9A62E'); yl(nag.tr,'#5B4B95');
+  sy.appendChild(el('text',{x:X0+4,y:12,'font-size':11,fill:'#5B6572'},'y-coordinate (the steep direction) against step, first '+N+' steps'));
+  const minY=tr=>Math.min(...tr.map(p=>p[1]));
+  const f=v=>v.toFixed(3);
+  const cur=(tr)=>tr[Math.min(t,tr.length-1)];
+  document.getElementById('nag-log').textContent=
+    'step '+t+'   momentum at ('+cur(mom.tr).map(f)+')   Nesterov at ('+cur(nag.tr).map(f)+')\n'+
+    'steps to reach within 0.01:  momentum '+mom.done+',  Nesterov '+nag.done+(gd?',  plain GD (step 0.01) '+gd.done:'')+'\n'+
+    'worst overshoot of y:  momentum '+f(minY(mom.tr))+',  Nesterov '+(Math.abs(minY(nag.tr))<1e-9?minY(nag.tr).toExponential(1):f(minY(nag.tr)))+
+    (NAG.key==='p1'?'\nfirst 12 y values (momentum): '+mom.tr.slice(0,12).map(p=>p[1].toFixed(3)).join(', ')+'\nfirst 12 y values (Nesterov): '+nag.tr.slice(0,12).map(p=>p[1].toFixed(3)).join(', '):'');
+}
+function nagStop(){ if(NAG.timer){ clearInterval(NAG.timer); NAG.timer=null; } }
+function nagEndT(){ const P=NAGP[NAG.key]; const a=nagRun(P,false,P.lr,P.beta,P.maxT).done, b=nagRun(P,true,P.lr,P.beta,P.maxT).done; let c=0; if(P.gd) c=nagRun(P,false,P.lr*(1-P.beta),0,P.maxT).done; return Math.max(a,b,c); }
+function nagPreset(k,btn){ nagStop(); NAG.key=k; NAG.t=0; ['nag-p1','nag-p2'].forEach(id=>document.getElementById(id).classList.remove('active')); btn.classList.add('active'); nagRender(); }
+document.getElementById('nag-p1').addEventListener('click',e=>nagPreset('p1',e.target));
+document.getElementById('nag-p2').addEventListener('click',e=>nagPreset('p2',e.target));
+document.getElementById('nag-step').addEventListener('click',()=>{ nagStop(); NAG.t=Math.min(nagEndT(),NAG.t+1); nagRender(); });
+document.getElementById('nag-play').addEventListener('click',()=>{ if(NAG.timer){ nagStop(); return; } const end=nagEndT(); if(NAG.t>=end) NAG.t=0; NAG.timer=setInterval(()=>{ NAG.t=Math.min(end,NAG.t+(NAG.key==='p2'&&NAG.t>130?10:1)); nagRender(); if(NAG.t>=end) nagStop(); },80); });
+document.getElementById('nag-end').addEventListener('click',()=>{ nagStop(); NAG.t=nagEndT(); nagRender(); });
+document.getElementById('nag-reset').addEventListener('click',()=>{ nagStop(); NAG.t=0; nagRender(); });
+nagRender();
+
+// ---------- TAB: ADAGRAD vs RMSPROP ----------
+const ADAP={ p1:{kind:'const',lr:0.1,beta:0.9,maxT:1000}, p2:{kind:'bowl',lr:0.09,beta:0.999,maxT:300,start:[5,5]}, p3:{kind:'bowl',lr:1.0,beta:0.999,maxT:3000,start:[500,500]} };
+const ADA={ key:'p1', t:0, timer:null };
+function adaConst(P,n){ let G=0,v=0,d1=0,d2=0; const s1=[],s2=[],D1=[],D2=[]; for(let t=1;t<=n;t++){ G+=1; v=P.beta*v+(1-P.beta)*1; const a=P.lr/Math.sqrt(G), b=P.lr/Math.sqrt(v); d1+=a; d2+=b; s1.push(a); s2.push(b); D1.push(d1); D2.push(d2); } return {s1,s2,D1,D2}; }
+function adaBowl(P,kind,n){ let p=P.start.slice(), s=[0,0]; const tr=[p.slice()]; let done=null; for(let t=1;t<=n;t++){ const g=[2*p[0],20*p[1]]; for(let j=0;j<2;j++){ s[j]= kind==='ada' ? s[j]+g[j]*g[j] : P.beta*s[j]+(1-P.beta)*g[j]*g[j]; p[j]=p[j]-P.lr*g[j]/(Math.sqrt(s[j])+1e-8); } tr.push(p.slice()); if(done===null && Math.hypot(p[0],p[1])<0.01) done=t; } return {tr,done}; }
+function adaRender(){
+  const P=ADAP[ADA.key], t=ADA.t, svg=document.getElementById('ada-svg'); svg.innerHTML='';
+  const X0=50,X1=470,Y0=270,Y1=25;
+  let log='';
+  if(P.kind==='const'){
+    const R=adaConst(P,P.maxT); const px=k=>X0+Math.log10(k)/3*(X1-X0), py=v=>Y0-Math.log10(v/0.002)/Math.log10(5/0.002)*(Y0-Y1);
+    [0.003,0.01,0.03,0.1,0.3,1,3].forEach(v=>{ svg.appendChild(el('line',{x1:X0,y1:py(v),x2:X1,y2:py(v),stroke:'#EEF0EE'})); svg.appendChild(el('text',{x:X0-6,y:py(v)+4,'text-anchor':'end','font-size':10,fill:'#5B6572'},String(v))); });
+    [1,10,100,1000].forEach(k=>svg.appendChild(el('text',{x:px(k),y:Y0+16,'text-anchor':'middle','font-size':10,fill:'#5B6572'},String(k))));
+    const line=(arr,c)=>{ if(t<1) return; svg.appendChild(el('path',{d:arr.slice(0,t).map((v,i)=>(i?'L ':'M ')+px(i+1).toFixed(1)+' '+py(v).toFixed(1)).join(' '),fill:'none',stroke:c,'stroke-width':2.2})); };
+    line(R.s1,'#D9636B'); line(R.s2,'#0F8B8D');
+    svg.appendChild(el('text',{x:X0,y:16,'font-size':11,fill:'#5B6572'},'step size at each step (log-log axes), constant gradient g = 1'));
+    const k=Math.max(1,t)-1;
+    log='step '+t+'\nAdaGrad step size lr/sqrt(G) = '+(t?R.s1[k].toFixed(5):'-')+'   total distance = '+(t?R.D1[k].toFixed(3):'0')+'\nRMSprop step size lr/sqrt(v) = '+(t?R.s2[k].toFixed(5):'-')+'   total distance = '+(t?R.D2[k].toFixed(3):'0')+
+      '\ncheckpoints: '+[1,10,100,1000].filter(c=>c<=t).map(c=>'t='+c+': AdaGrad '+R.s1[c-1].toFixed(4)+' / dist '+R.D1[c-1].toFixed(2)+';  RMSprop '+R.s2[c-1].toFixed(4)+' / dist '+R.D2[c-1].toFixed(2)).join('\n             ');
+  } else {
+    const A=adaBowl(P,'ada',P.maxT), R=adaBowl(P,'rms',P.maxT); const big=P.start[0]>100; const sc=big?0.42:25, ox=big?30:240, oy=big?240:150;
+    svg.appendChild(el('line',{x1:0,y1:oy,x2:480,y2:oy,stroke:'#D9E0DE'})); svg.appendChild(el('line',{x1:ox,y1:0,x2:ox,y2:300,stroke:'#D9E0DE'})); svg.appendChild(el('circle',{cx:ox,cy:oy,r:5,fill:'#1B2430'}));
+    const path=(tr,c)=>{ const pts=tr.slice(0,t+1); svg.appendChild(el('path',{d:pts.map((p,i)=>(i?'L ':'M ')+Math.max(-40,Math.min(520,ox+p[0]*sc)).toFixed(1)+' '+Math.max(-40,Math.min(340,oy-p[1]*sc)).toFixed(1)).join(' '),fill:'none',stroke:c,'stroke-width':2})); const l=pts[pts.length-1]; svg.appendChild(el('circle',{cx:Math.max(-40,Math.min(520,ox+l[0]*sc)),cy:Math.max(-40,Math.min(340,oy-l[1]*sc)),r:5,fill:c})); };
+    path(A.tr,'#D9636B'); path(R.tr,'#0F8B8D');
+    svg.appendChild(el('text',{x:8,y:16,'font-size':11,fill:'#5B6572'},'paths on L = x² + 10y² from ('+P.start.join(', ')+'), step '+t));
+    const f=p=>'('+p.map(v=>v.toFixed(Math.abs(v)>10?2:4)).join(', ')+')';
+    log='step '+t+'   AdaGrad at '+f(A.tr[t])+'   RMSprop at '+f(R.tr[t])+'\nsteps to reach within 0.01:  AdaGrad '+(A.done===null?'not within '+P.maxT:A.done)+',  RMSprop '+R.done;
+  }
+  document.getElementById('ada-log').textContent=log;
+}
+function adaStop(){ if(ADA.timer){ clearInterval(ADA.timer); ADA.timer=null; } }
+function adaPreset(k,btn){ adaStop(); ADA.key=k; ADA.t=0; ['ada-p1','ada-p2','ada-p3'].forEach(id=>document.getElementById(id).classList.remove('active')); btn.classList.add('active'); adaRender(); }
+['p1','p2','p3'].forEach(k=>document.getElementById('ada-'+k).addEventListener('click',e=>adaPreset(k,e.target)));
+function adaInc(){ const P=ADAP[ADA.key]; return P.kind==='const' ? (ADA.t<10?1:(ADA.t<100?5:50)) : (P.maxT>1000?50:(ADA.t<20?1:5)); }
+document.getElementById('ada-step').addEventListener('click',()=>{ adaStop(); ADA.t=Math.min(ADAP[ADA.key].maxT,ADA.t+adaInc()); adaRender(); });
+document.getElementById('ada-play').addEventListener('click',()=>{ if(ADA.timer){ adaStop(); return; } if(ADA.t>=ADAP[ADA.key].maxT) ADA.t=0; ADA.timer=setInterval(()=>{ ADA.t=Math.min(ADAP[ADA.key].maxT,ADA.t+adaInc()); adaRender(); if(ADA.t>=ADAP[ADA.key].maxT) adaStop(); },80); });
+document.getElementById('ada-end').addEventListener('click',()=>{ adaStop(); ADA.t=ADAP[ADA.key].maxT; adaRender(); });
+document.getElementById('ada-reset').addEventListener('click',()=>{ adaStop(); ADA.t=0; adaRender(); });
+adaRender();
+// ---------- TAB 2: BIAS CORRECTION ----------
+function renderBias(){
+  const beta1=parseFloat(document.getElementById('beta1').value);
+  const gtrue=parseFloat(document.getElementById('gtrue').value);
+  document.getElementById('beta1-r').textContent=beta1.toFixed(2);
+  document.getElementById('gtrue-r').textContent=gtrue.toFixed(0);
+
+  const tbl=document.getElementById('biastable');
+  tbl.innerHTML='';
+  const header=document.createElement('tr');
+  ['t','m (raw, biased)','m&#770; (corrected)','true gradient'].forEach(h=>{
+    const th=document.createElement('th'); th.innerHTML=h; header.appendChild(th);
+  });
+  tbl.appendChild(header);
+  let m=0;
+  for(let t=1;t<=6;t++){
+    m = beta1*m + (1-beta1)*gtrue;
+    const mhat = m/(1-Math.pow(beta1,t));
+    const tr=document.createElement('tr');
+    const cells=[t, m.toFixed(4), mhat.toFixed(4), gtrue.toFixed(4)];
+    cells.forEach((c,i)=>{
+      const td=document.createElement('td'); td.textContent=c;
+      if(i===2) td.classList.add('win');
+      tr.appendChild(td);
+    });
+    tbl.appendChild(tr);
+  }
+}
+['beta1','gtrue'].forEach(id=>document.getElementById(id).addEventListener('input', renderBias));
+renderBias();
+</script>
+</body>
+</html>

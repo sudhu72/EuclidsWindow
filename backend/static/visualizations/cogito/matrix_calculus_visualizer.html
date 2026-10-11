@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matrix Calculus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; min-width:0; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  h3{ font-family:"Fraunces", serif; font-size:16px; font-weight:600; margin:0 0 8px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .sub code, .caption code, .stat code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  .caption{ font-size:13.5px; color:var(--ink); margin-top:12px; line-height:1.6; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .presetlabel{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:4px 0 8px; }
+  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .layout > .plot{ flex:1 1 400px; min-width:0; }
+  .layout > .side{ flex:1 1 280px; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  svg text{ font-family:"IBM Plex Mono", monospace; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; overflow-wrap:anywhere; }
+  .stat .k{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; display:block; }
+  .stat b{ color:var(--accent); }
+  .ok{ color:var(--good); } .bad{ color:var(--bad); }
+  .test{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .test:last-child{ border-bottom:none; }
+  .test .mark{ font-family:"IBM Plex Mono",monospace; font-weight:600; width:18px; flex-shrink:0; }
+  .test.ok .mark{ color:var(--good); } .test.bad .mark{ color:var(--bad); }
+  .test > div:last-child{ min-width:0; overflow-wrap:anywhere; }
+  .test .detail{ font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  .verdict{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin-top:12px; }
+  .verdict.ok{ color:var(--good); } .verdict.bad{ color:var(--bad); }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .legend span::before{ content:""; display:inline-block; width:12px; height:3px; margin-right:6px; vertical-align:middle; background:currentColor; }
+  .steplog{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.85; min-height:120px; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .steplog .hd{ color:var(--accent); font-weight:600; }
+  /* matrices */
+  .mv{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-family:"IBM Plex Mono",monospace; font-size:13.5px; margin:8px 0; }
+  .mblock{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .mlabel{ font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-soft); }
+  .mat{ display:grid; gap:3px 10px; padding:6px 9px; border-left:2px solid var(--ink); border-right:2px solid var(--ink); border-radius:4px; }
+  .mat div{ text-align:right; padding:1px 4px; border-radius:4px; transition:background .25s; white-space:nowrap; }
+  .hl{ background:#FCEFC8; } .hlb{ background:#D6F0EF; } .hlr{ background:#F6DAD8; }
+  .badge{ display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; background:var(--accent-soft); color:var(--accent); border:1px solid #D8D0F0; border-radius:20px; padding:1px 8px; margin-left:4px; white-space:nowrap; }
+  .formula{ font-family:"Fraunces",serif; font-size:21px; font-weight:600; margin:0 0 4px; }
+  .formula small{ font-family:"Inter",sans-serif; font-size:13px; font-weight:500; color:var(--ink-soft); display:block; margin-top:2px; }
+  .grid4{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:12px; }
+  .opbox{ background:#F5F4F0; border-radius:10px; padding:10px 12px; border:2px solid transparent; transition:border-color .25s, opacity .25s; min-width:0; }
+  .opbox.on{ border-color:var(--c2); }
+  .opbox.dim{ opacity:.35; }
+  .opbox .t{ font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); margin-bottom:6px; overflow-wrap:anywhere; }
+  .hm{ display:grid; grid-template-columns:repeat(2, 1fr); gap:3px; font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .hm div{ text-align:center; padding:5px 2px; border-radius:5px; }
+  .sumrow{ display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; margin-top:14px; }
+  .sumrow > div{ flex:1 1 260px; min-width:0; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; }
+  @media (max-width:520px){ .card{ padding:18px 14px; } .wrap{ padding-top:28px; } .formula{ font-size:18px; } .mv{ font-size:12.5px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Matrix Calculus</div>
+    <h1>Derivatives of Whole Vectors and Matrices</h1>
+    <p>Four rules turn a hundred partial derivatives into one line. Every worked example from the file is a one-click preset below. Each analytic answer is checked live on this page against <b>finite differences</b>: nudge one entry by <code style="font-family:'IBM Plex Mono',monospace">h = 10⁻⁶</code> each way and measure how the output changes.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="rules">1 · The Four Rules</button>
+    <button class="tab" data-tab="ne">2 · Normal Equations</button>
+    <button class="tab" data-tab="layer">3 · A Layer's Backward Pass</button>
+    <button class="tab" data-tab="batch">4 · Batch Gradient</button>
+  </div>
+
+  <!-- ============ TAB 1 ============ -->
+  <div class="panel active" id="panel-rules">
+    <div class="card">
+      <h2>Each rule, next to its numeric check</h2>
+      <p class="sub">Rules 1–3 use <code>a = (1, 2, 3)</code> and <code>x = (0.5, −1, 2)</code>. Click a rule to see its formula, its one-variable twin, the analytic gradient, and the finite-difference gradient computed right now.</p>
+      <div class="presetbar" id="rulePresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <div id="ruleFormula"></div>
+          <svg id="ruleSvg" viewBox="0 0 520 280" role="img" aria-label="Analytic gradient compared with finite differences"></svg>
+          <div class="legend" id="ruleLegend"></div>
+        </div>
+        <div class="side">
+          <div id="ruleSide"></div>
+          <div id="ruleTests"></div>
+          <div class="verdict" id="ruleVerdict"></div>
+        </div>
+      </div>
+      <div class="steplog" id="ruleLog"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2 ============ -->
+  <div class="panel" id="panel-ne">
+    <div class="card">
+      <h2>Linear regression in one line: <code style="font-family:'IBM Plex Mono',monospace;font-size:17px">∇L = −2Xᵀ(y − Xw)</code></h2>
+      <p class="sub">Five points, <code>x = 0…4</code>, <code>y = 1, 3, 2, 5, 4</code>. Each row of <code>X</code> is <code>[x, 1]</code> (the 1 carries the intercept), so <code>w = (slope, intercept)</code>. The loss is <code>L(w) = ‖y − Xw‖²</code>.</p>
+      <div class="presetbar" id="nePresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <svg id="neSvg" viewBox="0 0 480 400" role="img" aria-label="Contour plot of the squared-error loss over slope and intercept"></svg>
+          <div class="legend"><span style="color:#B7BFD6">loss contours</span><span style="color:var(--bad)">∇L (uphill)</span><span style="color:var(--c1)">−∇L (downhill)</span><span style="color:var(--c2)">solution</span><span style="color:#9AA3AD">arrows drawn at 0.02 × true length</span></div>
+        </div>
+        <div class="side"><div id="neSide"></div><div id="neTests"></div><div class="verdict" id="neVerdict"></div></div>
+      </div>
+      <div class="steplog" id="neLog"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3 ============ -->
+  <div class="panel" id="panel-layer">
+    <div class="card">
+      <h2>Three lines of backprop: <code style="font-family:'IBM Plex Mono',monospace;font-size:16px">δxᵀ</code>, <code style="font-family:'IBM Plex Mono',monospace;font-size:16px">δ</code>, <code style="font-family:'IBM Plex Mono',monospace;font-size:16px">Wᵀδ</code></h2>
+      <p class="sub">A dense layer <code>z = Wx + b</code> with 2 inputs and 3 outputs, followed by softmax and cross-entropy. <code>W = [[0.2, −0.5], [0.4, 0.1], [−0.3, 0.6]]</code>, <code>b = (0.1, 0, −0.1)</code>, <code>x = (1.5, −2)</code>, true class 2 so <code>y = (0, 1, 0)</code>. Step through in order, or press <b>Play all steps</b>.</p>
+      <div class="presetbar" id="layerPresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <svg id="layerSvg" viewBox="0 0 600 400" role="img" aria-label="Network diagram of the dense layer with gradients on each edge"></svg>
+          <div class="legend" id="layerLegend"></div>
+        </div>
+        <div class="side"><div id="layerSide"></div></div>
+      </div>
+      <div id="layerTests" style="margin-top:12px"></div>
+      <div class="verdict" id="layerVerdict"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4 ============ -->
+  <div class="panel" id="panel-batch">
+    <div class="card">
+      <h2>A batch: four outer products, one matrix multiply</h2>
+      <p class="sub">The same layer (<code>W</code>, <code>b</code> from tab 3) on a batch of 4 inputs, labels classes <code>1, 2, 3, 2</code>. The batch loss is the <b>sum</b> of the four cross-entropies. Each example contributes its own outer product <code>δᵢxᵢᵀ</code>; stacking inputs as rows of <code>X</code> and blames as rows of <code>Δ</code> gives the whole sum as <code>ΔᵀX</code>.</p>
+      <div class="presetbar" id="batchPresets"></div>
+      <div class="mv" id="batchData"></div>
+      <div class="grid4" id="batchGrid"></div>
+      <div class="sumrow">
+        <div><h3>Running sum</h3><div id="batchSum"></div></div>
+        <div><div id="batchTests"></div><div class="verdict" id="batchVerdict"></div></div>
+      </div>
+      <div class="steplog" id="batchLog"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>math/matrix-calculus.md</code>. Every number on this page is computed live in your browser, including every finite-difference check (central differences, <code>h = 10⁻⁶</code>). The values match the file: rule 3's trap <code>(7, 5, 3)</code> vs. <code>(−3, 10, 8)</code>; regression gradient <code>(−76, −30)</code> and solution <code>(0.8, 1.4)</code>; the layer's <code>δ = (0.7089, −0.7392, 0.0304)</code>, <code>W₂₁</code> gradient <code>−1.1088</code> and <code>Wᵀδ = (−0.1630, −0.4101)</code>.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const H_FD = 1e-6;
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+}));
+
+/* ---------- linear algebra helpers ---------- */
+const T = M => M[0].map((_, j) => M.map(r => r[j]));
+const matvec = (M, v) => M.map(r => r.reduce((s, m, j) => s + m*v[j], 0));
+const matmul = (A, B) => A.map(r => B[0].map((_, j) => r.reduce((s, a, k) => s + a*B[k][j], 0)));
+const add = (u, v) => u.map((x, i) => x + v[i]);
+const sub = (u, v) => u.map((x, i) => x - v[i]);
+const scale = (u, s) => u.map(x => x*s);
+const dot = (u, v) => u.reduce((s, x, i) => s + x*v[i], 0);
+const outer = (u, v) => u.map(a => v.map(b => a*b));
+const madd = (A, B) => A.map((r, i) => r.map((x, j) => x + B[i][j]));
+const flat = M => M.reduce((a, r) => a.concat(r), []);
+const reshape = (arr, m, n) => Array.from({length: m}, (_, i) => arr.slice(i*n, i*n + n));
+const maxAbsDiff = (u, v) => u.reduce((m, x, i) => Math.max(m, Math.abs(x - v[i])), 0);
+
+/* central finite differences of a scalar function of a flat parameter array */
+function fdGrad(f, p){
+  return p.map((_, i) => {
+    const up = p.slice(), dn = p.slice();
+    up[i] += H_FD; dn[i] -= H_FD;
+    return (f(up) - f(dn)) / (2*H_FD);
+  });
+}
+
+/* ---------- formatting ---------- */
+const SUBS = "₀₁₂₃₄₅₆₇₈₉";
+const subs = n => String(n).split("").map(d => SUBS[+d]).join("");
+function fmt(x, d){
+  if (d === undefined) d = 4;
+  const r = Math.round(x * Math.pow(10, d)) / Math.pow(10, d);
+  let s = (Object.is(r, -0) ? 0 : r).toFixed(d);
+  if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+  return s.replace("-", "−");
+}
+const fx = (x, d) => { const r = (Math.abs(x) < 0.5*Math.pow(10, -d) ? 0 : x).toFixed(d); return r.replace("-", "−"); };
+const fp = x => x < 0 ? "(" + fmt(x) + ")" : fmt(x);
+const vec = (v, d) => "(" + v.map(x => fmt(x, d)).join(", ") + ")";
+const vecFixed = (v, d) => "(" + v.map(x => fx(x, d)).join(", ") + ")";
+const matStr = (M, d) => "[" + M.map(r => "[" + r.map(x => fmt(x, d)).join(", ") + "]").join(", ") + "]";
+const sci = e => { if (e === 0) return "0"; const k = Math.floor(Math.log10(e)); const m = e / Math.pow(10, k); return fmt(m, 1) + " × 10" + String(k).replace("-", "⁻").split("").map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"["0123456789".indexOf(c)] || c).join(""); };
+
+/* HTML matrix; M is array of rows (a vector is passed as a column: [[a],[b],...]) */
+function matHTML(M, opts){
+  opts = opts || {};
+  const d = opts.d === undefined ? 4 : opts.d;
+  const n = M[0].length;
+  let h = `<div class="mat" style="grid-template-columns:repeat(${n}, auto)">`;
+  M.forEach((r, i) => r.forEach((x, j) => {
+    const c = opts.cls ? (opts.cls(i, j) || "") : "";
+    h += `<div class="${c}">${typeof x === "string" ? x : fmt(x, d)}</div>`;
+  }));
+  return h + `</div>`;
+}
+const col = v => v.map(x => [x]);
+function mblock(label, M, opts, shape){
+  return `<div class="mblock"><div class="mat-wrap">${matHTML(M, opts)}</div><div class="mlabel">${label}${shape ? ` <span class="badge">${shape}</span>` : ""}</div></div>`;
+}
+function testHTML(ok, label, detail){
+  return `<div class="test ${ok ? "ok" : "bad"}"><div class="mark">${ok ? "✓" : "✗"}</div><div>${label}${detail ? `<div class="detail">${detail}</div>` : ""}</div></div>`;
+}
+
+/* ---------- svg helpers ---------- */
+function el(tag, attrs, parent){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(parent, x, y, s, attrs){
+  const t = el("text", Object.assign({ x, y, "font-size": 12, fill: "#1B2430" }, attrs || {}), parent);
+  t.textContent = s; return t;
+}
+function arrowDefs(svg){
+  const defs = el("defs", {}, svg);
+  [["ah-red", "#C2413B"], ["ah-teal", "#0F8B8D"], ["ah-grey", "#9AA3AD"], ["ah-purple", "#463A73"], ["ah-gold", "#B98A1A"]].forEach(([id, c]) => {
+    const m = el("marker", { id: svg.id + "-" + id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+    el("path", { d: "M0,0 L10,5 L0,10 z", fill: c }, m);
+  });
+}
+function makeButtons(sel, defs, onClick){
+  const btns = [];
+  defs.forEach((d, i) => {
+    const b = document.createElement("button");
+    b.className = "op"; b.textContent = d.t;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); onClick(d, i); });
+    $(sel).appendChild(b); btns.push(b);
+  });
+  return btns;
+}
+
+/* ================================================================
+   TAB 1 — the four rules
+   ================================================================ */
+const a3 = [1, 2, 3], x3 = [0.5, -1, 2];
+const Asym = [[2,1,0],[1,3,1],[0,1,4]];
+const Bns = [[1,2,0],[0,1,3],[4,0,1]];
+const a2 = [1, -2], b3 = [3, 0.5, -1];
+const Wr4a = [[0.3, -1, 2],[1, 0.5, -0.7]];
+const Wr4b = [[-2, 4, 0.1],[0, -3, 5]];
+const quad = M => v => dot(v, matvec(M, v));
+
+function barChart(series, labels, opts){
+  // series: [{vals, color, kind:"bar"|"marker"|"hollow", name}]
+  const svg = $("#ruleSvg"); svg.innerHTML = ""; arrowDefs(svg);
+  const W = 520, Hh = 280, L = 46, R = 14, Tp = 18, B = 40;
+  const all = series.reduce((a, s) => a.concat(s.vals), [0]);
+  let lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+  const pad = (hi - lo) * 0.12 || 1; lo = Math.min(0, lo - pad); hi = hi + pad;
+  const sy = v => Tp + (hi - v) / (hi - lo) * (Hh - Tp - B);
+  // gridlines
+  const stepGuess = (hi - lo) / 5;
+  const pow = Math.pow(10, Math.floor(Math.log10(stepGuess)));
+  const step = [1, 2, 5, 10].map(m => m*pow).find(s => s >= stepGuess);
+  for (let g = Math.ceil(lo/step)*step; g <= hi + 1e-9; g += step){
+    el("line", { x1: L, x2: W - R, y1: sy(g), y2: sy(g), stroke: Math.abs(g) < 1e-9 ? "#9AA3AD" : "#E6EAEC", "stroke-width": 1 }, svg);
+    txt(svg, L - 6, sy(g) + 4, fmt(g, 2), { "text-anchor": "end", "font-size": 10.5, fill: "#5B6572" });
+  }
+  const n = labels.length, gw = (W - L - R) / n;
+  const bars = series.filter(s => s.kind !== "marker");
+  const bw = Math.min(46, (gw - 30) / Math.max(1, bars.length));
+  labels.forEach((lab, i) => {
+    const cx = L + gw*(i + 0.5);
+    txt(svg, cx, Hh - B + 18, lab, { "text-anchor": "middle", "font-size": 12, fill: "#1B2430" });
+    bars.forEach((s, k) => {
+      const v = s.vals[i];
+      const x = cx - bars.length*bw/2 + k*bw + 2;
+      const y0 = sy(Math.max(0, v)), y1 = sy(Math.min(0, v));
+      el("rect", { x, y: y0, width: bw - 4, height: Math.max(1, y1 - y0), rx: 3,
+        fill: s.kind === "hollow" ? "rgba(194,65,59,0.10)" : s.color, stroke: s.color, "stroke-width": s.kind === "hollow" ? 2 : 0, "stroke-dasharray": s.kind === "hollow" ? "5 3" : "" }, svg);
+      txt(svg, x + (bw - 4)/2, v >= 0 ? y0 - 11 : y1 + 20, fmt(v, 3), { "text-anchor": "middle", "font-size": 11, fill: s.kind === "hollow" ? "#C2413B" : "#1B2430", "font-weight": 600 });
+    });
+    series.filter(s => s.kind === "marker").forEach(s => {
+      const v = s.vals[i], y = sy(v);
+      const target = bars[0];
+      const x = cx - bars.length*bw/2 + (bw - 4)/2 + 2;
+      el("path", { d: `M${x},${y - 7} L${x + 7},${y} L${x},${y + 7} L${x - 7},${y} z`, fill: s.color, stroke: "#fff", "stroke-width": 1.5 }, svg);
+    });
+  });
+  if (opts && opts.title) txt(svg, L, 13, opts.title, { "font-size": 11, fill: "#5B6572" });
+  $("#ruleLegend").innerHTML = series.map(s => `<span style="color:${s.color}">${s.name}</span>`).join("");
+}
+function heatChart(Ma, Mfd, rowLab, colLab){
+  const svg = $("#ruleSvg"); svg.innerHTML = "";
+  const m = Ma.length, n = Ma[0].length;
+  const L = 70, Tp = 40, cw = 130, ch = 80;
+  const mx = Math.max.apply(null, flat(Ma).map(Math.abs));
+  colLab.forEach((c, j) => txt(svg, L + cw*j + cw/2, Tp - 12, c, { "text-anchor": "middle", "font-size": 12, fill: "#5B6572" }));
+  for (let i = 0; i < m; i++){
+    txt(svg, L - 10, Tp + ch*i + ch/2 + 4, rowLab[i], { "text-anchor": "end", "font-size": 12, fill: "#5B6572" });
+    for (let j = 0; j < n; j++){
+      const v = Ma[i][j], al = 0.12 + 0.55*Math.abs(v)/mx;
+      el("rect", { x: L + cw*j + 3, y: Tp + ch*i + 3, width: cw - 6, height: ch - 6, rx: 8, fill: v >= 0 ? `rgba(15,139,141,${al})` : `rgba(194,65,59,${al})` }, svg);
+      txt(svg, L + cw*j + cw/2, Tp + ch*i + ch/2 - 4, `a${subs(i+1)}b${subs(j+1)} = ${fmt(v, 3)}`, { "text-anchor": "middle", "font-size": 13, "font-weight": 600 });
+      txt(svg, L + cw*j + cw/2, Tp + ch*i + ch/2 + 16, `FD ${fx(Mfd[i][j], 6)}`, { "text-anchor": "middle", "font-size": 11, fill: "#5B6572" });
+    }
+  }
+  txt(svg, L, Tp + ch*m + 28, "each cell: nudge Wᵢⱼ alone; aᵀWb changes by aᵢ·bⱼ per unit", { "font-size": 11, fill: "#5B6572" });
+  $("#ruleLegend").innerHTML = `<span style="color:var(--c1)">positive entry</span><span style="color:var(--bad)">negative entry</span>`;
+}
+
+const RULES = [
+  { t: "Rule 1: ∇(aᵀx) = a", run(){
+      const f = v => dot(a3, v);
+      const an = a3.slice(), num = fdGrad(f, x3);
+      return { formula: "∇ₓ(aᵀx) = a", twin: "one-variable twin: d(ax)/dx = a", an, num,
+        side: `<div class="mv">${mblock("a", col(a3), {d:3}, "3")}${mblock("x", col(x3), {d:3}, "3")}</div>`,
+        log: [`<span class="hd">Why:</span> aᵀx = a₁x₁ + a₂x₂ + a₃x₃ = 1·0.5 + 2·(−1) + 3·2 = ${fmt(f(x3))}`,
+              `∂/∂x₁ = a₁ = 1,  ∂/∂x₂ = a₂ = 2,  ∂/∂x₃ = a₃ = 3`,
+              `analytic gradient a = ${vec(an)}`,
+              `finite differences   = ${vecFixed(num, 6)}`,
+              `The gradient doesn't depend on x at all: a linear function has the same slope everywhere.`].join("\n") };
+  }},
+  { t: "Rule 2: ∇(xᵀx) = 2x", run(){
+      const f = v => dot(v, v);
+      const an = scale(x3, 2), num = fdGrad(f, x3);
+      return { formula: "∇ₓ(xᵀx) = 2x", twin: "one-variable twin: d(x²)/dx = 2x", an, num,
+        side: `<div class="mv">${mblock("x", col(x3), {d:3}, "3")}</div>`,
+        log: [`<span class="hd">Why:</span> xᵀx = x₁² + x₂² + x₃² = 0.25 + 1 + 4 = ${fmt(f(x3))}`,
+              `each term xₖ² has derivative 2xₖ, and no other term involves xₖ`,
+              `analytic gradient 2x = 2·(0.5, −1, 2) = ${vec(an)}`,
+              `finite differences    = ${vecFixed(num, 6)}`].join("\n") };
+  }},
+  { t: "Rule 3: ∇(xᵀAx), symmetric A", run(){
+      const f = quad(Asym);
+      const Ax = matvec(Asym, x3), ATx = matvec(T(Asym), x3);
+      const an = add(Ax, ATx), num = fdGrad(f, x3);
+      return { formula: "∇ₓ(xᵀAx) = (A + Aᵀ)x = 2Ax  (A symmetric)", twin: "one-variable twin: d(ax²)/dx = 2ax", an, num,
+        side: `<div class="mv">${mblock("A (symmetric)", Asym, {d:3}, "3×3")}${mblock("x", col(x3), {d:3}, "3")}</div>`,
+        log: [`<span class="hd">Why:</span> xᵀAx = Σᵢⱼ xᵢAᵢⱼxⱼ. The variable xₖ appears once as the left x and once as the right x:`,
+              `∂/∂xₖ = Σⱼ Aₖⱼxⱼ + Σᵢ xᵢAᵢₖ = (Ax)ₖ + (Aᵀx)ₖ`,
+              `Ax  = ${vec(Ax)}`,
+              `Aᵀx = ${vec(ATx)}   (the same, because Aᵀ = A)`,
+              `(A + Aᵀ)x = 2Ax = ${vec(an)}`,
+              `finite differences = ${vecFixed(num, 6)}`].join("\n") };
+  }},
+  { t: "Rule 4: ∂(aᵀWb)/∂W = abᵀ", run(){
+      const fA = p => dot(a2, matvec(reshape(p, 2, 3), b3));
+      const an = outer(a2, b3);
+      const numA = fdGrad(fA, flat(Wr4a)), numB = fdGrad(fA, flat(Wr4b));
+      return { formula: "∂(aᵀWb)/∂W = a bᵀ", twin: "one-variable twin: d(awb)/dw = ab", an: flat(an), num: numA, num2: numB, matrix: an,
+        side: `<div class="mv">${mblock("a", col(a2), {d:3}, "2")}${mblock("bᵀ", [b3], {d:3}, "1×3")}<span>=</span>${mblock("abᵀ", an, {d:3}, "2×3")}</div>`,
+        log: [`<span class="hd">Why:</span> aᵀWb = Σᵢⱼ aᵢ Wᵢⱼ bⱼ. Nudging one entry Wᵢⱼ changes the total by aᵢbⱼ per unit.`,
+              `Lay those six numbers out in a grid, row i = aᵢ times the row bᵀ:`,
+              `row 1: a₁·bᵀ = 1·(3, 0.5, −1)  = ${vec(an[0])}`,
+              `row 2: a₂·bᵀ = −2·(3, 0.5, −1) = ${vec(an[1])}`,
+              `shape check: W is 2×3, a is length 2, b is length 3, so abᵀ is 2×3 ✓`,
+              `finite differences at W = ${matStr(Wr4a)}:  ${matStr(reshape(numA, 2, 3).map(r => r.map(v => Math.round(v*1e6)/1e6)), 6)}`,
+              `finite differences at W = ${matStr(Wr4b)}:  ${matStr(reshape(numB, 2, 3).map(r => r.map(v => Math.round(v*1e6)/1e6)), 6)}`,
+              `Same answer at both W: aᵀWb is linear in W, so its gradient doesn't depend on W.`].join("\n") };
+  }},
+  { t: "Rule 3's trap: non-symmetric B", trap: true, run(){
+      const f = quad(Bns);
+      const Bx = matvec(Bns, x3), BTx = matvec(T(Bns), x3);
+      const an = add(Bx, BTx), wrong = scale(Bx, 2), num = fdGrad(f, x3);
+      return { formula: "B ≠ Bᵀ, so ∇ₓ(xᵀBx) = (B + Bᵀ)x, not 2Bx", twin: "the 2Ax shortcut only holds for symmetric matrices", an, num, wrong,
+        side: `<div class="mv">${mblock("B", Bns, {d:3, cls:(i,j)=> Bns[i][j] !== Bns[j][i] ? "hlr" : ""}, "3×3")}${mblock("Bᵀ", T(Bns), {d:3, cls:(i,j)=> Bns[i][j] !== Bns[j][i] ? "hlr" : ""}, "3×3")}</div><div class="caption" style="margin-top:0">Red cells: where B and Bᵀ disagree.</div>`,
+        log: [`<span class="hd">Same derivation as rule 3:</span> ∂/∂xₖ (xᵀBx) = (Bx)ₖ + (Bᵀx)ₖ`,
+              `Bx  = ${vec(Bx)}`,
+              `Bᵀx = ${vec(BTx)}   ← different from Bx, because B isn't symmetric`,
+              `correct: (B + Bᵀ)x = ${vec(an)}`,
+              `wrong:   2Bx       = ${vec(wrong)}`,
+              `finite differences = ${vecFixed(num, 6)}   → agrees with (B + Bᵀ)x`,
+              `Hessians and covariance matrices are symmetric, which is why 2Ax usually works in practice.`].join("\n") };
+  }},
+];
+
+function runRule(R){
+  const out = R.run();
+  $("#ruleFormula").innerHTML = `<div class="formula">${out.formula}<small>${out.twin}</small></div>`;
+  $("#ruleSide").innerHTML = out.side;
+  const err = maxAbsDiff(out.an, out.num);
+  let tests = `<div class="stat"><span class="k">analytic</span>${out.matrix ? matStr(out.matrix) : vec(out.an)}<span class="k">finite differences (h = 10⁻⁶)</span>${out.matrix ? matStr(reshape(out.num, 2, 3).map(r => r.map(v => Math.round(v*1e6)/1e6)), 6) : vecFixed(out.num, 6)}</div>`;
+  const ok = err < 1e-6;
+  tests += testHTML(ok, R.trap ? "Correct (B + Bᵀ)x matches finite differences" : "Analytic matches finite differences", `max |analytic − numeric| = ${sci(err)}`);
+  let allOk = ok;
+  if (out.num2){ const e2 = maxAbsDiff(out.an, out.num2); allOk = allOk && e2 < 1e-6; tests += testHTML(e2 < 1e-6, "Same gradient at a second, different W", `max error = ${sci(e2)}`); }
+  if (out.wrong){ const ew = maxAbsDiff(out.wrong, out.num); tests += testHTML(false, "Shortcut 2Bx matches finite differences?", `2Bx = ${vec(out.wrong)}; off by up to ${fmt(ew, 3)}`); }
+  $("#ruleTests").innerHTML = tests;
+  const vd = $("#ruleVerdict");
+  vd.className = "verdict " + (allOk ? "ok" : "bad");
+  vd.textContent = out.wrong ? "✓ (B + Bᵀ)x = (7, 5, 3) is right; ✗ 2Bx = (−3, 10, 8) is wrong." : `✓ Rule verified: ${out.matrix ? matStr(out.matrix) : vec(out.an)}`;
+  $("#ruleLog").innerHTML = out.log;
+  if (out.matrix) heatChart(out.matrix, reshape(out.num, 2, 3), ["a₁=1", "a₂=−2"], ["b₁=3", "b₂=0.5", "b₃=−1"]);
+  else {
+    const series = [{ vals: out.an, color: "#0F8B8D", kind: "bar", name: out.wrong ? "correct (B + Bᵀ)x" : "analytic gradient" }];
+    if (out.wrong) series.push({ vals: out.wrong, color: "#C2413B", kind: "hollow", name: "wrong 2Bx" });
+    series.push({ vals: out.num, color: "#D9A62E", kind: "marker", name: "finite-difference check (◆)" });
+    barChart(series, ["∂/∂x₁", "∂/∂x₂", "∂/∂x₃"], { title: "gradient components at x = (0.5, −1, 2)" });
+  }
+}
+const ruleBtns = makeButtons("#rulePresets", RULES, R => runRule(R));
+ruleBtns[0].classList.add("active"); runRule(RULES[0]);
+
+/* ================================================================
+   TAB 2 — normal equations
+   ================================================================ */
+const Xr = [[0,1],[1,1],[2,1],[3,1],[4,1]], yr = [1,3,2,5,4];
+const lossR = w => { const r = sub(yr, matvec(Xr, w)); return dot(r, r); };
+const gradR = w => scale(matvec(T(Xr), sub(yr, matvec(Xr, w))), -2);
+const XtX = matmul(T(Xr), Xr), Xty = matvec(T(Xr), yr);
+const det2 = XtX[0][0]*XtX[1][1] - XtX[0][1]*XtX[1][0];
+const inv2 = [[XtX[1][1]/det2, -XtX[0][1]/det2], [-XtX[1][0]/det2, XtX[0][0]/det2]];
+const wStar = matvec(inv2, Xty);
+const Lstar = lossR(wStar);
+const NE = { wmin: -1.6, wmax: 3.2, bmin: -4.4, bmax: 7.2, L: 42, R: 14, T: 14, B: 36, W: 480, H: 400 };
+const nsx = w => NE.L + (w - NE.wmin) / (NE.wmax - NE.wmin) * (NE.W - NE.L - NE.R);
+const nsy = b => NE.T + (NE.bmax - b) / (NE.bmax - NE.bmin) * (NE.H - NE.T - NE.B);
+
+function drawNE(stage){
+  const svg = $("#neSvg"); svg.innerHTML = ""; arrowDefs(svg);
+  el("rect", { x: NE.L, y: NE.T, width: NE.W - NE.L - NE.R, height: NE.H - NE.T - NE.B, fill: "#FBFCFC" }, svg);
+  for (let w = -1; w <= 3; w++){ el("line", { x1: nsx(w), x2: nsx(w), y1: NE.T, y2: NE.H - NE.B, stroke: w === 0 ? "#9AA3AD" : "#EEF1F2" }, svg); txt(svg, nsx(w), NE.H - NE.B + 15, String(w).replace("-", "−"), { "text-anchor": "middle", "font-size": 10.5, fill: "#5B6572" }); }
+  for (let b = -4; b <= 7; b += 2){ el("line", { y1: nsy(b), y2: nsy(b), x1: NE.L, x2: NE.W - NE.R, stroke: b === 0 ? "#9AA3AD" : "#EEF1F2" }, svg); txt(svg, NE.L - 6, nsy(b) + 4, String(b).replace("-", "−"), { "text-anchor": "end", "font-size": 10.5, fill: "#5B6572" }); }
+  el("line", { y1: nsy(0), y2: nsy(0), x1: NE.L, x2: NE.W - NE.R, stroke: "#9AA3AD" }, svg);
+  txt(svg, NE.W - NE.R, NE.H - 6, "slope w₁ →", { "text-anchor": "end", "font-size": 11, fill: "#5B6572" });
+  txt(svg, NE.L + 4, NE.T + 12, "↑ intercept w₂", { "font-size": 11, fill: "#5B6572" });
+  // contours: L(w) = L* + (w − w*)ᵀ XᵀX (w − w*), drawn exactly as ellipses
+  const levels = [1, 4, 10, 20, 35, lossR([0,0]) - Lstar];
+  levels.forEach((c, k) => {
+    const pts = [];
+    for (let i = 0; i <= 160; i++){
+      const th = 2*Math.PI*i/160, u = [Math.cos(th), Math.sin(th)];
+      const t = Math.sqrt(c / dot(u, matvec(XtX, u)));
+      pts.push(`${nsx(wStar[0] + t*u[0]).toFixed(1)},${nsy(wStar[1] + t*u[1]).toFixed(1)}`);
+    }
+    el("polyline", { points: pts.join(" "), fill: "none", stroke: k === levels.length - 1 ? "#8E86B8" : "#B7BFD6", "stroke-width": k === levels.length - 1 ? 1.6 : 1.1, "stroke-dasharray": k === levels.length - 1 ? "5 3" : "" }, svg);
+  });
+  txt(svg, nsx(0) - 6, nsy(0) + 16, "L(0) = " + fmt(lossR([0,0])), { "text-anchor": "end", "font-size": 10.5, fill: "#5B6572" });
+  el("circle", { cx: nsx(0), cy: nsy(0), r: 5, fill: "#1B2430" }, svg);
+  if (stage >= 1){
+    const g = gradR([0,0]), s = 0.02;
+    el("line", { x1: nsx(0), y1: nsy(0), x2: nsx(g[0]*s), y2: nsy(g[1]*s), stroke: "#C2413B", "stroke-width": 2.5, "marker-end": "url(#neSvg-ah-red)" }, svg);
+    el("line", { x1: nsx(0), y1: nsy(0), x2: nsx(-g[0]*s), y2: nsy(-g[1]*s), stroke: "#0F8B8D", "stroke-width": 2.5, "marker-end": "url(#neSvg-ah-teal)" }, svg);
+    txt(svg, nsx(g[0]*s) - 4, nsy(g[1]*s) + 18, "∇L = (−76, −30)", { "text-anchor": "start", "font-size": 11, fill: "#C2413B", "font-weight": 600 });
+    txt(svg, nsx(-g[0]*s) + 2, nsy(-g[1]*s) + 18, "−∇L = (76, 30)", { "font-size": 11, fill: "#0F8B8D", "font-weight": 600 });
+  }
+  if (stage >= 2){
+    el("line", { x1: nsx(0), y1: nsy(0), x2: nsx(wStar[0]), y2: nsy(wStar[1]), stroke: "#D9A62E", "stroke-width": 1.5, "stroke-dasharray": "4 3" }, svg);
+    const cx = nsx(wStar[0]), cy = nsy(wStar[1]);
+    const star = []; for (let i = 0; i < 10; i++){ const r = i % 2 ? 4 : 10, th = -Math.PI/2 + i*Math.PI/5; star.push(`${(cx + r*Math.cos(th)).toFixed(1)},${(cy + r*Math.sin(th)).toFixed(1)}`); }
+    el("polygon", { points: star.join(" "), fill: "#D9A62E", stroke: "#fff", "stroke-width": 1 }, svg);
+    txt(svg, cx + 12, cy - 8, `w* = ${vec(wStar)}`, { "font-size": 12, "font-weight": 600 });
+    txt(svg, cx + 12, cy + 8, `L = ${fmt(Lstar)}, ∇L = 0`, { "font-size": 10.5, fill: "#5B6572" });
+  }
+}
+const dotLine = (u, v) => u.map((x, i) => `${fmt(x)}·${fp(v[i])}`).join(" + ");
+function runNE(stage){
+  drawNE(stage);
+  const lines = [], side = [], tests = [];
+  side.push(`<div class="mv">${mblock("X", Xr, {d:0}, "5×2")}${mblock("y", col(yr), {d:0}, "5")}</div>`);
+  if (stage === 0){
+    lines.push("Click “Gradient at w = 0” to start.");
+  }
+  if (stage >= 1){
+    const w0 = [0,0], Xw = matvec(Xr, w0), r = sub(yr, Xw), Xt = T(Xr), Xtr = matvec(Xt, r), g = scale(Xtr, -2);
+    const num = fdGrad(lossR, w0), e = maxAbsDiff(g, num);
+    lines.push(`<span class="hd">Step 1 · the gradient at w = (0, 0)</span>`);
+    lines.push(`Xw = ${vec(Xw)}`);
+    lines.push(`residual r = y − Xw = ${vec(r)}`);
+    lines.push(`(Xᵀr)₁ = column 1 of X · r = ${dotLine(Xt[0], r)} = ${fmt(Xtr[0])}`);
+    lines.push(`(Xᵀr)₂ = column 2 of X · r = ${dotLine(Xt[1], r)} = ${fmt(Xtr[1])}`);
+    lines.push(`∇L = −2Xᵀr = −2·${vec(Xtr)} = ${vec(g)}`);
+    lines.push(`finite differences (h = 10⁻⁶): ${vecFixed(num, 6)}`);
+    lines.push(`Both entries negative: increasing the slope or the intercept lowers the loss (go along −∇L).`);
+    side.push(`<div class="stat"><span class="k">∇L at w = (0, 0)</span><b>${vec(g)}</b><span class="k">shape</span>Xᵀ (2×5) · r (5) → 2, same as w ✓</div>`);
+    tests.push(testHTML(e < 1e-4, "−2Xᵀ(y − Xw) matches finite differences", `max error = ${sci(e)}`));
+  }
+  if (stage >= 2){
+    const Xt = T(Xr);
+    lines.push("");
+    lines.push(`<span class="hd">Step 2 · set ∇L = 0 → the normal equations XᵀXw = Xᵀy</span>`);
+    lines.push(`(XᵀX)₁₁ = col 1 · col 1 = ${dotLine(Xt[0], Xt[0])} = ${fmt(XtX[0][0])}`);
+    lines.push(`(XᵀX)₁₂ = (XᵀX)₂₁ = col 1 · col 2 = ${dotLine(Xt[0], Xt[1])} = ${fmt(XtX[0][1])}`);
+    lines.push(`(XᵀX)₂₂ = col 2 · col 2 = ${dotLine(Xt[1], Xt[1])} = ${fmt(XtX[1][1])}`);
+    lines.push(`(Xᵀy)₁ = col 1 · y = ${dotLine(Xt[0], yr)} = ${fmt(Xty[0])}`);
+    lines.push(`(Xᵀy)₂ = col 2 · y = ${dotLine(Xt[1], yr)} = ${fmt(Xty[1])}`);
+    lines.push(`So: [[${fmt(XtX[0][0])}, ${fmt(XtX[0][1])}], [${fmt(XtX[1][0])}, ${fmt(XtX[1][1])}]] · w = (${fmt(Xty[0])}, ${fmt(Xty[1])})`);
+    lines.push(`det = ${fmt(XtX[0][0])}·${fmt(XtX[1][1])} − ${fmt(XtX[0][1])}·${fmt(XtX[1][0])} = ${fmt(det2)}`);
+    lines.push(`(XᵀX)⁻¹ = (1/${fmt(det2)})·[[${fmt(XtX[1][1])}, ${fmt(-XtX[0][1])}], [${fmt(-XtX[1][0])}, ${fmt(XtX[0][0])}]]`);
+    lines.push(`slope     = (${fmt(XtX[1][1])}·${fmt(Xty[0])} − ${fmt(XtX[0][1])}·${fmt(Xty[1])}) / ${fmt(det2)} = ${fmt(XtX[1][1]*Xty[0] - XtX[0][1]*Xty[1])} / ${fmt(det2)} = ${fmt(wStar[0])}`);
+    lines.push(`intercept = (−${fmt(XtX[1][0])}·${fmt(Xty[0])} + ${fmt(XtX[0][0])}·${fmt(Xty[1])}) / ${fmt(det2)} = ${fmt(-XtX[1][0]*Xty[0] + XtX[0][0]*Xty[1])} / ${fmt(det2)} = ${fmt(wStar[1])}`);
+    const rs = sub(yr, matvec(Xr, wStar)), Xtrs = matvec(Xt, rs);
+    lines.push(`check: residual at w* = ${vec(rs)}; Xᵀ·residual = ${vec(Xtrs)} → the residual is perpendicular to both columns of X`);
+    const numS = fdGrad(lossR, wStar), eS = Math.max(Math.abs(numS[0]), Math.abs(numS[1]));
+    side.push(`<div class="mv">${mblock("XᵀX", XtX, {d:0}, "2×2")}${mblock("Xᵀy", col(Xty), {d:0}, "2")}</div>`);
+    side.push(`<div class="stat"><span class="k">solution w* = (XᵀX)⁻¹Xᵀy</span><b>slope ${fmt(wStar[0])}, intercept ${fmt(wStar[1])}</b><span class="k">loss at w*</span>${fmt(Lstar)} (down from ${fmt(lossR([0,0]))})</div>`);
+    tests.push(testHTML(maxAbsDiff(wStar, [0.8, 1.4]) < 1e-12, "Solution is (0.8, 1.4), same as fitting coordinate by coordinate", `w* = ${vec(wStar, 10)}`));
+    tests.push(testHTML(eS < 1e-4, "Finite-difference gradient at w* is zero", `FD = ${vecFixed(numS, 6)}`));
+  }
+  $("#neSide").innerHTML = side.join("");
+  $("#neTests").innerHTML = tests.join("");
+  const vd = $("#neVerdict");
+  vd.className = "verdict ok";
+  vd.textContent = stage === 1 ? "✓ ∇L(0) = (−76, −30): walk downhill along (76, 30)." : stage === 2 ? "✓ XᵀXw = Xᵀy gives w = (0.8, 1.4)." : "";
+  $("#neLog").innerHTML = lines.join("\n");
+}
+const neBtns = makeButtons("#nePresets", [{ t: "Gradient at w = 0", s: 1 }, { t: "Solve XᵀXw = Xᵀy", s: 2 }], d => runNE(d.s));
+neBtns[0].classList.add("active"); runNE(1);
+
+/* ================================================================
+   TAB 3 — a layer's backward pass
+   ================================================================ */
+const LW = [[0.2,-0.5],[0.4,0.1],[-0.3,0.6]], Lb = [0.1,0,-0.1], Lx = [1.5,-2], Ly = [0,1,0];
+function softmax(z){ const m = Math.max.apply(null, z); const e = z.map(v => Math.exp(v - m)); const s = e.reduce((a, b) => a + b, 0); return e.map(v => v/s); }
+function ce(z, y){ const m = Math.max.apply(null, z); const lse = m + Math.log(z.reduce((s, v) => s + Math.exp(v - m), 0)); return -y.reduce((s, yi, i) => s + yi*(z[i] - lse), 0); }
+const layerLoss = (W, b, x, y) => ce(add(matvec(W, x), b), y);
+const Lz = add(matvec(LW, Lx), Lb), Lp = softmax(Lz), Lloss = ce(Lz, Ly);
+const Ld = sub(Lp, Ly);
+const LgW = outer(Ld, Lx), Lgb = Ld.slice(), Lgx = matvec(T(LW), Ld);
+const fdW = reshape(fdGrad(p => layerLoss(reshape(p, 3, 2), Lb, Lx, Ly), flat(LW)), 3, 2);
+const fdb = fdGrad(p => layerLoss(LW, p, Lx, Ly), Lb);
+const fdx = fdGrad(p => layerLoss(LW, Lb, p, Ly), Lx);
+const fdz = fdGrad(p => ce(p, Ly), Lz);
+
+const NX = [{ x: 150, y: 130 }, { x: 150, y: 280 }];
+const NZ = [{ x: 370, y: 80 }, { x: 370, y: 205 }, { x: 370, y: 330 }];
+let layerToken = 0;
+
+function drawLayer(step){
+  const svg = $("#layerSvg"); svg.innerHTML = ""; arrowDefs(svg);
+  const feyn = step === 6;
+  const gradMode = step === 3 || feyn;
+  const back = step >= 2 && !feyn;
+  const mxG = Math.max.apply(null, flat(LgW).map(Math.abs));
+  // edges
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++){
+    const A = NX[j], B = NZ[i];
+    const isHot = i === 1 && j === 0;
+    let stroke = "#9AA3AD", sw = 1.6, op = 1;
+    if (gradMode){ const g = LgW[i][j]; stroke = g >= 0 ? "#0F8B8D" : "#C2413B"; sw = 1.2 + 4*Math.abs(g)/mxG; }
+    if (step === 5){ stroke = "#463A73"; sw = 1.6; }
+    if (feyn && !isHot) op = 0.18;
+    if (feyn && isHot){ stroke = "#D9A62E"; sw = 5; }
+    const x1 = A.x + 24, x2 = B.x - 26;
+    const y1 = A.y + (B.y - A.y) * 24 / (B.x - A.x), y2 = B.y - (B.y - A.y) * 26 / (B.x - A.x);
+    const attrs = { x1, y1, x2, y2, stroke, "stroke-width": sw, opacity: op };
+    if (step === 5) attrs["marker-start"] = "url(#layerSvg-ah-purple)";
+    el("line", attrs, svg);
+    // label
+    const t = j === 0 ? 0.30 : 0.70;
+    const lx = A.x + (B.x - A.x)*t, ly = A.y + (B.y - A.y)*t;
+    let lab;
+    if (gradMode) lab = fmt(LgW[i][j]);
+    else lab = `W${subs(i+1)}${subs(j+1)}=${fmt(LW[i][j])}`;
+    if (!(feyn && !isHot)){
+      const w = lab.length*6.9 + 8;
+      el("rect", { x: lx - w/2, y: ly - 10, width: w, height: 17, rx: 4, fill: feyn && isHot ? "#FCEFC8" : "#FFFFFF", stroke: isHot && (gradMode) ? "#D9A62E" : "#D9E0DE", "stroke-width": isHot && gradMode ? 2 : 1 }, svg);
+      txt(svg, lx, ly + 3, lab, { "text-anchor": "middle", "font-size": 11, "font-weight": 600, fill: gradMode ? (LgW[i][j] >= 0 ? "#0B6D6F" : "#A3322D") : "#1B2430" });
+    }
+  }
+  // input nodes
+  NX.forEach((n, j) => {
+    el("circle", { cx: n.x, cy: n.y, r: 24, fill: feyn && j === 0 ? "#FCEFC8" : "#EFEBFA", stroke: "#463A73", "stroke-width": 1.5 }, svg);
+    txt(svg, n.x, n.y + 4, "x" + subs(j+1), { "text-anchor": "middle", "font-size": 14, "font-weight": 600 });
+    txt(svg, n.x, n.y - 32, "= " + fmt(Lx[j]), { "text-anchor": "middle", "font-size": 12 });
+    if (step === 5){
+      el("rect", { x: n.x - 142, y: n.y + 30, width: 104, height: 38, rx: 6, fill: "#EFEBFA", stroke: "#463A73" }, svg);
+      el("line", { x1: n.x - 38, y1: n.y + 40, x2: n.x - 18, y2: n.y + 18, stroke: "#463A73", "stroke-width": 1 }, svg);
+      txt(svg, n.x - 90, n.y + 46, `∂L/∂x${subs(j+1)}`, { "text-anchor": "middle", "font-size": 11, fill: "#463A73" });
+      txt(svg, n.x - 90, n.y + 62, fx(Lgx[j], 4), { "text-anchor": "middle", "font-size": 12.5, "font-weight": 600, fill: "#463A73" });
+    }
+  });
+  // output nodes
+  NZ.forEach((n, i) => {
+    el("circle", { cx: n.x, cy: n.y, r: 26, fill: feyn && i === 1 ? "#FCEFC8" : "#E4F3F3", stroke: "#0F8B8D", "stroke-width": 1.5 }, svg);
+    txt(svg, n.x, n.y + 4, "z" + subs(i+1), { "text-anchor": "middle", "font-size": 14, "font-weight": 600 });
+    txt(svg, n.x, n.y - 33, step >= 1 ? "= " + fmt(Lz[i], 2) : "", { "text-anchor": "middle", "font-size": 12 });
+    // bias
+    if (step === 4){
+      const bl = `∂L/∂b${subs(i+1)} = ${fx(Lgb[i], 4)}`, bw = bl.length*6.6 + 12;
+      el("rect", { x: n.x - bw/2, y: n.y + 30, width: bw, height: 20, rx: 6, fill: "#FCEFC8", stroke: "#D9A62E" }, svg);
+      txt(svg, n.x, n.y + 44, bl, { "text-anchor": "middle", "font-size": 11, "font-weight": 600, fill: "#7A5A0E" });
+    } else {
+      txt(svg, n.x, n.y + 42, `+b${subs(i+1)}=${fmt(Lb[i])}`, { "text-anchor": "middle", "font-size": 10.5, fill: "#5B6572" });
+    }
+    // p column
+    if (step >= 1){
+      el("line", { x1: n.x + 28, y1: n.y, x2: 446, y2: n.y, stroke: "#C8CFD4", "stroke-width": 1 }, svg);
+      txt(svg, 450, n.y - 4, `p${subs(i+1)}=${fmt(Lp[i])}`, { "font-size": 11.5 });
+      txt(svg, 450, n.y + 11, `y${subs(i+1)}=${Ly[i]}${Ly[i] ? " (true)" : ""}`, { "font-size": 10.5, fill: Ly[i] ? "#1E8A5A" : "#5B6572", "font-weight": Ly[i] ? 600 : 400 });
+    }
+    if (step >= 2 && step !== 6){
+      const g = Ld[i];
+      el("rect", { x: 450, y: n.y + 18, width: 106, height: 20, rx: 10, fill: g >= 0 ? "rgba(15,139,141,0.14)" : "rgba(194,65,59,0.14)" }, svg);
+      txt(svg, 503, n.y + 32, `δ${subs(i+1)}=${fmt(g)}`, { "text-anchor": "middle", "font-size": 11.5, "font-weight": 600, fill: g >= 0 ? "#0B6D6F" : "#A3322D" });
+    }
+    if (feyn && i === 1){
+      txt(svg, 450, n.y + 32, `δ₂=${fmt(Ld[1])}`, { "font-size": 12, "font-weight": 600, fill: "#A3322D" });
+    }
+  });
+  // loss
+  if (step >= 1){
+    txt(svg, 565, 30, "loss", { "text-anchor": "middle", "font-size": 11, fill: "#5B6572" });
+    txt(svg, 565, 46, fmt(Lloss), { "text-anchor": "middle", "font-size": 13, "font-weight": 600 });
+  }
+  if (step === 0) txt(svg, 450, 205, "softmax → p → loss", { "font-size": 11, fill: "#5B6572" });
+  // shape badges along the bottom
+  const badges = step === 5 ? ["Wᵀ: 2×3", "δ: 3", "Wᵀδ: 2 = shape of x ✓"]
+               : step === 3 ? ["δ: 3", "xᵀ: 1×2", "δxᵀ: 3×2 = shape of W ✓"]
+               : step === 4 ? ["δ: 3", "∂L/∂b: 3 = shape of b ✓"]
+               : step === 2 ? ["p: 3", "y: 3", "δ = p − y: 3 = shape of z ✓"]
+               : ["W: 3×2", "x: 2", "b: 3", "z = Wx + b: 3"];
+  let bx = 12;
+  badges.forEach(s => {
+    const w = s.length*6.8 + 16;
+    el("rect", { x: bx, y: 372, width: w, height: 20, rx: 10, fill: "#EFEBFA", stroke: "#D8D0F0" }, svg);
+    txt(svg, bx + w/2, 386, s, { "text-anchor": "middle", "font-size": 11, fill: "#463A73", "font-weight": 600 });
+    bx += w + 8;
+  });
+}
+
+function layerFDTable(analytic, numeric, names){
+  const e = maxAbsDiff(analytic, numeric);
+  const rows = analytic.map((v, k) => `<tr><td>${names[k]}</td><td class="num">${fx(v, 6)}</td><td class="num">${fx(numeric[k], 6)}</td><td class="num">${sci(Math.abs(v - numeric[k]))}</td></tr>`).join("");
+  return { e, html: `<div style="overflow-x:auto;max-width:100%"><table style="border-collapse:collapse;width:100%;font-size:12.5px"><tr>${["entry","analytic","finite diff.","|diff|"].map(h => `<th style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)">${h}</th>`).join("")}</tr>${rows.replace(/<td/g, '<td style="font-family:\'IBM Plex Mono\',monospace;padding:4px 8px;border-bottom:1px solid var(--line)"')}</table></div>` };
+}
+
+function runLayer(step){
+  drawLayer(step);
+  const side = [];
+  let tests = "", verdict = "";
+  const legend = $("#layerLegend");
+  legend.innerHTML = step === 3 ? `<span style="color:var(--c1)">positive gradient</span><span style="color:var(--bad)">negative gradient</span><span style="color:var(--c2)">W₂₁ (the Feynman check)</span>`
+    : step === 5 ? `<span style="color:var(--accent)">blame flowing back through Wᵀ</span>` : `<span style="color:#9AA3AD">edge = one weight Wᵢⱼ (input j → output i)</span>`;
+  if (step === 1){
+    side.push(`<div class="stat"><span class="k">z = Wx + b</span>` + [0,1,2].map(i => `z${subs(i+1)} = ${fmt(LW[i][0])}·${fmt(Lx[0])} + ${fmt(LW[i][1])}·(${fmt(Lx[1])}) + ${fmt(Lb[i])} = <b>${fmt(Lz[i], 2)}</b>`).join("<br>") + `</div>`);
+    side.push(`<div class="stat"><span class="k">p = softmax(z)</span>${vec(Lp)}<span class="k">loss = −ln p₂ (true class 2)</span>−ln ${fmt(Lp[1])} = <b>${fmt(Lloss)}</b></div>`);
+    side.push(`<div class="mv">${mblock("W", LW, {d:2}, "3×2")}${mblock("x", col(Lx), {d:2}, "2")}${mblock("b", col(Lb), {d:2}, "3")}</div>`);
+    verdict = "Forward pass done. Next: how much does the loss change per unit of each zᵢ?";
+  }
+  if (step === 2){
+    side.push(`<div class="stat"><span class="k">δ = ∂L/∂z = p − y</span>${vec(Lp)} − ${vec(Ly)}<br>= <b>${vec(Ld)}</b></div>`);
+    side.push(`<div class="caption">Softmax + cross-entropy collapses to <code>p − y</code>: the true class gets a negative blame (raise z₂ to lower the loss), the others get positive blame equal to their probability.</div>`);
+    const t = layerFDTable(Ld, fdz, ["δ₁", "δ₂", "δ₃"]); tests = t.html + testHTML(t.e < 1e-6, "δ = p − y matches finite differences in z", `max error = ${sci(t.e)}`);
+    verdict = "✓ δ = (0.7089, −0.7392, 0.0304)";
+  }
+  if (step === 3){
+    side.push(`<div class="mv">${mblock("δ", col(Ld), {d:4}, "3")}${mblock("xᵀ", [Lx], {d:2}, "1×2")}<span>=</span>${mblock("δxᵀ", LgW, {d:4, cls:(i,j)=> i===1&&j===0 ? "hl" : ""}, "3×2")}</div>`);
+    side.push(`<div class="stat"><span class="k">each entry: output's blame × input's value</span>` + [0,1,2].map(i => `row ${i+1}: δ${subs(i+1)}·xᵀ = ${fmt(Ld[i])}·(1.5, −2) = ${vec(LgW[i])}`).join("<br>") + `<span class="k">highlighted</span>W₂₁: δ₂·x₁ = −0.7392 × 1.5 = <b>${fmt(LgW[1][0])}</b></div>`);
+    const names = []; for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) names.push(`W${subs(i+1)}${subs(j+1)}`);
+    const t = layerFDTable(flat(LgW), flat(fdW), names); tests = t.html + testHTML(t.e < 1e-6, "all 6 entries of δxᵀ match finite differences", `max error = ${sci(t.e)}`);
+    verdict = "✓ ∂L/∂W = δxᵀ, a 3×2 matrix like W";
+  }
+  if (step === 4){
+    side.push(`<div class="stat"><span class="k">∂L/∂b = δ</span><b>${vec(Lgb)}</b><span class="k">why</span>bᵢ adds straight into zᵢ (∂zᵢ/∂bᵢ = 1), so it inherits zᵢ's blame unchanged.</div>`);
+    const t = layerFDTable(Lgb, fdb, ["b₁", "b₂", "b₃"]); tests = t.html + testHTML(t.e < 1e-6, "∂L/∂b = δ matches finite differences", `max error = ${sci(t.e)}`);
+    verdict = "✓ ∂L/∂b = δ, length 3 like b";
+  }
+  if (step === 5){
+    const WT = T(LW);
+    side.push(`<div class="mv">${mblock("Wᵀ", WT, {d:2}, "2×3")}${mblock("δ", col(Ld), {d:4}, "3")}<span>=</span>${mblock("Wᵀδ", col(Lgx.map(v => fx(v, 4))), {d:4}, "2")}</div>`);
+    side.push(`<div class="stat"><span class="k">each input collects blame from every output it feeds</span>` + [0,1].map(j => `∂L/∂x${subs(j+1)} = ` + [0,1,2].map(i => `${fmt(LW[i][j])}·${fp(Ld[i])}`).join(" + ") + ` = <b>${fx(Lgx[j], 4)}</b>`).join("<br>") + `</div>`);
+    const t = layerFDTable(Lgx, fdx, ["x₁", "x₂"]); tests = t.html + testHTML(t.e < 1e-6, "∂L/∂x = Wᵀδ matches finite differences", `max error = ${sci(t.e)}`);
+    verdict = "✓ ∂L/∂x = Wᵀδ = (−0.1630, −0.4101), length 2 like x";
+  }
+  if (step === 6){
+    side.push(`<div class="stat"><span class="k">weight W₂₁ connects input 1 → output 2</span>nudge W₂₁ by 1 → z₂ moves by x₁ = 1.5<br>each unit of z₂ moves the loss by δ₂ = ${fmt(Ld[1])}<br>chain rule: 1.5 × (${fmt(Ld[1])}) = <b>${fmt(LgW[1][0])}</b></div>`);
+    side.push(`<div class="caption">No matrices needed: it's "blame × input". The outer product <code>δxᵀ</code> just lays out that product for all six connections at once.</div>`);
+    const e = Math.abs(LgW[1][0] - fdW[1][0]);
+    tests = testHTML(e < 1e-6, "W₂₁ gradient matches finite differences", `analytic ${fx(LgW[1][0], 6)}, numeric ${fx(fdW[1][0], 6)}, diff ${sci(e)}`);
+    verdict = "✓ W₂₁: δ₂ · x₁ = −0.7392 × 1.5 = −1.1088";
+  }
+  $("#layerSide").innerHTML = side.join("");
+  $("#layerTests").innerHTML = tests;
+  const vd = $("#layerVerdict"); vd.className = "verdict ok"; vd.textContent = verdict;
+}
+const LAYER_STEPS = [
+  { t: "1 · Forward: z, p, loss", s: 1 },
+  { t: "2 · Blame δ = p − y", s: 2 },
+  { t: "3 · ∂L/∂W = δxᵀ", s: 3 },
+  { t: "4 · ∂L/∂b = δ", s: 4 },
+  { t: "5 · ∂L/∂x = Wᵀδ", s: 5 },
+  { t: "Feynman check: W₂₁", s: 6 },
+  { t: "▶ Play all steps", s: -1 },
+];
+const layerBtns = makeButtons("#layerPresets", LAYER_STEPS, async (d) => {
+  const my = ++layerToken;
+  if (d.s > 0){ runLayer(d.s); return; }
+  for (let s = 1; s <= 5; s++){
+    if (my !== layerToken) return;
+    layerBtns.forEach((b, k) => b.classList.toggle("active", k === s - 1 || k === 6));
+    runLayer(s);
+    await sleep(2200);
+  }
+});
+layerBtns[0].classList.add("active"); runLayer(1);
+
+/* ================================================================
+   TAB 4 — batch gradient
+   ================================================================ */
+const BX = [[1.5,-2],[0.5,1],[-1,0.5],[2,1]];
+const BLab = [0, 1, 2, 1];
+const BY = BLab.map(c => [0,1,2].map(k => k === c ? 1 : 0));
+const batchLoss = W => BX.reduce((s, x, n) => s + layerLoss(W, Lb, x, BY[n]), 0);
+const BZ = BX.map(x => add(matvec(LW, x), Lb));
+const BP = BZ.map(softmax);
+const BD = BP.map((p, n) => sub(p, BY[n]));           // Δ: 4×3
+const BOuter = BD.map((d, n) => outer(d, BX[n]));     // four 3×2
+const BDTX = matmul(T(BD), BX);                       // ΔᵀX: 3×2
+const BFD = reshape(fdGrad(p => batchLoss(reshape(p, 3, 2)), flat(LW)), 3, 2);
+const BMax = Math.max.apply(null, BOuter.concat([BDTX]).reduce((a, m) => a.concat(flat(m)), []).map(Math.abs));
+
+function hmHTML(M, hot){
+  return `<div class="hm">` + flat(M).map(v => {
+    const al = 0.10 + 0.6*Math.abs(v)/BMax;
+    return `<div style="background:${v >= 0 ? `rgba(15,139,141,${al})` : `rgba(194,65,59,${al})`}">${fmt(v)}</div>`;
+  }).join("") + `</div>`;
+}
+let batchToken = 0;
+function renderBatch(k, mode){
+  // k = number of examples added so far (0..4); mode "one" highlights only example k
+  $("#batchData").innerHTML = mblock("X (inputs as rows)", BX, {d:2, cls:(i)=> mode === "one" && i === k - 1 ? "hl" : ""}, "4×2") +
+    mblock("classes", col(BLab.map(c => String(c + 1))), {d:0, cls:(i)=> mode === "one" && i === k - 1 ? "hl" : ""}, "4") +
+    mblock("Δ = P − Y (blames as rows)", BD, {d:4, cls:(i)=> mode === "one" && i === k - 1 ? "hl" : ""}, "4×3");
+  $("#batchGrid").innerHTML = BOuter.map((M, n) => {
+    const cls = mode === "one" ? (n === k - 1 ? "on" : "dim") : (n < k ? "" : "dim");
+    return `<div class="opbox ${cls}"><div class="t">example ${n+1}: δ${subs(n+1)}x${subs(n+1)}ᵀ <span class="badge">3×2</span><br>x = ${vec(BX[n])}, class ${BLab[n]+1}</div>${hmHTML(M)}</div>`;
+  }).join("");
+  const upto = mode === "one" ? k : k;
+  let S = [[0,0],[0,0],[0,0]];
+  for (let n = 0; n < upto; n++) S = madd(S, BOuter[n]);
+  $("#batchSum").innerHTML = `<div class="opbox ${k === 4 ? "on" : ""}"><div class="t">${upto === 0 ? "nothing added yet" : `sum of examples 1–${upto}`}${k === 4 ? " = ΔᵀX" : ""} <span class="badge">3×2</span></div>${hmHTML(S)}</div>`;
+  const lines = [];
+  if (mode === "one" && k > 0){
+    const n = k - 1, d = BD[n], x = BX[n];
+    lines.push(`<span class="hd">Example ${k}: x = ${vec(x)}, true class ${BLab[n] + 1}</span>`);
+    lines.push(`z = Wx + b = ${vec(BZ[n])}`);
+    lines.push(`p = softmax(z) = ${vec(BP[n])}`);
+    lines.push(`δ = p − y = ${vec(BP[n])} − ${vec(BY[n])} = ${vec(d)}`);
+    lines.push(`δxᵀ, row by row (blame × input):`);
+    for (let i = 0; i < 3; i++) lines.push(`  row ${i+1}: ${fmt(d[i])}·${vec(x)} = ${vec(BOuter[n][i])}`);
+  }
+  if (k === 4 && mode === "sum"){
+    lines.push(`<span class="hd">Add the four outer products, entry by entry:</span>`);
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++)
+      lines.push(`  (${i+1},${j+1}): ` + BOuter.map(M => fmt(M[i][j])).join(" + ").replace(/\+ −/g, "− ") + ` = ${fmt(S[i][j])}`);
+    lines.push(`<span class="hd">Same thing as one matrix multiply, ΔᵀX:</span> (ΔᵀX)ᵢⱼ = Σₙ Δₙᵢ Xₙⱼ, i.e. column i of Δ · column j of X`);
+    lines.push(`  (2,1): ` + BD.map((d, n) => `${fmt(d[1])}·${fp(BX[n][0])}`).join(" + ") + ` = ${fmt(BDTX[1][0])}`);
+    lines.push(`shapes: Δᵀ is 3×4, X is 4×2, so ΔᵀX is 3×2 = shape of W ✓`);
+  }
+  if (lines.length === 0) lines.push("Click an example to see its outer product, or “▶ Play all four” to watch them add up.");
+  $("#batchLog").innerHTML = lines.join("\n");
+  let tests = "", vd = $("#batchVerdict");
+  if (k === 4 && mode === "sum"){
+    const e1 = maxAbsDiff(flat(S), flat(BDTX)), e2 = maxAbsDiff(flat(BDTX), flat(BFD));
+    tests += testHTML(e1 < 1e-12, "Sum of 4 outer products = ΔᵀX", `max difference ${sci(e1)}`);
+    tests += testHTML(e2 < 1e-6, "ΔᵀX matches finite differences of the batch loss", `FD = ${matStr(BFD)}<br>max error = ${sci(e2)}`);
+    vd.className = "verdict ok"; vd.textContent = "✓ ∂L/∂W = ΔᵀX: four outer products, one matrix multiply.";
+  } else { vd.textContent = ""; }
+  if (mode === "one" && k > 0){
+    const n = k - 1;
+    const fdOne = reshape(fdGrad(p => layerLoss(reshape(p, 3, 2), Lb, BX[n], BY[n]), flat(LW)), 3, 2);
+    const e = maxAbsDiff(flat(BOuter[n]), flat(fdOne));
+    tests += testHTML(e < 1e-6, `Example ${k}'s δxᵀ matches finite differences of its own loss`, `max error = ${sci(e)}`);
+  }
+  $("#batchTests").innerHTML = tests;
+}
+const BATCH_DEFS = [
+  { t: "Example 1", k: 1, m: "one" }, { t: "Example 2", k: 2, m: "one" },
+  { t: "Example 3", k: 3, m: "one" }, { t: "Example 4", k: 4, m: "one" },
+  { t: "Sum them: ΔᵀX", k: 4, m: "sum" }, { t: "▶ Play all four", k: -1 },
+];
+const batchBtns = makeButtons("#batchPresets", BATCH_DEFS, async d => {
+  const my = ++batchToken;
+  if (d.k > 0){ renderBatch(d.k, d.m); return; }
+  for (let k = 1; k <= 4; k++){
+    if (my !== batchToken) return;
+    renderBatch(k, "one"); await sleep(1600);
+    if (my !== batchToken) return;
+    renderBatch(k, "partial"); await sleep(700);
+  }
+  if (my !== batchToken) return;
+  renderBatch(4, "sum");
+});
+renderBatch(0, "partial");
+
+/* expose for testing */
+window.__MC = { a3, x3, RULES, gradR, wStar, XtX, Xty, Lz, Lp, Lloss, Ld, LgW, Lgx, fdW, fdb, fdx, BDTX, BFD, BOuter, maxAbsDiff };
+})();
+</script>
+</body>
+</html>

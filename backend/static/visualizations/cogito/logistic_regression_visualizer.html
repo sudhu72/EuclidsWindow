@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logistic regression, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --purple:#b39ddb; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{overflow-x:hidden;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:920px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.5;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  h3{font-family:'Kalam',cursive;font-size:15px;font-weight:400;margin:18px 0 4px;color:var(--chalk-dim);text-align:center;}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .row .lead{font-size:11.5px;color:var(--chalk-dim);align-self:center;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op.go{border-color:var(--amber);}
+  button:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:640px;height:auto;}
+
+  .tblwrap{overflow-x:auto;max-width:100%;}
+  table.dtbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.dtbl th, table.dtbl td{border:1px solid var(--border);padding:6px 8px;text-align:center;}
+  table.dtbl th{color:var(--chalk-dim);font-weight:700;}
+  table.dtbl tr.hl td{background:rgba(127,179,213,0.16);color:var(--chalk);font-weight:700;}
+  table.dtbl td.pos{color:var(--green);}
+  table.dtbl td.neg{color:var(--coral);}
+  table.dtbl td.barcell{min-width:120px;padding:4px 6px;}
+  .bar{position:relative;height:12px;}
+  .bar .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--chalk-dim);}
+  .bar .fill{position:absolute;top:0;height:12px;border-radius:2px;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:130px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:15px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;white-space:pre-line;line-height:1.55;}
+  .calc{font-size:13px;line-height:1.7;text-align:center;margin:10px 0;color:var(--chalk);}
+  .calc b{color:var(--amber);}
+  .walk{list-style:none;padding:0;margin:10px 0;font-size:12.5px;line-height:1.6;}
+  .walk li{border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:8px;}
+  .walk li b{color:var(--amber);}
+  .legend{display:flex;justify-content:center;gap:18px;font-size:11.5px;color:var(--chalk-dim);margin-top:2px;flex-wrap:wrap;}
+  .legend span.sw{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle;}
+  .legend span.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .note{font-size:11.5px;color:var(--chalk-dim);border-left:3px solid var(--amber);padding:6px 10px;margin:12px 0 0;line-height:1.5;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;line-height:1.5;}
+  footer a{color:var(--blue);}
+
+  @media (max-width:560px){
+    body{padding:20px 16px 40px;}
+    .panel{padding:16px 12px;}
+    .metric{min-width:0;flex:1 1 40%;padding:8px 8px;}
+    table.dtbl{font-size:11px;}
+    table.dtbl th, table.dtbl td{padding:5px 4px;}
+    table.dtbl .drawn{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Logistic Regression, Live</h1>
+  <p class="sub">Companion to <b>logistic_regression_feynman.md</b>. Five demos, and every worked example in the tutorial is one button: why a straight line fails on 0/1 answers, probability ↔ odds ↔ log-odds, reading the fitted model, fitting it by gradient descent, and what happens when the classes separate perfectly. Every number is computed live in this page.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="t1">1 · Why not a straight line</button>
+    <button class="tab-btn" data-tab="t2">2 · Probability ↔ odds ↔ log-odds</button>
+    <button class="tab-btn" data-tab="t3">3 · Read the model</button>
+    <button class="tab-btn" data-tab="t4">4 · Fitting</button>
+    <button class="tab-btn" data-tab="t5">5 · Separable data</button>
+  </div>
+
+  <!-- ===================== TAB 1 ===================== -->
+  <div class="tabpage active" id="t1">
+    <div class="panel">
+      <h2>A straight line through 0s and 1s breaks; the S-curve doesn't</h2>
+      <p class="sub">The 20 students from the tutorial (hours studied; green = passed, coral = failed). The amber line is ordinary linear regression on the 0/1 answers. The blue curve is logistic regression. The shaded bands are impossible probabilities.</p>
+      <div class="row">
+        <button class="op active" id="t1Base">The 20 students</button>
+        <button class="op go" id="t1Add">Add the 20-hour student (passed)</button>
+      </div>
+      <svg id="t1svg" viewBox="0 0 640 340" aria-label="Scatter of 20 students with a linear fit and a logistic curve"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#ffce54"></span>linear regression</span>
+        <span><span class="sw" style="background:#7fb3d5"></span>logistic regression</span>
+        <span id="t1GhostLeg" style="display:none"><span class="sw" style="background:#7f8f83"></span>linear line before (dashed)</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">linear slope</div><div class="num" id="t1Slope">—</div></div>
+        <div class="metric amber"><div class="lbl">linear prediction at 5 h</div><div class="num" id="t1At5">—</div></div>
+        <div class="metric amber"><div class="lbl">linear prediction at 2 h</div><div class="num" id="t1At2">—</div></div>
+        <div class="metric blue"><div class="lbl">logistic b₀, b₁</div><div class="num" id="t1Log">—</div></div>
+      </div>
+      <div class="story-line" id="t1story" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 2 ===================== -->
+  <div class="tabpage" id="t2">
+    <div class="panel">
+      <h2>One chance, three ways of writing it</h2>
+      <p class="sub">Pick a probability. The page converts it to odds p/(1−p) and to log-odds ln(odds), and marks it on the sigmoid, the curve that turns log-odds back into a probability.</p>
+      <div class="row" id="t2Btns"></div>
+      <div class="calc" id="t2calc" aria-live="polite"></div>
+      <svg id="t2svg" viewBox="0 0 640 300" aria-label="Sigmoid curve with the chosen point marked"></svg>
+      <h3>The same six chances as odds: the "unlikely" ones are crammed between 0 and 1</h3>
+      <svg id="t2odds" viewBox="0 0 640 110" aria-label="Odds number line"></svg>
+      <div class="tblwrap"><table class="dtbl" id="t2tbl"></table></div>
+      <div class="story-line" id="t2story"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 3 ===================== -->
+  <div class="tabpage" id="t3">
+    <div class="panel">
+      <h2>Reading the fitted model: b₀ = −4.078, b₁ = 1.505</h2>
+      <p class="sub">log-odds = b₀ + b₁ × hours, probability = sigmoid(log-odds). Pick an hour to see its row worked out, show the 50% decision boundary, or walk the "×4.5 odds per hour" multiplier.</p>
+      <div class="row">
+        <span class="lead">predict at:</span>
+        <button class="op" data-h="1">1 h</button>
+        <button class="op" data-h="2">2 h</button>
+        <button class="op" data-h="3">3 h</button>
+        <button class="op" data-h="4">4 h</button>
+        <button class="op" data-h="5">5 h</button>
+      </div>
+      <div class="row">
+        <button class="op go" id="t3Boundary">Decision boundary (2.71 h)</button>
+        <button class="op go" id="t3Walk">Walk the ×4.5 odds multiplier, hour by hour</button>
+      </div>
+      <div class="calc" id="t3calc" aria-live="polite"></div>
+      <svg id="t3svg" viewBox="0 0 640 320" aria-label="Logistic curve for the 20 students"></svg>
+      <ul class="walk" id="t3walk"></ul>
+      <div class="tblwrap"><table class="dtbl" id="t3tbl"></table></div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">odds multiplier e^b₁</div><div class="num" id="t3eb">—</div></div>
+        <div class="metric amber"><div class="lbl">boundary −b₀/b₁</div><div class="num" id="t3bd">—</div></div>
+        <div class="metric green"><div class="lbl">accuracy at 50%</div><div class="num" id="t3acc">—</div></div>
+        <div class="metric coral"><div class="lbl">log loss at the fit</div><div class="num" id="t3ll">—</div></div>
+      </div>
+      <div class="story-line" id="t3story"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 4 ===================== -->
+  <div class="tabpage" id="t4">
+    <div class="panel">
+      <h2>Fitting by walking downhill: gradient = average of (p − y) × input</h2>
+      <p class="sub">Start at b₀ = b₁ = 0 (every student predicted 50%). Each step moves the weights against the average gradient, with learning rate 0.1, on the mean log loss. The table shows each student's error (p − y) at the current weights: those errors are what the next step uses.</p>
+      <div class="row">
+        <button class="op" id="t4Reset">Reset to b₀ = b₁ = 0</button>
+        <button class="op go" id="t4One">1 step</button>
+        <button class="op go" id="t4Ten">10 steps</button>
+        <button class="op go" id="t4Hund">100 steps</button>
+        <button class="op go" id="t4Conv">Run to convergence</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">steps taken</div><div class="num" id="t4Step">0</div></div>
+        <div class="metric blue"><div class="lbl">b₀, b₁</div><div class="num" id="t4B">—</div></div>
+        <div class="metric coral"><div class="lbl">mean log loss</div><div class="num" id="t4L">—</div></div>
+        <div class="metric green"><div class="lbl">average gradient (∂b₀, ∂b₁)</div><div class="num" id="t4G">—</div></div>
+      </div>
+      <div class="story-line" id="t4story" aria-live="polite"></div>
+      <svg id="t4svg" viewBox="0 0 640 300" aria-label="Current logistic curve over the data"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#ff8266"></span>current curve</span>
+        <span><span class="sw" style="background:#7fb3d5"></span>final answer (dashed)</span>
+      </div>
+      <h3>The walk through (b₁, b₀) space</h3>
+      <svg id="t4path" viewBox="0 0 640 260" aria-label="Path of the weights during gradient descent"></svg>
+      <h3>Every student's error at the current weights</h3>
+      <div class="tblwrap"><table class="dtbl" id="t4tbl"></table></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 5 ===================== -->
+  <div class="tabpage" id="t5">
+    <div class="panel">
+      <h2>Perfectly separable data: the slope runs away</h2>
+      <p class="sub">Six students: 1, 2, 3 hours failed; 4, 5, 6 hours passed. Plain gradient descent (learning rate 0.5, from zero) never finishes: the loss keeps shrinking by making the S steeper. Then switch on scikit-learn's L2 penalty and the slope stops.</p>
+      <div class="row">
+        <span class="lead">no penalty, after:</span>
+        <button class="op" data-k="s100">100 steps</button>
+        <button class="op" data-k="s1000">1,000 steps</button>
+        <button class="op" data-k="s10000">10,000 steps</button>
+        <button class="op" data-k="s100000">100,000 steps</button>
+      </div>
+      <div class="row">
+        <span class="lead">with L2 penalty:</span>
+        <button class="op" data-k="c1">C = 1 (scikit-learn default)</button>
+        <button class="op" data-k="c100">C = 100 (weak penalty)</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">slope b₁</div><div class="num" id="t5S">—</div></div>
+        <div class="metric amber"><div class="lbl">boundary (hours)</div><div class="num" id="t5Bd">—</div></div>
+        <div class="metric coral"><div class="lbl">mean log loss</div><div class="num" id="t5L">—</div></div>
+        <div class="metric green"><div class="lbl">p(pass) at 3 h / 4 h</div><div class="num" id="t5P">—</div></div>
+      </div>
+      <div class="story-line" id="t5story" aria-live="polite"></div>
+      <svg id="t5svg" viewBox="0 0 640 300" aria-label="Six separable students and the current curve"></svg>
+      <h3>Slope versus training steps (log scale)</h3>
+      <svg id="t5slope" viewBox="0 0 640 260" aria-label="Slope growing with training steps"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#7fb3d5"></span>no penalty (gradient descent)</span>
+        <span><span class="sw" style="background:#b39ddb"></span>C = 100 stops here</span>
+        <span><span class="sw" style="background:#8fd19e"></span>C = 1 stops here</span>
+      </div>
+      <div class="tblwrap"><table class="dtbl" id="t5tbl"></table></div>
+      <p class="note" id="t5note"></p>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <a href="../supervised/logistic_regression_feynman.md">logistic_regression_feynman.md</a>. Open directly in any browser: no install, nothing sent anywhere (only Google Fonts is requested, falling back to system fonts offline).
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const C = {chalk:'#f4f1e8', dim:'#7f8f83', amber:'#ffce54', coral:'#ff8266', green:'#8fd19e', blue:'#7fb3d5', purple:'#b39ddb'};
+  const FONT = 'JetBrains Mono, monospace';
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = id => document.getElementById(id);
+
+  function el(tag, attrs, text){
+    const e = document.createElementNS(svgNS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // ---------- tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tabpage').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      $(btn.dataset.tab).classList.add('active');
+    });
+  });
+  function setActive(buttons, active){ buttons.forEach(b => b.classList.toggle('active', b === active)); }
+
+  // ---------- chart helper ----------
+  function chart(svg, o){
+    svg.innerHTML = '';
+    const W = o.W, H = o.H, l = o.l || 52, r = o.r || 20, t = o.t || 18, b = o.b || 42;
+    const px = x => l + (x - o.xmin) / (o.xmax - o.xmin) * (W - l - r);
+    const py = y => H - b - (y - o.ymin) / (o.ymax - o.ymin) * (H - t - b);
+    const add = (tag, attrs, text) => { const e = el(tag, attrs, text); svg.appendChild(e); return e; };
+    const cid = 'clip-' + svg.id;
+    const defs = add('defs', {});
+    const cp = el('clipPath', {id: cid});
+    cp.appendChild(el('rect', {x: l, y: t, width: W - l - r, height: H - t - b}));
+    defs.appendChild(cp);
+    (o.yticks || []).forEach(v => {
+      add('line', {x1: l, x2: W - r, y1: py(v), y2: py(v), stroke: C.chalk, 'stroke-opacity': 0.07});
+      add('text', {x: l - 8, y: py(v) + 4, 'text-anchor': 'end', 'font-size': 11, 'font-family': FONT, fill: C.dim}, o.yfmt ? o.yfmt(v) : v);
+    });
+    (o.xticks || []).forEach(v => {
+      add('line', {x1: px(v), x2: px(v), y1: H - b, y2: H - b + 4, stroke: C.dim});
+      add('text', {x: px(v), y: H - b + 17, 'text-anchor': 'middle', 'font-size': 11, 'font-family': FONT, fill: C.dim}, o.xfmt ? o.xfmt(v) : v);
+    });
+    add('line', {x1: l, y1: H - b, x2: W - r, y2: H - b, stroke: C.dim, 'stroke-width': 1.2});
+    add('line', {x1: l, y1: t, x2: l, y2: H - b, stroke: C.dim, 'stroke-width': 1.2});
+    if (o.xlab) add('text', {x: (l + W - r) / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 11, 'font-family': FONT, fill: C.dim}, o.xlab);
+    if (o.ylab) add('text', {x: 14, y: (t + H - b) / 2, 'text-anchor': 'middle', 'font-size': 11, 'font-family': FONT, fill: C.dim, transform: `rotate(-90 14 ${(t + H - b) / 2})`}, o.ylab);
+    const fn = (f, x0, x1, attrs, n) => {
+      n = n || 240; let d = '';
+      for (let i = 0; i <= n; i++){ const x = x0 + (x1 - x0) * i / n; const y = f(x); d += (i ? 'L' : 'M') + px(x).toFixed(1) + ',' + py(y).toFixed(1); }
+      return add('path', Object.assign({d, fill: 'none', 'clip-path': `url(#${cid})`}, attrs));
+    };
+    const label = (x, y, text, attrs) => add('text', Object.assign({x, y, 'font-size': 11, 'font-family': FONT, fill: C.chalk}, attrs || {}), text);
+    return {px, py, add, fn, label, W, H, l, r, t, b, cid};
+  }
+
+  // ---------- math ----------
+  const sig = z => 1 / (1 + Math.exp(-z));
+  const HOURS = [0.50,0.75,1.00,1.25,1.50,1.75,1.75,2.00,2.25,2.50,2.75,3.00,3.25,3.50,4.00,4.25,4.50,4.75,5.00,5.50];
+  const PASSED = [0,0,0,0,0,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1];
+
+  function fitOLS(x, y){
+    const n = x.length, mx = x.reduce((a, b) => a + b, 0) / n, my = y.reduce((a, b) => a + b, 0) / n;
+    let sxy = 0, sxx = 0;
+    for (let i = 0; i < n; i++){ sxy += (x[i] - mx) * (y[i] - my); sxx += (x[i] - mx) ** 2; }
+    const s = sxy / sxx; return {b0: my - s * mx, b1: s};
+  }
+  // Newton's method. Cpen = Infinity -> plain maximum likelihood.
+  // Otherwise minimises scikit-learn's objective: Cpen * sum(log loss) + 0.5 * b1^2 (intercept not penalised).
+  function fitLogistic(x, y, Cpen){
+    let b0 = 0, b1 = 0; const reg = isFinite(Cpen);
+    for (let it = 0; it < 200; it++){
+      let g0 = 0, g1 = 0, h00 = 0, h01 = 0, h11 = 0;
+      for (let i = 0; i < x.length; i++){
+        const p = sig(b0 + b1 * x[i]), e = p - y[i], w = p * (1 - p);
+        g0 += e; g1 += e * x[i]; h00 += w; h01 += w * x[i]; h11 += w * x[i] * x[i];
+      }
+      if (reg){ g0 *= Cpen; g1 *= Cpen; h00 *= Cpen; h01 *= Cpen; h11 *= Cpen; g1 += b1; h11 += 1; }
+      const det = h00 * h11 - h01 * h01;
+      const d0 = (h11 * g0 - h01 * g1) / det, d1 = (-h01 * g0 + h00 * g1) / det;
+      b0 -= d0; b1 -= d1;
+      if (Math.abs(d0) + Math.abs(d1) < 1e-14) break;
+    }
+    return {b0, b1};
+  }
+  function meanLoss(x, y, b0, b1){
+    let L = 0;
+    for (let i = 0; i < x.length; i++){
+      const z = b0 + b1 * x[i];
+      // numerically stable: -[y ln sig(z) + (1-y) ln(1-sig(z))] = ln(1+e^z) - y z
+      L += (z > 0 ? z + Math.log1p(Math.exp(-z)) : Math.log1p(Math.exp(z))) - y[i] * z;
+    }
+    return L / x.length;
+  }
+  function avgGrad(x, y, b0, b1){
+    let g0 = 0, g1 = 0;
+    for (let i = 0; i < x.length; i++){ const e = sig(b0 + b1 * x[i]) - y[i]; g0 += e; g1 += e * x[i]; }
+    return [g0 / x.length, g1 / x.length];
+  }
+  const f3 = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(3);
+  const s3 = v => (v < 0 ? '−' : '') + Math.abs(v).toFixed(3);
+  const s4 = v => (v < 0 ? '−' : '') + Math.abs(v).toFixed(4);
+  const pct = (p, d) => (100 * p).toFixed(d === undefined ? 1 : d) + '%';
+
+  const LIN = fitOLS(HOURS, PASSED);
+  const LIN21 = fitOLS(HOURS.concat([20]), PASSED.concat([1]));
+  const MLE = fitLogistic(HOURS, PASSED, Infinity);
+  const MLE21 = fitLogistic(HOURS.concat([20]), PASSED.concat([1]), Infinity);
+  const EB1 = Math.exp(MLE.b1);
+  const BOUND = -MLE.b0 / MLE.b1;
+  const MLE_LOSS = meanLoss(HOURS, PASSED, MLE.b0, MLE.b1);
+  const PRED = HOURS.map(h => sig(MLE.b0 + MLE.b1 * h) >= 0.5 ? 1 : 0);
+  const WRONG = HOURS.map((h, i) => PRED[i] !== PASSED[i]);
+  const ACC = WRONG.filter(w => !w).length / HOURS.length;
+  // best accuracy over every possible single cutoff (checked, as in the tutorial)
+  let BEST_CUT_ACC = 0;
+  { const cands = [-1].concat(HOURS.map((h, i) => h), [99]);
+    cands.forEach(c => [c - 1e-9, c + 1e-9].forEach(cc => {
+      const a = HOURS.filter((h, i) => (h > cc ? 1 : 0) === PASSED[i]).length / HOURS.length;
+      if (a > BEST_CUT_ACC) BEST_CUT_ACC = a;
+    })); }
+
+  function drawStudents(c, xs, ys, opts){
+    opts = opts || {};
+    xs.forEach((h, i) => {
+      const col = ys[i] ? C.green : C.coral;
+      c.add('circle', {cx: c.px(h), cy: c.py(ys[i]), r: opts.r || 6, fill: col, 'fill-opacity': 0.85, stroke: '#16221c', 'stroke-width': 1});
+      if (opts.ring && opts.ring[i]) c.add('circle', {cx: c.px(h), cy: c.py(ys[i]), r: 10, fill: 'none', stroke: C.amber, 'stroke-width': 1.6});
+    });
+  }
+
+  // ======================= TAB 1 =======================
+  function renderT1(added){
+    const c = chart($('t1svg'), {W: 640, H: 340, xmin: 0, xmax: 6, ymin: -0.25, ymax: 1.3,
+      xticks: [0,1,2,3,4,5,6], yticks: [0, 0.25, 0.5, 0.75, 1], xlab: 'hours studied', ylab: 'predicted chance of passing',
+      yfmt: v => (v * 100) + '%'});
+    // impossible bands
+    c.add('rect', {x: c.l, y: c.py(0), width: c.W - c.l - c.r, height: c.py(-0.25) - c.py(0), fill: C.coral, 'fill-opacity': 0.09});
+    c.add('rect', {x: c.l, y: c.py(1.3), width: c.W - c.l - c.r, height: c.py(1) - c.py(1.3), fill: C.coral, 'fill-opacity': 0.09});
+    c.label(c.l + 6, c.py(-0.25) - 6, 'impossible: below 0%', {fill: C.coral, 'font-size': 10.5});
+    c.label(c.l + 6, c.py(1.3) + 13, 'impossible: above 100%', {fill: C.coral, 'font-size': 10.5});
+    const L = added ? LIN21 : LIN, M = added ? MLE21 : MLE;
+    if (added) c.fn(x => LIN.b0 + LIN.b1 * x, 0, 6, {stroke: C.dim, 'stroke-width': 1.8, 'stroke-dasharray': '6,5'}, 2);
+    c.fn(x => L.b0 + L.b1 * x, 0, 6, {stroke: C.amber, 'stroke-width': 2.6}, 2);
+    c.fn(x => sig(M.b0 + M.b1 * x), 0, 6, {stroke: C.blue, 'stroke-width': 2.8});
+    drawStudents(c, HOURS, PASSED);
+    if (!added){
+      const a = LIN.b0 + LIN.b1 * 0.5, z = LIN.b0 + LIN.b1 * 5.5;
+      c.add('circle', {cx: c.px(0.5), cy: c.py(a), r: 4, fill: C.amber});
+      c.label(c.px(0.5) + 6, c.py(a) + 16, `line says ${pct(a)} at 0.5 h`, {fill: C.amber, 'font-size': 10.5});
+      c.add('circle', {cx: c.px(5.5), cy: c.py(z), r: 4, fill: C.amber});
+      c.label(c.px(5.5) - 6, c.py(z) - 8, `line says ${pct(z)} at 5.5 h`, {fill: C.amber, 'font-size': 10.5, 'text-anchor': 'end'});
+    } else {
+      // the new student is off to the right
+      const ax = c.W - c.r - 4, ay = c.py(1);
+      c.add('path', {d: `M${ax - 26},${ay} L${ax},${ay} M${ax - 8},${ay - 6} L${ax},${ay} L${ax - 8},${ay + 6}`, stroke: C.green, 'stroke-width': 2.2, fill: 'none'});
+      c.label(ax, ay - 12, 'new student: 20 h, passed →', {fill: C.green, 'text-anchor': 'end', 'font-size': 10.5});
+      [2, 5].forEach(h => {
+        c.add('line', {x1: c.px(h), x2: c.px(h), y1: c.py(LIN.b0 + LIN.b1 * h), y2: c.py(LIN21.b0 + LIN21.b1 * h), stroke: C.amber, 'stroke-width': 1.4, 'stroke-dasharray': '2,3'});
+        c.add('circle', {cx: c.px(h), cy: c.py(LIN21.b0 + LIN21.b1 * h), r: 4, fill: C.amber});
+      });
+    }
+    $('t1GhostLeg').style.display = added ? '' : 'none';
+    const at = (m, h) => (m.b0 + m.b1 * h).toFixed(3);
+    if (added){
+      $('t1Slope').textContent = `${LIN.b1.toFixed(4)} → ${LIN21.b1.toFixed(4)}`;
+      $('t1At5').textContent = `${at(LIN, 5)} → ${at(LIN21, 5)}`;
+      $('t1At2').textContent = `${at(LIN, 2)} → ${at(LIN21, 2)}`;
+      $('t1Log').textContent = `${s4(MLE21.b0)}, ${MLE21.b1.toFixed(4)} (unchanged)`;
+      $('t1story').textContent =
+        `One extra student who studied 20 hours and passed, which is exactly what anyone expects. The straight line has to reach out to that far point, so its slope collapses from ${LIN.b1.toFixed(4)} to ${LIN21.b1.toFixed(4)}: the 5-hour prediction drops from ${at(LIN, 5)} to ${at(LIN21, 5)} and the 2-hour one rises from ${at(LIN, 2)} to ${at(LIN21, 2)}.\n` +
+        `The logistic fit with 21 students is b₀ = ${s4(MLE21.b0)}, b₁ = ${MLE21.b1.toFixed(4)}, identical to 4 decimals. That student already sits where the S-curve is flat at ~100%, so it gives the curve nothing to fix.`;
+    } else {
+      $('t1Slope').textContent = LIN.b1.toFixed(4);
+      $('t1At5').textContent = at(LIN, 5);
+      $('t1At2').textContent = at(LIN, 2);
+      $('t1Log').textContent = `${s4(MLE.b0)}, ${MLE.b1.toFixed(4)}`;
+      $('t1story').textContent =
+        `Linear regression on the 0/1 answers: ${LIN.b1.toFixed(4)} × hours − ${Math.abs(LIN.b0).toFixed(4)}. It predicts ${(LIN.b0 + LIN.b1 * 0.5).toFixed(3)} at 0.5 hours (a negative chance) and ${(LIN.b0 + LIN.b1 * 5.5).toFixed(3)} at 5.5 hours (a 113.6% chance), because a line has no reason to stay between 0 and 1.\n` +
+        `The logistic curve (b₀ = ${s4(MLE.b0)}, b₁ = ${MLE.b1.toFixed(4)}) stays inside 0–100% everywhere. Now press "Add the 20-hour student".`;
+    }
+  }
+  const t1Btns = [$('t1Base'), $('t1Add')];
+  $('t1Base').addEventListener('click', () => { setActive(t1Btns, $('t1Base')); renderT1(false); });
+  $('t1Add').addEventListener('click', () => { setActive(t1Btns, $('t1Add')); renderT1(true); });
+  renderT1(false);
+
+  // ======================= TAB 2 =======================
+  const T2P = [0.10, 0.20, 0.50, 0.80, 0.90, 0.99];
+  const t2Btns = T2P.map(p => {
+    const b = document.createElement('button');
+    b.className = 'op'; b.textContent = Math.round(p * 100) + '%';
+    b.addEventListener('click', () => { setActive(t2Btns, b); renderT2(p); });
+    $('t2Btns').appendChild(b); return b;
+  });
+  function renderT2(p){
+    const odds = p / (1 - p), lo = Math.log(odds);
+    // sigmoid chart
+    const c = chart($('t2svg'), {W: 640, H: 300, xmin: -5.5, xmax: 5.5, ymin: 0, ymax: 1,
+      xticks: [-5,-4,-3,-2,-1,0,1,2,3,4,5], yticks: [0, 0.25, 0.5, 0.75, 1],
+      xlab: 'log-odds  z = ln(p / (1 − p))', ylab: 'probability p', yfmt: v => (v * 100) + '%',
+      xfmt: v => v < 0 ? '−' + (-v) : String(v)});
+    c.fn(z => sig(z), -5.5, 5.5, {stroke: C.blue, 'stroke-width': 2.8});
+    T2P.forEach(q => { const z = Math.log(q / (1 - q)); c.add('circle', {cx: c.px(z), cy: c.py(q), r: 3.5, fill: C.dim}); });
+    if (p !== null){
+      c.add('line', {x1: c.px(lo), x2: c.px(lo), y1: c.py(p), y2: c.py(0), stroke: C.amber, 'stroke-dasharray': '4,4'});
+      c.add('line', {x1: c.px(-5.5), x2: c.px(lo), y1: c.py(p), y2: c.py(p), stroke: C.amber, 'stroke-dasharray': '4,4'});
+      c.add('circle', {cx: c.px(lo), cy: c.py(p), r: 7, fill: C.amber});
+      // put labels on the side of the S where the curve isn't: above-left when z < 0, below-right when z >= 0
+      const lab = (z, q, text, col, fs) => {
+        // near the chart edges, flip horizontally so the label stays inside
+        const toLeft = (z < 0 && z > -3) || z > 3;
+        const dx = toLeft ? -12 : 12, dy = z < -3 ? -40 : z < 0 ? -12 : z > 3 ? 50 : 20;
+        c.label(c.px(z) + dx, c.py(q) + dy, text, {fill: col, 'text-anchor': toLeft ? 'end' : 'start', 'font-size': fs || 11});
+      };
+      lab(lo, p, `p = ${p.toFixed(2)}, z = ${Math.abs(lo) < 1e-12 ? '0.000' : f3(lo)}`, C.amber);
+      // mirror point for symmetry
+      if (Math.abs(p - 0.5) > 1e-9){
+        const mz = -lo, mp = 1 - p;
+        c.add('circle', {cx: c.px(mz), cy: c.py(mp), r: 6, fill: 'none', stroke: C.purple, 'stroke-width': 1.8});
+        lab(mz, mp, `mirror: ${Math.round(mp * 100)}% ↔ z = ${f3(mz)}`, C.purple, 10.5);
+      }
+    }
+    // odds strip
+    const o = chart($('t2odds'), {W: 640, H: 110, t: 30, b: 40, xmin: 0, xmax: 10, ymin: 0, ymax: 1, xticks: [0,1,2,3,4,5,6,7,8,9,10], xlab: 'odds = p / (1 − p)   (no ceiling: 0.99 gives 99)'});
+    o.add('rect', {x: o.px(0), y: 30, width: o.px(1) - o.px(0), height: 40, fill: C.coral, 'fill-opacity': 0.10});
+    o.label(o.px(0.5), 26, 'all p < 50%', {fill: C.coral, 'text-anchor': 'middle', 'font-size': 10});
+    o.label(o.px(5.5), 26, 'all p > 50% spread from 1 to ∞', {fill: C.green, 'text-anchor': 'middle', 'font-size': 10});
+    T2P.forEach(q => {
+      const od = q / (1 - q), active = p !== null && Math.abs(q - p) < 1e-9;
+      if (od > 10){
+        const ax = o.W - o.r;
+        o.add('path', {d: `M${ax - 20},50 L${ax},50 M${ax - 7},45 L${ax},50 L${ax - 7},55`, stroke: active ? C.amber : C.dim, 'stroke-width': 2, fill: 'none'});
+        o.label(ax - 24, 54, '99', {fill: active ? C.amber : C.dim, 'text-anchor': 'end', 'font-size': 10.5});
+      } else {
+        o.add('circle', {cx: o.px(od), cy: 50, r: active ? 7 : 4.5, fill: active ? C.amber : C.dim});
+      }
+    });
+    // table
+    let html = '<tr><th>probability p</th><th>odds p/(1−p)</th><th>log-odds ln(odds)</th></tr>';
+    T2P.forEach(q => {
+      const od = q / (1 - q), z = Math.log(od);
+      html += `<tr class="${p !== null && Math.abs(q - p) < 1e-9 ? 'hl' : ''}"><td>${q.toFixed(2)}</td><td>${od.toFixed(3)}</td><td>${Math.abs(z) < 1e-12 ? '0.000' : f3(z)}</td></tr>`;
+    });
+    $('t2tbl').innerHTML = html;
+    if (p === null){
+      $('t2calc').innerHTML = 'Press a probability above.';
+      $('t2story').textContent = '';
+      return;
+    }
+    const zStr = Math.abs(lo) < 1e-12 ? '0.000' : f3(lo);
+    $('t2calc').innerHTML =
+      `odds = ${p.toFixed(2)} / (1 − ${p.toFixed(2)}) = ${p.toFixed(2)} / ${(1 - p).toFixed(2)} = <b>${odds.toFixed(3)}</b><br>` +
+      `log-odds = ln(${odds.toFixed(3)}) = <b>${zStr}</b><br>` +
+      `back again: 1 / (1 + e^(${Math.abs(lo) < 1e-12 ? '0' : (lo > 0 ? '−' : '+') + Math.abs(lo).toFixed(3)})) = <b>${sig(lo).toFixed(2)}</b>`;
+    const stories = {
+      '0.1': '10% is odds of 1 to 9 (0.111). Its log-odds, −2.197, is exactly the mirror of 90% (+2.197).',
+      '0.2': '20% is "1 to 4" (odds 0.250). Log-odds −1.386: the same distance from zero as 80%, on the other side.',
+      '0.5': '50% is even odds (1.000), and log-odds of exactly 0: the centre of the scale, and the decision boundary of a logistic model.',
+      '0.8': '80% is "4 to 1" (odds 4.000). Log-odds +1.386, the mirror image of 20% (−1.386).',
+      '0.9': '90% is odds of 9 to 1. Log-odds +2.197, mirroring 10%.',
+      '0.99': '99% is odds of 99 to 1: far off the odds line, because odds have no ceiling. Log-odds +4.595. Near certainty keeps going, to +∞ as p → 1.'
+    };
+    $('t2story').textContent = stories[String(p)] + '\nOn the log-odds axis the scale is symmetric around zero and runs from −∞ to +∞, which is why a straight line can predict it safely.';
+  }
+  renderT2(null);
+
+  // ======================= TAB 3 =======================
+  const t3HourBtns = Array.from(document.querySelectorAll('#t3 button[data-h]'));
+  const t3AllBtns = t3HourBtns.concat([$('t3Boundary'), $('t3Walk')]);
+  let t3Timer = null;
+  function t3Row(h){ const z = MLE.b0 + MLE.b1 * h; return {h, z, odds: Math.exp(z), p: sig(z)}; }
+  function renderT3Chart(opts){
+    opts = opts || {};
+    const c = chart($('t3svg'), {W: 640, H: 320, xmin: 0, xmax: 6, ymin: 0, ymax: 1,
+      xticks: [0,1,2,3,4,5,6], yticks: [0, 0.25, 0.5, 0.75, 1], xlab: 'hours studied', ylab: 'probability of passing', yfmt: v => (v * 100) + '%'});
+    if (opts.boundary){
+      c.add('rect', {x: c.px(0), y: c.t, width: c.px(BOUND) - c.px(0), height: c.H - c.t - c.b, fill: C.coral, 'fill-opacity': 0.07});
+      c.add('rect', {x: c.px(BOUND), y: c.t, width: c.px(6) - c.px(BOUND), height: c.H - c.t - c.b, fill: C.green, 'fill-opacity': 0.07});
+      c.add('line', {x1: c.px(BOUND), x2: c.px(BOUND), y1: c.t, y2: c.H - c.b, stroke: C.amber, 'stroke-width': 2, 'stroke-dasharray': '6,4'});
+      c.add('line', {x1: c.px(0), x2: c.px(6), y1: c.py(0.5), y2: c.py(0.5), stroke: C.amber, 'stroke-opacity': 0.5, 'stroke-dasharray': '3,4'});
+      c.label(c.px(BOUND) + 6, c.t + 14, `boundary ${BOUND.toFixed(2)} h`, {fill: C.amber});
+      c.label(c.px(0.2), c.t + 14, 'predict fail', {fill: C.coral, 'font-size': 10.5});
+      c.label(c.px(5.8), c.t + 14, 'predict pass', {fill: C.green, 'font-size': 10.5, 'text-anchor': 'end'});
+    }
+    c.fn(x => sig(MLE.b0 + MLE.b1 * x), 0, 6, {stroke: C.blue, 'stroke-width': 2.8});
+    drawStudents(c, HOURS, PASSED, {r: 5, ring: opts.boundary ? WRONG : null});
+    (opts.marks || []).forEach((h, k, arr) => {
+      const r = t3Row(h), last = k === arr.length - 1;
+      c.add('line', {x1: c.px(h), x2: c.px(h), y1: c.py(r.p), y2: c.py(0), stroke: C.amber, 'stroke-dasharray': '3,4', 'stroke-opacity': last ? 1 : 0.5});
+      c.add('circle', {cx: c.px(h), cy: c.py(r.p), r: last ? 7 : 5, fill: C.amber, 'fill-opacity': last ? 1 : 0.6});
+      const up = r.z < 0, edge = h >= 5;
+      c.label(c.px(h) + (up || edge ? -10 : 10), c.py(r.p) + (up ? -10 : 20), pct(r.p), {fill: C.amber, 'text-anchor': (up || edge) ? 'end' : 'start'});
+    });
+  }
+  function renderT3Table(hl){
+    let html = '<tr><th>hours</th><th>log-odds b₀ + b₁·h</th><th>odds e^(log-odds)</th><th>probability</th><th>50% call</th></tr>';
+    [1,2,3,4,5].forEach(h => {
+      const r = t3Row(h);
+      html += `<tr class="${(hl || []).includes(h) ? 'hl' : ''}"><td>${h}</td><td>${f3(r.z)}</td><td>${r.odds.toFixed(3)}</td><td>${pct(r.p)}</td><td class="${r.p >= 0.5 ? 'pos' : 'neg'}">${r.p >= 0.5 ? 'pass' : 'fail'}</td></tr>`;
+    });
+    $('t3tbl').innerHTML = html;
+  }
+  function stopT3(){ if (t3Timer){ clearTimeout(t3Timer); t3Timer = null; } }
+  function t3Hour(h, btn){
+    stopT3(); setActive(t3AllBtns, btn); $('t3walk').innerHTML = '';
+    const r = t3Row(h);
+    renderT3Chart({marks: [h]}); renderT3Table([h]);
+    $('t3calc').innerHTML =
+      `log-odds = ${s3(MLE.b0)} + ${MLE.b1.toFixed(3)} × ${h} = <b>${f3(r.z)}</b><br>` +
+      `odds = e^(${f3(r.z)}) = <b>${r.odds.toFixed(3)}</b><br>` +
+      `probability = 1 / (1 + e^(${r.z >= 0 ? '−' : '+'}${Math.abs(r.z).toFixed(3)})) = <b>${pct(r.p)}</b>`;
+    $('t3story').textContent = r.p >= 0.5 ? `Above the 2.71-hour boundary, so the 50% rule predicts "pass".` : `Below the 2.71-hour boundary, so the 50% rule predicts "fail".`;
+  }
+  t3HourBtns.forEach(b => b.addEventListener('click', () => t3Hour(+b.dataset.h, b)));
+  $('t3Boundary').addEventListener('click', () => {
+    stopT3(); setActive(t3AllBtns, $('t3Boundary')); $('t3walk').innerHTML = '';
+    renderT3Chart({boundary: true}); renderT3Table([]);
+    const wrongList = HOURS.map((h, i) => WRONG[i] ? `${h.toFixed(2)} h (${PASSED[i] ? 'passed' : 'failed'})` : null).filter(Boolean);
+    $('t3calc').innerHTML =
+      `50% probability ⇔ log-odds = 0 ⇔ ${s3(MLE.b0)} + ${MLE.b1.toFixed(3)} × hours = 0<br>` +
+      `hours = ${Math.abs(MLE.b0).toFixed(3)} / ${MLE.b1.toFixed(3)} = <b>${BOUND.toFixed(2)}</b>`;
+    $('t3story').textContent =
+      `Predict "pass" above ${BOUND.toFixed(2)} hours and "fail" below. That gets ${Math.round(ACC * 20)} of 20 right (${pct(ACC, 0)}); the ${wrongList.length} ringed students are the misses: ${wrongList.join(', ')}.\n` +
+      `Trying every possible single cutoff, the best accuracy is ${pct(BEST_CUT_ACC, 0)}: no straight cutoff can do better on data this mixed.`;
+  });
+  $('t3Walk').addEventListener('click', () => {
+    stopT3(); setActive(t3AllBtns, $('t3Walk'));
+    const ul = $('t3walk'); ul.innerHTML = '';
+    $('t3calc').innerHTML = `Each extra hour adds b₁ = ${MLE.b1.toFixed(3)} to the log-odds, so it multiplies the odds by e^${MLE.b1.toFixed(3)} = <b>${EB1.toFixed(3)}</b>.`;
+    $('t3story').textContent = '';
+    let k = 1;
+    const marks = [1];
+    renderT3Chart({marks}); renderT3Table([1]);
+    const next = () => {
+      const a = t3Row(k), b = t3Row(k + 1);
+      const li = document.createElement('li');
+      li.innerHTML = `<b>${k} h → ${k + 1} h:</b> odds ${a.odds.toFixed(3)} × ${EB1.toFixed(3)} = <b>${(a.odds * EB1).toFixed(3)}</b> (the odds at ${k + 1} h). ` +
+        `Probability ${pct(a.p)} → ${pct(b.p)}: <b>+${(100 * (b.p - a.p)).toFixed(1)} points</b>.`;
+      ul.appendChild(li);
+      marks.push(k + 1);
+      renderT3Chart({marks}); renderT3Table(marks.slice());
+      k++;
+      if (k < 5){ t3Timer = setTimeout(next, reduceMotion ? 0 : 1100); }
+      else {
+        t3Timer = null;
+        const p2 = t3Row(2).p, p3 = t3Row(3).p, p4 = t3Row(4).p, p5 = t3Row(5).p;
+        $('t3story').textContent =
+          `Same ×${EB1.toFixed(1)} on the odds every hour, but not the same change in probability: 2→3 h adds ${(100 * (p3 - p2)).toFixed(1)} points, 4→5 h adds only ${(100 * (p5 - p4)).toFixed(1)}, because the probability is running into the 100% ceiling.\n` +
+          `So "b₁ = 1.5" never means "+1.5 percentage points per hour".`;
+      }
+    };
+    t3Timer = setTimeout(next, reduceMotion ? 0 : 500);
+  });
+  $('t3eb').textContent = EB1.toFixed(3);
+  $('t3bd').textContent = BOUND.toFixed(3) + ' h';
+  $('t3acc').textContent = pct(ACC, 0);
+  $('t3ll').textContent = MLE_LOSS.toFixed(4);
+  renderT3Chart({}); renderT3Table([]);
+  $('t3calc').innerHTML = `Fitted by maximum likelihood on the 20 students: b₀ = <b>${s4(MLE.b0)}</b>, b₁ = <b>${MLE.b1.toFixed(4)}</b> (published answer: −4.1 and 1.5).`;
+
+  // ======================= TAB 4 =======================
+  const LR = 0.1, TOL = 1e-9;
+  const gd = {b0: 0, b1: 0, step: 0, path: [[0, 0]], done: false};
+  let t4Run = 0;
+  function gdStep(){
+    const [g0, g1] = avgGrad(HOURS, PASSED, gd.b0, gd.b1);
+    gd.b0 -= LR * g0; gd.b1 -= LR * g1; gd.step++;
+    if (gd.step <= 60 || gd.step % 25 === 0) gd.path.push([gd.b0, gd.b1]);
+  }
+  function renderT4(msg){
+    const [g0, g1] = avgGrad(HOURS, PASSED, gd.b0, gd.b1);
+    const loss = meanLoss(HOURS, PASSED, gd.b0, gd.b1);
+    $('t4Step').textContent = gd.step.toLocaleString('en-US');
+    $('t4B').textContent = `${s4(gd.b0)}, ${s4(gd.b1)}`;
+    $('t4L').textContent = loss.toFixed(4);
+    $('t4G').textContent = `${s3(Math.abs(g0) < 5e-4 ? 0 : g0)}, ${s3(Math.abs(g1) < 5e-4 ? 0 : g1)}`;
+    if (msg !== undefined) $('t4story').textContent = msg;
+    // curve chart
+    const c = chart($('t4svg'), {W: 640, H: 300, xmin: 0, xmax: 6, ymin: 0, ymax: 1,
+      xticks: [0,1,2,3,4,5,6], yticks: [0, 0.25, 0.5, 0.75, 1], xlab: 'hours studied', ylab: 'probability of passing', yfmt: v => (v * 100) + '%'});
+    c.fn(x => sig(MLE.b0 + MLE.b1 * x), 0, 6, {stroke: C.blue, 'stroke-width': 1.8, 'stroke-dasharray': '6,5', 'stroke-opacity': 0.8});
+    // error sticks from each student to the current curve
+    HOURS.forEach((h, i) => {
+      const p = sig(gd.b0 + gd.b1 * h);
+      c.add('line', {x1: c.px(h), x2: c.px(h), y1: c.py(PASSED[i]), y2: c.py(p), stroke: PASSED[i] ? C.green : C.coral, 'stroke-opacity': 0.45, 'stroke-width': 1.5});
+    });
+    c.fn(x => sig(gd.b0 + gd.b1 * x), 0, 6, {stroke: C.coral, 'stroke-width': 2.8});
+    drawStudents(c, HOURS, PASSED, {r: 5});
+    // path chart
+    const q = chart($('t4path'), {W: 640, H: 260, xmin: -0.1, xmax: 1.8, ymin: -4.6, ymax: 0.4,
+      xticks: [0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8], yticks: [-4, -3, -2, -1, 0], xlab: 'slope b₁', ylab: 'intercept b₀',
+      yfmt: v => v < 0 ? '−' + (-v) : String(v)});
+    const tx = q.px(MLE.b1), ty = q.py(MLE.b0);
+    q.add('line', {x1: tx - 8, x2: tx + 8, y1: ty, y2: ty, stroke: C.blue, 'stroke-width': 2});
+    q.add('line', {x1: tx, x2: tx, y1: ty - 8, y2: ty + 8, stroke: C.blue, 'stroke-width': 2});
+    q.label(tx - 12, ty + 4, `MLE (${MLE.b1.toFixed(3)}, ${s3(MLE.b0)})`, {fill: C.blue, 'text-anchor': 'end', 'font-size': 10.5});
+    q.add('circle', {cx: q.px(0), cy: q.py(0), r: 4, fill: C.dim});
+    q.label(q.px(0) + 8, q.py(0) - 6, 'start (0, 0)', {fill: C.dim, 'font-size': 10.5});
+    const pts = gd.path.concat([[gd.b0, gd.b1]]).map(([a, b]) => q.px(b).toFixed(1) + ',' + q.py(a).toFixed(1));
+    q.add('path', {d: 'M' + pts.join(' L'), fill: 'none', stroke: C.coral, 'stroke-width': 2, 'clip-path': `url(#${q.cid})`});
+    q.add('circle', {cx: q.px(gd.b1), cy: q.py(gd.b0), r: 5, fill: C.coral});
+    // per-student table
+    let html = '<tr><th>#</th><th>hours x</th><th>passed y</th><th>model p</th><th>error p − y</th><th class="drawn">error, drawn</th><th>(p − y) × x</th></tr>';
+    HOURS.forEach((h, i) => {
+      const p = sig(gd.b0 + gd.b1 * h), e = p - PASSED[i];
+      const w = Math.min(Math.abs(e), 1) * 50;
+      const bar = `<div class="bar"><div class="mid"></div><div class="fill" style="${e >= 0 ? 'left:50%' : 'right:50%'};width:${w.toFixed(1)}%;background:${e >= 0 ? C.coral : C.green}"></div></div>`;
+      html += `<tr><td>${i + 1}</td><td>${h.toFixed(2)}</td><td>${PASSED[i]}</td><td>${p.toFixed(3)}</td><td class="${e >= 0 ? 'neg' : 'pos'}">${f3(e)}</td><td class="barcell drawn">${bar}</td><td>${f3(e * h)}</td></tr>`;
+    });
+    html += `<tr class="hl"><td colspan="4">average (this is the gradient)</td><td>${f3(g0)}</td><td class="drawn"></td><td>${f3(g1)}</td></tr>`;
+    $('t4tbl').innerHTML = html;
+  }
+  function t4Reset(){
+    t4Run++;
+    gd.b0 = 0; gd.b1 = 0; gd.step = 0; gd.path = [[0, 0]]; gd.done = false;
+    renderT4('At b₀ = b₁ = 0 every student gets p = 50%, so each error is ±0.5. The failures (y = 0, error +0.5) and passes (y = 1, error −0.5) cancel in ∂b₀, but the passes study more hours, so ∂b₁ = −0.506: "raise the slope". Press "1 step".');
+  }
+  function t4Steps(n){
+    t4Run++;
+    for (let i = 0; i < n; i++) gdStep();
+    renderT4(`After ${gd.step.toLocaleString('en-US')} step${gd.step === 1 ? '' : 's'}: each step moved (b₀, b₁) by −0.1 × the average gradient. ` +
+      (gd.step === 1 ? 'The first step only raised the slope, to 0.0506, because the first gradient was (0.000, −0.506).' :
+       'The students the curve gets most wrong (longest bars) are pulling hardest.'));
+  }
+  $('t4Reset').addEventListener('click', t4Reset);
+  $('t4One').addEventListener('click', () => t4Steps(1));
+  $('t4Ten').addEventListener('click', () => t4Steps(10));
+  $('t4Hund').addEventListener('click', () => t4Steps(100));
+  $('t4Conv').addEventListener('click', () => {
+    const run = ++t4Run;
+    const converged = () => { const [g0, g1] = avgGrad(HOURS, PASSED, gd.b0, gd.b1); return Math.max(Math.abs(g0), Math.abs(g1)) < TOL; };
+    const finish = () => renderT4(`Converged after ${gd.step.toLocaleString('en-US')} steps (every gradient component below ${TOL}): b₀ = ${s4(gd.b0)}, b₁ = ${gd.b1.toFixed(4)}, log loss ${meanLoss(HOURS, PASSED, gd.b0, gd.b1).toFixed(4)}. ` +
+      `That is the same answer maximum likelihood gives directly (${s4(MLE.b0)}, ${MLE.b1.toFixed(4)}). The loss is convex, one bowl with one bottom, so any start ends here.`);
+    if (reduceMotion){ let g = 0; while (!converged() && g++ < 200000) gdStep(); finish(); return; }
+    const frame = () => {
+      if (run !== t4Run) return;
+      const k = Math.max(5, Math.floor(gd.step / 12));
+      for (let i = 0; i < k && !converged(); i++) gdStep();
+      if (converged() || gd.step > 200000){ finish(); return; }
+      renderT4(`Walking downhill… step ${gd.step.toLocaleString('en-US')}`);
+      setTimeout(frame, 16);
+    };
+    setTimeout(frame, 16);
+  });
+  t4Reset();
+
+  // ======================= TAB 5 =======================
+  const SX = [1,2,3,4,5,6], SY = [0,0,0,1,1,1], SLR = 0.5;
+  const SEP = {}; const slopeHist = [];
+  {
+    let b0 = 0, b1 = 0, nextRec = 1;
+    for (let s = 1; s <= 100000; s++){
+      const [g0, g1] = avgGrad(SX, SY, b0, b1);
+      b0 -= SLR * g0; b1 -= SLR * g1;
+      if (s >= nextRec){ slopeHist.push([s, b1]); nextRec = Math.ceil(nextRec * 1.08); }
+      if (s === 100 || s === 1000 || s === 10000 || s === 100000) SEP['s' + s] = {b0, b1, steps: s};
+    }
+  }
+  const REG1 = fitLogistic(SX, SY, 1), REG100 = fitLogistic(SX, SY, 100);
+  SEP.c1 = Object.assign({C: 1}, REG1); SEP.c100 = Object.assign({C: 100}, REG100);
+  const T5ORDER = ['s100', 's1000', 's10000', 's100000', 'c1', 'c100'];
+  const T5NAME = {s100: '100 steps', s1000: '1,000 steps', s10000: '10,000 steps', s100000: '100,000 steps', c1: 'C = 1 (default)', c100: 'C = 100'};
+  const t5Btns = Array.from(document.querySelectorAll('#t5 button[data-k]'));
+  function renderT5(key){
+    const cur = key ? SEP[key] : null;
+    // curve chart
+    const c = chart($('t5svg'), {W: 640, H: 300, xmin: 0, xmax: 7, ymin: 0, ymax: 1,
+      xticks: [0,1,2,3,4,5,6,7], yticks: [0, 0.25, 0.5, 0.75, 1], xlab: 'hours studied', ylab: 'probability of passing', yfmt: v => (v * 100) + '%'});
+    T5ORDER.slice(0, 4).forEach(k => { const m = SEP[k]; c.fn(x => sig(m.b0 + m.b1 * x), 0, 7, {stroke: C.dim, 'stroke-width': 1.2, 'stroke-opacity': 0.55}); });
+    if (cur){
+      const col = key === 'c1' ? C.green : key === 'c100' ? C.purple : C.blue;
+      const bd = -cur.b0 / cur.b1;
+      c.add('line', {x1: c.px(bd), x2: c.px(bd), y1: c.t, y2: c.H - c.b, stroke: C.amber, 'stroke-dasharray': '5,4'});
+      c.label(c.px(bd) + 6, c.t + 14, `boundary ${bd.toFixed(3)} h`, {fill: C.amber});
+      c.fn(x => sig(cur.b0 + cur.b1 * x), 0, 7, {stroke: col, 'stroke-width': 3});
+    }
+    drawStudents(c, SX, SY, {r: 6});
+    c.label(c.W - c.r - 4, c.H - c.b - 8, 'grey: the four unpenalised curves', {fill: C.dim, 'text-anchor': 'end', 'font-size': 10});
+    // slope vs steps chart
+    const q = chart($('t5slope'), {W: 640, H: 260, xmin: 0, xmax: 5, ymin: 0, ymax: 12.5,
+      xticks: [0,1,2,3,4,5], yticks: [0, 2, 4, 6, 8, 10, 12], xlab: 'training steps', ylab: 'slope b₁',
+      xfmt: v => ['1', '10', '100', '1k', '10k', '100k'][v]});
+    const pts = slopeHist.map(([s, b]) => q.px(Math.log10(s)).toFixed(1) + ',' + q.py(b).toFixed(1));
+    q.add('path', {d: 'M' + pts.join(' L'), fill: 'none', stroke: C.blue, 'stroke-width': 2.6});
+    [['c100', C.purple], ['c1', C.green]].forEach(([k, col]) => {
+      const v = SEP[k].b1;
+      q.add('line', {x1: q.px(0), x2: q.px(5), y1: q.py(v), y2: q.py(v), stroke: col, 'stroke-width': key === k ? 2.6 : 1.6, 'stroke-dasharray': '7,5'});
+      q.label(q.px(5) - 4, q.py(v) - 6, `${T5NAME[k]}: ${v.toFixed(3)}`, {fill: col, 'text-anchor': 'end', 'font-size': 10.5});
+    });
+    T5ORDER.slice(0, 4).forEach(k => {
+      const m = SEP[k], on = key === k;
+      q.add('circle', {cx: q.px(Math.log10(m.steps)), cy: q.py(m.b1), r: on ? 7 : 4, fill: on ? C.amber : C.blue});
+      if (on) q.label(q.px(Math.log10(m.steps)) - 10, q.py(m.b1) - 10, m.b1.toFixed(2), {fill: C.amber, 'text-anchor': 'end'});
+    });
+    // table
+    let html = '<tr><th>setting</th><th>slope b₁</th><th>boundary (h)</th><th>mean log loss</th><th>p at 3 h</th><th>p at 4 h</th></tr>';
+    T5ORDER.forEach(k => {
+      const m = SEP[k];
+      html += `<tr class="${key === k ? 'hl' : ''}"><td>${T5NAME[k]}</td><td>${m.b1.toFixed(k[0] === 'c' ? 3 : 2)}</td><td>${(-m.b0 / m.b1).toFixed(3)}</td><td>${meanLoss(SX, SY, m.b0, m.b1).toPrecision(3)}</td>` +
+        `<td>${pct(sig(m.b0 + m.b1 * 3), 2)}</td><td>${pct(sig(m.b0 + m.b1 * 4), 2)}</td></tr>`;
+    });
+    $('t5tbl').innerHTML = html;
+    if (!cur){
+      ['t5S', 't5Bd', 't5L', 't5P'].forEach(id => $(id).textContent = '—');
+      $('t5story').textContent = 'Press a step count to watch the unpenalised fit, then a C button to switch on the penalty.';
+      return;
+    }
+    const loss = meanLoss(SX, SY, cur.b0, cur.b1);
+    const p3 = sig(cur.b0 + cur.b1 * 3), p4 = sig(cur.b0 + cur.b1 * 4);
+    $('t5S').textContent = cur.b1.toFixed(key[0] === 'c' ? 3 : 2);
+    $('t5Bd').textContent = (-cur.b0 / cur.b1).toFixed(3);
+    $('t5L').textContent = loss.toPrecision(3);
+    $('t5P').textContent = `${pct(p3, 2)} / ${pct(p4, 2)}`;
+    const stories = {
+      s100: 'After 100 steps: slope 1.25, boundary 3.23 h, loss 0.21. A reasonable-looking S-curve, but it is still getting steeper.',
+      s1000: 'After 1,000 steps: slope 3.22, boundary 3.45 h, loss 0.064. Steeper again; the loss is still falling.',
+      s10000: 'After 10,000 steps: slope 6.95, boundary 3.48 h, loss 0.010. The boundary has settled near 3.5 h, but the slope keeps climbing.',
+      s100000: 'After 100,000 steps: slope 11.51, boundary 3.49 h, loss 0.001. The blue line in the lower chart never flattens: on separable data the "best" slope is infinite. The model now gives a 3-hour student 0.36% and a 4-hour student 99.72%: absurdly overconfident.',
+      c1: 'L2 penalty, C = 1 (scikit-learn\'s default): the slope stops at 1.121, a finite answer with honest, gentle probabilities. The boundary sits at exactly 3.5 h.',
+      c100: 'L2 penalty, C = 100 (a weak penalty): the slope stops at 5.65, steeper than C = 1, but finite. Smaller C = stronger penalty = flatter curve.'
+    };
+    $('t5story').textContent = stories[key];
+  }
+  t5Btns.forEach(b => b.addEventListener('click', () => { setActive(t5Btns, b); renderT5(b.dataset.k); }));
+  $('t5note').textContent =
+    `How the C rows are computed: this page solves scikit-learn's objective, C × Σ(log loss) + ½·b₁² (the intercept is not penalised), exactly, with Newton's method. ` +
+    `That gives slope ${REG1.b1.toFixed(4)} for C = 1 and ${REG100.b1.toFixed(4)} for C = 100. The tutorial's scikit-learn run reports 1.121 and 5.652; ` +
+    `the 0.001 gap at C = 100 is most likely scikit-learn's solver stopping at its default tolerance, a hair short of the exact minimum. Either way the point stands: the slope is finite.`;
+  renderT5(null);
+
+  // expose computed values for automated checks (read-only copy)
+  window.__LR_CHECK__ = {LIN, LIN21, MLE, MLE21, EB1, BOUND, MLE_LOSS, ACC, BEST_CUT_ACC, SEP, gd,
+    grad0: avgGrad(HOURS, PASSED, 0, 0), sepLoss: k => meanLoss(SX, SY, SEP[k].b0, SEP[k].b1)};
+})();
+</script>
+</body>
+</html>

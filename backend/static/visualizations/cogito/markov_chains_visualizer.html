@@ -93,6 +93,10 @@
     <button class="tab" data-tab="race">HH vs HT Race</button>
     <button class="tab" data-tab="ruin">Gambler's Ruin</button>
     <button class="tab" data-tab="sufficient">Is the State Enough?</button>
+    <button class="tab" data-tab="mcmc">Metropolis-Hastings Sampler</button>
+    <button class="tab" data-tab="conv">When Does It Settle?</button>
+    <button class="tab" data-tab="pagerank">PageRank &amp; Damping</button>
+    <button class="tab" data-tab="hmm">Hidden Markov Model</button>
   </div>
 
   <!-- ============ TAB 1: PROBABILITY TREE (BAYES) ============ -->
@@ -251,6 +255,134 @@
       <div id="sufficientTable"></div>
       <div class="verdict" id="sufficientVerdict"></div>
       <div class="caption"><b>Why it matters:</b> this is the exact design question behind an AI agent's context window — the model can only ever see its current state (whatever's in context), so the real question is never "is this Markovian" (a bounded context forces that), it's "does this state pack in enough history to be <em>sufficient</em>" — precisely what this tab lets you check by hand.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 7: METROPOLIS-HASTINGS SAMPLER (MCMC) ============ -->
+  <div class="panel" id="panel-mcmc">
+    <div class="card">
+      <h2>Building a Chain That Wanders Toward the Answer</h2>
+      <p class="sub"><b>What's happening:</b> a target distribution over 5 states (A-E) with relative weights 1,3,6,3,1 — the chain never sees the true normalized probabilities, only these ratios. Click "Propose a step" to watch one accept/reject decision, or run thousands at once and watch the visit histogram converge onto the true target shown alongside it.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> step through by hand a few times and notice the chain sometimes accepts a move to a <em>lower</em>-weight state — that's not a bug, it's the entire reason MCMC explores the whole distribution instead of collapsing onto the single best state. Then run 10,000 steps and watch the empirical bars land almost exactly on the black target ticks.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="mcmcStep">Propose a step ▶</button>
+        <button class="op" id="mcmcBatch">Run 10,000 more instantly ⏩</button>
+        <button class="op" id="mcmcReset">Reset</button>
+      </div>
+      <div class="verdict" id="mcmcLastStep">Click "Propose a step" to begin. Current state: <b>C</b>.</div>
+      <div class="caption" style="margin:10px 0 6px;">Visited-frequency histogram after <b id="mcmcN">0</b> steps (black tick = true target):</div>
+      <div id="mcmcBars"></div>
+      <div class="caption"><b>Why it matters:</b> the chain is only ever told <code>target(proposed)/target(current)</code> — a ratio of the raw weights 1,3,6,3,1 — never the true probabilities 0.0714, 0.2143, 0.4286, 0.2143, 0.0714 those weights normalize to. Given enough steps, its own wandering re-derives those correct proportions purely from ratios — precisely the "impossible integral" trick this tab makes watchable.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 8: WHEN DOES IT SETTLE? (convergence conditions + mixing) ============ -->
+  <div class="panel" id="panel-conv">
+    <div class="card">
+      <h2>When Does a Chain Settle, and How Fast?</h2>
+      <p class="sub"><b>What's happening:</b> each preset is a small chain and a starting belief. Press <em>Step</em> to push the belief forward one step, <em>Play</em> to animate it, or <em>Jump to step 60</em> to go straight to the end. The black ticks show where the belief <em>should</em> end up, if it settles at all.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with <em>Healthy weather chain</em>: it settles. Then try <em>Flip chain</em>: it bounces forever. Next try the three <em>Two separate towns</em> presets: each settles, but on a different answer depending on where it started. Last, compare <em>Fast</em>, <em>Healthy</em> and <em>Sticky</em>. The closer the second eigenvalue is to 1, the longer the chain takes to forget its start.</p>
+      <div class="row" style="gap:6px;" id="convPresets">
+        <button class="op" data-cp="weather">Healthy weather chain (λ₂ = 0.4)</button>
+        <button class="op" data-cp="flip">Flip chain (periodic, λ₂ = −1)</button>
+        <button class="op" data-cp="nearflip">Almost-flip (λ₂ = −0.8)</button>
+        <button class="op" data-cp="redA">Two separate towns: start in A</button>
+        <button class="op" data-cp="redC">Two separate towns: start in C</button>
+        <button class="op" data-cp="redMix">Two separate towns: 50/50 A or C</button>
+        <button class="op" data-cp="fast">Fast mixing (λ₂ = 0.2)</button>
+        <button class="op" data-cp="sticky">Sticky weather (λ₂ = 0.9)</button>
+        <button class="op" data-cp="nullrec">Endless line walk (null recurrent)</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="convStep">Step ▶</button>
+        <button class="op" id="convPlay">Play ⏯</button>
+        <button class="op" id="convJump">Jump to step 60 ⏭</button>
+        <button class="op" id="convReset">Reset</button>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <div class="matrix" id="convMatrix" style="grid-template-columns:repeat(5,auto);"></div>
+          <div class="caption" id="convInfo"></div>
+        </div>
+        <div class="col">
+          <div class="caption" style="margin:0 0 6px;">Belief at <b>step <span id="convN">0</span></b> (black tick = where it should settle):</div>
+          <div id="convBars"></div>
+        </div>
+      </div>
+      <canvas id="convCanvas" width="900" height="200"></canvas>
+      <div class="caption">Plot: the distance from the settling point at each step (largest gap over all states). A healthy chain shrinks it by a factor of |λ₂| every step.</div>
+      <div class="verdict" id="convVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> a chain settles on one answer, whatever its start, only when it is <b>irreducible</b> (every state can reach every other), <b>aperiodic</b> (it does not cycle on a fixed beat) and <b>positive recurrent</b> (it comes back to each state in finite average time). Each preset breaks or keeps one of these, and the second eigenvalue says how fast the settling happens.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 9: PAGERANK & DAMPING ============ -->
+  <div class="panel" id="panel-pagerank">
+    <div class="card">
+      <h2>The Random Surfer, With and Without Teleportation</h2>
+      <p class="sub"><b>What's happening:</b> a tiny web of six pages. The surfer follows a random link with probability <span class="formula">d</span>. With probability <span class="formula">1 − d</span> they get bored and jump to a random page. <b>F</b> has no outgoing links (a <em>dangling node</em>). <b>D</b> and <b>E</b> link only to each other (a <em>spider trap</em>). Each step pushes the whole crowd of surfers forward once. This is power iteration.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press <em>d = 1, raw links</em> and then <em>Jump</em>. Total mass leaks out through F, and what is left sloshes between D and E forever. Press <em>d = 1, dangling fixed</em>: no more leak, but it still sloshes. Now press <em>d = 0.85</em> and <em>Jump</em>. It settles in 99 steps, exactly on the black ticks. The ticks come from a direct linear solve, a separate method from stepping.</p>
+      <div class="row" style="gap:6px;" id="prPresets">
+        <button class="op" data-pp="raw">d = 1, raw links (leak + trap)</button>
+        <button class="op" data-pp="trap">d = 1, dangling fixed (trap oscillates)</button>
+        <button class="op" data-pp="d85">d = 0.85 (Google's choice)</button>
+        <button class="op" data-pp="d50">d = 0.5</button>
+        <button class="op" data-pp="d95">d = 0.95</button>
+        <button class="op" data-pp="d99">d = 0.99</button>
+        <button class="op" data-pp="four">4-page web from Eigenvalues doc, d = 0.85</button>
+      </div>
+      <div class="row"><label>damping d (free play)</label><input type="range" id="prD" min="0" max="100" step="1" value="85"><span class="readout" id="prDOut">0.85</span></div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="prStep">Step ▶</button>
+        <button class="op" id="prPlay">Play ⏯</button>
+        <button class="op" id="prJump">Jump to convergence ⏭</button>
+        <button class="op" id="prReset">Reset</button>
+      </div>
+      <div class="cols">
+        <div class="col" style="max-width:380px;"><svg id="prSvg" viewBox="0 0 380 300" role="img" aria-label="Web graph"></svg></div>
+        <div class="col">
+          <div class="caption" style="margin:0 0 6px;">Step <b id="prIter">0</b>, total mass <b id="prMass">1.0000</b>, change this step <b id="prDelta">-</b></div>
+          <div id="prBars"></div>
+        </div>
+      </div>
+      <div class="verdict" id="prVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> teleportation gives every page a small direct link to every other page. That one change makes the chain irreducible and aperiodic, so a single stationary distribution is guaranteed and power iteration must reach it. The error shrinks by at least a factor of d each step, so a smaller d settles faster but listens less to the real link structure.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 10: HIDDEN MARKOV MODEL (dishonest casino) ============ -->
+  <div class="panel" id="panel-hmm">
+    <div class="card">
+      <h2>The Dishonest Casino: Seeing Rolls, Guessing Dice</h2>
+      <p class="sub"><b>What's happening:</b> a casino secretly switches between a <b>Fair</b> die and a <b>Loaded</b> die. The loaded die rolls a 6 half the time. You see only the rolls. Fair stays fair 95% of the time and Loaded stays loaded 90% of the time. You walk in at a random moment, so your starting belief is 2/3 Fair, 1/3 Loaded. Press <em>Step</em> to fill one column of the trellis (one roll), <em>Play</em> to animate, or <em>Jump to end</em>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> pick the <em>16 rolls</em> preset and <em>Jump to end</em>. The forward rows (sum over all paths) and the Viterbi rows (best single path) fill in. Then press <em>Brute-force check</em>: it tries all 65,536 hidden paths one by one and gets the same two numbers. Look for roll 13, where the single best path and the best guess for each roll on its own disagree.</p>
+      <div class="row" style="gap:6px;" id="hmmPresets">
+        <button class="op" data-hp="main">16 rolls with a run of sixes</button>
+        <button class="op" data-hp="sym">14 rolls, six sixes in a row</button>
+        <button class="op" data-hp="fair">10 ordinary rolls</button>
+        <button class="op" data-hp="sixes">Ten sixes</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="hmmStep">Step ▶</button>
+        <button class="op" id="hmmPlay">Play ⏯</button>
+        <button class="op" id="hmmJump">Jump to end ⏭</button>
+        <button class="op" id="hmmReset">Reset</button>
+        <button class="op" id="hmmBrute">Brute-force check (all paths)</button>
+      </div>
+      <div style="overflow-x:auto;"><table id="hmmTable" style="border-collapse:collapse; font-family:'IBM Plex Mono',monospace; font-size:10.5px; white-space:nowrap;"></table></div>
+      <div class="verdict" id="hmmVerdict"></div>
+      <div class="card" style="margin-top:16px; background:#FAFAF7;">
+        <h2 style="font-size:18px;">Baum–Welch: learning the dice from rolls alone</h2>
+        <p class="sub">3,000 rolls are generated from the true casino (fixed seed 7). Baum–Welch is <em>not</em> told the true numbers. It starts from a rough guess (stay 0.8, loaded six 0.25) and runs forward–backward, then re-estimates, again and again. Each round's score, the log-likelihood, never goes down.</p>
+        <div class="row" style="gap:6px;">
+          <button class="op" id="bwStep">Run 1 round ▶</button>
+          <button class="op" id="bwPlay">Play ⏯</button>
+          <button class="op" id="bwJump">Jump to 100 rounds ⏭</button>
+          <button class="op" id="bwReset">Reset</button>
+        </div>
+        <div class="verdict" id="bwVerdict"></div>
+      </div>
+      <div class="caption"><b>Why it matters:</b> this exact machinery once decoded speech (hidden phonemes, observed sound) and still finds genes (hidden coding or non-coding regions, observed DNA letters). Forward gives the chance of the whole observation. Viterbi gives the single best hidden story. Forward–backward gives the chance of each hidden state at each moment. Baum–Welch learns the model's numbers when nobody labelled the hidden states.</div>
     </div>
   </div>
 
@@ -720,6 +852,509 @@
       });
     });
     renderSufficient();
+  })();
+
+  /* ---------- MCMC: Metropolis-Hastings sampler ---------- */
+  (function(){
+    var labels = ["A","B","C","D","E"];
+    var weights = [1,3,6,3,1];
+    var Z = weights.reduce(function(a,b){return a+b;},0);
+    var trueDist = weights.map(function(w){ return w/Z; });
+    var current = 2; // start at C
+    var visits = [0,0,0,0,0];
+    var nSteps = 0;
+
+    function proposeAndStep(){
+      var direction = Math.random() < 0.5 ? -1 : 1;
+      var proposed = current + direction;
+      var logLine;
+      if(proposed < 0 || proposed > 4){
+        logLine = "Proposed stepping off the edge — automatically rejected. Stay at <b>" + labels[current] + "</b>.";
+      } else {
+        var ratio = weights[proposed] / weights[current];
+        var acceptProb = Math.min(1, ratio);
+        var r = Math.random();
+        if(r < acceptProb){
+          logLine = "Propose " + labels[current] + " → " + labels[proposed] + ": ratio=" + ratio.toFixed(3) + ", accept_prob=" + acceptProb.toFixed(3) + " — <b>ACCEPT</b>, move to " + labels[proposed] + ".";
+          current = proposed;
+        } else {
+          logLine = "Propose " + labels[current] + " → " + labels[proposed] + ": ratio=" + ratio.toFixed(3) + ", accept_prob=" + acceptProb.toFixed(3) + " — <b>REJECT</b>, stay at " + labels[current] + ".";
+        }
+      }
+      visits[current]++;
+      nSteps++;
+      return logLine;
+    }
+
+    function renderMcmc(lastLog){
+      document.getElementById("mcmcN").textContent = nSteps;
+      var verdict = document.getElementById("mcmcLastStep");
+      verdict.innerHTML = (lastLog || 'Click "Propose a step" to begin.') + " Current state: <b>" + labels[current] + "</b>.";
+      var barsWrap = document.getElementById("mcmcBars");
+      barsWrap.innerHTML = "";
+      for(var i=0;i<5;i++){
+        var empirical = nSteps > 0 ? visits[i]/nSteps : 0;
+        var row = document.createElement("div");
+        row.style.marginBottom = "12px";
+        var lbl = document.createElement("div");
+        lbl.style.fontSize = "12px"; lbl.style.color = "var(--ink-soft)"; lbl.style.marginBottom = "3px";
+        lbl.textContent = labels[i] + " (true target: " + (trueDist[i]*100).toFixed(1) + "%)";
+        row.appendChild(lbl);
+        var bar = document.createElement("div");
+        bar.className = "bar";
+        var fill = document.createElement("div");
+        fill.style.background = "var(--accent)";
+        fill.style.width = (empirical*100).toFixed(1) + "%";
+        fill.textContent = (empirical*100).toFixed(1) + "%";
+        bar.appendChild(fill);
+        row.appendChild(bar);
+        var statLine = document.createElement("div");
+        statLine.className = "stat-line";
+        var tick = document.createElement("div");
+        tick.className = "stat-tick";
+        tick.style.left = (trueDist[i]*100).toFixed(1) + "%";
+        tick.setAttribute("data-l", (trueDist[i]*100).toFixed(1)+"%");
+        statLine.appendChild(tick);
+        row.appendChild(statLine);
+        barsWrap.appendChild(row);
+      }
+    }
+
+    document.getElementById("mcmcStep").addEventListener("click", function(){
+      var log = proposeAndStep();
+      renderMcmc(log);
+    });
+    document.getElementById("mcmcBatch").addEventListener("click", function(){
+      var log;
+      for(var i=0;i<10000;i++){ log = proposeAndStep(); }
+      renderMcmc("Ran 10,000 more steps.");
+    });
+    document.getElementById("mcmcReset").addEventListener("click", function(){
+      current = 2; visits = [0,0,0,0,0]; nSteps = 0;
+      renderMcmc('Reset. Click "Propose a step" to begin.');
+    });
+    renderMcmc();
+  })();
+})();
+</script>
+<script>
+/* ===== Tabs 8-10: convergence conditions, PageRank damping, HMM (added for P3) ===== */
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function markActive(containerId, btn){
+    document.querySelectorAll("#"+containerId+" button").forEach(function(b){ b.classList.remove("active"); });
+    if(btn) btn.classList.add("active");
+  }
+  function vecMat(x, P){
+    var n = P.length, y = new Array(n).fill(0);
+    for(var i=0;i<n;i++) for(var j=0;j<n;j++) y[j] += x[i]*P[i][j];
+    return y;
+  }
+  var COLORS = ["#D9A62E","#0F8B8D","#463A73","#D9636B","#6B8E23","#8A6D3B"];
+
+  /* ---------------- TAB 8: WHEN DOES IT SETTLE? ---------------- */
+  (function(){
+    var W = [[.8,.2],[.4,.6]];
+    var RED = [[.8,.2,0,0],[.4,.6,0,0],[0,0,.3,.7],[0,0,.7,.3]];
+    var P2 = ["Sunny","Rainy"], AB = ["A","B"], ABCD = ["A","B","C","D"];
+    var PRESETS = {
+      weather:{names:P2, P:W, x0:[1,0], target:[2/3,1/3], lam:0.4, eig:"1 and 0.4",
+        note:"Irreducible (each state reaches the other), aperiodic (self-loops break any rhythm), finite so positive recurrent. All three hold, so it settles on π = (2/3, 1/3). The gap shrinks ×0.4 each step and is under 0.01 by step 4."},
+      flip:{names:AB, P:[[0,1],[1,0]], x0:[1,0], target:[.5,.5], lam:-1, eig:"1 and −1",
+        note:"Irreducible, but <b>periodic with period 2</b>: you can only return to A in an even number of steps. A stationary π = (0.5, 0.5) exists (it is the eigenvalue-1 eigenvector), but the belief bounces 1, 0, 1, 0 forever and never reaches it. The time-average still lands on 0.5."},
+      nearflip:{names:AB, P:[[.1,.9],[.9,.1]], x0:[1,0], target:[.5,.5], lam:-0.8, eig:"1 and −0.8",
+        note:"A small self-loop (0.1) breaks the rhythm, so the chain is aperiodic. It still zig-zags because λ₂ is negative, but each swing is 0.8× the last, so it does settle."},
+      redA:{names:ABCD, P:RED, x0:[1,0,0,0], target:[2/3,1/3,0,0], lam:null, eig:"1, 0.4, 1 and −0.4 (eigenvalue 1 appears twice)",
+        note:"<b>Reducible</b>: towns {A,B} and {C,D} have no roads between them. Start in A and you settle on (2/3, 1/3, 0, 0), the weather chain's answer."},
+      redC:{names:ABCD, P:RED, x0:[0,0,1,0], target:[0,0,.5,.5], lam:null, eig:"1, 0.4, 1 and −0.4 (eigenvalue 1 appears twice)",
+        note:"Same chain, start in C, and you settle on (0, 0, 0.5, 0.5), a different answer. Eigenvalue 1 appears twice, so there are two independent stationary distributions and the start decides."},
+      redMix:{names:ABCD, P:RED, x0:[.5,0,.5,0], target:[1/3,1/6,1/4,1/4], lam:null, eig:"1, 0.4, 1 and −0.4 (eigenvalue 1 appears twice)",
+        note:"Start 50/50 between the towns and the limit is the 50/50 blend (1/3, 1/6, 1/4, 1/4). Any blend of the two stationary distributions is stationary, so the limit depends on the start."},
+      fast:{names:AB, P:[[.6,.4],[.4,.6]], x0:[1,0], target:[.5,.5], lam:0.2, eig:"1 and 0.2",
+        note:"λ₂ = 0.2, so the gap shrinks ×0.2 each step and is under 0.01 by step 3."},
+      sticky:{names:AB, P:[[.95,.05],[.05,.95]], x0:[1,0], target:[.5,.5], lam:0.9, eig:"1 and 0.9",
+        note:"Each state is sticky (stay 95%). λ₂ = 0.9, so the gap shrinks only ×0.9 per step. It takes <b>38 steps</b> to get within 0.01, against 4 for the healthy chain. Same π, much slower mixing."}
+    };
+    var cur = null, x = null, n = 0, hist = [], timer = null;
+
+    function maxGap(v,t){ var m=0; for(var i=0;i<v.length;i++) m=Math.max(m,Math.abs(v[i]-t[i])); return m; }
+    function firstWithin(){ for(var i=0;i<hist.length;i++) if(hist[i] < 0.01) return i; return -1; }
+
+    function renderMatrix(){
+      var p = cur.P, names = cur.names, k = names.length, h = '<div class="mh"></div>';
+      for(var j=0;j<k;j++) h += '<div class="mh">→ '+names[j]+'</div>';
+      for(var j2=k;j2<4;j2++) h += '<div></div>';
+      for(var i=0;i<k;i++){
+        h += '<div class="mh">'+names[i]+' →</div>';
+        for(var j3=0;j3<k;j3++) h += '<div class="mc">'+p[i][j3].toFixed(2)+'</div>';
+        for(var j4=k;j4<4;j4++) h += '<div></div>';
+      }
+      $("convMatrix").innerHTML = h;
+    }
+    function renderBars(){
+      var h = "";
+      for(var i=0;i<cur.names.length;i++){
+        h += '<div style="margin-bottom:10px;"><div style="font-size:12px;color:var(--ink-soft);margin-bottom:3px;">'+cur.names[i]+'</div>'+
+          '<div class="bar"><div style="background:'+COLORS[i]+'; width:'+(x[i]*100).toFixed(2)+'%">'+(x[i]*100).toFixed(1)+'%</div></div>'+
+          '<div class="stat-line"><div class="stat-tick" data-l="'+(cur.target[i]*100).toFixed(1)+'%" style="left:'+(cur.target[i]*100)+'%"></div></div></div>';
+      }
+      $("convBars").innerHTML = h;
+      $("convN").textContent = n;
+    }
+    function drawPlot(){
+      var c = $("convCanvas"), ctx = c.getContext("2d"), Wd = c.width, H = c.height, pad = 34;
+      ctx.clearRect(0,0,Wd,H);
+      ctx.strokeStyle = "rgba(27,36,48,0.18)"; ctx.fillStyle = "#5B6572"; ctx.font = "11px monospace";
+      ctx.beginPath(); ctx.moveTo(pad,pad/2); ctx.lineTo(pad,H-pad); ctx.lineTo(Wd-10,H-pad); ctx.stroke();
+      ctx.fillText("gap", 2, 14); ctx.fillText("step →", Wd-60, H-8);
+      var maxY = Math.max(0.5, hist[0]||0.5);
+      ctx.fillText(maxY.toFixed(2), 2, pad/2+8); ctx.fillText("0", 20, H-pad);
+      var y01 = H-pad-(0.01/maxY)*(H-1.5*pad);
+      ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(pad,y01); ctx.lineTo(Wd-10,y01); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillText("0.01", pad+4, y01-3);
+      ctx.strokeStyle = "#463A73"; ctx.lineWidth = 2; ctx.beginPath();
+      for(var i=0;i<hist.length;i++){
+        var X = pad + (i/60)*(Wd-pad-10), Y = H-pad-(hist[i]/maxY)*(H-1.5*pad);
+        if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+      }
+      ctx.stroke(); ctx.lineWidth = 1;
+    }
+    function verdict(){
+      var g = hist[hist.length-1], fw = firstWithin();
+      var s = 'Second eigenvalue(s): <b>'+cur.eig+'</b><br>Gap to settling point at step '+n+': <b>'+g.toFixed(4)+'</b>';
+      if(cur.lam !== null && n>0){ s += ' &nbsp;(prediction from |λ₂|ⁿ × starting gap: '+(Math.pow(Math.abs(cur.lam),n)*hist[0]).toFixed(4)+')'; }
+      s += '<br>First step within 0.01: <b>'+(fw>=0 ? fw : (n>=60 ? "never (in 60 steps)" : "not yet"))+'</b><br>'+cur.note;
+      $("convVerdict").innerHTML = s;
+      $("convInfo").innerHTML = 'Each row sums to 1. Starting belief: ('+cur.x0.join(", ")+').';
+    }
+    function render(){ renderBars(); drawPlot(); verdict(); }
+    function load(key){
+      stop();
+      cur = PRESETS[key]; x = cur.x0.slice(); n = 0; hist = [maxGap(x,cur.target)];
+      renderMatrix(); render();
+    }
+    function step(){ if(!cur || n>=60) { stop(); return; } x = vecMat(x,cur.P); n++; hist.push(maxGap(x,cur.target)); render(); }
+    function stop(){ if(timer){ clearInterval(timer); timer=null; } }
+    function showNullRec(){
+      stop();
+      // P(no return to 0 by step 2n) = C(2n,n)/4^n = prod_{k=1..n} (2k-1)/(2k)
+      var rows = [], p = 1, marks = {1:1,5:1,50:1,500:1,5000:1};
+      for(var k=1;k<=5000;k++){ p *= (2*k-1)/(2*k); if(marks[k]) rows.push([2*k,p]); }
+      var s = '<b>Endless line walk</b>: a token on the integers …, −2, −1, 0, 1, 2, … steps left or right with probability ½ each. It is irreducible and it <em>does</em> come back to 0 with probability 1. But the average return time is infinite, so it is <b>null recurrent</b> and has no stationary distribution. You cannot spread probability 1 evenly over infinitely many states. Exact chance it has <em>not yet</em> returned to 0:<br>';
+      rows.forEach(function(r){ s += '&nbsp;&nbsp;after '+r[0]+' steps: <b>'+r[1].toFixed(4)+'</b><br>'; });
+      s += 'It shrinks only like 1/√(πn). Each 100× more steps cuts it by just 10×. That tail is too fat for the average return time to be finite.';
+      $("convVerdict").innerHTML = s;
+      $("convBars").innerHTML = ""; $("convMatrix").innerHTML = ""; $("convInfo").innerHTML = "This chain has infinitely many states, so there is no matrix to show."; $("convN").textContent = "-";
+      var c = $("convCanvas"); c.getContext("2d").clearRect(0,0,c.width,c.height);
+      cur = null;
+    }
+    document.querySelectorAll("#convPresets [data-cp]").forEach(function(b){
+      b.addEventListener("click", function(){
+        markActive("convPresets", b);
+        if(b.dataset.cp === "nullrec") showNullRec(); else load(b.dataset.cp);
+      });
+    });
+    $("convStep").addEventListener("click", step);
+    $("convPlay").addEventListener("click", function(){ if(timer){ stop(); return; } timer = setInterval(step, 120); });
+    $("convJump").addEventListener("click", function(){ stop(); if(!cur) return; while(n<60){ x = vecMat(x,cur.P); n++; hist.push(maxGap(x,cur.target)); } render(); });
+    $("convReset").addEventListener("click", function(){ if(cur){ var k = Object.keys(PRESETS).filter(function(q){ return PRESETS[q]===cur; })[0]; load(k); } });
+    markActive("convPresets", document.querySelector('#convPresets [data-cp="weather"]'));
+    load("weather");
+  })();
+
+  /* ---------------- TAB 9: PAGERANK & DAMPING ---------------- */
+  (function(){
+    var GRAPHS = {
+      six:{ names:["A","B","C","D","E","F"], links:{A:"BC",B:"CD",C:"AF",D:"E",E:"D",F:""},
+            pos:{A:[70,70],B:[190,40],C:[110,190],D:[300,110],E:[310,240],F:[40,270]} },
+      four:{ names:["A","B","C","D"], links:{A:"BC",B:"C",C:"A",D:"C"},
+            pos:{A:[80,80],B:[280,70],C:[180,220],D:[320,250]} }
+    };
+    var PRESETS = {
+      raw:{g:"six", d:1, fixDangling:false, note:"No teleport and F's empty row left as is. Mass that reaches F has nowhere to go and <b>vanishes</b>. Total mass falls from 1 to 0.5333. What remains is caught in the D↔E trap and swaps sides every step, so it never settles."},
+      trap:{g:"six", d:1, fixDangling:true, note:"The dangling fix: a surfer on F jumps to a random page, so no mass is lost. But the D↔E spider trap still swallows everything and flips (0.4792, 0.5208) ↔ (0.5208, 0.4792) forever. The chain is reducible (nothing leaves {D,E}) and periodic (period 2). The second eigenvalue is −1, so it never settles."},
+      d85:{g:"six", d:0.85, fixDangling:true, note:"With d = 0.85, every page gets at least (1−d)/6 = 0.025. The chain is now irreducible and aperiodic, and it settles in <b>99 steps</b> (total change below 10⁻⁸) on A 0.0779, B 0.0692, C 0.0985, D 0.3462, E 0.3303, F 0.0779. That matches numpy's eigenvector. The trap pages still rank highest, but they no longer take everything."},
+      d50:{g:"six", d:0.5, fixDangling:true, note:"d = 0.5: settles in only 24 steps. But half of all moves are random jumps, so the ranking is much flatter: D gets 0.2318 against 0.3462 at d = 0.85."},
+      d95:{g:"six", d:0.95, fixDangling:true, note:"d = 0.95: listens more to the links (D 0.4299), but needs 311 steps. The error shrinks only ×0.95 per step."},
+      d99:{g:"six", d:0.99, fixDangling:true, note:"d = 0.99: almost no teleport. The trap takes nearly everything (D 0.4836, E 0.4818), and it needs 1,586 steps. This is why Google did not pick d close to 1."},
+      four:{g:"four", d:0.85, fixDangling:true, note:"The Eigenvalues tutorial's 4-page web gave D exactly 0 without damping. With d = 0.85, D gets the floor (1−0.85)/4 = <b>0.0375</b>. The rest is A 0.3725, B 0.1958, C 0.3941. It settles in 37 steps."}
+    };
+    var G, M, d, x, iter, lastDelta, timer = null, curKey = "d85", fixD = true, ref = null;
+
+    function build(gkey, fix){
+      var g = GRAPHS[gkey], n = g.names.length, m = [];
+      for(var i=0;i<n;i++){
+        var out = g.links[g.names[i]], row = new Array(n).fill(0);
+        if(out.length===0){ if(fix) row.fill(1/n); }
+        else for(var k=0;k<out.length;k++) row[g.names.indexOf(out[k])] += 1/out.length;
+        m.push(row);
+      }
+      return m;
+    }
+    function googleStep(v){
+      var n = v.length, y = vecMat(v, M), tot = 0;
+      for(var i=0;i<n;i++) tot += v[i];
+      for(var j=0;j<n;j++) y[j] = d*y[j] + (1-d)*tot/n;
+      return y;
+    }
+    function directSolve(){
+      // pi = (1-d)/n * 1^T (I - d M)^{-1}  ->  solve (I - d M)^T pi = (1-d)/n * 1
+      if(d >= 1) return null;
+      var n = M.length, A = [], b = [];
+      for(var i=0;i<n;i++){ A.push([]); for(var j=0;j<n;j++) A[i].push((i===j?1:0) - d*M[j][i]); b.push((1-d)/n); }
+      for(var c=0;c<n;c++){
+        var piv=c; for(var r=c+1;r<n;r++) if(Math.abs(A[r][c])>Math.abs(A[piv][c])) piv=r;
+        var t=A[c]; A[c]=A[piv]; A[piv]=t; var tb=b[c]; b[c]=b[piv]; b[piv]=tb;
+        for(var r2=c+1;r2<n;r2++){ var f=A[r2][c]/A[c][c]; for(var k=c;k<n;k++) A[r2][k]-=f*A[c][k]; b[r2]-=f*b[c]; }
+      }
+      var xs = new Array(n).fill(0);
+      for(var r3=n-1;r3>=0;r3--){ var s=b[r3]; for(var k2=r3+1;k2<n;k2++) s-=A[r3][k2]*xs[k2]; xs[r3]=s/A[r3][r3]; }
+      return xs;
+    }
+    function drawGraph(){
+      var g = GRAPHS[G], s = '<defs><marker id="prArw" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,3 L0,6 Z" fill="#5B6572"/></marker></defs>';
+      g.names.forEach(function(a){
+        var out = g.links[a];
+        for(var k=0;k<out.length;k++){
+          var p1 = g.pos[a], p2 = g.pos[out[k]], dx=p2[0]-p1[0], dy=p2[1]-p1[1], L=Math.sqrt(dx*dx+dy*dy);
+          var ox = -dy/L*6, oy = dx/L*6; // offset so two-way links show as two lines
+          var x1=p1[0]+dx/L*24+ox, y1=p1[1]+dy/L*24+oy, x2=p2[0]-dx/L*26+ox, y2=p2[1]-dy/L*26+oy;
+          s += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#5B6572" stroke-width="1.6" marker-end="url(#prArw)"/>';
+        }
+      });
+      var mx = Math.max.apply(null, x);
+      g.names.forEach(function(a,i){
+        var p = g.pos[a], r = 14 + 16*(x[i]/(mx||1));
+        s += '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+r.toFixed(1)+'" fill="#463A73" fill-opacity="'+(0.15+0.6*x[i]/(mx||1)).toFixed(2)+'" stroke="#463A73" stroke-width="2"/>';
+        s += '<text x="'+p[0]+'" y="'+(p[1]+5)+'" text-anchor="middle" font-family="Fraunces,serif" font-size="15" font-weight="700" fill="#1B2430">'+a+'</text>';
+      });
+      if(G==="six"){
+        s += '<text x="40" y="298" text-anchor="middle" font-size="10" fill="#5B6572">dangling</text>';
+        s += '<text x="340" y="180" text-anchor="middle" font-size="10" fill="#5B6572">spider trap</text>';
+      }
+      $("prSvg").innerHTML = s;
+    }
+    function render(){
+      var g = GRAPHS[G], h = "", mass = 0;
+      x.forEach(function(v){ mass += v; });
+      g.names.forEach(function(a,i){
+        h += '<div style="margin-bottom:8px;"><div style="font-size:12px;color:var(--ink-soft);margin-bottom:2px;">page <b>'+a+'</b>: <b>'+x[i].toFixed(4)+'</b>'+(ref?(' (direct solve: '+ref[i].toFixed(4)+')'):'')+'</div>'+
+          '<div class="bar" style="height:20px;"><div style="background:#463A73; width:'+(x[i]*100).toFixed(2)+'%"></div></div>'+
+          (ref?'<div class="stat-line"><div class="stat-tick" style="left:'+(ref[i]*100)+'%"></div></div>':'')+'</div>';
+      });
+      $("prBars").innerHTML = h;
+      $("prIter").textContent = iter; $("prMass").textContent = mass.toFixed(4);
+      $("prDelta").textContent = lastDelta===null ? "-" : lastDelta.toExponential(2);
+      drawGraph();
+    }
+    function load(key){
+      stop(); curKey = key; var p = PRESETS[key];
+      G = p.g; fixD = p.fixDangling; d = p.d;
+      $("prD").value = Math.round(d*100); $("prDOut").textContent = d.toFixed(2);
+      reset(); $("prVerdict").innerHTML = p.note;
+    }
+    function reset(){
+      stop(); M = build(G, fixD); var n = M.length; x = new Array(n).fill(1/n); iter = 0; lastDelta = null; ref = directSolve(); render();
+    }
+    function step(){
+      var y = googleStep(x), dl = 0; for(var i=0;i<y.length;i++) dl += Math.abs(y[i]-x[i]);
+      x = y; iter++; lastDelta = dl; render();
+      return dl;
+    }
+    function stop(){ if(timer){ clearInterval(timer); timer=null; } }
+    document.querySelectorAll("#prPresets [data-pp]").forEach(function(b){
+      b.addEventListener("click", function(){ markActive("prPresets", b); load(b.dataset.pp); });
+    });
+    $("prD").addEventListener("input", function(){
+      d = parseInt($("prD").value,10)/100; $("prDOut").textContent = d.toFixed(2); markActive("prPresets", null);
+      reset(); $("prVerdict").innerHTML = "Free play: d = "+d.toFixed(2)+" on the current graph"+(fixD?" (dangling fix on)":" (raw links)")+". Press Jump to see how many steps it takes to settle.";
+    });
+    $("prStep").addEventListener("click", function(){ stop(); step(); });
+    $("prPlay").addEventListener("click", function(){ if(timer){ stop(); return; } timer = setInterval(function(){ var dl = step(); if(dl < 1e-8 || iter >= 2000) stop(); }, 80); });
+    $("prJump").addEventListener("click", function(){
+      stop(); var dl = 1;
+      while(iter < 2000){ var y = googleStep(x); dl = 0; for(var i=0;i<y.length;i++) dl += Math.abs(y[i]-x[i]); x = y; iter++; lastDelta = dl; if(dl < 1e-8) break; }
+      render();
+      var maxErr = 0; if(ref) for(var k=0;k<x.length;k++) maxErr = Math.max(maxErr, Math.abs(x[k]-ref[k]));
+      var msg = (dl < 1e-8) ? ('<b>Settled after '+iter+' steps</b> (total change below 10⁻⁸). Largest gap from the direct linear solve: '+maxErr.toExponential(1)+'.')
+                            : ('<b>Still not settled after '+iter+' steps</b>. This chain never converges.');
+      $("prVerdict").innerHTML = msg + '<br>' + (PRESETS[curKey] && $("prD").value==Math.round(PRESETS[curKey].d*100) ? PRESETS[curKey].note : "");
+    });
+    $("prReset").addEventListener("click", reset);
+    markActive("prPresets", document.querySelector('#prPresets [data-pp="d85"]'));
+    load("d85");
+  })();
+
+  /* ---------------- TAB 10: HIDDEN MARKOV MODEL ---------------- */
+  (function(){
+    var A = [[0.95,0.05],[0.10,0.90]];
+    var B = [[1/6,1/6,1/6,1/6,1/6,1/6],[0.1,0.1,0.1,0.1,0.1,0.5]];
+    var PI0 = [2/3,1/3];
+    var SEQS = {
+      main:[3,1,4,2,5,6,6,2,6,6,6,6,3,1,5,2],
+      sym:[2,5,1,3,6,6,6,6,6,6,4,2,3,1],
+      fair:[1,2,3,4,5,6,1,2,3,4],
+      sixes:[6,6,6,6,6,6,6,6,6,6]
+    };
+    var obs, T, t, alpha, delta, back, path, post, timer = null, curKey = "main";
+
+    function e(v){ return v.toExponential(3); }
+    function load(key){ stop(); curKey = key; obs = SEQS[key]; T = obs.length; reset(); }
+    function reset(){
+      stop(); t = 0; alpha = []; delta = []; back = []; path = null; post = null;
+      render(); $("hmmVerdict").innerHTML = "Rolls: <b>"+obs.join(" ")+"</b> ("+T+" rolls, so 2<sup>"+T+"</sup> = "+Math.pow(2,T).toLocaleString()+" possible hidden paths). Press Step, Play or Jump to end.";
+    }
+    function stepCol(){
+      if(t >= T) return false;
+      var o = obs[t]-1, a = [0,0], dl = [0,0], bk = [0,0];
+      for(var j=0;j<2;j++){
+        if(t===0){ a[j] = PI0[j]*B[j][o]; dl[j] = PI0[j]*B[j][o]; bk[j] = -1; }
+        else {
+          a[j] = (alpha[t-1][0]*A[0][j] + alpha[t-1][1]*A[1][j]) * B[j][o];
+          var c0 = delta[t-1][0]*A[0][j], c1 = delta[t-1][1]*A[1][j];
+          bk[j] = c1 > c0 ? 1 : 0; dl[j] = Math.max(c0,c1) * B[j][o];
+        }
+      }
+      alpha.push(a); delta.push(dl); back.push(bk); t++;
+      if(t === T) finish();
+      return true;
+    }
+    function finish(){
+      var last = delta[T-1][1] > delta[T-1][0] ? 1 : 0; path = [last];
+      for(var k=T-1;k>0;k--){ last = back[k][last]; path.unshift(last); }
+      var beta = []; for(var q=0;q<T;q++) beta.push([1,1]);
+      for(var k2=T-2;k2>=0;k2--){
+        var o = obs[k2+1]-1;
+        for(var i=0;i<2;i++) beta[k2][i] = A[i][0]*B[0][o]*beta[k2+1][0] + A[i][1]*B[1][o]*beta[k2+1][1];
+      }
+      var P = alpha[T-1][0] + alpha[T-1][1];
+      post = []; for(var k3=0;k3<T;k3++) post.push(alpha[k3][1]*beta[k3][1]/P);
+      var pv = Math.max(delta[T-1][0], delta[T-1][1]);
+      var vs = path.map(function(s){ return s?"L":"F"; }).join(""), ps = post.map(function(p){ return p>0.5?"L":"F"; }).join("");
+      var dis = []; for(var k4=0;k4<T;k4++) if(vs[k4]!==ps[k4]) dis.push(k4+1);
+      $("hmmVerdict").innerHTML =
+        'Forward: P(all '+T+' rolls) = sum over every hidden path = <b>'+e(P)+'</b><br>'+
+        'Viterbi: best single path <b>'+vs+'</b> with probability <b>'+e(pv)+'</b> ('+(pv/P*100).toFixed(2)+'% of the total)<br>'+
+        'Per-roll best guess (P(Loaded) &gt; 0.5): <b>'+ps+'</b>'+(dis.length?(' — differs from Viterbi at roll '+dis.join(", ")):' — agrees with Viterbi everywhere')+'<br>'+
+        'Work done: 2² × '+T+' = '+(4*T)+' small multiply-adds, against '+Math.pow(2,T).toLocaleString()+' whole paths for brute force.';
+    }
+    function render(){
+      var h = '<tr><td style="padding:3px 6px;color:#5B6572;">roll #</td>';
+      for(var k=0;k<T;k++) h += '<td style="padding:3px 6px;text-align:center;color:#5B6572;">'+(k+1)+'</td>';
+      h += '</tr><tr><td style="padding:3px 6px;"><b>roll</b></td>';
+      for(var k1=0;k1<T;k1++) h += '<td style="padding:3px 6px;text-align:center;font-size:14px;'+(obs[k1]===6?'color:#D9636B;font-weight:700;':'')+'"><b>'+obs[k1]+'</b></td>';
+      h += '</tr>';
+      function row(label, arr, idx, color){
+        var r = '<tr><td style="padding:3px 6px;color:'+color+';white-space:nowrap;">'+label+'</td>';
+        for(var k=0;k<T;k++){
+          var v = k < arr.length ? arr[k][idx] : null, hi = (path && path[k]===idx && label.indexOf("Viterbi")===0);
+          r += '<td style="padding:3px 3px;text-align:center;border:1px solid #D9E0DE;'+(hi?'background:#EFEBFA;font-weight:700;':'')+(k===t-1?'outline:2px solid #463A73;':'')+'">'+(v===null?'':v.toExponential(1))+'</td>';
+        }
+        return r + '</tr>';
+      }
+      h += row("forward α  F", alpha, 0, "#0F8B8D") + row("forward α  L", alpha, 1, "#D9636B");
+      h += row("Viterbi δ  F", delta, 0, "#0F8B8D") + row("Viterbi δ  L", delta, 1, "#D9636B");
+      h += '<tr><td style="padding:3px 6px;">Viterbi path</td>';
+      for(var k2=0;k2<T;k2++) h += '<td style="padding:3px 6px;text-align:center;font-weight:700;color:'+(path&&path[k2]?'#D9636B':'#0F8B8D')+'">'+(path?(path[k2]?'L':'F'):'')+'</td>';
+      h += '</tr><tr><td style="padding:3px 6px;">P(L | all rolls)</td>';
+      for(var k3=0;k3<T;k3++) h += '<td style="padding:3px 6px;text-align:center;">'+(post?post[k3].toFixed(3):'')+'</td>';
+      h += '</tr>';
+      $("hmmTable").innerHTML = h;
+    }
+    function brute(){
+      var n = Math.pow(2,T), tot = 0, best = -1, bestS = 0;
+      for(var s=0;s<n;s++){
+        var prev = (s>>(T-1))&1, p = PI0[prev]*B[prev][obs[0]-1];
+        for(var k=1;k<T;k++){ var st = (s>>(T-1-k))&1; p *= A[prev][st]*B[st][obs[k]-1]; prev = st; }
+        tot += p; if(p > best){ best = p; bestS = s; }
+      }
+      var bp = ""; for(var k2=0;k2<T;k2++) bp += ((bestS>>(T-1-k2))&1) ? "L" : "F";
+      // make sure the DP is complete for comparison
+      while(stepCol()){} render();
+      var P = alpha[T-1][0]+alpha[T-1][1], pv = Math.max(delta[T-1][0], delta[T-1][1]);
+      var vs = path.map(function(q){ return q?"L":"F"; }).join("");
+      $("hmmVerdict").innerHTML += '<br><br><b>Brute force over all '+n.toLocaleString()+' hidden paths:</b><br>'+
+        'sum of all path probabilities = <b>'+e(tot)+'</b> (forward said '+e(P)+'; relative gap '+(Math.abs(tot-P)/P).toExponential(1)+')<br>'+
+        'single best path = <b>'+bp+'</b> at <b>'+e(best)+'</b> (Viterbi said '+vs+' at '+e(pv)+') — '+(bp===vs?'<b>identical</b>':'DIFFERENT');
+    }
+    function stop(){ if(timer){ clearInterval(timer); timer=null; } }
+    document.querySelectorAll("#hmmPresets [data-hp]").forEach(function(b){
+      b.addEventListener("click", function(){ markActive("hmmPresets", b); load(b.dataset.hp); });
+    });
+    $("hmmStep").addEventListener("click", function(){ stop(); stepCol(); render(); });
+    $("hmmPlay").addEventListener("click", function(){ if(timer){ stop(); return; } timer = setInterval(function(){ if(!stepCol()) stop(); render(); }, 350); });
+    $("hmmJump").addEventListener("click", function(){ stop(); while(stepCol()){} render(); });
+    $("hmmReset").addEventListener("click", reset);
+    $("hmmBrute").addEventListener("click", function(){ stop(); brute(); });
+    markActive("hmmPresets", document.querySelector('#hmmPresets [data-hp="main"]'));
+    load("main");
+
+    /* ---- Baum-Welch on 3,000 simulated rolls (seed 7) ---- */
+    function makeLCG(seed){ var s = seed>>>0; return function(){ s = (Math.imul(s,1664525) + 1013904223)>>>0; return s/4294967296; }; }
+    var rolls = (function(){
+      var r = makeLCG(7), N = 3000, s = r() < 2/3 ? 0 : 1, xs = [];
+      for(var k=0;k<N;k++){
+        var u = r(), acc = 0, em = 5;
+        for(var j=0;j<6;j++){ acc += B[s][j]; if(u < acc){ em = j; break; } }
+        xs.push(em);
+        if(r() >= A[s][s]) s = 1-s;
+      }
+      return xs;
+    })();
+    var bwA, bwB, bwP, bwRound, bwLL, bwTimer = null;
+    function bwReset(){
+      if(bwTimer){ clearInterval(bwTimer); bwTimer=null; }
+      bwA = [[0.8,0.2],[0.2,0.8]]; bwB = [[1/6,1/6,1/6,1/6,1/6,1/6],[0.15,0.15,0.15,0.15,0.15,0.25]]; bwP = [0.5,0.5];
+      bwRound = 0; bwLL = [fwdLL(false)]; bwRender();
+    }
+    function fwdLL(update){
+      var N = rolls.length, a = [], c = [], i, j, k;
+      var a0 = [bwP[0]*bwB[0][rolls[0]], bwP[1]*bwB[1][rolls[0]]], c0 = a0[0]+a0[1];
+      a.push([a0[0]/c0, a0[1]/c0]); c.push(c0);
+      for(k=1;k<N;k++){
+        var o = rolls[k], v = [0,0];
+        for(j=0;j<2;j++) v[j] = (a[k-1][0]*bwA[0][j] + a[k-1][1]*bwA[1][j]) * bwB[j][o];
+        var ck = v[0]+v[1]; a.push([v[0]/ck, v[1]/ck]); c.push(ck);
+      }
+      var ll = 0; for(k=0;k<N;k++) ll += Math.log(c[k]);
+      if(!update) return ll;
+      var b = new Array(N); b[N-1] = [1,1];
+      for(k=N-2;k>=0;k--){
+        var o2 = rolls[k+1], w = [0,0];
+        for(i=0;i<2;i++) w[i] = (bwA[i][0]*bwB[0][o2]*b[k+1][0] + bwA[i][1]*bwB[1][o2]*b[k+1][1]) / c[k+1];
+        b[k] = w;
+      }
+      var xiSum = [[0,0],[0,0]], gSum = [0,0], gEm = [[0,0,0,0,0,0],[0,0,0,0,0,0]], g0 = null;
+      for(k=0;k<N;k++){
+        var g = [a[k][0]*b[k][0], a[k][1]*b[k][1]], gs = g[0]+g[1]; g = [g[0]/gs, g[1]/gs];
+        if(k===0) g0 = g;
+        for(i=0;i<2;i++){ gEm[i][rolls[k]] += g[i]; gSum[i] += g[i]; }
+        if(k < N-1){
+          var o3 = rolls[k+1];
+          for(i=0;i<2;i++) for(j=0;j<2;j++) xiSum[i][j] += a[k][i]*bwA[i][j]*bwB[j][o3]*b[k+1][j]/c[k+1];
+        }
+      }
+      var nA = [[0,0],[0,0]], nB = [[],[]];
+      for(i=0;i<2;i++){ var rs = xiSum[i][0]+xiSum[i][1]; for(j=0;j<2;j++) nA[i][j] = xiSum[i][j]/rs; for(var m=0;m<6;m++) nB[i].push(gEm[i][m]/gSum[i]); }
+      bwA = nA; bwB = nB; bwP = g0;
+      return ll;
+    }
+    function bwOne(){ if(bwRound >= 100) return false; fwdLL(true); bwRound++; bwLL.push(fwdLL(false)); return true; }
+    function bwRender(){
+      var mono = true; for(var k=1;k<bwLL.length;k++) if(bwLL[k] < bwLL[k-1]-1e-6) mono = false;
+      var marks = [0,1,2,5,10,25,50,100].filter(function(q){ return q < bwLL.length; });
+      $("bwVerdict").innerHTML =
+        'Round <b>'+bwRound+'</b> of 100. Log-likelihood: <b>'+bwLL[bwLL.length-1].toFixed(2)+'</b> (it was '+bwLL[0].toFixed(2)+' at the rough guess; never went down so far: <b>'+(mono?'yes':'NO')+'</b>)<br>'+
+        'History: '+marks.map(function(q){ return 'round '+q+': '+bwLL[q].toFixed(2); }).join(' · ')+'<br>'+
+        'Learned stay-fair <b>'+bwA[0][0].toFixed(4)+'</b> (true 0.95) · stay-loaded <b>'+bwA[1][1].toFixed(4)+'</b> (true 0.90)<br>'+
+        'Learned P(six | loaded) <b>'+bwB[1][5].toFixed(4)+'</b> (true 0.5) · P(six | fair) <b>'+bwB[0][5].toFixed(4)+'</b> (true 0.1667)';
+    }
+    $("bwStep").addEventListener("click", function(){ bwOne(); bwRender(); });
+    $("bwPlay").addEventListener("click", function(){ if(bwTimer){ clearInterval(bwTimer); bwTimer=null; return; } bwTimer = setInterval(function(){ if(!bwOne()){ clearInterval(bwTimer); bwTimer=null; } bwRender(); }, 60); });
+    $("bwJump").addEventListener("click", function(){ if(bwTimer){ clearInterval(bwTimer); bwTimer=null; } while(bwOne()){} bwRender(); });
+    $("bwReset").addEventListener("click", bwReset);
+    bwReset();
   })();
 })();
 </script>

@@ -122,6 +122,67 @@
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer b{ color:var(--ink); }
   .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+
+  /* ---- Binomial theorem (step-through presets) ---- */
+  #panel-binomial .bn-presets{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  #panel-binomial button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  #panel-binomial .bn-ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; }
+  #panel-binomial .bn-ctrl .bn-count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  #panel-binomial .bn-stage{ min-height:160px; padding:4px 0; }
+  #panel-binomial .bn-log{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.75; max-height:260px; overflow:auto; }
+  #panel-binomial .bn-log div{ color:var(--ink-soft); }
+  #panel-binomial .bn-log div.cur{ color:var(--ink); font-weight:600; }
+  #panel-binomial .bn-box{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13.5px; margin-bottom:10px; line-height:1.8; }
+  #panel-binomial .bn-box .k{ display:block; color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+  #panel-binomial .bn-box b{ color:var(--accent); }
+  #panel-binomial .bn-words{ display:flex; gap:8px; flex-wrap:wrap; margin:6px 0; }
+  #panel-binomial .bn-word{ font-family:"IBM Plex Mono",monospace; font-size:16px; padding:6px 10px; border-radius:8px; border:1px solid var(--line); background:#fff; letter-spacing:2px; }
+  #panel-binomial .bn-word .b{ color:var(--c1); font-weight:700; }
+  #panel-binomial .bn-word.hi{ background:var(--accent-soft); border-color:var(--accent); }
+  #panel-binomial .bn-word.dim{ opacity:.35; }
+  #panel-binomial .bn-group{ display:flex; align-items:center; gap:10px; margin:6px 0; flex-wrap:wrap; }
+  #panel-binomial .bn-group .lab{ width:150px; font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--ink-soft); }
+  #panel-binomial .bn-row{ display:flex; gap:6px; justify-content:center; margin:4px 0; }
+  #panel-binomial .bn-cell{ min-width:44px; padding:6px 8px; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:14px; border-radius:8px; background:#F5F4F0; border:1px solid var(--line); }
+  #panel-binomial .bn-cell.hi{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  #panel-binomial .bn-cell.from{ background:var(--accent-soft); border-color:var(--accent); }
+  #panel-binomial .bn-cell.ghost{ visibility:hidden; }
+  #panel-binomial .bn-rowlab{ width:150px; text-align:right; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); align-self:center; }
+  #panel-binomial table.bn-t{ border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:13px; width:100%; margin:6px 0; }
+  #panel-binomial table.bn-t th, #panel-binomial table.bn-t td{ border-bottom:1px solid var(--line); padding:5px 8px; text-align:left; }
+  #panel-binomial table.bn-t th{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  #panel-binomial table.bn-t tr.cur td{ background:var(--accent-soft); }
+  #panel-binomial .bn-bar{ display:inline-block; height:14px; background:var(--c1); border-radius:3px; vertical-align:middle; }
+  #panel-binomial .good{ color:#1E8A5A; font-weight:700; } #panel-binomial .bad{ color:#C2413B; font-weight:700; }
+
+  /* ---- Counting Toolkit + Recurrences & Catalan (step-through presets, shared engine) ---- */
+  .sp .sp-presets{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .sp .sp-presets .grp{ width:100%; font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); margin-top:4px; }
+  .sp button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .sp .sp-ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; }
+  .sp .sp-ctrl .sp-count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  .sp .sp-stage{ min-height:160px; padding:4px 0; }
+  .sp .sp-log{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.75; max-height:240px; overflow:auto; }
+  .sp .sp-log div{ color:var(--ink-soft); } .sp .sp-log div.cur{ color:var(--ink); font-weight:600; }
+  .sp .bx{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13.5px; margin-bottom:10px; line-height:1.8; }
+  .sp .bx .k{ display:block; color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+  .sp .bx b{ color:var(--accent); }
+  .sp .chips{ display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 10px; }
+  .sp .chip{ font-family:"IBM Plex Mono",monospace; font-size:14px; padding:5px 9px; border-radius:8px; border:1px solid var(--line); background:#fff; }
+  .sp .chip.hi{ background:var(--accent-soft); border-color:var(--accent); }
+  .sp .chip.ok{ background:#E3F4EC; border-color:#1E8A5A; }
+  .sp .chip.no{ background:#FBE9E8; border-color:#C2413B; opacity:.8; }
+  .sp .chip.dim{ opacity:.35; }
+  .sp table.t{ border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:13px; width:100%; margin:6px 0; }
+  .sp table.t th, .sp table.t td{ border-bottom:1px solid var(--line); padding:4px 8px; text-align:left; }
+  .sp table.t th{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  .sp table.t tr.cur td{ background:var(--accent-soft); }
+  .sp .barc{ display:inline-block; height:13px; background:var(--c1); border-radius:3px; vertical-align:middle; }
+  .sp .good{ color:#1E8A5A; font-weight:700; } .sp .bad{ color:#C2413B; font-weight:700; }
+  .sp .minis{ display:flex; flex-wrap:wrap; gap:8px; }
+  .sp .mini{ border:1px solid var(--line); border-radius:8px; padding:4px; background:#fff; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:11px; }
+  .sp .mini.ok{ border-color:#1E8A5A; background:#F1FAF5; } .sp .mini.no{ border-color:#C2413B; background:#FDF3F2; }
+  .sp .star{ color:var(--c2); } .sp .barch{ color:var(--accent); font-weight:700; }
 </style>
 </head>
 <body>
@@ -136,6 +197,11 @@
     <button class="tab active" data-tab="combinatorics">Combinatorics</button>
     <button class="tab" data-tab="group">Group Theory</button>
     <button class="tab" data-tab="topology">Topology</button>
+    <button class="tab" data-tab="opensets">Open Sets</button>
+    <button class="tab" data-tab="homology">Homology</button>
+    <button class="tab" data-tab="binomial">Binomial Theorem</button>
+    <button class="tab" data-tab="counting">Counting Toolkit</button>
+    <button class="tab" data-tab="recur">Recurrences &amp; Catalan</button>
   </div>
 
   <!-- ============ COMBINATORICS ============ -->
@@ -246,6 +312,91 @@
         <div class="verdict" id="mobiusVerdict"></div>
       </div>
       <p class="caption"><b>Why it matters:</b> this is the single most counterintuitive claim in topology, made walkable instead of taken on faith — cut an actual strip of paper with a half-twist and try it by hand if you have one, and this diagram will match exactly what you feel happen.</p>
+    </div>
+  </div>
+
+  <!-- ============ BINOMIAL THEOREM ============ -->
+  <div class="panel" id="panel-binomial">
+    <div class="card">
+      <h2>The Binomial Theorem, by counting choices</h2>
+      <p class="sub">Multiplying out <span class="formula">(a + b)ⁿ</span> means picking <i>a</i> or <i>b</i> from each of the n brackets. The number of ways to get <span class="formula">aⁿ⁻ᵏbᵏ</span> is the number of ways to choose which k brackets give the b: <span class="formula">C(n, k)</span>. Every preset plays itself; use Step, Play, Jump to end or Reset.</p>
+      <div class="bn-presets" id="bnPresets"></div>
+      <div class="bn-ctrl"><button class="op" data-bn="step">Step ▸</button><button class="op" data-bn="play">▶ Play</button><button class="op" data-bn="end">Jump to end ⏭</button><button class="op" data-bn="reset">↺ Reset</button><span class="bn-count"></span></div>
+      <div class="bn-stage" id="bnStage"></div>
+      <div class="bn-log" id="bnLog"></div>
+    </div>
+  </div>
+
+  <!-- ============ COUNTING TOOLKIT (08-combinatorics.md §10.6–10.8) ============ -->
+  <div class="panel sp" id="panel-counting">
+    <div class="card">
+      <h2>Counting Toolkit: stars and bars, inclusion–exclusion, generating functions</h2>
+      <p class="sub">Every worked example from §10.6–10.8 as a one-click preset. Each preset plays itself and ends with a brute-force check computed live in this page; use Step, Play, Jump to end or Reset.</p>
+      <div class="sp-presets"></div>
+      <div class="sp-ctrl"><button class="op" data-sp="step">Step ▸</button><button class="op" data-sp="play">▶ Play</button><button class="op" data-sp="end">Jump to end ⏭</button><button class="op" data-sp="reset">↺ Reset</button><span class="sp-count"></span></div>
+      <div class="sp-stage"></div>
+      <div class="sp-log"></div>
+    </div>
+  </div>
+
+  <!-- ============ RECURRENCES & CATALAN (08-combinatorics.md §10.8–10.10) ============ -->
+  <div class="panel sp" id="panel-recur">
+    <div class="card">
+      <h2>Recurrences &amp; Catalan numbers</h2>
+      <p class="sub">The Fibonacci generating function, solving linear recurrences (§10.9) and the Catalan numbers (§10.10), each as a one-click preset checked against brute force; use Step, Play, Jump to end or Reset.</p>
+      <div class="sp-presets"></div>
+      <div class="sp-ctrl"><button class="op" data-sp="step">Step ▸</button><button class="op" data-sp="play">▶ Play</button><button class="op" data-sp="end">Jump to end ⏭</button><button class="op" data-sp="reset">↺ Reset</button><span class="sp-count"></span></div>
+      <div class="sp-stage"></div>
+      <div class="sp-log"></div>
+    </div>
+  </div>
+
+  <!-- ============ OPEN SETS (09-topology.md §12.4) ============ -->
+  <style>
+    .tp-presets{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+    .tp-panel button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+    .tp-ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; flex-wrap:wrap; }
+    .tp-ctrl .tp-count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+    .tp-layout{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+    .tp-layout > .tp-plot{ flex:1 1 420px; min-width:0; }
+    .tp-layout > .tp-side{ flex:1 1 250px; min-width:0; }
+    .tp-panel svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+    .tp-panel svg text{ font-family:"IBM Plex Mono", monospace; }
+    .tp-box{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; overflow-wrap:anywhere; }
+    .tp-box .k{ display:block; color:var(--ink-soft); font-size:11.5px; }
+    .tp-box b{ color:var(--accent); }
+    .tp-ok{ color:#1E8A5A; font-weight:700; } .tp-bad{ color:#C2413B; font-weight:700; }
+    .tp-caption{ font-size:13.5px; color:var(--ink); margin-top:12px; line-height:1.6; min-height:40px; }
+    .tp-chip{ display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:13px; padding:3px 9px; margin:3px; border-radius:8px; background:#fff; border:1px solid var(--line); }
+    .tp-chip.miss{ border-color:#C2413B; color:#C2413B; border-style:dashed; }
+  </style>
+  <div class="panel tp-panel" id="panel-opensets">
+    <div class="card">
+      <h2>Open Sets: Wiggle Room</h2>
+      <p class="sub">A set is <b>open</b> when every point in it can wiggle a little in every direction and stay inside. Continuity, in topology, means "the inputs that land in an open target form an open set". Every preset plays itself; use Step, Play, Jump to end or Reset.</p>
+      <div class="tp-presets" id="osPresets"></div>
+      <div class="tp-ctrl" id="osCtrl"></div>
+      <div class="tp-layout">
+        <div class="tp-plot"><svg id="osSvg" viewBox="0 0 460 300" role="img" aria-label="Number line or graph"></svg></div>
+        <div class="tp-side"><div class="tp-box" id="osInfo"></div></div>
+      </div>
+      <div class="tp-caption" id="osCaption"></div>
+    </div>
+  </div>
+
+  <!-- ============ HOMOLOGY (09-topology.md §12.5) ============ -->
+  <div class="panel tp-panel" id="panel-homology">
+    <div class="card">
+      <h2>Homology: Counting Holes</h2>
+      <p class="sub"><span class="formula">β₀</span> = pieces, <span class="formula">β₁</span> = loops that can't shrink away, <span class="formula">β₂</span> = enclosed cavities. The page builds each shape's boundary matrices and computes <span class="formula">βₖ = (k-pieces) − rank(out) − rank(in)</span> with its own Gaussian elimination. Persistent-homology presets grow the radius ε step by step.</p>
+      <div class="tp-presets" id="hoPresets"></div>
+      <div class="tp-ctrl" id="hoCtrl"></div>
+      <div class="tp-layout">
+        <div class="tp-plot"><svg id="hoSvg" viewBox="0 0 460 400" role="img" aria-label="Shape or point cloud"></svg>
+          <svg id="hoBars" viewBox="0 0 460 150" role="img" aria-label="Barcode" style="margin-top:10px; display:none"></svg></div>
+        <div class="tp-side"><div class="tp-box" id="hoInfo"></div></div>
+      </div>
+      <div class="tp-caption" id="hoCaption"></div>
     </div>
   </div>
 
@@ -543,6 +694,848 @@
     renderMobius();
   });
   renderMobius();
+})();
+</script>
+<script>
+/* ================= BINOMIAL THEOREM (presets for 08-combinatorics.md §10.3) ================= */
+(function(){
+  "use strict";
+  const C = (n, k) => { if (k < 0 || k > n) return 0; let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return Math.round(r); };
+  const row = n => Array.from({length: n + 1}, (_, k) => C(n, k));
+  const box = (k, v) => `<div class="bn-box"><span class="k">${k}</span>${v}</div>`;
+  const wordHtml = (w, cls) => `<span class="bn-word${cls ? " " + cls : ""}">${[...w].map(c => c === "b" ? `<span class="b">b</span>` : c).join("")}</span>`;
+  const words = n => { const out = []; for (let m = 0; m < 2 ** n; m++){ let w = ""; for (let j = n - 1; j >= 0; j--) w += (m >> j) & 1 ? "b" : "a"; out.push(w); } return out; };
+  const nb = w => [...w].filter(c => c === "b").length;
+  const term = (n, k) => { const pa = n - k, pb = k; const sup = x => x === 1 ? "" : String(x).replace(/\d/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[d]);
+    return (pa ? "a" + sup(pa) : "") + (pb ? "b" + sup(pb) : "") || "1"; };
+  const cellRow = (vals, lab, o) => { o = o || {}; return `<div class="bn-row"><span class="bn-rowlab">${lab || ""}</span>${vals.map((v, i) => `<span class="bn-cell${o.hi && o.hi.includes(i) ? " hi" : ""}${o.from && o.from.includes(i) ? " from" : ""}${v === null ? " ghost" : ""}">${v === null ? "" : v}</span>`).join("")}<span class="bn-rowlab"></span></div>`; };
+  function cumulative(items){ const fr = []; for (let k = 1; k <= items.length; k++) fr.push({ html: items.slice(0, k).map(i => i[0]).join(""), note: items[k-1][1] }); return fr; }
+
+  function eightWords(){
+    const ws = words(3), fr = [];
+    const head = box("multiply out", "(a + b)(a + b)(a + b): pick a or b from each bracket, 2 × 2 × 2 = 8 ways");
+    for (let k = 1; k <= 8; k++) fr.push({ html: head + `<div class="bn-words">${ws.slice(0, k).map(w => wordHtml(w)).join("")}</div>`, note: `pick ${k}: ${ws[k-1]}` });
+    let g = "";
+    for (let k = 0; k <= 3; k++){
+      const these = ws.filter(w => nb(w) === k);
+      g += `<div class="bn-group"><span class="lab">${k} b's → ${term(3, k)}</span>${these.map(w => wordHtml(w, "hi")).join("")}<b>× ${these.length}</b> &nbsp;= C(3,${k}) = ${C(3, k)}</div>`;
+      fr.push({ html: head + g, note: `${these.length} word(s) with ${k} b's: ${these.join(", ")} → C(3,${k}) = ${C(3, k)}` });
+    }
+    fr.push({ html: head + g + box("so", `<b>(a + b)³ = a³ + 3a²b + 3ab² + b³</b>`), note: "(a + b)³ = a³ + 3a²b + 3ab² + b³" });
+    return fr;
+  }
+  function fourWords(){
+    const ws = words(4);
+    return cumulative([
+      [box("(a + b)⁴", "4 brackets, 2 choices each: 2⁴ = 16 words") + `<div class="bn-words">${ws.map(w => wordHtml(w)).join("")}</div>`, "All 16 ways to pick a or b from 4 brackets."],
+      [box("keep the words with exactly two b's (they multiply to a²b²)", `<div class="bn-words">${ws.map(w => wordHtml(w, nb(w) === 2 ? "hi" : "dim")).join("")}</div>`), `Words with two b's: ${ws.filter(w => nb(w) === 2).join(", ")}.`],
+      [box("count them", `${ws.filter(w => nb(w) === 2).length} = C(4,2) = <b>${C(4, 2)}</b>: choose which 2 of the 4 brackets give the b`), `Coefficient of a²b² is C(4,2) = ${C(4, 2)}.`],
+      [box("all of it", `<b>(a + b)⁴ = ${row(4).map((c, k) => (c === 1 ? "" : c) + term(4, k)).join(" + ")}</b>`), `(a + b)⁴ = ${row(4).map((c, k) => (c === 1 ? "" : c) + term(4, k)).join(" + ")}`],
+    ]);
+  }
+  function rowFromRow(){
+    const r3 = row(3), sh = (v, left) => left ? v.concat([null]) : [null].concat(v);
+    const sum = r3.concat([0]).map((v, i) => v + (i ? r3[i-1] : 0));
+    return cumulative([
+      [box("start from row 3", "(a + b)³ = 1·a³ + 3·a²b + 3·ab² + 1·b³") + cellRow(r3, "row 3"), "Row 3: 1 3 3 1."],
+      [box("multiply by one more bracket (a + b): first, every term × a", "the power of b doesn't change, so the coefficients stay in their column") + cellRow(sh(r3, true), "× a"), "Times a: 1 3 3 1 in columns 0–3."],
+      [box("then every term × b", "one more b: each coefficient moves one column right") + cellRow(sh(r3, false), "× b"), "Times b: 1 3 3 1 shifted one column right."],
+      [box("add the columns", "each new coefficient = (the one above-left) + (the one above): the fork-in-the-road rule") + cellRow(sum, "row 4", { hi: [2] }), `Row 4: ${sum.join(" ")}. Middle: 3 + 3 = ${sum[2]}.`],
+      [box("which is", `C(4,2) = C(3,1) + C(3,2) = 3 + 3 = <b>${C(4, 2)}</b>: did the last bracket give a b (left parent) or an a (right parent)?`), "C(n,k) = C(n−1,k−1) + C(n−1,k)."],
+    ]);
+  }
+  function twoPlusThree(){
+    const a = 2, b = 3, n = 3; let run = 0; const items = [[box("check", `(2 + 3)³ = 5³ = <b>${(a + b) ** n}</b>`), `(2 + 3)³ = ${(a + b) ** n}`]];
+    for (let k = 0; k <= n; k++){
+      const t = C(n, k) * a ** (n - k) * b ** k; run += t;
+      items.push([box(`k = ${k}: C(3,${k}) · 2^${n - k} · 3^${k}`, `${C(n, k)} × ${a ** (n - k)} × ${b ** k} = <b>${t}</b> &nbsp; running total ${run}`), `C(3,${k})·2^${n-k}·3^${k} = ${t}; total ${run}`]);
+    }
+    items.push([box("formula vs plain multiplication", `${run} = ${(a + b) ** n} <span class="good">✓</span>`), `8 + 36 + 54 + 27 = ${run} ✓`]);
+    return cumulative(items);
+  }
+  function elevens(){
+    const items = [];
+    for (let n = 0; n <= 5; n++){
+      const v = 11 ** n, r = row(n), ok = String(v) === r.join("");
+      items.push([box(`11^${n} = (10 + 1)^${n}`, `${v} &nbsp; vs row ${n}: ${r.join(" ")} ${ok ? `<span class="good">digits match</span>` : `<span class="bad">breaks: 10s carry</span>`}`), `11^${n} = ${v}; row ${n} = ${r.join(" ")}${ok ? "" : " (two-digit entries carry, so the trick stops)"}`]);
+    }
+    return cumulative(items);
+  }
+  function rowSums(){
+    const items = [];
+    for (let n = 0; n <= 7; n++){
+      const r = row(n), s = r.reduce((x, y) => x + y, 0), alt = r.reduce((x, y, k) => x + (k % 2 ? -y : y), 0);
+      items.push([cellRow(r, `row ${n}`) + box("", `sum = <b>${s}</b> = 2^${n} &nbsp; · &nbsp; alternating sum = <b>${alt}</b>${n === 0 ? " (row 0 is just 1)" : ""}`), `row ${n}: sum ${s} = 2^${n} (a = b = 1), alternating ${alt} (a = 1, b = −1)`]);
+    }
+    return cumulative(items);
+  }
+  function pmf(n, p){
+    let run = 0; const rows = [];
+    for (let k = 0; k <= n; k++){ const t = C(n, k) * p ** k * (1 - p) ** (n - k); run += t; rows.push([k, C(n, k), t, run]); }
+    const tbl = j => `<table class="bn-t"><tr><th>k</th><th>C(${n},k)</th><th>C(${n},k)·${p}^k·${+(1 - p).toFixed(10)}^(${n}−k)</th><th></th><th>running sum</th></tr>` + rows.slice(0, j).map((r, i) => `<tr${i === j - 1 ? ' class="cur"' : ""}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2].toFixed(4)}</td><td><span class="bn-bar" style="width:${Math.max(1, r[2] * 300)}px"></span></td><td>${r[3].toFixed(4)}</td></tr>`).join("") + `</table>`;
+    const fr = [{ html: box("the binomial distribution", `P(k successes in ${n} trials) = C(${n},k) · ${p}^k · ${+(1 - p).toFixed(10)}^(${n}−k)`), note: `Binomial n = ${n}, p = ${p}.` }];
+    rows.forEach((r, i) => fr.push({ html: fr[0].html + tbl(i + 1), note: `k = ${r[0]}: ${r[2].toFixed(4)}; running sum ${r[3].toFixed(4)}` }));
+    fr.push({ html: fr[0].html + tbl(rows.length) + box("why it must be 1", `Σ C(${n},k) p^k (1−p)^(${n}−k) = ((1 − p) + p)^${n} = 1^${n} = <b>1</b>, by the binomial theorem with a = 1 − p, b = p.<br>The computer's float sum prints as <b>${run}</b>${run === 1 ? "" : " — rounding in floating point, not a failure of the theorem"}.`), note: `Sum = 1 (float sum prints ${run}).` });
+    return fr;
+  }
+  function approx(){
+    const cases = [[0.01, 10], [0.001, 100], [-0.01, 10], [0.05, 10]];
+    const rows = cases.map(([x, n]) => [x, n, (1 + x) ** n, 1 + n * x, 1 + n * x + C(n, 2) * x * x]);
+    const tbl = j => `<table class="bn-t"><tr><th>(1 + x)ⁿ</th><th>exact</th><th>1 + nx</th><th>1 + nx + C(n,2)x²</th><th>nx</th></tr>` + rows.slice(0, j).map((r, i) => `<tr${i === j - 1 ? ' class="cur"' : ""}><td>${(1 + r[0]).toFixed(r[0] === 0.001 ? 3 : 2)}^${r[1]}</td><td>${r[2].toFixed(6)}</td><td class="${Math.abs(r[3] - r[2]) > 0.05 ? "bad" : ""}">${+r[3].toFixed(6)}</td><td>${+r[4].toFixed(6)}</td><td>${+(r[0] * r[1]).toFixed(6)}</td></tr>`).join("") + `</table>`;
+    const head = box("(1 + x)ⁿ = 1 + nx + C(n,2)x² + …", "when x is small, x² is smaller still, so keep only 1 + nx");
+    const fr = rows.map((r, i) => ({ html: head + tbl(i + 1), note: `${(1 + r[0])}^${r[1]} = ${r[2].toFixed(6)} vs 1 + nx = ${+r[3].toFixed(6)}` + (Math.abs(r[3] - r[2]) > 0.05 ? ` (poor: nx = ${+(r[0] * r[1]).toFixed(3)} isn't small)` : "") }));
+    const f = 1 - 0.999 ** 100;
+    fr.push({ html: head + tbl(rows.length) + box("100 parts, each failing with probability 0.001", `P(at least one fails) = 1 − 0.999¹⁰⁰ = <b>${f.toFixed(4)}</b> ≈ 100 × 0.001 = 0.1`), note: `1 − 0.999^100 = ${f.toFixed(4)} ≈ 0.1` });
+    return fr;
+  }
+
+  const PRESETS = [
+    ["(a + b)³: the 8 picks", eightWords], ["(a + b)⁴: the a²b² coefficient", fourWords], ["row 4 from row 3", rowFromRow],
+    ["(2 + 3)³ = 125", twoPlusThree], ["powers of 11", elevens], ["row sums 2ⁿ, alternating 0", rowSums],
+    ["binomial PMF n = 4, p = 0.3", () => pmf(4, 0.3)], ["binomial PMF n = 10, p = 0.3", () => pmf(10, 0.3)], ["(1 + x)ⁿ ≈ 1 + nx", approx],
+  ];
+  const stage = document.getElementById("bnStage"), log = document.getElementById("bnLog"), cnt = document.querySelector("#panel-binomial .bn-count"), pb = document.querySelector('#panel-binomial [data-bn="play"]');
+  const P = { frames: [], i: 0, t: null };
+  P.draw = () => { const f = P.frames[P.i]; if (!f) return; stage.innerHTML = f.html;
+    log.innerHTML = P.frames.slice(0, P.i + 1).map((g, j) => g.note ? `<div class="${j === P.i ? "cur" : ""}">${g.note}</div>` : "").join(""); log.scrollTop = log.scrollHeight;
+    cnt.textContent = `step ${P.i + 1} of ${P.frames.length}`; };
+  P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+  P.play = () => { if (P.t){ P.stop(); return; } if (P.i >= P.frames.length - 1){ P.i = 0; P.draw(); }
+    const tick = () => { if (P.i >= P.frames.length - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, 1100); };
+    P.t = setTimeout(tick, 900); pb.textContent = "❚❚ Pause"; };
+  P.load = (fr, auto) => { P.stop(); P.frames = fr; P.i = 0; P.draw(); if (auto) P.play(); };
+  document.querySelector("#panel-binomial .bn-ctrl").addEventListener("click", e => {
+    const a = e.target.dataset && e.target.dataset.bn; if (!a) return;
+    if (a === "play") return P.play();
+    P.stop(); if (a === "step" && P.i < P.frames.length - 1) P.i++; if (a === "end") P.i = P.frames.length - 1; if (a === "reset") P.i = 0; P.draw();
+  });
+  const bar = document.getElementById("bnPresets"), btns = [];
+  PRESETS.forEach(([name, fn]) => { const b = document.createElement("button"); b.className = "op pre"; b.textContent = name;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); P.load(fn(), true); });
+    bar.appendChild(b); btns.push(b); });
+  btns[0].classList.add("active"); P.load(PRESETS[0][1](), false);
+})();
+</script>
+<script>
+/* ================= COUNTING TOOLKIT + RECURRENCES & CATALAN (presets for 08-combinatorics.md §10.6–10.10) ================= */
+(function(){
+  "use strict";
+  // ---------- shared helpers ----------
+  const C = (n, k) => { if (k < 0 || k > n) return 0; let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return Math.round(r); };
+  const CB = (n, k) => { if (k < 0 || k > n) return 0n; let r = 1n; for (let i = 0; i < k; i++) r = r * BigInt(n - i) / BigInt(i + 1); return r; };
+  const fact = n => { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; };
+  const box = (k, v) => `<div class="bx">${k ? `<span class="k">${k}</span>` : ""}${v}</div>`;
+  const chip = (t, cls) => `<span class="chip${cls ? " " + cls : ""}">${t}</span>`;
+  const sup = x => String(x).replace(/\d/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[d]).replace("-", "⁻");
+  const cum = items => items.map((_, k) => ({ html: items.slice(0, k + 1).map(i => i[0]).join(""), note: items[k][1] }));
+  const ok = b => b ? `<span class="good">✓ match</span>` : `<span class="bad">✗ mismatch</span>`;
+  function* tuples(k, lo, hi){ const t = Array(k).fill(lo); while (true){ yield t.slice(); let i = k - 1; while (i >= 0 && t[i] === hi){ t[i] = lo; i--; } if (i < 0) return; t[i]++; } }
+  function perms(arr){ if (arr.length <= 1) return [arr.slice()]; const out = []; arr.forEach((x, i) => { perms(arr.slice(0, i).concat(arr.slice(i + 1))).forEach(p => out.push([x].concat(p))); }); return out; }
+  const pmul = (a, b) => { const r = Array(a.length + b.length - 1).fill(0); a.forEach((x, i) => b.forEach((y, j) => { r[i + j] += x * y; })); return r; };
+  const polyStr = (c, lo) => c.map((v, i) => v ? `${v === 1 && i ? "" : v}${i ? "x" + (i === 1 ? "" : sup(i)) : ""}` : "").filter(Boolean).join(" + ");
+  const barRow = (lab, v, scale, extra) => `<tr><td>${lab}</td><td>${v}</td><td><span class="barc" style="width:${Math.max(1, v * scale)}px"></span></td>${extra !== undefined ? `<td>${extra}</td>` : ""}</tr>`;
+
+  // ---------- engine: one per panel ----------
+  function makeStepper(panelId, groups){
+    const panel = document.getElementById(panelId);
+    const stage = panel.querySelector(".sp-stage"), log = panel.querySelector(".sp-log"), cnt = panel.querySelector(".sp-count"), pb = panel.querySelector('[data-sp="play"]');
+    const P = { frames: [], i: 0, t: null };
+    P.draw = () => { const f = P.frames[P.i]; if (!f) return; stage.innerHTML = f.html;
+      log.innerHTML = P.frames.slice(0, P.i + 1).map((g, j) => g.note ? `<div class="${j === P.i ? "cur" : ""}">${g.note}</div>` : "").join(""); log.scrollTop = log.scrollHeight;
+      cnt.textContent = `step ${P.i + 1} of ${P.frames.length}`; };
+    P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+    P.play = () => { if (P.t){ P.stop(); return; } if (P.i >= P.frames.length - 1){ P.i = 0; P.draw(); }
+      const tick = () => { if (P.i >= P.frames.length - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, 1000); };
+      P.t = setTimeout(tick, 800); pb.textContent = "❚❚ Pause"; };
+    P.load = (fr, auto) => { P.stop(); P.frames = fr; P.i = 0; P.draw(); if (auto) P.play(); };
+    panel.querySelector(".sp-ctrl").addEventListener("click", e => {
+      const a = e.target.dataset && e.target.dataset.sp; if (!a) return;
+      if (a === "play") return P.play();
+      P.stop(); if (a === "step" && P.i < P.frames.length - 1) P.i++; if (a === "end") P.i = P.frames.length - 1; if (a === "reset") P.i = 0; P.draw();
+    });
+    const bar = panel.querySelector(".sp-presets"), btns = [];
+    groups.forEach(([gname, list]) => {
+      const g = document.createElement("div"); g.className = "grp"; g.textContent = gname; bar.appendChild(g);
+      list.forEach(([name, fn]) => { const b = document.createElement("button"); b.className = "op pre"; b.textContent = name;
+        b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); P.load(fn(), true); });
+        bar.appendChild(b); btns.push(b); });
+    });
+    btns[0].classList.add("active"); P.load(groups[0][1][0][1](), false);
+  }
+
+  // =====================================================================
+  // COUNTING TOOLKIT
+  // =====================================================================
+  const sbString = t => t.map(v => `<span class="star">${"★".repeat(v)}</span>`).join(`<span class="barch">|</span>`);
+  function cookies(){
+    const sols = []; for (const t of tuples(3, 0, 5)) if (t[0] + t[1] + t[2] === 5) sols.push(t);
+    const head = box("5 identical cookies, 3 kids", "write the cookies as ★★★★★ and drop in 2 bars |: the piles between the bars are the kids' shares");
+    const fr = [{ html: head, note: "5 stars, 2 bars, 7 slots." }];
+    for (let k = 3; k <= sols.length; k += 3){
+      fr.push({ html: head + `<div class="chips">${sols.slice(0, k).map(t => chip(`${sbString(t)} &nbsp;→ (${t.join(", ")})`)).join("")}</div>`, note: `rows ${k - 2}–${k}: ${sols.slice(k - 3, k).map(t => "(" + t.join(",") + ")").join(" ")}` });
+    }
+    fr.push({ html: fr[fr.length - 1].html + box("count", `every row of 5 ★ and 2 | is one sharing: choose which 2 of the 7 slots hold bars, C(7, 2) = <b>${C(7, 2)}</b><br>brute force over all (a, b, c) from 0 to 5 with a + b + c = 5: <b>${sols.length}</b> ${ok(sols.length === C(7, 2))}`), note: `C(7,2) = ${C(7, 2)} = brute force ${sols.length}` });
+    return fr;
+  }
+  function atLeastOne(){
+    const rest = []; for (const t of tuples(3, 0, 2)) if (t[0] + t[1] + t[2] === 2) rest.push(t);
+    let bf = 0; for (const t of tuples(3, 1, 5)) if (t[0] + t[1] + t[2] === 5) bf++;
+    return cum([
+      [box("everyone gets at least one", "hand each kid 1 cookie first: 5 − 3 = 2 cookies are left to share freely"), "Give one each; 2 left."],
+      [box("share the 2 leftovers: 2 stars + 2 bars", `<div class="chips">${rest.map(t => chip(`${sbString(t)} → (${t.map(v => v + 1).join(", ")})`)).join("")}</div>`), `${rest.length} rows: ${rest.map(t => "(" + t.map(v => v + 1).join(",") + ")").join(" ")}`],
+      [box("count", `C(2 + 2, 2) = C(4, 2) = <b>${C(4, 2)}</b> &nbsp; brute force over shares 1..5 adding to 5: <b>${bf}</b> ${ok(bf === 6)}`), `C(4,2) = 6 = brute force ${bf}`],
+    ]);
+  }
+  function moreSB(){
+    let a = 0; for (const t of tuples(4, 0, 10)) if (t[0] + t[1] + t[2] + t[3] === 10) a++;
+    let ic = 0; for (const t of tuples(3, 0, 4)) if (t[0] <= t[1] && t[1] <= t[2]) ic++;
+    const monos = []; for (const t of tuples(3, 0, 2)) if (t[0] + t[1] + t[2] <= 2) monos.push(t);
+    const name = t => { const s = ["x", "y", "z"].map((v, i) => t[i] ? v + (t[i] > 1 ? "²" : "") : "").join(""); return s || "1"; };
+    let m10 = 0; for (const t of tuples(10, 0, 3)) if (t.reduce((p, q) => p + q, 0) <= 3) m10++;
+    return cum([
+      [box("x₁ + x₂ + x₃ + x₄ = 10, every xᵢ ≥ 0", `10 stars, 3 bars: C(13, 3) = <b>${C(13, 3)}</b> &nbsp; brute force: <b>${a}</b> ${ok(a === C(13, 3))}`), `x1+x2+x3+x4 = 10: ${a} = C(13,3)`],
+      [box("3 scoops from 5 flavours, repeats allowed, order ignored", `3 stars (scoops), 4 bars (between 5 flavours): C(7, 3) = <b>${C(7, 3)}</b> &nbsp; brute force (sorted flavour triples): <b>${ic}</b> ${ok(ic === 35)}`), `ice cream: ${ic} = C(7,3)`],
+      [box("polynomial features: every term of degree ≤ 2 in x, y, z", `<div class="chips">${monos.map(t => chip(name(t))).join("")}</div>2 stars shared among x, y, z and one 'unused degree' slot: C(5, 2) = <b>${C(5, 2)}</b> &nbsp; listed: <b>${monos.length}</b> ${ok(monos.length === 10)}`), `degree ≤ 2 in 3 variables: ${monos.length} features`],
+      [box("10 input columns, degree ≤ 3", `C(13, 3) = <b>${C(13, 3)}</b> features &nbsp; brute force over all exponent patterns: <b>${m10}</b> ${ok(m10 === 286)}`), `degree ≤ 3 in 10 variables: ${m10} features`],
+    ]);
+  }
+  function ie100(){
+    const cnt = d => Math.floor(100 / d);
+    const terms = [["divisible by 2", 2, +1], ["by 3", 3, +1], ["by 5", 5, +1], ["by 6 (2 and 3)", 6, -1], ["by 10 (2 and 5)", 10, -1], ["by 15 (3 and 5)", 15, -1], ["by 30 (all three)", 30, +1]];
+    let run = 0; const items = [[box("how many of 1..100 are divisible by 2, 3, or 5?", "include the singles, exclude the pairs, include the triple back"), "Inclusion–exclusion on 1..100."]];
+    terms.forEach(([lab, d, sg]) => { run += sg * cnt(d); items.push([box(`${sg > 0 ? "+" : "−"} ${lab}`, `${sg > 0 ? "+" : "−"}${cnt(d)} &nbsp; running total <b>${run}</b>`), `${sg > 0 ? "+" : "−"}${cnt(d)} (${lab}) → ${run}`]); });
+    let bf = 0; for (let n = 1; n <= 100; n++) if (n % 2 === 0 || n % 3 === 0 || n % 5 === 0) bf++;
+    items.push([box("check every number 1..100 one at a time", `<b>${bf}</b> ${ok(bf === run)}`), `brute force: ${bf}`]);
+    return cum(items);
+  }
+  function hats3(){
+    const ps = perms(["A", "B", "C"]); const own = ["A", "B", "C"];
+    const fr = [{ html: box("3 people, hats A, B, C handed back at random", "person 1 owns A, person 2 owns B, person 3 owns C: 3! = 6 ways to hand them back"), note: "6 shuffles." }];
+    ps.forEach((p, k) => {
+      const shown = ps.slice(0, k + 1).map(q => { const d = q.every((h, i) => h !== own[i]); return chip(q.join(" ") + (d ? " — nobody's own" : " — someone's own"), d ? "ok" : "no"); }).join("");
+      const d = p.every((h, i) => h !== own[i]);
+      fr.push({ html: fr[0].html + `<div class="chips">${shown}</div>`, note: `${p.join(" ")}: ${d ? "a derangement" : "person " + (p.findIndex((h, i) => h === own[i]) + 1) + " gets their own hat"}` });
+    });
+    const D = ps.filter(p => p.every((h, i) => h !== own[i])).length;
+    fr.push({ html: fr[fr.length - 1].html + box("so", `D(3) = <b>${D}</b> derangements (B C A and C A B); chance nobody gets their own hat = ${D}/6 = <b>1/3</b>`), note: `D(3) = ${D}, chance 1/3` });
+    return fr;
+  }
+  function D4(){
+    const t = [0, 1, 2, 3, 4].map(k => fact(4) / fact(k)); let run = 0; const items = [[box("bad shuffles of 4 hats, by inclusion–exclusion", "D(4) = 4! − C(4,1)·3! + C(4,2)·2! − C(4,3)·1! + C(4,4)·0!"), "D(4) by inclusion–exclusion."]];
+    const lab = ["all 4! shuffles", "− (some chosen 1 person is lucky): C(4,1)·3!", "+ (some chosen 2 are lucky): C(4,2)·2!", "− (some chosen 3): C(4,3)·1!", "+ (all 4): C(4,4)·0!"];
+    t.forEach((v, k) => { run += (k % 2 ? -1 : 1) * v; items.push([box(lab[k], `${k % 2 ? "−" : "+"}${v} &nbsp; running total <b>${run}</b>`), `${k % 2 ? "−" : "+"}${v} → ${run}`]); });
+    const bf = perms([0, 1, 2, 3]).filter(p => p.every((h, i) => h !== i)).length;
+    items.push([box("brute force over all 24 shuffles", `<b>${bf}</b> leave nobody with their own hat ${ok(bf === run)}`), `brute force: ${bf}`]);
+    return cum(items);
+  }
+  function eTable(){
+    const Df = n => { let s = 0; for (let k = 0; k <= n; k++) s += (k % 2 ? -1 : 1) * fact(n) / fact(k); return Math.round(s); };
+    const rows = []; for (let n = 1; n <= 12; n++){ const d = Df(n); rows.push([n, d, fact(n), d / fact(n)]); }
+    const bfs = [1, 2, 3, 4, 5, 6, 7, 8].map(n => perms([...Array(n).keys()]).filter(p => p.every((h, i) => h !== i)).length);
+    const tbl = j => `<table class="t"><tr><th>n</th><th>D(n)</th><th>n!</th><th>D(n)/n!</th><th>minus 1/e</th><th>brute force</th></tr>` + rows.slice(0, j).map((r, i) => `<tr${i === j - 1 ? ' class="cur"' : ""}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3].toFixed(10)}</td><td>${(r[3] - 1 / Math.E).toExponential(2)}</td><td>${r[0] <= 8 ? bfs[r[0] - 1] + (bfs[r[0] - 1] === r[1] ? " ✓" : " ✗") : "—"}</td></tr>`).join("") + `</table>`;
+    const head = box("D(n) = n!·(1 − 1/1! + 1/2! − … ± 1/n!) and the chance D(n)/n!", `1/e = <b>${(1 / Math.E).toFixed(10)}</b>`);
+    const fr = rows.map((r, i) => ({ html: head + tbl(i + 1), note: `n = ${r[0]}: D = ${r[1]}, D/n! = ${r[3].toFixed(10)}` }));
+    fr.push({ html: head + tbl(rows.length) + box("Secret Santa with 5 people", `${rows[4][1]} of ${rows[4][2]} draws are valid = ${rows[4][3].toFixed(4)}; so about ${Math.round(100 * (1 - rows[4][3]))}% of the time someone draws their own name<br>and the shortcut D(n) = (n−1)(D(n−1) + D(n−2)) for n = 5: 4 × (9 + 2) = <b>${4 * (9 + 2)}</b> ${ok(44 === rows[4][1])}`), note: "Secret Santa: 44/120 valid." });
+    return fr;
+  }
+  const die = [0, 1, 1, 1, 1, 1, 1];
+  function twoDice(){
+    const two = pmul(die, die);
+    const fr = [{ html: box("one die", "x + x² + x³ + x⁴ + x⁵ + x⁶ (one way to roll each face)"), note: "One die as a polynomial." }];
+    const grid = upto => `<table class="t"><tr><th>×</th>${[1, 2, 3, 4, 5, 6].map(b => `<th>x${sup(b)}</th>`).join("")}</tr>` + [1, 2, 3, 4, 5, 6].map(a => `<tr${a === upto ? ' class="cur"' : ""}><td><b>x${sup(a)}</b></td>${[1, 2, 3, 4, 5, 6].map(b => `<td>${a <= upto ? "x" + sup(a + b) : ""}</td>`).join("")}</tr>`).join("") + `</table>`;
+    for (let a = 1; a <= 6; a++) fr.push({ html: fr[0].html + box(`first die shows ${a}: multiply x${sup(a)} by every face of the second`, "multiplying powers adds the exponents, so each cell is the total") + grid(a), note: `row ${a}: x^${a}·x^b = x^${a}+b` });
+    let bf = Array(13).fill(0); for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) bf[a + b]++;
+    const tb = `<table class="t"><tr><th>total</th><th>coefficient</th><th></th><th>brute force</th></tr>` + two.map((v, s) => s >= 2 ? barRow(s, v, 22, bf[s] + (bf[s] === v ? " ✓" : " ✗")) : "").join("") + `</table>`;
+    fr.push({ html: fr[0].html + grid(6) + box("collect equal powers", `(x + … + x⁶)² = ${polyStr(two)}`) + tb, note: `coefficients ${two.slice(2).join(", ")}` });
+    fr.push({ html: fr[fr.length - 1].html + box("so", `7 is the most likely total: ${two[7]}/36 = 1/6 &nbsp; ${ok(JSON.stringify(bf) === JSON.stringify(two))} against all 36 rolls`), note: "P(7) = 6/36 = 1/6" });
+    return fr;
+  }
+  function galileo(){
+    const three = pmul(pmul(die, die), die);
+    const parts = s => { const o = []; for (let a = 1; a <= 6; a++) for (let b = a; b <= 6; b++) for (let c = b; c <= 6; c++) if (a + b + c === s) o.push([a, b, c]); return o; };
+    const orders = t => new Set(perms(t).map(p => p.join())).size;
+    let bf = Array(19).fill(0); for (const t of tuples(3, 1, 6)) bf[t[0] + t[1] + t[2]]++;
+    const tb = `<table class="t"><tr><th>total</th><th>coefficient of xˢ in (x+…+x⁶)³</th><th></th><th>brute force (216 rolls)</th></tr>` + three.map((v, s) => s >= 3 ? barRow(s, v, 9, bf[s] + (bf[s] === v ? " ✓" : " ✗")) : "").join("") + `</table>`;
+    const p9 = parts(9), p10 = parts(10);
+    return cum([
+      [box("the gamblers' puzzle (Galileo, about 1620)", "9 and 10 can each be written as three faces in six ways, so why does 10 come up more often?"), "Galileo's puzzle."],
+      [box("the six ways to make 9, and how many orders each can be rolled in", `<div class="chips">${p9.map(t => chip(t.join("+") + " : " + orders(t))).join("")}</div>total orders = <b>${p9.reduce((s, t) => s + orders(t), 0)}</b>`), `9: ${p9.map(t => t.join("+") + "(" + orders(t) + ")").join(" ")}`],
+      [box("the six ways to make 10", `<div class="chips">${p10.map(t => chip(t.join("+") + " : " + orders(t))).join("")}</div>total orders = <b>${p10.reduce((s, t) => s + orders(t), 0)}</b>`), `10: ${p10.map(t => t.join("+") + "(" + orders(t) + ")").join(" ")}`],
+      [box("the generating function does it all at once", `(x + … + x⁶)³: x⁹ has coefficient <b>${three[9]}</b>, x¹⁰ has <b>${three[10]}</b>, out of ${three.reduce((a, b) => a + b, 0)}`) + tb, `coefficients: 9 → ${three[9]}, 10 → ${three[10]}`],
+    ]);
+  }
+  function sicherman(){
+    const A = [1, 2, 2, 3, 3, 4], B = [1, 3, 4, 5, 6, 8], N = [1, 2, 3, 4, 5, 6];
+    const dist = (X, Y) => { const d = Array(13).fill(0); X.forEach(a => Y.forEach(b => { d[a + b]++; })); return d; };
+    const dn = dist(N, N), ds = dist(A, B);
+    const tbl = upto => `<table class="t"><tr><th>total</th><th>ordinary dice</th><th>Sicherman dice</th><th></th></tr>` + dn.map((v, s) => s >= 2 && s <= upto ? `<tr${s === upto ? ' class="cur"' : ""}><td>${s}</td><td>${v}</td><td>${ds[s]}</td><td>${v === ds[s] ? "✓" : "✗"}</td></tr>` : "").join("") + `</table>`;
+    const head = box("two strange dice", `faces ${A.join(", ")} and ${B.join(", ")}: their polynomials multiply to the same product as two ordinary dice`);
+    const fr = []; for (let s = 2; s <= 12; s++) fr.push({ html: head + tbl(s), note: `total ${s}: ${dn[s]} ways vs ${ds[s]} ways` });
+    fr.push({ html: head + tbl(12) + box("verdict", `all 11 totals match ${ok(JSON.stringify(dn) === JSON.stringify(ds))}: (x+x²+x²+x³+x³+x⁴)(x+x³+x⁴+x⁵+x⁶+x⁸) = (x+…+x⁶)²`), note: "Same distribution, different dice." });
+    return fr;
+  }
+  function coins(){
+    const series = (c, upto) => Array.from({ length: upto + 1 }, (_, i) => i % c === 0 ? 1 : 0);
+    const p = series(1, 10), n = series(5, 10), d = series(10, 10);
+    const pn = pmul(p, n).slice(0, 11), pnd = pmul(pn, d).slice(0, 11);
+    const ways = []; for (let a = 0; a <= 10; a++) for (let b = 0; b <= 2; b++) for (let c = 0; c <= 1; c++) if (a + 5 * b + 10 * c === 10) ways.push([a, b, c]);
+    const dp = (T, cs) => { const w = Array(T + 1).fill(0); w[0] = 1; cs.forEach(c => { for (let s = c; s <= T; s++) w[s] += w[s - c]; }); return w[T]; };
+    return cum([
+      [box("one series per coin: how many of me?", "pennies 1 + x + x² + …, nickels 1 + x⁵ + x¹⁰ + …, dimes 1 + x¹⁰ + …"), "One series per coin type."],
+      [box("pennies × nickels (up to x¹⁰)", polyStr(pn)), `pennies×nickels: coefficients ${pn.join(",")}`],
+      [box("× dimes (up to x¹⁰)", polyStr(pnd) + `<br>coefficient of x¹⁰ = <b>${pnd[10]}</b>`), `× dimes: x^10 coefficient ${pnd[10]}`],
+      [box("the 4 ways, listed (pennies, nickels, dimes)", `<div class="chips">${ways.map(w => chip(`${w[0]}p ${w[1]}n ${w[2]}d`)).join("")}</div>${ok(ways.length === pnd[10])}`), `listed: ${ways.length}`],
+      [box("a dollar, same machine, coin-by-coin table", `1, 5, 10, 25 cents: <b>${dp(100, [1, 5, 10, 25])}</b> ways &nbsp; · &nbsp; with 50-cent coins too: <b>${dp(100, [1, 5, 10, 25, 50])}</b> ways`), `100 cents: ${dp(100, [1, 5, 10, 25])} ways, ${dp(100, [1, 5, 10, 25, 50])} with half-dollars`],
+    ]);
+  }
+  function sbGF(){
+    const g = Array(11).fill(1); const g2 = pmul(g, g).slice(0, 11), g3 = pmul(g2, g).slice(0, 11);
+    return cum([
+      [box("one kid's share", "1 + x + x² + x³ + … = 1/(1 − x): one way to get each number of cookies"), "1/(1−x)."],
+      [box("two kids: 1/(1 − x)²", polyStr(g2)), `1/(1−x)^2: ${g2.join(", ")}`],
+      [box("three kids: 1/(1 − x)³", polyStr(g3)), `1/(1−x)^3: ${g3.join(", ")}`],
+      [box("read off x⁵", `coefficient = <b>${g3[5]}</b> = C(7, 2) = ${C(7, 2)} ${ok(g3[5] === 21)}: the same 21 as stars and bars, found without drawing a bar`), `x^5 coefficient = ${g3[5]}`],
+    ]);
+  }
+
+  makeStepper("panel-counting", [
+    ["§10.6 stars and bars", [["5 cookies, 3 kids → 21", cookies], ["everyone gets one → 6", atLeastOne], ["286, 35, polynomial features", moreSB]]],
+    ["§10.7 inclusion–exclusion & derangements", [["1..100 divisible by 2, 3, 5 → 74", ie100], ["3 hats → 2 derangements", hats3], ["D(4) = 24−24+12−4+1 = 9", D4], ["D(n)/n! → 1/e", eTable]]],
+    ["§10.8 generating functions", [["two dice by multiplying", twoDice], ["Galileo: 9 vs 10 with 3 dice", galileo], ["Sicherman dice", sicherman], ["making change: 10¢ and $1", coins], ["1/(1−x)³ → stars and bars 21", sbGF]]],
+  ]);
+
+  // =====================================================================
+  // RECURRENCES & CATALAN
+  // =====================================================================
+  const phi = (1 + Math.sqrt(5)) / 2, psi = (1 - Math.sqrt(5)) / 2, s5 = Math.sqrt(5);
+  const fibB = n => { let a = 0n, b = 1n; for (let i = 0; i < n; i++) [a, b] = [b, a + b]; return a; };
+  function fibGF(){
+    const c = []; const fr = [{ html: box("F(x) = x / (1 − x − x²)", "long division: each coefficient = (the x in the numerator, only at n = 1) + previous + one before that"), note: "Divide x by 1 − x − x²." }];
+    for (let n = 0; n < 12; n++){ c[n] = (n === 1 ? 1 : 0) + (n >= 1 ? c[n - 1] : 0) + (n >= 2 ? c[n - 2] : 0);
+      fr.push({ html: fr[0].html + box("coefficients so far", `<div class="chips">${c.map((v, i) => chip(`x${sup(i)}: ${v}`, i === n ? "hi" : "")).join("")}</div>`), note: `x^${n}: ${n === 1 ? "1 (numerator)" : ""}${n >= 1 ? (n === 1 ? " + " : "") + c[n - 1] : ""}${n >= 2 ? " + " + c[n - 2] : ""} = ${c[n]}` }); }
+    let sum = 0; let a = 0, b = 1; for (let n = 0; n < 80; n++){ sum += a / Math.pow(10, n); [a, b] = [b, a + b]; }
+    fr.push({ html: fr[fr.length - 1].html + box("put x = 1/10", `formula: 0.1/(1 − 0.1 − 0.01) = 10/89 = <b>${(10 / 89).toFixed(15)}</b><br>adding F₀/10⁰ + F₁/10¹ + F₂/10² + … (80 terms): <b>${sum.toFixed(15)}</b> ${ok(Math.abs(sum - 10 / 89) < 1e-13)}<br>so 1/89 = ${(1 / 89).toFixed(15)}… = 0.01 + 0.001 + 0.0002 + 0.00003 + 0.000005 + …`), note: "Σ F_n/10^n = 10/89" });
+    return fr;
+  }
+  function binet(){
+    const head = box("characteristic equation r² = r + 1", `φ = (1 + √5)/2 = <b>${phi.toFixed(10)}</b>, ψ = (1 − √5)/2 = <b>${psi.toFixed(10)}</b>; matching F₀ = 0, F₁ = 1 gives F(n) = (φⁿ − ψⁿ)/√5`);
+    const ns = [0, 1, 2, 3, 5, 10, 20, 30, 50];
+    const tbl = j => `<table class="t"><tr><th>n</th><th>true Fₙ (whole numbers)</th><th>(φⁿ − ψⁿ)/√5</th><th>ψⁿ/√5 (shrinks)</th><th></th></tr>` + ns.slice(0, j).map((n, i) => { const v = (phi ** n - psi ** n) / s5; const f = fibB(n); return `<tr${i === j - 1 ? ' class="cur"' : ""}><td>${n}</td><td>${f}</td><td>${v.toFixed(6)}</td><td>${(psi ** n / s5).toExponential(3)}</td><td>${BigInt(Math.round(v)) === f ? "✓" : "✗"}</td></tr>`; }).join("") + `</table>`;
+    const fr = ns.map((n, i) => ({ html: head + tbl(i + 1), note: `n = ${n}: F = ${fibB(n)}, formula ${((phi ** n - psi ** n) / s5).toFixed(6)}` }));
+    fr.push({ html: head + tbl(ns.length) + box("neighbours' ratio", `F₃₁/F₃₀ = ${(Number(fibB(31)) / Number(fibB(30))).toFixed(11)} → φ = ${phi.toFixed(11)}`), note: "Ratio → φ." });
+    let first = -1; for (let n = 0; n < 120 && first < 0; n++) if (BigInt(Math.round(phi ** n / s5)) !== fibB(n)) first = n;
+    fr.push({ html: fr[fr.length - 1].html + box("honest warning: floating point", `round(φⁿ/√5) in 64-bit floats first goes wrong at n = <b>${first}</b>: it gives ${BigInt(Math.round(phi ** first / s5))}, but F${first} = ${fibB(first)}. Use whole-number arithmetic for exact big values.`), note: `float formula first fails at n = ${first}` });
+    return fr;
+  }
+  function distinctRoots(){
+    const a = [1, 4]; for (let n = 2; n < 12; n++) a.push(5 * a[n - 1] - 6 * a[n - 2]);
+    const f = n => 2 * 3 ** n - 2 ** n;
+    const tbl = `<table class="t"><tr><th>n</th><th>stepping the rule</th><th>2·3ⁿ − 2ⁿ</th><th></th></tr>` + a.map((v, n) => `<tr><td>${n}</td><td>${v}</td><td>${f(n)}</td><td>${v === f(n) ? "✓" : "✗"}</td></tr>`).join("") + `</table>`;
+    return cum([
+      [box("aₙ = 5aₙ₋₁ − 6aₙ₋₂, a₀ = 1, a₁ = 4", "guess aₙ = rⁿ"), "Guess r^n."],
+      [box("characteristic equation", "r² = 5r − 6 → r² − 5r + 6 = (r − 2)(r − 3) = 0 → r = <b>2</b> or <b>3</b>"), "Roots 2 and 3."],
+      [box("general solution", "aₙ = A·2ⁿ + B·3ⁿ"), "a_n = A·2^n + B·3^n"],
+      [box("match the start", "n = 0: A + B = 1 &nbsp;&nbsp; n = 1: 2A + 3B = 4 → B = <b>2</b>, A = <b>−1</b>"), "A = −1, B = 2"],
+      [box("so", "<b>aₙ = 2·3ⁿ − 2ⁿ</b>") + tbl, `checked n = 0..11: ${a.every((v, n) => v === f(n)) ? "all match" : "mismatch"}`],
+    ]);
+  }
+  function repeatedRoot(){
+    const b = [1, 4]; for (let n = 2; n < 12; n++) b.push(4 * b[n - 1] - 4 * b[n - 2]);
+    const f = n => (n + 1) * 2 ** n;
+    const tbl = `<table class="t"><tr><th>n</th><th>stepping the rule</th><th>(n + 1)·2ⁿ</th><th></th></tr>` + b.map((v, n) => `<tr><td>${n}</td><td>${v}</td><td>${f(n)}</td><td>${v === f(n) ? "✓" : "✗"}</td></tr>`).join("") + `</table>`;
+    return cum([
+      [box("bₙ = 4bₙ₋₁ − 4bₙ₋₂, b₀ = 1, b₁ = 4", "characteristic equation r² − 4r + 4 = (r − 2)² = 0: only one root, <b>2</b>"), "Repeated root 2."],
+      [box("try the old recipe A·2ⁿ + B·2ⁿ", "that's (A + B)·2ⁿ, one unknown really: n = 0 needs A + B = 1, n = 1 needs 2(A + B) = 4 → A + B = 2. <span class='bad'>Contradiction.</span>"), "A·2^n + B·2^n can't fit both starts."],
+      [box("the fix", "for a repeated root r, n·rⁿ is also a solution: bₙ = (A + B·n)·2ⁿ"), "Use (A + Bn)·2^n."],
+      [box("match the start", "n = 0: A = 1 &nbsp;&nbsp; n = 1: 2(A + B) = 4 → B = 1"), "A = 1, B = 1"],
+      [box("so", "<b>bₙ = (n + 1)·2ⁿ</b>") + tbl, `checked n = 0..11: ${b.every((v, n) => v === f(n)) ? "all match" : "mismatch"}`],
+    ]);
+  }
+  function hanoi(){
+    const moves = []; const go = (n, a, b, c) => { if (!n) return; go(n - 1, a, c, b); moves.push([n, a, c]); go(n - 1, b, a, c); }; go(3, 0, 1, 2);
+    const pegs = [[3, 2, 1], [], []];
+    const draw = () => `<div class="chips">${pegs.map((p, i) => chip(`peg ${"ABC"[i]}: ${p.length ? p.join(" ") : "—"}`)).join("")}</div>`;
+    const hh = box("Tower of Hanoi, 3 disks (3 is the biggest)", "T(n) = 2T(n − 1) + 1: move n − 1 out of the way, move the big one, move n − 1 back on top");
+    const fr = [{ html: hh + draw(), note: "Start: all on A." }];
+    moves.forEach((m, i) => { pegs[m[2]].push(pegs[m[1]].pop()); fr.push({ html: hh + draw() + box("", `move ${i + 1}: disk ${m[0]} from ${"ABC"[m[1]]} to ${"ABC"[m[2]]}`), note: `move ${i + 1}: disk ${m[0]} ${"ABC"[m[1]]}→${"ABC"[m[2]]}` }); });
+    const counts = []; for (let n = 1; n <= 10; n++){ let k = 0; const g = (m, a, b, c) => { if (!m) return; g(m - 1, a, c, b); k++; g(m - 1, b, a, c); }; g(n, 0, 1, 2); counts.push(k); }
+    fr.push({ html: box("solve it: particular + general", "a constant c works if c = 2c + 1 → c = −1; add A·2ⁿ; T(0) = 0 → A = 1: <b>T(n) = 2ⁿ − 1</b>") + `<table class="t"><tr><th>disks</th><th>moves the program made</th><th>2ⁿ − 1</th></tr>${counts.map((k, i) => `<tr><td>${i + 1}</td><td>${k}</td><td>${2 ** (i + 1) - 1} ${k === 2 ** (i + 1) - 1 ? "✓" : "✗"}</td></tr>`).join("")}</table>`, note: "T(n) = 2^n − 1, checked for 1..10 disks" });
+    const big = 2n ** 64n - 1n;
+    fr.push({ html: fr[fr.length - 1].html + box("the legend's 64 disks", `2⁶⁴ − 1 = <b>${big.toLocaleString("en-US")}</b> moves ≈ ${(Number(big) / (365.25 * 24 * 3600) / 1e9).toFixed(0)} billion years at one move per second`), note: "64 disks: 18,446,744,073,709,551,615 moves" });
+    return fr;
+  }
+  function companion(){
+    const mm = (A, B) => [[A[0][0] * B[0][0] + A[0][1] * B[1][0], A[0][0] * B[0][1] + A[0][1] * B[1][1]], [A[1][0] * B[0][0] + A[1][1] * B[1][0], A[1][0] * B[0][1] + A[1][1] * B[1][1]]];
+    const M = [[1n, 1n], [1n, 0n]]; let R = [[1n, 0n], [0n, 1n]];
+    const items = [[box("one Fibonacci step is a matrix", "[Fₙ₊₁, Fₙ] = M·[Fₙ, Fₙ₋₁] with M = [[1, 1], [1, 0]], the companion matrix"), "Companion matrix M."],
+      [box("its eigenvalues", `det(M − λI) = (1 − λ)(−λ) − 1 = λ² − λ − 1 = 0, the same as r² = r + 1<br>λ = (1 ± √5)/2 = <b>${phi.toFixed(8)}</b> and <b>${psi.toFixed(8)}</b>; check: trace = ${(phi + psi).toFixed(6)} (= 1), det = ${(phi * psi).toFixed(6)} (= −1)`), "Eigenvalues φ and ψ."]];
+    for (let n = 1; n <= 10; n++){ R = mm(R, M); items.push([box(`M${sup(n)}`, `[[${R[0][0]}, ${R[0][1]}], [${R[1][0]}, ${R[1][1]}]] = [[F${n + 1}, F${n}], [F${n}, F${n - 1}]] ${ok(R[0][1] === fibB(n))}`), `M^${n} = [[${R[0][0]},${R[0][1]}],[${R[1][0]},${R[1][1]}]]`]); }
+    let A = M, Q = [[1n, 0n], [0n, 1n]], e = 100, k = 0; const steps = [];
+    while (e){ if (e & 1){ Q = mm(Q, A); k++; steps.push("multiply"); } e >>= 1; if (e){ A = mm(A, A); k++; steps.push("square"); } }
+    items.push([box("fast: M¹⁰⁰ by repeated squaring (100 = 64 + 32 + 4)", `${k} matrix multiplications (${steps.join(", ")})<br>F₁₀₀ = <b>${Q[0][1]}</b> ${ok(Q[0][1] === fibB(100))} against 99 plain additions`), `F100 = ${Q[0][1]} in ${k} multiplications`]);
+    const base = items[0][0] + items[1][0], L = items.length;
+    return items.map((it, i) => ({ html: i < 2 ? items.slice(0, i + 1).map(q => q[0]).join("") : base + (i === L - 1 ? items[L - 2][0] : "") + it[0], note: it[1] }));
+  }
+  function mergeSort(){
+    const T = n => n === 1 ? 1 : 2 * T(n / 2) + n;
+    const b = [1, 4]; for (let n = 2; n < 8; n++) b.push(4 * b[n - 1] - 4 * b[n - 2]);
+    const rows = []; for (let m = 0; m < 8; m++) rows.push([m, 2 ** m, T(2 ** m), (m + 1) * 2 ** m, b[m]]);
+    const tbl = j => `<table class="t"><tr><th>m</th><th>n = 2ᵐ</th><th>T(n) = 2T(n/2) + n</th><th>(m + 1)·2ᵐ = n·log₂n + n</th><th>bₘ from the repeated-root example</th></tr>` + rows.slice(0, j).map((r, i) => `<tr${i === j - 1 ? ' class="cur"' : ""}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]} ${r[2] === r[3] ? "✓" : "✗"}</td><td>${r[4]} ${r[4] === r[2] ? "✓" : "✗"}</td></tr>`).join("") + `</table>`;
+    const head = box("merge sort: T(n) = 2T(n/2) + n, T(1) = 1", "write n = 2ᵐ, S(m) = T(2ᵐ): S(m) = 2S(m − 1) + 2ᵐ. The extra 2ᵐ grows at the same rate as the root 2, which is the repeated-root case.");
+    const fr = rows.map((r, i) => ({ html: head + tbl(i + 1), note: `n = ${r[1]}: T = ${r[2]}, (m+1)2^m = ${r[3]}` }));
+    fr.push({ html: head + tbl(8) + box("so", "S(m) = (m + 1)·2ᵐ, i.e. <b>T(n) = n·log₂n + n</b>: the Master Theorem's balanced case is a repeated root"), note: "T(n) = n log2 n + n" });
+    return fr;
+  }
+  // ---- Catalan helpers ----
+  const allStrings = (n, a, b) => { const out = []; for (const t of tuples(2 * n, 0, 1)) { if (t.filter(x => x === 0).length === n) out.push(t.map(x => x ? b : a).join("")); } return out; };
+  const isGood = (s, up) => { let d = 0; for (const ch of s){ d += ch === up ? -1 : 1; if (d < 0) return false; } return d === 0; };
+  function parens3(){
+    const ss = allStrings(3, "(", ")"); const fr = [{ html: box("all strings with three ( and three )", `C(6, 3) = ${C(6, 3)} of them; keep the ones that never close more than they've opened`), note: "20 candidate strings." }];
+    for (let k = 4; k <= ss.length; k += 4) fr.push({ html: fr[0].html + `<div class="chips">${ss.slice(0, k).map(s => chip(s, isGood(s, ")") ? "ok" : "no")).join("")}</div>`, note: ss.slice(k - 4, k).map(s => s + (isGood(s, ")") ? " ✓" : " ✗")).join("  ") });
+    const good = ss.filter(s => isGood(s, ")"));
+    fr.push({ html: fr[fr.length - 1].html + box("balanced", `<div class="chips">${good.map(s => chip(s, "ok")).join("")}</div><b>${good.length}</b> = C(6,3)/(3+1) = 20/4 = 5 ${ok(good.length === 5)}`), note: `balanced: ${good.join(" ")}` });
+    return fr;
+  }
+  function treesOf(n){ if (n === 0) return [null]; const out = []; for (let i = 0; i < n; i++) treesOf(i).forEach(L => treesOf(n - 1 - i).forEach(R => out.push([L, R]))); return out; }
+  const treeParen = t => t === null ? "" : "(" + treeParen(t[0]) + ")" + treeParen(t[1]);
+  function treeSvg(t){
+    const nodes = []; let x = 0; const lay = (u, d) => { if (!u) return null; const l = lay(u[0], d + 1); const me = { x: x++, d }; nodes.push(me); const r = lay(u[1], d + 1); me.l = l; me.r = r; return me; }; lay(t, 0);
+    const W = 26, H = 26, w = Math.max(1, nodes.length) * W + 10, h = (Math.max(...nodes.map(q => q.d)) + 1) * H + 10;
+    const cx = q => 5 + q.x * W + W / 2, cy = q => 5 + q.d * H + H / 2;
+    let s = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+    nodes.forEach(q => [q.l, q.r].forEach(c => { if (c) s += `<line x1="${cx(q)}" y1="${cy(q)}" x2="${cx(c)}" y2="${cy(c)}" stroke="#5B6572" stroke-width="1.5"/>`; }));
+    nodes.forEach(q => { s += `<circle cx="${cx(q)}" cy="${cy(q)}" r="7" fill="#463A73"/>`; });
+    return s + "</svg>";
+  }
+  function trees3(){
+    const ts = treesOf(3); const head = box("binary trees with 3 nodes", "each node has an optional left child and an optional right child; encode a tree as ( left ) right");
+    const fr = ts.map((t, k) => ({ html: head + `<div class="minis">${ts.slice(0, k + 1).map(u => `<div class="mini ok">${treeSvg(u)}<br>${treeParen(u)}</div>`).join("")}</div>`, note: `tree ${k + 1}: ${treeParen(t)}` }));
+    const counts = [0, 1, 2, 3, 4, 5, 6, 7].map(n => treesOf(n).length);
+    fr.push({ html: fr[fr.length - 1].html + box("count", `<b>${ts.length}</b> shapes, and their codes are exactly the 5 balanced strings. Shapes for n = 0..7 (built by recursion): ${counts.join(", ")}`), note: `tree counts n=0..7: ${counts.join(", ")}` });
+    return fr;
+  }
+  function pathSvg(s, n, opt){
+    opt = opt || {}; const u = opt.cell || 14, pad = 6, W = n * u + 2 * pad, Hh = (n + (opt.extra || 0)) * u + 2 * pad, N = n + (opt.extra || 0);
+    const X = i => pad + i * u, Y = j => Hh - pad - j * u;
+    let g = `<svg width="${W}" height="${Hh}" viewBox="0 0 ${W} ${Hh}">`;
+    for (let i = 0; i <= n; i++) g += `<line x1="${X(i)}" y1="${Y(0)}" x2="${X(i)}" y2="${Y(N)}" stroke="#E2E6E4"/>`;
+    for (let j = 0; j <= N; j++) g += `<line x1="${X(0)}" y1="${Y(j)}" x2="${X(n)}" y2="${Y(j)}" stroke="#E2E6E4"/>`;
+    g += `<line x1="${X(0)}" y1="${Y(0)}" x2="${X(n)}" y2="${Y(n)}" stroke="#9AA3A0" stroke-dasharray="3 2"/>`;
+    if (opt.line) g += `<line x1="${X(0)}" y1="${Y(1)}" x2="${X(Math.min(n, N - 1))}" y2="${Y(Math.min(n, N - 1) + 1)}" stroke="#C2413B" stroke-dasharray="4 2"/>`;
+    const draw = (str, col, from) => { let x = 0, y = 0, pts = [[x, y]]; for (const ch of str){ if (ch === "R") x++; else y++; pts.push([x, y]); }
+      g += `<polyline points="${pts.map(p => X(p[0]) + "," + Y(p[1])).join(" ")}" fill="none" stroke="${col}" stroke-width="2.4"/>`; return pts; };
+    draw(s, opt.col || (isGood(s, "U") ? "#1E8A5A" : "#C2413B"));
+    if (opt.second) draw(opt.second, "#463A73");
+    return g + "</svg>";
+  }
+  function paths3(){
+    const ps = allStrings(3, "R", "U"); const head = box("3-by-3 grid: right (R) or up (U), never above the dashed diagonal", `C(6, 3) = ${C(6, 3)} shortest paths in all; green = stays on or below, red = goes above`);
+    const fr = []; for (let k = 2; k <= ps.length; k += 2) fr.push({ html: head + `<div class="minis">${ps.slice(0, k).map(s => `<div class="mini ${isGood(s, "U") ? "ok" : "no"}">${pathSvg(s, 3)}<br>${s}</div>`).join("")}</div>`, note: ps.slice(k - 2, k).map(s => s + (isGood(s, "U") ? " good" : " bad")).join(", ") });
+    const g = ps.filter(s => isGood(s, "U")).length;
+    fr.push({ html: fr[fr.length - 1].html + box("count", `good <b>${g}</b>, bad <b>${ps.length - g}</b> = C(6, 4) = ${C(6, 4)}; so C₃ = 20 − 15 = <b>5</b> ${ok(g === 5 && ps.length - g === C(6, 4))}. Read R as ( and U as ): the good paths are the 5 balanced strings.`), note: `good ${g}, bad ${ps.length - g}` });
+    return fr;
+  }
+  function reflectOne(){
+    const bad = "RUURRU"; let d = 0, at = -1; for (let i = 0; i < bad.length; i++){ d += bad[i] === "R" ? 1 : -1; if (d < 0){ at = i; break; } }
+    const refl = bad.slice(0, at + 1) + bad.slice(at + 1).split("").map(c => c === "R" ? "U" : "R").join("");
+    const big = s => pathSvg(s, 3, { cell: 34, extra: 1, line: true });
+    return cum([
+      [box("a bad path for n = 3", `${bad}: <span class="bad">goes above the diagonal</span>`) + `<div class="minis"><div class="mini no">${big(bad)}<br>${bad}</div></div>`, `bad path ${bad}`],
+      [box("find the first step above the diagonal", `after step ${at + 1} (${bad.slice(0, at + 1)}) it touches the red line one above the diagonal`), `first touch after step ${at + 1}`],
+      [box("reflect everything after that: swap R ↔ U", `${bad.slice(0, at + 1)} | ${bad.slice(at + 1)} → ${bad.slice(0, at + 1)} | ${refl.slice(at + 1)}`) + `<div class="minis"><div class="mini">${pathSvg(bad, 3, { cell: 34, extra: 1, line: true, second: refl })}<br>red: ${bad} · purple: ${refl}</div></div>`, `reflected: ${refl}`],
+      [box("where it ends now", `${refl} has <b>${refl.split("U").length - 1}</b> ups and <b>${refl.split("R").length - 1}</b> rights: it ends one row above the corner. Every path with 4 ups crosses the red line, so reflecting back undoes it: bad paths ↔ all paths with n + 1 ups, C(6, 4) = ${C(6, 4)}`), "bad paths ↔ paths with n+1 ups"],
+    ]);
+  }
+  function n4(){
+    const ps = allStrings(4, "R", "U"); const good = ps.filter(s => isGood(s, "U"));
+    const reflect = s => { let d = 0; for (let i = 0; i < s.length; i++){ d += s[i] === "R" ? 1 : -1; if (d < 0) return s.slice(0, i + 1) + s.slice(i + 1).split("").map(c => c === "R" ? "U" : "R").join(""); } return null; };
+    const bads = ps.filter(s => !isGood(s, "U")), imgs = new Set(bads.map(reflect));
+    return cum([
+      [box("n = 4: all paths", `C(8, 4) = <b>${C(8, 4)}</b> (enumerated: ${ps.length})`), `all paths ${ps.length}`],
+      [box("bad paths, reflected", `${bads.length} bad paths → ${imgs.size} different reflected paths, all with 5 ups: ${[...imgs].every(s => s.split("U").length - 1 === 5) ? "yes" : "no"}; C(8, 5) = <b>${C(8, 5)}</b> ${ok(bads.length === C(8, 5) && imgs.size === bads.length)}`), `bad ${bads.length} → ${imgs.size} distinct images`],
+      [box("so", `C₄ = C(8, 4) − C(8, 5) = 70 − 56 = <b>${C(8, 4) - C(8, 5)}</b> = C(8, 4)/5 = ${C(8, 4) / 5}; good paths enumerated: <b>${good.length}</b> ${ok(good.length === 14)}`), `C4 = 14`],
+    ]);
+  }
+  function catTable(){
+    const cat = [1n]; for (let n = 0; n < 11; n++){ let s = 0n; for (let i = 0; i <= n; i++) s += cat[i] * cat[n - i]; cat.push(s); }
+    const bal = n => allStrings(n, "(", ")").filter(s => isGood(s, ")")).length;
+    const rows = []; for (let n = 0; n <= 10; n++) rows.push([n, CB(2 * n, n) / BigInt(n + 1), CB(2 * n, n) - CB(2 * n, n + 1), cat[n], n <= 7 ? bal(n) : "—", n <= 7 ? treesOf(n).length : "—"]);
+    const tbl = j => `<table class="t"><tr><th>n</th><th>C(2n,n)/(n+1)</th><th>C(2n,n) − C(2n,n+1)</th><th>recurrence Σ CᵢCₙ₋₁₋ᵢ</th><th>balanced strings</th><th>binary trees</th></tr>` + rows.slice(0, j).map((r, i) => `<tr${i === j - 1 ? ' class="cur"' : ""}><td>${r.join("</td><td>")}</td></tr>`).join("") + `</table>`;
+    const fr = rows.map((r, i) => ({ html: box("four independent ways to get the Catalan numbers", "brute-force columns enumerate every string and every tree") + tbl(i + 1), note: `n = ${r[0]}: ${r[1]}` }));
+    let gx = 0; const x = 0.1; for (let n = 0; n < 60; n++) gx += Number(CB(2 * n, n) / BigInt(n + 1)) * x ** n;
+    fr.push({ html: fr[fr.length - 1].html + box("generating function C(x) = (1 − √(1 − 4x))/(2x) at x = 0.1", `first 60 terms: <b>${gx.toFixed(10)}</b> &nbsp; formula: <b>${((1 - Math.sqrt(1 - 4 * x)) / (2 * x)).toFixed(10)}</b>`), note: "C(0.1) = 1.1270166538" });
+    return fr;
+  }
+  function matrixChain(){
+    const par = k => { if (k.length === 1) return [k]; const out = []; for (let i = 1; i < k.length; i++) par(k.slice(0, i)).forEach(L => par(k.slice(i)).forEach(R => out.push("(" + L + R + ")"))); return out; };
+    const p4 = par("ABCD").map(s => s.slice(1, -1)), p5 = par("ABCDE");
+    return cum([
+      [box("ways to multiply four matrices ABCD", "split into (first part)(second part), then split each part again"), "Parenthesize ABCD."],
+      [box("the orders", `<div class="chips">${p4.map(s => chip(s, "ok")).join("")}</div><b>${p4.length}</b> = C₃`), p4.join("  ")],
+      [box("five matrices", `<b>${p5.length}</b> = C₄; this is how many parse trees E → E * E gives a * b * c * d * e, and the search space the matrix-chain DP chooses from`), `5 matrices: ${p5.length}`],
+    ]);
+  }
+
+  makeStepper("panel-recur", [
+    ["§10.8–10.9 Fibonacci", [["generating function x/(1−x−x²)", fibGF], ["Binet's formula (and the n = 71 float failure)", binet]]],
+    ["§10.9 solving recurrences", [["distinct roots: 2·3ⁿ − 2ⁿ", distinctRoots], ["repeated root: (n+1)·2ⁿ", repeatedRoot], ["Tower of Hanoi: 2ⁿ − 1", hanoi], ["companion matrix & F₁₀₀", companion], ["merge sort T(n) = 2T(n/2) + n", mergeSort]]],
+    ["§10.10 Catalan numbers", [["3 pairs of parentheses → 5", parens3], ["binary trees with 3 nodes → 5", trees3], ["20 grid paths → 5 good, 15 bad", paths3], ["reflect one bad path", reflectOne], ["n = 4: 70 − 56 = 14", n4], ["four ways to compute Cₙ", catTable], ["multiplying 4 matrices → 5 orders", matrixChain]]],
+  ]);
+})();
+</script>
+<script>
+/* ================= OPEN SETS + HOMOLOGY (presets for 09-topology.md §12.4–12.5) ================= */
+(function(){
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const TP = {}; window.__TP = TP; const PI = Math.PI;
+  const fx = (x, d) => { const m = 10 ** d, r = Math.round(x * m) / m; return (Object.is(r, -0) ? 0 : r).toFixed(d); };
+  function el(tag, attrs, parent){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+  function txt(parent, x, y, s, attrs){ const t = el("text", Object.assign({ x, y, "font-size": 12, fill: "var(--ink)" }, attrs || {}), parent); t.textContent = s; return t; }
+  function view(xmin, xmax, ymin, ymax, W, H, pad){ return { sx: x => pad + (x - xmin) / (xmax - xmin) * (W - 2*pad), sy: y => H - pad - (y - ymin) / (ymax - ymin) * (H - 2*pad), xmin, xmax, ymin, ymax }; }
+  function makePlayer(sel){
+    const root = document.querySelector(sel);
+    root.innerHTML = `<button class="op" data-x="step">Step ▸</button><button class="op" data-x="play">▶ Play</button><button class="op" data-x="end">Jump to end ⏭</button><button class="op" data-x="reset">↺ Reset</button><span class="tp-count"></span>`;
+    const pb = root.querySelector('[data-x="play"]'), cnt = root.querySelector(".tp-count");
+    const P = { spec: null, i: 0, t: null };
+    P.draw = () => { P.spec.draw(P.i); cnt.textContent = P.spec.n > 1 ? `step ${P.i + 1} of ${P.spec.n}` : "single view"; };
+    P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+    P.play = () => { if (P.t){ P.stop(); return; } if (P.i >= P.spec.n - 1){ P.i = 0; P.draw(); }
+      const tick = () => { if (P.i >= P.spec.n - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, P.spec.ms || 900); };
+      P.t = setTimeout(tick, P.spec.ms || 900); pb.textContent = "❚❚ Pause"; };
+    P.load = (spec, auto) => { P.stop(); P.spec = spec; P.i = 0; P.draw(); if (auto && spec.n > 1) P.play(); };
+    root.addEventListener("click", e => { const a = e.target.dataset && e.target.dataset.x; if (!a || !P.spec) return;
+      if (a === "play") return P.play(); P.stop();
+      if (a === "step" && P.i < P.spec.n - 1) P.i++; if (a === "end") P.i = P.spec.n - 1; if (a === "reset") P.i = 0; P.draw(); });
+    return P;
+  }
+  function presets(sel, defs, onPick, initial){
+    const bar = document.querySelector(sel), btns = [];
+    defs.forEach((d, i) => { const b = document.createElement("button"); b.className = "op"; b.textContent = d.t;
+      b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); onPick(d, true); }); bar.appendChild(b); btns.push(b); });
+    btns[initial].classList.add("active"); onPick(defs[initial], false);
+  }
+
+  /* ---------------- OPEN SETS ---------------- */
+  const os = document.getElementById("osSvg"), osInfo = document.getElementById("osInfo"), osCap = document.getElementById("osCaption");
+  const OP = makePlayer("#osCtrl");
+  function numberLine(lo, hi){
+    os.innerHTML = ""; const v = view(lo, hi, 0, 1, 460, 300, 30);
+    el("line", { x1: v.sx(lo), y1: 170, x2: v.sx(hi), y2: 170, stroke: "#9AA3AD", "stroke-width": 1.5 }, os);
+    return v;
+  }
+  const tick = (v, x, lab) => { el("line", { x1: v.sx(x), y1: 164, x2: v.sx(x), y2: 176, stroke: "#9AA3AD" }, os); txt(os, v.sx(x) - lab.length*3.6, 194, lab, { "font-size": 11, fill: "var(--ink-soft)" }); };
+  const seg = (v, a, b, y, col, w) => el("line", { x1: v.sx(a), y1: y, x2: v.sx(b), y2: y, stroke: col, "stroke-width": w || 6, "stroke-linecap": "butt", opacity: 0.85 }, os);
+  const endDot = (v, x, y, filled, col) => el("circle", { cx: v.sx(x), cy: y, r: 6, fill: filled ? col : "#fff", stroke: col, "stroke-width": 2 }, os);
+  function openInterval(){
+    const xs = [0.5, 0.25, 0.1, 0.05, 0.01, 0.001, 0.999];
+    return { n: xs.length + 1, ms: 1000, draw: k => {
+      const v = numberLine(-0.25, 1.25); tick(v, 0, "0"); tick(v, 1, "1");
+      seg(v, 0, 1, 170, "var(--c1)"); endDot(v, 0, 170, false, "var(--c1)"); endDot(v, 1, 170, false, "var(--c1)");
+      txt(os, 20, 30, "(0, 1): all numbers strictly between 0 and 1", { "font-size": 12 });
+      if (k < xs.length){
+        const x = xs[k], w = Math.min(x, 1 - x);
+        const wPix = Math.max(v.sx(x + w) - v.sx(x), 1.5);
+        el("rect", { x: v.sx(x) - wPix, y: 130, width: 2*wPix, height: 20, fill: "rgba(217,166,46,0.35)", stroke: "var(--c2)" }, os);
+        el("circle", { cx: v.sx(x), cy: 170, r: 5, fill: "var(--c3)" }, os);
+        txt(os, Math.min(v.sx(x) + 8, 330), 124, `x = ${x}`, { fill: "var(--c3)" });
+        osInfo.innerHTML = `<span class="k">point</span>x = <b>${x}</b><span class="k">wiggle room min(x, 1 − x)</span><b>${w}</b><span class="k">(x − w, x + w) inside (0, 1)?</span><span class="tp-ok">yes</span>`;
+        osCap.innerHTML = k < 5 ? "The gold box is how far this point can wiggle and stay inside. Moving towards an edge shrinks it…" : "…but it never reaches zero, because the edges 0 and 1 themselves aren't in the set.";
+      } else {
+        osInfo.innerHTML = xs.map(x => `x = ${x}: wiggle ${Math.min(x, 1 - x)}`).join("<br>") + `<span class="k">smallest wiggle room found</span><b>${Math.min(...xs.map(x => Math.min(x, 1 - x)))}</b> &gt; 0`;
+        osCap.innerHTML = "Every point of (0, 1) has some wiggle room, however small. That is exactly what <b>open</b> means.";
+      }
+    } };
+  }
+  function closedInterval(){
+    const steps = [[0.5, null], [0.1, null], [0, 0.1], [0, 0.01], [0, 0.001]];
+    return { n: steps.length + 1, ms: 1000, draw: k => {
+      const v = numberLine(-0.25, 1.25); tick(v, 0, "0"); tick(v, 1, "1");
+      seg(v, 0, 1, 170, "var(--c1)"); endDot(v, 0, 170, true, "var(--c1)"); endDot(v, 1, 170, true, "var(--c1)");
+      txt(os, 20, 30, "[0, 1]: includes the endpoints 0 and 1", { "font-size": 12 });
+      const [x, d] = steps[Math.min(k, steps.length - 1)];
+      if (d === null){
+        const w = Math.min(x, 1 - x), wPix = v.sx(x + w) - v.sx(x);
+        el("rect", { x: v.sx(x) - wPix, y: 130, width: 2*wPix, height: 20, fill: "rgba(217,166,46,0.35)", stroke: "var(--c2)" }, os);
+        el("circle", { cx: v.sx(x), cy: 170, r: 5, fill: "var(--c3)" }, os);
+        osInfo.innerHTML = `<span class="k">point</span>x = <b>${x}</b><span class="k">wiggle room</span><b>${w}</b> <span class="tp-ok">fine</span>`;
+        osCap.innerHTML = "Points in the middle are fine…";
+      } else {
+        const dPix = Math.max(v.sx(d) - v.sx(0), 2);
+        el("rect", { x: v.sx(0) - dPix, y: 130, width: 2*dPix, height: 20, fill: "rgba(194,65,59,0.2)", stroke: "var(--tp-red, #C2413B)" }, os);
+        el("circle", { cx: v.sx(0), cy: 170, r: 5, fill: "var(--c3)" }, os);
+        el("circle", { cx: v.sx(-d/2), cy: 140, r: 4, fill: "#C2413B" }, os);
+        txt(os, v.sx(0) + 10, 118, `try wiggle δ = ${d}: −δ/2 = ${-d/2} is outside`, { fill: "#C2413B", "font-size": 11 });
+        osInfo.innerHTML = `<span class="k">point</span>x = <b>0</b><span class="k">wiggle δ = ${d}</span>the point ${-d/2} is within δ of 0 but <span class="tp-bad">not in [0, 1]</span>`;
+        osCap.innerHTML = k < steps.length ? "At the endpoint 0, every wiggle to the left, however small, leaves the set." : "";
+      }
+      if (k === steps.length){ osInfo.innerHTML += `<span class="k">verdict</span><span class="tp-bad">[0, 1] is not open</span>: the point 0 has zero wiggle room.`;
+        osCap.innerHTML = "One point with no wiggle room is enough to make a set not open. [0, 1] is <b>closed</b> (its outside, (−∞, 0) ∪ (1, ∞), is open), which is a different property, not the opposite one."; }
+    } };
+  }
+  function preimageSquare(){
+    let lo1 = Infinity, hi1 = -Infinity, lo2 = Infinity, hi2 = -Infinity;
+    for (let i = 0; i <= 600000; i++){ const x = -3 + 6 * i / 600000, y = x*x; if (y > 1 && y < 4){ if (x < 0){ lo1 = Math.min(lo1, x); hi1 = Math.max(hi1, x); } else { lo2 = Math.min(lo2, x); hi2 = Math.max(hi2, x); } } }
+    TP.preimage = [lo1, hi1, lo2, hi2];
+    return { n: 4, ms: 1300, draw: k => {
+      os.innerHTML = ""; const v = view(-3, 3, -0.6, 6, 460, 300, 26);
+      el("line", { x1: v.sx(-3), y1: v.sy(0), x2: v.sx(3), y2: v.sy(0), stroke: "#9AA3AD" }, os); el("line", { x1: v.sx(0), y1: v.sy(-0.6), x2: v.sx(0), y2: v.sy(6), stroke: "#9AA3AD" }, os);
+      let d = ""; for (let i = 0; i <= 200; i++){ const x = -2.45 + 4.9*i/200; d += (i ? "L" : "M") + v.sx(x).toFixed(1) + "," + v.sy(x*x).toFixed(1); }
+      el("path", { d, fill: "none", stroke: "var(--c3)", "stroke-width": 2.5 }, os);
+      txt(os, v.sx(1.9), v.sy(5.2), "y = x²", { fill: "var(--c3)" });
+      if (k >= 1){ el("rect", { x: v.sx(-3), y: v.sy(4), width: v.sx(3) - v.sx(-3), height: v.sy(1) - v.sy(4), fill: "rgba(217,166,46,0.18)" }, os);
+        el("line", { x1: v.sx(0), y1: v.sy(1), x2: v.sx(0), y2: v.sy(4), stroke: "var(--c2)", "stroke-width": 6 }, os); txt(os, v.sx(0) + 8, v.sy(2.5), "target (1, 4)", { fill: "#8a6a10", "font-size": 11 }); }
+      if (k >= 2){ [[lo1, hi1], [lo2, hi2]].forEach(([a, b]) => { el("line", { x1: v.sx(a), y1: v.sy(0), x2: v.sx(b), y2: v.sy(0), stroke: "var(--c1)", "stroke-width": 7 }, os);
+        [a, b].forEach(e => el("circle", { cx: v.sx(Math.round(e)), cy: v.sy(0), r: 5, fill: "#fff", stroke: "var(--c1)", "stroke-width": 2 }, os)); }); }
+      const lines = [`<span class="k">f(x) = x², open target (1, 4)</span>`];
+      if (k >= 2) lines.push(`<span class="k">inputs that land in the target (600,001 samples on [−3, 3])</span>from ${fx(lo1, 5)} to ${fx(hi1, 5)}<br>and from ${fx(lo2, 5)} to ${fx(hi2, 5)}<span class="k">so the preimage is</span><b>(−2, −1) ∪ (1, 2)</b>`);
+      if (k >= 3) lines.push(`<span class="k">open?</span><span class="tp-ok">yes</span>: two open intervals, endpoints excluded`);
+      osInfo.innerHTML = lines.join("");
+      osCap.innerHTML = ["The graph of x².", "Pick an open target on the output axis: (1, 4).", "Collect every input whose output lands in the target: two pieces, each without its endpoints.", "The preimage of an open set is open, as continuity requires. Inputs near ±1 or ±2 have small but real wiggle room."][k];
+    } };
+  }
+  function preimageStep(){
+    return { n: 5, ms: 1300, draw: k => {
+      os.innerHTML = ""; const v = view(-3, 3, -0.6, 1.9, 460, 300, 26);
+      el("line", { x1: v.sx(-3), y1: v.sy(0), x2: v.sx(3), y2: v.sy(0), stroke: "#9AA3AD" }, os); el("line", { x1: v.sx(0), y1: v.sy(-0.6), x2: v.sx(0), y2: v.sy(1.9), stroke: "#9AA3AD" }, os);
+      el("line", { x1: v.sx(-3), y1: v.sy(0), x2: v.sx(0), y2: v.sy(0), stroke: "var(--c3)", "stroke-width": 3 }, os);
+      el("line", { x1: v.sx(0), y1: v.sy(1), x2: v.sx(3), y2: v.sy(1), stroke: "var(--c3)", "stroke-width": 3 }, os);
+      el("circle", { cx: v.sx(0), cy: v.sy(0), r: 5, fill: "#fff", stroke: "var(--c3)", "stroke-width": 2 }, os);
+      el("circle", { cx: v.sx(0), cy: v.sy(1), r: 5, fill: "var(--c3)" }, os);
+      txt(os, v.sx(1.2), v.sy(1) - 10, "f = 1 for x ≥ 0", { fill: "var(--c3)", "font-size": 11 }); txt(os, v.sx(-2.8), v.sy(0) - 10, "f = 0 for x < 0", { fill: "var(--c3)", "font-size": 11 });
+      if (k >= 1){ el("rect", { x: v.sx(-3), y: v.sy(1.5), width: v.sx(3) - v.sx(-3), height: v.sy(0.5) - v.sy(1.5), fill: "rgba(217,166,46,0.18)" }, os); txt(os, v.sx(-2.9), v.sy(1.35), "target (0.5, 1.5)", { fill: "#8a6a10", "font-size": 11 }); }
+      if (k >= 2){ el("line", { x1: v.sx(0), y1: v.sy(0) + 14, x2: v.sx(3), y2: v.sy(0) + 14, stroke: "var(--c1)", "stroke-width": 7 }, os); el("circle", { cx: v.sx(0), cy: v.sy(0) + 14, r: 5, fill: "var(--c1)" }, os); }
+      if (k >= 3){ const d = 0.4; el("rect", { x: v.sx(-d), y: v.sy(0) + 26, width: v.sx(d) - v.sx(-d), height: 14, fill: "rgba(194,65,59,0.2)", stroke: "#C2413B" }, os);
+        el("circle", { cx: v.sx(-d/2), cy: v.sy(0) + 33, r: 4, fill: "#C2413B" }, os); txt(os, v.sx(-d) - 150, v.sy(0) + 56, `x = −δ/2 gives f = 0, outside the target`, { fill: "#C2413B", "font-size": 11 }); }
+      const lines = [`<span class="k">step function, open target (0.5, 1.5)</span>`];
+      if (k >= 2) lines.push(`<span class="k">inputs landing in the target</span><b>[0, ∞)</b>: includes 0, nothing to its left`);
+      if (k >= 3) lines.push(`<span class="k">wiggle room at 0</span>for every δ &gt; 0, the input −δ/2 has f(−δ/2) = 0 ∉ (0.5, 1.5)`);
+      if (k >= 4) lines.push(`<span class="k">verdict</span><span class="tp-bad">preimage not open → f is not continuous at 0</span>`);
+      osInfo.innerHTML = lines.join("");
+      osCap.innerHTML = ["The step function jumps from 0 to 1 at x = 0.", "An open target around the value 1.", "The inputs that hit it: [0, ∞). The point 0 is included.", "But 0 has no wiggle room in that set: an arbitrarily small nudge left drops the output all the way to 0.", "That missing wiggle room is the tear. Open sets made \"tearing\" checkable without measuring any distances."][k];
+    } };
+  }
+  function shrinking(){
+    const ns = [1, 2, 3, 4, 5, 10, 100, 1000];
+    return { n: ns.length + 1, ms: 900, draw: k => {
+      const v = numberLine(-1.2, 1.2); tick(v, -1, "−1"); tick(v, 0, "0"); tick(v, 1, "1");
+      ns.slice(0, Math.min(k + 1, ns.length)).forEach((n, i) => { const y = 150 - i * 13; seg(v, -1/n, 1/n, y, `rgba(15,139,141,${0.35 + 0.08*i})`, 7);
+        el("circle", { cx: v.sx(-1/n), cy: y, r: 3.5, fill: "#fff", stroke: "var(--c1)" }, os); el("circle", { cx: v.sx(1/n), cy: y, r: 3.5, fill: "#fff", stroke: "var(--c1)" }, os); });
+      if (k < ns.length){ const n = ns[k];
+        osInfo.innerHTML = `<span class="k">interval n = ${n}</span>(−1/${n}, 1/${n}) = (${fx(-1/n, 4)}, ${fx(1/n, 4)}): open<span class="k">shared by all so far</span>(−1/${n}, 1/${n}): still open`;
+        osCap.innerHTML = "Each interval is open, and any finite number of them share an open interval (the smallest one)."; }
+      else { el("circle", { cx: v.sx(0), cy: 170, r: 7, fill: "#C2413B" }, os);
+        osInfo.innerHTML = `<span class="k">shared by every n = 1, 2, 3, …</span><b>{0}</b> only<span class="k">open?</span><span class="tp-bad">no</span>: 0 has no wiggle room inside {0}`;
+        osCap.innerHTML = "Infinitely many intersections squeezed the wiggle room to nothing. That's why the rules only promise that <b>finite</b> intersections of open sets are open; unions of any number are fine."; }
+    } };
+  }
+  function checker(){
+    const X = ["a", "b", "c"], key = s => s.slice().sort().join("");
+    const subsetsAll = []; for (let m = 0; m < 8; m++) subsetsAll.push(X.filter((_, i) => m >> i & 1));
+    function check(T){
+      const keys = new Set(T.map(key));
+      if (!keys.has("") || !keys.has("abc")) return { ok: false, why: "∅ or X missing" };
+      for (const A of T) for (const B of T){
+        const U = [...new Set(A.concat(B))]; if (!keys.has(key(U))) return { ok: false, why: `union {${key(U).split("").join(", ")}} missing`, miss: U };
+        const I = A.filter(x => B.includes(x)); if (!keys.has(key(I))) return { ok: false, why: `intersection {${key(I).split("").join(", ")}} missing`, miss: I };
+      }
+      return { ok: true };
+    }
+    function count(n){
+      const Y = [...Array(n).keys()], subs = []; for (let m = 0; m < 2 ** n; m++) subs.push(m);
+      const full = 2 ** n - 1, others = subs.filter(m => m !== 0 && m !== full); let c = 0;
+      for (let pick = 0; pick < 2 ** others.length; pick++){
+        const T = new Set([0, full]); others.forEach((m, i) => { if (pick >> i & 1) T.add(m); });
+        let ok = true; for (const a of T){ for (const b of T){ if (!T.has(a | b) || !T.has(a & b)){ ok = false; break; } } if (!ok) break; }
+        if (ok) c++;
+      }
+      return c;
+    }
+    const cases = [
+      [[], ["a"], ["a", "b"], ["a", "b", "c"]],
+      [[], ["a"], ["b"], ["a", "b", "c"]],
+      [[], ["a", "b"], ["b", "c"], ["a", "b", "c"]],
+      [[], ["a", "b", "c"]],
+      subsetsAll,
+    ];
+    const results = cases.map(check), counts = [1, 2, 3].map(count);
+    TP.checker = results.map(r => r.ok); TP.counts = counts;
+    const chip = s => `<span class="tp-chip">${s.length ? "{" + s.join(", ") + "}" : "∅"}</span>`;
+    return { n: cases.length + 1, ms: 1500, draw: k => {
+      os.innerHTML = "";
+      txt(os, 20, 30, "X = {a, b, c}: is this collection of 'open sets' a topology?", { "font-size": 12 });
+      const pos = { a: [150, 170], b: [230, 120], c: [310, 170] };
+      if (k < cases.length){
+        const T = cases[k], r = results[k];
+        T.filter(s => s.length && s.length < 3).forEach((s, i) => {
+          const pts = s.map(x => pos[x]), cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+          el("ellipse", { cx, cy, rx: 34 + 42 * (s.length - 1), ry: 34 + 6*i, fill: "rgba(15,139,141,0.10)", stroke: "var(--c1)", "stroke-width": 1.5, transform: s.length === 2 ? `rotate(${(pts[1][1] - pts[0][1]) / (pts[1][0] - pts[0][0]) * 57.3 | 0} ${cx} ${cy})` : "" }, os);
+        });
+        if (r.miss){ const pts = r.miss.map(x => pos[x]); const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+          el("ellipse", { cx, cy, rx: 30 + 40 * (r.miss.length - 1), ry: 28, fill: "none", stroke: "#C2413B", "stroke-width": 2, "stroke-dasharray": "5 4" }, os); }
+        el("rect", { x: 90, y: 70, width: 280, height: 160, rx: 18, fill: "none", stroke: "#9AA3AD", "stroke-dasharray": "3 4" }, os);
+        Object.entries(pos).forEach(([n, p]) => { el("circle", { cx: p[0], cy: p[1], r: 6, fill: "var(--ink)" }, os); txt(os, p[0] - 4, p[1] + 22, n, { "font-size": 14, "font-weight": 600 }); });
+        osInfo.innerHTML = `<span class="k">proposed open sets</span>${T.map(chip).join("")}` +
+          `<span class="k">rules: ∅ and X included · unions · intersections</span>${r.ok ? '<span class="tp-ok">a topology</span>' : `<span class="tp-bad">not a topology</span>: ${r.why}`}`;
+        osCap.innerHTML = r.ok ? (T.length === 2 ? "The blurriest topology: only ∅ and X are open, so no point can be told apart from another." : T.length === 8 ? "The sharpest topology: every subset is open." : "Every union and every intersection of these sets is again in the list.") : "One missing union or intersection is enough to break the rules (the dashed red outline).";
+      } else {
+        osInfo.innerHTML = `<span class="k">brute force: try every collection of subsets</span>topologies on a 1-point set: <b>${counts[0]}</b><br>on a 2-point set: <b>${counts[1]}</b><br>on a 3-point set: <b>${counts[2]}</b>`;
+        osCap.innerHTML = "The same points can be given many different notions of \"nearby\". A topology is that choice; distances are just one way to make it.";
+        txt(os, 60, 150, `1 → ${counts[0]}   2 → ${counts[1]}   3 → ${counts[2]} topologies`, { "font-size": 18, "font-weight": 600, fill: "var(--accent)" });
+      }
+    } };
+  }
+  presets("#osPresets", [
+    { t: "(0, 1) is open", s: openInterval }, { t: "[0, 1] is not open", s: closedInterval },
+    { t: "x² is continuous: preimage of (1, 4)", s: preimageSquare }, { t: "The step function tears", s: preimageStep },
+    { t: "∩ (−1/n, 1/n) = {0}", s: shrinking }, { t: "Topology checker on {a, b, c}", s: checker },
+  ], (d, auto) => OP.load(d.s(), auto), 0);
+
+  /* ---------------- HOMOLOGY ---------------- */
+  const ho = document.getElementById("hoSvg"), bars = document.getElementById("hoBars"), hoInfo = document.getElementById("hoInfo"), hoCap = document.getElementById("hoCaption");
+  const HP = makePlayer("#hoCtrl");
+  function rank(M){
+    if (!M.length || !M[0].length) return 0;
+    const A = M.map(r => r.slice()), R = A.length, C = A[0].length; let rk = 0;
+    for (let c = 0; c < C && rk < R; c++){
+      let p = rk; for (let r = rk + 1; r < R; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+      if (Math.abs(A[p][c]) < 1e-9) continue;
+      [A[rk], A[p]] = [A[p], A[rk]];
+      for (let r = rk + 1; r < R; r++){ const f = A[r][c] / A[rk][c]; if (f) for (let j = c; j < C; j++) A[r][j] -= f * A[rk][j]; }
+      rk++;
+    }
+    return rk;
+  }
+  function complex(maximal){
+    const S = new Map();
+    maximal.forEach(s => { const t = s.slice().sort((a, b) => a - b), n = t.length;
+      for (let m = 1; m < 2 ** n; m++){ const f = t.filter((_, i) => m >> i & 1); S.set(f.join(","), f); } });
+    const byd = [[], [], []]; S.forEach(f => byd[f.length - 1].push(f));
+    byd.forEach(L => L.sort((a, b) => a.join(",") < b.join(",") ? -1 : 1));
+    const bmat = d => { if (!byd[d].length || !byd[d-1].length) return []; const idx = new Map(byd[d-1].map((f, i) => [f.join(","), i]));
+      const M = byd[d-1].map(() => new Array(byd[d].length).fill(0));
+      byd[d].forEach((s, j) => s.forEach((_, i) => { const f = s.filter((_, q) => q !== i); M[idx.get(f.join(","))][j] = (i % 2 ? -1 : 1); })); return M; };
+    const r1 = rank(bmat(1)), r2 = rank(bmat(2)), c = byd.map(L => L.length);
+    return { c, r1, r2, b: [c[0] - r1, c[1] - r1 - r2, c[2] - r2], byd };
+  }
+  function torusTris(n){ const T = [], v = (i, j) => ((i % n + n) % n) * n + ((j % n + n) % n);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++){ T.push([v(i, j), v(i+1, j), v(i+1, j+1)]); T.push([v(i, j), v(i, j+1), v(i+1, j+1)]); } return T; }
+  const combos3 = n => { const o = []; for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++) o.push([a, b, c]); return o; };
+  const SHAPES = [
+    { t: "Point", max: [[0]], pos: [[230, 200]], note: "One piece, nothing else: (1, 0, 0)." },
+    { t: "Two points", max: [[0], [1]], pos: [[170, 200], [290, 200]], note: "Two separate pieces: β₀ = 2." },
+    { t: "Circle", max: [[0, 1], [1, 2], [0, 2]], pos: [[230, 90], [130, 280], [330, 280]], note: "Three edges forming a loop that isn't the edge of anything: β₁ = 1." },
+    { t: "Disk (filled)", max: [[0, 1, 2]], pos: [[230, 90], [130, 280], [330, 280]], note: "Fill the triangle in: the loop is now a boundary, so β₁ drops to 0." },
+    { t: "Figure eight", max: [[0, 1], [1, 2], [0, 2], [0, 3], [3, 4], [0, 4]], pos: [[230, 200], [110, 110], [110, 290], [350, 110], [350, 290]], note: "Two independent loops sharing a point: β₁ = 2, χ = −1." },
+    { t: "Sphere (tetrahedron)", max: combos3(4), pos: [[230, 70], [100, 310], [360, 310], [230, 230]], note: "Hollow: no unshrinkable loop, one cavity. (1, 0, 1)." },
+    { t: "Sphere (octahedron)", max: (() => { const o = []; for (const a of [0, 1]) for (const b of [2, 3]) for (const c of [4, 5]) o.push([a, b, c]); return o; })(),
+      pos: [[230, 60], [230, 290], [110, 240], [350, 240], [170, 170], [290, 170]], note: "A different way to cut a sphere, same Betti numbers (1, 0, 1)." },
+    { t: "Torus (3 × 3 grid)", max: torusTris(3), torus: 3, note: "Two independent loops (around the tube, through the hole) and one cavity: (1, 2, 1)." },
+    { t: "Torus (4 × 4 grid)", max: torusTris(4), torus: 4, note: "A finer cut of the same torus: still (1, 2, 1)." },
+  ];
+  function drawComplex(S, R, stage){
+    ho.innerHTML = ""; bars.style.display = "none";
+    if (S.torus){
+      const n = S.torus, x0 = 90, y0 = 60, w = 280 / n, P = (i, j) => [x0 + j*w, y0 + i*w];
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++){
+        const a = P(i, j), b = P(i+1, j), c = P(i+1, j+1), d = P(i, j+1);
+        el("polygon", { points: [a, b, c].map(p => p.join(",")).join(" "), fill: "rgba(91,75,149,0.12)", stroke: "var(--c3)", "stroke-width": 1 }, ho);
+        el("polygon", { points: [a, d, c].map(p => p.join(",")).join(" "), fill: "rgba(91,75,149,0.06)", stroke: "var(--c3)", "stroke-width": 1 }, ho);
+      }
+      for (let i = 0; i <= n; i++) for (let j = 0; j <= n; j++){ const p = P(i, j); el("circle", { cx: p[0], cy: p[1], r: 3.5, fill: "var(--ink)" }, ho);
+        txt(ho, p[0] + 4, p[1] - 4, String((i % n) * n + (j % n)), { "font-size": 9.5, fill: "var(--ink-soft)" }); }
+      const arrowAt = (x, y, ang, col) => el("polygon", { points: `${x},${y} ${x - 9*Math.cos(ang) + 5*Math.sin(ang)},${y - 9*Math.sin(ang) - 5*Math.cos(ang)} ${x - 9*Math.cos(ang) - 5*Math.sin(ang)},${y - 9*Math.sin(ang) + 5*Math.cos(ang)}`, fill: col }, ho);
+      arrowAt(x0 + 140, y0, 0, "var(--c1)"); arrowAt(x0 + 140, y0 + 280, 0, "var(--c1)");
+      arrowAt(x0, y0 + 140, PI/2, "var(--c2)"); arrowAt(x0 + 280, y0 + 140, PI/2, "var(--c2)");
+      txt(ho, 20, 30, "top edge glued to bottom, left glued to right (same vertex numbers)", { "font-size": 11, fill: "var(--ink-soft)" });
+      if (stage >= 2){
+        el("line", { x1: x0, y1: y0 + w*0.5 + 1, x2: x0 + 280, y2: y0 + w*0.5 + 1, stroke: "var(--c1)", "stroke-width": 3.5, opacity: 0.8 }, ho);
+        el("line", { x1: x0 + w*0.5, y1: y0, x2: x0 + w*0.5, y2: y0 + 280, stroke: "var(--c2)", "stroke-width": 3.5, opacity: 0.8 }, ho);
+        txt(ho, x0 + 290, y0 + w*0.5 + 4, "loop 1", { fill: "var(--c1)", "font-size": 11 }); txt(ho, x0 + w*0.5 - 18, y0 + 300, "loop 2", { fill: "#8a6a10", "font-size": 11 });
+      }
+      return;
+    }
+    const pos = S.pos;
+    R.byd[2].forEach(f => el("polygon", { points: f.map(i => pos[i].join(",")).join(" "), fill: "rgba(91,75,149,0.13)", stroke: "none" }, ho));
+    R.byd[1].forEach(([a, b]) => el("line", { x1: pos[a][0], y1: pos[a][1], x2: pos[b][0], y2: pos[b][1], stroke: "var(--c3)", "stroke-width": 2.2 }, ho));
+    R.byd[0].forEach(([a]) => { el("circle", { cx: pos[a][0], cy: pos[a][1], r: 6, fill: "var(--ink)" }, ho); txt(ho, pos[a][0] + 8, pos[a][1] - 8, String(a), { "font-size": 11, fill: "var(--ink-soft)" }); });
+    if (S.t.startsWith("Sphere")) txt(ho, 20, 30, "drawn flat: the outer region is one more face, so the surface is closed", { "font-size": 11, fill: "var(--ink-soft)" });
+  }
+  function shapeSpec(S){
+    const R = complex(S.max); TP["h_" + S.t] = { c: R.c, b: R.b, r1: R.r1, r2: R.r2 };
+    return { n: 4, ms: 1300, draw: k => {
+      drawComplex(S, R, k);
+      const lines = [`<span class="k">count the pieces</span>V = <b>${R.c[0]}</b> vertices, E = <b>${R.c[1]}</b> edges, F = <b>${R.c[2]}</b> triangles`];
+      if (k >= 1) lines.push(`<span class="k">ranks of the boundary matrices</span>edges → vertices: <b>${R.r1}</b><br>triangles → edges: <b>${R.r2}</b>`);
+      if (k >= 2) lines.push(`<span class="k">Betti numbers</span>β₀ = ${R.c[0]} − ${R.r1} = <b>${R.b[0]}</b><br>β₁ = ${R.c[1]} − ${R.r1} − ${R.r2} = <b>${R.b[1]}</b><br>β₂ = ${R.c[2]} − ${R.r2} = <b>${R.b[2]}</b>`);
+      if (k >= 3){ const chi = R.c[0] - R.c[1] + R.c[2], alt = R.b[0] - R.b[1] + R.b[2];
+        lines.push(`<span class="k">Euler–Poincaré check</span>V − E + F = <b>${chi}</b><br>β₀ − β₁ + β₂ = <b>${alt}</b> ${chi === alt ? '<span class="tp-ok">equal</span>' : '<span class="tp-bad">differ</span>'}`); }
+      hoInfo.innerHTML = lines.join("");
+      hoCap.innerHTML = ["Build the shape from vertices, edges, and filled triangles.", "Each boundary matrix records which vertices bound each edge, and which edges bound each triangle. Its rank counts the independent boundaries.", "Holes = cycles that aren't boundaries. " + S.note, "The alternating sum of Betti numbers always equals V − E + F, which is why the Euler characteristic can't change when you cut the shape differently."][k];
+    } };
+  }
+  function rips(Pts, eps){
+    const n = Pts.length, d = (i, j) => Math.hypot(Pts[i][0] - Pts[j][0], Pts[i][1] - Pts[j][1]);
+    const E = [], Es = new Set(); for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (d(i, j) <= eps + 1e-9){ E.push([i, j]); Es.add(i + "," + j); }
+    const Tr = []; for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (Es.has(a + "," + b)) for (let c = b + 1; c < n; c++) if (Es.has(a + "," + c) && Es.has(b + "," + c)) Tr.push([a, b, c]);
+    const ei = new Map(E.map((e, i) => [e.join(","), i]));
+    const B1 = Pts.map(() => new Array(E.length).fill(0)); E.forEach(([i, j], t) => { B1[i][t] = -1; B1[j][t] = 1; });
+    const B2 = E.map(() => new Array(Tr.length).fill(0)); Tr.forEach(([i, j, k], t) => { B2[ei.get(j + "," + k)][t] = 1; B2[ei.get(i + "," + k)][t] = -1; B2[ei.get(i + "," + j)][t] = 1; });
+    const r1 = rank(B1), r2 = Tr.length ? rank(B2) : 0;
+    return { b0: n - r1, b1: E.length - r1 - r2, E, Tr };
+  }
+  function persistence(name, Pts, emax, view0){
+    const n = Pts.length, ds = []; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) ds.push(Math.hypot(Pts[i][0] - Pts[j][0], Pts[i][1] - Pts[j][1]));
+    const grid = []; for (let e = 0; e <= emax + 1e-9; e += emax / 60) grid.push(+e.toFixed(6));
+    const events = ds.filter(x => x <= emax);
+    const epsList = [...new Set(grid.concat(events).map(x => +x.toFixed(10)))].sort((a, b) => a - b);
+    const all = epsList.map(e => ({ e, ...rips(Pts, e) }));
+    // keep frames where something changes, plus a sparse grid for smooth growth
+    const frames = all.filter((f, i) => i === 0 || i === all.length - 1 || f.b0 !== all[i-1].b0 || f.b1 !== all[i-1].b1 || grid.includes(f.e));
+    // barcode from counts
+    const b0bars = [], b1bars = [], open1 = [];
+    for (let i = 0; i < n; i++) b0bars.push([0, null]);
+    let alive0 = n, prev1 = 0;
+    all.forEach(f => {
+      while (f.b0 < alive0){ b0bars[alive0 - 1][1] = f.e; alive0--; }
+      while (f.b1 > prev1){ const bar = [f.e, null]; b1bars.push(bar); open1.push(bar); prev1++; }
+      while (f.b1 < prev1){ open1.pop()[1] = f.e; prev1--; }
+    });
+    TP["ph_" + name] = { b0: b0bars.map(b => b[1]), b1: b1bars.map(b => b.slice()) };
+    return { n: frames.length, ms: 160, draw: k => {
+      const F = frames[k], v = view(view0[0], view0[1], view0[2], view0[3], 460, 400, 20), sc = v.sx(1) - v.sx(0);
+      ho.innerHTML = "";
+      Pts.forEach(p => el("circle", { cx: v.sx(p[0]), cy: v.sy(p[1]), r: Math.max(0, F.e / 2 * sc), fill: "rgba(15,139,141,0.08)", stroke: "rgba(15,139,141,0.25)" }, ho));
+      F.Tr.forEach(t => el("polygon", { points: t.map(i => `${v.sx(Pts[i][0]).toFixed(1)},${v.sy(Pts[i][1]).toFixed(1)}`).join(" "), fill: "rgba(91,75,149,0.10)" }, ho));
+      F.E.forEach(([a, b]) => el("line", { x1: v.sx(Pts[a][0]), y1: v.sy(Pts[a][1]), x2: v.sx(Pts[b][0]), y2: v.sy(Pts[b][1]), stroke: "var(--c3)", "stroke-width": 1.4, opacity: 0.7 }, ho));
+      Pts.forEach(p => el("circle", { cx: v.sx(p[0]), cy: v.sy(p[1]), r: 4, fill: "var(--ink)" }, ho));
+      txt(ho, 16, 24, `ε = ${fx(F.e, 4)}`, { "font-size": 14, "font-weight": 600 });
+      bars.style.display = "block"; bars.innerHTML = "";
+      const bv = view(0, emax, 0, 1, 460, 150, 0), X = e => 40 + (e / emax) * 400;
+      txt(bars, 4, 14, "barcode (one bar per feature, from birth ε to death ε)", { "font-size": 10, fill: "var(--ink-soft)" });
+      let row = 0; const rowY = r => 26 + r * 7;
+      const drawBar = (b, col, lab) => { const s = b[0], e = b[1] === null ? emax : b[1]; if (s > F.e) { row++; return; }
+        el("line", { x1: X(s), y1: rowY(row), x2: X(Math.min(e, F.e)), y2: rowY(row), stroke: col, "stroke-width": 4 }, bars); row++; };
+      txt(bars, 4, rowY(0) + 4, "β₀", { "font-size": 10, fill: "var(--c1)" });
+      b0bars.forEach(b => drawBar(b, "var(--c1)"));
+      row++; txt(bars, 4, rowY(row) + 4, "β₁", { "font-size": 10, fill: "var(--c3)" });
+      b1bars.forEach(b => drawBar(b, "var(--c3)"));
+      el("line", { x1: X(F.e), y1: 18, x2: X(F.e), y2: 148, stroke: "var(--c2)", "stroke-dasharray": "3 3" }, bars);
+      hoInfo.innerHTML = `<span class="k">${name}: ${n} points, Vietoris–Rips at ε</span>edges: ${F.E.length}, filled triangles: ${F.Tr.length}` +
+        `<span class="k">Betti numbers at this ε</span>β₀ = <b>${F.b0}</b> (pieces) · β₁ = <b>${F.b1}</b> (loops)` +
+        `<span class="k">β₁ bars found (birth → death)</span>${b1bars.map(b => `${fx(b[0], 4)} → ${b[1] === null ? "∞" : fx(b[1], 4)} (length ${b[1] === null ? "∞" : fx(b[1] - b[0], 4)})`).join("<br>") || "none"}`;
+      hoCap.innerHTML = k < frames.length - 1 ? "Connect points closer than ε, fill triangles whose three sides are all present, and recompute the Betti numbers as ε grows." :
+        (name === "noisy circle" ? `One long β₁ bar: the loop is born at ${fx(b1bars[0][0], 4)} and dies at ${fx(b1bars[0][1], 4)}. A hole that persists this long is a real feature: the data lie on a circle.` :
+          `The β₁ bars are tiny (noise), but two β₀ bars last until ${fx(b0bars[1][1], 4)}: the data really are two separate groups.`);
+    } };
+  }
+  const circPts = [...Array(12).keys()].map(k => { const a = 2*Math.PI*k/12, r = 1 + 0.12*Math.sin(3.7*k + 0.5); return [r*Math.cos(a), r*Math.sin(a)]; });
+  const base = [[0, 0], [0.35, 0.1], [0.15, 0.4], [-0.25, 0.3], [-0.3, -0.2], [0.2, -0.35]];
+  const clusterPts = base.map(([x, y]) => [x - 1.5, y]).concat(base.map(([x, y]) => [x + 1.5, y]));
+  presets("#hoPresets", SHAPES.map(S => ({ t: S.t, s: () => shapeSpec(S) })).concat([
+    { t: "Persistent homology: noisy circle", s: () => persistence("noisy circle", circPts, 2.2, [-1.9, 1.9, -1.65, 1.65]) },
+    { t: "Persistent homology: two clusters", s: () => persistence("two clusters", clusterPts, 2.6, [-2.4, 2.4, -2.1, 2.1]) },
+  ]), (d, auto) => HP.load(d.s(), auto), 2);
 })();
 </script>
 </body>

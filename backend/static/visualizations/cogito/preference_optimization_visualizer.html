@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How RLHF actually works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{overflow-x:hidden;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.55;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  h3{font-family:'Kalam',cursive;font-size:16px;margin:0 0 4px;font-weight:400;text-align:center;}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op.play{border-color:var(--amber);color:var(--amber);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .row-label{width:100%;text-align:center;font-size:11.5px;color:var(--chalk-dim);margin-bottom:-4px;}
+
+  .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11.5px;color:var(--chalk-dim);margin:4px 0 10px;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .sw{width:18px;height:10px;display:inline-block;border-radius:2px;}
+
+  .plots{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;}
+  .plotcard{border:1px solid var(--border);border-radius:8px;padding:10px 8px 8px;min-width:0;}
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:6px auto;width:100%;height:auto;}
+  svg text{font-family:'JetBrains Mono',monospace;}
+  svg .anim{transition:all 0.6s ease;}
+
+  .formula{text-align:center;font-size:13px;margin:4px 0 14px;color:var(--chalk);line-height:1.6;}
+  .formula b{color:var(--amber);}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+  .metric.chalk .num{color:var(--chalk);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;line-height:1.6;}
+  .story-line b{color:var(--chalk);}
+  .tablewrap{overflow-x:auto;}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:6px 7px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+  table.datatable tr.hl td{background:rgba(255,206,84,0.12);color:var(--amber);}
+  .ok{color:var(--green);}
+  .bad{color:var(--coral);}
+
+  /* pipeline */
+  .pipe{display:flex;align-items:stretch;justify-content:center;gap:8px;flex-wrap:wrap;}
+  .stage{flex:1 1 150px;max-width:210px;border:1px solid var(--border);border-radius:10px;padding:12px 10px;cursor:pointer;background:rgba(244,241,232,0.02);text-align:center;font-family:'JetBrains Mono',monospace;color:var(--chalk);}
+  .stage:hover{border-color:var(--chalk-dim);}
+  .stage.active{border-color:var(--amber);background:rgba(255,206,84,0.10);}
+  .stage .t{font-family:'Kalam',cursive;font-size:17px;}
+  .stage .d{font-size:11px;color:var(--chalk-dim);margin-top:4px;line-height:1.45;}
+  .arrow{align-self:center;color:var(--chalk-dim);font-size:18px;}
+  .branch{width:100%;text-align:center;font-size:11.5px;color:var(--chalk-dim);margin:10px 0 6px;}
+  .detail{border:1px dashed var(--border);border-radius:8px;padding:14px 16px;margin-top:14px;font-size:12.5px;line-height:1.65;}
+  .detail b{color:var(--amber);}
+
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+
+  @media (max-width:600px){
+    body{padding:20px 16px 48px;}
+    .panel{padding:16px 12px;}
+    .metric{min-width:120px;flex:1 1 120px;}
+    table.datatable{font-size:10.5px;}
+    table.datatable th, table.datatable td{padding:5px 3px;}
+    .arrow{display:none;}
+    .stage{max-width:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>How RLHF actually works</h1>
+  <p class="sub">Companion to §3.8.1 of the Feynman ML/DL/LLM tutorial. Four pieces turn a next-word predictor into an assistant: supervised fine-tuning, a reward model trained on "A is better than B", an RL step held on a KL leash (or DPO, which folds the last two into one loss), and GRPO's group-relative scoring for checkable answers. Every number below is computed live from the formulas and matches the tutorial's tables. Every worked example is one click.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="pipe">0 · The pipeline</button>
+    <button class="tab-btn" data-tab="rm">1 · Reward model</button>
+    <button class="tab-btn" data-tab="kl">2 · KL leash</button>
+    <button class="tab-btn" data-tab="dpo">3 · DPO</button>
+    <button class="tab-btn" data-tab="grpo">4 · GRPO</button>
+  </div>
+
+  <!-- ==================== TAB 0: PIPELINE ==================== -->
+  <div class="tabpage active" id="tab-pipe">
+    <div class="panel">
+      <h2>From base model to assistant: click any stage</h2>
+      <div class="pipe">
+        <button class="stage" data-stage="base"><div class="t">Base model</div><div class="d">predicts internet text; not yet helpful</div></button>
+        <span class="arrow">&rarr;</span>
+        <button class="stage" data-stage="sft"><div class="t">1 · SFT</div><div class="d">next-word loss on the assistant's reply only</div></button>
+        <span class="arrow">&rarr;</span>
+        <button class="stage" data-stage="rm"><div class="t">2 · Reward model</div><div class="d">P(A beats B) = σ(r_A − r_B)</div></button>
+        <span class="arrow">&rarr;</span>
+        <button class="stage" data-stage="kl"><div class="t">3 · RL + KL leash</div><div class="d">reward − β × drift (PPO)</div></button>
+      </div>
+      <div class="branch">&hellip; or skip the reward model and the RL loop:</div>
+      <div class="pipe">
+        <button class="stage" data-stage="dpo"><div class="t">4 · DPO</div><div class="d">train on the preferred / rejected pairs directly</div></button>
+        <button class="stage" data-stage="grpo"><div class="t">GRPO</div><div class="d">checkable answers: score each against its own group</div></button>
+      </div>
+      <div class="detail" id="stageDetail"></div>
+      <div class="row" style="margin-top:12px"><button class="op play" id="stageGo" style="display:none">Open this stage's worked example &rarr;</button></div>
+      <div class="story-line"><b>The whole pipeline in one line:</b> SFT teaches the format; a reward model (or a checkable answer) says which outputs are better; RL with a KL leash, or DPO directly, shifts probability toward the better outputs without letting the model wander far from normal language.</div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 1: REWARD MODEL ==================== -->
+  <div class="tabpage" id="tab-rm">
+    <div class="panel">
+      <h2>Bradley–Terry: the sigmoid of the score gap</h2>
+      <div class="formula">P(A preferred over B) = <b>σ(r_A − r_B)</b> &nbsp;&nbsp; loss = <b>−ln σ(r_A − r_B)</b> &nbsp;&nbsp; (the human preferred A)</div>
+      <div class="row">
+        <div class="row-label">One-click worked examples (the tutorial's three rows)</div>
+        <button class="op rmp" data-a="2.0" data-b="0.5">r_A = 2.0, r_B = 0.5 (agrees)</button>
+        <button class="op rmp" data-a="0.5" data-b="2.0">r_A = 0.5, r_B = 2.0 (disagrees)</button>
+        <button class="op rmp" data-a="12.0" data-b="10.5">r_A = 12.0, r_B = 10.5 (shifted +10)</button>
+        <button class="op play" id="rmPlay">Play all three</button>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--green)"></i>response A (the one the human picked)</span>
+        <span><i class="sw" style="background:var(--coral)"></i>response B</span>
+        <span><i class="sw" style="background:var(--amber)"></i>σ(gap)</span>
+      </div>
+      <div class="plots">
+        <div class="plotcard"><h3>The two scores on the reward scale</h3><svg id="rmScores" viewBox="0 0 320 220"></svg></div>
+        <div class="plotcard"><h3>σ(r_A − r_B): only the gap matters</h3><svg id="rmCurve" viewBox="0 0 320 220"></svg></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric chalk"><div class="lbl">gap r_A − r_B</div><div class="num" id="rmGap">—</div></div>
+        <div class="metric amber"><div class="lbl">P(A preferred)</div><div class="num" id="rmP">—</div></div>
+        <div class="metric coral"><div class="lbl">loss −ln P</div><div class="num" id="rmLoss">—</div></div>
+      </div>
+      <div class="story-line" id="rmStory"></div>
+      <div class="tablewrap"><table class="datatable" id="rmTable">
+        <tr><th>reward model's scores</th><th>gap</th><th>P(A preferred)</th><th>loss</th><th>tutorial</th></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: KL LEASH ==================== -->
+  <div class="tabpage" id="tab-kl">
+    <div class="panel">
+      <h2>The RL step, on a leash: reward − β × drift</h2>
+      <div class="formula">objective = <b>reward − β × KL(new model ‖ reference model)</b> &nbsp; (drift = the per-response KL estimate)</div>
+      <div class="row">
+        <div class="row-label">One-click worked examples</div>
+        <button class="op klp" data-beta="none">Reward only</button>
+        <button class="op klp" data-beta="0.1">Reward minus KL penalty (β = 0.1)</button>
+      </div>
+      <div class="row">
+        <div class="row-label">Other leash strengths</div>
+        <button class="op klp" data-beta="0">β = 0 (no leash)</button>
+        <button class="op klp" data-beta="0.05">β = 0.05</button>
+        <button class="op klp" data-beta="0.2">β = 0.2</button>
+        <button class="op play" id="klPlay">Play: tighten the leash</button>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--blue)"></i>reward from the reward model</span>
+        <span><i class="sw" style="background:repeating-linear-gradient(45deg,var(--coral) 0 3px,transparent 3px 6px)"></i>KL penalty β × drift (subtracted)</span>
+        <span><i class="sw" style="background:var(--amber)"></i>objective (what RL maximizes)</span>
+      </div>
+      <svg id="klSvg" viewBox="0 0 360 300" style="max-width:600px"></svg>
+      <div class="metric-row">
+        <div class="metric chalk"><div class="lbl">β</div><div class="num" id="klBeta">—</div></div>
+        <div class="metric green"><div class="lbl">sensible (reward 3.0, drift 4.0)</div><div class="num" id="klS">—</div></div>
+        <div class="metric coral"><div class="lbl">hacked (reward 3.5, drift 20.0)</div><div class="num" id="klH">—</div></div>
+        <div class="metric amber"><div class="lbl">winner</div><div class="num" id="klW">—</div></div>
+      </div>
+      <div class="story-line" id="klStory"></div>
+      <div class="tablewrap"><table class="datatable" id="klTable">
+        <tr><th>response</th><th>reward</th><th>drift from reference</th><th>objective</th></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: DPO ==================== -->
+  <div class="tabpage" id="tab-dpo">
+    <div class="panel">
+      <h2>DPO: the same Bradley–Terry loss, scored by probability gains</h2>
+      <div class="formula">loss = <b>−ln σ( β × [ (gain on preferred) − (gain on rejected) ] )</b>, &nbsp; gain = ln P_new(answer) − ln P_ref(answer), &nbsp; <span style="white-space:nowrap">β = 0.1</span></div>
+      <div class="row">
+        <div class="row-label">One-click worked examples (the tutorial's three training states)</div>
+        <button class="op dpop" data-pg="0" data-rg="0">Start: gains 0 / 0</button>
+        <button class="op dpop" data-pg="2" data-rg="-1">Partway: +2 / −1</button>
+        <button class="op dpop" data-pg="5" data-rg="-5">Further: +5 / −5</button>
+        <button class="op play" id="dpoPlay">Play training</button>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--green)"></i>gain on preferred answer</span>
+        <span><i class="sw" style="background:var(--coral)"></i>gain on rejected answer</span>
+        <span><i class="sw" style="background:var(--amber)"></i>σ(margin)</span>
+      </div>
+      <div class="plots">
+        <div class="plotcard"><h3>Log-probability gains vs. the reference</h3><svg id="dpoGains" viewBox="0 0 320 220"></svg></div>
+        <div class="plotcard"><h3>σ(margin) and the loss</h3><svg id="dpoCurve" viewBox="0 0 320 220"></svg></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric chalk"><div class="lbl">gain difference</div><div class="num" id="dpoDiff">—</div></div>
+        <div class="metric blue"><div class="lbl">margin = β × difference</div><div class="num" id="dpoM">—</div></div>
+        <div class="metric amber"><div class="lbl">σ(margin)</div><div class="num" id="dpoS">—</div></div>
+        <div class="metric coral"><div class="lbl">loss</div><div class="num" id="dpoL">—</div></div>
+      </div>
+      <div class="story-line" id="dpoStory"></div>
+      <div class="tablewrap"><table class="datatable" id="dpoTable">
+        <tr><th>training state</th><th>preferred gain</th><th>rejected gain</th><th>margin</th><th>loss</th><th>tutorial</th></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 4: GRPO ==================== -->
+  <div class="tabpage" id="tab-grpo">
+    <div class="panel">
+      <h2>GRPO: score each answer against its own group</h2>
+      <div class="formula">advantage = <b>(reward − group mean) / group std</b> &nbsp; (right = 1, wrong = 0; population std)</div>
+      <div class="row">
+        <div class="row-label">One-click worked examples (four sampled answers to one prompt)</div>
+        <button class="op grp" data-r="1,0,0,1">Two of four right: [1, 0, 0, 1]</button>
+        <button class="op grp" data-r="1,0,0,0">One of four right: [1, 0, 0, 0]</button>
+        <button class="op play" id="grPlay">Play both</button>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--blue)"></i>reward (1 = right, 0 = wrong)</span>
+        <span><i class="sw" style="background:var(--amber);height:3px"></i>group mean</span>
+        <span><i class="sw" style="background:var(--green)"></i>positive advantage (pushed up)</span>
+        <span><i class="sw" style="background:var(--coral)"></i>negative advantage (pushed down)</span>
+      </div>
+      <div class="plots">
+        <div class="plotcard"><h3>Each answer's reward vs. the group mean</h3><svg id="grRew" viewBox="0 0 320 220"></svg></div>
+        <div class="plotcard"><h3>Advantage (signed)</h3><svg id="grAdv" viewBox="0 0 320 220"></svg></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">group mean</div><div class="num" id="grMean">—</div></div>
+        <div class="metric chalk"><div class="lbl">group std (population)</div><div class="num" id="grStd">—</div></div>
+        <div class="metric amber"><div class="lbl">advantages</div><div class="num" id="grA">—</div></div>
+      </div>
+      <div class="story-line" id="grStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>§3.8.1 of ml_deep_learning_llm_feynman_tutorial.md</b>
+    (<a href="../deep_learning/ml_deep_learning_llm_feynman_tutorial.md">ml_deep_learning_llm_feynman_tutorial.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const C = {chalk:"#f4f1e8", dim:"#7f8f83", amber:"#ffce54", coral:"#ff8266", green:"#8fd19e", blue:"#7fb3d5", grid:"rgba(244,241,232,0.10)"};
+  const sigma = z => 1/(1+Math.exp(-z));
+  const f4 = x => x.toFixed(4);
+  const sgn = (x,d) => (x>0?"+":x<0?"−":"") + Math.abs(x).toFixed(d);
+  const $ = id => document.getElementById(id);
+
+  function el(tag, attrs, parent, text){
+    const e = document.createElementNS(NS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if(text !== undefined) e.textContent = text;
+    if(parent) parent.appendChild(e);
+    return e;
+  }
+  function clear(svg){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+  function setActive(sel, btn){ document.querySelectorAll(sel).forEach(b=>b.classList.toggle("active", b===btn)); }
+
+  // ---------- tabs ----------
+  const timers = [];
+  function stopTimers(){ while(timers.length) clearTimeout(timers.pop()); }
+  function showTab(name){
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+    document.querySelectorAll(".tabpage").forEach(p=>p.classList.toggle("active", p.id==="tab-"+name));
+  }
+  document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click", ()=>{ stopTimers(); showTab(b.dataset.tab); }));
+  function playSeq(buttons, ms){
+    stopTimers();
+    buttons.forEach((b,i)=> timers.push(setTimeout(()=>b.click(), i*ms)));
+  }
+
+  // ---------- sigmoid curve plot (shared) ----------
+  // draws σ(z) for z in [zmin,zmax], marks point z0; returns nothing
+  function sigmoidPlot(svg, z0, zmin, zmax, xlabel, tickStep){
+    clear(svg);
+    const W=320,H=220,L=40,R=12,T=14,B=36;
+    const X = z => L + (z-zmin)/(zmax-zmin)*(W-L-R);
+    const Y = p => T + (1-p)*(H-T-B);
+    for(let p=0;p<=1.001;p+=0.25){
+      el("line",{x1:L,x2:W-R,y1:Y(p),y2:Y(p),stroke:C.grid},svg);
+      el("text",{x:L-6,y:Y(p)+4,"text-anchor":"end","font-size":10,fill:C.dim},svg,p.toFixed(2));
+    }
+    for(let z=Math.ceil(zmin/tickStep)*tickStep; z<=zmax+1e-9; z+=tickStep){
+      el("line",{x1:X(z),x2:X(z),y1:T,y2:H-B,stroke:C.grid},svg);
+      el("text",{x:X(z),y:H-B+14,"text-anchor":"middle","font-size":10,fill:C.dim},svg,(+z.toFixed(2)).toString().replace("-","−"));
+    }
+    el("text",{x:(L+W-R)/2,y:H-6,"text-anchor":"middle","font-size":10.5,fill:C.dim},svg,xlabel);
+    let d="";
+    for(let i=0;i<=200;i++){ const z=zmin+(zmax-zmin)*i/200; d+=(i?"L":"M")+X(z).toFixed(1)+","+Y(sigma(z)).toFixed(1); }
+    el("path",{d:d,fill:"none",stroke:C.amber,"stroke-width":2.5},svg);
+    // 0.5 reference
+    el("line",{x1:X(0),x2:X(0),y1:T,y2:H-B,stroke:C.dim,"stroke-dasharray":"3 3"},svg);
+    if(z0 === null || z0 === undefined) return;
+    const p = sigma(z0);
+    el("line",{x1:X(z0),x2:X(z0),y1:H-B,y2:Y(p),stroke:C.blue,"stroke-width":1.5,"stroke-dasharray":"4 3"},svg);
+    el("line",{x1:L,x2:X(z0),y1:Y(p),y2:Y(p),stroke:C.blue,"stroke-width":1.5,"stroke-dasharray":"4 3"},svg);
+    el("circle",{cx:X(z0),cy:Y(p),r:6,fill:C.amber,stroke:C.bg||"#16221c","stroke-width":2},svg);
+    // label on the side of the (rising) curve that is empty: lower-right when p >= 0.5, upper-left below 0.5
+    const lowerRight = p >= 0.5 && X(z0) < W-110;
+    el("text",{x:X(z0)+(lowerRight?10:-10),y:Y(p)+(lowerRight?18:-12),"text-anchor":lowerRight?"start":"end","font-size":11,fill:C.chalk,"font-weight":700},svg,"σ = "+f4(p));
+  }
+
+  // ================= STAGE DETAILS =================
+  const STAGES = {
+    base:{tab:null, html:"<b>Base model.</b> A raw next-word predictor. It will continue a sentence in unhelpful or unsafe directions, because it was only ever taught to predict internet text, not to be helpful."},
+    sft:{tab:null, html:"<b>1 · Supervised fine-tuning.</b> Train on example conversations written by people with the ordinary next-word loss from Part 3.6. The twist is <b>loss masking</b>: the loss is counted only on the assistant's reply, not the user's question, so the model learns to <i>answer</i>, not to predict what users ask. (No separate worked example here: it's the same loss you already know.)"},
+    rm:{tab:"rm", html:"<b>2 · Reward model.</b> People pick the better of two responses; a separate network learns a score r for each response so that P(A beats B) = σ(r_A − r_B). That's logistic regression on the <i>difference</i> of two scores, so only the gap matters."},
+    kl:{tab:"kl", html:"<b>3 · RL on a leash.</b> Generate responses, score them with the reward model, make high-scoring ones more likely, but subtract β × KL drift from the SFT (reference) model. Without the leash the LLM finds outputs the reward model overrates (<b>reward hacking</b>). PPO also caps each single update: a second, smaller leash."},
+    dpo:{tab:"dpo", html:"<b>4 · DPO.</b> Folds steps 2 and 3 into one loss with the same Bradley–Terry shape. The \"score\" of a response is how much the model has raised its log-probability relative to the reference. The reference is built in, so the KL leash comes for free: no reward model, no RL loop, no sampling during training."},
+    grpo:{tab:"grpo", html:"<b>GRPO (verifiable rewards).</b> For checkable answers the reward is just right = 1, wrong = 0. Sample several answers to the same prompt and score each <i>relative to its own group</i>: (reward − mean) / std. That replaces the separate value network PPO needs."}
+  };
+  let currentStage = null;
+  document.querySelectorAll(".stage").forEach(s=>s.addEventListener("click", ()=>{
+    currentStage = s.dataset.stage;
+    setActive(".stage", s);
+    $("stageDetail").innerHTML = STAGES[currentStage].html;
+    $("stageGo").style.display = STAGES[currentStage].tab ? "" : "none";
+  }));
+  $("stageGo").addEventListener("click", ()=>{
+    const t = STAGES[currentStage] && STAGES[currentStage].tab;
+    if(!t) return;
+    showTab(t);
+    const first = document.querySelector("#tab-"+t+" button.op:not(.play)");
+    if(first) first.click();
+    window.scrollTo(0,0);
+  });
+
+  // ================= TAB 1: REWARD MODEL =================
+  const RM_ROWS = [
+    {a:2.0,b:0.5,label:"r_A = 2.0, r_B = 0.5 (agrees)",tp:0.8176,tl:0.2014},
+    {a:0.5,b:2.0,label:"r_A = 0.5, r_B = 2.0 (disagrees)",tp:0.1824,tl:1.7014},
+    {a:12.0,b:10.5,label:"r_A = 12.0, r_B = 10.5",tp:0.8176,tl:0.2014}
+  ];
+  function rmScoresPlot(a,b){
+    const svg=$("rmScores"); clear(svg);
+    const W=320,H=220,L=40,R=12,T=22,B=30, vmax=15;
+    const Y = v => T + (1-v/vmax)*(H-T-B);
+    for(let v=0;v<=14;v+=2){
+      el("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:C.grid},svg);
+      el("text",{x:L-6,y:Y(v)+4,"text-anchor":"end","font-size":10,fill:C.dim},svg,v);
+    }
+    const bars=[{x:110,v:a,c:C.green,n:"A"},{x:210,v:b,c:C.coral,n:"B"}];
+    bars.forEach(o=>{
+      el("rect",{x:o.x-28,y:Y(o.v),width:56,height:Y(0)-Y(o.v),fill:o.c,opacity:0.85,rx:3},svg);
+      el("text",{x:o.x,y:Y(o.v)-6,"text-anchor":"middle","font-size":12,fill:C.chalk,"font-weight":700},svg,"r = "+o.v.toFixed(1));
+      el("text",{x:o.x,y:H-B+16,"text-anchor":"middle","font-size":11,fill:C.dim},svg,"response "+o.n);
+    });
+    // gap bracket
+    const top=Math.max(a,b), bot=Math.min(a,b), gx=160;
+    el("line",{x1:gx,x2:gx,y1:Y(top),y2:Y(bot),stroke:C.amber,"stroke-width":2},svg);
+    el("line",{x1:gx-6,x2:gx+6,y1:Y(top),y2:Y(top),stroke:C.amber,"stroke-width":2},svg);
+    el("line",{x1:gx-6,x2:gx+6,y1:Y(bot),y2:Y(bot),stroke:C.amber,"stroke-width":2},svg);
+    el("text",{x:(L+W-R)/2,y:T+2,"text-anchor":"middle","font-size":11.5,fill:C.amber,"font-weight":700},svg,"gap r_A − r_B = "+sgn(a-b,1));
+  }
+  function rmTable(idx){
+    const t=$("rmTable"); while(t.rows.length>1) t.deleteRow(1);
+    RM_ROWS.forEach((r,i)=>{
+      const g=r.a-r.b, p=sigma(g), l=-Math.log(p);
+      const ok = f4(p)===f4(r.tp) && f4(l)===f4(r.tl);
+      const tr=t.insertRow(); if(i===idx) tr.className="hl";
+      tr.innerHTML=`<td>${r.label}</td><td>${sgn(g,1)}</td><td>${f4(p)}</td><td>${f4(l)}</td><td class="${ok?'ok':'bad'}">${ok?'✓ matches':'✗ mismatch'}</td>`;
+    });
+  }
+  document.querySelectorAll(".rmp").forEach((btn,i)=>btn.addEventListener("click", ()=>{
+    setActive(".rmp", btn);
+    const a=parseFloat(btn.dataset.a), b=parseFloat(btn.dataset.b), g=a-b, p=sigma(g), l=-Math.log(p);
+    rmScoresPlot(a,b);
+    sigmoidPlot($("rmCurve"), g, -5, 5, "score gap r_A − r_B", 1);
+    $("rmGap").textContent=sgn(g,1); $("rmP").textContent=f4(p); $("rmLoss").textContent=f4(l);
+    const stories=[
+      `The reward model scores A (the human's pick) <b>1.5 higher</b> than B. σ(+1.5) = <b>${f4(p)}</b>: it agrees with the human 82% of the way, so the loss −ln ${f4(p)} = <b>${f4(l)}</b> is small. Little to correct.`,
+      `Now it scores B higher, <b>disagreeing</b> with the human. The gap is −1.5, σ(−1.5) = <b>${f4(p)}</b>, and the loss jumps to <b>${f4(l)}</b>. That big loss is what pushes r_A up and r_B down during training.`,
+      `Both scores are 10 higher than in the first row, but the <b>gap is still +1.5</b>, so the point on the sigmoid is the same: P = <b>${f4(p)}</b>, loss <b>${f4(l)}</b>. A reward score means nothing on its own, only compared with another response's score.`
+    ];
+    $("rmStory").innerHTML=stories[i];
+    rmTable(i);
+  }));
+  $("rmPlay").addEventListener("click", ()=>playSeq([...document.querySelectorAll(".rmp")], 2200));
+
+  // ================= TAB 2: KL LEASH =================
+  const KL_RESP = [
+    {name:"sensible answer", reward:3.0, drift:4.0, c:C.green},
+    {name:"reward-hacked answer", reward:3.5, drift:20.0, c:C.coral}
+  ];
+  function klDraw(beta){
+    const svg=$("klSvg"); clear(svg);
+    // bars live in the left part (x from L to BR); every label sits right-aligned in the column after BR
+    const W=360,H=300,L=14,BR=222,LX=W-6,T=8,B=34, vmin=-1, vmax=4;
+    const X = v => L + (v-vmin)/(vmax-vmin)*(BR-L);
+    for(let v=vmin; v<=vmax; v+=0.5){
+      el("line",{x1:X(v),x2:X(v),y1:T,y2:H-B,stroke:v===0?C.dim:C.grid,"stroke-width":v===0?1.2:1},svg);
+      if(Number.isInteger(v)) el("text",{x:X(v),y:H-B+14,"text-anchor":"middle","font-size":11,fill:C.dim},svg,(v<0?"−":"")+Math.abs(v));
+    }
+    el("text",{x:(L+BR)/2,y:H-4,"text-anchor":"middle","font-size":11,fill:C.dim},svg,"score");
+    const objs = KL_RESP.map(r=> beta===null ? r.reward : r.reward - beta*r.drift);
+    const win = objs[0]>objs[1] ? 0 : 1;
+    KL_RESP.forEach((r,i)=>{
+      const y0 = T + i*128;
+      const title = el("text",{x:L,y:y0+14,"font-size":14,fill:r.c,"font-weight":700},svg,r.name);
+      el("tspan",{fill:C.dim,"font-weight":400,"font-size":12.5},title," · drift "+r.drift.toFixed(1));
+      if(win===i) el("tspan",{fill:C.amber,"font-weight":700,"font-size":13.5},title,"  ★ WINS");
+      const yB = y0 + 24;
+      // reward bar
+      el("rect",{x:X(0),y:yB,width:X(r.reward)-X(0),height:22,fill:C.blue,opacity:0.85,rx:3},svg);
+      el("text",{x:LX,y:yB+16,"text-anchor":"end","font-size":13,fill:C.blue},svg,"reward "+r.reward.toFixed(1));
+      if(beta!==null){
+        const pen = beta*r.drift, obj = objs[i];
+        // penalty hatched segment from obj to reward
+        const x1 = X(Math.max(obj,vmin)), x2 = X(r.reward);
+        el("rect",{x:Math.min(x1,x2),y:yB+28,width:Math.abs(x2-x1),height:22,fill:"url(#hatch)",stroke:C.coral,"stroke-width":1,rx:3},svg);
+        const ptxt = "−"+beta+"×"+r.drift.toFixed(1)+" = −"+fmtObj(pen);
+        el("text",{x:LX,y:yB+44,"text-anchor":"end","font-size":13,fill:C.coral},svg,beta===0?"penalty 0":ptxt);
+        // objective bar
+        const ox0=X(Math.min(0,obj)), ox1=X(Math.max(0,obj));
+        el("rect",{x:ox0,y:yB+56,width:Math.max(ox1-ox0,1),height:22,fill:C.amber,opacity:0.9,rx:3},svg);
+        el("text",{x:LX,y:yB+72,"text-anchor":"end","font-size":13.5,fill:C.amber,"font-weight":700},svg,"objective "+fmtObj(obj));
+      }
+    });
+    const defs=el("defs",{},svg);
+    const pat=el("pattern",{id:"hatch",width:6,height:6,patternUnits:"userSpaceOnUse",patternTransform:"rotate(45)"},defs);
+    el("rect",{width:3,height:6,fill:C.coral,opacity:0.7},pat);
+    return {objs,win};
+  }
+  const fmtObj = v => (v<0?"−":"")+Math.abs(v).toFixed(Math.abs(v*10-Math.round(v*10))>1e-9?2:1);
+  function klTable(beta){
+    const t=$("klTable"); while(t.rows.length>1) t.deleteRow(1);
+    KL_RESP.forEach(r=>{
+      const tr=t.insertRow();
+      const obj = beta===null ? r.reward : r.reward-beta*r.drift;
+      const expr = beta===null ? `${r.reward.toFixed(1)} (no penalty counted)` : `${r.reward.toFixed(1)} − ${beta} × ${r.drift.toFixed(1)} = <b>${fmtObj(obj)}</b>`;
+      tr.innerHTML=`<td>${r.name}</td><td>${r.reward.toFixed(1)}</td><td>${r.drift.toFixed(1)}</td><td>${expr}</td>`;
+      if(beta===0.1) tr.className="hl";
+    });
+  }
+  document.querySelectorAll(".klp").forEach(btn=>btn.addEventListener("click", ()=>{
+    setActive(".klp", btn);
+    const beta = btn.dataset.beta==="none" ? null : parseFloat(btn.dataset.beta);
+    const {objs,win} = klDraw(beta);
+    $("klBeta").textContent = beta===null ? "not counted" : beta;
+    $("klS").textContent = fmtObj(objs[0]); $("klH").textContent = fmtObj(objs[1]);
+    $("klW").textContent = win===0 ? "sensible" : "hacked";
+    const breakEven = (KL_RESP[1].reward-KL_RESP[0].reward)/(KL_RESP[1].drift-KL_RESP[0].drift);
+    let s;
+    if(beta===null) s=`Judged on reward alone, the <b>reward-hacked answer wins, 3.5 vs 3.0</b>. The reward model overrates it (too long, flattering, repetitive), and RL would happily push the LLM toward it.`;
+    else if(beta===0) s=`β = 0 is the same as no leash: the penalty is zero and the <b>hacked answer wins 3.5 vs 3.0</b>.`;
+    else if(beta===0.1) s=`With the leash counted, the sensible answer scores 3.0 − 0.4 = <b>2.6</b> and the hacked one 3.5 − 2.0 = <b>1.5</b>. The ranking <b>flips</b>: the hacked answer had to drift 20 units from normal language to get its extra 0.5 of reward, and that drift costs 2.0.`;
+    else if(beta===0.05) s=`A looser leash: sensible 3.0 − 0.2 = <b>2.8</b>, hacked 3.5 − 1.0 = <b>2.5</b>. The sensible answer still wins. The flip happens for any β above ${breakEven.toFixed(5)} (= 0.5 extra reward ÷ 16 extra drift).`;
+    else s=`A tighter leash: sensible 3.0 − 0.8 = <b>2.2</b>, hacked 3.5 − 4.0 = <b>−0.5</b>. The hacked answer is now worse than doing nothing. Too tight a leash, though, would stop the model from improving at all: β is a trade-off.`;
+    $("klStory").innerHTML=s;
+    klTable(beta);
+  }));
+  $("klPlay").addEventListener("click", ()=>{
+    const b=[...document.querySelectorAll(".klp")];
+    playSeq([b[0],b[3],b[1],b[4]], 2200);
+  });
+
+  // ================= TAB 3: DPO =================
+  const DPO_BETA = 0.1;
+  const DPO_ROWS = [
+    {pg:0,rg:0,label:"start (new model = reference)",tm:0.0,tl:0.6931},
+    {pg:2,rg:-1,label:"partway",tm:0.3,tl:0.5544},
+    {pg:5,rg:-5,label:"further",tm:1.0,tl:0.3133}
+  ];
+  function dpoGainsPlot(pg,rg){
+    const svg=$("dpoGains"); clear(svg);
+    const W=320,H=220,L=40,R=12,T=16,B=30, vmin=-6, vmax=6;
+    const Y = v => T + (vmax-v)/(vmax-vmin)*(H-T-B);
+    for(let v=vmin; v<=vmax; v+=2){
+      el("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:v===0?C.dim:C.grid,"stroke-width":v===0?1.3:1},svg);
+      el("text",{x:L-6,y:Y(v)+4,"text-anchor":"end","font-size":10,fill:v===0?C.chalk:C.dim},svg,v===0?"0=ref":(v>0?"+":"−")+Math.abs(v));
+    }
+    [{x:120,v:pg,c:C.green,n:"preferred"},{x:220,v:rg,c:C.coral,n:"rejected"}].forEach(o=>{
+      const y1=Y(Math.max(o.v,0)), y2=Y(Math.min(o.v,0));
+      el("rect",{x:o.x-26,y:y1,width:52,height:Math.max(y2-y1,2),fill:o.c,opacity:0.85,rx:3},svg);
+      el("text",{x:o.x,y:o.v>=0?y1-6:y2+14,"text-anchor":"middle","font-size":12,fill:C.chalk,"font-weight":700},svg,(o.v>0?"+":o.v<0?"−":"")+Math.abs(o.v));
+      el("text",{x:o.x,y:H-B+16,"text-anchor":"middle","font-size":11,fill:C.dim},svg,o.n);
+    });
+  }
+  function dpoTable(idx){
+    const t=$("dpoTable"); while(t.rows.length>1) t.deleteRow(1);
+    DPO_ROWS.forEach((r,i)=>{
+      const m=DPO_BETA*(r.pg-r.rg), l=-Math.log(sigma(m));
+      const ok = Math.abs(m-r.tm)<1e-9 && f4(l)===f4(r.tl);
+      const tr=t.insertRow(); if(i===idx) tr.className="hl";
+      tr.innerHTML=`<td>${r.label}</td><td>${sgn(r.pg,0)||"0"}</td><td>${sgn(r.rg,0)||"0"}</td><td>${m.toFixed(1)}</td><td>${f4(l)}</td><td class="${ok?'ok':'bad'}">${ok?'✓ matches':'✗ mismatch'}</td>`;
+    });
+  }
+  document.querySelectorAll(".dpop").forEach((btn,i)=>btn.addEventListener("click", ()=>{
+    setActive(".dpop", btn);
+    const pg=parseFloat(btn.dataset.pg), rg=parseFloat(btn.dataset.rg);
+    const diff=pg-rg, m=DPO_BETA*diff, s=sigma(m), l=-Math.log(s);
+    dpoGainsPlot(pg,rg);
+    sigmoidPlot($("dpoCurve"), m, -1.5, 1.5, "margin = β × (preferred gain − rejected gain)", 0.5);
+    $("dpoDiff").textContent=sgn(diff,0)||"0"; $("dpoM").textContent=m.toFixed(1);
+    $("dpoS").textContent=f4(s); $("dpoL").textContent=f4(l);
+    const stories=[
+      `At the start the new model <b>is</b> the reference, so both gains are 0 and the margin is 0. σ(0) = 0.5, a coin flip, and the loss is −ln 0.5 = ln 2 = <b>${f4(l)}</b>.`,
+      `Training has raised the preferred answer's log-probability by 2 and lowered the rejected one's by 1. Difference 3, times β = 0.1, gives a margin of <b>0.3</b>. σ(0.3) = ${f4(s)}, loss <b>${f4(l)}</b>.`,
+      `Further on: +5 and −5, difference 10, margin <b>1.0</b>. σ(1.0) = ${f4(s)}, loss <b>${f4(l)}</b>. The gains are measured against the reference, so the KL leash is built in: no reward model, no RL loop.`
+    ];
+    $("dpoStory").innerHTML=stories[i];
+    dpoTable(i);
+  }));
+  $("dpoPlay").addEventListener("click", ()=>playSeq([...document.querySelectorAll(".dpop")], 2200));
+
+  // ================= TAB 4: GRPO =================
+  function grpo(rs){
+    const n=rs.length, mean=rs.reduce((a,b)=>a+b,0)/n;
+    const std=Math.sqrt(rs.reduce((a,b)=>a+(b-mean)*(b-mean),0)/n);
+    return {mean,std,adv:rs.map(r=>std>0?(r-mean)/std:0)};
+  }
+  function grDraw(rs,g){
+    // rewards
+    let svg=$("grRew"); clear(svg);
+    const W=320,H=220,L=40,R=12,T=16,B=30;
+    const X = i => L + (i+0.5)*(W-L-R)/rs.length;
+    let Y = v => T + (1.2-v)/1.2*(H-T-B);
+    for(let v=0; v<=1.001; v+=0.25){
+      el("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:C.grid},svg);
+      el("text",{x:L-6,y:Y(v)+4,"text-anchor":"end","font-size":10,fill:C.dim},svg,v.toFixed(2));
+    }
+    rs.forEach((r,i)=>{
+      el("rect",{x:X(i)-22,y:Y(r),width:44,height:Math.max(Y(0)-Y(r),2),fill:C.blue,opacity:0.85,rx:3},svg);
+      el("text",{x:X(i),y:Y(r)-6,"text-anchor":"middle","font-size":11.5,fill:C.chalk,"font-weight":700},svg,r+(r?" ✓":" ✗"));
+      el("text",{x:X(i),y:H-B+16,"text-anchor":"middle","font-size":10.5,fill:C.dim},svg,"answer "+(i+1));
+    });
+    el("line",{x1:L,x2:W-R,y1:Y(g.mean),y2:Y(g.mean),stroke:C.amber,"stroke-width":2,"stroke-dasharray":"6 4"},svg);
+    el("text",{x:(L+W-R)/2,y:13,"text-anchor":"middle","font-size":11,fill:C.amber,"font-weight":700},svg,"- - group mean = "+g.mean.toFixed(2));
+    // advantages
+    svg=$("grAdv"); clear(svg);
+    const vmin=-2, vmax=2;
+    Y = v => T + (vmax-v)/(vmax-vmin)*(H-T-B);
+    for(let v=vmin; v<=vmax; v+=1){
+      el("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:v===0?C.dim:C.grid,"stroke-width":v===0?1.3:1},svg);
+      el("text",{x:L-6,y:Y(v)+4,"text-anchor":"end","font-size":10,fill:C.dim},svg,(v>0?"+":v<0?"−":"")+Math.abs(v));
+    }
+    g.adv.forEach((a,i)=>{
+      const y1=Y(Math.max(a,0)), y2=Y(Math.min(a,0));
+      el("rect",{x:X(i)-22,y:y1,width:44,height:Math.max(y2-y1,2),fill:a>=0?C.green:C.coral,opacity:0.85,rx:3},svg);
+      el("text",{x:X(i),y:a>=0?y1-6:y2+14,"text-anchor":"middle","font-size":11.5,fill:C.chalk,"font-weight":700},svg,sgn(a,3));
+      el("text",{x:X(i),y:H-B+16,"text-anchor":"middle","font-size":10.5,fill:C.dim},svg,"answer "+(i+1));
+    });
+  }
+  document.querySelectorAll(".grp").forEach((btn,i)=>btn.addEventListener("click", ()=>{
+    setActive(".grp", btn);
+    const rs=btn.dataset.r.split(",").map(Number), g=grpo(rs);
+    grDraw(rs,g);
+    $("grMean").textContent=g.mean.toFixed(2); $("grStd").textContent=g.std.toFixed(4);
+    $("grA").textContent="["+g.adv.map(a=>sgn(a,3)).join(", ")+"]";
+    const stories=[
+      `Two of four right: mean 0.5, std 0.5. Each right answer sits 0.5 above the mean, (1 − 0.5)/0.5 = <b>+1</b>; each wrong one (0 − 0.5)/0.5 = <b>−1</b>. Right answers are pushed up exactly as hard as wrong ones are pushed down.`,
+      `Only one of four right: mean 0.25, std ${g.std.toFixed(4)}. The lone correct answer gets (1 − 0.25)/${g.std.toFixed(4)} = <b>${sgn(g.adv[0],3)}</b>, a strong push up; each wrong one gets <b>${sgn(g.adv[1],3)}</b>. A rare success is worth more. No separate value network needed: the group itself is the baseline.`
+    ];
+    $("grStory").innerHTML=stories[i];
+  }));
+  $("grPlay").addEventListener("click", ()=>playSeq([...document.querySelectorAll(".grp")], 2600));
+
+  // ---------- initial states ----------
+  document.querySelector('.stage[data-stage="rm"]').click();
+  document.querySelector(".rmp").click();
+  document.querySelectorAll(".klp")[1].click();
+  document.querySelector(".dpop").click();
+  document.querySelector(".grp").click();
+})();
+</script>
+</body>
+</html>

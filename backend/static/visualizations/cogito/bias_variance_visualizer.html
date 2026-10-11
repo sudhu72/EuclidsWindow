@@ -29,6 +29,11 @@
   input[type=range]{flex:1;min-width:180px;accent-color:var(--amber);}
   .readout{font-family:'Kalam',cursive;font-size:14px;background:rgba(244,241,232,.08);border-radius:6px;padding:2px 10px;min-width:44px;text-align:center;}
 
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op.primary{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  button.op:disabled{opacity:0.4;cursor:default;}
   svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:0 auto;}
   .cols{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;align-items:flex-start;}
   .col-title{text-align:center;font-family:'Kalam',cursive;font-size:14px;margin-bottom:4px;}
@@ -57,6 +62,7 @@
     <button class="tabbtn active" data-tab="sweep">The Complexity Sweep</button>
     <button class="tabbtn" data-tab="ensemble">Ensembling Reduces Variance</button>
     <button class="tabbtn" data-tab="doubledescent">Double Descent</button>
+    <button class="tabbtn" data-tab="learncurve">Learning Curves</button>
   </div>
 
   <!-- ============ TAB 1: THE COMPLEXITY SWEEP ============ -->
@@ -115,6 +121,34 @@
         <div class="metric amber"><div class="lbl">regime</div><div class="num" id="ddRegime">-</div></div>
       </div>
       <div class="story-line" id="ddStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: LEARNING CURVES ============ -->
+  <div class="tabpanel" id="tab-learncurve">
+    <div class="panel">
+      <h2>Learning Curves: Train and Validation Error vs. Training-Set Size</h2>
+      <p class="sub">f(x) = 0.5x² + 2x + 1, σ = 1 (noise floor MSE = 1), x uniform on [−3, 3]. Each point is the mean over 20 random 75/25 splits from sklearn's learning_curve (numbers reproduced in the doc, Part 7).</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-lc="linear">Preset: linear model (high bias)</button>
+        <button class="op" data-lc="tree6">Preset: depth-6 tree (high variance)</button>
+        <button class="op" data-lc="quad">Preset: quadratic (right family)</button>
+        <button class="op" data-lc="treefull">Preset: fully grown tree (memorizer)</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="lcStep">Step: add the next training size</button>
+        <button class="op" id="lcPlay">Play</button>
+        <button class="op" id="lcEnd">Jump to end</button>
+        <button class="op" id="lcReset">Reset</button>
+      </div>
+      <svg id="lcSvg" width="660" height="320" viewBox="0 0 660 320"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">training rows</div><div class="num" id="lcN">-</div></div>
+        <div class="metric coral"><div class="lbl">train MSE</div><div class="num" id="lcTr">-</div></div>
+        <div class="metric blue"><div class="lbl">validation MSE</div><div class="num" id="lcVa">-</div></div>
+        <div class="metric green"><div class="lbl">gap (variance part)</div><div class="num" id="lcGap">-</div></div>
+      </div>
+      <div class="story-line" id="lcStory"></div>
     </div>
   </div>
 
@@ -368,6 +402,86 @@
   }
   document.getElementById("ddSlider").addEventListener("input", renderDoubleDescent);
   renderDoubleDescent();
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function $(id){ return document.getElementById(id); }
+  /* ============================================================
+     TAB 4 — LEARNING CURVES (sklearn learning_curve output)
+     ============================================================ */
+  const SIZES = [10,20,50,100,200,500,1000,1500];
+  const LC = {
+    linear:   {name:"linear model", tr:[1.742,2.140,2.668,2.694,2.758,2.752,2.755,2.739], va:[3.837,3.121,2.876,2.811,2.778,2.766,2.764,2.766],
+               verdict:"HIGH BIAS: the curves met by 200 rows (gap 0.019) and are flat at ~2.77, far above the floor of 1. More data will not help; a more flexible model (add x²) will."},
+    tree6:    {name:"depth-6 tree", tr:[0.000,0.017,0.119,0.288,0.469,0.662,0.774,0.833], va:[2.851,2.056,1.816,1.721,1.498,1.264,1.147,1.111],
+               verdict:"HIGH VARIANCE: big gap that keeps closing (2.851 → 0.278), validation still falling at 1,500 rows. More data will help, and so would regularizing."},
+    quad:     {name:"quadratic", tr:[0.687,0.786,0.920,0.934,0.957,0.938,0.947,0.956], va:[1.329,1.117,1.000,0.972,0.962,0.955,0.951,0.951],
+               verdict:"JUST RIGHT: both curves sit on the noise floor (validation 0.951). What remains is σ², which nothing can remove. Stop here."},
+    treefull: {name:"fully grown tree", tr:[0,0,0,0,0,0,0,0], va:[2.852,2.061,1.918,1.966,1.973,1.937,1.996,1.987],
+               verdict:"MEMORIZER: train MSE is 0 at every size and validation is stuck near 2 (= its own noise 1 + the new point's noise 1). Data will not close this gap; regularize."}
+  };
+  const lc = { model:"linear", k:0, timer:null };
+  const W = 660, H = 320, L = 60, R = 20, T = 20, B = 46, YMAX = 4.0;
+  const sx = n => L + (Math.log10(n) - 1) / (Math.log10(1500) - 1) * (W - L - R);
+  const sy = v => T + (1 - v / YMAX) * (H - T - B);
+  function draw(){
+    const svg = $("lcSvg"); svg.innerHTML = "";
+    const d = LC[lc.model];
+    [0,1,2,3,4].forEach(v=>{
+      svg.appendChild(el("line",{x1:L,x2:W-R,y1:sy(v),y2:sy(v),stroke:"var(--border)"}));
+      svg.appendChild(el("text",{x:L-8,y:sy(v)+4,fill:"var(--chalk-dim)","font-size":10,"text-anchor":"end"},String(v)));
+    });
+    SIZES.forEach(n=> svg.appendChild(el("text",{x:sx(n),y:H-B+16,fill:"var(--chalk-dim)","font-size":10,"text-anchor":"middle"},String(n))));
+    svg.appendChild(el("text",{x:(L+W-R)/2,y:H-8,fill:"var(--chalk-dim)","font-size":11,"text-anchor":"middle"},"training rows (log scale)"));
+    svg.appendChild(el("text",{x:14,y:T+8,fill:"var(--chalk-dim)","font-size":11},"MSE"));
+    svg.appendChild(el("line",{x1:L,x2:W-R,y1:sy(1),y2:sy(1),stroke:"var(--green)","stroke-dasharray":"5 4"}));
+    svg.appendChild(el("text",{x:L+4,y:sy(1)-5,fill:"var(--green)","font-size":10},"noise floor σ² = 1"));
+    const upto = lc.k;
+    ["tr","va"].forEach(key=>{
+      const col = key === "tr" ? "var(--coral)" : "var(--blue)";
+      let pts = "";
+      for (let i=0;i<upto;i++) pts += sx(SIZES[i])+","+sy(d[key][i])+" ";
+      if (upto > 1) svg.appendChild(el("polyline",{points:pts.trim(),fill:"none",stroke:col,"stroke-width":2.5}));
+      for (let i=0;i<upto;i++) svg.appendChild(el("circle",{cx:sx(SIZES[i]),cy:sy(d[key][i]),r:4,fill:col}));
+    });
+    svg.appendChild(el("text",{x:L+10,y:T+14,fill:"var(--coral)","font-size":11},"— train MSE"));
+    svg.appendChild(el("text",{x:L+110,y:T+14,fill:"var(--blue)","font-size":11},"— validation MSE"));
+    svg.appendChild(el("text",{x:L+250,y:T+14,fill:"var(--amber)","font-size":11},d.name));
+    if (upto > 0){
+      const i = upto - 1;
+      $("lcN").textContent = SIZES[i];
+      $("lcTr").textContent = d.tr[i].toFixed(3);
+      $("lcVa").textContent = d.va[i].toFixed(3);
+      $("lcGap").textContent = (d.va[i] - d.tr[i]).toFixed(3);
+    } else { ["lcN","lcTr","lcVa","lcGap"].forEach(id=>$(id).textContent="-"); }
+    $("lcStory").textContent = upto === 0 ? "Press Step to train on 10 rows, then keep adding rows." :
+      upto < SIZES.length ? ("At "+SIZES[upto-1]+" rows. Keep stepping: is the gap closing, and are the curves still moving?") : d.verdict;
+    $("lcStep").disabled = upto >= SIZES.length;
+  }
+  function stop(){ if (lc.timer){ clearInterval(lc.timer); lc.timer = null; $("lcPlay").textContent = "Play"; } }
+  document.querySelectorAll("[data-lc]").forEach(b=>b.addEventListener("click", ()=>{
+    stop(); lc.model = b.dataset.lc; lc.k = SIZES.length;
+    document.querySelectorAll("[data-lc]").forEach(x=>x.classList.toggle("active", x===b));
+    draw();
+  }));
+  $("lcStep").addEventListener("click", ()=>{ if (lc.k < SIZES.length){ lc.k++; draw(); } });
+  $("lcEnd").addEventListener("click", ()=>{ stop(); lc.k = SIZES.length; draw(); });
+  $("lcReset").addEventListener("click", ()=>{ stop(); lc.k = 0; draw(); });
+  $("lcPlay").addEventListener("click", ()=>{
+    if (lc.timer){ stop(); return; }
+    if (lc.k >= SIZES.length) lc.k = 0;
+    $("lcPlay").textContent = "Pause"; draw();
+    lc.timer = setInterval(()=>{ if (lc.k >= SIZES.length){ stop(); return; } lc.k++; draw(); }, 700);
+  });
+  draw();
 })();
 </script>
 </body>

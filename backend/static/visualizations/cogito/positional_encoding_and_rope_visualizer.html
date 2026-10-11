@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Positional Encoding and RoPE, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:200px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:70px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:560px;height:auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+  .badge{display:inline-block;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;margin-left:6px;}
+  .badge.ok{background:rgba(143,209,158,0.18);color:var(--green);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Positional Encoding and RoPE, live</h1>
+  <p class="sub">Two demos: watch a single fixed rotation matrix correctly predict a sinusoidal encoding at any offset from any starting position, then watch RoPE's rotated Query/Key dot product hold rock-steady across wildly different absolute positions — as long as the offset between them doesn't change.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="pe">Sinusoidal PE &amp; Relative Rotation</button>
+    <button class="tab-btn" data-tab="rope">RoPE: Relative-Offset Invariance</button>
+  </div>
+
+  <!-- ==================== TAB 1: SINUSOIDAL PE ==================== -->
+  <div class="tabpage active" id="tab-pe">
+    <div class="panel">
+      <h2>PE(pos), Heatmapped</h2>
+      <p class="sub">Each column is a dimension pair's sine/cosine wave; some oscillate fast (fine position detail), some slow (coarse document position).</p>
+      <svg id="peHeatmap" viewBox="0 0 480 260"></svg>
+    </div>
+    <div class="panel">
+      <h2>The Relative-Rotation Property, Checked Live</h2>
+      <div class="slider-row"><label for="peP">Position (pos)</label><input type="range" id="peP" min="0" max="30" step="1" value="3"><output id="peLabelP">3</output></div>
+      <div class="slider-row"><label for="peK">Offset (k)</label><input type="range" id="peK" min="1" max="10" step="1" value="2"><output id="peLabelK">2</output></div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">actual PE(pos+k)[0:2]</div><div class="num" id="peActual">—</div></div>
+        <div class="metric amber"><div class="lbl">M_k applied to PE(pos)[0:2]</div><div class="num" id="pePredicted">—</div></div>
+      </div>
+      <div class="story-line" id="peStory"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: ROPE ==================== -->
+  <div class="tabpage" id="tab-rope">
+    <div class="panel">
+      <h2>Rotate Q at Position m, K at Position n</h2>
+      <p class="sub">Fixed toy vectors q=[0.6, 0.8], k=[0.3, -0.5], frequency ω=1.0. Drag m and n independently — the dot product only ever depends on n−m.</p>
+      <div class="slider-row"><label for="rM">Query position (m)</label><input type="range" id="rM" min="0" max="100" step="1" value="2"><output id="rMOut">2</output></div>
+      <div class="slider-row"><label for="rN">Key position (n)</label><input type="range" id="rN" min="0" max="100" step="1" value="5"><output id="rNOut">5</output></div>
+      <div class="row">
+        <button class="op" onclick="shiftBoth(10)">Shift BOTH m,n by +10 (offset unchanged)</button>
+        <button class="op" onclick="shiftN(1)">Change offset only (n += 1)</button>
+        <button class="op" onclick="reset()">Reset</button>
+      </div>
+      <svg id="ropeSvg" viewBox="0 0 480 260"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">offset (n − m)</div><div class="num" id="ropeOffset">—</div></div>
+        <div class="metric coral"><div class="lbl">rotated dot product</div><div class="num" id="ropeDot">—</div></div>
+      </div>
+      <div class="story-line" id="ropeStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>§3.4-3.4.1 of ml_deep_learning_llm_feynman_tutorial.md</b>
+    (<a href="../deep_learning/ml_deep_learning_llm_feynman_tutorial.md">ml_deep_learning_llm_feynman_tutorial.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ==================== TAB 1: SINUSOIDAL PE ====================
+  const D = 4;
+  function omega(i){ return 1.0/Math.pow(10000, i/D); }
+  function peVec(pos){
+    const v = new Array(D).fill(0);
+    for(let i=0;i<D;i+=2){
+      const w = omega(i);
+      v[i] = Math.sin(pos*w);
+      v[i+1] = Math.cos(pos*w);
+    }
+    return v;
+  }
+  function drawHeatmap(){
+    const svg = document.getElementById("peHeatmap");
+    svg.innerHTML = "";
+    const maxPos = 30;
+    const cellW = 460/D, cellH = 220/maxPos;
+    for(let p=0;p<maxPos;p++){
+      const v = peVec(p);
+      for(let d=0;d<D;d++){
+        const t = (v[d]+1)/2; // 0..1
+        const color = `rgba(255,206,84,${t.toFixed(3)})`;
+        svg.appendChild(el("rect",{x:10+d*cellW, y:10+p*cellH, width:cellW-2, height:cellH-1, fill:color}));
+      }
+    }
+    for(let d=0;d<D;d++){
+      svg.appendChild(el("text",{x:10+d*cellW+cellW/2, y:242, "text-anchor":"middle", "font-size":10, fill:"var(--chalk-dim)"}, "dim "+d));
+    }
+    svg.appendChild(el("text",{x:465, y:15, "text-anchor":"end", "font-size":10, fill:"var(--chalk-dim)"}, "pos=0"));
+    svg.appendChild(el("text",{x:465, y:232, "text-anchor":"end", "font-size":10, fill:"var(--chalk-dim)"}, "pos="+(maxPos-1)));
+  }
+  drawHeatmap();
+
+  function updatePE(){
+    const pos = parseInt(document.getElementById("peP").value,10);
+    const k = parseInt(document.getElementById("peK").value,10);
+    document.getElementById("peLabelP").textContent = pos;
+    document.getElementById("peLabelK").textContent = k;
+    const pePos = peVec(pos);
+    const peActual = peVec(pos+k);
+    // build M_k for dim-pair 0 and apply
+    const w0 = omega(0);
+    const ang = k*w0;
+    const c = Math.cos(ang), s = Math.sin(ang);
+    const predicted0 = c*pePos[0] + s*pePos[1];
+    const predicted1 = -s*pePos[0] + c*pePos[1];
+    document.getElementById("peActual").textContent = `[${peActual[0].toFixed(4)}, ${peActual[1].toFixed(4)}]`;
+    document.getElementById("pePredicted").textContent = `[${predicted0.toFixed(4)}, ${predicted1.toFixed(4)}]`;
+    const match = Math.abs(predicted0-peActual[0])<1e-6 && Math.abs(predicted1-peActual[1])<1e-6;
+    document.getElementById("peStory").innerHTML = match
+      ? `The SAME fixed rotation M_${k} (built only from the offset) correctly maps PE(${pos}) to PE(${pos+k}). <span class="badge ok">MATCH ✓</span>`
+      : "Mismatch — check inputs.";
+  }
+  ["peP","peK"].forEach(id => document.getElementById(id).addEventListener("input", updatePE));
+  updatePE();
+
+  // ==================== TAB 2: ROPE ====================
+  const Q = [0.6, 0.8], K = [0.3, -0.5], OMEGA = 1.0;
+  function rotate(vec, theta){
+    const c = Math.cos(theta), s = Math.sin(theta);
+    return [c*vec[0] - s*vec[1], s*vec[0] + c*vec[1]];
+  }
+  function drawRope(m, n){
+    const svg = document.getElementById("ropeSvg");
+    svg.innerHTML = "";
+    const cx1=140, cx2=340, cy=140, r=90;
+    svg.appendChild(el("circle",{cx:cx1,cy:cy,r:r,fill:"none",stroke:"rgba(244,241,232,0.15)"}));
+    svg.appendChild(el("circle",{cx:cx2,cy:cy,r:r,fill:"none",stroke:"rgba(244,241,232,0.15)"}));
+    const qRot = rotate(Q, m*OMEGA);
+    const kRot = rotate(K, n*OMEGA);
+    svg.appendChild(el("line",{x1:cx1,y1:cy,x2:cx1+qRot[0]*r,y2:cy-qRot[1]*r, stroke:"var(--blue)", "stroke-width":3}));
+    svg.appendChild(el("text",{x:cx1, y:cy+r+20, "text-anchor":"middle", "font-size":11, fill:"var(--blue)"}, "Q at m="+m));
+    svg.appendChild(el("line",{x1:cx2,y1:cy,x2:cx2+kRot[0]*r,y2:cy-kRot[1]*r, stroke:"var(--coral)", "stroke-width":3}));
+    svg.appendChild(el("text",{x:cx2, y:cy+r+20, "text-anchor":"middle", "font-size":11, fill:"var(--coral)"}, "K at n="+n));
+    return qRot.map((v,i)=>v*kRot[i]).reduce((a,b)=>a+b,0);
+  }
+  function updateRope(){
+    const m = parseInt(document.getElementById("rM").value,10);
+    const n = parseInt(document.getElementById("rN").value,10);
+    document.getElementById("rMOut").textContent = m;
+    document.getElementById("rNOut").textContent = n;
+    const dot = drawRope(m,n);
+    document.getElementById("ropeOffset").textContent = (n-m);
+    document.getElementById("ropeDot").textContent = dot.toFixed(6);
+    document.getElementById("ropeStory").textContent =
+      `offset n−m = ${n-m}. Try "shift both by +10" — the offset, and the dot product, won't move at all.`;
+  }
+  window.shiftBoth = function(amt){
+    let m = parseInt(document.getElementById("rM").value,10) + amt;
+    let n = parseInt(document.getElementById("rN").value,10) + amt;
+    if(m<=100 && n<=100){ document.getElementById("rM").value=m; document.getElementById("rN").value=n; updateRope(); }
+  };
+  window.shiftN = function(amt){
+    let n = parseInt(document.getElementById("rN").value,10) + amt;
+    if(n<=100){ document.getElementById("rN").value=n; updateRope(); }
+  };
+  window.reset = function(){
+    document.getElementById("rM").value=2; document.getElementById("rN").value=5; updateRope();
+  };
+  ["rM","rN"].forEach(id => document.getElementById(id).addEventListener("input", updateRope));
+  updateRope();
+})();
+</script>
+</body>
+</html>

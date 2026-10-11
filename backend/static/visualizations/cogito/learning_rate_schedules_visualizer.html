@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning-rate schedules &amp; warmup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#16221c;--bg-panel:#1b2b23;--chalk:#f4f1e8;--chalk-dim:#7f8f83;--amber:#ffce54;--coral:#ff8266;--green:#8fd19e;--blue:#7fb3d5;--border:rgba(244,241,232,0.14);}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.55;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;}
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;} .tabpage.active{display:block;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .row-label{width:100%;text-align:center;font-size:11.5px;color:var(--chalk-dim);margin-bottom:-4px;}
+  .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11.5px;color:var(--chalk-dim);margin:4px 0 10px;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .sw{width:18px;height:3px;display:inline-block;border-radius:2px;}
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:6px auto;width:100%;height:auto;max-width:860px;}
+  svg text{font-family:'JetBrains Mono',monospace;}
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);} .metric.coral .num{color:var(--coral);} .metric.green .num{color:var(--green);} .metric.amber .num{color:var(--amber);}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;line-height:1.6;}
+  .story-line b{color:var(--chalk);}
+  .eq{font-size:14px;text-align:center;line-height:1.9;margin:8px 0;}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.datatable th,table.datatable td{border:1px solid var(--border);padding:6px 7px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+  .dim{color:var(--chalk-dim);} .ok{color:var(--green);} .bad{color:var(--coral);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Learning-rate schedules &amp; warmup</h1>
+  <p class="sub">Companion to Part 5 of the Adam optimizer tutorial. The schedules are exact formulas, so they match the tutorial's table digit for digit. The noisy-SGD race is a real simulation with a seeded random generator (same numbers every click); its averages differ a little from the tutorial's because the random draws differ. Every example is one click.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="sched">1 · The schedules</button>
+    <button class="tab-btn" data-tab="race">2 · Noisy SGD race</button>
+    <button class="tab-btn" data-tab="adam">3 · Adam's blind first step</button>
+  </div>
+
+  <div class="tabpage active" id="tab-sched">
+    <div class="panel">
+      <h2>Learning rate at every step</h2>
+      <div class="row"><div class="row-label">One-click examples</div>
+        <button class="op sp" data-s="step">Step decay</button>
+        <button class="op sp" data-s="cos">Cosine decay</button>
+        <button class="op sp" data-s="wc">Warmup + cosine (the tutorial's table)</button>
+      </div>
+      <div class="eq" id="schedEq"></div>
+      <svg id="schedPlot" viewBox="0 0 860 340"></svg>
+      <div class="story-line" id="schedStory"></div>
+      <table class="datatable" id="schedTable"></table>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-race">
+    <div class="panel">
+      <h2>Minimize ½w² from w = 5 with noisy gradients (gradient = w + N(0, 1) noise)</h2>
+      <div class="row"><div class="row-label">One-click examples</div>
+        <button class="op rp" data-r="race">Noisy SGD race: 200 runs × 2,000 steps</button>
+        <button class="op rp" data-r="clean">Without noise: 200 steps</button>
+      </div>
+      <div class="legend"><span><i class="sw" style="background:var(--coral)"></i>constant 0.1</span><span><i class="sw" style="background:var(--blue)"></i>constant 0.01</span><span><i class="sw" style="background:var(--green)"></i>cosine 0.1 → 0.001</span></div>
+      <svg id="racePlot" viewBox="0 0 860 340"></svg>
+      <div class="metric-row" id="raceMetrics"></div>
+      <div class="story-line" id="raceStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-adam">
+    <div class="panel">
+      <h2>Adam's first update, for gradients of very different sizes</h2>
+      <div class="row"><div class="row-label">One-click example (β₁ = 0.9, β₂ = 0.999, ε = 10⁻⁸, lr = 0.001)</div>
+        <button class="op ap" id="adamBtn">Adam's blind first step: gradients 0.0001, 1, 10,000</button>
+      </div>
+      <div class="eq">m₁ = (1 − β₁)·g, &nbsp; v₁ = (1 − β₂)·g² &nbsp;→&nbsp; m̂ = m₁/(1 − β₁) = g, &nbsp; v̂ = v₁/(1 − β₂) = g² &nbsp;→&nbsp; step = lr · m̂ / (√v̂ + ε) = lr · g / (|g| + ε)</div>
+      <table class="datatable" id="adamTable"></table>
+      <div class="story-line" id="adamStory"></div>
+    </div>
+  </div>
+
+  <footer>Companion to <b>Part 5 of adam_optimizer_feynman.md</b> (<a href="../deep_learning/adam_optimizer_feynman.md">adam_optimizer_feynman.md</a>). Open directly in any browser: no install, nothing sent anywhere.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+const C={amber:"#ffce54",coral:"#ff8266",green:"#8fd19e",blue:"#7fb3d5",chalk:"#f4f1e8",dim:"#7f8f83",grid:"rgba(244,241,232,0.10)"};
+const $=id=>document.getElementById(id);
+function rng(seed){let a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
+function gauss(r){let s=null;return function(){if(s!==null){const v=s;s=null;return v;}let u=0;while(u===0)u=r();const v=r(),m=Math.sqrt(-2*Math.log(u));s=m*Math.sin(2*Math.PI*v);return m*Math.cos(2*Math.PI*v);};}
+const SUP={"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","-":"⁻"};
+const sup=s=>String(s).split("").map(c=>SUP[c]).join("");
+function sci(v,d){if(v===0)return"0";const e=Math.floor(Math.log10(Math.abs(v))+1e-12),m=v/Math.pow(10,e);return m.toFixed(d===undefined?2:d)+" × 10"+sup(e);}
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(p,x,y,s,a){const t=el("text",Object.assign({x,y,fill:C.dim,"font-size":11},a||{}),p);t.textContent=s;return t;}
+document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".tabpage").forEach(x=>x.classList.remove("active"));b.classList.add("active");$("tab-"+b.dataset.tab).classList.add("active");}));
+
+// ---------------- the schedules ----------------
+const PEAK=3e-4,FLOOR=3e-5,WU=100,T=1000;
+const cosine=(p,peak,floor)=>floor+0.5*(peak-floor)*(1+Math.cos(Math.PI*p));
+const stepDecay=t=>t<30?0.1:t<60?0.01:0.001;
+const cosNoWarm=t=>cosine(t/(T-1),PEAK,FLOOR);
+const warmCos=t=>t<WU?PEAK*(t+1)/WU:cosine((t-WU)/(T-WU),PEAK,FLOOR);
+const TABLE=[[0,"3.0 × 10⁻⁶"],[49,"1.5 × 10⁻⁴"],[99,"3.0 × 10⁻⁴"],[325,"2.6 × 10⁻⁴"],[550,"1.65 × 10⁻⁴"],[775,"6.95 × 10⁻⁵"],[999,"3.0 × 10⁻⁵"]];
+const docDigits=s=>(s.split(" × ")[0].split(".")[1]||"").length;
+
+function lineChart(svg,o){
+  svg.innerHTML="";const W=860,H=340,L=86,R=16,Tp=16,B=46;
+  const sx=x=>L+(x-o.x0)/(o.x1-o.x0)*(W-L-R),yv=o.log?(v=>Math.log10(v)):(v=>v),y0=yv(o.y0),y1=yv(o.y1),sy=v=>Tp+(y1-yv(v))/(y1-y0)*(H-Tp-B);
+  o.yt.forEach(v=>{el("line",{x1:L,x2:W-R,y1:sy(v),y2:sy(v),stroke:C.grid},svg);txt(svg,L-6,sy(v)+4,o.yfmt(v),{"text-anchor":"end"});});
+  for(let x=o.x0;x<=o.x1;x+=o.xs){el("line",{x1:sx(x),x2:sx(x),y1:Tp,y2:H-B,stroke:C.grid},svg);txt(svg,sx(x),H-B+16,String(x),{"text-anchor":"middle"});}
+  txt(svg,(L+W-R)/2,H-8,o.xl,{"text-anchor":"middle","font-size":12});
+  txt(svg,14,Tp+(H-Tp-B)/2,o.yl,{"text-anchor":"middle",transform:`rotate(-90 14 ${Tp+(H-Tp-B)/2})`});
+  (o.vlines||[]).forEach(([x,lab])=>{el("line",{x1:sx(x),x2:sx(x),y1:Tp,y2:H-B,stroke:C.amber,"stroke-opacity":0.5,"stroke-dasharray":"6 4"},svg);txt(svg,sx(x)+5,Tp+12,lab,{fill:C.amber});});
+  o.series.forEach(s=>{let d="";s.ys.forEach((v,i)=>{d+=(i?"L":"M")+sx(i).toFixed(1)+","+sy(Math.max(o.y0,Math.min(o.y1,v))).toFixed(1);});el("path",{d,stroke:s.c,"stroke-width":s.w||2.5,fill:"none"},svg);});
+  (o.pts||[]).forEach(([x,v,lab])=>{el("circle",{cx:sx(x),cy:sy(v),r:5.5,fill:C.amber,stroke:"#16221c","stroke-width":1.5},svg);if(lab)txt(svg,sx(x)+(x>900?-8:8),sy(v)+(x<WU?16:-9),lab,{fill:C.chalk,"text-anchor":x>900?"end":"start"});});
+}
+const lin=f=>v=>(v/1e-4).toFixed(1)+"e−4";
+function drawSched(s){
+  document.querySelectorAll(".sp").forEach(b=>b.classList.toggle("active",b.dataset.s===s));
+  let tb="";
+  if(s==="step"){
+    const ys=Array.from({length:90},(_,t)=>stepDecay(t));
+    lineChart($("schedPlot"),{x0:0,x1:89,xs:10,y0:0.0005,y1:0.2,log:true,yt:[0.001,0.01,0.1],yfmt:v=>String(v),xl:"step",yl:"learning rate (log scale)",series:[{ys,c:C.blue,w:3}],vlines:[[30,"÷10"],[60,"÷10"]],pts:[[0,0.1,"0.1"],[30,0.01,"0.01"],[60,0.001,"0.001"]]});
+    $("schedEq").innerHTML="lr = 0.1 for steps 0–29, 0.01 for steps 30–59, 0.001 after";
+    $("schedStory").innerHTML="<b>Step decay</b> cuts the rate by a fixed factor (here ÷10) at set steps. Simple, but each cut is a sudden jump.";
+    tb=`<tr><th>step</th>`+[0,29,30,59,60,89].map(t=>`<td>${t}</td>`).join("")+`</tr><tr><th>learning rate</th>`+[0,29,30,59,60,89].map(t=>`<td><b>${stepDecay(t)}</b></td>`).join("")+`</tr>`;
+  } else {
+    const f=s==="cos"?cosNoWarm:warmCos,ys=Array.from({length:T},(_,t)=>f(t));
+    const pts=s==="wc"?TABLE.map(([t])=>[t,f(t),String(t)]):[[0,f(0),"peak"],[999,f(999),"floor"]];
+    lineChart($("schedPlot"),{x0:0,x1:1000,xs:100,y0:0,y1:3.3e-4,yt:[0,0.5e-4,1e-4,1.5e-4,2e-4,2.5e-4,3e-4],yfmt:v=>v===0?"0":lin()(v),xl:"step",yl:"learning rate",series:[{ys,c:s==="cos"?C.blue:C.green,w:3}],vlines:s==="wc"?[[WU,"warmup ends (step 100)"]]:[],pts});
+    $("schedEq").innerHTML=(s==="wc"?"warmup (t &lt; 100): lr = peak · (t + 1) / 100 &nbsp;·&nbsp; then ":"")+"lr = floor + ½(peak − floor)(1 + cos(π · progress))"+(s==="wc"?", progress = (t − 100) / 900":", progress = t / 999")+"<br><span class='dim'>peak = 3 × 10⁻⁴, floor = 3 × 10⁻⁵</span>";
+    if(s==="wc"){
+      let ok=true;
+      tb=`<tr><th>step</th>`+TABLE.map(([t])=>`<td>${t}</td>`).join("")+`</tr><tr><th>computed here</th>`+TABLE.map(([t])=>`<td><b>${sci(f(t),3)}</b></td>`).join("")+`</tr><tr><th>tutorial</th>`+TABLE.map(([t,d])=>{const m=sci(f(t),docDigits(d))===d;ok=ok&&m;return `<td class="${m?"ok":"bad"}">${d}</td>`;}).join("")+`</tr>`;
+      $("schedStory").innerHTML=`<b>Linear warmup, then cosine decay</b>: the rate starts at 3 × 10⁻⁶, climbs to the peak at step 99, then glides down to the floor. `+(ok?`<span class="ok">All seven table points, rounded to the tutorial's digits, match exactly.</span>`:`<span class="bad">A table point does not match.</span>`);
+    } else {
+      tb=`<tr><th>step</th>`+[0,250,500,750,999].map(t=>`<td>${t}</td>`).join("")+`</tr><tr><th>learning rate</th>`+[0,250,500,750,999].map(t=>`<td><b>${sci(f(t),3)}</b></td>`).join("")+`</tr>`;
+      $("schedStory").innerHTML="<b>Cosine decay</b> (no warmup) follows half a cosine wave from the peak down to the floor: smooth, no sudden drops. Halfway (step ≈ 500) it is midway between peak and floor.";
+    }
+  }
+  $("schedTable").innerHTML=tb;
+}
+document.querySelectorAll(".sp").forEach(b=>b.addEventListener("click",()=>drawSched(b.dataset.s)));
+
+// ---------------- noisy SGD race ----------------
+const STEPS=2000,RUNS=200;
+const RACE=[{name:"constant 0.1",f:()=>0.1,c:C.coral,doc:"0.183",cls:"coral",lr:0.1},{name:"constant 0.01",f:()=>0.01,c:C.blue,doc:"0.053",cls:"blue",lr:0.01},{name:"cosine 0.1 → 0.001",f:t=>cosine(t/(STEPS-1),0.1,0.001),c:C.green,doc:"0.036",cls:"green"}];
+let raceCache=null;
+function race(){
+  if(raceCache)return raceCache;
+  raceCache=RACE.map((r,k)=>{const g=gauss(rng(2024+k)),mean=new Float64Array(STEPS+1);let tot=0;
+    for(let run=0;run<RUNS;run++){let w=5;mean[0]+=5;for(let t=0;t<STEPS;t++){w-=r.f(t)*(w+g());mean[t+1]+=Math.abs(w);}tot+=Math.abs(w);}
+    return {final:tot/RUNS,mean:Array.from(mean,v=>v/RUNS)};});
+  return raceCache;
+}
+function drawRace(mode){
+  document.querySelectorAll(".rp").forEach(b=>b.classList.toggle("active",b.dataset.r===mode));
+  const lt=[0.01,0.1,1,10];
+  if(mode==="race"){
+    const R=race();
+    lineChart($("racePlot"),{x0:0,x1:2000,xs:250,y0:0.01,y1:6,log:true,yt:lt,yfmt:v=>String(v),xl:"step",yl:"average |w| over 200 runs (log)",series:R.map((r,k)=>({ys:r.mean,c:RACE[k].c,w:k===2?3.5:2.5}))});
+    $("raceMetrics").innerHTML=R.map((r,k)=>`<div class="metric ${RACE[k].cls}"><div class="lbl">${RACE[k].name}: final average |w|<br>yours · tutorial${RACE[k].lr?" · theory":""}</div><div class="num">${r.final.toFixed(3)} · ${RACE[k].doc}${RACE[k].lr?" · "+(Math.sqrt(2/Math.PI*RACE[k].lr/(2-RACE[k].lr))).toFixed(3):""}</div></div>`).join("");
+    $("raceStory").innerHTML=`Constant 0.1 arrives fast but keeps bouncing in the noise; constant 0.01 settles lower but slowly; <b>cosine</b> takes big steps early and small ones late, and ends closest (<b>${R[2].final.toFixed(3)}</b>). "Theory" is the long-run average |w| for a constant rate, √(2/π) · √(lr / (2 − lr)). Averages over 200 runs still wobble by a few thousandths, which is why yours and the tutorial's differ slightly.`;
+  } else {
+    const a=Array.from({length:201},(_,t)=>5*Math.pow(0.9,t)),b=Array.from({length:201},(_,t)=>5*Math.pow(0.99,t));
+    lineChart($("racePlot"),{x0:0,x1:200,xs:25,y0:1e-9,y1:6,log:true,yt:[1e-8,1e-6,1e-4,0.01,1],yfmt:v=>v>=0.01?String(v):"10"+sup(Math.round(Math.log10(v))),xl:"step (no noise: w ← w − lr · w)",yl:"|w| (log)",series:[{ys:a,c:C.coral,w:3},{ys:b,c:C.blue,w:3}]});
+    $("raceMetrics").innerHTML=`<div class="metric coral"><div class="lbl">lr 0.1: 5 × 0.9²⁰⁰<br>tutorial: essentially 0</div><div class="num">${sci(a[200],1)}</div></div><div class="metric blue"><div class="lbl">lr 0.01: 5 × 0.99²⁰⁰<br>tutorial: 0.67</div><div class="num">${b[200].toFixed(2)}</div></div>`;
+    $("raceStory").innerHTML=`With no noise each step multiplies w by (1 − lr). The big rate gets there fast (<b>${sci(a[200],1)}</b> after 200 steps); the small one is still at <b>${b[200].toFixed(2)}</b>: slow. That is the other side of the tension.`;
+  }
+}
+document.querySelectorAll(".rp").forEach(b=>b.addEventListener("click",()=>drawRace(b.dataset.r)));
+
+// ---------------- Adam's first step ----------------
+function drawAdam(){
+  $("adamBtn").classList.add("active");
+  const lr=0.001,b1=0.9,b2=0.999,eps=1e-8,doc=["lr × 0.9999","lr × 1.0000","lr × 1.0000"];
+  let h=`<tr><th>gradient g</th><th>m̂</th><th>√v̂</th><th>m̂ / (√v̂ + ε)</th><th>Adam's first step ÷ lr<br>(yours · tutorial)</th><th>plain SGD step lr · g</th></tr>`;
+  [1e-4,1,1e4].forEach((g,i)=>{const m=(1-b1)*g,v=(1-b2)*g*g,mh=m/(1-b1),vh=v/(1-b2),r=mh/(Math.sqrt(vh)+eps),step=lr*r;
+    h+=`<tr><td><b>${["0.0001","1","10,000"][i]}</b></td><td>${mh.toPrecision(5)}</td><td>${Math.sqrt(vh).toPrecision(5)}</td><td>${r.toFixed(6)}</td><td style="color:var(--amber)"><b>lr × ${(step/lr).toFixed(4)}</b> <span class="dim">· ${doc[i]}</span></td><td>${sci(lr*g,0)}</td></tr>`;});
+  $("adamTable").innerHTML=h;
+  $("adamStory").innerHTML=`Plain SGD's first step spans eight orders of magnitude (10⁻⁷ to 10). Adam's is <b>the full learning rate</b> for all three, because after one gradient m̂ = g and √v̂ = |g|, so their ratio is ±1 (the 0.9999 is ε = 10⁻⁸ showing up next to |g| = 10⁻⁴). Adam hasn't learned which parameters are sensitive yet, so it moves every one by lr at once. <b>Warmup</b> makes those blind first steps tiny.`;
+}
+$("adamBtn").addEventListener("click",drawAdam);
+
+drawSched("wc");drawRace("race");drawAdam();
+})();
+</script>
+</body>
+</html>

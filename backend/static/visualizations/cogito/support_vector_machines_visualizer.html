@@ -57,12 +57,13 @@
 <body>
 <div class="wrap">
   <h1>Support Vector Machines: the widest street, live-solved</h1>
-  <p class="sub">Three tabs, one live solver underneath: a simplified but real SMO-style (Sequential Minimal Optimization) quadratic-programming solver, running entirely in this page's JavaScript. It is <b>not</b> scikit-learn's exact solver — it is honest about that everywhere below — but it converges to the same kind of answer on every dataset here.</p>
+  <p class="sub">Three solver tabs plus a Hinge Loss tab; one live solver underneath: a simplified but real SMO-style (Sequential Minimal Optimization) quadratic-programming solver, running entirely in this page's JavaScript. It is <b>not</b> scikit-learn's exact solver — it is honest about that everywhere below — but it converges to the same kind of answer on every dataset here.</p>
 
   <div class="tabs">
     <button class="tabbtn active" data-tab="margin">Margin &amp; Support Vectors</button>
     <button class="tabbtn" data-tab="soft">Soft Margin &amp; C</button>
     <button class="tabbtn" data-tab="kernel">Kernel Trick</button>
+    <button class="tabbtn" data-tab="hinge">Hinge Loss</button>
   </div>
 
   <!-- ============ TAB 1: MARGIN & SUPPORT VECTORS ============ -->
@@ -129,8 +130,67 @@
     </div>
   </div>
 
+  <!-- ============ TAB 4: HINGE LOSS ============ -->
+  <div class="tabpanel" id="tab-hinge">
+    <div class="panel">
+      <h2>Four losses, one axis: the margin m = y·f(x)</h2>
+      <p class="sub">The tutorial's Part 5. Horizontal axis: a point's <b>margin</b> m = y·f(x) (positive = correct side, at least 1 = outside the street). Vertical: what each loss charges that point. Click a margin preset to read all four losses there.</p>
+      <div class="row" style="justify-content:center;">
+        <span style="font-size:12px;color:var(--chalk-dim)">margin presets:</span>
+        <button class="op small" id="hmM-2" style="border-color:var(--amber)">m = −2</button>
+        <button class="op small" id="hmM-1" style="border-color:var(--amber)">m = −1</button>
+        <button class="op small" id="hmM0" style="border-color:var(--amber)">m = 0</button>
+        <button class="op small" id="hmM0.5" style="border-color:var(--amber)">m = 0.5</button>
+        <button class="op small" id="hmM1" style="border-color:var(--amber)">m = 1</button>
+        <button class="op small" id="hmM2" style="border-color:var(--amber)">m = 2</button>
+        <button class="op small" id="hmMworst" style="border-color:var(--amber)">worst point, m = −0.8626</button>
+      </div>
+      <div class="row"><label>margin m (drag)</label><input type="range" id="hmSlider" min="-2.5" max="3" step="0.05" value="0.5"><span class="readout" id="hmSliderOut">0.50</span></div>
+      <div class="cols"><svg id="hingeSvg" width="600" height="360" viewBox="0 0 600 360"></svg></div>
+      <div class="plot-caption">grey = 0-1 loss &nbsp;·&nbsp; amber = hinge max(0, 1−m) &nbsp;·&nbsp; coral = squared hinge &nbsp;·&nbsp; blue = log loss in bits, log₂(1+e^(−m)) &nbsp;·&nbsp; green dots = Part 3's 40 points (when shown)</div>
+      <div class="metric-row">
+        <div class="metric"><div class="lbl">0-1 loss</div><div class="num" id="hm01">-</div></div>
+        <div class="metric a"><div class="lbl">hinge</div><div class="num" id="hmH">-</div></div>
+        <div class="metric c"><div class="lbl">squared hinge</div><div class="num" id="hmSq">-</div></div>
+        <div class="metric b"><div class="lbl">log loss (ln / bits)</div><div class="num" id="hmLog" style="font-size:15px">-</div></div>
+        <div class="metric g"><div class="lbl">hinge slope d/dm</div><div class="num" id="hmGrad" style="font-size:15px">-</div></div>
+      </div>
+      <div class="story-line" id="hingeStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Part 3's overlapping data at C = 1: who pays hinge?</h2>
+      <p class="sub">The same 40 points as the "Soft Margin &amp; C" tab (full-precision coordinates), with scikit-learn's own <code>SVC(kernel='linear', C=1)</code> fit embedded: w = [0.8781, 1.0067], b = −5.0663.</p>
+      <div class="row" style="justify-content:center;">
+        <button class="op" id="hmShowPts" style="border-color:var(--amber)">Preset: show every point's hinge (scikit-learn fit)</button>
+      </div>
+      <div class="row" style="justify-content:center;">
+        <span style="font-size:12px;color:var(--chalk-dim)">Subgradient descent from w = 0, b = 0 (step 0.5/√t):</span>
+        <button class="op small" id="sgReset">Reset</button>
+        <button class="op small" id="sgStep">Step (+1,000)</button>
+        <button class="op small" id="sgPlay">Play</button>
+        <button class="op small" id="sgEnd" style="border-color:var(--amber)">Jump to end (200,000)</button>
+      </div>
+      <div class="row" style="justify-content:center;">
+        <button class="op small" id="sqFit" style="border-color:var(--amber)">Preset: fit with squared hinge instead (200,000 gradient steps)</button>
+        <span class="readout" id="sqOut" style="font-size:12px;font-family:'JetBrains Mono',monospace">-</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric a"><div class="lbl">Σ hinge (C = 1)</div><div class="num" id="hpSum">-</div></div>
+        <div class="metric g"><div class="lbl">points with m &lt; 1</div><div class="num" id="hpCount">-</div></div>
+        <div class="metric c"><div class="lbl">objective ½‖w‖² + C·Σ hinge</div><div class="num" id="hpObj">-</div></div>
+      </div>
+      <div class="metric-row">
+        <div class="metric b"><div class="lbl">subgradient iterations</div><div class="num" id="sgIter">0</div></div>
+        <div class="metric b"><div class="lbl">best objective so far</div><div class="num" id="sgObj">-</div></div>
+        <div class="metric b"><div class="lbl">its w, b</div><div class="num" id="sgWb" style="font-size:13px">-</div></div>
+      </div>
+      <div class="story-line" id="hpStory"></div>
+      <div class="approx-note">The subgradient loop is the tutorial's from-scratch NumPy loop, ported line for line: at each step, every point with m &lt; 1 pushes w by C·y·x; points with m &ge; 1 push nothing. It never touches scikit-learn's solver, yet it lands on the same w and b.</div>
+    </div>
+  </div>
+
   <footer>
-    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../supervised/support_vector_machines_feynman.md">Support Vector Machines</a>, Parts 1–4.
+    <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../supervised/support_vector_machines_feynman.md">Support Vector Machines</a>, Parts 1–5.
   </footer>
 </div>
 
@@ -473,6 +533,96 @@
     kernelMode="rbf"; this.classList.add("active"); document.getElementById("btnKernelLinear").classList.remove("active"); renderKernel();
   });
   renderKernel();
+
+  /* ============================================================
+     TAB 4 — HINGE LOSS
+     ============================================================ */
+  const hgX = [[2.496714153,1.861735699],[2.647688538,3.523029856],[1.765846625,1.765863043],[3.579212816,2.767434729],[1.530525614,2.542560044],[1.536582307,1.534270246],[2.241962272,0.08671975534],[0.2750821675,1.437712471],[0.9871688797,2.314247333],[1.091975924,0.5876962987],[3.465648769,1.7742237],[2.067528205,0.5752518138],[1.455617275,2.11092259],[0.8490064226,2.375698018],[1.39936131,1.70830625],[1.398293388,3.852278185],[1.986502775,0.942289071],[2.822544912,0.77915635],[2.208863595,0.04032987612],[0.6718139511,2.196861236],[4.73846658,4.171368281],[3.884351718,3.698896304],[2.52147801,3.280155792],[3.539361229,5.057122226],[4.34361829,2.236959845],[4.324083969,3.61491772],[3.323078,4.611676289],[5.030999522,4.931280119],[3.160782477,3.690787624],[4.331263431,4.975545127],[3.520825762,3.814341023],[2.893665026,2.803793376],[4.812525822,5.356240029],[3.927989878,5.003532898],[4.361636025,3.354880245],[4.361395606,5.538036566],[3.964173961,5.564643656],[1.380254896,4.821902504],[4.087047068,3.70099265],[4.091760777,2.012431085]];
+  const hgY = hgX.map((_,i)=> i<20 ? -1 : 1);
+  const HG_W = [0.878128322307846, 1.0066826113148717], HG_B = -5.06631361465569, HG_C = 1.0;
+  let hgM = 0.5, hgShowPts = false;
+  function hgMargins(w,b){ return hgX.map((x,i)=> hgY[i]*(w[0]*x[0]+w[1]*x[1]+b)); }
+  function hgObjective(w,b){ return 0.5*(w[0]*w[0]+w[1]*w[1]) + HG_C*hgMargins(w,b).reduce((a,m)=>a+Math.max(0,1-m),0); }
+  function renderHinge(){
+    const svg=document.getElementById("hingeSvg"); svg.innerHTML="";
+    const W=600,H=360,pad=40, mx0=-2.5, mx1=3, ly0=0, ly1=4;
+    const X_=m=>pad+(m-mx0)/(mx1-mx0)*(W-2*pad), Y_=l=>H-pad-(l-ly0)/(ly1-ly0)*(H-2*pad);
+    for(let g=-2; g<=3; g++){ svg.appendChild(el("line",{x1:X_(g),y1:Y_(0),x2:X_(g),y2:Y_(ly1),stroke:"rgba(244,241,232,0.07)"})); const t=el("text",{x:X_(g),y:H-pad+16,fill:"var(--chalk-dim)","font-size":11,"text-anchor":"middle"}); t.textContent=g; svg.appendChild(t); }
+    for(let l=0; l<=4; l++){ svg.appendChild(el("line",{x1:X_(mx0),y1:Y_(l),x2:X_(mx1),y2:Y_(l),stroke:"rgba(244,241,232,0.07)"})); const t=el("text",{x:pad-8,y:Y_(l)+4,fill:"var(--chalk-dim)","font-size":11,"text-anchor":"end"}); t.textContent=l; svg.appendChild(t); }
+    const tx=el("text",{x:W/2,y:H-6,fill:"var(--chalk-dim)","font-size":11,"text-anchor":"middle"}); tx.textContent="margin m = y·f(x)"; svg.appendChild(tx);
+    function curve(fn,color,width,dash){ let d="", pen=false; for(let i=0;i<=440;i++){ const m=mx0+(mx1-mx0)*i/440; const v=fn(m); if(v>ly1){ pen=false; continue; } d+=(pen?"L":"M")+X_(m).toFixed(1)+" "+Y_(v).toFixed(1); pen=true; } const a={d,fill:"none",stroke:color,"stroke-width":width}; if(dash) a["stroke-dasharray"]=dash; svg.appendChild(el("path",a)); }
+    svg.appendChild(el("path",{d:"M"+X_(mx0)+" "+Y_(1)+"L"+X_(0)+" "+Y_(1)+"L"+X_(0)+" "+Y_(0)+"L"+X_(mx1)+" "+Y_(0),fill:"none",stroke:"#9aa79d","stroke-width":2.2}));
+    curve(m=>Math.log2(1+Math.exp(-m)),"var(--blue)",2.2);
+    curve(m=>Math.pow(Math.max(0,1-m),2),"var(--coral)",2.2,"6 3");
+    curve(m=>Math.max(0,1-m),"var(--amber)",3);
+    if(hgShowPts){
+      hgMargins(HG_W,HG_B).forEach(m=>{ const h=Math.max(0,1-m); svg.appendChild(el("circle",{cx:X_(Math.min(m,mx1)),cy:Y_(h),r:4.2,fill:h>1e-6?"var(--green)":"rgba(143,209,158,0.35)",stroke:"var(--bg)","stroke-width":0.8})); });
+    }
+    const v01 = hgM<=0?1:0, vh=Math.max(0,1-hgM), vsq=vh*vh, vln=Math.log(1+Math.exp(-hgM)), vb=Math.log2(1+Math.exp(-hgM));
+    svg.appendChild(el("line",{x1:X_(hgM),y1:Y_(0),x2:X_(hgM),y2:Y_(ly1),stroke:"var(--chalk)","stroke-width":1,"stroke-dasharray":"3 3"}));
+    [[vh,"var(--amber)"],[Math.min(vsq,ly1),"var(--coral)"],[vb,"var(--blue)"]].forEach(([v,c])=>svg.appendChild(el("circle",{cx:X_(hgM),cy:Y_(v),r:5.5,fill:c,stroke:"var(--bg)","stroke-width":1.2})));
+    document.getElementById("hmSliderOut").textContent=hgM.toFixed(2);
+    document.getElementById("hm01").textContent=v01;
+    document.getElementById("hmH").textContent=vh.toFixed(4);
+    document.getElementById("hmSq").textContent=vsq.toFixed(4);
+    document.getElementById("hmLog").textContent=vln.toFixed(4)+" / "+vb.toFixed(4);
+    const g = Math.abs(hgM-1)<1e-9 ? "any in [−1, 0]" : (hgM<1 ? "−1" : "0");
+    document.getElementById("hmGrad").textContent=g;
+    const st=document.getElementById("hingeStory");
+    if(hgM<0) st.textContent="m = "+hgM.toFixed(2)+": wrong side of the boundary. 0-1 loss says 1 no matter how wrong; hinge grows in a straight line (slope −1), squared hinge grows like a parabola, log loss also grows almost linearly.";
+    else if(hgM<1) st.textContent="m = "+hgM.toFixed(2)+": correct side but inside the street. 0-1 loss charges nothing — but hinge still charges "+vh.toFixed(2)+": the SVM wants every point at least 1 unit out.";
+    else if(Math.abs(hgM-1)<1e-9) st.textContent="m = 1: exactly on the street's edge. Hinge has a kink here: the slope jumps from −1 to 0, so any value in between is a valid subgradient.";
+    else st.textContent="m = "+hgM.toFixed(2)+": outside the street. Hinge and squared hinge are exactly 0 — this point has no say at all in the fit. Log loss is still "+vln.toFixed(4)+" (never exactly 0), so in logistic regression every point keeps pulling.";
+    const ms=hgMargins(HG_W,HG_B), sum=ms.reduce((a,m)=>a+Math.max(0,1-m),0);
+    if(hgShowPts){
+      document.getElementById("hpSum").textContent=sum.toFixed(4);
+      document.getElementById("hpCount").textContent=ms.filter(m=>m<1).length+" of 40";
+      document.getElementById("hpObj").textContent=hgObjective(HG_W,HG_B).toFixed(4);
+      document.getElementById("hpStory").textContent="Bright green dots pay hinge: 7 points clearly inside the street or on the wrong side (margins −0.8626 to 0.5527) plus 3 sitting on its edge (0.9997–0.9999). Those 10 are exactly the 10 support vectors Part 3 reports for C = 1. The other 30 (faded, margin ≥ 1.1628) pay 0 and could move without changing the fit.";
+    }
+  }
+  [["hmM-2",-2],["hmM-1",-1],["hmM0",0],["hmM0.5",0.5],["hmM1",1],["hmM2",2]].forEach(([id,v])=>document.getElementById(id).addEventListener("click",()=>{ hgM=v; document.getElementById("hmSlider").value=v; renderHinge(); }));
+  document.getElementById("hmSlider").addEventListener("input",function(){ hgM=parseFloat(this.value); renderHinge(); });
+  document.getElementById("hmShowPts").addEventListener("click",()=>{ hgShowPts=true; renderHinge(); });
+
+  // subgradient descent, identical to the tutorial's NumPy loop
+  const sg = { W:[0,0], B:0, t:0, best:Infinity, bestW:[0,0], bestB:0, timer:null };
+  function sgIterate(n){
+    for(let k=0;k<n && sg.t<200000;k++){
+      sg.t++;
+      let gW0=sg.W[0], gW1=sg.W[1], gB=0;
+      for(let i=0;i<hgX.length;i++){
+        const m=hgY[i]*(sg.W[0]*hgX[i][0]+sg.W[1]*hgX[i][1]+sg.B);
+        if(m<1){ gW0-=HG_C*hgY[i]*hgX[i][0]; gW1-=HG_C*hgY[i]*hgX[i][1]; gB-=HG_C*hgY[i]; }
+      }
+      const eta=0.5/Math.sqrt(sg.t);
+      sg.W=[sg.W[0]-eta*gW0, sg.W[1]-eta*gW1]; sg.B=sg.B-eta*gB;
+      const o=hgObjective(sg.W,sg.B);
+      if(o<sg.best){ sg.best=o; sg.bestW=sg.W.slice(); sg.bestB=sg.B; }
+    }
+    renderSg();
+  }
+  function renderSg(){
+    document.getElementById("sgIter").textContent=sg.t.toLocaleString("en-US");
+    document.getElementById("sgObj").textContent=isFinite(sg.best)?sg.best.toFixed(4):"-";
+    document.getElementById("sgWb").textContent=isFinite(sg.best)?"["+sg.bestW[0].toFixed(4)+", "+sg.bestW[1].toFixed(4)+"], "+sg.bestB.toFixed(4):"-";
+    if(sg.t>=200000){ sgStop(); document.getElementById("hpStory").textContent="200,000 subgradient steps: best objective "+sg.best.toFixed(4)+" with w = ["+sg.bestW[0].toFixed(4)+", "+sg.bestW[1].toFixed(4)+"], b = "+sg.bestB.toFixed(4)+" — versus scikit-learn's 8.0636 with w = [0.8781, 1.0067], b = −5.0663. The same fit to within 0.0004 in w and 0.002 in b, reached by nothing more than 'nudge w by y·x for every point inside the street'."; }
+  }
+  function sgStop(){ if(sg.timer){ clearInterval(sg.timer); sg.timer=null; document.getElementById("sgPlay").textContent="Play"; } }
+  document.getElementById("sgReset").addEventListener("click",()=>{ sgStop(); Object.assign(sg,{W:[0,0],B:0,t:0,best:Infinity,bestW:[0,0],bestB:0}); renderSg(); });
+  document.getElementById("sgStep").addEventListener("click",()=>{ sgStop(); sgIterate(1000); });
+  document.getElementById("sgEnd").addEventListener("click",()=>{ sgStop(); sgIterate(200000); });
+  document.getElementById("sgPlay").addEventListener("click",function(){ if(sg.timer){ sgStop(); return; } if(sg.t>=200000) document.getElementById("sgReset").click(); this.textContent="Pause"; sg.timer=setInterval(()=>sgIterate(2000),60); });
+  document.getElementById("hmMworst").addEventListener("click",()=>{ hgM=Math.min(...hgMargins(HG_W,HG_B)); document.getElementById("hmSlider").value=-0.85; renderHinge(); });
+  document.getElementById("sqFit").addEventListener("click",()=>{
+    let W=[0,0],B=0; const eta=1/4000;
+    for(let t=0;t<200000;t++){ let g0=W[0],g1=W[1],gb=0;
+      for(let i=0;i<hgX.length;i++){ const m=hgY[i]*(W[0]*hgX[i][0]+W[1]*hgX[i][1]+B); if(m<1){ const c=2*HG_C*(1-m)*hgY[i]; g0-=c*hgX[i][0]; g1-=c*hgX[i][1]; gb-=c; } }
+      W=[W[0]-eta*g0,W[1]-eta*g1]; B-=eta*gb; }
+    const ms=hgMargins(W,B);
+    document.getElementById("sqOut").textContent="w = ["+W[0].toFixed(4)+", "+W[1].toFixed(4)+"], b = "+B.toFixed(4)+", street width "+(2/Math.hypot(W[0],W[1])).toFixed(4)+" (hinge: 1.4972), m < 1: "+ms.filter(m=>m<1).length+", mistakes: "+ms.filter(m=>m<0).length;
+  });
+  renderHinge(); renderSg();
 })();
 </script>
 </body>

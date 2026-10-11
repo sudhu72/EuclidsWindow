@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Model scale & inference, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --purple:#b39ddb; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:230px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:80px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:560px;height:auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+  .metric.purple .num{color:var(--purple);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;white-space:pre-line;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:6px 8px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13.5px;}
+  table.datatable tr.hl td{background:rgba(255,206,84,0.12);color:var(--amber);}
+  svg.wide{max-width:860px;}
+  .wrapwide{max-width:900px;}
+  .legend{display:flex;justify-content:center;gap:18px;font-size:11.5px;color:var(--chalk-dim);margin-top:2px;flex-wrap:wrap;}
+  .legend span.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Model Scale &amp; Inference, Live</h1>
+  <p class="sub">Companion to <b>llm_scale_and_inference_feynman.md</b>. Six demos: how more parameters buy real approximation accuracy, why chain-of-thought's benefit compounds with model capability, what a fixed compute budget's parameter/token split actually costs, and three inference tricks (FlashAttention's online softmax, speculative decoding, continuous batching) — reproducing that file's own verified numbers.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="t1">Piecewise Approximation</button>
+    <button class="tab-btn" data-tab="t2">Chain-of-Thought Compounding</button>
+    <button class="tab-btn" data-tab="t3">Same Compute, Different Split</button>
+    <button class="tab-btn" data-tab="t4">FlashAttention: Online Softmax</button>
+    <button class="tab-btn" data-tab="t5">Speculative Decoding</button>
+    <button class="tab-btn" data-tab="t6">Continuous Batching</button>
+  </div>
+
+  <div class="tabpage active" id="t1">
+    <div class="panel">
+      <h2>More "pieces" (parameters) fit the wiggly truth better</h2>
+      <p class="sub">Target: f(x) = sin(3x) + 0.5·sin(9x+1) + 0.15x² over x ∈ [-3, 3], approximated with evenly-spaced piecewise-linear segments — a low-dimensional stand-in for "more parameters approximate a complicated function better."</p>
+      <div class="slider-row"><label for="segSlider">Segment count (2^n)</label><input type="range" id="segSlider" min="1" max="7" step="1" value="3"><output id="segOut">8</output></div>
+      <svg id="approxsvg" viewBox="0 0 560 320"></svg>
+      <div class="legend"><span><span class="sw" style="background:#7fb3d5"></span>true function</span><span><span class="sw" style="background:#ff8266"></span>piecewise-linear fit</span></div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">RMSE</div><div class="num" id="rmseOut">—</div></div>
+      </div>
+      <div class="story-line" id="t1story"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t2">
+    <div class="panel">
+      <h2>Toy model: a chain is only as good as every link surviving</h2>
+      <p class="sub">Illustrative toy, not a literal mechanism inside a Transformer: each reasoning step "survives" independently with probability p; the final answer is only correct if every step survives. Drag each model's per-step reliability and the chain length.</p>
+      <div class="slider-row"><label for="pSmall">Less-capable model: p per step</label><input type="range" id="pSmall" min="0.5" max="0.99" step="0.01" value="0.85"><output id="pSmallOut">0.85</output></div>
+      <div class="slider-row"><label for="pBig">More-capable model: p per step</label><input type="range" id="pBig" min="0.5" max="0.99" step="0.01" value="0.97"><output id="pBigOut">0.97</output></div>
+      <div class="slider-row"><label for="steps">Chain length (steps)</label><input type="range" id="steps" min="1" max="15" step="1" value="10"><output id="stepsOut">10</output></div>
+      <svg id="cotsvg" viewBox="0 0 560 320"></svg>
+      <div class="legend"><span><span class="sw" style="background:#ff8266"></span>less-capable model</span><span><span class="sw" style="background:#8fd19e"></span>more-capable model</span></div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">P(all correct), less-capable</div><div class="num" id="pSmallFinal">—</div></div>
+        <div class="metric green"><div class="lbl">P(all correct), more-capable</div><div class="num" id="pBigFinal">—</div></div>
+      </div>
+      <div class="story-line" id="t2story"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t3">
+    <div class="panel">
+      <h2>A fixed compute budget, split between size and data</h2>
+      <p class="sub">Fixed training-compute budget C ≈ 6·N·D (N = parameters, D = training tokens). Drag the parameter count N — the tokens D needed to spend the same budget is derived live, alongside GPT-3, Gopher, and Chinchilla's real, published positions and the ~20:1 Chinchilla-optimal line.</p>
+      <div class="slider-row"><label for="budgetSlider">Compute budget C (FLOPs, log scale)</label><input type="range" id="budgetSlider" min="23" max="23.5" step="0.01" value="23.77"><output id="budgetOut">—</output></div>
+      <div class="slider-row"><label for="paramSlider">Your model's parameters N (log₁₀)</label><input type="range" id="paramSlider" min="9.5" max="12" step="0.01" value="10.85"><output id="paramOut">—</output></div>
+      <svg id="scalingsvg" viewBox="0 0 560 380"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#7fb3d5"></span>GPT-3</span>
+        <span><span class="sw" style="background:#ff8266"></span>Gopher</span>
+        <span><span class="sw" style="background:#8fd19e"></span>Chinchilla</span>
+        <span><span class="sw" style="background:#ffce54"></span>your slider</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">your model: tokens D</div><div class="num" id="dOut">—</div></div>
+        <div class="metric purple"><div class="lbl">tokens per parameter</div><div class="num" id="ratioOut">—</div></div>
+      </div>
+      <div class="story-line" id="t3story"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t4">
+    <div class="panel">
+      <h2>The online softmax: attention one block at a time</h2>
+      <p class="sub">One query, scores [2, 1, 3, 0.5], values [10, 20, 30, 40], two blocks of two. Keep a running max m, a running sum l of e^(score − m), and a running weighted sum o. When the max grows, rescale l and o by e^(m_old − m_new).</p>
+      <div class="row">
+        <button class="op fa-preset" data-step="1">after block 1</button>
+        <button class="op fa-preset" data-step="2">after block 2 (max changes: rescale)</button>
+        <button class="op fa-preset" data-step="0">standard softmax, all at once</button>
+      </div>
+      <table class="datatable" id="faTable"></table>
+      <svg id="faSvg" class="wide" viewBox="0 0 860 220"></svg>
+      <div class="story-line" id="faStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Exactness at full size, and why the running max matters</h2>
+      <div class="row">
+        <button class="op fa-check" data-n="1024" data-b="128">random check: N = 1,024, d = 64, blocks of 128</button>
+        <button class="op fa-check" data-n="1024" data-b="16">same, blocks of 16</button>
+        <button class="op" id="faOverflow">overflow: softmax of [1000, 999]</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">largest |online − standard|</div><div class="num" id="faDiff">-</div></div>
+        <div class="metric blue"><div class="lbl">blocks processed per query</div><div class="num" id="faBlocks">-</div></div>
+      </div>
+      <div class="story-line" id="faCheckStory">Click a check. (Random data comes from this page's own seeded generator, so the exact tiny difference differs from the tutorial's NumPy run; its size is the point.)</div>
+    </div>
+    <div class="panel">
+      <h2>How big is the N × N score matrix that standard attention writes to HBM?</h2>
+      <div class="row">
+        <button class="op fa-mem" data-n="4096" data-h="32">N = 4,096, 32 heads</button>
+        <button class="op fa-mem" data-n="32768" data-h="32">N = 32,768, 32 heads</button>
+        <button class="op fa-mem" data-n="2048" data-h="32">N = 2,048, 32 heads</button>
+      </div>
+      <div class="slider-row"><label for="faN">Sequence length N (log₂)</label><input type="range" id="faN" min="9" max="17" step="1" value="12"><output id="faNOut">4096</output></div>
+      <div class="slider-row"><label for="faH">Attention heads</label><input type="range" id="faH" min="1" max="128" step="1" value="32"><output id="faHOut">32</output></div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">scores per head (16-bit)</div><div class="num" id="faPerHead">-</div></div>
+        <div class="metric coral"><div class="lbl">all heads, one layer, one sequence</div><div class="num" id="faAll">-</div></div>
+        <div class="metric green"><div class="lbl">FlashAttention's extra memory</div><div class="num">grows with N, not N²</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t5">
+    <div class="panel">
+      <h2>Expected speedup: E = (1 − α^(γ+1)) / (1 − α) tokens per target pass</h2>
+      <p class="sub">α = chance each drafted token is accepted (assumed independent), γ = tokens drafted per round, c = cost of one draft pass as a fraction of one target pass. Speedup = E / (γc + 1).</p>
+      <div class="row">
+        <button class="op sd-preset" data-a="0.8" data-g="4" data-c="0.05">α 0.8, γ 4, c 0.05</button>
+        <button class="op sd-preset" data-a="0.6" data-g="4" data-c="0.05">α 0.6, γ 4, c 0.05</button>
+        <button class="op sd-preset" data-a="0.9" data-g="4" data-c="0.05">α 0.9, γ 4, c 0.05</button>
+        <button class="op sd-preset" data-a="0.8" data-g="8" data-c="0.05">α 0.8, γ 8, c 0.05</button>
+        <button class="op sd-preset" data-a="0.8" data-g="4" data-c="0.3">α 0.8, γ 4, c 0.3</button>
+      </div>
+      <div class="slider-row"><label for="sdA">Acceptance rate α</label><input type="range" id="sdA" min="0.05" max="0.99" step="0.01" value="0.8"><output id="sdAOut">0.80</output></div>
+      <div class="slider-row"><label for="sdG">Draft length γ</label><input type="range" id="sdG" min="1" max="16" step="1" value="4"><output id="sdGOut">4</output></div>
+      <div class="slider-row"><label for="sdC">Draft cost c</label><input type="range" id="sdC" min="0" max="1" step="0.01" value="0.05"><output id="sdCOut">0.05</output></div>
+      <svg id="sdSvg" class="wide" viewBox="0 0 860 260"></svg>
+      <div class="legend"><span><span class="sw" style="background:#7fb3d5"></span>tokens per target pass E</span><span><span class="sw" style="background:#8fd19e"></span>speedup</span></div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">tokens per target pass E</div><div class="num" id="sdE">-</div></div>
+        <div class="metric green"><div class="lbl">speedup E/(γc+1)</div><div class="num" id="sdS">-</div></div>
+        <div class="metric amber"><div class="lbl">simulated tokens per round (200,000 rounds)</div><div class="num" id="sdSim">-</div></div>
+      </div>
+      <div class="row"><button class="op" id="sdSimBtn">simulate 200,000 rounds</button></div>
+      <div class="story-line" id="sdStory"></div>
+    </div>
+    <div class="panel">
+      <h2>The acceptance rule keeps the output distribution exactly p</h2>
+      <p class="sub">Accept the drafted token x with probability min(1, p(x)/q(x)); on rejection, sample from max(0, p − q), renormalized.</p>
+      <div class="row">
+        <button class="op" id="sdRule">show the rule for p = [0.5, 0.3, 0.15, 0.05], q = [0.3, 0.4, 0.2, 0.1]</button>
+        <button class="op" id="sdMC">Monte Carlo: 400,000 draws</button>
+      </div>
+      <table class="datatable" id="sdTable"></table>
+      <div class="story-line" id="sdRuleStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t6">
+    <div class="panel">
+      <h2>Static vs. continuous batching: 16 requests, 4 slots</h2>
+      <p class="sub">Output lengths [12, 3, 5, 2, 9, 4, 3, 7, 2, 6, 10, 3, 4, 8, 2, 5] (85 tokens), one token per slot per step, requests taken in arrival order. Grey = an idle slot.</p>
+      <div class="row">
+        <button class="op cb-preset" data-mode="static" data-eq="0">static batching</button>
+        <button class="op cb-preset" data-mode="cont" data-eq="0">continuous batching</button>
+        <button class="op cb-preset" data-mode="static" data-eq="1">static, all lengths 8</button>
+        <button class="op cb-preset" data-mode="cont" data-eq="1">continuous, all lengths 8</button>
+      </div>
+      <svg id="cbSvg" class="wide" viewBox="0 0 860 220"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">total steps</div><div class="num" id="cbT">-</div></div>
+        <div class="metric green"><div class="lbl">slot utilization</div><div class="num" id="cbU">-</div></div>
+        <div class="metric blue"><div class="lbl">tokens per step</div><div class="num" id="cbTP">-</div></div>
+        <div class="metric purple"><div class="lbl">mean steps until a request finishes</div><div class="num" id="cbLat">-</div></div>
+      </div>
+      <div class="story-line" id="cbStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>ml_deep_learning_llm_feynman_tutorial.md</b>'s scaling-laws paragraph (§4.4) and <b>llm_scale_and_inference_feynman.md</b>
+    (<a href="../deep_learning/llm_scale_and_inference_feynman.md">llm_scale_and_inference_feynman.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const svgNS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs){
+    const e = document.createElementNS(svgNS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  // ---------- TABS ----------
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---------- TAB 1: PIECEWISE APPROXIMATION ----------
+  function target(x){
+    return Math.sin(3*x) + 0.5*Math.sin(9*x + 1.0) + 0.15*x*x;
+  }
+  const X0 = -3, X1 = 3;
+  const FINE_N = 2000;
+  const fineXs = [];
+  for(let i=0;i<=FINE_N;i++) fineXs.push(X0 + (X1-X0)*i/FINE_N);
+  const fineTrue = fineXs.map(target);
+
+  function piecewiseFit(nSegments){
+    const bpXs = [];
+    for(let i=0;i<=nSegments;i++) bpXs.push(X0 + (X1-X0)*i/nSegments);
+    const bpYs = bpXs.map(target);
+    // linear-interpolate at each fine x
+    const approx = fineXs.map(x=>{
+      // find segment
+      let seg = Math.floor((x-X0)/(X1-X0)*nSegments);
+      if(seg>=nSegments) seg = nSegments-1;
+      if(seg<0) seg = 0;
+      const xa=bpXs[seg], xb=bpXs[seg+1], ya=bpYs[seg], yb=bpYs[seg+1];
+      const t = xb>xa ? (x-xa)/(xb-xa) : 0;
+      return ya + t*(yb-ya);
+    });
+    let se = 0;
+    for(let i=0;i<fineTrue.length;i++) se += (approx[i]-fineTrue[i])*(approx[i]-fineTrue[i]);
+    const rmse = Math.sqrt(se/fineTrue.length);
+    return {bpXs, bpYs, approx, rmse};
+  }
+
+  const OX1=40, OY1=280, W1=480, H1=240;
+  const YMIN1=-2.2, YMAX1=2.2;
+  function px1(x){ return OX1 + (x-X0)/(X1-X0)*W1; }
+  function py1(y){ return OY1 - (y-YMIN1)/(YMAX1-YMIN1)*H1; }
+
+  function renderT1(){
+    const nSeg = Math.pow(2, parseInt(document.getElementById('segSlider').value,10));
+    document.getElementById('segOut').textContent = nSeg;
+    const {bpXs, bpYs, rmse} = piecewiseFit(nSeg);
+    const svg = document.getElementById('approxsvg'); svg.innerHTML='';
+    svg.appendChild(el('line',{x1:OX1,y1:OY1,x2:OX1+W1,y2:OY1,stroke:'#7f8f83','stroke-width':1.2}));
+    svg.appendChild(el('line',{x1:OX1,y1:OY1-H1,x2:OX1,y2:OY1,stroke:'#7f8f83','stroke-width':1.2}));
+    // true curve
+    let d = 'M ' + fineXs.map((x,i)=>px1(x)+','+py1(fineTrue[i])).join(' L ');
+    svg.appendChild(el('path',{d, fill:'none', stroke:'#7fb3d5','stroke-width':2.4, opacity:0.85}));
+    // piecewise fit
+    let d2 = 'M ' + bpXs.map((x,i)=>px1(x)+','+py1(bpYs[i])).join(' L ');
+    svg.appendChild(el('path',{d:d2, fill:'none', stroke:'#ff8266','stroke-width':2.2}));
+    bpXs.forEach((x,i)=>{ svg.appendChild(el('circle',{cx:px1(x), cy:py1(bpYs[i]), r:3, fill:'#ff8266'})); });
+    const lbl = el('text',{x:OX1+6,y:24,'font-size':'11','font-family':'JetBrains Mono, monospace',fill:'#f4f1e8'});
+    lbl.textContent = nSeg + ' segment' + (nSeg>1?'s':'');
+    svg.appendChild(lbl);
+
+    document.getElementById('rmseOut').textContent = rmse.toFixed(4);
+    document.getElementById('t1story').textContent =
+      nSeg + ' piecewise-linear segments give RMSE = ' + rmse.toFixed(4) + '. ' +
+      (nSeg<=4 ? 'Too few pieces to track the fine wiggles at all — the fit is nearly a straight line through a genuinely curvy function.' :
+       nSeg<32 ? 'More pieces are starting to trace the real shape, but the fit still visibly cuts corners on the sharper wiggles.' :
+       'Enough pieces now that the fit is visually indistinguishable from the truth — this is the geometric content of "more parameters buy real accuracy," not just a bigger file.');
+  }
+  document.getElementById('segSlider').addEventListener('input', renderT1);
+  renderT1();
+
+  // ---------- TAB 2: CHAIN-OF-THOUGHT COMPOUNDING ----------
+  const OX2=40, OY2=280, W2=480, H2=240;
+  const MAXK2 = 15;
+  function px2(k){ return OX2 + (k-1)/(MAXK2-1)*W2; }
+  function py2(p){ return OY2 - p*H2; }
+
+  function renderT2(){
+    const pSmall = parseFloat(document.getElementById('pSmall').value);
+    const pBig = parseFloat(document.getElementById('pBig').value);
+    const steps = parseInt(document.getElementById('steps').value,10);
+    document.getElementById('pSmallOut').textContent = pSmall.toFixed(2);
+    document.getElementById('pBigOut').textContent = pBig.toFixed(2);
+    document.getElementById('stepsOut').textContent = steps;
+
+    const svg = document.getElementById('cotsvg'); svg.innerHTML='';
+    svg.appendChild(el('line',{x1:OX2,y1:OY2,x2:OX2+W2,y2:OY2,stroke:'#7f8f83','stroke-width':1.2}));
+    svg.appendChild(el('line',{x1:OX2,y1:OY2-H2,x2:OX2,y2:OY2,stroke:'#7f8f83','stroke-width':1.2}));
+    for(let yy=0; yy<=1.0001; yy+=0.25){
+      svg.appendChild(el('line',{x1:OX2,y1:py2(yy),x2:OX2+W2,y2:py2(yy),stroke:'#f4f1e8',opacity:0.06}));
+      const t = el('text',{x:OX2-6,y:py2(yy)+3,'font-size':'9.5','font-family':'JetBrains Mono, monospace',fill:'#7f8f83','text-anchor':'end'});
+      t.textContent = yy.toFixed(2); svg.appendChild(t);
+    }
+    function curve(p, color){
+      let pts = [];
+      for(let k=1;k<=MAXK2;k++) pts.push(px2(k)+','+py2(Math.pow(p,k)));
+      svg.appendChild(el('path',{d:'M '+pts.join(' L '), fill:'none', stroke:color, 'stroke-width':2.4}));
+    }
+    curve(pSmall, '#ff8266');
+    curve(pBig, '#8fd19e');
+    // vertical marker at chosen steps
+    const mx = px2(steps);
+    svg.appendChild(el('line',{x1:mx,y1:OY2,x2:mx,y2:OY2-H2,stroke:'#ffce54','stroke-width':1.3,'stroke-dasharray':'4,3'}));
+    const finalSmall = Math.pow(pSmall, steps);
+    const finalBig = Math.pow(pBig, steps);
+    svg.appendChild(el('circle',{cx:mx, cy:py2(finalSmall), r:4.5, fill:'#ff8266'}));
+    svg.appendChild(el('circle',{cx:mx, cy:py2(finalBig), r:4.5, fill:'#8fd19e'}));
+    const klbl = el('text',{x:mx+6,y:OY2-H2+14,'font-size':'11','font-family':'JetBrains Mono, monospace',fill:'#ffce54'});
+    klbl.textContent = steps + ' steps'; svg.appendChild(klbl);
+
+    document.getElementById('pSmallFinal').textContent = (finalSmall*100).toFixed(1)+'%';
+    document.getElementById('pBigFinal').textContent = (finalBig*100).toFixed(1)+'%';
+    document.getElementById('t2story').textContent =
+      'At ' + steps + ' chained steps: the less-capable model\'s odds of every single step surviving are ' + (finalSmall*100).toFixed(1) +
+      '%, versus ' + (finalBig*100).toFixed(1) + '% for the more-capable model. The gap (' + ((finalBig-finalSmall)*100).toFixed(1) +
+      ' points) grows with chain length because every link has to hold, not just most of them — try dragging steps up and watch the two curves pull apart.';
+  }
+  ['pSmall','pBig','steps'].forEach(id=>document.getElementById(id).addEventListener('input', renderT2));
+  renderT2();
+
+  // ---------- TAB 3: SAME COMPUTE, DIFFERENT SPLIT ----------
+  const REAL_MODELS = [
+    {name:'GPT-3', N:175e9, D:300e9, color:'#7fb3d5'},
+    {name:'Gopher', N:280e9, D:300e9, color:'#ff8266'},
+    {name:'Chinchilla', N:70e9, D:1.4e12, color:'#8fd19e'},
+  ];
+  const OX3=50, OY3=340, W3=460, H3=280;
+  const LOGN_MIN=9.3, LOGN_MAX=12.2;   // ~2B to ~1.6T params
+  const LOGD_MIN=10.0, LOGD_MAX=13.3;  // ~10B to ~2T tokens
+  function px3(logN){ return OX3 + (logN-LOGN_MIN)/(LOGN_MAX-LOGN_MIN)*W3; }
+  function py3(logD){ return OY3 - (logD-LOGD_MIN)/(LOGD_MAX-LOGD_MIN)*H3; }
+
+  function renderT3(){
+    const logC = parseFloat(document.getElementById('budgetSlider').value); // stored as log10(C)... but we drive C off Chinchilla-ish reference; simplify: fixed C from slider directly as exponent*1e? -> use logC as log10(FLOPs)*  actually store true log10(C)
+    // Reinterpret budgetSlider as log10(C) directly, range chosen to bracket real models' compute (~3.1e23 to ~5.9e23 -> log10 ~23.5 to 23.77)
+    const C = Math.pow(10, logC);
+    document.getElementById('budgetOut').textContent = C.toExponential(2) + ' FLOPs';
+
+    const logN = parseFloat(document.getElementById('paramSlider').value);
+    document.getElementById('paramOut').textContent = 'N ≈ ' + Math.pow(10,logN).toExponential(2);
+    const N = Math.pow(10, logN);
+    const D = C/(6*N);
+    const logD = Math.log10(D);
+    const ratio = D/N;
+
+    const svg = document.getElementById('scalingsvg'); svg.innerHTML='';
+    svg.appendChild(el('line',{x1:OX3,y1:OY3,x2:OX3+W3,y2:OY3,stroke:'#7f8f83','stroke-width':1.2}));
+    svg.appendChild(el('line',{x1:OX3,y1:OY3-H3,x2:OX3,y2:OY3,stroke:'#7f8f83','stroke-width':1.2}));
+    const xlbl = el('text',{x:OX3+W3/2,y:OY3+28,'font-size':'11','font-family':'JetBrains Mono, monospace',fill:'#7f8f83','text-anchor':'middle'});
+    xlbl.textContent = 'parameters N (log scale) →'; svg.appendChild(xlbl);
+    const ylbl = el('text',{x:14,y:OY3-H3/2,'font-size':'11','font-family':'JetBrains Mono, monospace',fill:'#7f8f83','text-anchor':'middle', transform:'rotate(-90 14 '+(OY3-H3/2)+')'});
+    ylbl.textContent = 'training tokens D (log scale) →'; svg.appendChild(ylbl);
+
+    // 20:1 compute-optimal line: D = 20*N  => logD = logN + log10(20)
+    const log20 = Math.log10(20);
+    const lx1 = LOGN_MIN, ly1 = LOGN_MIN+log20;
+    const lx2 = LOGN_MAX, ly2 = LOGN_MAX+log20;
+    svg.appendChild(el('line',{x1:px3(lx1),y1:py3(ly1),x2:px3(lx2),y2:py3(ly2),stroke:'#b39ddb','stroke-width':1.6,'stroke-dasharray':'5,4'}));
+    const optlbl = el('text',{x:px3(lx2)-90,y:py3(ly2)+16,'font-size':'10','font-family':'JetBrains Mono, monospace',fill:'#b39ddb'});
+    optlbl.textContent = '20 tokens/param (Chinchilla-optimal)'; svg.appendChild(optlbl);
+
+    // real models
+    REAL_MODELS.forEach(m=>{
+      const lgN = Math.log10(m.N), lgD = Math.log10(m.D);
+      svg.appendChild(el('circle',{cx:px3(lgN), cy:py3(lgD), r:5.5, fill:m.color}));
+      const t = el('text',{x:px3(lgN)+8,y:py3(lgD)-6,'font-size':'10.5','font-family':'JetBrains Mono, monospace',fill:m.color,'font-weight':'700'});
+      t.textContent = m.name; svg.appendChild(t);
+    });
+
+    // your slider point (clamp to plotted range)
+    const plotLogD = Math.max(LOGD_MIN, Math.min(LOGD_MAX, logD));
+    svg.appendChild(el('circle',{cx:px3(logN), cy:py3(plotLogD), r:6, fill:'#ffce54', stroke:'#16221c','stroke-width':1.5}));
+
+    document.getElementById('dOut').textContent = D.toExponential(2);
+    document.getElementById('ratioOut').textContent = ratio.toFixed(2);
+    document.getElementById('t3story').textContent =
+      'At this compute budget (' + C.toExponential(2) + ' FLOPs) and N ≈ ' + N.toExponential(2) + ' parameters, matching it needs D ≈ ' + D.toExponential(2) +
+      ' tokens — ' + ratio.toFixed(1) + ' tokens per parameter. ' +
+      (ratio < 10 ? 'Well below the ~20:1 Chinchilla-optimal line — by that finding, this split is oversized on parameters relative to data, GPT-3\'s own mistake.' :
+       ratio > 35 ? 'Well above the ~20:1 line — plenty of data for a comparatively small model; likely leaving capacity on the table for this budget.' :
+       'Close to the ~20:1 Chinchilla-optimal balance for this compute budget.');
+  }
+  ['budgetSlider','paramSlider'].forEach(id=>document.getElementById(id).addEventListener('input', renderT3));
+  renderT3();
+  // ---------- TAB 4: FLASHATTENTION ONLINE SOFTMAX ----------
+  function $(id){ return document.getElementById(id); }
+  function setAct(sel, b){ document.querySelectorAll(sel).forEach(x => x.classList.remove('active')); if (b) b.classList.add('active'); }
+  const FA_S = [2, 1, 3, 0.5], FA_V = [10, 20, 30, 40];
+  function faStandard(){
+    const m = Math.max(...FA_S), e = FA_S.map(x => Math.exp(x - m)), z = e.reduce((a, b) => a + b, 0);
+    const w = e.map(x => x/z); return {w, out: w.reduce((a, x, i) => a + x*FA_V[i], 0)};
+  }
+  function faOnline(nBlocks){
+    let m = -Infinity, l = 0, o = 0; const rows = [];
+    for (let b = 0; b < nBlocks; b++){
+      const sb = FA_S.slice(2*b, 2*b+2), vb = FA_V.slice(2*b, 2*b+2);
+      const mn = Math.max(m, ...sb), corr = Math.exp(m - mn);
+      l = l*corr + sb.reduce((a, x) => a + Math.exp(x - mn), 0);
+      o = o*corr + sb.reduce((a, x, i) => a + Math.exp(x - mn)*vb[i], 0);
+      m = mn; rows.push({b: b+1, sb, m, corr, l, o});
+    }
+    return rows;
+  }
+  function renderFA(step){
+    const std = faStandard();
+    let html = '<tr><th>after</th><th>scores in block</th><th>running max m</th><th>rescale factor e^(m_old − m)</th><th>running sum l</th><th>running o</th><th>o / l so far</th></tr>';
+    const rows = step === 0 ? [] : faOnline(step);
+    rows.forEach(r => {
+      html += '<tr class="' + (r.b === step ? 'hl' : '') + '"><td>block ' + r.b + '</td><td>[' + r.sb.join(', ') + ']</td><td>' + r.m + '</td><td>' + (r.b === 1 ? '— (first block)' : r.corr.toFixed(6)) + '</td><td>' + r.l.toFixed(6) + '</td><td>' + r.o.toFixed(6) + '</td><td>' + (r.o/r.l).toFixed(6) + '</td></tr>';
+    });
+    html += '<tr><td>standard</td><td>[2, 1, 3, 0.5]</td><td>3</td><td>-</td><td>-</td><td>-</td><td>' + std.out.toFixed(6) + '</td></tr>';
+    $('faTable').innerHTML = html;
+    const svg = $('faSvg'); svg.innerHTML = '';
+    const seen = step === 0 ? 4 : 2*step;
+    const m = step === 0 ? 3 : rows[rows.length-1].m, l = step === 0 ? null : rows[rows.length-1].l;
+    const z = l === null ? FA_S.reduce((a, x) => a + Math.exp(x - 3), 0) : l;
+    FA_S.forEach((sc, i) => {
+      const x = 90 + i*180, on = i < seen;
+      const w = on ? Math.exp(sc - m)/z : 0;
+      const h = w*150;
+      svg.appendChild(el('rect',{x:x, y:180-h, width:110, height:Math.max(h, 1), fill: on ? (i < 2 ? '#7fb3d5' : '#8fd19e') : 'rgba(244,241,232,0.08)', rx:4}));
+      const t = el('text',{x:x+55, y:172-h, 'text-anchor':'middle','font-size':'12','font-family':'JetBrains Mono, monospace', fill:'#f4f1e8'});
+      t.textContent = on ? 'weight ' + w.toFixed(4) : 'not seen yet'; svg.appendChild(t);
+      const t2 = el('text',{x:x+55, y:200, 'text-anchor':'middle','font-size':'11','font-family':'JetBrains Mono, monospace', fill:'#7f8f83'});
+      t2.textContent = 'score ' + sc + ', value ' + FA_V[i] + (i < 2 ? ' (block 1)' : ' (block 2)'); svg.appendChild(t2);
+    });
+    let story;
+    if (step === 1) story = 'Block 1 only: the best guess so far is 12.689414, using weights relative to the max seen so far (2).';
+    else if (step === 2) story = 'Block 2 has a bigger score (3), so the old l and o are multiplied by e^(2 − 3) = 0.367879 before adding the new terms. Final o / l = ' + (rows[1].o/rows[1].l).toFixed(6) + ', identical to standard softmax.';
+    else story = 'Standard softmax: weights [' + std.w.map(x => x.toFixed(4)).join(', ') + '], output ' + std.out.toFixed(6) + '. It needs the whole row of scores at once.';
+    $('faStory').textContent = story;
+  }
+  document.querySelectorAll('.fa-preset').forEach(b => b.addEventListener('click', () => { setAct('.fa-preset', b); renderFA(parseInt(b.dataset.step, 10)); }));
+  renderFA(2); setAct('.fa-preset', document.querySelector('.fa-preset[data-step="2"]'));
+
+  function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function gaussFactory(seed){ const r = mulberry32(seed); return () => { let u = 0, v = 0; while (u === 0) u = r(); v = r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }; }
+  function faCheck(N, B){
+    const d = 64, g = gaussFactory(12345);
+    const mk = () => { const a = new Float64Array(N*d); for (let i = 0; i < N*d; i++) a[i] = g(); return a; };
+    const Q = mk(), K = mk(), V = mk(), sc = 1/Math.sqrt(d);
+    let maxd = 0;
+    const S = new Float64Array(N), O1 = new Float64Array(d), O2 = new Float64Array(d);
+    for (let q = 0; q < N; q++){
+      let mx = -Infinity;
+      for (let k = 0; k < N; k++){ let s = 0; for (let j = 0; j < d; j++) s += Q[q*d+j]*K[k*d+j]; S[k] = s*sc; if (S[k] > mx) mx = S[k]; }
+      let z = 0; O1.fill(0);
+      for (let k = 0; k < N; k++){ const e = Math.exp(S[k] - mx); z += e; for (let j = 0; j < d; j++) O1[j] += e*V[k*d+j]; }
+      for (let j = 0; j < d; j++) O1[j] /= z;
+      let m = -Infinity, l = 0; O2.fill(0);
+      for (let b0 = 0; b0 < N; b0 += B){
+        let bm = -Infinity; for (let k = b0; k < b0+B; k++) if (S[k] > bm) bm = S[k];
+        const mn = Math.max(m, bm), c = Math.exp(m - mn);
+        l *= c; for (let j = 0; j < d; j++) O2[j] *= c;
+        for (let k = b0; k < b0+B; k++){ const e = Math.exp(S[k] - mn); l += e; for (let j = 0; j < d; j++) O2[j] += e*V[k*d+j]; }
+        m = mn;
+      }
+      for (let j = 0; j < d; j++){ const df = Math.abs(O2[j]/l - O1[j]); if (df > maxd) maxd = df; }
+    }
+    return maxd;
+  }
+  document.querySelectorAll('.fa-check').forEach(b => b.addEventListener('click', () => {
+    setAct('.fa-check', b);
+    const N = parseInt(b.dataset.n, 10), B = parseInt(b.dataset.b, 10);
+    const diff = faCheck(N, B);
+    $('faDiff').textContent = diff.toExponential(2);
+    $('faBlocks').textContent = N/B;
+    $('faCheckStory').textContent = N + ' queries × ' + N + ' keys, 64 dimensions, keys processed in ' + (N/B) + ' blocks of ' + B + ': the online result differs from standard attention by at most ' + diff.toExponential(2) + ', which is floating-point rounding. Not an approximation.';
+  }));
+  $('faOverflow').addEventListener('click', () => {
+    setAct('.fa-check', null);
+    const naive = [Math.exp(1000), Math.exp(999)], zn = naive[0] + naive[1];
+    const st = [Math.exp(0), Math.exp(-1)], zs = st[0] + st[1];
+    $('faDiff').textContent = '-'; $('faBlocks').textContent = '-';
+    $('faCheckStory').textContent = 'Naive: e^1000 = ' + naive[0] + ', so the weights are [' + (naive[0]/zn) + ', ' + (naive[1]/zn) + ']. Subtract the max first: [' + (st[0]/zs).toFixed(4) + ', ' + (st[1]/zs).toFixed(4) + ']. That is why the online softmax tracks a running max.';
+  });
+
+  function renderFAMem(){
+    const N = Math.pow(2, parseInt($('faN').value, 10)), H = parseInt($('faH').value, 10);
+    $('faNOut').textContent = N; $('faHOut').textContent = H;
+    const per = N*N*2, all = per*H;
+    const f = b => b >= 1e9 ? (b/1e9).toFixed(2) + ' GB' : (b/1e6).toFixed(1) + ' MB';
+    $('faPerHead').textContent = f(per); $('faAll').textContent = f(all);
+  }
+  ['faN','faH'].forEach(id => $(id).addEventListener('input', () => { setAct('.fa-mem', null); renderFAMem(); }));
+  document.querySelectorAll('.fa-mem').forEach(b => b.addEventListener('click', () => {
+    setAct('.fa-mem', b); $('faN').value = Math.round(Math.log2(parseInt(b.dataset.n, 10))); $('faH').value = b.dataset.h; renderFAMem();
+  }));
+  renderFAMem();
+
+  // ---------- TAB 5: SPECULATIVE DECODING ----------
+  const sdE = (a, g) => (1 - Math.pow(a, g+1))/(1 - a);
+  function renderSD(){
+    const a = parseFloat($('sdA').value), g = parseInt($('sdG').value, 10), c = parseFloat($('sdC').value);
+    $('sdAOut').textContent = a.toFixed(2); $('sdGOut').textContent = g; $('sdCOut').textContent = c.toFixed(2);
+    const E = sdE(a, g), S = E/(g*c + 1);
+    $('sdE').textContent = E.toFixed(4); $('sdS').textContent = S.toFixed(2) + '×'; $('sdSim').textContent = '-';
+    const svg = $('sdSvg'); svg.innerHTML = '';
+    const L = 60, R = 830, T = 20, Bt = 220, GM = 16;
+    const ymax = Math.max(6, Math.ceil(sdE(a, GM)) + 1);
+    const px = k => L + (k-1)/(GM-1)*(R-L), py = v => Bt - v/ymax*(Bt-T);
+    svg.appendChild(el('line',{x1:L,y1:Bt,x2:R,y2:Bt,stroke:'#7f8f83'})); svg.appendChild(el('line',{x1:L,y1:T,x2:L,y2:Bt,stroke:'#7f8f83'}));
+    for (let v = 0; v <= ymax; v++){ const t = el('text',{x:L-8,y:py(v)+4,'text-anchor':'end','font-size':'10','font-family':'JetBrains Mono, monospace',fill:'#7f8f83'}); t.textContent = v; svg.appendChild(t); }
+    let d1 = '', d2 = '';
+    for (let k = 1; k <= GM; k++){ d1 += (k > 1 ? ' L ' : 'M ') + px(k) + ',' + py(sdE(a, k)); d2 += (k > 1 ? ' L ' : 'M ') + px(k) + ',' + py(sdE(a, k)/(k*c + 1)); }
+    svg.appendChild(el('path',{d:d1,fill:'none',stroke:'#7fb3d5','stroke-width':2.4}));
+    svg.appendChild(el('path',{d:d2,fill:'none',stroke:'#8fd19e','stroke-width':2.4}));
+    svg.appendChild(el('line',{x1:px(g),y1:T,x2:px(g),y2:Bt,stroke:'#ffce54','stroke-dasharray':'4,3'}));
+    svg.appendChild(el('circle',{cx:px(g),cy:py(E),r:5,fill:'#7fb3d5'})); svg.appendChild(el('circle',{cx:px(g),cy:py(S),r:5,fill:'#8fd19e'}));
+    const xl = el('text',{x:(L+R)/2,y:Bt+30,'text-anchor':'middle','font-size':'11','font-family':'JetBrains Mono, monospace',fill:'#7f8f83'}); xl.textContent = 'draft length γ (1 to 16)'; svg.appendChild(xl);
+    let best = 1; for (let k = 1; k <= GM; k++) if (sdE(a, k)/(k*c+1) > sdE(a, best)/(best*c+1)) best = k;
+    $('sdStory').textContent = 'With α = ' + a.toFixed(2) + ', drafting γ = ' + g + ' tokens yields ' + E.toFixed(4) + ' tokens per big-model pass; at draft cost c = ' + c.toFixed(2) + ' the speedup is ' + S.toFixed(2) + '×. For these α and c, the best γ in 1–16 is ' + best + ' (' + (sdE(a, best)/(best*c+1)).toFixed(2) + '×).';
+  }
+  ['sdA','sdG','sdC'].forEach(id => $(id).addEventListener('input', () => { setAct('.sd-preset', null); renderSD(); }));
+  document.querySelectorAll('.sd-preset').forEach(b => b.addEventListener('click', () => {
+    setAct('.sd-preset', b); $('sdA').value = b.dataset.a; $('sdG').value = b.dataset.g; $('sdC').value = b.dataset.c; renderSD();
+  }));
+  $('sdSimBtn').addEventListener('click', () => {
+    const a = parseFloat($('sdA').value), g = parseInt($('sdG').value, 10), r = mulberry32(777), R = 200000;
+    let tot = 0;
+    for (let i = 0; i < R; i++){ let k = 0; while (k < g && r() < a) k++; tot += k + 1; }
+    $('sdSim').textContent = (tot/R).toFixed(4) + ' (formula ' + sdE(a, g).toFixed(4) + ')';
+  });
+  renderSD(); setAct('.sd-preset', document.querySelector('.sd-preset'));
+
+  const SP = [0.5, 0.3, 0.15, 0.05], SQ = [0.3, 0.4, 0.2, 0.1];
+  function sdRuleParts(){
+    const acc = SP.map((p, i) => Math.min(1, p/SQ[i]));
+    const alpha = SP.reduce((s, p, i) => s + Math.min(p, SQ[i]), 0);
+    let res = SP.map((p, i) => Math.max(0, p - SQ[i])); const rz = res.reduce((a, b) => a + b, 0); res = res.map(v => v/rz);
+    const fin = SQ.map((q, i) => q*acc[i] + (1 - alpha)*res[i]);
+    return {acc, alpha, res, fin};
+  }
+  function showRule(mc){
+    const {acc, alpha, res, fin} = sdRuleParts();
+    const f = a => a.map(v => '<td>' + (Math.round(v*10000)/10000) + '</td>').join('');
+    let html = '<tr><th></th><th>token A</th><th>token B</th><th>token C</th><th>token D</th></tr>' +
+      '<tr><td>target p</td>' + f(SP) + '</tr><tr><td>draft q</td>' + f(SQ) + '</tr>' +
+      '<tr><td>accept prob min(1, p/q)</td>' + f(acc) + '</tr><tr><td>leftover max(0, p − q), renormalized</td>' + f(res) + '</tr>' +
+      '<tr class="hl"><td>final output distribution</td>' + f(fin) + '</tr>';
+    let story = 'Overall acceptance rate α = Σ min(p, q) = ' + alpha.toFixed(4) + '. The final distribution equals p exactly.';
+    if (mc){
+      const r = mulberry32(2024), n = 400000, cnt = [0,0,0,0]; let acc_n = 0;
+      const cum = a => { const c = []; a.reduce((s, v, i) => (c[i] = s + v), 0); return c; };
+      const cq = cum(SQ), cr = cum(res);
+      const pick = c => { const u = r(); for (let i = 0; i < c.length; i++) if (u < c[i]) return i; return c.length - 1; };
+      for (let i = 0; i < n; i++){ const x = pick(cq); if (r() < acc[x]){ cnt[x]++; acc_n++; } else cnt[pick(cr)]++; }
+      html += '<tr><td>Monte Carlo frequency (400,000 draws)</td>' + f(cnt.map(v => v/n)) + '</tr>';
+      story += ' Monte Carlo acceptance rate: ' + (acc_n/n).toFixed(4) + '.';
+    }
+    $('sdTable').innerHTML = html; $('sdRuleStory').textContent = story;
+  }
+  $('sdRule').addEventListener('click', () => showRule(false));
+  $('sdMC').addEventListener('click', () => showRule(true));
+  showRule(false);
+
+  // ---------- TAB 6: CONTINUOUS BATCHING ----------
+  const CB_L = [12, 3, 5, 2, 9, 4, 3, 7, 2, 6, 10, 3, 4, 8, 2, 5];
+  function cbSchedule(mode, lens, B){
+    const jobs = [];
+    if (mode === 'static'){
+      let t = 0;
+      for (let i = 0; i < lens.length; i += B){
+        const g = lens.slice(i, i+B), mx = Math.max(...g);
+        g.forEach((L, j) => jobs.push({id: i+j, slot: j, start: t, end: t + L}));
+        t += mx;
+      }
+      return {jobs, T: t};
+    }
+    const se = new Array(B).fill(0);
+    lens.forEach((L, i) => { let s = 0; for (let k = 1; k < B; k++) if (se[k] < se[s]) s = k; jobs.push({id: i, slot: s, start: se[s], end: se[s] + L}); se[s] += L; });
+    return {jobs, T: Math.max(...se)};
+  }
+  const CB_COLORS = ['#7fb3d5','#8fd19e','#ffce54','#ff8266','#b39ddb'];
+  function renderCB(mode, eq){
+    const lens = eq ? new Array(16).fill(8) : CB_L, B = 4;
+    const {jobs, T} = cbSchedule(mode, lens, B);
+    const total = lens.reduce((a, b) => a + b, 0);
+    const svg = $('cbSvg'); svg.innerHTML = '';
+    const L = 70, R = 840, top = 20, rowH = 40, TM = 40;
+    const ux = (R - L)/TM;
+    for (let s = 0; s < B; s++){
+      svg.appendChild(el('rect',{x:L,y:top + s*rowH,width:T*ux,height:rowH-8,fill:'rgba(244,241,232,0.10)'}));
+      const t = el('text',{x:L-10,y:top + s*rowH + rowH/2,'text-anchor':'end','font-size':'11','font-family':'JetBrains Mono, monospace',fill:'#f4f1e8'}); t.textContent = 'slot ' + (s+1); svg.appendChild(t);
+    }
+    jobs.forEach(j => {
+      svg.appendChild(el('rect',{x:L + j.start*ux + 0.5, y:top + j.slot*rowH, width:(j.end - j.start)*ux - 1, height:rowH-8, fill:CB_COLORS[j.id % 5], opacity:0.85, rx:3}));
+      const t = el('text',{x:L + (j.start + j.end)/2*ux, y:top + j.slot*rowH + rowH/2, 'text-anchor':'middle','font-size':'10','font-family':'JetBrains Mono, monospace',fill:'#0c1a23'}); t.textContent = 'r' + (j.id+1); svg.appendChild(t);
+    });
+    svg.appendChild(el('line',{x1:L + T*ux,y1:top-6,x2:L + T*ux,y2:top + B*rowH,stroke:'#ffce54','stroke-width':2,'stroke-dasharray':'4,3'}));
+    const tl = el('text',{x:L + T*ux + 6,y:top + B*rowH,'font-size':'11','font-family':'JetBrains Mono, monospace',fill:'#ffce54'}); tl.textContent = T + ' steps'; svg.appendChild(tl);
+    const xl = el('text',{x:L,y:top + B*rowH + 26,'font-size':'10.5','font-family':'JetBrains Mono, monospace',fill:'#7f8f83'}); xl.textContent = 'decoding steps → (axis 0 to ' + TM + ')'; svg.appendChild(xl);
+    const lat = jobs.reduce((a, j) => a + j.end, 0)/jobs.length;
+    $('cbT').textContent = T; $('cbU').textContent = total + '/' + (T*B) + ' = ' + (total/(T*B)*100).toFixed(1) + '%';
+    $('cbTP').textContent = (total/T).toFixed(2); $('cbLat').textContent = lat.toFixed(2);
+    $('cbStory').textContent = eq ? 'Every request is 8 tokens, so no slot is ever left waiting: both schedules take 32 steps at 100% utilization. Continuous batching helps only because real lengths vary.'
+      : mode === 'static' ? 'Static: each batch of 4 runs until its longest request is done (12, 9, 10, 8 steps), so short requests leave their slots idle (grey).'
+      : 'Continuous: the moment a request finishes, the next one in line takes its slot on the very next step. Same 85 tokens, far fewer idle slots.';
+  }
+  document.querySelectorAll('.cb-preset').forEach(b => b.addEventListener('click', () => { setAct('.cb-preset', b); renderCB(b.dataset.mode, b.dataset.eq === '1'); }));
+  renderCB('static', false); setAct('.cb-preset', document.querySelector('.cb-preset'));
+})();
+</script>
+</body>
+</html>

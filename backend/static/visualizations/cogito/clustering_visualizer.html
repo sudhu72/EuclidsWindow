@@ -57,7 +57,7 @@
 <body>
 <div class="wrap">
   <h1>Clustering, live</h1>
-  <p class="sub">Four tabs, matching the tutorial's four verified demonstrations. k-means and DBSCAN are computed live, in this page's own JavaScript, on the exact datasets and initial conditions cited in the tutorial.</p>
+  <p class="sub">Six tabs, matching the tutorial's verified demonstrations. k-means and DBSCAN are computed live, in this page's own JavaScript, on the exact datasets and initial conditions cited in the tutorial.</p>
 
   <div class="tabs">
     <button class="tabbtn active" data-tab="kmeans">K-Means Step-Through</button>
@@ -65,6 +65,7 @@
     <button class="tabbtn" data-tab="dbscan">DBSCAN Noise Detection</button>
     <button class="tabbtn" data-tab="elbow">Elbow &amp; Silhouette</button>
     <button class="tabbtn" data-tab="gmm">GMM: Soft Clustering (EM)</button>
+    <button class="tabbtn" data-tab="kpp">k-means++ Seeding</button>
   </div>
 
   <!-- ============ TAB 1: K-MEANS ============ -->
@@ -183,6 +184,53 @@
         <span>dashed ellipse = each component's own covariance, 1.5&sigma;</span>
       </div>
       <div class="story-line" id="gmmStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: K-MEANS++ ============ -->
+  <div class="tabpanel" id="tab-kpp">
+    <div class="panel">
+      <h2>k-means++: Start the Fire Stations Far Apart</h2>
+      <p class="sub">Part 1.3 of the tutorial. Left: the D&sup2; sampling rule worked by hand on the 12 houses (the first station is fixed at (1,1), then each next station is drawn with probability proportional to its squared distance to the nearest station already placed). Below: 500 seeds of random init vs k-means++ on nine blobs.</p>
+      <div class="row">
+        <span style="font-size:12px;color:var(--chalk-dim)">Hand example:</span>
+        <button class="op" id="kppPresetHand" style="border-color:var(--amber)">Preset: Part 1.3 worked example</button>
+        <button class="op" id="kppReset">Reset</button>
+        <button class="op" id="kppStep">Step</button>
+        <button class="op" id="kppPlay">Play</button>
+        <button class="op" id="kppEnd">Jump to end</button>
+      </div>
+      <svg id="kppSvg" width="520" height="420" viewBox="0 0 520 420"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">stage</div><div class="num" id="kppStage">0 / 5</div></div>
+        <div class="metric coral"><div class="lbl">P(next in A / B / C)</div><div class="num" id="kppProb">&mdash;</div></div>
+        <div class="metric blue"><div class="lbl">total D&sup2;</div><div class="num" id="kppTot">&mdash;</div></div>
+      </div>
+      <table class="datatable" id="kppTable"></table>
+      <div class="story-line" id="kppStory"></div>
+    </div>
+    <div class="panel">
+      <h2>500 Seeds: Where Random Init Gets Stuck</h2>
+      <p class="sub">180 points in nine tight blobs on a 3&times;3 grid (20 per blob, the tutorial's dataset). k = 9. Each run starts once (n_init = 1) and runs Lloyd's assign/update loop to convergence. Best possible WCSS is 322.831.</p>
+      <div class="row">
+        <button class="op" id="kppRunRandom" style="border-color:var(--amber)">500 seeds: random init</button>
+        <button class="op" id="kppRunD2" style="border-color:var(--amber)">500 seeds: pure D&sup2; (k-means++)</button>
+        <button class="op" id="kppRunGreedy" style="border-color:var(--amber)">500 seeds: greedy k-means++ (scikit-learn's)</button>
+      </div>
+      <div class="row">
+        <button class="op" id="kppShowStuck" style="border-color:var(--amber)">Show a stuck random-init run</button>
+        <button class="op" id="kppShowGood" style="border-color:var(--amber)">Show a k-means++ run</button>
+      </div>
+      <svg id="kppBlobSvg" width="440" height="440" viewBox="0 0 440 440"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">method</div><div class="num" id="kppM" style="font-size:12px">&mdash;</div></div>
+        <div class="metric green"><div class="lbl">reached best WCSS</div><div class="num" id="kppHit">&mdash;</div></div>
+        <div class="metric coral"><div class="lbl">mean WCSS</div><div class="num" id="kppMean">&mdash;</div></div>
+        <div class="metric coral"><div class="lbl">worst WCSS</div><div class="num" id="kppWorst">&mdash;</div></div>
+        <div class="metric blue"><div class="lbl">mean iterations</div><div class="num" id="kppIters">&mdash;</div></div>
+      </div>
+      <div class="story-line" id="kppBlobStory"></div>
+      <p class="sub" style="margin-top:10px">This page uses its own seeded random-number generator, so its counts differ a little from the tutorial's scikit-learn table (500 seeds there: random 18.0%, pure D&sup2; 64.8%, greedy 99.6%). The pattern is the same.</p>
     </div>
   </div>
 
@@ -788,6 +836,135 @@
     for (var i=0;i<40;i++){ gmmEStep(); gmmMStep(); }
     gmmEStep(); renderGMM();
   });
+
+  // ================= TAB 6: K-MEANS++ =================
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function kpD2(a,b){ var dx=a[0]-b[0], dy=a[1]-b[1]; return dx*dx+dy*dy; }
+  function initRandom(X,k,rnd){ var idx=[]; while(idx.length<k){ var i=Math.floor(rnd()*X.length); if (idx.indexOf(i)<0) idx.push(i); } return idx.map(function(i){ return X[i].slice(); }); }
+  function sampleD2(X, dmin, rnd){ var tot=0; for (var i=0;i<X.length;i++) tot+=dmin[i]; var r=rnd()*tot, acc=0; for (var j=0;j<X.length;j++){ acc+=dmin[j]; if (acc>=r && dmin[j]>0) return j; } return X.length-1; }
+  function initKpp(X,k,rnd,trials){
+    var C=[X[Math.floor(rnd()*X.length)].slice()];
+    var dmin=X.map(function(p){ return kpD2(p,C[0]); });
+    while (C.length<k){
+      var best=-1, bestPot=Infinity, bestD=null;
+      for (var t=0;t<trials;t++){
+        var j=sampleD2(X,dmin,rnd), nd=new Array(X.length), pot=0;
+        for (var i=0;i<X.length;i++){ nd[i]=Math.min(dmin[i], kpD2(X[i],X[j])); pot+=nd[i]; }
+        if (pot<bestPot){ bestPot=pot; best=j; bestD=nd; }
+      }
+      C.push(X[best].slice()); dmin=bestD;
+    }
+    return C;
+  }
+  function lloyd(X,C){
+    var k=C.length, lab=null, it=0;
+    while (it<300){
+      var nl=X.map(function(p){ var b=0,bd=Infinity; for (var c=0;c<k;c++){ var dd=kpD2(p,C[c]); if (dd<bd){bd=dd;b=c;} } return b; });
+      it++;
+      var same = lab && nl.every(function(v,i){ return v===lab[i]; });
+      lab=nl;
+      if (same) break;
+      var s=[],n=[]; for (var c2=0;c2<k;c2++){ s.push([0,0]); n.push(0); }
+      for (var i=0;i<X.length;i++){ s[lab[i]][0]+=X[i][0]; s[lab[i]][1]+=X[i][1]; n[lab[i]]++; }
+      for (var c3=0;c3<k;c3++) if (n[c3]>0) C[c3]=[s[c3][0]/n[c3], s[c3][1]/n[c3]];
+    }
+    var inert=0; for (var i2=0;i2<X.length;i2++) inert+=kpD2(X[i2],C[lab[i2]]);
+    return {C:C, lab:lab, iters:it, inertia:inert};
+  }
+  function runSeeds(X,k,mode,nSeeds){
+    var out=[];
+    for (var s=1;s<=nSeeds;s++){
+      var rnd=mulberry32(s*7919);
+      var C = mode==='random' ? initRandom(X,k,rnd) : initKpp(X,k,rnd, mode==='greedy' ? 2+Math.floor(Math.log(k)) : 1);
+      out.push(lloyd(X,C));
+    }
+    return out;
+  }
+  var BLOBS = [[1.76,0.4],[0.98,2.24],[1.87,-0.98],[0.95,-0.15],[-0.1,0.41],[0.14,1.45],[0.76,0.12],[0.44,0.33],[1.49,-0.21],[0.31,-0.85],[-2.55,0.65],[0.86,-0.74],[2.27,-1.45],[0.05,-0.19],[1.53,1.47],[0.15,0.38],[-0.89,-1.98],[-0.35,0.16],[1.23,1.2],[-0.39,-0.3],[-1.05,8.58],[-1.71,11.95],[-0.51,9.56],[-1.25,10.78],[-1.61,9.79],[-0.9,10.39],[-0.51,8.82],[-0.03,10.43],[0.07,10.3],[-0.63,9.64],[-0.67,9.64],[-0.81,8.27],[0.18,9.6],[-1.63,10.46],[-0.91,10.05],[0.73,10.13],[1.14,8.77],[0.4,9.32],[-0.87,9.42],[-0.31,10.06],[-1.17,20.9],[0.47,18.46],[1.49,21.9],[1.18,19.82],[-1.07,21.05],[-0.4,21.22],[0.21,20.98],[0.36,20.71],[0.01,21.79],[0.13,20.4],[1.88,18.65],[-1.27,20.97],[-1.17,21.94],[-0.41,19.25],[1.92,21.48],[1.87,20.91],[-0.86,21.91],[-0.27,20.8],[0.95,19.84],[0.61,20.92],[10.38,-1.1],[10.3,1.33],[9.31,-0.15],[9.56,1.85],[10.67,0.41],[9.23,0.54],[9.33,0.03],[9.36,0.68],[10.58,-0.21],[10.4,-1.09],[8.51,0.44],[10.17,0.64],[12.38,0.94],[9.09,1.12],[8.68,-0.46],[9.93,1.71],[9.26,-0.83],[9.9,-0.66],[11.13,-1.08],[8.85,-0.44],[9.5,11.93],[10.95,10.09],[8.77,10.84],[9.0,8.46],[11.19,10.32],[10.92,10.32],[10.86,9.35],[8.97,10.68],[9.2,9.31],[9.54,10.02],[9.65,8.63],[9.36,7.78],[10.63,8.4],[8.9,10.05],[9.26,11.54],[8.71,10.27],[9.96,8.83],[10.52,9.83],[10.77,10.82],[12.16,11.34],[9.63,19.76],[11.1,20.66],[10.64,18.38],[9.98,19.26],[10.28,19.9],[10.91,20.32],[10.79,19.53],[9.06,19.59],[9.98,20.38],[12.26,19.96],[9.04,19.65],[9.54,20.48],[8.46,20.06],[10.16,20.23],[9.4,19.76],[8.58,19.51],[9.46,20.42],[8.84,20.78],[11.49,17.93],[10.43,20.68],[19.36,-0.4],[19.87,-0.3],[19.69,-1.68],[21.15,1.08],[19.19,-1.47],[20.52,-0.58],[20.14,-0.32],[20.69,0.69],[19.27,-1.38],[18.42,0.61],[18.81,-0.51],[19.4,-0.05],[18.06,0.19],[20.52,0.09],[19.69,0.1],[20.4,-2.77],[21.96,0.39],[19.35,-0.39],[20.49,-0.12],[17.97,2.06],[19.89,11.02],[19.31,11.54],[20.29,10.61],[18.95,11.21],[20.69,11.3],[19.37,9.52],[22.3,8.94],[19.86,11.14],[20.1,10.58],[19.6,10.37],[18.69,11.66],[19.88,9.32],[20.67,9.54],[18.67,8.65],[20.69,9.84],[19.87,11.08],[18.87,9.27],[19.62,10.09],[19.96,9.71],[19.94,9.89],[19.28,19.19],[20.27,19.11],[18.84,19.69],[19.84,22.26],[19.3,20.94],[20.75,18.81],[20.77,18.82],[17.34,20.61],[18.24,20.45],[19.32,21.66],[21.07,19.55],[19.31,18.79],[19.56,19.72],[19.64,20.16],[20.58,20.35],[19.24,18.56],[21.36,19.31],[19.35,19.48],[18.16,19.52],[19.52,20.62]];
+  var KPP_BEST = 322.831;
+  var KPP_PICKS = [0, 7, 8];   // (1,1) fixed first; then the worked example's draws: (9,9) from B, (1,8) from C
+  var kppState = { stage:0, timer:null, lloyd:null };
+  function kppCenters(){ if (kppState.stage===0) return []; var n = kppState.stage>=4 ? 3 : Math.min(3, Math.floor((kppState.stage+2)/2)); return KPP_PICKS.slice(0,n); }
+  function kppDmin(centers){ return PTS12.map(function(p){ var m=Infinity; centers.forEach(function(ci){ m=Math.min(m, dist2(p, PTS12[ci])); }); return m; }); }
+  function renderKPP(){
+    var st=kppState.stage, svg=document.getElementById('kppSvg'); while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W=520,H=420,pad=40;
+    for (var g=0; g<=10; g+=2){ var a=mapXY([g,0],W,H,pad), b=mapXY([g,10],W,H,pad), c=mapXY([0,g],W,H,pad), e=mapXY([10,g],W,H,pad);
+      svg.appendChild(svgEl('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'rgba(244,241,232,0.06)'})); svg.appendChild(svgEl('line',{x1:c[0],y1:c[1],x2:e[0],y2:e[1],stroke:'rgba(244,241,232,0.06)'})); }
+    var centers = kppCenters();
+    var showProb = (st===1 || st===3);
+    var dmin = kppDmin(centers), tot = dmin.reduce(function(x,y){return x+y;},0);
+    var final = st>=5 ? kppState.lloyd : null;
+    for (var i=0;i<PTS12.length;i++){
+      var xy=mapXY(PTS12[i],W,H,pad);
+      var fill = final ? PALETTE[final.lab[i]] : '#7fb3d5';
+      var r = showProb ? 4 + 18*Math.sqrt(dmin[i]/tot) : 6;
+      svg.appendChild(svgEl('circle',{cx:xy[0],cy:xy[1],r:r,fill:fill,'fill-opacity':showProb?0.55:1,stroke:'#16221c','stroke-width':1}));
+      if (showProb){ var t=svgEl('text',{x:xy[0]+8,y:xy[1]-8,fill:'#f4f1e8','font-size':10,'font-family':'Courier New'}); t.textContent=(100*dmin[i]/tot).toFixed(1)+'%'; svg.appendChild(t); }
+    }
+    var cs = final ? final.C : centers.map(function(ci){ return PTS12[ci]; });
+    cs.forEach(function(c,j){ var xy=mapXY(c,W,H,pad); var t=svgEl('text',{x:xy[0],y:xy[1]+6,fill:'#ffce54','font-size':22,'text-anchor':'middle'}); t.textContent='❖'; svg.appendChild(t);
+      var l=svgEl('text',{x:xy[0]+12,y:xy[1]+18,fill:'#ffce54','font-size':11,'font-family':'Courier New'}); l.textContent= final ? '('+c[0].toFixed(1)+','+c[1].toFixed(1)+')' : 'station '+(j+1); svg.appendChild(l); });
+    var nb = function(lo,hi){ var s=0; for (var q=lo;q<hi;q++) s+=dmin[q]; return s; };
+    var A=nb(0,4), B=nb(4,8), C=nb(8,12);
+    document.getElementById('kppStage').textContent = st+' / 5';
+    document.getElementById('kppProb').textContent = showProb ? (100*A/tot).toFixed(2)+'% / '+(100*B/tot).toFixed(2)+'% / '+(100*C/tot).toFixed(2)+'%' : '—';
+    document.getElementById('kppTot').textContent = showProb ? tot.toFixed(0) : '—';
+    var h='<tr><th>house</th>'+PTS12.map(function(p){return '<th>('+p[0]+','+p[1]+')</th>';}).join('')+'</tr>';
+    if (showProb) h+='<tr><td>D&sup2; to nearest station</td>'+dmin.map(function(v){return '<td>'+v+'</td>';}).join('')+'</tr><tr><td>P(pick)</td>'+dmin.map(function(v){return '<td>'+(100*v/tot).toFixed(2)+'%</td>';}).join('')+'</tr>';
+    document.getElementById('kppTable').innerHTML=h;
+    var S=[
+      'Stage 0: the 12 houses. Step to place the first station — k-means++ picks the first one uniformly at random; this worked example uses (1,1).',
+      'Stage 1: station 1 at (1,1). Each house\'s chance of being the next station is its squared distance to (1,1), divided by the total 684. Neighbourhood A (right next to the station) gets just 4/684 = 0.58%; B gets 452/684 = 66.08%; C gets 228/684 = 33.33%. Circle size shows the chance.',
+      'Stage 2: the draw lands in B — station 2 at (9,9).',
+      'Stage 3: recompute each house\'s D² to its NEAREST station. A and B now each hold only 4/220 = 1.82%; C holds 212/220 = 96.36%. The rule almost forces the third station into the empty neighbourhood.',
+      'Stage 4: station 3 lands in C at (1,8). One station per neighbourhood before Lloyd\'s loop even starts.',
+      'Stage 5: Lloyd\'s assign/update loop from these seeds converges in '+(kppState.lloyd?kppState.lloyd.iters:'?')+' passes to WCSS '+(kppState.lloyd?kppState.lloyd.inertia.toFixed(4):'?')+' — the best possible. (Over every possible draw, k-means++ puts one seed in each neighbourhood with probability 95.14%; three uniformly random houses do so only 64/220 = 29.09% of the time.)'
+    ];
+    document.getElementById('kppStory').textContent=S[st];
+  }
+  function kppStepFn(){
+    if (kppState.stage<5){ kppState.stage++; if (kppState.stage===5) kppState.lloyd=lloyd(PTS12, KPP_PICKS.map(function(i){return PTS12[i].slice();})); renderKPP(); }
+    else if (kppState.timer){ clearInterval(kppState.timer); kppState.timer=null; document.getElementById('kppPlay').textContent='Play'; }
+  }
+  function kppStop(){ if (kppState.timer){ clearInterval(kppState.timer); kppState.timer=null; document.getElementById('kppPlay').textContent='Play'; } }
+  document.getElementById('kppReset').addEventListener('click', function(){ kppStop(); kppState.stage=0; renderKPP(); });
+  document.getElementById('kppPresetHand').addEventListener('click', function(){ kppStop(); kppState.stage=1; renderKPP(); });
+  document.getElementById('kppStep').addEventListener('click', function(){ kppStop(); kppStepFn(); });
+  document.getElementById('kppEnd').addEventListener('click', function(){ kppStop(); kppState.stage=4; kppStepFn(); });
+  document.getElementById('kppPlay').addEventListener('click', function(){
+    if (kppState.timer){ kppStop(); return; }
+    if (kppState.stage>=5) { kppState.stage=0; renderKPP(); }
+    this.textContent='Pause'; kppState.timer=setInterval(kppStepFn, 1400);
+  });
+
+  var kppRuns = {};
+  function kppRender(run, label){
+    var svg=document.getElementById('kppBlobSvg'); while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W=440,H=440,pad=24, lo=-4, hi=24;
+    function m(p){ return [pad+(p[0]-lo)/(hi-lo)*(W-2*pad), H-pad-(p[1]-lo)/(hi-lo)*(H-2*pad)]; }
+    var COLS=['#ff8266','#7fb3d5','#8fd19e','#c39bd3','#ffce54','#e88fb0','#f4f1e8','#5fd3c8','#d4a373'];
+    for (var i=0;i<BLOBS.length;i++){ var xy=m(BLOBS[i]); svg.appendChild(svgEl('circle',{cx:xy[0],cy:xy[1],r:3.4,fill: run?COLS[run.lab[i]%9]:'#7fb3d5'})); }
+    if (run) run.C.forEach(function(c){ var xy=m(c); var t=svgEl('text',{x:xy[0],y:xy[1]+7,fill:'#ffce54','font-size':20,'text-anchor':'middle'}); t.textContent='❖'; svg.appendChild(t); });
+    if (label) document.getElementById('kppBlobStory').textContent=label;
+  }
+  function kppSummary(mode, name){
+    if (!kppRuns[mode]) kppRuns[mode]=runSeeds(BLOBS,9,mode,500);
+    var r=kppRuns[mode], I=r.map(function(o){return o.inertia;});
+    var hit=I.filter(function(v){return v<KPP_BEST+0.01;}).length;
+    document.getElementById('kppM').textContent=name;
+    document.getElementById('kppHit').textContent=hit+' / 500 ('+(hit/5).toFixed(1)+'%)';
+    document.getElementById('kppMean').textContent=(I.reduce(function(a,b){return a+b;},0)/500).toFixed(2);
+    document.getElementById('kppWorst').textContent=Math.max.apply(null,I).toFixed(2);
+    document.getElementById('kppIters').textContent=(r.reduce(function(a,o){return a+o.iters;},0)/500).toFixed(2);
+    return r;
+  }
+  document.getElementById('kppRunRandom').addEventListener('click', function(){ var r=kppSummary('random','random init'); var w=r.reduce(function(a,o){return o.inertia>a.inertia?o:a;}); kppRender(w,'Random init: the worst of the 500 runs is shown. Several stations started inside the same blob, so other blobs had to share one — and Lloyd\'s loop can never move a station across the empty gap to fix it.'); });
+  document.getElementById('kppRunD2').addEventListener('click', function(){ var r=kppSummary('d2','pure D² sampling'); var w=r.reduce(function(a,o){return o.inertia>a.inertia?o:a;}); kppRender(w,'Pure D² sampling: far better on average, but it is still random — this is its worst run of 500.'); });
+  document.getElementById('kppRunGreedy').addEventListener('click', function(){ var r=kppSummary('greedy','greedy k-means++'); var w=r.reduce(function(a,o){return o.inertia>a.inertia?o:a;}); kppRender(w,'Greedy k-means++ (try 2 + ln k candidates per step, keep the one that lowers total D² most — what scikit-learn does): almost every run is perfect. Shown: its worst run.'); });
+  document.getElementById('kppShowStuck').addEventListener('click', function(){ var r=kppSummary('random','random init'); var s=r.filter(function(o){return o.inertia>KPP_BEST+0.01;})[0]; kppRender(s,'A typical stuck random-init run: WCSS '+s.inertia.toFixed(2)+' instead of 322.83. Look for two stations sharing one blob while two other blobs share one station.'); });
+  document.getElementById('kppShowGood').addEventListener('click', function(){ var r=kppSummary('greedy','greedy k-means++'); var s=r.filter(function(o){return o.inertia<KPP_BEST+0.01;})[0]; kppRender(s,'A k-means++ run: one station per blob, WCSS '+s.inertia.toFixed(2)+', converged in '+s.iters+' passes.'); });
+  kppState.stage=0; renderKPP(); kppRender(null,'Click a preset above. Each run of 500 seeds takes a moment.');
 
   // ================= INIT =================
   kmReset();

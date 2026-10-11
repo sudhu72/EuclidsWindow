@@ -59,6 +59,29 @@
   .heatgrid{ display:inline-grid; gap:2px; margin:12px auto; }
   .heatcell{ width:28px; height:28px; border-radius:2px; }
 
+  /* ---- Softmax Jacobian tab ---- */
+  .steps{ font-family:"IBM Plex Mono", monospace; font-size:13px; line-height:1.75; background:#FAFBFB; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-top:12px; overflow-wrap:anywhere; white-space:pre-wrap; }
+  .steps .st{ animation:sjIn .35s ease both; }
+  .steps .st b{ color:var(--accent); }
+  .steps .hd{ font-family:"Inter", sans-serif; font-weight:700; color:var(--ink); margin-top:6px; white-space:normal; }
+  .sjscroll{ overflow-x:auto; max-width:100%; }
+  table.sjgrid{ border-collapse:separate; border-spacing:4px; margin:12px auto; font-family:"IBM Plex Mono",monospace; }
+  table.sjgrid th{ font-size:12px; color:var(--ink-soft); font-weight:600; padding:2px 6px; }
+  table.sjgrid td{ border:1px solid var(--line); border-radius:8px; padding:6px 8px; text-align:center; font-size:12px; line-height:1.45; min-width:88px; background:#fff; animation:sjIn .35s ease both; }
+  table.sjgrid td.dg{ background:rgba(15,139,141,0.10); border-color:rgba(15,139,141,0.45); }
+  table.sjgrid td.od{ background:rgba(217,99,107,0.08); border-color:rgba(217,99,107,0.40); }
+  table.sjgrid td.hl{ outline:2.5px solid var(--c2); }
+  table.sjgrid td.ex{ background:var(--accent-soft); border-color:var(--accent); }
+  table.sjgrid td .f{ color:var(--ink-soft); font-size:11px; }
+  table.sjgrid td .v{ font-weight:600; font-size:13px; color:var(--ink); }
+  @keyframes sjIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:none; } }
+  @media (max-width:560px){
+    table.sjgrid td{ min-width:0; padding:4px 4px; font-size:10.5px; }
+    table.sjgrid td .f{ font-size:9.5px; } table.sjgrid td .v{ font-size:11.5px; }
+    table.sjgrid{ border-spacing:2px; }
+    .steps{ font-size:12px; }
+  }
+
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer a{ color:var(--accent); } footer b{ color:var(--ink); }
 </style>
@@ -68,7 +91,7 @@
   <header>
     <div class="eyebrow">Companion to the Feynman Math Tutorials · Jacobian &amp; SVD</div>
     <h1>Rotate, Stretch, Rotate</h1>
-    <p>A live Jacobian for any point you drag, the exact area-scaling factor behind polar coordinates, Newton's method solving two equations at once, and any matrix's own rotate-stretch-rotate decomposition — down to the last compressed pixel.</p>
+    <p>A live Jacobian for any point you drag, the exact area-scaling factor behind polar coordinates, Newton's method solving two equations at once, and any matrix's own rotate-stretch-rotate decomposition — down to the last compressed pixel — plus the softmax Jacobian, built cell by cell, showing why softmax + cross-entropy has the gradient p − y.</p>
   </header>
 
   <div class="tabs">
@@ -77,6 +100,8 @@
     <button class="tab" data-tab="newton">Newton's Method (System)</button>
     <button class="tab" data-tab="svd">SVD: Rotate-Stretch-Rotate</button>
     <button class="tab" data-tab="lowrank">Low-Rank Compression</button>
+    <button class="tab" data-tab="softmax">Softmax Jacobian &amp; p − y</button>
+    <button class="tab" data-tab="pinv">Pseudo-Inverse &amp; Minimum Norm</button>
   </div>
 
   <!-- ============ TAB 1: JACOBIAN CALCULATOR ============ -->
@@ -154,6 +179,51 @@
         <div><div class="caption" style="text-align:center;">reconstruction (k singular values)</div><div class="heatgrid" id="heatRecon" style="grid-template-columns:repeat(4,1fr);"></div></div>
       </div>
       <div class="verdict" id="lowrankVerdict"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: SOFTMAX JACOBIAN & p − y ============ -->
+  <div class="panel" id="panel-softmax">
+    <div class="card">
+      <h2>The Softmax Jacobian, and Why the Gradient Is p − y</h2>
+      <p class="sub">Scores z = (2.0, 1.0, 0.1) go through softmax, then cross-entropy. Each button plays one fully worked step of the tutorial. Every number is computed live; nothing to type.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="sjBtnSoftmax">1 · Softmax of z = (2, 1, 0.1)</button>
+        <button class="op" id="sjBtnBuild">2 · Build the Jacobian</button>
+        <button class="op" id="sjBtnFD">3 · Check against finite differences</button>
+        <button class="op" id="sjBtnRows">4 · Why rows sum to 0</button>
+        <button class="op" id="sjBtnCE">5 · Add cross-entropy: the gradient is p − y</button>
+        <button class="op" id="sjBtnCE2">6 · Another true class (y = (0, 1, 0))</button>
+      </div>
+      <svg viewBox="0 0 600 240" id="sjSvg"></svg>
+      <div class="sjscroll"><div id="sjGrid"></div></div>
+      <div class="steps" id="sjSteps"></div>
+      <div class="verdict" id="sjVerdict"></div>
+      <div class="caption"><b>How to read the grid:</b> the cell in row pᵢ, column zⱼ is ∂pᵢ/∂zⱼ, how much probability i moves when score j is nudged. Teal cells are the diagonal (pᵢ(1 − pᵢ)); coral cells are off-diagonal (−pᵢ·pⱼ).</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 7: PSEUDO-INVERSE & MINIMUM NORM ============ -->
+  <div class="panel" id="panel-pinv">
+    <div class="card">
+      <h2>The Pseudo-Inverse: Undo Every Stretch You Can, Leave Crushed Directions Blank</h2>
+      <p class="sub"><b>What's happening:</b> <span class="formula">A⁺ = VΣ⁺Uᵀ</span> undoes SVD's three moves in reverse, dividing by every non-zero singular value and putting 0 wherever a direction was crushed. The answer <span class="formula">x⁺ = A⁺b</span> fits <span class="formula">b</span> as well as anything can, and among all the answers tied for that best fit it's the <b>shortest</b>. Every number here is computed live.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> on <em>x + 2y = 5</em>, drag the candidate along the solution line and watch its length never drop below 2.2361, the length of x⁺. On <em>Gradient descent</em>, compare the two starting points. On <em>Tiny σ blow-up</em>, press ε = 0.001 and watch a 0.01 nudge in b throw the answer to (−8, 10).</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" data-pipreset="one">x + 2y = 5 (one equation, two unknowns)</button>
+        <button class="op" data-pipreset="two">x+y=2 and x+y=4 (no solution, many best)</button>
+        <button class="op" data-pipreset="ridge">Ridge λ → 0</button>
+        <button class="op" data-pipreset="gd">Gradient descent from 0 vs (4, −3)</button>
+        <button class="op" data-pipreset="tiny">Tiny σ blow-up</button>
+        <button class="op" data-pipreset="dd">Double-descent mechanism</button>
+      </div>
+      <div class="row" id="piRowT"><label>slide candidate t</label><input type="range" id="piT" min="-3" max="3" step="0.05" value="1.5"><span class="readout" id="piTOut">1.50</span></div>
+      <div class="row" id="piRowL"><label>ridge λ (log₁₀)</label><input type="range" id="piL" min="-6" max="1" step="0.1" value="0"><span class="readout" id="piLOut">1</span></div>
+      <div class="row" id="piRowE" style="gap:6px;"><label>ε</label>
+        <button class="op" data-pieps="1">ε = 1</button><button class="op" data-pieps="0.1">ε = 0.1</button><button class="op" data-pieps="0.01">ε = 0.01</button><button class="op" data-pieps="0.001">ε = 0.001</button></div>
+      <div class="row" id="piRowP"><label>features p</label><input type="range" id="piP" min="0" max="21" step="1" value="11"><span class="readout" id="piPOut">80</span></div>
+      <svg viewBox="0 0 700 340" id="piSvg"></svg>
+      <div class="verdict" id="piVerdict"></div>
     </div>
   </div>
 
@@ -460,6 +530,357 @@
     render();
   })();
 
+  /* =========================================================
+     TAB 6 — SOFTMAX JACOBIAN & p − y
+     ========================================================= */
+  (function(){
+    const Z = [2.0, 1.0, 0.1];
+    const SUB = ["₁","₂","₃"];
+    function softmax(z){ const m=Math.max(...z); const e=z.map(v=>Math.exp(v-m)); const s=e.reduce((a,b)=>a+b,0); return e.map(v=>v/s); }
+    function jacobian(p){ return p.map((pi,i)=>p.map((pj,j)=> i===j ? pi*(1-pi) : -pi*pj)); }
+    function fdJacobian(z,h){
+      const J=[[0,0,0],[0,0,0],[0,0,0]];
+      for (let j=0;j<3;j++){
+        const zp=z.slice(), zm=z.slice(); zp[j]+=h; zm[j]-=h;
+        const pp=softmax(zp), pm=softmax(zm);
+        for (let i=0;i<3;i++) J[i][j]=(pp[i]-pm[i])/(2*h);
+      }
+      return J;
+    }
+    function lossFn(z,c){ return -Math.log(softmax(z)[c]); }
+    function fdGrad(z,c,h){ return [0,1,2].map(k=>{ const zp=z.slice(), zm=z.slice(); zp[k]+=h; zm[k]-=h; return (lossFn(zp,c)-lossFn(zm,c))/(2*h); }); }
+    const f4 = v => fmt(v,4);
+    const sg = v => (v<0 ? "−"+fmt(-v,4) : fmt(v,4));      // true minus sign
+    const par = v => (v<0 ? "("+sg(v)+")" : sg(v));
+    const vec = a => "("+a.map(sg).join(", ")+")";
+    const ex = v => v.toExponential(1).replace("-","−");
+
+    const svg = document.getElementById("sjSvg");
+    const gridEl = document.getElementById("sjGrid");
+    const stepsEl = document.getElementById("sjSteps");
+    const verdictEl = document.getElementById("sjVerdict");
+
+    function drawBars(groups){
+      svg.innerHTML = "";
+      const W=600, top=42, bot=196, wsum=groups.reduce((a,g)=>a+(g.w||1),0);
+      let xAcc=0;
+      groups.forEach((g,gi)=>{
+        const gw=W*(g.w||1)/wsum, x0=xAcc; xAcc+=gw;
+        const lo=g.range[0], hi=g.range[1];
+        const yOf = v => top + (hi-v)/(hi-lo)*(bot-top);
+        const t = el("text",{x:x0+gw/2, y:22, "text-anchor":"middle", "font-family":"Inter, sans-serif", "font-size":"13", "font-weight":"600", fill:"var(--ink)"}); t.textContent=g.title; svg.appendChild(t);
+        svg.appendChild(el("line",{x1:x0+12, y1:yOf(0), x2:x0+gw-12, y2:yOf(0), stroke:"var(--ink-soft)", "stroke-width":1}));
+        const n=g.vals.length, slot=(gw-40)/n, bw=Math.min(44, slot*0.62);
+        g.vals.forEach((v,k)=>{
+          const cx = x0+20+(k+0.5)*slot;
+          const y1=yOf(Math.max(v,0)), y2=yOf(Math.min(v,0));
+          svg.appendChild(el("rect",{x:cx-bw/2, y:y1, width:bw, height:Math.max(1,y2-y1), rx:3, fill:g.color, opacity:(g.hl===k?1:0.8), stroke:(g.hl===k?"var(--ink)":"none"), "stroke-width":1.5}));
+          const vt = el("text",{x:cx, y: v>=0 ? y1-5 : y2+14, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace", "font-size":"11", fill:"var(--ink)"});
+          vt.textContent = g.fmt ? g.fmt(v) : sg(v); svg.appendChild(vt);
+          const lt = el("text",{x:cx, y:224, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace", "font-size":"12", fill:"var(--ink-soft)"});
+          lt.textContent = g.labels[k]; svg.appendChild(lt);
+        });
+      });
+    }
+    // cells: 3x3 array of {cls, html}; extraCol optional {head, cells[3]}
+    function drawGrid(cells, opts){
+      opts = opts || {};
+      let h = "<table class=\"sjgrid\"><tr><th></th>";
+      for (let j=0;j<3;j++) h += "<th>z"+SUB[j]+"</th>";
+      if (opts.extra) h += "<th>"+opts.extra.head+"</th>";
+      h += "</tr>";
+      let n = 0;
+      for (let i=0;i<3;i++){
+        h += "<tr><th>p"+SUB[i]+"</th>";
+        for (let j=0;j<3;j++){
+          const c = cells[i][j];
+          const delay = opts.stagger ? (n++)*opts.stagger : 0;
+          h += "<td class=\""+(c.cls||"")+"\" style=\"animation-delay:"+delay+"ms\">"+c.html+"</td>";
+        }
+        if (opts.extra){ const c=opts.extra.cells[i]; const delay = opts.stagger ? (9+i)*opts.stagger : 0; h += "<td class=\"ex "+(c.cls||"")+"\" style=\"animation-delay:"+delay+"ms\">"+c.html+"</td>"; }
+        h += "</tr>";
+      }
+      h += "</table>";
+      gridEl.innerHTML = h;
+    }
+    function steps(lines, stagger){
+      stepsEl.innerHTML = lines.map((l,i)=>{
+        const hd = l.startsWith("##");
+        return "<div class=\"st"+(hd?" hd":"")+"\" style=\"animation-delay:"+(i*(stagger||0))+"ms\">"+(hd?l.slice(2):l)+"</div>";
+      }).join("");
+    }
+    function jCells(p, J, rowHl){
+      return J.map((row,i)=>row.map((v,j)=>({ cls:(i===j?"dg":"od")+(rowHl===i?" hl":""), html:"<div class=\"v\">"+sg(v)+"</div>" })));
+    }
+    const buttons = ["sjBtnSoftmax","sjBtnBuild","sjBtnFD","sjBtnRows","sjBtnCE","sjBtnCE2"].map(id=>document.getElementById(id));
+    function setActive(btn){ buttons.forEach(b=>b.classList.remove("active")); btn.classList.add("active"); }
+
+    const p = softmax(Z), J = jacobian(p);
+    const zLab = ["z"+SUB[0],"z"+SUB[1],"z"+SUB[2]], pLab = ["p"+SUB[0],"p"+SUB[1],"p"+SUB[2]];
+
+    function showSoftmax(){
+      const e = Z.map(Math.exp), s = e.reduce((a,b)=>a+b,0);
+      drawBars([
+        {title:"scores z", vals:Z, range:[0,2.3], color:"var(--c3)", labels:zLab, fmt:v=>fmt(v,1)},
+        {title:"e^z", vals:e, range:[0,8.3], color:"var(--c2)", labels:zLab.map(l=>"e^"+l)},
+        {title:"probabilities p", vals:p, range:[0,1.15], color:"var(--c1)", labels:pLab}
+      ]);
+      gridEl.innerHTML = "";
+      steps([
+        "##Step 1 — exponentiate every score (makes them all positive)",
+        "e^z"+SUB[0]+" = e^2.0 = <b>"+f4(e[0])+"</b>",
+        "e^z"+SUB[1]+" = e^1.0 = <b>"+f4(e[1])+"</b>",
+        "e^z"+SUB[2]+" = e^0.1 = <b>"+f4(e[2])+"</b>",
+        "##Step 2 — add them up (the shared denominator)",
+        "Σ e^zⱼ = "+f4(e[0])+" + "+f4(e[1])+" + "+f4(e[2])+" = <b>"+f4(s)+"</b>",
+        "##Step 3 — divide each by the total",
+        "p"+SUB[0]+" = "+f4(e[0])+" / "+f4(s)+" = <b>"+f4(p[0])+"</b>",
+        "p"+SUB[1]+" = "+f4(e[1])+" / "+f4(s)+" = <b>"+f4(p[1])+"</b>",
+        "p"+SUB[2]+" = "+f4(e[2])+" / "+f4(s)+" = <b>"+f4(p[2])+"</b>",
+        "check: "+f4(p[0])+" + "+f4(p[1])+" + "+f4(p[2])+" = <b>"+f4(p[0]+p[1]+p[2])+"</b>"
+      ], 120);
+      verdictEl.innerHTML = "<b>p = "+vec(p)+"</b><br>Every probability shares the same denominator, so nudging any one score moves <em>all three</em> probabilities. That is why softmax needs a full 3×3 Jacobian, not three separate slopes.";
+    }
+
+    function showBuild(){
+      drawBars([{title:"probabilities p (the only inputs the Jacobian needs)", vals:p, range:[0,1.15], color:"var(--c1)", labels:pLab}]);
+      const cells = J.map((row,i)=>row.map((v,j)=>{
+        const a="p"+SUB[i], b="p"+SUB[j];
+        if (i===j) return {cls:"dg", html:"<div class=\"f\">"+a+"(1 − "+a+")</div><div class=\"f\">"+f4(p[i])+" × "+f4(1-p[i])+"</div><div class=\"v\">= "+sg(v)+"</div>"};
+        return {cls:"od", html:"<div class=\"f\">−"+a+"·"+b+"</div><div class=\"f\">−"+f4(p[i])+" × "+f4(p[j])+"</div><div class=\"v\">= "+sg(v)+"</div>"};
+      }));
+      drawGrid(cells, {stagger:260});
+      steps([
+        "##The rule, one cell at a time (row pᵢ, column zⱼ holds ∂pᵢ/∂zⱼ)",
+        "same position (i = j):      ∂pᵢ/∂zᵢ = <b>pᵢ(1 − pᵢ)</b>   — raising your own score raises you",
+        "different positions (i ≠ j): ∂pᵢ/∂zⱼ = <b>−pᵢ·pⱼ</b>      — raising another's score takes from you",
+        "as one matrix: <b>J = diag(p) − p·pᵀ</b>",
+        "symmetric: cell (1,2) = −p₁p₂ = −p₂p₁ = cell (2,1) = "+sg(J[0][1])
+      ], 150);
+      verdictEl.innerHTML = "<b>J =</b> [["+J[0].map(sg).join(", ")+"], ["+J[1].map(sg).join(", ")+"], ["+J[2].map(sg).join(", ")+"]]<br>Diagonal cells are positive, off-diagonal cells negative: every class competes for the same total of 1.";
+    }
+
+    function showFD(){
+      const h=1e-6, F=fdJacobian(Z,h);
+      let maxd=0;
+      const cells = F.map((row,i)=>row.map((v,j)=>{
+        const d=Math.abs(v-J[i][j]); maxd=Math.max(maxd,d);
+        return {cls:(i===j?"dg":"od"), html:"<div class=\"f\">nudged: "+fmt(v,8)+"</div><div class=\"f\">formula: "+fmt(J[i][j],8)+"</div><div class=\"v\">diff "+ex(d)+"</div>"};
+      }));
+      drawGrid(cells, {stagger:120});
+      const zp=Z.slice(); zp[0]+=h; const zm=Z.slice(); zm[0]-=h;
+      const pp=softmax(zp), pm=softmax(zm);
+      drawBars([{title:"p at z (the point we nudge around)", vals:p, range:[0,1.15], color:"var(--c1)", labels:pLab}]);
+      steps([
+        "##Brute force, no calculus: nudge one score by ±h, re-run softmax, divide",
+        "h = 10⁻⁶. Column j of the grid = [ softmax(z + h·eⱼ) − softmax(z − h·eⱼ) ] / (2h)",
+        "example, column z₁: z + h = (2.000001, 1, 0.1) → p = ("+pp.map(v=>fmt(v,8)).join(", ")+")",
+        "                    z − h = (1.999999, 1, 0.1) → p = ("+pm.map(v=>fmt(v,8)).join(", ")+")",
+        "difference ÷ 2h → ("+[0,1,2].map(i=>fmt((pp[i]-pm[i])/(2*h),8)).join(", ")+")  = column z₁ of J"
+      ], 150);
+      verdictEl.innerHTML = "<b>largest difference between the nudged grid and the formula grid: "+ex(maxd)+"</b><br>Two unrelated methods, one symbolic and one re-running the function, agree to about ten decimal places.";
+    }
+
+    function showRows(){
+      const Z5 = Z.map(v=>v+5), p5 = softmax(Z5);
+      drawBars([
+        {title:"scores z", w:0.9, vals:Z, range:[0,7.6], color:"var(--c3)", labels:zLab, fmt:v=>fmt(v,1)},
+        {title:"scores z + 5", w:0.9, vals:Z5, range:[0,7.6], color:"var(--c0)", labels:zLab, fmt:v=>fmt(v,1)},
+        {title:"p from z  vs  p′ from z + 5", w:1.7, vals:[p[0],p5[0],p[1],p5[1],p[2],p5[2]], range:[0,1.15], color:"var(--c1)", labels:["p₁","p₁′","p₂","p₂′","p₃","p₃′"], fmt:v=>fmt(v,3)}
+      ]);
+      const rs = J.map(r=>r[0]+r[1]+r[2]);
+      drawGrid(jCells(p,J), {stagger:60, extra:{head:"row sum", cells:rs.map((v,i)=>({html:"<div class=\"f\">"+J[i].map(par).join(" + ")+"</div><div class=\"v\">= "+(Math.abs(v)<1e-12?"0.0000":ex(v))+"</div>"}))}});
+      steps([
+        "##Shift every score by the same amount",
+        "z + 5 = ("+Z5.map(v=>fmt(v,1)).join(", ")+")",
+        "p from z     = "+vec(p),
+        "p from z + 5 = <b>"+vec(p5)+"</b>   (identical — largest change "+ex(Math.max(...p.map((v,i)=>Math.abs(v-p5[i]))))+")",
+        "why: e^(zᵢ+5) = e⁵·e^zᵢ, and the e⁵ cancels between top and bottom",
+        "##So a nudge that raises all scores equally changes nothing",
+        "the change in pᵢ from raising every score by ε is ε × (row i's sum) → every row sum must be 0",
+        "algebra: pᵢ(1 − pᵢ) − pᵢ·Σⱼ≠ᵢ pⱼ = pᵢ(1 − pᵢ) − pᵢ(1 − pᵢ) = <b>0</b>"
+      ], 140);
+      verdictEl.innerHTML = "<b>row sums = ("+rs.map(v=>Math.abs(v)<1e-12?"0.0000":ex(v)).join(", ")+")</b> — zero up to floating-point rounding. Because J is symmetric, every column also sums to 0.";
+    }
+
+    function showCE(c){
+      const y=[0,0,0]; y[c]=1;
+      const L = -Math.log(p[c]);
+      const g = [0,0,0]; g[c] = -1/p[c];               // ∂L/∂p
+      const JT = [0,1,2].map(k=>[0,1,2].reduce((s,i)=>s+J[i][k]*g[i],0));  // Jᵀ g
+      const pmy = p.map((v,i)=>v-y[i]);
+      const fd = fdGrad(Z,c,1e-6);
+      const maxd = Math.max(...[0,1,2].map(k=>Math.max(Math.abs(fd[k]-pmy[k]), Math.abs(JT[k]-pmy[k]))));
+      drawBars([
+        {title:"p", vals:p, range:[-1.1,1.1], color:"var(--c1)", labels:pLab, hl:c},
+        {title:"y (one-hot truth)", vals:y, range:[-1.1,1.1], color:"var(--c2)", labels:["y₁","y₂","y₃"], fmt:v=>fmt(v,0)},
+        {title:"gradient p − y", vals:pmy, range:[-1.1,1.1], color:"var(--c4)", labels:["∂L/∂z₁","∂L/∂z₂","∂L/∂z₃"]}
+      ]);
+      drawGrid(jCells(p,J,c), {stagger:50, extra:{head:"∂L/∂p", cells:g.map((v,i)=>({cls:(i===c?"hl":""), html:"<div class=\"v\">"+(i===c?"−1/p"+SUB[c]+"<br>= "+sg(v):"0")+"</div>"}))}});
+      const P = "p"+SUB[c];
+      const lines = [
+        "##Step 1 — the loss and its slope with respect to p",
+        "true class = "+(c+1)+", so y = ("+y.join(", ")+") and L = −ln "+P+" = −ln "+f4(p[c])+" = <b>"+f4(L)+"</b>",
+        "∂L/∂p = (−y₁/p₁, −y₂/p₂, −y₃/p₃) = <b>("+g.map((v,i)=>i===c?sg(v):"0").join(", ")+")</b>   — only the true class is non-zero",
+        "##Step 2 — chain rule: ∂L/∂zₖ = Σᵢ J[i][k] · ∂L/∂pᵢ  (that is Jᵀ·∂L/∂p)"
+      ];
+      for (let k=0;k<3;k++){
+        lines.push("∂L/∂z"+SUB[k]+" = "+[0,1,2].map(i=>par(J[i][k])+"×"+(g[i]===0?"0":par(g[i]))).join(" + ")+" = <b>"+sg(JT[k])+"</b>");
+      }
+      lines.push("only row "+(c+1)+" of J survives (highlighted in gold): its "+P+" cancels the 1/"+P);
+      lines.push("  diagonal: "+P+"(1 − "+P+") × (−1/"+P+") = −(1 − "+P+") = "+sg(-(1-p[c]))+"   ·   off-diagonal: −"+P+"·pⱼ × (−1/"+P+") = +pⱼ");
+      lines.push("##Step 3 — compare three routes");
+      lines.push("Jᵀ(∂L/∂p)            = "+vec(JT));
+      lines.push("p − y                = "+vec(p)+" − ("+y.join(", ")+") = <b>"+vec(pmy)+"</b>");
+      lines.push("finite differences   = "+vec(fd)+"   (nudging each score by ±10⁻⁶)");
+      steps(lines, 110);
+      verdictEl.innerHTML = "<b class=\"big\">∂L/∂z = p − y = "+vec(pmy)+"</b><br>All three routes agree (largest gap "+ex(maxd)+"). Push the true class's score up by the probability it was missing ("+f4(1-p[c])+"); push every other class down by the probability it wrongly got.";
+    }
+
+    const actions = [showSoftmax, showBuild, showFD, showRows, ()=>showCE(0), ()=>showCE(1)];
+    buttons.forEach((b,i)=>b.addEventListener("click", ()=>{ setActive(b); actions[i](); }));
+    showSoftmax();
+  })();
+
+})();
+</script>
+<script>
+/* ===== Pseudo-Inverse & Minimum Norm tab (self-contained) ===== */
+(function(){
+  "use strict";
+  const NS="http://www.w3.org/2000/svg";
+  function el(tag,a,t){ const e=document.createElementNS(NS,tag); for(const k in a) e.setAttribute(k,a[k]); if(t!==undefined) e.textContent=t; return e; }
+  function f4(v){ const r=Math.round(v*10000)/10000; return (Math.abs(r)<5e-5?0:r).toFixed(4); }
+  const svg=document.getElementById("piSvg"), out=document.getElementById("piVerdict");
+  const tS=document.getElementById("piT"), lS=document.getElementById("piL"), pS=document.getElementById("piP");
+  let mode="one", eps=0.001;
+  // precomputed (python, seed 0): n=80, d=20, noise 0.5, random ReLU features, w = pinv(Phi) y
+  // [p, smallest nonzero sigma, |w+|, train MSE, test MSE]
+  const DD=[[5,2.1761,1.79,1.496,0.977],[10,1.9449,2.49,1.0377,0.914],[20,1.4842,2.2,0.6716,0.711],[30,1.1891,2.57,0.4166,0.74],[40,0.8185,3.04,0.248,0.83],[50,0.5449,4.44,0.1566,1.639],[60,0.3625,6.37,0.0944,3.468],[65,0.276,7.17,0.0701,4.246],[70,0.1835,7.48,0.0684,4.684],[75,0.0706,12.67,0.0219,11.169],[78,0.038,11.32,0.0177,8.366],[80,0.0179,64.31,0.0,293.468],[82,0.059,10.66,0.0,10.608],[85,0.0842,7.63,0.0,5.693],[90,0.1277,6.27,0.0,4.032],[100,0.2955,5.64,0.0,3.473],[120,0.4848,3.74,0.0,1.774],[150,0.8324,2.81,0.0,1.084],[200,1.1801,2.15,0.0,0.685],[300,1.8128,1.58,0.0,0.56],[400,2.3224,1.23,0.0,0.451],[600,3.0322,0.93,0.0,0.31]];
+  function rows(t,l,e,p){ document.getElementById("piRowT").style.display=t?"flex":"none"; document.getElementById("piRowL").style.display=l?"flex":"none"; document.getElementById("piRowE").style.display=e?"flex":"none"; document.getElementById("piRowP").style.display=p?"flex":"none"; }
+  // plane view
+  function plane(xmin,xmax,ymin,ymax){
+    svg.innerHTML="";
+    const x0=60,y0=14,w=300,h=310;
+    const X=v=>x0+(v-xmin)/(xmax-xmin)*w, Y=v=>y0+h-(v-ymin)/(ymax-ymin)*h;
+    svg.appendChild(el("rect",{x:x0,y:y0,width:w,height:h,fill:"#FBFBF8",stroke:"var(--line)"}));
+    for(let g=Math.ceil(xmin); g<=xmax; g++){ svg.appendChild(el("line",{x1:X(g),y1:y0,x2:X(g),y2:y0+h,stroke:g===0?"#9AA1AA":"var(--line)","stroke-width":g===0?1.3:0.7})); svg.appendChild(el("text",{x:X(g)-4,y:y0+h+14,"font-size":10,fill:"var(--ink-soft)"},String(g))); }
+    for(let g=Math.ceil(ymin); g<=ymax; g++){ svg.appendChild(el("line",{x1:x0,y1:Y(g),x2:x0+w,y2:Y(g),stroke:g===0?"#9AA1AA":"var(--line)","stroke-width":g===0?1.3:0.7})); svg.appendChild(el("text",{x:x0-16,y:Y(g)+4,"font-size":10,fill:"var(--ink-soft)"},String(g))); }
+    const clipId="piClip"; const defs=el("defs",{}); const cp=el("clipPath",{id:clipId}); cp.appendChild(el("rect",{x:x0,y:y0,width:w,height:h})); defs.appendChild(cp); svg.appendChild(defs);
+    const g=el("g",{"clip-path":"url(#"+clipId+")"}); svg.appendChild(g);
+    return {X,Y,g,xmin,xmax};
+  }
+  // line a·x + b·y = c
+  function line(m,a,b,c,color,w,dash){ let p1,p2; if(Math.abs(b)>1e-9){ p1=[m.xmin,(c-a*m.xmin)/b]; p2=[m.xmax,(c-a*m.xmax)/b]; } else { p1=[c/a,-100]; p2=[c/a,100]; }
+    m.g.appendChild(el("line",{x1:m.X(p1[0]),y1:m.Y(p1[1]),x2:m.X(p2[0]),y2:m.Y(p2[1]),stroke:color,"stroke-width":w||2,"stroke-dasharray":dash||""})); }
+  function pt(m,x,y,color,r,label){ m.g.appendChild(el("circle",{cx:m.X(x),cy:m.Y(y),r:r||5,fill:color})); if(label) m.g.appendChild(el("text",{x:m.X(x)+7,y:m.Y(y)-6,"font-size":11,fill:color,"font-family":"IBM Plex Mono, monospace"},label)); }
+  function seg(m,x1,y1,x2,y2,color,w,dash){ m.g.appendChild(el("line",{x1:m.X(x1),y1:m.Y(y1),x2:m.X(x2),y2:m.Y(y2),stroke:color,"stroke-width":w||1.5,"stroke-dasharray":dash||""})); }
+  function circ(m,r,color){ m.g.appendChild(el("circle",{cx:m.X(0),cy:m.Y(0),r:Math.abs(m.X(r)-m.X(0)),fill:"none",stroke:color,"stroke-width":1.2,"stroke-dasharray":"4,3"})); }
+  function side(lines){ lines.forEach((t,i)=>svg.appendChild(el("text",{x:376,y:30+i*21,"font-size":10.5,fill:t[1]||"var(--ink)","font-family":"IBM Plex Mono, monospace"},t[0]))); }
+  const nrm=(x,y)=>Math.hypot(x,y);
+  // pinv of a 1x2 row [a,b]: [a,b]^T/(a^2+b^2)
+  function drawOne(){
+    rows(true,false,false,false);
+    const t=parseFloat(tS.value); document.getElementById("piTOut").textContent=t.toFixed(2);
+    const m=plane(-2,6,-3,4);
+    const s1=Math.sqrt(5), xp=[1*5/5,2*5/5];
+    line(m,1,2,5,"var(--c1)",2.5);
+    seg(m,-2*-3/Math.sqrt(5),1*-3/Math.sqrt(5),-2*3/Math.sqrt(5),1*3/Math.sqrt(5),"var(--c4)",1.5,"5,3");
+    circ(m,nrm(xp[0],xp[1]),"var(--accent)");
+    seg(m,0,0,xp[0],xp[1],"var(--accent)",2.5);
+    [[5,0],[3,1],[0,2.5],[-1,3]].forEach(q=>pt(m,q[0],q[1],"#9AA1AA",4,"("+q[0]+","+q[1]+") len "+nrm(q[0],q[1]).toFixed(4)));
+    const nd=[-2/Math.sqrt(5),1/Math.sqrt(5)], c=[xp[0]+t*nd[0],xp[1]+t*nd[1]];
+    seg(m,0,0,c[0],c[1],"var(--c2)",2,"4,3"); pt(m,c[0],c[1],"var(--c2)",6);
+    pt(m,xp[0],xp[1],"var(--accent)",6,"x⁺");
+    side([["A = [[1, 2]],  b = 5"],["σ₁ = "+f4(s1)+" (= √5)"],["v₁ = ("+f4(1/s1)+", "+f4(2/s1)+")"],["A⁺ = VΣ⁺Uᵀ = [[0.2], [0.4]]"],["x⁺ = A⁺b = ("+f4(xp[0])+", "+f4(xp[1])+")","var(--accent)"],["‖x⁺‖ = "+f4(nrm(xp[0],xp[1])),"var(--accent)"],["x⁺ · (−2, 1) = "+f4(-2*xp[0]+xp[1])+" (perpendicular)"],[""],["gold candidate = x⁺ + t·n"],["  = ("+f4(c[0])+", "+f4(c[1])+")","var(--c2)"],["  x + 2y = "+f4(c[0]+2*c[1])],["  length = "+f4(nrm(c[0],c[1])),"var(--c2)"],["  √(‖x⁺‖² + t²) = "+f4(Math.sqrt(5+t*t))]]);
+    out.innerHTML=`<b>One equation, two unknowns.</b> Every point on the teal line solves x + 2y = 5. The coral dashed line is the null direction (−2, 1), which A sends to 0. x⁺ = (1, 2) is the foot of the perpendicular from the origin, and Pythagoras makes every other solution longer: ‖x⁺ + t·n‖² = ‖x⁺‖² + t². <b>Minimum length = ${f4(Math.sqrt(5))}.</b>`;
+  }
+  function drawTwo(withRidge){
+    rows(!withRidge,withRidge,false,false);
+    const m=plane(-1.5,4.5,-1.5,4.5);
+    line(m,1,1,2,"#9AA1AA",1.6,"5,3"); line(m,1,1,4,"#9AA1AA",1.6,"5,3"); line(m,1,1,3,"var(--c1)",2.5);
+    seg(m,-3,-3,6,6,"var(--line)",1);
+    const xp=[1.5,1.5];
+    circ(m,nrm(1.5,1.5),"var(--accent)");
+    [[3,0],[0,3],[2,1]].forEach(q=>pt(m,q[0],q[1],"#9AA1AA",4,"("+q[0]+","+q[1]+") len "+nrm(q[0],q[1]).toFixed(4)));
+    pt(m,xp[0],xp[1],"var(--accent)",6,"x⁺");
+    const res=(x,y)=>Math.hypot(x+y-2,x+y-4);
+    let lines=[["A = [[1,1],[1,1]],  b = (2, 4)"],["det A = 0 → inv(A) fails"],["AᵀA = [[2,2],[2,2]], det 0 → normal eqs fail"],["σ = (2, 0)"],["A⁺ = [[0.25, 0.25], [0.25, 0.25]]"],["x⁺ = (1.5000, 1.5000)","var(--accent)"],["residual ‖Ax⁺ − b‖ = "+f4(res(1.5,1.5))],["‖x⁺‖ = "+f4(nrm(1.5,1.5)),"var(--accent)"]];
+    if(!withRidge){
+      const t=parseFloat(tS.value); document.getElementById("piTOut").textContent=t.toFixed(2);
+      const c=[1.5+t/Math.SQRT2,1.5-t/Math.SQRT2]; pt(m,c[0],c[1],"var(--c2)",6); seg(m,0,0,c[0],c[1],"var(--c2)",2,"4,3");
+      lines=lines.concat([[""],["gold candidate on x + y = 3:"],["  ("+f4(c[0])+", "+f4(c[1])+")","var(--c2)"],["  residual = "+f4(res(c[0],c[1]))+"  (tied)"],["  length = "+f4(nrm(c[0],c[1])),"var(--c2)"]]);
+      out.innerHTML=`<b>No exact solution, and infinitely many best ones.</b> The grey dashed lines are the two demands, x + y = 2 and x + y = 4. Every point on the teal compromise line x + y = 3 leaves the same residual, 1.4142. The pseudo-inverse breaks the tie by length: x⁺ = (1.5, 1.5) has length 2.1213, shorter than (3, 0), (0, 3) and (2, 1) (3, 3 and 2.2361).`;
+    } else {
+      const L=Math.pow(10,parseFloat(lS.value)); document.getElementById("piLOut").textContent=L<0.01?L.toExponential(0):L.toFixed(L<1?3:1);
+      // (AᵀA + λI)⁻¹ Aᵀb, AᵀA=[[2,2],[2,2]], Aᵀb=(6,6): solution symmetric x=y=6/(4+λ)
+      const r=6/(4+L);
+      pt(m,r,r,"var(--c2)",6,"ridge");
+      const tbl=[1,0.1,0.01,0.001,1e-6].map(l=>"  λ = "+(l<0.01?l.toExponential(0):l)+" → ("+f4(6/(4+l))+", "+f4(6/(4+l))+")");
+      lines=lines.concat([[""],["ridge: (AᵀA + λI)⁻¹Aᵀb, λ = "+(L<0.01?L.toExponential(1):L.toFixed(3))],["  = ("+f4(r)+", "+f4(r)+")","var(--c2)"]]).concat(tbl.map(s=>[s]));
+      out.innerHTML=`<b>Ridge with the penalty turned down to nothing.</b> Adding λI makes AᵀA invertible for any λ > 0. Drag λ toward 10⁻⁶ and the gold ridge answer slides along the diagonal onto x⁺ = (1.5, 1.5).`;
+    }
+    side(lines);
+  }
+  let gdTimer=null;
+  function drawGD(nSteps){
+    rows(false,false,false,false);
+    const m=plane(-2,6,-3.5,4);
+    line(m,1,2,5,"var(--c1)",2.5);
+    circ(m,Math.sqrt(5),"var(--accent)");
+    function run(x0,y0,n){ let x=x0,y=y0; const path=[[x,y]]; for(let i=0;i<n;i++){ const r=x+2*y-5; x-=0.05*r; y-=0.05*2*r; if(i<80) path.push([x,y]); } return {x,y,path}; }
+    const shown=Math.min(nSteps,80);
+    const A=run(0,0,nSteps), B=run(4,-3,nSteps);
+    [[A,"var(--accent)"],[B,"var(--c2)"]].forEach(([R,col])=>{ const pth=R.path.slice(0,shown+1); for(let i=1;i<pth.length;i++) seg(m,pth[i-1][0],pth[i-1][1],pth[i][0],pth[i][1],col,2); pt(m,pth[0][0],pth[0][1],col,4); pt(m,R.x,R.y,col,6); });
+    pt(m,1,2,"var(--accent)",3,"x⁺");
+    const AF=run(0,0,2000), BF=run(4,-3,2000);
+    side([["minimize ½(x + 2y − 5)², step 0.05"],["each step moves along Aᵀ = (1, 2)"],[""],["steps shown: "+nSteps],["from (0, 0):  ("+f4(A.x)+", "+f4(A.y)+")","var(--accent)"],["from (4, −3): ("+f4(B.x)+", "+f4(B.y)+")","var(--c2)"],[""],["after 2,000 steps:"],["  from (0,0)  → ("+f4(AF.x)+", "+f4(AF.y)+"), len "+f4(nrm(AF.x,AF.y)),"var(--accent)"],["  from (4,−3) → ("+f4(BF.x)+", "+f4(BF.y)+"), len "+f4(nrm(BF.x,BF.y)),"var(--c2)"],["null-space part (−2x+y)/√5 kept:"],["  start (4,−3): "+f4((-8-3)/Math.sqrt(5))+"   end: "+f4((-2*BF.x+BF.y)/Math.sqrt(5))]]);
+    out.innerHTML=`<b>Gradient descent's implicit bias.</b> Both runs end on the solution line, but every step is parallel to (1, 2), so the component along the null direction (−2, 1) never changes. Starting at 0 carries none of it, so that run lands exactly on x⁺ = (1, 2). Starting at (4, −3) keeps its null-space part and lands on (5.4, −0.2), a valid but longer solution.`;
+  }
+  function startGD(){ if(gdTimer) clearInterval(gdTimer); let n=0; drawGD(0); gdTimer=setInterval(()=>{ n+=2; drawGD(n); if(n>=80||mode!=="gd"){ clearInterval(gdTimer); gdTimer=null; if(mode==="gd") drawGD(2000); } },60); }
+  function drawTiny(){
+    rows(false,false,true,false);
+    document.querySelectorAll("[data-pieps]").forEach(b=>b.classList.toggle("active",parseFloat(b.dataset.pieps)===eps));
+    const m=plane(-9,3,-1.5,10.5);
+    // C = [[1,1],[1,1+eps]]
+    const a=1,b=1,c=1,d=1+eps;
+    const det=a*d-b*c;
+    const sol=(b1,b2)=>[(d*b1-b*b2)/det,(a*b2-c*b1)/det];
+    const s0=sol(2,2), s1=sol(2,2.01);
+    line(m,1,1,2,"var(--c1)",2); line(m,1,1+eps,2,"var(--c3)",2); line(m,1,1+eps,2.01,"var(--c2)",2,"5,3");
+    pt(m,s0[0],s0[1],"var(--c1)",6,"b = (2, 2)"); pt(m,s1[0],s1[1],"var(--c4)",6,"b = (2, 2.01)");
+    const tr=a*a+b*b+c*c+d*d, dt=det*det, disc=Math.sqrt(Math.max(0,tr*tr/4-dt));
+    const smax=Math.sqrt(tr/2+disc), smin=Math.sqrt(tr/2-disc);
+    side([["C = [[1, 1], [1, 1+ε]],  ε = "+eps],["σ = ("+f4(smax)+", "+f4(smin)+")"],["1/σ_min = "+(1/smin).toFixed(2),"var(--c4)"],[""],["b = (2, 2)    → x = ("+f4(s0[0])+", "+f4(s0[1])+")","var(--c1)"],["b = (2, 2.01) → x = ("+f4(s1[0])+", "+f4(s1[1])+")","var(--c4)"],["answer moved by "+f4(nrm(s1[0]-s0[0],s1[1]-s0[1]))],["for a nudge of 0.01 in b"]]);
+    out.innerHTML=`<b>Dividing by a tiny σ amplifies noise.</b> The two lines are nearly parallel, so they cross at a point that swings wildly when either line shifts slightly. With ε = ${eps}, σ_min = ${f4(smin)} and 1/σ_min ≈ ${(1/smin).toFixed(1)}, so a 0.01 nudge moves the answer from (2, 0) to (${f4(s1[0])}, ${f4(s1[1])}). This is why numpy's pinv drops singular values below a cutoff (rcond), and why ridge's λ helps.`;
+  }
+  function drawDD(){
+    rows(false,false,false,true);
+    const i=parseInt(pS.value,10), R=DD[i]; document.getElementById("piPOut").textContent=R[0];
+    svg.innerHTML="";
+    const x0=60,y0=14,w=500,h=250;
+    const lx=v=>x0+(Math.log10(v)-Math.log10(5))/(Math.log10(600)-Math.log10(5))*w;
+    const ly=v=>y0+h-(Math.log10(v)+1)/(Math.log10(1000)+1)*h;   // 0.1 .. 1000
+    svg.appendChild(el("rect",{x:x0,y:y0,width:w,height:h,fill:"#FBFBF8",stroke:"var(--line)"}));
+    [0.1,1,10,100,1000].forEach(v=>{ svg.appendChild(el("line",{x1:x0,y1:ly(v),x2:x0+w,y2:ly(v),stroke:"var(--line)"})); svg.appendChild(el("text",{x:x0-34,y:ly(v)+4,"font-size":10,fill:"var(--ink-soft)"},String(v))); });
+    [5,10,20,50,80,100,200,600].forEach(v=>{ svg.appendChild(el("line",{x1:lx(v),y1:y0,x2:lx(v),y2:y0+h,stroke:v===80?"var(--c4)":"var(--line)","stroke-dasharray":v===80?"4,3":""})); svg.appendChild(el("text",{x:lx(v)-6,y:y0+h+14,"font-size":10,fill:v===80?"var(--c4)":"var(--ink-soft)"},String(v))); });
+    svg.appendChild(el("text",{x:x0+w/2-60,y:y0+h+30,"font-size":11,fill:"var(--ink-soft)"},"p (features), log scale; dashed = p = n = 80"));
+    function series(idx,f,col){ const d=DD.map((r,k)=>(k?"L":"M")+lx(r[0]).toFixed(1)+","+ly(f(r)).toFixed(1)).join(""); svg.appendChild(el("path",{d,fill:"none",stroke:col,"stroke-width":2.5})); DD.forEach(r=>svg.appendChild(el("circle",{cx:lx(r[0]),cy:ly(f(r)),r:2.5,fill:col}))); }
+    series(0,r=>r[4],"var(--accent)"); series(1,r=>1/r[1],"var(--c2)"); series(2,r=>r[2],"var(--c1)");
+    svg.appendChild(el("line",{x1:lx(R[0]),y1:y0,x2:lx(R[0]),y2:y0+h,stroke:"var(--ink)","stroke-width":1.2}));
+    [["test MSE","var(--accent)"],["1/σ_min of Φ","var(--c2)"],["‖w⁺‖","var(--c1)"]].forEach((L,k)=>{ svg.appendChild(el("rect",{x:x0+10+k*140,y:y0+8,width:14,height:4,fill:L[1]})); svg.appendChild(el("text",{x:x0+28+k*140,y:y0+14,"font-size":11,fill:L[1]},L[0])); });
+    out.innerHTML=`<b>p = ${R[0]}</b> features, n = 80 training points: smallest non-zero σ of Φ = <b>${R[1].toFixed(4)}</b>, 1/σ_min = <b>${(1/R[1]).toFixed(1)}</b>, ‖w⁺‖ = <b>${R[2].toFixed(2)}</b>, train MSE = ${R[3].toFixed(4)}, test MSE = <b>${R[4].toFixed(3)}</b>.<br>At p = n, Φ is square and nearly singular, so the pseudo-inverse divides by a tiny σ, the weights balloon, and test error spikes. Past the threshold the smallest σ grows again and the minimum-norm choice picks the shortest interpolating weights, so test error falls. (Precomputed in Python: 20 true dimensions, noise 0.5, seed 0. This is an independent rerun of the setup in The Bias-Variance Tradeoff, Part 6.)`;
+  }
+  function draw(){ if(mode!=="gd"&&gdTimer){ clearInterval(gdTimer); gdTimer=null; }
+    ({one:drawOne,two:()=>drawTwo(false),ridge:()=>drawTwo(true),gd:()=>drawGD(2000),tiny:drawTiny,dd:drawDD})[mode](); }
+  const P={ one:()=>{ tS.value=1.5; }, two:()=>{ tS.value=1.5; }, ridge:()=>{ lS.value=0; }, gd:()=>{}, tiny:()=>{ eps=0.001; }, dd:()=>{ pS.value=11; } };
+  document.querySelectorAll("[data-pipreset]").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("[data-pipreset]").forEach(x=>x.classList.remove("active")); b.classList.add("active");
+    mode=b.dataset.pipreset; P[mode](); if(mode==="gd") startGD(); else draw(); }));
+  document.querySelectorAll("[data-pieps]").forEach(b=>b.addEventListener("click",()=>{ eps=parseFloat(b.dataset.pieps); drawTiny(); }));
+  [tS,lS,pS].forEach(s=>s.addEventListener("input",draw));
+  document.querySelector('[data-pipreset="one"]').classList.add("active");
+  draw();
 })();
 </script>
 </body>

@@ -10,7 +10,7 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--chalk);font-family:'Trebuchet MS','Segoe UI',sans-serif;padding:32px 24px 60px;}
-  .wrap{max-width:900px;margin:0 auto;}
+  .wrap{max-width:1180px;margin:0 auto;}
   h1{font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
   .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
   .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
@@ -42,14 +42,27 @@
   .metric.amber .num{color:var(--amber);}
 
   .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tabbtn{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:20px;padding:9px 16px;cursor:pointer;}
+  .tabbtn.active{background:var(--amber);color:#26210f;border-color:var(--amber);}
+  .tabpanel{display:none;} .tabpanel.active{display:block;}
+  button.op.preset{border-color:var(--amber);}
+  #cbTfidf th, #cbTfidf td{padding:4px 5px;min-width:0;}
+  .scrollx{overflow-x:auto;}
   footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Matrix Completion, live</h1>
-  <p class="sub">The tutorial's exact 6-user, 5-movie ratings matrix, with the same 6 entries hidden (amber). Watch the alternating rank-k imputation algorithm converge from a naive column-mean guess toward the true, hidden values.</p>
+  <p class="sub">Two tabs. Alternating Imputation: the tutorial's exact 6-user, 5-movie ratings matrix, with the same 6 entries hidden (amber). Watch the alternating rank-k imputation algorithm converge from a naive column-mean guess toward the true, hidden values.</p>
 
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="impute">Alternating Imputation</button>
+    <button class="tabbtn" data-tab="content">Content-Based &amp; Hybrid</button>
+  </div>
+
+  <div class="tabpanel active" id="tab-impute">
   <div class="panel">
     <h2>Alternating Imputation</h2>
     <div class="row">
@@ -68,6 +81,42 @@
     </div>
     <div class="story-line" id="mcStory"></div>
   </div>
+  </div>
+
+  <!-- ============ TAB 2: CONTENT-BASED ============ -->
+  <div class="tabpanel" id="tab-content">
+    <div class="panel">
+      <h2>Content-Based Recommending: Describe the Movie, Not the Crowd</h2>
+      <p class="sub">The tutorial's Part 3. Six movies, each with a short description; five users' ratings; target user <b>U0</b> rated Star Voyage 5, Paris Love 1, Robot Heart 4. Nebula Station is brand new: nobody has rated it. Step through: TF-IDF item vectors &rarr; U0's profile &rarr; cosine scores &rarr; collaborative-filtering predictions &rarr; hybrid.</p>
+      <div class="row">
+        <span style="font-size:12px;color:var(--chalk-dim)">Presets:</span>
+        <button class="op preset" id="cbPresetFull">Part 3 worked example (all stages)</button>
+        <button class="op preset" id="cbPresetCold">Cold start: new movie (Nebula Station)</button>
+        <button class="op preset" id="cbPresetNewUser">Cold start: new user (no ratings)</button>
+      </div>
+      <div class="row">
+        <button class="op" id="cbReset">Reset</button>
+        <button class="op" id="cbStep">Step</button>
+        <button class="op" id="cbPlay">Play</button>
+        <button class="op" id="cbEnd">Jump to end</button>
+        <span style="font-size:12px;color:var(--chalk-dim);margin-left:10px">hybrid weight on CF, &alpha;:</span>
+        <button class="op preset" id="cbA0">&alpha; = 0</button>
+        <button class="op preset" id="cbA05">&alpha; = 0.5</button>
+        <button class="op preset" id="cbA1">&alpha; = 1</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">stage</div><div class="num" id="cbStage">0 / 5</div></div>
+        <div class="metric blue"><div class="lbl">target user</div><div class="num" id="cbUser">U0</div></div>
+        <div class="metric green"><div class="lbl">top recommendation</div><div class="num" id="cbTop" style="font-size:13px">&mdash;</div></div>
+      </div>
+      <table class="matrix" id="cbCatalog"></table>
+      <div class="scrollx"><table class="matrix" id="cbTfidf" style="font-size:10.5px"></table></div>
+      <table class="matrix" id="cbScores"></table>
+      <div class="story-line" id="cbStory"></div>
+      <p class="sub" style="margin-top:10px">TF-IDF is computed live with scikit-learn's default <code>TfidfVectorizer</code> formula (idf = ln((1+n)/(1+df)) + 1, then each row scaled to length 1). The CF column is this page's own run of the Alternating Imputation tab's algorithm (rank 2) on the 5&times;6 ratings matrix.</p>
+    </div>
+  </div>
+
 
   <footer>
     Companion to <code>matrix_completion_feynman.md</code>. Self-contained — no external requests, opens directly from disk.
@@ -225,6 +274,144 @@
 
   mcInit();
   renderMC();
+
+  document.querySelectorAll('.tabbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.tabbtn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.tabpanel').forEach(function(p){ p.classList.remove('active'); });
+      document.getElementById('tab-'+btn.getAttribute('data-tab')).classList.add('active');
+    });
+  });
+
+  // ================= TAB 2: CONTENT-BASED =================
+  var CB_TITLES = ['Star Voyage','Galaxy Heist','Paris Love','Last Wedding','Robot Heart','Nebula Station'];
+  var CB_DOCS = ['space adventure aliens starship battle','space heist aliens comedy chase','romance comedy paris wedding','romance drama wedding family','robot space drama romance','space station aliens mystery'];
+  var CB_R = [[5,null,1,null,4,null],[5,4,1,2,4,null],[4,5,2,1,null,null],[1,2,5,4,2,null],[2,1,4,5,1,null]];
+  var cbState = { stage:0, alpha:0.5, newUser:false, timer:null, cf:null };
+
+  function cbTfidf(){
+    var toks = CB_DOCS.map(function(d){ return d.split(' '); });
+    var vocab = []; toks.forEach(function(t){ t.forEach(function(w){ if (vocab.indexOf(w)<0) vocab.push(w); }); });
+    vocab.sort();
+    var n = CB_DOCS.length;
+    var idf = vocab.map(function(w){ var df=toks.filter(function(t){ return t.indexOf(w)>=0; }).length; return Math.log((1+n)/(1+df))+1; });
+    var df = vocab.map(function(w){ return toks.filter(function(t){ return t.indexOf(w)>=0; }).length; });
+    var V = toks.map(function(t){
+      var row = vocab.map(function(w,j){ var tf=t.filter(function(x){return x===w;}).length; return tf*idf[j]; });
+      var nr = Math.sqrt(row.reduce(function(a,b){return a+b*b;},0));
+      return row.map(function(x){ return x/nr; });
+    });
+    return {vocab:vocab, idf:idf, df:df, V:V};
+  }
+  function cbCos(a,b){ var d=0,na=0,nb=0; for (var i=0;i<a.length;i++){ d+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } return (na===0||nb===0) ? 0 : d/Math.sqrt(na*nb); }
+  function cbProfile(T, ratings){
+    var idx=[]; ratings.forEach(function(r,j){ if (r!==null) idx.push(j); });
+    if (!idx.length) return {mean:null, w:[], prof:T.vocab.map(function(){return 0;})};
+    var mean = idx.reduce(function(a,j){ return a+ratings[j]; },0)/idx.length;
+    var wsum = idx.reduce(function(a,j){ return a+Math.abs(ratings[j]-mean); },0);
+    var prof = T.vocab.map(function(_,k){ return idx.reduce(function(a,j){ return a+(ratings[j]-mean)*T.V[j][k]; },0)/(wsum||1); });
+    return {mean:mean, idx:idx, w:idx.map(function(j){ return ratings[j]-mean; }), prof:prof};
+  }
+  function cbCF(){
+    // the Alternating Imputation tab's algorithm, on the 5x6 matrix, rank 2
+    var m=CB_R.length, n=CB_R[0].length, all=[], i, j;
+    for (i=0;i<m;i++) for (j=0;j<n;j++) if (CB_R[i][j]!==null) all.push(CB_R[i][j]);
+    var gm = all.reduce(function(a,b){return a+b;},0)/all.length;
+    var means=[]; for (j=0;j<n;j++){ var s=0,c=0; for (i=0;i<m;i++) if (CB_R[i][j]!==null){ s+=CB_R[i][j]; c++; } means.push(c? s/c : gm); }
+    var X = CB_R.map(function(row){ return row.map(function(v,j){ return v===null ? means[j] : v; }); });
+    for (var it=0; it<500; it++){
+      var svd=topKSVD(X,2), rec=reconstruct(svd,2,m,n), delta=0;
+      for (i=0;i<m;i++) for (j=0;j<n;j++) if (CB_R[i][j]===null){ delta=Math.max(delta,Math.abs(rec[i][j]-X[i][j])); X[i][j]=rec[i][j]; }
+      if (delta<1e-10) break;
+    }
+    return {X:X, gm:gm};
+  }
+  window.__cbCF = cbCF;
+  function renderCB(){
+    var st=cbState.stage, T=cbTfidf();
+    var ratings = cbState.newUser ? [null,null,null,null,null,null] : CB_R[0];
+    var P = cbProfile(T, ratings);
+    if (!cbState.cf) cbState.cf = cbCF();
+    var cf = cbState.cf;
+    // catalog + U0 ratings
+    var h='<tr><th>movie</th><th>description</th><th>ratings (U0..U4)</th><th>'+(cbState.newUser?'new user':'U0')+'</th>'+(st>=2&&!cbState.newUser?'<th>weight r &minus; '+P.mean.toFixed(4)+'</th>':'')+'</tr>';
+    CB_TITLES.forEach(function(t,j){
+      var col=CB_R.map(function(r){ return r[j]===null?'?':r[j]; }).join(' ');
+      var mine = ratings[j]===null ? '&mdash;' : ratings[j];
+      h+='<tr><td>'+t+'</td><td style="text-align:left">'+CB_DOCS[j]+'</td><td class="observed">'+col+'</td><td'+(ratings[j]!==null?' class="hidden"':'')+'>'+mine+'</td>'+(st>=2&&!cbState.newUser?'<td>'+(ratings[j]===null?'':(ratings[j]-P.mean).toFixed(4))+'</td>':'')+'</tr>';
+    });
+    document.getElementById('cbCatalog').innerHTML=h;
+    // tf-idf table
+    var t2='';
+    if (st>=1){
+      t2='<tr><th></th>'+T.vocab.map(function(w){return '<th>'+w+'</th>';}).join('')+'</tr><tr><th>idf</th>'+T.idf.map(function(v){return '<td>'+v.toFixed(4)+'</td>';}).join('')+'</tr>';
+      T.V.forEach(function(row,j){ t2+='<tr><th>'+CB_TITLES[j]+'</th>'+row.map(function(v){return '<td'+(v>0?' class="hidden"':' class="observed"')+'>'+(v>0?v.toFixed(4):'0')+'</td>';}).join('')+'</tr>'; });
+      if (st>=2) t2+='<tr><th>'+(cbState.newUser?'new user':'U0')+' profile</th>'+P.prof.map(function(v){return '<td style="color:'+(v>1e-12?'#8fd19e':(v<-1e-12?'#ff8266':'#7f8f83'))+'">'+(Math.abs(v)>1e-12?v.toFixed(4):'0')+'</td>';}).join('')+'</tr>';
+    }
+    document.getElementById('cbTfidf').innerHTML=t2;
+    // scores
+    var cands=[]; ratings.forEach(function(r,j){ if (r===null) cands.push(j); });
+    var t3='';
+    var best=null;
+    if (st>=3){
+      t3='<tr><th>candidate</th><th>content: cos(profile, movie)</th>'+(st>=4?'<th>CF predicted rating (rank 2)</th>':'')+(st>=5?'<th>hybrid, &alpha; = '+cbState.alpha+'</th>':'')+'</tr>';
+      cands.forEach(function(j){
+        var c=cbCos(P.prof,T.V[j]);
+        var nRatings = CB_R.filter(function(r){ return r[j]!==null; }).length;
+        var cfv = cf.X[0][j];
+        var cold = nRatings===0;
+        var hy = cold ? (c+1)/2 : cbState.alpha*(cfv-1)/4 + (1-cbState.alpha)*(c+1)/2;
+        var score = st>=5 ? hy : (st>=4 && !cbState.newUser ? cfv : c);
+        if (best===null || score>best.s) best={s:score, j:j};
+        t3+='<tr><td>'+CB_TITLES[j]+(cold?' (0 ratings)':'')+'</td><td>'+c.toFixed(4)+'</td>'+
+          (st>=4?'<td'+(cold?' class="observed"':'')+'>'+(cbState.newUser?'(user has no row)':(cfv.toFixed(4)+(cold?' &mdash; no data, &asymp; global mean '+cf.gm.toFixed(4):'')))+'</td>':'')+
+          (st>=5?'<td>'+hy.toFixed(4)+(cold?' (content only)':'')+'</td>':'')+'</tr>';
+      });
+    }
+    document.getElementById('cbScores').innerHTML=t3;
+    document.getElementById('cbStage').textContent=st+' / 5';
+    document.getElementById('cbUser').textContent=cbState.newUser?'new user':'U0';
+    document.getElementById('cbTop').textContent = (best && !cbState.newUser) ? CB_TITLES[best.j] : (cbState.newUser && st>=3 ? 'none (all 0)' : '—');
+    var S = cbState.newUser ? [
+      'New user: no ratings at all.',
+      'Stage 1: the item vectors exist — they come from descriptions, not ratings.',
+      'Stage 2: but the profile is a weighted average of the movies this user rated, and there are none. The profile is the zero vector.',
+      'Stage 3: cosine with a zero vector is undefined (scikit-learn returns 0). Every movie scores 0.0000: content-based has its own cold start — for new USERS. Ask them for a few ratings or favourite genres first.',
+      'Stage 4: collaborative filtering has the same problem for a new user (Part 2 of the tutorial: an empty row just reproduces the column means).',
+      'Stage 5: with no profile and no row, neither method — nor any blend of them — can personalise. Fall back to popularity until the user rates something.'
+    ] : [
+      'Stage 0: the catalog. U0 loved Star Voyage (5), liked Robot Heart (4), hated Paris Love (1). Nebula Station has no ratings from anyone.',
+      'Stage 1: TF-IDF. Rare words get high idf (starship, in 1 of 6 descriptions: 2.2528); common ones low (space, in 4 of 6: 1.3365). Each row is scaled to length 1 — Star Voyage\'s raw weights have length 4.4095.',
+      'Stage 2: U0\'s profile = average of the rated movies\' vectors, weighted by (rating − U0\'s mean 3.3333): Star Voyage +1.6667, Paris Love −2.3333, Robot Heart +0.6667, divided by their total size 4.6667. Green words pull towards, coral words push away.',
+      'Stage 3: cosine similarity of the profile with each unrated movie. Nebula Station (space, aliens) scores highest, 0.1760; Galaxy Heist only −0.0143 — its word "comedy" is shared with the hated Paris Love.',
+      'Stage 4: collaborative filtering (rank-2 alternating imputation) says the opposite about Galaxy Heist: 4.8614, because U1 and U2, who rate like U0, gave it 4 and 5. For Nebula Station it has nothing: its column is empty, so every user gets ≈ the global mean.',
+      'Stage 5: hybrid = α·(CF − 1)/4 + (1 − α)·(cos + 1)/2 for movies with ratings, content only for movies with none. At α = 0.5: Galaxy Heist 0.7291 > Nebula Station 0.5880 > Last Wedding 0.1864. Each method covers the other\'s blind spot.'
+    ];
+    var story = S[st];
+    if (st>=5 && !cbState.newUser && cbState.alpha!==0.5) story = 'Hybrid at α = '+cbState.alpha+(cbState.alpha===0?': pure content — Nebula Station (0.5880) now beats Galaxy Heist (0.4928).':': pure CF for rated movies — Galaxy Heist 0.9653, and Nebula Station still gets its content score 0.5880, because CF has nothing to say about it.');
+    document.getElementById('cbStory').textContent=story;
+    ['cbA0','cbA05','cbA1'].forEach(function(id){ document.getElementById(id).classList.remove('active'); });
+    document.getElementById(cbState.alpha===0?'cbA0':(cbState.alpha===1?'cbA1':'cbA05')).classList.add('active');
+  }
+  function cbStop(){ if (cbState.timer){ clearInterval(cbState.timer); cbState.timer=null; document.getElementById('cbPlay').textContent='Play'; } }
+  function cbStepFn(){ if (cbState.stage<5){ cbState.stage++; renderCB(); } else cbStop(); }
+  document.getElementById('cbReset').addEventListener('click', function(){ cbStop(); cbState.stage=0; renderCB(); });
+  document.getElementById('cbStep').addEventListener('click', function(){ cbStop(); cbStepFn(); });
+  document.getElementById('cbEnd').addEventListener('click', function(){ cbStop(); cbState.stage=5; renderCB(); });
+  document.getElementById('cbPlay').addEventListener('click', function(){
+    if (cbState.timer){ cbStop(); return; }
+    if (cbState.stage>=5){ cbState.stage=0; renderCB(); }
+    this.textContent='Pause'; cbState.timer=setInterval(cbStepFn, 1600);
+  });
+  document.getElementById('cbPresetFull').addEventListener('click', function(){ cbStop(); cbState.newUser=false; cbState.alpha=0.5; cbState.stage=5; renderCB(); });
+  document.getElementById('cbPresetCold').addEventListener('click', function(){ cbStop(); cbState.newUser=false; cbState.alpha=0.5; cbState.stage=4; renderCB(); });
+  document.getElementById('cbPresetNewUser').addEventListener('click', function(){ cbStop(); cbState.newUser=true; cbState.stage=3; renderCB(); });
+  document.getElementById('cbA0').addEventListener('click', function(){ cbStop(); cbState.newUser=false; cbState.alpha=0; cbState.stage=5; renderCB(); });
+  document.getElementById('cbA05').addEventListener('click', function(){ cbStop(); cbState.newUser=false; cbState.alpha=0.5; cbState.stage=5; renderCB(); });
+  document.getElementById('cbA1').addEventListener('click', function(){ cbStop(); cbState.newUser=false; cbState.alpha=1; cbState.stage=5; renderCB(); });
+  renderCB();
+
 })();
 </script>
 </body>

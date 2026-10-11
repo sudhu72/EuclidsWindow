@@ -1639,6 +1639,902 @@
       ],
       "viz": "shape_and_spread_explorer.html",
       "source": "shapes_of_data_feynman_tutorial.md"
+    },
+    {
+      "id": "ones_and_twos_complement",
+      "name": "One's and Two's Complement",
+      "keywords": [
+        "twos complement",
+        "two's complement",
+        "ones complement",
+        "one's complement",
+        "signed binary",
+        "negative binary numbers"
+      ],
+      "related": [
+        "base_conversion",
+        "modular_arithmetic",
+        "integers_topic"
+      ],
+      "viz": "ones_and_twos_complement_visualizer.html",
+      "source": "ones-and-twos-complement.md"
+    },
+    {
+      "id": "floating_point",
+      "name": "Floating Point and Numerical Stability",
+      "keywords": [
+        "floating point",
+        "ieee 754",
+        "machine epsilon",
+        "numerical stability",
+        "catastrophic cancellation",
+        "log-sum-exp",
+        "half precision"
+      ],
+      "related": [
+        "real_numbers",
+        "exponents",
+        "model_quantization"
+      ],
+      "viz": "floating_point_visualizer.html",
+      "source": "floating-point-and-numerical-stability.md"
+    },
+    {
+      "id": "roots_of_equations",
+      "name": "Roots of Equations",
+      "keywords": [
+        "roots of equations",
+        "root finding",
+        "bisection method",
+        "newton's method",
+        "newton raphson",
+        "internal rate of return"
+      ],
+      "related": [
+        "polynomial",
+        "quadratic_equation",
+        "function",
+        "derivative"
+      ],
+      "viz": "roots_of_equations_visualizer.html",
+      "source": "roots-of-equations.md"
+    },
+    {
+      "id": "trilateration_and_triangulation",
+      "name": "Trilateration and Triangulation",
+      "keywords": [
+        "trilateration",
+        "triangulation",
+        "gps positioning",
+        "locating a point from distances"
+      ],
+      "related": [
+        "trigonometry",
+        "circles",
+        "system of equations"
+      ],
+      "viz": "trilateration_and_triangulation_visualizer.html",
+      "source": "trilateration-and-triangulation.md"
+    },
+    {
+      "id": "transformations",
+      "related": [
+        "matrices",
+        "neural_network_math"
+      ],
+      "viz": "affine_transformations_visualizer.html",
+      "source": "affine-transformations.md"
+    },
+    {
+      "id": "normed_vector_spaces",
+      "name": "Normed Vector Spaces",
+      "keywords": [
+        "normed vector space",
+        "vector norm",
+        "p-norm",
+        "l1 norm",
+        "l2 norm",
+        "unit ball",
+        "infinity norm"
+      ],
+      "related": [
+        "vectors",
+        "regularization_l1_l2_elasticnet",
+        "normalization"
+      ],
+      "viz": "normed_vector_spaces_visualizer.html",
+      "source": "normed-vector-spaces.md"
+    },
+    {
+      "id": "four_fundamental_subspaces",
+      "name": "Four Fundamental Subspaces",
+      "keywords": [
+        "four fundamental subspaces",
+        "null space",
+        "column space",
+        "row space",
+        "left null space",
+        "rank nullity"
+      ],
+      "related": [
+        "matrices",
+        "system of equations",
+        "curve_fitting",
+        "svd"
+      ],
+      "viz": "four_fundamental_subspaces_visualizer.html",
+      "source": "four-fundamental-subspaces.md"
+    },
+    {
+      "id": "linear_algebra_advanced_toolkit",
+      "name": "Advanced Linear Algebra Toolkit",
+      "keywords": [
+        "advanced linear algebra",
+        "trace and determinant",
+        "matrix norm",
+        "cauchy schwarz",
+        "jordan form",
+        "conjugate gradient",
+        "kronecker product"
+      ],
+      "related": [
+        "eigenvalues",
+        "matrices",
+        "normed_vector_spaces"
+      ],
+      "viz": "linear_algebra_advanced_visualizer.html",
+      "source": "linear-algebra-advanced-toolkit.md"
+    },
+    {
+      "id": "matrix_calculus",
+      "name": "Matrix Calculus",
+      "keywords": [
+        "matrix calculus",
+        "vector calculus derivative",
+        "gradient of a matrix",
+        "normal equations",
+        "matrix derivative"
+      ],
+      "related": [
+        "derivative",
+        "jacobian",
+        "backpropagation",
+        "matrices"
+      ],
+      "viz": "matrix_calculus_visualizer.html",
+      "source": "matrix-calculus.md"
+    },
+    {
+      "id": "multivariable_vector_calculus",
+      "name": "Multivariable and Vector Calculus",
+      "keywords": [
+        "multivariable calculus",
+        "vector calculus",
+        "directional derivative",
+        "double integral",
+        "divergence and curl",
+        "line integral",
+        "calculus of variations"
+      ],
+      "related": [
+        "derivative",
+        "integral",
+        "polar_coordinates",
+        "matrix_calculus"
+      ],
+      "viz": "vector_calculus_visualizer.html",
+      "source": "multivariable-and-vector-calculus.md"
+    },
+    {
+      "id": "hessian_and_curvature",
+      "name": "Hessian and Curvature",
+      "keywords": [
+        "hessian",
+        "hessian matrix",
+        "curvature",
+        "second derivative test",
+        "saddle point",
+        "newton's method optimization",
+        "rosenbrock"
+      ],
+      "related": [
+        "derivative",
+        "taylor_series",
+        "eigenvalues",
+        "continuity_and_extrema"
+      ],
+      "viz": "hessian_and_curvature_visualizer.html",
+      "source": "hessian-and-curvature.md"
+    },
+    {
+      "id": "constrained_optimization_kkt",
+      "name": "Constrained Optimization and KKT",
+      "keywords": [
+        "kkt conditions",
+        "karush kuhn tucker",
+        "lagrange multiplier",
+        "complementary slackness"
+      ],
+      "related": [
+        "mathematical optimization",
+        "support_vector_machines",
+        "regularization_l1_l2_elasticnet",
+        "hessian_and_curvature"
+      ],
+      "viz": "constrained_optimization_and_kkt_visualizer.html",
+      "source": "constrained-optimization-and-kkt.md"
+    },
+    {
+      "id": "optimization",
+      "related": [
+        "constrained_optimization_kkt"
+      ],
+      "viz": "linear_programming_and_duality_visualizer.html",
+      "source": "linear-programming-and-duality.md"
+    },
+    {
+      "id": "automatic_differentiation",
+      "name": "Automatic Differentiation",
+      "keywords": [
+        "automatic differentiation",
+        "autodiff",
+        "dual numbers",
+        "forward mode",
+        "reverse mode"
+      ],
+      "related": [
+        "derivative",
+        "backpropagation",
+        "backprop_reuse",
+        "matrix_calculus"
+      ],
+      "viz": "automatic_differentiation_visualizer.html",
+      "source": "automatic-differentiation.md"
+    },
+    {
+      "id": "joint_distributions_covariance",
+      "name": "Joint Distributions and Covariance",
+      "keywords": [
+        "joint distribution",
+        "marginal distribution",
+        "covariance",
+        "bivariate normal",
+        "conditional distribution"
+      ],
+      "related": [
+        "probability",
+        "statistics",
+        "correlation_matrix",
+        "pdf_cdf"
+      ],
+      "viz": "joint_distributions_visualizer.html",
+      "source": "joint-distributions-and-covariance.md"
+    },
+    {
+      "id": "likelihood_and_estimation",
+      "name": "Likelihood and Estimation",
+      "keywords": [
+        "likelihood",
+        "maximum likelihood",
+        "maximum likelihood estimation",
+        "mle",
+        "map estimation",
+        "fisher information"
+      ],
+      "related": [
+        "loss_functions",
+        "cross-entropy loss",
+        "frequentist_vs_bayesian",
+        "statistics"
+      ],
+      "viz": "likelihood_and_estimation_visualizer.html",
+      "source": "likelihood-and-estimation.md"
+    },
+    {
+      "id": "causal_inference",
+      "name": "Causal Inference",
+      "keywords": [
+        "causal inference",
+        "potential outcomes",
+        "randomized controlled trial",
+        "causal dag",
+        "collider",
+        "average treatment effect"
+      ],
+      "related": [
+        "simpsons_paradox",
+        "statistics",
+        "probability"
+      ],
+      "viz": "causal_inference_visualizer.html",
+      "source": "causal-inference-basics.md"
+    },
+    {
+      "id": "linear_regression",
+      "name": "Linear Regression",
+      "keywords": [
+        "linear regression",
+        "ordinary least squares",
+        "ols regression",
+        "multicollinearity",
+        "regression coefficients"
+      ],
+      "related": [
+        "curve_fitting",
+        "four_fundamental_subspaces",
+        "matrix_calculus",
+        "statistics"
+      ],
+      "viz": "linear_regression_visualizer.html",
+      "source": "linear_regression_feynman.md"
+    },
+    {
+      "id": "logistic_regression",
+      "name": "Logistic Regression",
+      "keywords": [
+        "logistic regression",
+        "log odds",
+        "logit",
+        "odds ratio",
+        "sigmoid classifier"
+      ],
+      "related": [
+        "linear_regression",
+        "cross-entropy loss",
+        "likelihood_and_estimation",
+        "probability"
+      ],
+      "viz": "logistic_regression_visualizer.html",
+      "source": "logistic_regression_feynman.md"
+    },
+    {
+      "id": "regression_metrics",
+      "name": "Regression Metrics",
+      "keywords": [
+        "regression metrics",
+        "mae",
+        "rmse",
+        "mean absolute error",
+        "root mean squared error",
+        "huber loss"
+      ],
+      "related": [
+        "loss_functions",
+        "linear_regression",
+        "outlier_robustness"
+      ],
+      "viz": "regression_metrics_visualizer.html",
+      "source": "model_evaluation_metrics_feynman.md"
+    },
+    {
+      "id": "multiclass_confusion_matrix",
+      "name": "Multiclass Confusion Matrix",
+      "keywords": [
+        "multiclass confusion matrix",
+        "macro average",
+        "micro average",
+        "per-class f1"
+      ],
+      "related": [
+        "precision_recall",
+        "multiclass_cross_entropy"
+      ],
+      "viz": "multiclass_confusion_matrix_visualizer.html",
+      "source": "model_evaluation_metrics_feynman.md"
+    },
+    {
+      "id": "smote_oversampling",
+      "name": "SMOTE Oversampling",
+      "keywords": [
+        "smote",
+        "synthetic minority oversampling",
+        "oversampling",
+        "majority contamination"
+      ],
+      "related": [
+        "class_imbalance",
+        "k_nearest_neighbors"
+      ],
+      "viz": "class_imbalance_visualizer.html",
+      "source": "class_imbalance_feynman.md"
+    },
+    {
+      "id": "categorical_encoding",
+      "name": "Feature Engineering and Encoding",
+      "keywords": [
+        "feature engineering",
+        "categorical encoding",
+        "one-hot encoding",
+        "target encoding",
+        "hashing trick",
+        "high cardinality"
+      ],
+      "related": [
+        "feature_scaling_and_leakage",
+        "cross_validation_strategies"
+      ],
+      "viz": "feature_engineering_and_encoding_visualizer.html",
+      "source": "feature_engineering_and_encoding_feynman.md"
+    },
+    {
+      "id": "missing_data_imputation",
+      "name": "Missing Data Imputation",
+      "keywords": [
+        "missing data",
+        "imputation",
+        "mcar",
+        "mnar",
+        "mice imputation",
+        "knn imputation"
+      ],
+      "related": [
+        "feature_scaling_and_leakage",
+        "k_nearest_neighbors",
+        "statistics"
+      ],
+      "viz": "missing_data_imputation_visualizer.html",
+      "source": "missing_data_imputation_feynman.md"
+    },
+    {
+      "id": "hyperparameter_search",
+      "name": "Hyperparameter Search",
+      "keywords": [
+        "hyperparameter search",
+        "hyperparameter tuning",
+        "grid search",
+        "random search",
+        "bayesian optimization"
+      ],
+      "related": [
+        "cross_validation_strategies",
+        "bias_variance_tradeoff"
+      ],
+      "viz": "hyperparameter_search_visualizer.html",
+      "source": "hyperparameter_search_feynman.md"
+    },
+    {
+      "id": "anomaly_detection",
+      "name": "Anomaly Detection",
+      "keywords": [
+        "anomaly detection",
+        "outlier detection",
+        "local outlier factor",
+        "one-class svm",
+        "isolation forest"
+      ],
+      "related": [
+        "outlier_robustness",
+        "k_nearest_neighbors",
+        "support_vector_machines",
+        "clustering"
+      ],
+      "viz": "anomaly_detection_visualizer.html",
+      "source": "anomaly_detection_feynman.md"
+    },
+    {
+      "id": "model_monitoring_drift",
+      "name": "Model Monitoring and Drift",
+      "keywords": [
+        "model monitoring",
+        "data drift",
+        "concept drift",
+        "population stability index",
+        "psi",
+        "ks test",
+        "retraining trigger"
+      ],
+      "related": [
+        "pdf_cdf",
+        "time_series_and_forecasting",
+        "calibration_metrics"
+      ],
+      "viz": "model_monitoring_and_drift_visualizer.html",
+      "source": "model_monitoring_and_drift_feynman.md"
+    },
+    {
+      "id": "weight_initialization",
+      "name": "Weight Initialization",
+      "keywords": [
+        "weight initialization",
+        "xavier initialization",
+        "he initialization",
+        "glorot initialization"
+      ],
+      "related": [
+        "neural_network_math",
+        "backpropagation",
+        "statistics"
+      ],
+      "viz": "weight_initialization_visualizer.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "neural_network_math",
+      "related": [
+        "backpropagation",
+        "weight_initialization"
+      ],
+      "viz": "activation_slopes_visualizer.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "residual_connections",
+      "name": "Residual Connections",
+      "keywords": [
+        "residual connection",
+        "skip connection",
+        "resnet",
+        "identity shortcut"
+      ],
+      "related": [
+        "backpropagation",
+        "jacobian",
+        "weight_initialization"
+      ],
+      "viz": "residual_connections_visualizer.html",
+      "source": "jacobian-and-j-space.md"
+    },
+    {
+      "id": "inverted_dropout",
+      "name": "Dropout (Raw vs. Inverted)",
+      "keywords": [
+        "inverted dropout",
+        "dropout keep probability",
+        "dropout scaling"
+      ],
+      "related": [
+        "neural_network_math",
+        "regularization_l1_l2_elasticnet",
+        "early_stopping"
+      ],
+      "viz": "dropout_visualizer.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "adam_optimizer",
+      "name": "Adam Optimizer",
+      "keywords": [
+        "adam optimizer",
+        "adam",
+        "momentum",
+        "rmsprop",
+        "adagrad",
+        "nesterov momentum",
+        "stochastic gradient descent"
+      ],
+      "related": [
+        "mathematical optimization",
+        "hessian_and_curvature",
+        "backpropagation"
+      ],
+      "viz": "adam_optimizer_visualizer.html",
+      "source": "adam_optimizer_feynman.md"
+    },
+    {
+      "id": "learning_rate_schedules",
+      "name": "Learning-Rate Schedules",
+      "keywords": [
+        "learning rate schedule",
+        "learning rate warmup",
+        "cosine annealing",
+        "step decay"
+      ],
+      "related": [
+        "adam_optimizer",
+        "early_stopping"
+      ],
+      "viz": "learning_rate_schedules_visualizer.html",
+      "source": "adam_optimizer_feynman.md"
+    },
+    {
+      "id": "rnn_lstm",
+      "name": "RNNs and LSTMs",
+      "keywords": [
+        "recurrent neural network",
+        "rnn",
+        "lstm",
+        "long short-term memory",
+        "backpropagation through time",
+        "gradient clipping",
+        "seq2seq"
+      ],
+      "related": [
+        "backpropagation",
+        "attention",
+        "time_series_and_forecasting"
+      ],
+      "viz": "rnn_lstm_visualizer.html",
+      "source": "rnn_lstm_feynman.md"
+    },
+    {
+      "id": "tokenization_bpe",
+      "name": "Tokenization (Byte-Pair Encoding)",
+      "keywords": [
+        "tokenization",
+        "tokenizer",
+        "byte pair encoding",
+        "bpe",
+        "subword tokens"
+      ],
+      "related": [
+        "text_embeddings",
+        "transformers",
+        "compression_and_hashing"
+      ],
+      "viz": "tokenization_bpe_visualizer.html",
+      "source": "tokenization_bpe_feynman.md"
+    },
+    {
+      "id": "positional_encoding_rope",
+      "name": "Positional Encoding and RoPE",
+      "keywords": [
+        "rope",
+        "rotary position embedding",
+        "sinusoidal positional encoding"
+      ],
+      "related": [
+        "attention",
+        "transformers",
+        "complex_numbers",
+        "trigonometry"
+      ],
+      "viz": "positional_encoding_and_rope_visualizer.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "attention_math_connections",
+      "name": "Attention's Math Connections",
+      "keywords": [
+        "attention entropy",
+        "attention as kernel regression",
+        "attention temperature",
+        "attention as a graph"
+      ],
+      "related": [
+        "attention",
+        "graph_theory",
+        "markov_chains",
+        "mutual_information"
+      ],
+      "viz": "attention_math_connections_visualizer.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "transformers",
+      "related": [
+        "attention",
+        "positional_encoding_rope"
+      ],
+      "viz": "bert_vs_gpt_masking_visualizer.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "mixture_of_experts",
+      "name": "Mixture of Experts",
+      "keywords": [
+        "mixture of experts",
+        "moe",
+        "sparse activation",
+        "expert routing",
+        "load balancing loss"
+      ],
+      "related": [
+        "transformers",
+        "model_router",
+        "llm_scale_and_inference"
+      ],
+      "viz": "mixture_of_experts_visualizer.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "vision_transformer_clip",
+      "name": "Vision Transformer and CLIP",
+      "keywords": [
+        "vision transformer",
+        "vit",
+        "clip",
+        "contrastive language image pretraining",
+        "zero-shot classification",
+        "image patches"
+      ],
+      "related": [
+        "transformers",
+        "convolution",
+        "text_embeddings"
+      ],
+      "viz": "vision_transformer_and_clip_visualizer.html",
+      "source": "vision_transformer_and_clip_feynman.md"
+    },
+    {
+      "id": "augmentation_transfer_learning",
+      "name": "Data Augmentation and Transfer Learning",
+      "keywords": [
+        "data augmentation",
+        "transfer learning",
+        "fine-tuning a pretrained model",
+        "frozen layers"
+      ],
+      "related": [
+        "convolution",
+        "bias_variance_tradeoff",
+        "vision_transformer_clip"
+      ],
+      "viz": "data_augmentation_and_transfer_learning_visualizer.html",
+      "source": "data_augmentation_and_transfer_learning_feynman.md"
+    },
+    {
+      "id": "object_detection_segmentation",
+      "name": "Object Detection and Segmentation",
+      "keywords": [
+        "object detection",
+        "image segmentation",
+        "intersection over union",
+        "iou",
+        "non-max suppression",
+        "yolo",
+        "u-net",
+        "dice loss"
+      ],
+      "related": [
+        "convolution",
+        "precision_recall",
+        "ranking_metrics"
+      ],
+      "viz": "object_detection_visualizer.html",
+      "source": "object_detection_and_segmentation_feynman.md"
+    },
+    {
+      "id": "graph_neural_networks",
+      "name": "Graph Neural Networks",
+      "keywords": [
+        "graph neural network",
+        "gnn",
+        "gcn",
+        "graph convolutional network",
+        "message passing"
+      ],
+      "related": [
+        "graph_theory",
+        "convolution",
+        "matrices"
+      ],
+      "viz": "graph_neural_networks_visualizer.html",
+      "source": "graph_neural_networks_feynman.md"
+    },
+    {
+      "id": "generative_models",
+      "name": "Generative Models (VAE, GAN, Diffusion)",
+      "keywords": [
+        "generative model",
+        "variational autoencoder",
+        "vae",
+        "generative adversarial network",
+        "gan",
+        "diffusion model",
+        "reparameterization trick"
+      ],
+      "related": [
+        "probability",
+        "likelihood_and_estimation",
+        "game_theory",
+        "loss_functions"
+      ],
+      "viz": "generative_models_visualizer.html",
+      "source": "generative_models_vae_gan_diffusion_feynman.md"
+    },
+    {
+      "id": "preference_optimization",
+      "name": "Preference Optimization (RLHF, DPO, GRPO)",
+      "keywords": [
+        "rlhf",
+        "reinforcement learning from human feedback",
+        "preference optimization",
+        "dpo",
+        "direct preference optimization",
+        "grpo",
+        "reward model"
+      ],
+      "related": [
+        "reinforcement_learning",
+        "cross-entropy loss",
+        "llm_roadmap"
+      ],
+      "viz": "preference_optimization_visualizer.html",
+      "source": "ml_deep_learning_llm_feynman_tutorial.md"
+    },
+    {
+      "id": "interpretability",
+      "name": "Interpretability",
+      "keywords": [
+        "interpretability",
+        "explainability",
+        "saliency map",
+        "integrated gradients",
+        "grad-cam",
+        "linear probe",
+        "sparse autoencoder",
+        "superposition"
+      ],
+      "related": [
+        "backpropagation",
+        "dimensionality_reduction",
+        "transformers"
+      ],
+      "viz": "interpretability_visualizer.html",
+      "source": "interpretability_feynman.md"
+    },
+    {
+      "id": "distributed_training",
+      "name": "Distributed Training",
+      "keywords": [
+        "distributed training",
+        "data parallelism",
+        "ring all-reduce",
+        "pipeline parallelism",
+        "tensor parallelism",
+        "gradient accumulation",
+        "activation checkpointing"
+      ],
+      "related": [
+        "backpropagation",
+        "model_quantization",
+        "llm_scale_and_inference"
+      ],
+      "viz": "distributed_training_visualizer.html",
+      "source": "distributed_training_feynman.md"
+    },
+    {
+      "id": "llm_scale_and_inference",
+      "name": "LLM Scale and Inference",
+      "keywords": [
+        "llm inference",
+        "scaling laws",
+        "flashattention",
+        "speculative decoding",
+        "continuous batching",
+        "chain of thought"
+      ],
+      "related": [
+        "kv_cache",
+        "attention",
+        "model_quantization"
+      ],
+      "viz": "llm_scale_and_inference_visualizer.html",
+      "source": "llm_scale_and_inference_feynman.md"
+    },
+    {
+      "id": "llm_decoding_strategies",
+      "name": "LLM Decoding Strategies",
+      "keywords": [
+        "beam search",
+        "greedy decoding",
+        "decoding strategy",
+        "top-k sampling",
+        "nucleus sampling"
+      ],
+      "related": [
+        "llm_scale_and_inference",
+        "probability"
+      ],
+      "viz": "llm_decoding_strategies_visualizer.html",
+      "source": "llm_agentic_graph_interview_prep_feynman.md"
+    },
+    {
+      "id": "model_router",
+      "name": "Model Router",
+      "keywords": [
+        "model router",
+        "llm routing",
+        "model cascade",
+        "routing threshold"
+      ],
+      "related": [
+        "calibration_metrics",
+        "llm_scale_and_inference",
+        "agent_harness_engineering"
+      ],
+      "viz": "model_router_visualizer.html",
+      "source": "model_router_feynman.md"
     }
   ]
 }

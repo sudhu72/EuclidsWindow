@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weight initialization: Xavier &amp; He</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#16221c;--bg-panel:#1b2b23;--chalk:#f4f1e8;--chalk-dim:#7f8f83;--amber:#ffce54;--coral:#ff8266;--green:#8fd19e;--blue:#7fb3d5;--border:rgba(244,241,232,0.14);}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.55;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;}
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;} .tabpage.active{display:block;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .row-label{width:100%;text-align:center;font-size:11.5px;color:var(--chalk-dim);margin-bottom:-4px;}
+  .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11.5px;color:var(--chalk-dim);margin:4px 0 10px;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .sw{width:18px;height:3px;display:inline-block;border-radius:2px;}
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:6px auto;width:100%;height:auto;max-width:860px;}
+  svg text{font-family:'JetBrains Mono',monospace;}
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);} .metric.coral .num{color:var(--coral);} .metric.green .num{color:var(--green);} .metric.amber .num{color:var(--amber);}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;line-height:1.6;}
+  .story-line b{color:var(--chalk);}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.datatable th,table.datatable td{border:1px solid var(--border);padding:6px 7px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+  table.datatable tr.hl td{background:rgba(255,206,84,0.12);}
+  .eq{font-size:15px;text-align:center;line-height:2;margin:10px 0;}
+  .eq b{color:var(--amber);font-family:'Kalam',cursive;font-size:18px;}
+  .dim{color:var(--chalk-dim);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Weight initialization: Xavier &amp; He</h1>
+  <p class="sub">Companion to §2.2.2 of the Feynman ML/DL/LLM tutorial. A real simulation runs in your browser: 50 fully-connected layers of <b>256</b> neurons, a batch of <b>48</b> inputs drawn from N(0, 1) (the tutorial used a bigger batch; 48 keeps each run under a second), weights drawn from a seeded random generator so every click gives the same numbers. Your numbers sit next to the tutorial's; they differ a little because the random draws differ. Every example is one click.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="spread">1 · Spread through 50 layers</button>
+    <button class="tab-btn" data-tab="sat">2 · Saturated tanh</button>
+    <button class="tab-btn" data-tab="back">3 · Gradient backward</button>
+    <button class="tab-btn" data-tab="var">4 · Why Var(w) = 1/n</button>
+  </div>
+
+  <div class="tabpage active" id="tab-spread">
+    <div class="panel">
+      <h2>Standard deviation of the activations, layer by layer (log scale)</h2>
+      <div class="row" id="rowBtns"><div class="row-label">One click per table row: each click adds or removes that line on the chart</div></div>
+      <div class="row"><button class="op" id="allBtn">Overlay all seven rows</button><button class="op" id="clearBtn">Clear chart</button></div>
+      <div class="legend" id="spreadLegend"></div>
+      <svg id="spreadPlot" viewBox="0 0 860 400"></svg>
+      <div class="story-line" id="spreadStory"></div>
+      <table class="datatable" id="spreadTable"></table>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-sat">
+    <div class="panel">
+      <h2>What the tanh outputs look like at layer 50</h2>
+      <div class="row"><div class="row-label">One-click examples</div>
+        <button class="op sp" data-k="5">Standard normal + tanh (the deceptive row)</button>
+        <button class="op sp" data-k="6">Xavier + tanh (for comparison)</button>
+      </div>
+      <svg id="histPlot" viewBox="0 0 860 340"></svg>
+      <div class="metric-row" id="satMetrics"></div>
+      <div class="story-line" id="satStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-back">
+    <div class="panel">
+      <h2>A unit-size gradient flowing backward through 30 ReLU layers</h2>
+      <div class="row"><div class="row-label">One-click example</div>
+        <button class="op bp" id="backBtn">Gradient backward: He vs Xavier</button>
+      </div>
+      <div class="legend"><span><i class="sw" style="background:var(--green)"></i>He, Var(w) = 2/n</span><span><i class="sw" style="background:var(--coral)"></i>Xavier, Var(w) = 1/n</span><span><i class="sw" style="background:var(--chalk-dim)"></i>theory for Xavier: ×1/√2 per layer</span></div>
+      <svg id="backPlot" viewBox="0 0 860 360"></svg>
+      <div class="metric-row" id="backMetrics"></div>
+      <div class="story-line" id="backStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-var">
+    <div class="panel">
+      <h2>One neuron adds up n = 256 products: the n · Var(w) arithmetic</h2>
+      <div class="row"><div class="row-label">One-click examples (each measures 20,000 neurons live)</div>
+        <button class="op vp" data-v="1">Var(w) = 1</button>
+        <button class="op vp" data-v="xav">Xavier: Var(w) = 1/n</button>
+        <button class="op vp" data-v="he">He with ReLU: Var(w) = 2/n</button>
+      </div>
+      <div class="eq" id="varEq"></div>
+      <div class="metric-row" id="varMetrics"></div>
+      <div class="story-line" id="varStory"></div>
+    </div>
+  </div>
+
+  <footer>Companion to <b>§2.2.2 of ml_deep_learning_llm_feynman_tutorial.md</b> (<a href="../deep_learning/ml_deep_learning_llm_feynman_tutorial.md">ml_deep_learning_llm_feynman_tutorial.md</a>). Open directly in any browser: no install, nothing sent anywhere.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+const C={amber:"#ffce54",coral:"#ff8266",green:"#8fd19e",blue:"#7fb3d5",chalk:"#f4f1e8",dim:"#7f8f83",grid:"rgba(244,241,232,0.10)",violet:"#c3a6ff",pink:"#f49ac2",teal:"#5fd3c4"};
+const $=id=>document.getElementById(id);
+function rng(seed){let a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
+function gauss(r){let s=null;return function(){if(s!==null){const v=s;s=null;return v;}let u=0;while(u===0)u=r();const v=r(),m=Math.sqrt(-2*Math.log(u));s=m*Math.sin(2*Math.PI*v);return m*Math.cos(2*Math.PI*v);};}
+const SUP={"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","-":"⁻"};
+function fmt(v){if(v===0)return"0";const a=Math.abs(v);if(a>=0.001&&a<1e4)return a>=10?v.toPrecision(3):v.toPrecision(2);const e=Math.floor(Math.log10(a)),m=v/Math.pow(10,e);return m.toFixed(1)+" × 10"+String(e).split("").map(c=>SUP[c]).join("");}
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(p,x,y,s,a){const t=el("text",Object.assign({x,y,fill:C.dim,"font-size":11},a||{}),p);t.textContent=s;return t;}
+function stdOf(a){let m=0;for(let i=0;i<a.length;i++)m+=a[i];m/=a.length;let s=0;for(let i=0;i<a.length;i++)s+=(a[i]-m)*(a[i]-m);return Math.sqrt(s/a.length);}
+document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".tabpage").forEach(x=>x.classList.remove("active"));b.classList.add("active");$("tab-"+b.dataset.tab).classList.add("active");}));
+
+// log-scale line chart: series = [{ys:[...], x0, color, dash, w}]
+function logChart(svg,series,o){
+  svg.innerHTML="";const W=860,H=+svg.getAttribute("viewBox").split(" ")[3],L=76,R=16,T=14,B=44;
+  let lo=Infinity,hi=-Infinity;series.forEach(s=>s.ys.forEach(v=>{if(v>0){lo=Math.min(lo,Math.log10(v));hi=Math.max(hi,Math.log10(v));}}));
+  if(!isFinite(lo)){lo=-1;hi=1;}lo=Math.floor(Math.min(lo,-0.5));hi=Math.ceil(Math.max(hi,0.5));
+  const sx=x=>L+(x-o.xmin)/(o.xmax-o.xmin)*(W-L-R),sy=d=>T+(hi-d)/(hi-lo)*(H-T-B);
+  const step=[1,2,5,10,20][[1,2,5,10,20].findIndex(s=>(hi-lo)/s<=12)]||25;
+  for(let d=Math.floor(hi/step)*step;d>=lo;d-=step){el("line",{x1:L,x2:W-R,y1:sy(d),y2:sy(d),stroke:d===0?"rgba(244,241,232,0.35)":C.grid},svg);txt(svg,L-6,sy(d)+4,d===0?"1":"10"+String(d).split("").map(c=>SUP[c]).join(""),{"text-anchor":"end"});}
+  for(let x=o.xmin;x<=o.xmax;x+=o.xstep)txt(svg,sx(x),H-B+16,String(x),{"text-anchor":"middle"});
+  txt(svg,(L+W-R)/2,H-8,o.xlabel,{"text-anchor":"middle","font-size":12});
+  txt(svg,14,T+(H-T-B)/2,o.ylabel,{"text-anchor":"middle","font-size":11,transform:`rotate(-90 14 ${T+(H-T-B)/2})`});
+  series.forEach(s=>{let d="";s.ys.forEach((v,i)=>{d+=(i?"L":"M")+sx(s.x0+i).toFixed(1)+","+sy(Math.log10(Math.max(v,1e-300))).toFixed(1);});
+    el("path",{d,stroke:s.color,"stroke-width":s.w||2.5,fill:"none","stroke-dasharray":s.dash||"","stroke-linecap":"round"},svg);
+    (s.marks||[]).forEach(i=>el("circle",{cx:sx(s.x0+i),cy:sy(Math.log10(s.ys[i])),r:4.5,fill:s.color,stroke:"#16221c","stroke-width":1.5},svg));});
+}
+
+// ---------------- the forward simulation ----------------
+const N=256,BATCH=48,LAYERS=50;
+const ROWS=[
+  {name:"standard normal",act:"ReLU",wstd:1,doc:["9.3","2.5 × 10¹⁰","2.8 × 10⁵²"],color:C.coral,dash:""},
+  {name:"tiny, std 0.01",act:"ReLU",wstd:0.01,doc:["0.093","3.3 × 10⁻¹⁰","5.4 × 10⁻⁴⁸"],color:C.blue,dash:""},
+  {name:"Xavier, Var 1/n",act:"ReLU",wstd:Math.sqrt(1/N),doc:["0.59","0.023","3.2 × 10⁻⁸"],color:C.amber,dash:""},
+  {name:"He, Var 2/n",act:"ReLU",wstd:Math.sqrt(2/N),doc:["0.82","0.74","1.15"],color:C.green,dash:"",w:4.5},
+  {name:"tiny, std 0.01",act:"tanh",wstd:0.01,doc:["0.16","1.1 × 10⁻⁸","1.6 × 10⁻⁴⁰"],color:C.violet,dash:"7 4"},
+  {name:"standard normal",act:"tanh",wstd:1,doc:["0.97","0.97","0.97 (87% saturated)"],color:C.pink,dash:"7 4"},
+  {name:"Xavier",act:"tanh",wstd:Math.sqrt(1/N),doc:["0.63","0.23","0.088"],color:C.teal,dash:"7 4"}
+];
+const cache={};
+function simulate(k){
+  if(cache[k])return cache[k];
+  const r=ROWS[k],g=gauss(rng(1000+k));let X=new Float64Array(BATCH*N);for(let i=0;i<X.length;i++)X[i]=g();
+  const W=new Float64Array(N*N),stds=[];let hist=null,sat=0,pre=0,slope=0;
+  for(let l=0;l<LAYERS;l++){
+    for(let i=0;i<N*N;i++)W[i]=g()*r.wstd;
+    const Y=new Float64Array(BATCH*N);
+    for(let b=0;b<BATCH;b++){const xo=b*N;for(let j=0;j<N;j++){let s=0;const wo=j*N;for(let q=0;q<N;q++)s+=W[wo+q]*X[xo+q];Y[xo+j]=s;}}
+    if(l===LAYERS-1)pre=stdOf(Y);
+    for(let i=0;i<Y.length;i++)Y[i]=r.act==="ReLU"?(Y[i]>0?Y[i]:0):Math.tanh(Y[i]);
+    if(l===LAYERS-1&&r.act==="tanh"){hist=new Array(40).fill(0);let c=0,sl=0;for(let i=0;i<Y.length;i++){const v=Y[i];if(Math.abs(v)>0.99)c++;sl+=1-v*v;hist[Math.min(39,Math.floor((v+1)/2*40))]++;}sat=c/Y.length;slope=sl/Y.length;}
+    stds.push(stdOf(Y));X=Y;
+  }
+  return cache[k]={stds,hist,sat,pre,slope};
+}
+
+// ---------------- tab 1 ----------------
+const shown=new Set();
+ROWS.forEach((r,k)=>{const b=document.createElement("button");b.className="op rp";b.dataset.k=k;b.innerHTML=`<span style="color:${r.color}">■</span> ${r.name} · ${r.act}`;b.addEventListener("click",()=>{shown.has(k)?shown.delete(k):shown.add(k);drawSpread(k);});$("rowBtns").appendChild(b);});
+$("allBtn").addEventListener("click",()=>{ROWS.forEach((r,k)=>shown.add(k));drawSpread(-1);});
+$("clearBtn").addEventListener("click",()=>{shown.clear();drawSpread(-1);});
+const STORY=[
+  "<b>Exploded.</b> Each layer multiplies the spread by about √(256 × 1 × ½) ≈ 11, so 50 layers reach numbers no computer can train with.",
+  "<b>Vanished.</b> Each layer multiplies the spread by about √(256 × 0.0001 × ½) ≈ 0.11: after 50 layers the signal is effectively zero.",
+  "<b>Halves (in variance) every layer.</b> Var(w) = 1/n keeps the sum's variance level, but ReLU throws away half of it, so the spread shrinks by 1/√2 per layer.",
+  "<b>Stable.</b> Var(w) = 2/n exactly makes up for ReLU's halving. The line stays near 1 for all 50 layers (it wanders a little: 256 neurons is a finite sample).",
+  "<b>Vanished.</b> Tiny weights put tanh in its straight middle part (slope ≈ 1), so each layer multiplies the spread by about √(256 × 0.0001) = 0.16.",
+  "<b>Looks stable, isn't.</b> The spread sits at 0.97 because almost every output is pinned near −1 or +1. Open tab 2 to see the pile-up.",
+  "<b>Shrinks slowly.</b> Var(w) = 1/n is right for tanh's middle, but tanh squashes a little, so the spread creeps down."
+];
+let lastK=3;
+function drawSpread(last){
+  if(last===-2)last=lastK;else lastK=last;
+  document.querySelectorAll(".rp").forEach(b=>b.classList.toggle("active",shown.has(+b.dataset.k)));
+  const ks=[...shown].sort();
+  const series=ks.map(k=>({ys:simulate(k).stds,x0:1,color:ROWS[k].color,dash:ROWS[k].dash,w:ROWS[k].w,marks:[0,9,49]}));
+  logChart($("spreadPlot"),series,{xmin:0,xmax:50,xstep:5,xlabel:"layer (dots mark layers 1, 10 and 50)",ylabel:"std of activations (log)"});
+  $("spreadLegend").innerHTML=ks.map(k=>`<span><i class="sw" style="background:${ROWS[k].color}"></i>${ROWS[k].name} · ${ROWS[k].act}</span>`).join("")||"<span>Click a row button above to draw its line.</span>";
+  $("spreadStory").innerHTML=last>=0&&shown.has(last)?STORY[last]:(ks.length===ROWS.length?"All seven rows. Only <b>He + ReLU</b> (thick green) and the deceptive <b>standard normal + tanh</b> stay near 1; everything else explodes or vanishes geometrically, which is a straight line on a log scale.":"");
+  let h=`<tr><th>initialization</th><th>activation</th><th>layer 1 (yours · tutorial)</th><th>layer 10 (yours · tutorial)</th><th>layer 50 (yours · tutorial)</th></tr>`;
+  ROWS.forEach((r,k)=>{const s=cache[k];h+=`<tr${shown.has(k)?' class="hl"':''}><td style="color:${r.color}">${r.name}</td><td>${r.act}</td>`+[0,9,49].map((i,j)=>`<td><b>${s?fmt(s.stds[i]):"—"}</b> <span class="dim">· ${r.doc[j]}</span></td>`).join("")+`</tr>`;});
+  $("spreadTable").innerHTML=h;
+}
+
+// ---------------- tab 2 ----------------
+function drawSat(k){
+  document.querySelectorAll(".sp").forEach(b=>b.classList.toggle("active",+b.dataset.k===k));
+  const s=simulate(k),svg=$("histPlot");svg.innerHTML="";
+  const W=860,H=340,L=60,R=16,T=14,B=44,mx=Math.max(...s.hist),tot=s.hist.reduce((a,b)=>a+b,0);
+  const bw=(W-L-R)/40,sy=v=>T+(1-v/(mx/tot))*(H-T-B);
+  const hs=mx/tot>0.3?0.1:mx/tot>0.12?0.05:0.02,ht=[];for(let v=0;v<=mx/tot+1e-9;v+=hs)ht.push(v);ht.forEach(v=>{el("line",{x1:L,x2:W-R,y1:sy(v),y2:sy(v),stroke:C.grid},svg);txt(svg,L-6,sy(v)+4,(v*100).toFixed(0)+"%",{"text-anchor":"end"});});
+  s.hist.forEach((c,i)=>{const edge=i===0||i===39;el("rect",{x:L+i*bw+1,y:sy(c/tot),width:bw-2,height:H-B-sy(c/tot),fill:edge?C.coral:C.blue,opacity:0.9},svg);});
+  [-1,-0.5,0,0.5,1].forEach(v=>txt(svg,L+(v+1)/2*(W-L-R),H-B+16,String(v),{"text-anchor":"middle"}));
+  txt(svg,(L+W-R)/2,H-8,"tanh output at layer 50 (red bars: the outermost bins, nearest ±1)",{"text-anchor":"middle","font-size":12});
+  txt(svg,14,T+(H-T-B)/2,"share of outputs",{"text-anchor":"middle",transform:`rotate(-90 14 ${T+(H-T-B)/2})`});
+  const doc=k===5?["87%","≈ 16"]:["—","—"];
+  $("satMetrics").innerHTML=`<div class="metric coral"><div class="lbl">outputs beyond ±0.99<br>yours · tutorial</div><div class="num">${(s.sat*100).toFixed(1)}% · ${doc[0]}</div></div>`+
+    `<div class="metric amber"><div class="lbl">spread of the input to tanh<br>yours · tutorial</div><div class="num">${s.pre.toFixed(2)} · ${doc[1]}</div></div>`+
+    `<div class="metric blue"><div class="lbl">average tanh slope 1 − tanh²<br>(how much blame gets through)</div><div class="num">${s.slope.toFixed(3)}</div></div>`+
+    `<div class="metric green"><div class="lbl">std of the outputs</div><div class="num">${s.stds[49].toFixed(3)}</div></div>`;
+  $("satStory").innerHTML=k===5?`The inputs to each tanh have spread about <b>${s.pre.toFixed(1)}</b>, so tanh sits far out on its flat arms: <b>${(s.sat*100).toFixed(0)}%</b> of outputs are beyond ±0.99 and the average slope is only <b>${s.slope.toFixed(3)}</b>. The forward signal survives (std ${s.stds[49].toFixed(2)}); learning doesn't.`
+    :`With Xavier weights the inputs to tanh stay small (spread ${s.pre.toFixed(2)}), so the outputs cluster in tanh's straight middle where the slope is near 1 (average <b>${s.slope.toFixed(3)}</b>): nothing is saturated.`;
+}
+document.querySelectorAll(".sp").forEach(b=>b.addEventListener("click",()=>drawSat(+b.dataset.k)));
+
+// ---------------- tab 3 ----------------
+function backward(wstd,L,seed){
+  const g=gauss(rng(seed));let x=new Float64Array(N);for(let i=0;i<N;i++)x[i]=g();const Ws=[],Ms=[];
+  for(let l=0;l<L;l++){const W=new Float64Array(N*N);for(let i=0;i<N*N;i++)W[i]=g()*wstd;const y=new Float64Array(N),m=new Uint8Array(N);
+    for(let j=0;j<N;j++){let s=0;for(let q=0;q<N;q++)s+=W[j*N+q]*x[q];m[j]=s>0?1:0;y[j]=s>0?s:0;}Ws.push(W);Ms.push(m);x=y;}
+  let gr=new Float64Array(N);for(let i=0;i<N;i++)gr[i]=g();const rms=a=>Math.sqrt(a.reduce((s,v)=>s+v*v,0)/N);const out=[rms(gr)];
+  for(let l=L-1;l>=0;l--){const W=Ws[l],m=Ms[l],gx=new Float64Array(N);for(let j=0;j<N;j++){if(!m[j])continue;const gz=gr[j];for(let q=0;q<N;q++)gx[q]+=W[j*N+q]*gz;}gr=gx;out.push(rms(gr));}
+  return out;
+}
+function drawBack(){
+  $("backBtn").classList.add("active");
+  const he=backward(Math.sqrt(2/N),30,7),xa=backward(Math.sqrt(1/N),30,7),th=xa.map((v,i)=>xa[0]*Math.pow(0.5,i/2));
+  logChart($("backPlot"),[{ys:th,x0:0,color:C.dim,dash:"4 4",w:1.5},{ys:he,x0:0,color:C.green,w:3.5,marks:[30]},{ys:xa,x0:0,color:C.coral,marks:[30]}],{xmin:0,xmax:30,xstep:5,xlabel:"ReLU layers the gradient has passed back through",ylabel:"gradient size (rms, log)"});
+  $("backMetrics").innerHTML=`<div class="metric green"><div class="lbl">He, after 30 layers<br>yours · tutorial</div><div class="num">${fmt(he[30])} · 3.1</div></div><div class="metric coral"><div class="lbl">Xavier, after 30 layers<br>yours · tutorial</div><div class="num">${fmt(xa[30])} · 0.00015</div></div><div class="metric amber"><div class="lbl">ratio He / Xavier<br>yours · tutorial · theory 2¹⁵</div><div class="num">${fmt(he[30]/xa[30])} · 2.1 × 10⁴ · 3.3 × 10⁴</div></div>`;
+  $("backStory").innerHTML=`Backward, each ReLU layer multiplies the gradient's variance by n · Var(w) · ½: that is <b>1</b> for He and <b>½</b> for Xavier. So He's gradient stays near its starting size, and Xavier's shrinks by 1/√2 per layer, (1/√2)³⁰ = 2⁻¹⁵ ≈ 3 × 10⁻⁵ overall. The exact values depend on the random draws and on how big the starting gradient is (here: one N(0, 1) number per output neuron, rms ${he[0].toFixed(2)}); the <b>gap of about 10⁴</b> is the stable part.`;
+}
+$("backBtn").addEventListener("click",drawBack);
+
+// ---------------- tab 4 ----------------
+function measureVar(vw,relu){const g=gauss(rng(77)),sd=Math.sqrt(vw);let t=0,t2=0,t3=0;const M=20000;
+  for(let i=0;i<M;i++){let s=0;for(let q=0;q<N;q++)s+=g()*sd*g();t+=s;t2+=s*s;const a=s>0?s:0;t3+=a*a;}return {v:t2/M-(t/M)**2,ms:t3/M};}
+function drawVar(mode){
+  document.querySelectorAll(".vp").forEach(b=>b.classList.toggle("active",b.dataset.v===mode));
+  const vw=mode==="1"?1:mode==="xav"?1/N:2/N,lab=mode==="1"?"1":mode==="xav"?"1/256":"2/256",r=measureVar(vw);
+  let eq=`Var(z) = n × Var(w) × Var(x) = 256 × ${lab} × 1 = <b>${(N*vw).toFixed(0)}</b>`;
+  if(mode==="he")eq+=`<br>after ReLU, half of z is zeroed: E[ReLU(z)²] = Var(z) / 2 = 2 / 2 = <b>1</b> <span class="dim">→ the next layer sees the same size again</span>`;
+  $("varEq").innerHTML=eq;
+  let m=`<div class="metric amber"><div class="lbl">predicted Var(z)</div><div class="num">${(N*vw).toFixed(0)}</div></div><div class="metric green"><div class="lbl">measured over 20,000 neurons</div><div class="num">${r.v.toFixed(mode==="1"?0:3)}</div></div>`;
+  if(mode==="1")m+=`<div class="metric blue"><div class="lbl">tutorial's measurement</div><div class="num">257</div></div><div class="metric coral"><div class="lbl">spread std(z) = √Var</div><div class="num">${Math.sqrt(r.v).toFixed(1)}</div></div>`;
+  if(mode==="he")m+=`<div class="metric blue"><div class="lbl">measured E[ReLU(z)²]</div><div class="num">${r.ms.toFixed(3)}</div></div>`;
+  $("varMetrics").innerHTML=m;
+  $("varStory").innerHTML=mode==="1"?`Each of the 256 products w·x has variance 1, and variances of independent terms add: the sum has variance ≈ 256 (spread 16). Stack layers and the spread multiplies by about 16 at every layer (about 11 once ReLU drops half): that is the explosion in tab 1.`
+    :mode==="xav"?`Shrink each weight's variance by 1/n and the 256 terms add back up to variance 1: the layer leaves the signal's size unchanged. That is Xavier's rule, Var(w) = 1/n.`
+    :`ReLU zeroes the negative half, so only half the variance survives. Doubling Var(w) to 2/n makes the sum's variance 2, and after ReLU the next layer receives size 1 again: He's rule.`;
+}
+document.querySelectorAll(".vp").forEach(b=>b.addEventListener("click",()=>drawVar(b.dataset.v)));
+
+// ---------------- initial state ----------------
+shown.add(3);shown.add(2);drawSpread(3);
+let pend=0;(function next(){if(pend>=ROWS.length){drawSat(5);return;}simulate(pend++);drawSpread(-2);setTimeout(next,20);})();
+drawBack();drawVar("1");
+})();
+</script>
+</body>
+</html>

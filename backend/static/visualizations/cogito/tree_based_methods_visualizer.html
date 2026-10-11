@@ -62,7 +62,7 @@
 <body>
 <div class="wrap">
   <h1>Tree-Based Methods, live</h1>
-  <p class="sub">Nine tabs, matching the tutorial's nine verified demonstrations, from a single regression tree up through pruning, bagging, forests, boosting, and ensemble interpretation.</p>
+  <p class="sub">Fourteen tabs, matching the tutorial's verified demonstrations, from a single regression tree up through pruning, bagging, forests, boosting, ensemble interpretation, XGBoost's and LightGBM's internals, voting/stacking, and permutation importance.</p>
 
   <div class="tabs">
     <button class="tabbtn active" data-tab="regtree">1 · Regression Tree</button>
@@ -75,6 +75,10 @@
     <button class="tabbtn" data-tab="interpret">8 · PDP &amp; SHAP</button>
     <button class="tabbtn" data-tab="overfit">9 · GBM Overfitting</button>
     <button class="tabbtn" data-tab="isoforest">10 · Isolation Forest</button>
+    <button class="tabbtn" data-tab="xgb">11 · XGBoost by Hand</button>
+    <button class="tabbtn" data-tab="lgbm">12 · LightGBM Tricks</button>
+    <button class="tabbtn" data-tab="stack">13 · Voting &amp; Stacking</button>
+    <button class="tabbtn" data-tab="perm">14 · Permutation Importance</button>
   </div>
 
   <!-- TAB 1: REGRESSION TREE -->
@@ -258,6 +262,185 @@
         <div class="metric blue"><div class="lbl">avg. splits for a typical cluster point</div><div class="num" id="isoNormalPath">-</div></div>
       </div>
       <div class="story-line" id="isoStory"></div>
+    </div>
+  </div>
+
+  <!-- TAB 11: XGBOOST BY HAND -->
+  <div class="tabpanel" id="tab-xgb">
+    <div class="panel">
+      <h2>XGBoost by Hand: Gradients, Hessians, Leaf Weights and Gain</h2>
+      <p class="sub">8 points, x = 1…8. Log loss: labels y = [0,0,1,0,0,1,1,1], starting log-odds F₀ = 0. Squared error: targets y = [3,4,8,5,6,12,13,15], starting prediction 8.25. Every number below is recomputed live from w* = −G/(H+λ) and gain = ½[G_L²/(H_L+λ) + G_R²/(H_R+λ) − G²/(H+λ)] − γ.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op xgbpreset" data-preset="pr-log">Pseudo-residuals: log loss</button>
+        <button class="op xgbpreset" data-preset="pr-sq">Pseudo-residuals: squared error</button>
+        <button class="op xgbpreset" data-preset="lam0">λ = 0 (sklearn Newton step)</button>
+        <button class="op xgbpreset" data-preset="lam1">λ = 1 (XGBoost default)</button>
+        <button class="op xgbpreset" data-preset="gam">γ = 1.2 (no split survives)</button>
+        <button class="op xgbpreset" data-preset="rounds">3 rounds at ν = 0.3</button>
+        <button class="op xgbpreset" data-preset="sqshrink">Squared-error leaf shrinkage</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="xgbLossLog">loss: log loss</button>
+        <button class="op" id="xgbLossSq">loss: squared error</button>
+      </div>
+      <div class="row"><label>λ (L2 penalty on leaf weights)</label><input type="range" id="xgbLam" min="0" max="3" step="0.1" value="1"><span class="readout" id="xgbLamOut">1.0</span></div>
+      <div class="row"><label>γ (charge per extra leaf)</label><input type="range" id="xgbGam" min="0" max="2" step="0.05" value="0"><span class="readout" id="xgbGamOut">0.00</span></div>
+      <div class="row">
+        <button class="op primary" id="xgbStep">Add the best tree (ν = 0.3)</button>
+        <button class="op" id="xgbReset">Reset to round 0</button>
+      </div>
+      <svg id="xgbSvg" width="640" height="190" viewBox="0 0 640 190"></svg>
+      <div class="plot-caption">Dots: targets. Amber bars: current prediction (probability for log loss). Dashed line: the best split's threshold.</div>
+      <table class="coord" id="xgbPointTable"></table>
+      <table class="coord" id="xgbSplitTable"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">round</div><div class="num" id="xgbRound">0</div></div>
+        <div class="metric amber"><div class="lbl">best split for the next tree</div><div class="num" id="xgbBest">-</div></div>
+        <div class="metric green"><div class="lbl">w_L , w_R</div><div class="num" id="xgbW">-</div></div>
+        <div class="metric coral"><div class="lbl" id="xgbLossLbl">training log loss</div><div class="num" id="xgbLoss">-</div></div>
+      </div>
+      <div class="story-line" id="xgbStory"></div>
+    </div>
+  </div>
+
+  <!-- TAB 12: LIGHTGBM TRICKS -->
+  <div class="tabpanel" id="tab-lgbm">
+    <div class="panel">
+      <h2>1 · Histogram Binning: 254 Candidate Thresholds Instead of 99,999</h2>
+      <p class="sub">100,000 points whose target jumps at x = 3.7, run in numpy (numbers below are from that run, not simulated here).</p>
+      <div class="row"><button class="op" id="lgbHistBtn">Preset: compare exact vs. histogram split</button></div>
+      <svg id="lgbHistSvg" width="640" height="120" viewBox="0 0 640 120"></svg>
+      <div class="story-line" id="lgbHistStory"></div>
+    </div>
+    <div class="panel">
+      <h2>2 · Level-wise vs. Leaf-wise Growth, Same 4 Leaves</h2>
+      <p class="sub">The doc's 200 noisy points: flat below x = 4, then steps at 4, 6, 8. Each tree gets exactly 3 splits. Both trees are grown live here by greedy SSE reduction.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="lgbLevelBtn">Preset: level-wise (depth 2)</button>
+        <button class="op" id="lgbLeafBtn">Preset: leaf-wise (num_leaves = 4)</button>
+      </div>
+      <svg id="lgbGrowSvg" width="640" height="230" viewBox="0 0 640 230"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">growth</div><div class="num" id="lgbGrowName">-</div></div>
+        <div class="metric amber"><div class="lbl">SSE with 4 leaves</div><div class="num" id="lgbGrowSSE">-</div></div>
+      </div>
+      <div class="story-line" id="lgbGrowStory"></div>
+    </div>
+    <div class="panel">
+      <h2>3 · GOSS on 10 Gradients (a = b = 0.2)</h2>
+      <p class="sub">Keep the 2 largest |g| (amber), sample 2 of the other 8 (blue), multiply the sampled ones by (1 − a)/b = 4. True sum of all 10 gradients: 0.9.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="gossDraw">Preset: draw one GOSS sample</button>
+        <button class="op" id="gossAll">Preset: average all 28 possible samples</button>
+      </div>
+      <svg id="gossSvg" width="640" height="170" viewBox="0 0 640 170"></svg>
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">this estimate of Σg</div><div class="num" id="gossEst">-</div></div>
+        <div class="metric amber"><div class="lbl">true Σg</div><div class="num">0.9</div></div>
+      </div>
+      <div class="story-line" id="gossStory"></div>
+    </div>
+    <div class="panel">
+      <h2>4 · EFB: Three Never-Overlapping Columns Become One</h2>
+      <p class="sub">f_a, f_b, f_c are never non-zero in the same row. Offsets 0, 2 and 5 shift each into its own value range.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="efbBundle">Preset: bundle the three columns</button>
+        <button class="op" id="efbDecode">Preset: decode the bundle back</button>
+      </div>
+      <table class="coord" id="efbTable"></table>
+      <div class="story-line" id="efbStory"></div>
+    </div>
+  </div>
+
+  <!-- TAB 13: VOTING & STACKING -->
+  <div class="tabpanel" id="tab-stack">
+    <div class="panel">
+      <h2>Hard vs. Soft Voting</h2>
+      <p class="sub">Three models' predicted probability that one patient's tumour is malignant.</p>
+      <div class="row"><button class="op" id="voteDisagree">Preset: 0.9 / 0.45 / 0.45 (the two rules disagree)</button><button class="op" id="voteAgree">Preset: 0.8 / 0.7 / 0.3 (they agree)</button></div>
+      <div class="row"><label>model A: P(malignant)</label><input type="range" id="vp1" min="0" max="1" step="0.01" value="0.9"><span class="readout" id="vp1o">0.90</span></div>
+      <div class="row"><label>model B: P(malignant)</label><input type="range" id="vp2" min="0" max="1" step="0.01" value="0.45"><span class="readout" id="vp2o">0.45</span></div>
+      <div class="row"><label>model C: P(malignant)</label><input type="range" id="vp3" min="0" max="1" step="0.01" value="0.45"><span class="readout" id="vp3o">0.45</span></div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">hard vote</div><div class="num" id="voteHard">-</div></div>
+        <div class="metric amber"><div class="lbl">soft vote (mean prob.)</div><div class="num" id="voteSoft">-</div></div>
+      </div>
+      <div class="story-line" id="voteStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Building Out-of-Fold Predictions, One Fold at a Time</h2>
+      <p class="sub">20 training rows, 5 folds. Each fold's rows are predicted by models fitted on the other 4 folds, so no row is ever predicted by a model that saw it.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="oofStep">Next fold</button>
+        <button class="op" id="oofAll">Preset: build all 5 folds</button>
+        <button class="op" id="oofReset">Reset</button>
+      </div>
+      <svg id="oofSvg" width="640" height="200" viewBox="0 0 640 200"></svg>
+      <div class="story-line" id="oofStory"></div>
+    </div>
+    <div class="panel">
+      <h2>What the Meta-Learner Learns to Trust</h2>
+      <p class="sub">Breast-cancer data, mean logistic-regression meta-learner weights over 20 train/test splits (from the doc's sklearn run).</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="coefOOF">Preset: trained on out-of-fold predictions</button>
+        <button class="op" id="coefLeak">Preset: trained on in-fold (leaky) predictions</button>
+      </div>
+      <svg id="coefSvg" width="640" height="190" viewBox="0 0 640 190"></svg>
+      <div class="story-line" id="coefStory"></div>
+    </div>
+    <div class="panel">
+      <h2>The Breast-Cancer Scoreboard</h2>
+      <p class="sub">Mean test accuracy over 20 stratified 70/30 splits (sklearn 1.7.2 run, reproduced in the doc).</p>
+      <div class="row"><button class="op" id="scoreBtn">Preset: show the scoreboard</button></div>
+      <svg id="scoreSvg" width="640" height="300" viewBox="0 0 640 300"></svg>
+      <div class="story-line" id="scoreStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpanel" id="tab-perm">
+    <div class="panel">
+      <h2>Shuffle One Column, Re-score, Repeat</h2>
+      <p class="sub">8 held-out rows. The fitted model is one split: predict 1 if x1 &gt; 5. Each step applies one of five fixed shuffles to the chosen column and re-scores the same model.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="piColX1">Shuffle x1 (the column the model uses)</button>
+        <button class="op" id="piColX2">Shuffle x2 (the column it ignores)</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op primary" id="piStep">Step: next shuffle</button>
+        <button class="op" id="piPlay">Play</button>
+        <button class="op" id="piEnd">Jump to end (all 5 shuffles)</button>
+        <button class="op" id="piReset">Reset</button>
+      </div>
+      <svg id="piSvg" width="680" height="250" viewBox="0 0 680 250"></svg>
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">baseline accuracy</div><div class="num">1.00</div></div>
+        <div class="metric blue"><div class="lbl">accuracy after this shuffle</div><div class="num" id="piAcc">-</div></div>
+        <div class="metric coral"><div class="lbl">drops so far</div><div class="num" id="piDrops">-</div></div>
+        <div class="metric amber"><div class="lbl">permutation importance (mean drop)</div><div class="num" id="piMean">-</div></div>
+      </div>
+      <div class="story-line" id="piStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Titanic: Impurity Importance vs. Permutation Importance</h2>
+      <p class="sub">891 real passengers, 7 real columns plus two noise columns. 300-tree random forest, 668 train / 223 test rows (sklearn 1.7.2 run, reproduced in the doc).</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="tiImp">Preset: impurity importance (training splits)</button>
+        <button class="op" id="tiTest">Preset: permutation importance on test rows</button>
+        <button class="op" id="tiTrain">Preset: permutation importance on training rows</button>
+      </div>
+      <svg id="tiSvg" width="680" height="320" viewBox="0 0 680 320"></svg>
+      <div class="story-line" id="tiStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Correlated Columns Split the Credit</h2>
+      <p class="sub">y = 3·x1 + 2·x2 + 1·x3 + noise, 2,000 rows, 200-tree forest; importance = drop in test R² (sklearn run, reproduced in the doc).</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" id="ccNo">Preset: x1, x2, x3 only</button>
+        <button class="op" id="ccCopy">Preset: add x1_copy (corr 0.995)</button>
+        <button class="op" id="ccGroup">Preset: shuffle x1 and x1_copy together</button>
+      </div>
+      <svg id="ccSvg" width="680" height="200" viewBox="0 0 680 200"></svg>
+      <div class="story-line" id="ccStory"></div>
     </div>
   </div>
 
@@ -911,6 +1094,487 @@
   }
   document.getElementById("isoDist").addEventListener("input", renderIso);
   renderIso();
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function $(id){ return document.getElementById(id); }
+  function f4(v){ return (Math.abs(v) < 5e-5 ? 0 : v).toFixed(4); }
+  function sgn(v, d){ const s = (Math.abs(v) < 0.5*Math.pow(10,-d) ? 0 : v).toFixed(d); return (v > 0 && Number(s) !== 0 ? "+" : "") + s; }
+  function sig(z){ return 1/(1+Math.exp(-z)); }
+
+  /* ============================================================
+     TAB 11 — XGBOOST BY HAND
+     ============================================================ */
+  const XS = [1,2,3,4,5,6,7,8];
+  const YLOG = [0,0,1,0,0,1,1,1];
+  const YSQ = [3,4,8,5,6,12,13,15];
+  const NU = 0.3;
+  const xgb = { loss: "log", lam: 1, gam: 0, F: null, round: 0 };
+  function baseF(){ return xgb.loss === "log" ? XS.map(()=>0) : XS.map(()=>8.25); }
+  xgb.F = baseF();
+  function Y(){ return xgb.loss === "log" ? YLOG : YSQ; }
+  function gradHess(){
+    const y = Y();
+    if (xgb.loss === "log") return XS.map((_,i)=>{ const p = sig(xgb.F[i]); return {g: p - y[i], h: p*(1-p), p}; });
+    return XS.map((_,i)=>({g: xgb.F[i] - y[i], h: 1, p: xgb.F[i]}));
+  }
+  function trainLoss(){
+    const y = Y();
+    if (xgb.loss === "log") return -XS.reduce((s,_,i)=>{ const p = sig(xgb.F[i]); return s + y[i]*Math.log(p) + (1-y[i])*Math.log(1-p); }, 0)/XS.length;
+    return XS.reduce((s,_,i)=>s + (y[i]-xgb.F[i])**2, 0);
+  }
+  function splits(){
+    const gh = gradHess(), lam = xgb.lam, gam = xgb.gam;
+    const G = gh.reduce((s,d)=>s+d.g,0), H = gh.reduce((s,d)=>s+d.h,0);
+    const out = [];
+    for (let k=1;k<XS.length;k++){
+      const t = (XS[k-1]+XS[k])/2;
+      let GL=0,HL=0; for (let i=0;i<k;i++){ GL+=gh[i].g; HL+=gh[i].h; }
+      const GR = G-GL, HR = H-HL;
+      const gain = 0.5*(GL*GL/(HL+lam) + GR*GR/(HR+lam) - G*G/(H+lam)) - gam;
+      out.push({t, GL, HL, GR, HR, gain, wL: -GL/(HL+lam), wR: -GR/(HR+lam), wL0: HL>0 ? -GL/HL : 0, wR0: HR>0 ? -GR/HR : 0});
+    }
+    let best = out[0]; out.forEach(s=>{ if (s.gain > best.gain + 1e-12) best = s; });
+    return {out, best, G, H};
+  }
+  function renderXgb(){
+    $("xgbLamOut").textContent = xgb.lam.toFixed(1);
+    $("xgbGamOut").textContent = xgb.gam.toFixed(2);
+    $("xgbLam").value = xgb.lam; $("xgbGam").value = xgb.gam;
+    $("xgbLossLog").classList.toggle("active", xgb.loss === "log");
+    $("xgbLossSq").classList.toggle("active", xgb.loss === "sq");
+    const gh = gradHess(), sp = splits(), y = Y();
+    const isLog = xgb.loss === "log";
+    // point table
+    let h = "<tr><th>x</th>" + XS.map(x=>"<th>"+x+"</th>").join("") + "</tr>";
+    h += "<tr><th>y</th>" + y.map(v=>"<td>"+v+"</td>").join("") + "</tr>";
+    h += "<tr><th>F (" + (isLog ? "log-odds" : "prediction") + ")</th>" + xgb.F.map(v=>"<td>"+f4(v)+"</td>").join("") + "</tr>";
+    if (isLog) h += "<tr><th>p = σ(F)</th>" + gh.map(d=>"<td>"+f4(d.p)+"</td>").join("") + "</tr>";
+    h += "<tr><th>pseudo-residual −g = " + (isLog ? "y − p" : "y − F") + "</th>" + gh.map(d=>"<td class='winner'>"+sgn(-d.g,4)+"</td>").join("") + "</tr>";
+    h += "<tr><th>g</th>" + gh.map(d=>"<td>"+sgn(d.g,4)+"</td>").join("") + "</tr>";
+    h += "<tr><th>h = " + (isLog ? "p(1 − p)" : "1") + "</th>" + gh.map(d=>"<td>"+f4(d.h)+"</td>").join("") + "</tr>";
+    $("xgbPointTable").innerHTML = h;
+    // split table
+    let s = "<tr><th>split</th><th>G_L</th><th>H_L</th><th>G_R</th><th>H_R</th><th>gain</th><th>w_L</th><th>w_R</th></tr>";
+    sp.out.forEach(r=>{
+      const win = r === sp.best && r.gain > 0;
+      const c = win ? " class='winner'" : (r.gain <= 0 ? " class='worse'" : "");
+      s += "<tr><td"+c+">x &lt; "+r.t+"</td><td>"+sgn(r.GL,3)+"</td><td>"+r.HL.toFixed(3)+"</td><td>"+sgn(r.GR,3)+"</td><td>"+r.HR.toFixed(3)+"</td><td"+c+">"+f4(r.gain)+"</td><td>"+f4(r.wL)+"</td><td>"+f4(r.wR)+"</td></tr>";
+    });
+    $("xgbSplitTable").innerHTML = s;
+    const b = sp.best, ok = b.gain > 0;
+    $("xgbRound").textContent = xgb.round;
+    $("xgbBest").textContent = ok ? "x < " + b.t : "none";
+    $("xgbW").textContent = ok ? f4(b.wL) + " , " + f4(b.wR) : "-";
+    $("xgbLossLbl").textContent = isLog ? "training log loss" : "training RSS";
+    $("xgbLoss").textContent = isLog ? f4(trainLoss()) : trainLoss().toFixed(2);
+    // svg
+    const svg = $("xgbSvg"); svg.innerHTML = "";
+    const W=640,Hh=190,pad=36;
+    const yMin = isLog ? -0.05 : 0, yMax = isLog ? 1.05 : 16;
+    const X = x => pad + (x-0.5)/8*(W-2*pad);
+    const YY = v => Hh-pad - (v-yMin)/(yMax-yMin)*(Hh-2*pad);
+    svg.appendChild(el("line",{x1:pad,y1:Hh-pad,x2:W-pad,y2:Hh-pad,stroke:"var(--border)"}));
+    XS.forEach((x,i)=>{
+      const pv = isLog ? gh[i].p : xgb.F[i];
+      svg.appendChild(el("rect",{x:X(x)-14,y:Math.min(YY(pv),YY(yMin)),width:28,height:Math.abs(YY(yMin)-YY(pv)),fill:"var(--amber)",opacity:0.35}));
+      svg.appendChild(el("circle",{cx:X(x),cy:YY(y[i]),r:6,fill:y[i] >= (isLog?0.5:8.25) ? "var(--green)" : "var(--coral)"}));
+      svg.appendChild(el("text",{x:X(x),y:Hh-pad+16,"text-anchor":"middle",fill:"var(--chalk-dim)","font-size":11},"x="+x));
+    });
+    if (ok) svg.appendChild(el("line",{x1:X(b.t),y1:pad-10,x2:X(b.t),y2:Hh-pad,stroke:"var(--chalk)","stroke-dasharray":"5 4"}));
+  }
+  function setStory(t){ $("xgbStory").textContent = t; }
+  function xgbStep(){
+    const sp = splits(), b = sp.best;
+    if (b.gain <= 0){ setStory("No split has positive gain at this γ, so the tree stays a single leaf and nothing is added."); return; }
+    const before = trainLoss();
+    xgb.F = xgb.F.map((v,i)=> v + NU*(XS[i] < b.t ? b.wL : b.wR));
+    xgb.round++;
+    renderXgb();
+    setStory("Round " + xgb.round + ": split x < " + b.t + " (gain " + f4(b.gain) + "), leaves " + f4(b.wL) + " / " + f4(b.wR) + " added at ν = 0.3. Loss " + f4(before) + " → " + f4(trainLoss()) + ".");
+  }
+  function xgbReset(){ xgb.F = baseF(); xgb.round = 0; }
+  const XGB_PRESETS = {
+    "pr-log": ()=>{ xgb.loss="log"; xgb.lam=1; xgb.gam=0; xgbReset(); renderXgb();
+      setStory("Log loss at p = 0.5: every label-0 point has pseudo-residual y − p = −0.5 (push down), every label-1 point +0.5 (push up). Every h = 0.5 × 0.5 = 0.25."); },
+    "pr-sq": ()=>{ xgb.loss="sq"; xgb.lam=0; xgb.gam=0; xgbReset(); renderXgb();
+      setStory("Squared error: the pseudo-residual y − F is the ordinary residual from the mean 8.25 (e.g. 3 − 8.25 = −5.25), and h = 1 for every point."); },
+    "lam0": ()=>{ xgb.loss="log"; xgb.lam=0; xgb.gam=0; xgbReset(); renderXgb();
+      setStory("λ = 0: best split x < 5.5, gain 2.4000, leaves −1.5/1.25 = −1.2 and +1.5/0.75 = +2.0 — exactly what sklearn's GradientBoostingClassifier outputs for one depth-1 tree at learning rate 1. First-order boosting would use the mean pseudo-residual −0.3 instead."); },
+    "lam1": ()=>{ xgb.loss="log"; xgb.lam=1; xgb.gam=0; xgbReset(); renderXgb();
+      setStory("λ = 1: same winner x < 5.5, gain ½[1.5²/2.25 + 1.5²/1.75] = 1.1429; leaves shrink to −0.6667 and +0.8571. The 3-point right leaf (H = 0.75) shrinks most."); },
+    "gam": ()=>{ xgb.loss="log"; xgb.lam=1; xgb.gam=1.2; xgbReset(); renderXgb();
+      setStory("γ = 1.2 exceeds the best gain 1.1429, so every split's gain is negative (coral): XGBoost keeps the root as one leaf."); },
+    "rounds": ()=>{ xgb.loss="log"; xgb.lam=1; xgb.gam=0; xgbReset(); for (let i=0;i<3;i++){ const b = splits().best; xgb.F = xgb.F.map((v,j)=> v + NU*(XS[j] < b.t ? b.wL : b.wR)); xgb.round++; } renderXgb();
+      setStory("3 rounds at ν = 0.3, λ = 1: log-odds −0.5097 for x ≤ 5 and +0.6840 for x ≥ 6; log loss 0.6931 → 0.5109. sklearn's HistGradientBoostingClassifier(l2_regularization=1, learning_rate=0.3, max_iter=3) returns exactly these log-odds."); },
+    "sqshrink": ()=>{ xgb.loss="sq"; xgb.lam=1; xgb.gam=0; xgbReset(); renderXgb();
+      const b = splits().best;
+      setStory("Squared error, λ = 1: split x < 5.5. Left mean residual −3.05 (λ = 0 column w_L = −G/H) becomes −3.05 × 5/6 = " + f4(b.wL) + "; full-strength prediction 8.25 − 2.5417 = " + f4(8.25 + b.wL) + ", right " + f4(8.25 + b.wR) + " — matching HistGradientBoostingRegressor exactly."); }
+  };
+  document.querySelectorAll(".xgbpreset").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".xgbpreset").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    XGB_PRESETS[btn.dataset.preset]();
+  }));
+  $("xgbLam").addEventListener("input", e => { xgb.lam = Number(e.target.value); renderXgb(); setStory("λ = " + xgb.lam.toFixed(1) + ": every leaf is −G/(H + λ); larger λ pulls leaves toward 0."); });
+  $("xgbGam").addEventListener("input", e => { xgb.gam = Number(e.target.value); renderXgb(); setStory("γ = " + xgb.gam.toFixed(2) + " is subtracted from every split's gain."); });
+  $("xgbLossLog").addEventListener("click", () => { xgb.loss="log"; xgbReset(); renderXgb(); setStory(""); });
+  $("xgbLossSq").addEventListener("click", () => { xgb.loss="sq"; xgbReset(); renderXgb(); setStory(""); });
+  $("xgbStep").addEventListener("click", xgbStep);
+  $("xgbReset").addEventListener("click", () => { xgbReset(); renderXgb(); setStory("Back to round 0."); });
+  renderXgb();
+  setStory("Pick a preset above, or move λ and γ yourself.");
+
+  /* ============================================================
+     TAB 12 — LIGHTGBM TRICKS
+     ============================================================ */
+  $("lgbHistBtn").addEventListener("click", () => {
+    const svg = $("lgbHistSvg"); svg.innerHTML = "";
+    const rows = [["exact search", 99999, "threshold 3.6999, gain 105381.05", "var(--coral)"],["histogram (255 bins)", 254, "threshold 3.7007, gain 105346.35 (99.97%)", "var(--green)"]];
+    rows.forEach((r,i)=>{
+      const yy = 22 + i*48, w = Math.max(3, Math.log10(r[1])/5*360);
+      svg.appendChild(el("text",{x:10,y:yy+16,fill:"var(--chalk)","font-size":12},r[0]));
+      svg.appendChild(el("rect",{x:170,y:yy,width:w,height:24,fill:r[3],opacity:0.8}));
+      svg.appendChild(el("text",{x:176+w,y:yy+16,fill:"var(--chalk)","font-size":11},r[1].toLocaleString("en-US")+" candidates · "+r[2]));
+    });
+    $("lgbHistStory").textContent = "Bar length is log-scaled. 254 bin edges find a threshold 0.0008 away from the exact one and keep 99.97% of the gain, after one pass to sum G and H per bin.";
+  });
+
+  const GY = [-0.2808,-0.2557,0.3084,-0.3792,0.0067,-0.3416,-0.2204,-0.1972,0.1146,-0.2429,-0.4062,0.2450,-0.2352,0.0407,-0.1592,0.2472,-0.2025,-0.2638,0.2000,-0.0398,-0.0185,0.1787,0.1024,0.3384,0.2497,0.3566,-0.1987,0.2029,-0.2430,0.1584,0.1696,0.0574,0.0882,-0.0445,0.3497,-0.4924,-0.0800,0.1726,-0.4587,0.0986,-0.0183,0.1645,0.7013,-0.3500,-0.1250,-0.4869,0.2153,0.3965,-0.0164,0.7616,-0.1923,0.1420,-0.0851,0.0337,0.0791,-0.1122,0.3444,0.4409,0.0340,-0.3578,-0.0465,0.6861,0.2557,-0.3446,0.0750,0.1695,0.6100,0.4897,0.3108,-0.4261,-0.1033,0.3903,0.1744,0.0183,0.3833,-0.0444,0.0254,0.3941,0.3262,-0.6735,5.7415,6.0053,6.3991,5.9176,6.1275,5.6090,5.9173,5.6890,6.0409,6.1727,6.0817,6.2027,6.0102,5.9515,6.1163,5.9403,5.7016,6.4208,6.2795,6.2119,5.7097,5.8963,6.1220,6.1504,5.9796,5.9671,6.1588,5.9551,5.6543,5.8790,6.0338,5.9177,5.8956,5.5332,6.1092,6.8222,5.6463,6.2131,5.7951,6.3507,9.5417,9.1667,9.0019,9.1729,9.1505,8.8421,9.1341,9.0518,8.9329,8.6371,8.5084,9.2948,8.9048,9.5031,9.2830,9.0404,8.8704,8.8081,8.9747,8.7743,8.7475,8.6850,9.3412,9.1124,8.7494,8.7614,8.7748,8.8719,8.6472,8.9944,9.1606,8.6550,9.0297,8.2630,9.1786,8.8318,8.6196,9.2151,8.7559,9.3215,12.1430,11.8864,11.9016,11.5844,11.6944,11.9596,11.5160,12.3341,11.6533,11.7155,12.0712,12.0826,12.0603,11.7649,12.1714,11.4577,12.1909,11.7570,11.8986,11.7082,12.2571,12.0068,11.9688,12.1801,11.5944,12.0308,12.0781,11.4983,12.1682,12.3837,11.6795,11.1991,11.7340,11.8258,11.9341,11.8575,12.2486,12.4765,11.9423,12.0750];
+  const GX = GY.map((_,i)=>0.025 + 0.05*i);
+  function sseOf(idx){ if (!idx.length) return 0; const m = idx.reduce((s,i)=>s+GY[i],0)/idx.length; return idx.reduce((s,i)=>s+(GY[i]-m)**2,0); }
+  function bestSplit(idx){
+    const base = sseOf(idx); let best = {red:0, t:null};
+    for (let k=1;k<idx.length;k++){
+      const t = GX[idx[k]], L = idx.slice(0,k), R = idx.slice(k);
+      const red = base - sseOf(L) - sseOf(R);
+      if (red > best.red + 1e-12) best = {red, t, L, R};
+    }
+    return best;
+  }
+  function growLevel(){
+    let leaves = [GY.map((_,i)=>i)], log = [];
+    for (let d=0; d<2; d++){
+      const nw = [];
+      leaves.forEach(l=>{ const b = bestSplit(l); log.push(b); nw.push(b.L, b.R); });
+      leaves = nw;
+    }
+    return {leaves, log};
+  }
+  function growLeaf(){
+    let leaves = [GY.map((_,i)=>i)], log = [];
+    for (let k=0;k<3;k++){
+      let bi = 0, bb = null;
+      leaves.forEach((l,i)=>{ const b = bestSplit(l); if (!bb || b.red > bb.red){ bb = b; bi = i; } });
+      log.push(bb); leaves.splice(bi, 1, bb.L, bb.R);
+    }
+    return {leaves, log};
+  }
+  function drawGrow(kind){
+    const res = kind === "level" ? growLevel() : growLeaf();
+    $("lgbLevelBtn").classList.toggle("active", kind === "level");
+    $("lgbLeafBtn").classList.toggle("active", kind === "leaf");
+    const svg = $("lgbGrowSvg"); svg.innerHTML = "";
+    const W=640,H=230,pad=34;
+    const X = x => pad + x/10*(W-2*pad), Yv = v => H-pad - (v+1)/14*(H-2*pad);
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--border)"}));
+    GY.forEach((v,i)=> svg.appendChild(el("circle",{cx:X(GX[i]),cy:Yv(v),r:2.2,fill:"var(--blue)",opacity:0.7})));
+    res.leaves.forEach(l=>{
+      const m = l.reduce((s,i)=>s+GY[i],0)/l.length;
+      svg.appendChild(el("line",{x1:X(GX[l[0]]-0.025),x2:X(GX[l[l.length-1]]+0.025),y1:Yv(m),y2:Yv(m),stroke:"var(--amber)","stroke-width":3}));
+    });
+    res.log.forEach(b=> svg.appendChild(el("line",{x1:X(b.t-0.025),x2:X(b.t-0.025),y1:pad-14,y2:H-pad,stroke:"var(--coral)","stroke-dasharray":"4 4"})));
+    [0,2,4,6,8,10].forEach(t=> svg.appendChild(el("text",{x:X(t),y:H-pad+15,"text-anchor":"middle",fill:"var(--chalk-dim)","font-size":11},"x="+t)));
+    const total = res.leaves.reduce((s,l)=>s+sseOf(l),0);
+    $("lgbGrowName").textContent = kind === "level" ? "level-wise" : "leaf-wise";
+    $("lgbGrowSSE").textContent = total.toFixed(2);
+    $("lgbGrowStory").textContent = "Splits made (gain): " + res.log.map(b=>"x < " + (b.t-0.025).toFixed(2) + " (" + b.red.toFixed(2) + ")").join(", ") + ". " +
+      (kind === "level" ? "Depth 2 forces a split on the flat left half, which only fits noise." : "Every split goes to the leaf with the biggest gain, so the step at x = 6 gets found.");
+  }
+  $("lgbLevelBtn").addEventListener("click", () => drawGrow("level"));
+  $("lgbLeafBtn").addEventListener("click", () => drawGrow("leaf"));
+
+  const GG = [2.0,-1.5,0.3,-0.2,0.1,0.25,-0.3,0.15,-0.1,0.2];
+  let gossSeed = 7;
+  function gossRand(){ gossSeed = (gossSeed*1664525 + 1013904223) >>> 0; return gossSeed/4294967296; }
+  function drawGoss(sampled, est, label){
+    const svg = $("gossSvg"); svg.innerHTML = "";
+    const W=640,H=170,mid=85,sc=30;
+    svg.appendChild(el("line",{x1:20,x2:W-20,y1:mid,y2:mid,stroke:"var(--border)"}));
+    GG.forEach((g,i)=>{
+      const x = 40 + i*58, top = i < 2, s = sampled.indexOf(i) >= 0;
+      const fill = top ? "var(--amber)" : (s ? "var(--blue)" : "var(--chalk-dim)");
+      const op = top || s ? 0.95 : 0.25;
+      svg.appendChild(el("rect",{x:x,y:g>0?mid-g*sc:mid,width:34,height:Math.abs(g)*sc,fill,opacity:op}));
+      svg.appendChild(el("text",{x:x+17,y:g>0?mid+14:mid-6,"text-anchor":"middle",fill:"var(--chalk)","font-size":11},(g>0?"+":"")+g+(s?" ×4":"")));
+    });
+    $("gossEst").textContent = est.toFixed(4).replace(/0+$/,"").replace(/\.$/,"");
+    $("gossStory").textContent = label;
+  }
+  $("gossDraw").addEventListener("click", () => {
+    const rest = [2,3,4,5,6,7,8,9];
+    const a = Math.floor(gossRand()*8); let b = Math.floor(gossRand()*7); if (b >= a) b++;
+    const i = rest[a], j = rest[b];
+    const est = GG[0] + GG[1] + 4*(GG[i] + GG[j]);
+    drawGoss([i,j], est, "Kept 2.0 and −1.5; sampled " + GG[i] + " and " + GG[j] + ", each ×4. Estimate 0.5 + 4×(" + (GG[i]+GG[j]).toFixed(2) + ") = " + est.toFixed(2) + ". One draw can be far off; click again, or average all 28.");
+  });
+  $("gossAll").addEventListener("click", () => {
+    const rest = [2,3,4,5,6,7,8,9]; const ests = [];
+    for (let a=0;a<8;a++) for (let b=a+1;b<8;b++) ests.push(GG[0]+GG[1]+4*(GG[rest[a]]+GG[rest[b]]));
+    const mean = ests.reduce((s,v)=>s+v,0)/ests.length;
+    drawGoss(rest, mean, "All " + ests.length + " possible pairs: estimates range " + Math.min(...ests).toFixed(1) + " to " + Math.max(...ests).toFixed(1) + " and average exactly " + mean.toFixed(4) + " = the true sum. The ×4 weight is what makes GOSS unbiased.");
+  });
+
+  const FA=[1,0,0,2,0,0,0,0], FB=[0,3,0,0,1,0,2,0], FC=[0,0,1,0,0,0,0,1];
+  const BUN = FA.map((_,i)=> FA[i] ? FA[i] : FB[i] ? FB[i]+2 : FC[i] ? FC[i]+5 : 0);
+  function efbTable(showBundle, showDecode){
+    let h = "<tr><th>row</th>" + FA.map((_,i)=>"<th>"+(i+1)+"</th>").join("") + "</tr>";
+    h += "<tr><th>f_a</th>" + FA.map(v=>"<td>"+v+"</td>").join("") + "</tr>";
+    h += "<tr><th>f_b</th>" + FB.map(v=>"<td>"+v+"</td>").join("") + "</tr>";
+    h += "<tr><th>f_c</th>" + FC.map(v=>"<td>"+v+"</td>").join("") + "</tr>";
+    if (showBundle) h += "<tr><th>bundle</th>" + BUN.map(v=>"<td class='winner'>"+v+"</td>").join("") + "</tr>";
+    if (showDecode){
+      const da = BUN.map(v=> v>=1&&v<=2 ? v : 0), db = BUN.map(v=> v>=3&&v<=5 ? v-2 : 0), dc = BUN.map(v=> v>=6 ? v-5 : 0);
+      h += "<tr><th>decoded f_a</th>" + da.map((v,i)=>"<td class='"+(v===FA[i]?"better":"worse")+"'>"+v+"</td>").join("") + "</tr>";
+      h += "<tr><th>decoded f_b</th>" + db.map((v,i)=>"<td class='"+(v===FB[i]?"better":"worse")+"'>"+v+"</td>").join("") + "</tr>";
+      h += "<tr><th>decoded f_c</th>" + dc.map((v,i)=>"<td class='"+(v===FC[i]?"better":"worse")+"'>"+v+"</td>").join("") + "</tr>";
+      const ok = da.every((v,i)=>v===FA[i]) && db.every((v,i)=>v===FB[i]) && dc.every((v,i)=>v===FC[i]);
+      $("efbStory").textContent = ok ? "Decoded: 1–2 → f_a, 3–5 → f_b (subtract 2), 6 → f_c (subtract 5). All 24 cells match, so the bundle lost nothing." : "Mismatch!";
+    }
+    $("efbTable").innerHTML = h;
+  }
+  efbTable(false,false);
+  $("efbBundle").addEventListener("click", () => { efbTable(true,false); $("efbStory").textContent = "Bundle = [" + BUN.join(", ") + "]. One column, zero conflicts. At scale: 1,050 features → 51 bundles."; });
+  $("efbDecode").addEventListener("click", () => efbTable(true,true));
+
+  /* ============================================================
+     TAB 13 — VOTING & STACKING
+     ============================================================ */
+  function renderVote(){
+    const p = ["vp1","vp2","vp3"].map(id=>Number($(id).value));
+    ["vp1","vp2","vp3"].forEach((id,i)=> $(id+"o").textContent = p[i].toFixed(2));
+    const votes = p.filter(v=>v>0.5).length, soft = (p[0]+p[1]+p[2])/3;
+    const hard = votes >= 2 ? "malignant" : "benign", sc = soft > 0.5 ? "malignant" : "benign";
+    $("voteHard").textContent = hard + " (" + votes + " of 3)";
+    $("voteSoft").textContent = sc + " (" + soft.toFixed(2) + ")";
+    $("voteStory").textContent = hard === sc ? "Both rules agree." : "They disagree: hard voting counts heads (" + votes + " of 3 say malignant); soft voting lets the confident model outweigh two models on the fence (mean " + soft.toFixed(2) + ").";
+  }
+  ["vp1","vp2","vp3"].forEach(id=> $(id).addEventListener("input", renderVote));
+  function setVote(a,b,c){ $("vp1").value=a; $("vp2").value=b; $("vp3").value=c; renderVote(); }
+  $("voteDisagree").addEventListener("click", () => setVote(0.9,0.45,0.45));
+  $("voteAgree").addEventListener("click", () => setVote(0.8,0.7,0.3));
+  renderVote();
+
+  let oofFold = 0;
+  function drawOOF(){
+    const svg = $("oofSvg"); svg.innerHTML = "";
+    const cw = 26, x0 = 60;
+    for (let f=0; f<5; f++){
+      const yy = 20 + f*30;
+      svg.appendChild(el("text",{x:8,y:yy+15,fill:"var(--chalk-dim)","font-size":11},"fold "+(f+1)));
+      for (let r=0;r<20;r++){
+        const inFold = Math.floor(r/4) === f;
+        let fill = "rgba(244,241,232,0.06)";
+        if (f < oofFold) fill = inFold ? "var(--amber)" : "var(--blue)";
+        svg.appendChild(el("rect",{x:x0+r*cw,y:yy,width:cw-3,height:22,fill,opacity: f<oofFold ? (inFold?0.95:0.35) : 1,rx:3}));
+      }
+    }
+    for (let r=0;r<20;r++){
+      const done = Math.floor(r/4) < oofFold;
+      svg.appendChild(el("rect",{x:x0+r*cw,y:175,width:cw-3,height:18,fill: done ? "var(--green)" : "rgba(244,241,232,0.06)",rx:3}));
+    }
+    svg.appendChild(el("text",{x:8,y:188,fill:"var(--chalk-dim)","font-size":11},"OOF"));
+    $("oofStory").textContent = oofFold === 0 ? "Blue = rows the base models are fitted on; amber = rows they predict. Bottom row: OOF predictions collected so far." :
+      oofFold < 5 ? "Fold " + oofFold + ": fitted on " + (16) + " rows, predicted the 4 held-out rows. OOF predictions so far: " + (oofFold*4) + " of 20." :
+      "All 20 rows now have an out-of-fold prediction, each from a model that never saw that row. These 20 predictions per base model are the meta-learner's training inputs.";
+    $("oofStep").disabled = oofFold >= 5;
+  }
+  $("oofStep").addEventListener("click", () => { if (oofFold < 5){ oofFold++; drawOOF(); } });
+  $("oofAll").addEventListener("click", () => { oofFold = 5; drawOOF(); });
+  $("oofReset").addEventListener("click", () => { oofFold = 0; drawOOF(); });
+  drawOOF();
+
+  const COEF = { oof: [3.90,2.33,1.01,1.01], leak: [2.28,1.63,1.07,4.07] };
+  const NAMES = ["logistic reg.","15-NN","naive Bayes","unpruned tree"];
+  function drawCoef(kind){
+    $("coefOOF").classList.toggle("active", kind === "oof"); $("coefLeak").classList.toggle("active", kind === "leak");
+    const svg = $("coefSvg"); svg.innerHTML = "";
+    COEF[kind].forEach((c,i)=>{
+      const yy = 16 + i*42, w = c/4.5*400;
+      svg.appendChild(el("text",{x:10,y:yy+17,fill:"var(--chalk)","font-size":12},NAMES[i]));
+      svg.appendChild(el("rect",{x:140,y:yy,width:w,height:26,fill: i===3 ? "var(--coral)" : (i===0 ? "var(--green)" : "var(--blue)"),opacity:0.85}));
+      svg.appendChild(el("text",{x:146+w,y:yy+17,fill:"var(--chalk)","font-size":12},c.toFixed(2)));
+    });
+    $("coefStory").textContent = kind === "oof" ?
+      "Out-of-fold: the meta-learner saw the tree's honest 92.24% accuracy and gave it the joint-smallest weight (1.01, tied with naive Bayes); logistic regression gets the most (3.90). Test accuracy 0.9696." :
+      "In-fold (leaky): the tree is 100% right on its own training rows, so the meta-learner trusts it most (4.07). It scores 99.85% on its own inputs but only 0.9459 on the test set.";
+  }
+  $("coefOOF").addEventListener("click", () => drawCoef("oof"));
+  $("coefLeak").addEventListener("click", () => drawCoef("leak"));
+
+  const SCORE = [["logistic regression",0.9743],["15-NN",0.9585],["naive Bayes",0.9386],["unpruned tree",0.9301],["hard voting",0.9640],["soft voting",0.9596],["blending (75/25)",0.9620],["stacking, out-of-fold",0.9696],["stacking, in-fold (leaky)",0.9459]];
+  $("scoreBtn").addEventListener("click", () => {
+    const svg = $("scoreSvg"); svg.innerHTML = "";
+    const lo = 0.92, hi = 0.98;
+    SCORE.forEach((r,i)=>{
+      const yy = 10 + i*31, w = (r[1]-lo)/(hi-lo)*360;
+      const fill = i===0 ? "var(--green)" : i===7 ? "var(--amber)" : i===8 ? "var(--coral)" : "var(--blue)";
+      svg.appendChild(el("text",{x:10,y:yy+16,fill:"var(--chalk)","font-size":12},r[0]));
+      svg.appendChild(el("rect",{x:200,y:yy,width:w,height:22,fill,opacity:0.85}));
+      svg.appendChild(el("text",{x:206+w,y:yy+16,fill:"var(--chalk)","font-size":12},r[1].toFixed(4)));
+    });
+    $("scoreStory").textContent = "Axis starts at 0.92. Out-of-fold stacking (0.9696) beats every vote and the leaky stack (0.9459), but plain logistic regression (0.9743) still wins: the other models are weaker and wrong in similar places.";
+  });
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function $(id){ return document.getElementById(id); }
+
+  /* ============================================================
+     TAB 14 — PERMUTATION IMPORTANCE
+     ============================================================ */
+  const X1 = [2,3,4,6,7,8,1,9], X2 = [5,1,7,3,8,2,6,4], YY = [0,0,0,1,1,1,0,1];
+  const PERMS = [[1,2,3,4,5,6,7,0],[7,6,5,4,3,2,1,0],[2,0,1,5,3,4,7,6],[4,5,6,7,0,1,2,3],[3,7,0,6,1,5,2,4]];
+  const pi = { col: "x1", k: 0, timer: null };
+  function predict(a){ return a > 5 ? 1 : 0; }
+  function shuffled(k){
+    const p = PERMS[k-1];
+    const a = pi.col === "x1" ? p.map(i=>X1[i]) : X1.slice();
+    const b = pi.col === "x2" ? p.map(i=>X2[i]) : X2.slice();
+    return {a, b};
+  }
+  function accAt(k){
+    const s = k === 0 ? {a:X1, b:X2} : shuffled(k);
+    let c = 0; for (let i=0;i<8;i++) if (predict(s.a[i]) === YY[i]) c++;
+    return c/8;
+  }
+  function drawPI(){
+    const svg = $("piSvg"); svg.innerHTML = "";
+    const s = pi.k === 0 ? {a:X1, b:X2} : shuffled(pi.k);
+    const labels = ["row", "x1 (original)", "x2 (original)", pi.k ? (pi.col+" after shuffle "+pi.k) : "shuffled column", "x1 the model sees", "prediction", "y", "correct?"];
+    labels.forEach((t,j)=> svg.appendChild(el("text",{x:8,y:22+j*29,fill:"var(--chalk-dim)","font-size":11},t)));
+    for (let i=0;i<8;i++){
+      const cx = 200 + i*60;
+      const pr = predict(s.a[i]), ok = pr === YY[i];
+      const shownCol = pi.col === "x1" ? s.a[i] : s.b[i];
+      const vals = [i+1, X1[i], X2[i], pi.k ? shownCol : "-", s.a[i], pr, YY[i], ok ? "yes" : "NO"];
+      vals.forEach((v,j)=>{
+        let fill = "var(--chalk)";
+        if (j===3 && pi.k) fill = "var(--amber)";
+        if (j===7) fill = ok ? "var(--green)" : "var(--coral)";
+        if (j===5 && !ok) fill = "var(--coral)";
+        svg.appendChild(el("text",{x:cx,y:22+j*29,fill,"font-size":13,"text-anchor":"middle","font-weight":(j===7||j===3)?700:400},String(v)));
+      });
+    }
+    const acc = accAt(pi.k);
+    $("piAcc").textContent = pi.k ? acc.toFixed(2) : "-";
+    const drops = []; for (let k=1;k<=pi.k;k++) drops.push(1 - accAt(k));
+    $("piDrops").textContent = drops.length ? drops.map(d=>d.toFixed(2)).join(", ") : "-";
+    $("piMean").textContent = drops.length ? (drops.reduce((a,b)=>a+b,0)/drops.length).toFixed(2) : "-";
+    let story;
+    if (pi.k === 0) story = "No shuffle yet: the stump gets all 8 held-out rows right (accuracy 1.00). Press Step.";
+    else if (pi.col === "x2") story = "Shuffle "+pi.k+" of x2: the model never reads x2, so every prediction is unchanged. Drop 0.";
+    else story = "Shuffle "+pi.k+" of x1: x1 values now sit on the wrong rows, "+Math.round((1-acc)*8)+" of 8 predictions are wrong, drop "+(1-acc).toFixed(2)+"."+(pi.k===5?" Mean drop over the 5 shuffles: 0.45.":"");
+    $("piStory").textContent = story;
+    $("piStep").disabled = pi.k >= 5;
+  }
+  function stopPlay(){ if (pi.timer){ clearInterval(pi.timer); pi.timer = null; $("piPlay").textContent = "Play"; } }
+  $("piStep").addEventListener("click", ()=>{ if (pi.k < 5){ pi.k++; drawPI(); } });
+  $("piEnd").addEventListener("click", ()=>{ stopPlay(); pi.k = 5; drawPI(); });
+  $("piReset").addEventListener("click", ()=>{ stopPlay(); pi.k = 0; drawPI(); });
+  $("piPlay").addEventListener("click", ()=>{
+    if (pi.timer){ stopPlay(); return; }
+    if (pi.k >= 5) pi.k = 0;
+    $("piPlay").textContent = "Pause";
+    drawPI();
+    pi.timer = setInterval(()=>{ if (pi.k >= 5){ stopPlay(); return; } pi.k++; drawPI(); }, 900);
+  });
+  function setCol(c){ stopPlay(); pi.col = c; pi.k = 0; $("piColX1").classList.toggle("active", c==="x1"); $("piColX2").classList.toggle("active", c==="x2"); drawPI(); }
+  $("piColX1").addEventListener("click", ()=>setCol("x1"));
+  $("piColX2").addEventListener("click", ()=>setCol("x2"));
+  drawPI();
+
+  const TI = [
+    ["sex (2 values)",        0.2555,  0.1637, 0.0234, 0.2540],
+    ["fare (248)",            0.1895,  0.0157, 0.0099, 0.1145],
+    ["random_num (891) NOISE",0.1630, -0.0121, 0.0094, 0.0781],
+    ["age (88)",              0.1626,  0.0359, 0.0196, 0.1249],
+    ["pclass (3)",            0.0884,  0.0713, 0.0165, 0.1428],
+    ["random_cat (3) NOISE",  0.0397,  0.0175, 0.0079, 0.0362],
+    ["sibsp (7)",             0.0387,  0.0054, 0.0104, 0.0228],
+    ["parch (7)",             0.0329, -0.0072, 0.0090, 0.0109],
+    ["embarked (3)",          0.0299, -0.0022, 0.0090, 0.0313]
+  ];
+  function drawTI(mode){
+    const svg = $("tiSvg"); svg.innerHTML = "";
+    const col = mode === "imp" ? 1 : mode === "test" ? 2 : 4;
+    const rows = TI.map(r=>r).sort((a,b)=>b[col]-a[col]);
+    const lo = -0.03, hi = mode === "imp" ? 0.27 : 0.27, x0 = 220, W = 400;
+    const sx = v => x0 + (v-lo)/(hi-lo)*W;
+    svg.appendChild(el("line",{x1:sx(0),x2:sx(0),y1:4,y2:300,stroke:"var(--chalk-dim)","stroke-width":1}));
+    rows.forEach((r,i)=>{
+      const yy = 8 + i*33, v = r[col], noise = r[0].indexOf("NOISE") >= 0;
+      const fill = noise ? "var(--coral)" : "var(--blue)";
+      svg.appendChild(el("text",{x:8,y:yy+16,fill:noise?"var(--coral)":"var(--chalk)","font-size":12},(i+1)+". "+r[0]));
+      const a = Math.min(sx(0), sx(v)), w = Math.abs(sx(v)-sx(0));
+      svg.appendChild(el("rect",{x:a,y:yy,width:Math.max(w,1),height:22,fill,opacity:0.85}));
+      if (mode === "test"){
+        svg.appendChild(el("line",{x1:sx(v-r[3]),x2:sx(v+r[3]),y1:yy+11,y2:yy+11,stroke:"var(--chalk)","stroke-width":1.5}));
+      }
+      svg.appendChild(el("text",{x:Math.max(sx(0),sx(v))+8,y:yy+16,fill:"var(--chalk)","font-size":12},v.toFixed(4)+(mode==="test"?" ± "+r[3].toFixed(4):"")));
+    });
+    svg.appendChild(el("text",{x:sx(0),y:316,fill:"var(--chalk-dim)","font-size":10,"text-anchor":"middle"},"0"));
+    const story = {
+      imp: "Impurity importance, summed over the training splits: random_num, pure noise with 891 distinct values, ranks 3rd (0.1630), ahead of age and pclass.",
+      test: "Permutation importance on the 223 test rows: random_num drops to last (−0.0121). pclass rises to 2nd. random_cat's 0.0175 is test-set luck: over 10 splits it averages 0.004.",
+      train: "Permutation importance on the 668 training rows: random_num scores 0.0781, because the forest (100% train accuracy) memorized passengers with it. Use held-out rows."
+    }[mode];
+    $("tiStory").textContent = story;
+    ["tiImp","tiTest","tiTrain"].forEach(id=>$(id).classList.remove("active"));
+    $({imp:"tiImp",test:"tiTest",train:"tiTrain"}[mode]).classList.add("active");
+  }
+  $("tiImp").addEventListener("click", ()=>drawTI("imp"));
+  $("tiTest").addEventListener("click", ()=>drawTI("test"));
+  $("tiTrain").addEventListener("click", ()=>drawTI("train"));
+
+  const CC = {
+    no:    {bars:[["x1",1.144],["x2",0.515],["x3",0.114]], story:"Without a copy, shuffling x1 costs 1.144 of test R²: the model depends on it most, as the true coefficient 3 says."},
+    copy:  {bars:[["x1",0.554],["x2",0.514],["x3",0.111],["x1_copy",0.113]], story:"With a near-duplicate, x1 drops to 0.554 and the copy scores 0.113: the model leans on whichever copy is intact. Removing x1 and refitting only moves R² 0.910 → 0.904."},
+    group: {bars:[["x1 + x1_copy (together)",1.154],["x2",0.514],["x3",0.111]], story:"Shuffle the correlated pair as one group: 1.154, back in line with the original 1.144. Group correlated columns before reading importances."}
+  };
+  function drawCC(k){
+    const svg = $("ccSvg"); svg.innerHTML = "";
+    const d = CC[k], x0 = 220, W = 360, hi = 1.25;
+    d.bars.forEach((b,i)=>{
+      const yy = 10 + i*44, w = b[1]/hi*W;
+      const fill = b[0].indexOf("x1") === 0 ? "var(--amber)" : "var(--blue)";
+      svg.appendChild(el("text",{x:8,y:yy+20,fill:"var(--chalk)","font-size":12},b[0]));
+      svg.appendChild(el("rect",{x:x0,y:yy,width:w,height:28,fill,opacity:0.85}));
+      svg.appendChild(el("text",{x:x0+w+8,y:yy+20,fill:"var(--chalk)","font-size":12},b[1].toFixed(3)));
+    });
+    $("ccStory").textContent = d.story;
+    ["ccNo","ccCopy","ccGroup"].forEach(id=>$(id).classList.remove("active"));
+    $({no:"ccNo",copy:"ccCopy",group:"ccGroup"}[k]).classList.add("active");
+  }
+  $("ccNo").addEventListener("click", ()=>drawCC("no"));
+  $("ccCopy").addEventListener("click", ()=>drawCC("copy"));
+  $("ccGroup").addEventListener("click", ()=>drawCC("group"));
 })();
 </script>
 </body>

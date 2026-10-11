@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Linear Algebra Toolkit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; min-width:0; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  h3{ font-family:"Fraunces", serif; font-size:16px; font-weight:600; margin:0 0 8px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .presetlabel{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:4px 0 8px; }
+  .ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .ctrl .count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  .stage{ min-height:200px; padding:6px 0 4px; }
+  .steplog{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.75; max-height:260px; overflow:auto; }
+  .steplog div{ color:var(--ink-soft); padding:1px 0; }
+  .steplog div.cur{ color:var(--ink); font-weight:600; }
+  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .layout > .plot{ flex:1 1 440px; min-width:0; }
+  .layout > .side{ flex:1 1 260px; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  svg text{ font-family:"IBM Plex Mono", monospace; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; overflow-wrap:anywhere; }
+  .stat .k{ color:var(--ink-soft); font-size:11.5px; letter-spacing:.03em; display:block; }
+  .stat b{ color:var(--accent); }
+  .ok, .stat b.ok{ color:var(--good); } .bad, .stat b.bad{ color:var(--bad); }
+  .verdict{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin-top:12px; }
+  .verdict.ok{ color:var(--good); } .verdict.bad{ color:var(--bad); }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:8px; }
+  .legend span::before{ content:""; display:inline-block; width:12px; height:3px; margin-right:6px; vertical-align:middle; background:currentColor; }
+  table.mat{ border-collapse:separate; border-spacing:0; font-family:"IBM Plex Mono",monospace; font-size:13px; border-left:2px solid var(--ink); border-right:2px solid var(--ink); border-radius:6px; display:inline-table; vertical-align:middle; margin:2px 4px; }
+  table.mat td{ padding:3px 9px; text-align:right; }
+  table.mat td.hl{ background:#FCEFC8; font-weight:600; }
+  table.mat td.b0{ background:#E3F2F2; } table.mat td.b1{ background:#FCEFC8; } table.mat td.b2{ background:#EFEBFA; } table.mat td.b3{ background:#FBE3E1; }
+  table.mat td.dim{ color:#C4CAD0; }
+  .eq{ font-family:"IBM Plex Mono",monospace; font-size:13.5px; margin:8px 0; display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+  table.grid{ border-collapse:collapse; width:100%; font-size:13px; margin-top:6px; }
+  table.grid th, table.grid td{ padding:6px 9px; border-bottom:1px solid var(--line); text-align:left; }
+  table.grid th{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); font-weight:600; }
+  table.grid td.num{ font-family:"IBM Plex Mono",monospace; text-align:right; white-space:nowrap; }
+  table.grid tr.hot td{ background:#FCEFC8; }
+  .bar{ height:16px; border-radius:4px; display:inline-block; vertical-align:middle; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to The Advanced Linear Algebra Toolkit</div>
+    <h1>Six Sharp Tools</h1>
+    <p>Trace and determinant, matrix norms, Cauchy–Schwarz, similar matrices and the Jordan form, conjugate gradient, and the Kronecker product. Every worked example from the file is a one-click preset that plays itself: use <b>Step</b> to go one move at a time, <b>Play</b> to watch, or <b>Jump to end</b> for the answer. Every number is computed live by this page. There's nothing to type.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="trace">1 · Trace &amp; Determinant</button>
+    <button class="tab" data-tab="norm">2 · Matrix Norms</button>
+    <button class="tab" data-tab="cs">3 · Cauchy–Schwarz</button>
+    <button class="tab" data-tab="jordan">4 · Similar &amp; Jordan</button>
+    <button class="tab" data-tab="cg">5 · Conjugate Gradient</button>
+    <button class="tab" data-tab="kron">6 · Kronecker Product</button>
+  </div>
+
+  <div class="panel active" id="panel-trace"><div class="card">
+    <h2>The diagonal already knows the eigenvalues' sum and product</h2>
+    <p class="sub">Each preset writes the characteristic polynomial, solves it, and checks the sum against the trace and the product against the determinant. The plot is the complex plane: eigenvalues are dots, and the diamond is their average, <code>trace / n</code>.</p>
+    <div class="presetbar" id="pre-trace"></div><div id="pl-trace"></div>
+  </div></div>
+
+  <div class="panel" id="panel-norm"><div class="card">
+    <h2>How big is a matrix?</h2>
+    <p class="sub">The Frobenius norm measures the entries as one long list. The spectral norm measures the most the matrix can stretch any unit arrow. The condition number is the ratio of the most-stretched to the most-squashed direction.</p>
+    <div class="presetbar" id="pre-norm"></div><div id="pl-norm"></div>
+  </div></div>
+
+  <div class="panel" id="panel-cs"><div class="card">
+    <h2>A shadow can't be longer than the stick</h2>
+    <p class="sub"><code>|u·v| ≤ ‖u‖·‖v‖</code> in any number of dimensions. The proof: <code>‖u − t·v‖²</code> is a parabola in <code>t</code> that can never go below zero.</p>
+    <div class="presetbar" id="pre-cs"></div><div id="pl-cs"></div>
+  </div></div>
+
+  <div class="panel" id="panel-jordan"><div class="card">
+    <h2>Same transformation, different coordinates, and the matrices that can't be diagonalized</h2>
+    <p class="sub"><code>B = P⁻¹AP</code> is <code>A</code> rewritten in the basis made of <code>P</code>'s columns. When a matrix doesn't have enough eigenvectors, the best you can do is the Jordan form.</p>
+    <div class="presetbar" id="pre-jordan"></div><div id="pl-jordan"></div>
+  </div></div>
+
+  <div class="panel" id="panel-cg"><div class="card">
+    <h2>Conjugate gradient: directions that never undo each other</h2>
+    <p class="sub">Solving <code>Ax = b</code> for a symmetric positive-definite <code>A</code> is finding the bottom of the bowl <code>½xᵀAx − bᵀx</code>. The regression bowl is <code>A = [[30, 10], [10, 5]]</code>, <code>b = (38, 15)</code>, answer <code>(0.8, 1.4)</code>.</p>
+    <div class="presetbar" id="pre-cg"></div><div id="pl-cg"></div>
+  </div></div>
+
+  <div class="panel" id="panel-kron"><div class="card">
+    <h2>The Kronecker product: a table of tables</h2>
+    <p class="sub"><code>A ⊗ B</code> replaces every entry <code>aᵢⱼ</code> of <code>A</code> with the block <code>aᵢⱼ·B</code>. The vec trick <code>(A ⊗ B)·vec(X) = vec(B·X·Aᵀ)</code> means you almost never have to build it.</p>
+    <div class="presetbar" id="pre-kron"></div><div id="pl-kron"></div>
+  </div></div>
+
+  <footer>
+    Companion to <code>math/linear-algebra-advanced-toolkit.md</code>. Everything shown is computed in this page's script: eigenvalues by the quadratic formula (2×2) or Jacobi rotations (symmetric 3×3), singular values from <code>AᵀA</code>, conjugate gradient and steepest descent run step by step, determinants and solves by Gaussian elimination. Random draws use a fixed seed, so they repeat on every load; they are this page's own draws, so they differ slightly from the NumPy runs quoted in the file.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+}));
+
+/* ================= formatting ================= */
+function F(x, d){ if (d === undefined) d = 4; if (!isFinite(x)) return x > 0 ? "∞" : (x < 0 ? "−∞" : "NaN"); let r = Number(x.toFixed(d)); if (Object.is(r, -0) || r === 0) r = 0; let s = r.toFixed(d); if (s.indexOf(".") >= 0) s = s.replace(/\.?0+$/, ""); if (s === "-0") s = "0"; return s.replace("-", "−"); }
+function Fx(x, d){ if (d === undefined) d = 4; let s = x.toFixed(d); if (/^-0\.?0*$/.test(s)) s = s.slice(1); return s.replace("-", "−"); }
+function E(x, d){ if (x === 0) return "0"; const s = x.toExponential(d === undefined ? 1 : d); const [m, e] = s.split("e"); return m.replace("-", "−") + "×10" + sup(parseInt(e, 10)); }
+function sup(n){ const m = { "-": "⁻", "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹" }; return String(n).split("").map(c => m[c]).join(""); }
+const I = n => n.toLocaleString("en-US");
+const vs = (v, d) => "(" + v.map(x => F(x, d)).join(", ") + ")";
+function cstr(z, d){ if (Math.abs(z.im) < 1e-12) return F(z.re, d); const re = Math.abs(z.re) < 1e-12 ? "" : F(z.re, d) + " "; const sg = z.im < 0 ? "−" : (re ? "+" : ""); const m = Math.abs(z.im); return re + sg + (Math.abs(m - 1) < 1e-12 ? "" : F(m, d)) + "i"; }
+function mat(A, opt){
+  opt = opt || {};
+  let h = '<table class="mat">';
+  A.forEach((row, i) => { h += "<tr>" + row.map((x, j) => { let c = ""; if (opt.diag && i === j) c = "hl"; if (opt.cls) c = opt.cls(i, j) || c; const s = typeof x === "string" ? x : F(x, opt.d === undefined ? 4 : opt.d); return `<td class="${c}">${s}</td>`; }).join("") + "</tr>"; });
+  return h + "</table>";
+}
+const col = v => mat(v.map(x => [x]));
+const stat = (k, v) => `<div class="stat"><span class="k">${k}</span>${v}</div>`;
+const vd = (cls, t) => `<div class="verdict ${cls}">${t}</div>`;
+const eqrow = (...parts) => `<div class="eq">${parts.join("")}</div>`;
+const two = (left, right) => `<div class="layout"><div class="plot">${left}</div><div class="side">${right}</div></div>`;
+const legend = items => `<div class="legend">${items.map(([c, t]) => `<span style="color:${c}">${t}</span>`).join("")}</div>`;
+
+/* ================= linear algebra ================= */
+const mm = (A, B) => A.map(r => B[0].map((_, j) => r.reduce((s, a, k) => s + a * B[k][j], 0)));
+const mv = (A, v) => A.map(r => r.reduce((s, a, k) => s + a * v[k], 0));
+const tr = A => A[0].map((_, j) => A.map(r => r[j]));
+const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+const nrm = a => Math.sqrt(dot(a, a));
+const add = (a, b, c) => a.map((x, i) => x + (c === undefined ? 1 : c) * b[i]);
+const eye = n => Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => i === j ? 1 : 0));
+const trace = A => A.reduce((s, r, i) => s + r[i], 0);
+const inv2 = A => { const d = A[0][0]*A[1][1] - A[0][1]*A[1][0]; return [[A[1][1]/d, -A[0][1]/d], [-A[1][0]/d, A[0][0]/d]]; };
+const det2 = A => A[0][0]*A[1][1] - A[0][1]*A[1][0];
+function eig2(A){ const t = A[0][0] + A[1][1], d = det2(A), disc = t*t - 4*d; if (disc >= 0){ const s = Math.sqrt(disc); return { t, d, disc, vals: [{ re: (t + s)/2, im: 0 }, { re: (t - s)/2, im: 0 }] }; } const s = Math.sqrt(-disc); return { t, d, disc, vals: [{ re: t/2, im: s/2 }, { re: t/2, im: -s/2 }] }; }
+function svd2(A){ const e = eig2(mm(tr(A), A)); return [Math.sqrt(Math.max(0, e.vals[0].re)), Math.sqrt(Math.max(0, e.vals[1].re))]; }
+function luDet(A){ const n = A.length, M = A.map(r => r.slice()); let d = 1; for (let k = 0; k < n; k++){ let p = k; for (let i = k + 1; i < n; i++) if (Math.abs(M[i][k]) > Math.abs(M[p][k])) p = i; if (M[p][k] === 0) return 0; if (p !== k){ [M[p], M[k]] = [M[k], M[p]]; d = -d; } d *= M[k][k]; for (let i = k + 1; i < n; i++){ const f = M[i][k] / M[k][k]; for (let j = k; j < n; j++) M[i][j] -= f * M[k][j]; } } return d; }
+function solve(A, b){ const n = A.length, M = A.map((r, i) => r.concat([b[i]])); for (let k = 0; k < n; k++){ let p = k; for (let i = k + 1; i < n; i++) if (Math.abs(M[i][k]) > Math.abs(M[p][k])) p = i; [M[p], M[k]] = [M[k], M[p]]; for (let i = k + 1; i < n; i++){ const f = M[i][k] / M[k][k]; for (let j = k; j <= n; j++) M[i][j] -= f * M[k][j]; } } const x = new Array(n).fill(0); for (let i = n - 1; i >= 0; i--){ let s = M[i][n]; for (let j = i + 1; j < n; j++) s -= M[i][j] * x[j]; x[i] = s / M[i][i]; } return x; }
+function inv(A){ const n = A.length; const cols = eye(n).map(e => solve(A, e)); return tr(cols); }
+function jacobiEig(S){ const n = S.length, A = S.map(r => r.slice()); for (let sweep = 0; sweep < 100; sweep++){ let off = 0; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += A[i][j]*A[i][j]; if (off < 1e-30) break; for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++){ if (Math.abs(A[p][q]) < 1e-300) continue; const th = (A[q][q] - A[p][p]) / (2*A[p][q]); const t = Math.sign(th || 1) / (Math.abs(th) + Math.sqrt(th*th + 1)); const c = 1/Math.sqrt(t*t + 1), s = t*c; for (let k = 0; k < n; k++){ const akp = A[k][p], akq = A[k][q]; A[k][p] = c*akp - s*akq; A[k][q] = s*akp + c*akq; } for (let k = 0; k < n; k++){ const apk = A[p][k], aqk = A[q][k]; A[p][k] = c*apk - s*aqk; A[q][k] = s*apk + c*aqk; } } } return A.map((r, i) => r[i]).sort((a, b) => a - b); }
+function kron(A, B){ const m = A.length, n = A[0].length, p = B.length, q = B[0].length; const K = []; for (let i = 0; i < m*p; i++){ K.push([]); for (let j = 0; j < n*q; j++) K[i].push(A[Math.floor(i/p)][Math.floor(j/q)] * B[i % p][j % q]); } return K; }
+const vec = X => { const v = []; for (let j = 0; j < X[0].length; j++) for (let i = 0; i < X.length; i++) v.push(X[i][j]); return v; };
+const unvec = (v, r, c) => Array.from({ length: r }, (_, i) => Array.from({ length: c }, (_, j) => v[j*r + i]));
+function mpow(A, k){ let R = eye(A.length); for (let i = 0; i < k; i++) R = mm(R, A); return R; }
+function rank2(A){ const s = svd2(A); return (s[0] > 1e-12 ? 1 : 0) + (s[1] > 1e-12 * Math.max(1, s[0]) ? 1 : 0); }
+const maxAbsDiff = (a, b) => a.reduce((m, x, i) => Math.max(m, Math.abs(x - b[i])), 0);
+
+/* seeded random */
+function rng(seed){ let a = seed >>> 0; const u = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; const g = () => { let x = 0; while (x === 0) x = u(); return Math.sqrt(-2*Math.log(x)) * Math.cos(2*Math.PI*u()); }; return { u, g }; }
+
+/* ================= SVG plot helper ================= */
+function Plot(W, H, xmin, xmax, ymin, ymax, pad){
+  pad = pad === undefined ? 30 : pad;
+  const P = { W, H, parts: [] };
+  P.sx = x => pad + (x - xmin) / (xmax - xmin) * (W - 2*pad);
+  P.sy = y => H - pad - (y - ymin) / (ymax - ymin) * (H - 2*pad);
+  P.add = s => { P.parts.push(s); return P; };
+  P.line = (a, b, c, w, extra) => P.add(`<line x1="${P.sx(a[0]).toFixed(1)}" y1="${P.sy(a[1]).toFixed(1)}" x2="${P.sx(b[0]).toFixed(1)}" y2="${P.sy(b[1]).toFixed(1)}" stroke="${c}" stroke-width="${w || 1.5}" ${extra || ""}/>`);
+  P.poly = (pts, c, w, extra) => P.add(`<polyline fill="none" points="${pts.map(p => P.sx(p[0]).toFixed(1) + "," + P.sy(p[1]).toFixed(1)).join(" ")}" stroke="${c}" stroke-width="${w || 2}" stroke-linejoin="round" ${extra || ""}/>`);
+  P.dot = (p, r, c, extra) => P.add(`<circle cx="${P.sx(p[0]).toFixed(1)}" cy="${P.sy(p[1]).toFixed(1)}" r="${r}" fill="${c}" ${extra || ""}/>`);
+  P.text = (p, s, extra, dx, dy) => P.add(`<text x="${(P.sx(p[0]) + (dx || 0)).toFixed(1)}" y="${(P.sy(p[1]) + (dy || 0)).toFixed(1)}" font-size="11" fill="#1B2430" ${extra || ""}>${s}</text>`);
+  P.arrow = (a, b, c, w) => {
+    const x1 = P.sx(a[0]), y1 = P.sy(a[1]), x2 = P.sx(b[0]), y2 = P.sy(b[1]);
+    const L = Math.hypot(x2 - x1, y2 - y1); if (L < 1) return P;
+    const ux = (x2 - x1)/L, uy = (y2 - y1)/L, h = Math.min(10, L*0.4);
+    P.add(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x2 - ux*h*0.8).toFixed(1)}" y2="${(y2 - uy*h*0.8).toFixed(1)}" stroke="${c}" stroke-width="${w || 2.5}"/>`);
+    return P.add(`<polygon points="${x2.toFixed(1)},${y2.toFixed(1)} ${(x2 - ux*h - uy*h*0.45).toFixed(1)},${(y2 - uy*h + ux*h*0.45).toFixed(1)} ${(x2 - ux*h + uy*h*0.45).toFixed(1)},${(y2 - uy*h - ux*h*0.45).toFixed(1)}" fill="${c}"/>`);
+  };
+  P.axes = (tx, ty) => {
+    if (ymin <= 0 && ymax >= 0) P.line([xmin, 0], [xmax, 0], "#9AA3AD", 1);
+    if (xmin <= 0 && xmax >= 0) P.line([0, ymin], [0, ymax], "#9AA3AD", 1);
+    if (tx) P.add(`<text x="${W - pad}" y="${H - 8}" font-size="11" fill="#5B6572" text-anchor="end">${tx}</text>`);
+    if (ty) P.add(`<text x="8" y="16" font-size="11" fill="#5B6572">${ty}</text>`);
+    return P;
+  };
+  P.frame = () => P.add(`<rect x="${pad}" y="${pad}" width="${W - 2*pad}" height="${H - 2*pad}" fill="none" stroke="#D9E0DE"/>`);
+  P.svg = (label) => `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${label || "plot"}">${P.parts.join("")}</svg>`;
+  return P;
+}
+
+/* ================= the player (same as the other math visualizers) ================= */
+const PLAYERS = [];
+function Player(id){
+  const root = $("#" + id);
+  root.innerHTML = `<div class="ctrl"><button class="op" data-act="step">Step ▸</button><button class="op" data-act="play">▶ Play</button><button class="op" data-act="end">Jump to end ⏭</button><button class="op" data-act="reset">↺ Reset</button><span class="count"></span></div><div class="stage"></div><div class="steplog"></div>`;
+  const stage = root.querySelector(".stage"), log = root.querySelector(".steplog"), cnt = root.querySelector(".count"), pb = root.querySelector('[data-act="play"]');
+  const P = { frames: [], i: 0, t: null, speed: 1300, root };
+  P.draw = () => {
+    const f = P.frames[P.i]; if (!f) return;
+    stage.innerHTML = typeof f.html === "function" ? f.html() : f.html;
+    log.innerHTML = P.frames.slice(0, P.i + 1).map((g, j) => g.note ? `<div class="${j === P.i ? "cur" : ""}">${g.note}</div>` : "").join("");
+    log.scrollTop = log.scrollHeight;
+    cnt.textContent = `step ${P.i + 1} of ${P.frames.length}`;
+  };
+  P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+  P.play = () => {
+    if (P.t){ P.stop(); return; }
+    if (P.i >= P.frames.length - 1){ P.i = 0; P.draw(); }
+    const tick = () => { if (P.i >= P.frames.length - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, P.speed); };
+    P.t = setTimeout(tick, Math.min(900, P.speed)); pb.textContent = "❚❚ Pause";
+  };
+  P.load = (fr, auto, speed) => { P.stop(); P.frames = fr; P.speed = speed || 1300; P.i = 0; P.draw(); if (auto) P.play(); };
+  root.querySelector(".ctrl").addEventListener("click", e => {
+    const a = e.target.dataset && e.target.dataset.act; if (!a) return;
+    if (a === "play") return P.play();
+    P.stop();
+    if (a === "step" && P.i < P.frames.length - 1) P.i++;
+    if (a === "end") P.i = P.frames.length - 1;
+    if (a === "reset") P.i = 0;
+    P.draw();
+  });
+  PLAYERS.push(P);
+  return P;
+}
+function presets(barId, player, list){
+  const btns = [];
+  list.forEach(p => {
+    const b = document.createElement("button"); b.className = "op pre"; b.textContent = p.name;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); player.load(p.frames(), true, p.speed); });
+    $("#" + barId).appendChild(b); btns.push(b);
+  });
+  btns[0].classList.add("active"); player.load(list[0].frames(), false, list[0].speed);
+}
+const fr = (html, note) => ({ html, note });
+
+/* =====================================================================
+   TAB 1 — trace and determinant
+   ===================================================================== */
+function cplane(vals, n, lim){
+  lim = lim || 6;
+  const P = Plot(440, 260, -lim*0.3, lim, -lim*0.45, lim*0.45, 26).axes("real part", "imaginary part");
+  for (let k = Math.ceil(-lim*0.3); k <= lim; k++) if (k !== 0){ P.line([k, -0.06*lim], [k, 0.06*lim], "#9AA3AD", 1); P.text([k, 0], String(k).replace("-", "−"), 'text-anchor="middle" fill="#5B6572"', 0, 16); }
+  vals.forEach((z, i) => { P.dot([z.re, z.im], 7, "var(--c1)"); P.text([z.re, z.im], "λ" + "₁₂₃₄"[i] + " = " + cstr(z, 4), 'fill="#0F8B8D"', 9, i % 2 ? 16 : -9); });
+  if (n){ const m = vals.reduce((s, z) => s + z.re, 0) / n; P.add(`<rect x="${(P.sx(m) - 6).toFixed(1)}" y="${(P.sy(0) - 6).toFixed(1)}" width="12" height="12" fill="#D9A62E" transform="rotate(45 ${P.sx(m).toFixed(1)} ${P.sy(0).toFixed(1)})"/>`); P.text([m, 0], "trace/n = " + F(m, 4), 'fill="#9A6B0B"', -40, -14); }
+  return P.svg("eigenvalues in the complex plane");
+}
+function traceFrames2(A, label, lim){
+  const e = eig2(A), [l1, l2] = e.vals;
+  const sum = { re: l1.re + l2.re, im: l1.im + l2.im };
+  const prod = { re: l1.re*l2.re - l1.im*l2.im, im: l1.re*l2.im + l1.im*l2.re };
+  const a = A[0][0], b = A[0][1], c = A[1][0], d = A[1][1];
+  const head = `<h3>${label}</h3>` + eqrow("A =", mat(A, { diag: true }));
+  const out = [];
+  out.push(fr(two(cplane([], 0, lim), head + stat("trace = sum of the diagonal", `${F(a)} + ${F(d)} = <b>${F(e.t)}</b>`) + stat("determinant = ad − bc", `${F(a)}·${F(d)} − ${F(b)}·${F(c)} = <b>${F(e.d)}</b>`)), `Trace ${F(e.t)} (diagonal sum) and determinant ${F(e.d)}, read straight off the entries.`));
+  const poly = `λ² − (${F(a)} + ${F(d)})·λ + (${F(a)}·${F(d)} − ${F(b)}·${F(c)}) = <b>λ² ${e.t >= 0 ? "−" : "+"} ${F(Math.abs(e.t))}λ ${e.d >= 0 ? "+" : "−"} ${F(Math.abs(e.d))}</b>`;
+  const s2 = head + stat("characteristic polynomial det(A − λI)", poly);
+  out.push(fr(two(cplane([], 0, lim), s2), `det(A − λI) = λ² − ${F(e.t)}λ + ${F(e.d)}: the trace and determinant are already its coefficients.`));
+  const disc = `discriminant = ${F(e.t)}² − 4·${F(e.d)} = <b>${F(e.disc)}</b>` + (e.disc < 0 ? ` <span class="bad">(negative: complex pair)</span>` : "");
+  const s3 = s2 + stat("roots by the quadratic formula", disc + `<br>λ₁ = <b>${cstr(l1)}</b>, λ₂ = <b>${cstr(l2)}</b>`);
+  out.push(fr(two(cplane(e.vals, 0, lim), s3), `Roots: λ = ${cstr(l1)} and ${cstr(l2)}.`));
+  const s4 = s3 + stat("sum of eigenvalues", `${cstr(l1)} + ${cstr(l2)} = <b>${cstr(sum)}</b> = trace <span class="ok">✓</span>`);
+  out.push(fr(two(cplane(e.vals, 2, lim), s4), `Sum ${cstr(sum)} equals the trace ${F(e.t)}. The diamond (their average) sits at trace/2.`));
+  const s5 = s4 + stat("product of eigenvalues", `(${cstr(l1)})·(${cstr(l2)}) = <b>${cstr(prod)}</b> = det <span class="ok">✓</span>`);
+  out.push(fr(two(cplane(e.vals, 2, lim), s5 + vd("ok", "Sum = trace, product = determinant.")), `Product ${cstr(prod)} equals the determinant ${F(e.d)}.`));
+  return out;
+}
+function charpoly3(T){ const c1 = trace(T); let c2 = 0; for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) c2 += T[i][i]*T[j][j] - T[i][j]*T[j][i]; return [c1, c2, luDet(T)]; }
+function traceFrames3(){
+  const T = [[2,1,0],[1,3,1],[0,1,4]], [c1, c2, c3] = charpoly3(T), w = jacobiEig(T);
+  const vals = w.map(x => ({ re: x, im: 0 }));
+  const head = `<h3>A symmetric 3×3 matrix</h3>` + eqrow("A =", mat(T, { diag: true }));
+  const s1 = head + stat("trace", `2 + 3 + 4 = <b>${F(c1)}</b>`) + stat("determinant (by elimination)", `<b>${F(c3)}</b>`);
+  const s2 = s1 + stat("characteristic polynomial", `λ³ − ${F(c1)}λ² + ${F(c2)}λ − ${F(c3)}<br><span class="k">the λ² coefficient is the trace, the constant is the determinant (the middle one, ${F(c2)}, is the sum of the three 2×2 diagonal minors)</span>`);
+  const s3 = s2 + stat("eigenvalues (Jacobi rotations)", w.map((x, i) => `λ${"₁₂₃"[i]} = <b>${F(x)}</b>`).join(", ") + `<br>exactly 3 − √3 = ${F(3 - Math.sqrt(3))}, 3, 3 + √3 = ${F(3 + Math.sqrt(3))}`);
+  const s4 = s3 + stat("sum and product", `${w.map(x => F(x)).join(" + ")} = <b>${F(w[0] + w[1] + w[2], 10)}</b> = trace <span class="ok">✓</span><br>${w.map(x => F(x)).join(" × ")} = <b>${F(w[0]*w[1]*w[2], 10)}</b> = det <span class="ok">✓</span>`);
+  return [
+    fr(two(cplane([], 0), s1), "Trace 9, determinant 18."),
+    fr(two(cplane([], 0), s2), `Characteristic polynomial λ³ − ${F(c1)}λ² + ${F(c2)}λ − ${F(c3)}.`),
+    fr(two(cplane(vals, 0), s3), "Its roots are 3 − √3, 3 and 3 + √3."),
+    fr(two(cplane(vals, 3), s4 + vd("ok", "Sum 9 = trace, product 18 = det.")), "Sum 9 = trace, product 18 = determinant. The diamond sits at 9/3 = 3."),
+  ];
+}
+function pcaFrames(){
+  const C = [[2.25, 1.9], [1.9, 2.56]], w = jacobiEig(C), tot = trace(C);
+  const r1 = w[1]/tot, r2 = w[0]/tot;
+  const bars = `<div style="margin-top:8px">${[[w[1], r1, "var(--c1)", "PC1"], [w[0], r2, "var(--c2)", "PC2"]].map(([l, r, c, n]) => `<div style="margin:4px 0;font-family:IBM Plex Mono,monospace;font-size:12.5px">${n} <span class="bar" style="width:${(r*220).toFixed(0)}px;background:${c}"></span> ${F(l)} (${(100*r).toFixed(1)}%)</div>`).join("")}</div>`;
+  const head = `<h3>PCA: a covariance matrix</h3>` + eqrow("C =", mat(C, { diag: true }));
+  const s1 = head + stat("trace = total variance", `2.25 + 2.56 = <b>${F(tot)}</b>`);
+  const s2 = s1 + stat("eigenvalues = variance along each principal direction", `<b>${F(w[1])}</b> and <b>${F(w[0])}</b>, summing to <b>${F(w[0] + w[1])}</b> <span class="ok">✓</span>`);
+  const s3 = s2 + stat("explained variance ratio", `PC1: ${F(w[1])} / ${F(tot)} = <b>${(100*r1).toFixed(1)}%</b>` + bars);
+  const s4 = s3 + stat("det = product, log det = sum of logs", `${F(w[1])} × ${F(w[0])} = <b>${F(w[0]*w[1])}</b> = det(C) = ${F(det2(C))}<br>log det = ${F(Math.log(w[1]))} + (${F(Math.log(w[0]))}) = <b>${F(Math.log(w[0]) + Math.log(w[1]))}</b>`);
+  const vals = w.map(x => ({ re: x, im: 0 }));
+  return [
+    fr(two(cplane([], 0), s1), "The diagonal holds each variable's variance; their sum, 4.81, is the total variance."),
+    fr(two(cplane(vals.slice().reverse(), 2), s2), "Eigenvalues 4.3113 and 0.4987 also sum to 4.81: PCA redistributes the total, it never changes it."),
+    fr(two(cplane(vals.slice().reverse(), 2), s3), "PC1 explains 4.3113 / 4.81 = 89.6% of the variance."),
+    fr(two(cplane(vals.slice().reverse(), 2), s4), "Product 2.15 = det(C); log det is the sum of the logs, the safe way to compute it."),
+  ];
+}
+function hutchFrames(){
+  const T = [[2,1,0],[1,3,1],[0,1,4]], R = rng(7), checks = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+  let s = 0, n = 0; const pts = [], out = [];
+  for (const cN of checks){
+    while (n < cN){ const z = [0,0,0].map(() => R.u() < 0.5 ? -1 : 1); s += dot(z, mv(T, z)); n++; pts.push([Math.log10(n), s/n]); }
+    const P = Plot(460, 280, 0, 4, 4, 14, 34).frame();
+    P.line([0, 9], [4, 9], "var(--c2)", 2, 'stroke-dasharray="6 4"'); P.text([4, 9], "true trace 9", 'fill="#9A6B0B" text-anchor="end"', -4, -6);
+    for (let k = 0; k <= 4; k++) P.text([k, 4], I(Math.pow(10, k)), 'text-anchor="middle" fill="#5B6572"', 0, 16);
+    for (let y = 4; y <= 14; y += 2) P.text([0, y], String(y), 'text-anchor="end" fill="#5B6572"', -4, 4);
+    P.poly(pts, "var(--c1)", 2); P.dot(pts[pts.length - 1], 5, "var(--c1)");
+    P.add(`<text x="230" y="276" font-size="11" fill="#5B6572" text-anchor="middle">number of random ±1 vectors (log scale)</text>`);
+    const est = s/n;
+    out.push(fr(two(P.svg("Hutchinson estimate"), `<h3>Hutchinson's trace estimator</h3>` + eqrow("A =", mat(T, { diag: true })) + stat("average of zᵀAz over random z with ±1 entries", `after <b>${I(n)}</b> vectors: <b>${F(est, 3)}</b><br>true trace: 9 (error ${F(est - 9, 3)})`) + (cN === 10000 ? vd("ok", "It homes in on 9 using only multiplications by A.") : "")),
+      `${I(n)} random vectors: estimate ${F(est, 3)}.`));
+  }
+  out[out.length - 1].note += " (NumPy's own seeded run in the file gave 11.4, 9.36 and 8.98 at 10, 100 and 10,000; this page's draws differ, the convergence doesn't.)";
+  return out;
+}
+function sameTDFrames(){
+  const A = [[3,0],[0,3]], B = [[3,1],[0,3]];
+  const card = (M, nm) => { const e = eig2(M); return stat(nm, `${mat(M, { diag: true, d: 0 })}<br>trace <b>${F(e.t)}</b>, det <b>${F(e.d)}</b>, eigenvalues <b>${cstr(e.vals[0])}, ${cstr(e.vals[1])}</b>`); };
+  const pic = (show) => {
+    const P = Plot(440, 300, -0.5, 4.5, -0.5, 3.5, 26).axes();
+    P.arrow([0,0], [0,1], "#9AA3AD", 2); P.text([0,1], "(0,1)", 'fill="#5B6572"', 6, 0);
+    if (show >= 1){ P.arrow([0,0], mv(A, [0,1]), "var(--c1)"); P.text(mv(A, [0,1]), "3I·(0,1) = (0, 3)", 'fill="#0F8B8D"', 6, 4); }
+    if (show >= 2){ P.arrow([0,0], mv(B, [0,1]), "var(--bad)"); P.text(mv(B, [0,1]), "[[3,1],[0,3]]·(0,1) = (1, 3)", 'fill="#C2413B"', 6, 14); }
+    return P.svg("two matrices acting on (0,1)");
+  };
+  return [
+    fr(two(pic(0), `<h3>Trace 6 and determinant 9</h3>` + stat("characteristic polynomial", `λ² − 6λ + 9 = (λ − 3)²: both eigenvalues are <b>3</b>`)), "Trace 6 and det 9 force λ² − 6λ + 9 = (λ − 3)², so both eigenvalues are 3."),
+    fr(two(pic(1), card(A, "candidate 1: 3I")), "3I has trace 6, det 9: it scales every arrow by 3."),
+    fr(two(pic(2), card(A, "candidate 1: 3I") + card(B, "candidate 2: a Jordan block") + vd("bad", "Same trace, det and eigenvalues; different matrices.")), "[[3,1],[0,3]] has the same trace, det and eigenvalues, but it shears (0,1) to (1,3). Part 4 explains the gap."),
+  ];
+}
+presets("pre-trace", Player("pl-trace"), [
+  { name: "2×2  [[4,1],[2,3]]", frames: () => traceFrames2([[4,1],[2,3]], "The running example") },
+  { name: "3×3 tridiagonal", frames: traceFrames3 },
+  { name: "90° rotation (complex pair)", frames: () => traceFrames2([[0,-1],[1,0]], "The 90° rotation [[0,−1],[1,0]]", 3) },
+  { name: "PCA: trace = total variance", frames: pcaFrames },
+  { name: "Hutchinson estimator → 9", frames: hutchFrames, speed: 800 },
+  { name: "Feynman check: trace 6, det 9", frames: sameTDFrames },
+]);
+
+/* =====================================================================
+   TAB 2 — norms
+   ===================================================================== */
+const NA = [[3,0],[4,5]];
+function circEllipse(A, th, upto, opt){
+  opt = opt || {};
+  const W = 640, H = 320;
+  const lim = opt.lim || 7.5, L = Plot(320, 320, -1.5, 1.5, -1.5, 1.5, 20), R = Plot(320, 320, -lim, lim, -lim, lim, 20);
+  L.axes(); R.axes();
+  const circ = [], ell = [];
+  for (let k = 0; k <= 360; k += 3){ const t = k*Math.PI/180; circ.push([Math.cos(t), Math.sin(t)]); ell.push(mv(A, [Math.cos(t), Math.sin(t)])); }
+  L.poly(circ, "#C4CAD0", 1.5); R.poly(ell, "#E1E5E8", 1.5);
+  if (upto !== undefined){ const tr1 = [], tr2 = []; for (let k = 0; k <= upto + 1e-9; k += 1){ const t = k*Math.PI/180; tr1.push(mv(A, [Math.cos(t), Math.sin(t)])); tr2.push(mv(A, [-Math.cos(t), -Math.sin(t)])); } if (tr1.length > 1){ R.poly(tr1, "var(--c1)", 2.5); R.poly(tr2, "var(--c1)", 2.5); } }
+  (opt.marks || []).forEach(m => { const x = [Math.cos(m.t), Math.sin(m.t)], y = mv(A, x); L.arrow([0,0], x, m.c, 2); R.arrow([0,0], y, m.c, 2); R.text(y, m.lab, `fill="${m.c}"`, 6, -4); });
+  if (th !== undefined){ const x = [Math.cos(th), Math.sin(th)], y = mv(A, x); L.arrow([0,0], x, "var(--accent)", 3); R.arrow([0,0], y, "var(--accent)", 3); L.text(x, (th*180/Math.PI).toFixed(0) + "°", 'fill="#463A73"', 6, -4); }
+  L.add(`<text x="160" y="314" font-size="11" fill="#5B6572" text-anchor="middle">input: unit circle</text>`);
+  R.add(`<text x="160" y="314" font-size="11" fill="#5B6572" text-anchor="middle">output: A × circle (an ellipse)</text>`);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="unit circle and its image"><g>${L.parts.join("")}</g><g transform="translate(320,0)">${R.parts.join("")}</g><line x1="320" y1="10" x2="320" y2="310" stroke="#D9E0DE"/></svg>`;
+}
+function fineSweep(A){ let mx = -1, mn = 1e9, tmx = 0, tmn = 0; for (let i = 0; i <= 1800; i++){ const t = i/1800*Math.PI, s = nrm(mv(A, [Math.cos(t), Math.sin(t)])); if (s > mx){ mx = s; tmx = t; } if (s < mn){ mn = s; tmn = t; } } return { mx, mn, tmx, tmn }; }
+function sweepFrames(){
+  const out = []; let rec = 0, recT = 0;
+  for (let deg = 0; deg <= 180; deg += 5){
+    const t = deg*Math.PI/180, s = nrm(mv(NA, [Math.cos(t), Math.sin(t)]));
+    if (s > rec){ rec = s; recT = deg; }
+    out.push(fr(circEllipse(NA, t, deg) + `<div class="layout" style="margin-top:10px"><div class="plot">${stat("input angle", `<b>${deg}°</b>, ‖x‖ = 1`)}</div><div class="side">${stat("stretch ‖Ax‖", `<b>${F(s)}</b>; record so far <b>${F(rec)}</b> at ${recT}°`)}</div></div>`, `${deg}°: ‖Ax‖ = ${F(s)}`));
+  }
+  const fs = fineSweep(NA), sv = svd2(NA), ev = eig2(NA);
+  out.push(fr(circEllipse(NA, undefined, 180, { marks: [{ t: fs.tmx, c: "var(--bad)", lab: "max " + F(fs.mx) }, { t: fs.tmn, c: "var(--c2)", lab: "min " + F(fs.mn) }] }) +
+    `<div class="layout" style="margin-top:10px"><div class="plot">${stat("sweep of 1,801 directions", `longest output <b>${F(fs.mx)}</b> at ${F(fs.tmx*180/Math.PI, 1)}°<br>shortest output <b>${F(fs.mn)}</b> at ${F(fs.tmn*180/Math.PI, 1)}°`)}</div><div class="side">${stat("singular values (√ eigenvalues of AᵀA = [[25,20],[20,25]])", `σ₁ = √45 = <b>${F(sv[0])}</b>, σ₂ = √5 = <b>${F(sv[1])}</b><br>eigenvalues of A itself: ${cstr(ev.vals[0])} and ${cstr(ev.vals[1])}, both smaller than 6.7082`)}</div></div>` + vd("ok", "‖A‖₂ = σ_max = 6.7082, more than either eigenvalue."),
+    `Spectral norm ‖A‖₂ = σ_max = ${F(sv[0])}, reached at 45°; the minimum ${F(sv[1])} at 135°. A's eigenvalues are only 5 and 3.`));
+  return out;
+}
+function frobFrames(){
+  const ent = NA.flat(), sq = ent.reduce((s, x) => s + x*x, 0), AtA = mm(tr(NA), NA), sv = svd2(NA), A2 = mm(NA, NA), s2 = svd2(A2)[0];
+  const head = `<h3>A = [[3, 0], [4, 5]] as a pile of numbers, and as a machine</h3>` + eqrow("A =", mat(NA, { d: 0 }));
+  const S1 = stat("Frobenius: every entry squared, summed, square-rooted", `3² + 0² + 4² + 5² = ${F(sq)}; √${F(sq)} = <b>${F(Math.sqrt(sq))}</b>`);
+  const S2 = stat("same number via the trace", `AᵀA = ${mat(AtA, { diag: true, d: 0 })} → tr(AᵀA) = <b>${F(trace(AtA))}</b>`);
+  const S3 = stat("same number via singular values", `σ₁² + σ₂² = ${F(sv[0]*sv[0])} + ${F(sv[1]*sv[1])} = <b>${F(sv[0]*sv[0] + sv[1]*sv[1])}</b>`);
+  const S4 = stat("‖A‖₂ ≤ ‖A‖_F ≤ √rank · ‖A‖₂", `<b>${F(sv[0])}</b> ≤ <b>${F(Math.sqrt(sq))}</b> ≤ √2 × ${F(sv[0])} = <b>${F(Math.SQRT2*sv[0])}</b> <span class="ok">✓</span>`);
+  const S5 = stat("operator norms chain: ‖A·A‖₂ ≤ ‖A‖₂²", `‖A²‖₂ = <b>${F(s2, 2)}</b> ≤ ${F(sv[0])}² = <b>${F(sv[0]*sv[0], 2)}</b> <span class="ok">✓</span>`);
+  const bars = (k) => { const P = Plot(440, 200, 0, 10, 0, 4, 24); const rows = [["‖A‖₂ = σ_max", sv[0], "var(--c1)"], ["‖A‖_F", Math.sqrt(sq), "var(--c3)"], ["√2·‖A‖₂", Math.SQRT2*sv[0], "var(--c2)"]].slice(0, k); rows.forEach(([n, v, c], i) => { const y = 3.2 - i*1.1; P.add(`<rect x="${P.sx(0)}" y="${P.sy(y + 0.35)}" width="${(P.sx(v) - P.sx(0)).toFixed(1)}" height="${(P.sy(y - 0.35) - P.sy(y + 0.35)).toFixed(1)}" fill="${c}" rx="4"/>`); P.text([v, y], `${n} = ${F(v)}`, "", 6, 4); }); for (let x = 0; x <= 10; x += 2) P.text([x, 0], String(x), 'text-anchor="middle" fill="#5B6572"', 0, 14); return P.svg("norm comparison"); };
+  return [
+    fr(two(bars(0), head + S1), "Frobenius norm: √50 = 7.0711."),
+    fr(two(bars(0), head + S1 + S2), "The diagonal of AᵀA collects each column's squared length, so tr(AᵀA) = 50 too."),
+    fr(two(bars(2), head + S1 + S2 + S3), "And σ₁² + σ₂² = 45 + 5 = 50: Frobenius is the root-sum-square of the singular values."),
+    fr(two(bars(3), head + S1 + S2 + S3 + S4), "6.7082 ≤ 7.0711 ≤ 9.4868."),
+    fr(two(bars(3), head + S1 + S2 + S3 + S4 + S5), "Running A twice stretches by at most 6.7082² = 45; actually 41.23."),
+  ];
+}
+function powerFrames(){
+  const AtA = mm(tr(NA), NA), sv = svd2(NA); let x = [1, 0]; const out = [], rows = [];
+  const tbl = () => `<table class="grid"><tr><th>step</th><th>x (unit)</th><th>‖Ax‖ estimate</th></tr>${rows.map((r, i) => `<tr class="${i === rows.length - 1 ? "hot" : ""}"><td class="num">${r[0]}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td></tr>`).join("")}</table>`;
+  rows.push([0, vs(x), F(nrm(mv(NA, x)), 12)]);
+  out.push(fr(circEllipse(NA, Math.atan2(x[1], x[0])) + tbl(), "Start with x = (1, 0)."));
+  for (let k = 1; k <= 8; k++){
+    const y = mv(AtA, x), n = nrm(y); x = y.map(v => v/n);
+    rows.push([k, vs(x, 6), F(nrm(mv(NA, x)), 12)]);
+    out.push(fr(circEllipse(NA, Math.atan2(x[1], x[0])) + tbl(), `Step ${k}: multiply by AᵀA, rescale; ‖Ax‖ = ${F(nrm(mv(NA, x)), 12)}`));
+  }
+  const W = NA.map(r => r.map(v => v/sv[0])), sw = svd2(W);
+  out.push(fr(circEllipse(NA, Math.atan2(x[1], x[0])) + tbl() + stat("spectral normalization (as in GANs): W = A / σ_max", `${mat(W)} has singular values <b>${F(sw[0])}</b> and <b>${F(sw[1])}</b>: it can now stretch nothing by more than 1.`),
+    `Converged to σ_max = ${F(sv[0], 12)} along 45°. Dividing A by it gives singular values 1 and 0.3333.`));
+  return out;
+}
+function condFrames(){
+  const K = [[1,1],[1,1.0001]], sv = svd2(K), kap = sv[0]/sv[1];
+  const b1 = [2, 2.0001], b2 = [2, 2.0002], x1 = solve(K, b1), x2 = solve(K, b2);
+  const rb = nrm(add(b2, b1, -1))/nrm(b1), rx = nrm(add(x2, x1, -1))/nrm(x1);
+  const pic = (stage) => {
+    const P = Plot(460, 340, -1, 3, -0.5, 3, 30).axes("x₁", "x₂");
+    P.line([-1, 3], [3, -1], "var(--c1)", 2.5); P.text([2.4, -0.4], "x₁ + x₂ = 2", 'fill="#0F8B8D"', 0, 0);
+    const l2 = (b2v, c, dash) => P.line([-1, (b2v + 1)/1.0001], [3, (b2v - 3)/1.0001], c, 2, dash);
+    l2(b1[1], "var(--c3)", 'stroke-dasharray="7 4"'); P.text([-0.9, 2.95], "x₁ + 1.0001x₂ = 2.0001 (dashed)", 'fill="#5B4B95"', 0, 12);
+    if (stage >= 1) { P.dot(x1, 7, "var(--c3)"); P.text(x1, "x = " + vs(x1, 4), 'fill="#5B4B95"', 10, -6); }
+    if (stage >= 2) { l2(b2[1], "var(--bad)", 'stroke-dasharray="2 3"'); P.dot(x2, 7, "var(--bad)"); P.text(x2, "nudged: x = " + vs(x2, 4), 'fill="#C2413B"', 10, -6); }
+    return P.svg("two nearly parallel lines");
+  };
+  const head = `<h3>A nearly singular system</h3>` + eqrow("K =", mat(K)) + stat("singular values and κ", `σ = ${F(sv[0], 5)}, ${F(sv[1], 5)} → κ = <b>${I(Math.round(kap))}</b>`);
+  return [
+    fr(two(pic(0), head), `κ = ${I(Math.round(kap))}: the two rows are almost the same line.`),
+    fr(two(pic(1), head + stat("solve Kx = (2, 2.0001)", `x = <b>${vs(x1, 4)}</b>`)), "Solve: the lines cross at (1, 1)."),
+    fr(two(pic(2), head + stat("solve Kx = (2, 2.0001)", `x = <b>${vs(x1, 4)}</b>`) + stat("nudge b₂ by 0.0001: solve Kx = (2, 2.0002)", `x = <b>${vs(x2, 4)}</b>`)), "Nudge b by 0.0001: the crossing point jumps to (0, 2)."),
+    fr(two(pic(2), head + stat("relative changes", `in b: <b>${E(rb, 2)}</b> (${F(rb*100, 4)}%)<br>in x: <b>${F(rx, 4)}</b> (${F(rx*100, 1)}%)<br>amplification: <b>${I(Math.round(rx/rb))}×</b> ≤ κ = ${I(Math.round(kap))}<br>digits lost ≈ log₁₀ κ = <b>${F(Math.log10(kap), 1)}</b>`) + vd("bad", "A 0.0035% wobble in b moved x by 100%.")), `Amplification ${I(Math.round(rx/rb))}×, under the worst case κ = ${I(Math.round(kap))}.`),
+  ];
+}
+function sameFrobFrames(){
+  const D = [[10/Math.SQRT2, 0], [0, 10/Math.SQRT2]], C = [[10, 0], [0, 0]];
+  const info = (M, nm) => { const sv = svd2(M), fro = Math.sqrt(M.flat().reduce((s, x) => s + x*x, 0)); return stat(nm, `${mat(M, { d: 2 })}<br>‖·‖_F = <b>${F(fro)}</b>, ‖·‖₂ = <b>${F(sv[0])}</b>, σ_min = ${F(sv[1])}, κ = <b>${sv[1] < 1e-12 ? "∞ (singular)" : F(sv[0]/sv[1])}</b>`); };
+  return [
+    fr(circEllipse(D, undefined, 180) + info(D, "diagonal 7.07 · I"), "[[7.07,0],[0,7.07]]: Frobenius 10, spectral 7.07, κ = 1. The circle just grows."),
+    fr(circEllipse(C, undefined, 180, { lim: 11 }) + info(D, "diagonal 7.07 · I") + info(C, "a single 10 in the corner") + vd("bad", "Same Frobenius norm; one is perfectly safe, the other is singular."), "One 10 in the corner: Frobenius 10 too, but spectral 10 and κ infinite: the circle collapses to a line."),
+  ];
+}
+presets("pre-norm", Player("pl-norm"), [
+  { name: "Sweep the unit circle", frames: sweepFrames, speed: 350 },
+  { name: "Frobenius vs. spectral", frames: frobFrames },
+  { name: "Power iteration → σ_max", frames: powerFrames, speed: 1000 },
+  { name: "Condition number: the nudge", frames: condFrames },
+  { name: "Feynman check: same Frobenius", frames: sameFrobFrames },
+]);
+
+/* =====================================================================
+   TAB 3 — Cauchy–Schwarz
+   ===================================================================== */
+const U4 = [1,2,3,4], V4 = [4,3,2,1];
+function parab(curves, tmark, opt){
+  opt = opt || {};
+  const P = Plot(460, 300, opt.tmin === undefined ? -0.8 : opt.tmin, opt.tmax === undefined ? 1.8 : opt.tmax, -6, 80, 34).frame();
+  P.line([opt.tmin === undefined ? -0.8 : opt.tmin, 0], [opt.tmax === undefined ? 1.8 : opt.tmax, 0], "var(--bad)", 1.5, 'stroke-dasharray="5 4"'); P.text([opt.tmin === undefined ? -0.8 : opt.tmin, 0], "zero", 'fill="#C2413B"', 4, -5);
+  for (let y = 0; y <= 80; y += 20) P.text([opt.tmin === undefined ? -0.8 : opt.tmin, y], String(y), 'text-anchor="end" fill="#5B6572"', -4, 4);
+  for (let t = -0.5; t <= 1.6; t += 0.5) P.text([t, -6], String(t).replace("-", "−"), 'text-anchor="middle" fill="#5B6572"', 0, 14);
+  curves.forEach(c => { const pts = []; for (let t = (opt.tmin === undefined ? -0.8 : opt.tmin); t <= (opt.tmax === undefined ? 1.8 : opt.tmax) + 1e-9; t += 0.01){ const y = c.f(t); if (y <= 82) pts.push([t, y]); else if (pts.length) { pts.push([t, 82]); break; } } P.poly(pts, c.c, 2.5); if (c.lab) P.text(c.labAt, c.lab, `fill="${c.c}"`, 4, -6); });
+  if (tmark) { P.line([tmark.t, 0], [tmark.t, tmark.y], tmark.c || "var(--accent)", 1.5, 'stroke-dasharray="3 3"'); P.dot([tmark.t, tmark.y], 6, tmark.c || "var(--accent)"); P.text([tmark.t, tmark.y], tmark.lab, 'fill="#463A73"', 8, -8); }
+  P.add(`<text x="230" y="296" font-size="11" fill="#5B6572" text-anchor="middle">t</text>`);
+  return P.svg("parabola f(t)");
+}
+const fCS = (u, v) => t => { const r = add(u, v, -t); return dot(r, r); };
+function parabolaFrames(){
+  const f = fCS(U4, V4), uv = dot(U4, V4), uu = dot(U4, U4), vv = dot(V4, V4), ts = uv/vv, out = [];
+  const head = `<h3>u = (1, 2, 3, 4), v = (4, 3, 2, 1)</h3>` + stat("f(t) = ‖u − t·v‖² = ‖v‖²t² − 2(u·v)t + ‖u‖²", `= <b>${F(vv)}t² − ${F(2*uv)}t + ${F(uu)}</b>`);
+  for (let t = -0.5; t <= 1.5 + 1e-9; t += 0.125){
+    const r = add(U4, V4, -t);
+    out.push(fr(two(parab([{ f, c: "var(--c1)" }], { t, y: f(t), lab: `f(${F(t, 3)}) = ${F(f(t), 3)}` }), head + stat(`u − t·v at t = ${F(t, 3)}`, `${vs(r, 3)}<br>squared length <b>${F(f(t), 3)}</b> ≥ 0`)), `t = ${F(t, 3)}: ‖u − t·v‖² = ${F(f(t), 3)}`));
+  }
+  const r = add(U4, V4, -ts), disc = 4*uv*uv - 4*uu*vv;
+  out.push(fr(two(parab([{ f, c: "var(--c1)" }], { t: ts, y: f(ts), lab: `lowest: f(${F(ts)}) = ${F(f(ts), 3)}` }), head +
+    stat("lowest point t* = (u·v)/‖v‖²", `t* = ${F(uv)}/${F(vv)} = <b>${F(ts)}</b><br>leftover u − t*·v = ${vs(r, 3)}, length² <b>${F(f(ts), 3)}</b> = ${F(uu)} − ${F(uv)}²/${F(vv)}<br>leftover · v = <b>${F(dot(r, V4), 10)}</b> (perpendicular)`) +
+    stat("never below zero ⇒ at most one root ⇒ discriminant ≤ 0", `4(u·v)² − 4‖u‖²‖v‖² = ${F(4*uv*uv)} − ${F(4*uu*vv)} = <b>${F(disc)}</b> ≤ 0<br>⇒ (u·v)² ≤ ‖u‖²‖v‖², i.e. |u·v| ≤ ‖u‖‖v‖`) + vd("ok", "That's Cauchy–Schwarz, using nothing but dot-product rules.")),
+    `The lowest point is the projection t* = 2/3, leaving 16.667 ≥ 0. Discriminant −2000 < 0: Cauchy–Schwarz.`));
+  return out;
+}
+function fourDFrames(){
+  const terms = U4.map((x, i) => x*V4[i]), uv = dot(U4, V4), nu = nrm(U4), nv = nrm(V4), c = uv/(nu*nv), s = add(U4, V4);
+  const head = `<h3>Four dimensions, no picture needed</h3>` + eqrow("u =", vs(U4), "&nbsp; v =", vs(V4));
+  const S = [
+    stat("u·v term by term", `${terms.join(" + ")} = <b>${F(uv)}</b>`),
+    stat("lengths", `‖u‖ = √${F(dot(U4, U4))} = ${F(nu)}, ‖v‖ = √${F(dot(V4, V4))} = ${F(nv)}<br>‖u‖·‖v‖ = <b>${F(nu*nv)}</b>`),
+    stat("Cauchy–Schwarz", `|u·v| = ${F(uv)} ≤ ${F(nu*nv)} <span class="ok">✓</span>`),
+    stat("so this is a legal cosine", `cos θ = ${F(uv)}/${F(nu*nv)} = <b>${F(c)}</b> (= 2/3) → θ = <b>${F(Math.acos(c)*180/Math.PI, 2)}°</b>`),
+    stat("triangle inequality, which Cauchy–Schwarz proves", `‖u + v‖ = ‖${vs(s)}‖ = <b>${F(nrm(s), 3)}</b> ≤ ‖u‖ + ‖v‖ = <b>${F(nu + nv, 3)}</b> <span class="ok">✓</span>`),
+  ];
+  const bars = k => { const P = Plot(440, 180, 0, 34, 0, 3, 24); const rows = [["|u·v|", uv, "var(--c1)"], ["‖u‖‖v‖", nu*nv, "var(--c3)"]]; rows.slice(0, k).forEach(([n, v, col], i) => { const y = 2.2 - i*1.2; P.add(`<rect x="${P.sx(0)}" y="${P.sy(y + 0.4)}" width="${(P.sx(v) - P.sx(0)).toFixed(1)}" height="${(P.sy(y - 0.4) - P.sy(y + 0.4)).toFixed(1)}" fill="${col}" rx="4"/>`); P.text([v, y], `${n} = ${F(v)}`, "", 6, 4); }); return P.svg("dot product vs bound"); };
+  const notes = ["u·v = 4 + 6 + 6 + 4 = 20.", "‖u‖‖v‖ = √30·√30 = 30.", "20 ≤ 30.", "cos θ = 2/3, θ = 48.19°.", "‖u + v‖ = 10 ≤ 10.954."];
+  return S.map((_, k) => fr(two(bars(k === 0 ? 1 : 2), head + S.slice(0, k + 1).join("")), notes[k]));
+}
+function equalityFrames(){
+  const f0 = fCS(U4, V4), w1 = U4.map(x => 3*x), w2 = U4.map(x => -2*x), f1 = fCS(U4, w1), f2 = fCS(U4, w2);
+  const opt = { tmin: -0.8, tmax: 1.8 };
+  const curves = [{ f: f0, c: "#C4CAD0", lab: "v = (4,3,2,1): never touches 0", labAt: [0.9, 23] }];
+  return [
+    fr(two(parab(curves, null, opt), `<h3>When does equality hold?</h3>` + stat("baseline", "u = (1,2,3,4), v = (4,3,2,1): the parabola stays above zero, so |u·v| < ‖u‖‖v‖ strictly")), "A non-parallel pair: the parabola never touches zero."),
+    fr(two(parab(curves.concat([{ f: f1, c: "var(--c1)", lab: "w = 3u", labAt: [0.05, 60] }]), { t: 1/3, y: 0, lab: "touches 0 at t = 1/3" }, opt), `<h3>w = 3u</h3>` + stat("parallel", `u·w = <b>${F(dot(U4, w1))}</b>, ‖u‖‖w‖ = <b>${F(nrm(U4)*nrm(w1))}</b> → equal<br>discriminant = ${F(4*dot(U4, w1)**2 - 4*dot(U4, U4)*dot(w1, w1))}`)), "w = 3u: u·w = 90 = ‖u‖‖w‖. The parabola touches zero at t = 1/3, because u − (1/3)·w = 0."),
+    fr(two(parab(curves.concat([{ f: f1, c: "var(--c1)" }, { f: f2, c: "var(--c3)", lab: "w = −2u", labAt: [-0.75, 70] }]), { t: -0.5, y: 0, lab: "touches 0 at t = −1/2", c: "var(--c3)" }, opt), `<h3>w = −2u</h3>` + stat("anti-parallel", `u·w = <b>${F(dot(U4, w2))}</b>, |u·w| = ${F(Math.abs(dot(U4, w2)))} = ‖u‖‖w‖ = <b>${F(nrm(U4)*nrm(w2))}</b>`) + vd("ok", "Equality exactly when one vector is a multiple of the other.")), "w = −2u: u·w = −60, and |−60| = 60 = ‖u‖‖w‖: equality again, with cosine −1."),
+  ];
+}
+function corrFrames(){
+  const h = [1,2,3,4,5], s = [52,60,61,70,77], mh = h.reduce((a, b) => a + b)/5, ms = s.reduce((a, b) => a + b)/5;
+  const hc = h.map(x => x - mh), sc = s.map(x => x - ms), d = dot(hc, sc), nh = nrm(hc), ns = nrm(sc), rho = d/(nh*ns), t = d/dot(hc, hc), res = add(sc, hc, -t);
+  const pic = (stage) => { const P = Plot(440, 320, -2.6, 2.6, -16, 16, 30).axes("hours − 3", "score − 64"); hc.forEach((x, i) => { P.dot([x, sc[i]], 6, "var(--c1)"); if (stage >= 3){ P.line([x, t*x], [x, sc[i]], "var(--bad)", 2); } }); if (stage >= 2) P.line([-2.6, -2.6*t], [2.6, 2.6*t], "var(--c3)", 2); if (stage >= 2) P.text([1.5, 1.5*t], "best slope 6", 'fill="#5B4B95"', 6, 16); return P.svg("centered scatter"); };
+  const head = `<h3>Five students: correlation is a cosine</h3>` + stat("centered vectors", `hours − 3 = ${vs(hc)}<br>score − 64 = ${vs(sc)}`);
+  const S1 = stat("cosine of the centered vectors", `dot = <b>${F(d)}</b>, lengths ${F(nh)} and ${F(ns)}<br>ρ = ${F(d)} / (${F(nh)} × ${F(ns)}) = <b>${F(rho)}</b>`);
+  const S2 = stat("Cauchy–Schwarz ⇒ |ρ| ≤ 1", `|${F(d)}| ≤ ${F(nh*ns)}, so <b>|ρ| ≤ 1</b>, with ±1 only for an exact straight line`);
+  const S3 = stat("the parabola's lowest point is the regression slope", `t* = ${F(d)} / ${F(dot(hc, hc))} = <b>${F(t)}</b> points per hour<br>residuals ${vs(res)}, squared length <b>${F(dot(res, res))}</b><br>= ‖score − 64‖²(1 − ρ²) = ${F(dot(sc, sc))} × ${F(1 - rho*rho)} = <b>${F(dot(sc, sc)*(1 - rho*rho), 3)}</b>`);
+  return [
+    fr(two(pic(0), head), "Subtract each mean: the data become two vectors in 5 dimensions."),
+    fr(two(pic(1), head + S1), "ρ = 60 / (3.1623 × 19.3391) = 0.9811, the same as np.corrcoef."),
+    fr(two(pic(2), head + S1 + S2), "Cauchy–Schwarz is exactly why a correlation can't leave [−1, 1]."),
+    fr(two(pic(3), head + S1 + S2 + S3 + vd("ok", "Leftover ≥ 0 ⇔ |ρ| ≤ 1.")), "The leftover after the best slope (6) is the residual: 14 = 374 × (1 − ρ²)."),
+  ];
+}
+function randomFrames(){
+  const out = [], rows = [];
+  [2, 10, 100, 1000].forEach(n => {
+    const R = rng(1000 + n), a = Array.from({ length: n }, R.g), b = Array.from({ length: n }, R.g), d = dot(a, b), bound = nrm(a)*nrm(b);
+    rows.push([n, d, bound, d/bound]);
+    const P = Plot(440, 220, -1, 1, 0, rows.length + 0.5, 30).frame(); P.line([0, 0], [0, rows.length + 0.5], "#9AA3AD", 1);
+    P.text([-1, 0], "−1", 'text-anchor="middle" fill="#5B6572"', 0, 14); P.text([1, 0], "+1", 'text-anchor="middle" fill="#5B6572"', 0, 14); P.text([0, 0], "0", 'text-anchor="middle" fill="#5B6572"', 0, 14);
+    rows.forEach((r, i) => { const y = rows.length - i; P.line([0, y], [r[3], y], "var(--c1)", 8); P.text([Math.max(r[3], 0), y], `${r[0]}-D: cos = ${F(r[3], 3)}`, "", 8, 4); });
+    out.push(fr(two(P.svg("cosines"), `<h3>Two random vectors (Gaussian entries, fixed seed)</h3><table class="grid"><tr><th>dims</th><th>u·v</th><th>‖u‖‖v‖</th><th>cosine</th></tr>${rows.map(r => `<tr><td class="num">${I(r[0])}</td><td class="num">${F(r[1], 2)}</td><td class="num">${F(r[2], 2)}</td><td class="num">${F(r[3], 3)}</td></tr>`).join("")}</table>` + (n === 1000 ? stat("why it matters", "Every cosine is inside [−1, 1] (Cauchy–Schwarz), and in high dimensions random directions are almost perpendicular. So a cosine of 0.5 between two embeddings is a strong signal.") : "")),
+      `${I(n)} dimensions: u·v = ${F(d, 2)}, bound ${F(bound, 2)}, cosine ${F(d/bound, 3)}.` + (n === 1000 ? " (NumPy's seeded draw in the file: 59.13 vs 1,000.18, cosine 0.059.)" : "")));
+  });
+  return out;
+}
+presets("pre-cs", Player("pl-cs"), [
+  { name: "The parabola that never goes below zero", frames: parabolaFrames, speed: 500 },
+  { name: "4-D example", frames: fourDFrames },
+  { name: "Equality: parallel vectors", frames: equalityFrames },
+  { name: "Correlation of the five students", frames: corrFrames },
+  { name: "Random vectors, 2-D to 1,000-D", frames: randomFrames },
+]);
+
+/* =====================================================================
+   TAB 4 — similar matrices and Jordan form
+   ===================================================================== */
+const JA = [[4,1],[2,3]];
+function basisPic(A, Pm, opt){
+  opt = opt || {};
+  const P = Plot(440, 380, -2.5, 6.5, -2.5, 5.5, 22);
+  const b1 = [Pm[0][0], Pm[1][0]], b2 = [Pm[0][1], Pm[1][1]];
+  for (let k = -6; k <= 8; k++){ P.line(add([0,0], b2, k).map((x, i) => x - 12*b1[i]), add([0,0], b2, k).map((x, i) => x + 12*b1[i]), "#E1E5E8", 1); P.line(add([0,0], b1, k).map((x, i) => x - 12*b2[i]), add([0,0], b1, k).map((x, i) => x + 12*b2[i]), "#E1E5E8", 1); }
+  P.axes();
+  P.arrow([0,0], b1, "var(--c2)", 3); P.text(b1, opt.n1 || "b₁", 'fill="#9A6B0B"', 4, 14);
+  P.arrow([0,0], b2, "var(--c2)", 3); P.text(b2, opt.n2 || "b₂", 'fill="#9A6B0B"', 4, -4);
+  (opt.arrows || []).forEach(a => { P.arrow(a.from || [0,0], a.to, a.c, a.w || 2.5); if (a.lab) P.text(a.to, a.lab, `fill="${a.c}"`, 6, a.dy || -4); });
+  return `<svg viewBox="0 0 440 380" role="img" aria-label="basis grid"><defs><clipPath id="clipb"><rect x="22" y="22" width="396" height="336"/></clipPath></defs><g clip-path="url(#clipb)">${P.parts.join("")}</g></svg>`;
+}
+function invariants(rows){ return `<table class="grid"><tr><th>matrix</th><th>trace</th><th>det</th><th>eigenvalues</th></tr>${rows.map(([n, M]) => { const e = eig2(M); return `<tr><td>${n}</td><td class="num">${F(e.t)}</td><td class="num">${F(e.d)}</td><td class="num">${cstr(e.vals[0])}, ${cstr(e.vals[1])}</td></tr>`; }).join("")}</table>`; }
+function basisFrames(){
+  const Q = [[1,1],[0,1]], B = mm(mm(inv2(Q), JA), Q), Pe = [[1,1],[1,-2]], D = mm(mm(inv2(Pe), JA), Pe), Q2 = [[2,1],[1,1]], B2 = mm(mm(inv2(Q2), JA), Q2);
+  const e1 = [1,0], Ae1 = mv(JA, e1), c = mv(inv2(Q), e1), Bc = mv(B, c);
+  const head = eqrow("A =", mat(JA, { d: 0 }));
+  return [
+    fr(two(basisPic(JA, eye(2), { n1: "e₁", n2: "e₂", arrows: [{ to: e1, c: "var(--c1)", lab: "(1,0)" }, { to: Ae1, c: "var(--c3)", lab: "A·(1,0) = (4,2)" }] }), `<h3>The transformation, in standard coordinates</h3>` + head + stat("A sends", `(1, 0) → <b>${vs(Ae1)}</b>`)), "In standard coordinates A sends (1,0) to (4,2)."),
+    fr(two(basisPic(JA, Q, { arrows: [{ to: e1, c: "var(--c1)" }, { to: Ae1, c: "var(--c3)" }] }), `<h3>A new basis: b₁ = (1, 0), b₂ = (1, 1)</h3>` + eqrow("P =", mat(Q, { d: 0 })) + stat("the grid", "The faint grid is now drawn along b₁ and b₂. The arrows haven't moved: only the coordinates we describe them with change.")), "Pick the basis b₁ = (1,0), b₂ = (1,1): the columns of P."),
+    fr(two(basisPic(JA, Q, { arrows: [{ to: e1, c: "var(--c1)" }, { to: Ae1, c: "var(--c3)" }] }), `<h3>The same transformation, rewritten</h3>` + eqrow("B = P⁻¹AP =", mat(B)) + stat("read right to left", "P: new coords → standard; A: transform; P⁻¹: standard → new coords")), "B = P⁻¹AP = [[2,0],[2,5]]."),
+    fr(two(basisPic(JA, Q, { arrows: [{ to: e1, c: "var(--c1)", lab: "new coords " + vs(c) }, { to: Ae1, c: "var(--c3)", lab: "B·" + vs(c) + " = " + vs(Bc) }] }), `<h3>Check one vector</h3>` + eqrow("B =", mat(B)) + stat("(1, 0) in new coordinates", `P⁻¹·(1, 0) = <b>${vs(c)}</b>`) + stat("apply B", `B·${vs(c)} = <b>${vs(Bc)}</b>, i.e. ${F(Bc[0])}·b₁ + ${F(Bc[1])}·b₂ = ${vs(mv(Q, Bc))} = A·(1,0) <span class="ok">✓</span>`)), "(1,0) has new coordinates (1,0); B sends them to (2,2), and 2·b₁ + 2·b₂ = (4,2): the same arrow."),
+    fr(two(basisPic(JA, Pe, { n1: "v₁ = (1,1), λ = 5", n2: "v₂ = (1,−2), λ = 2", arrows: [{ to: mv(JA, [1,1]), c: "var(--c3)", lab: "A·v₁ = 5v₁" }, { to: mv(JA, [1,-2]), c: "var(--c1)", lab: "A·v₂ = 2v₂", dy: 14 }] }), `<h3>The eigenvector basis</h3>` + eqrow("P =", mat(Pe, { d: 0 }), "P⁻¹AP =", mat(D)) + stat("diagonalizing", "is just choosing the basis in which A is pure stretching")), "In the eigenvector basis, P⁻¹AP = diag(5, 2)."),
+    fr(two(basisPic(JA, Q2, { arrows: [] }), `<h3>What never changes</h3>` + invariants([["A", JA], ["B (basis (1,0),(1,1))", B], ["B₂ (basis (2,1),(1,1))", B2], ["diag (eigenbasis)", D]]) + vd("ok", "Similar matrices share trace, det and eigenvalues.")), "Every version has trace 7, det 10, eigenvalues 5 and 2."),
+    fr(two(basisPic([[1,1],[0,1]], eye(2), { n1: "e₁", n2: "e₂", arrows: [{ to: [0,1], c: "var(--c1)" }, { to: [1,1], c: "var(--bad)", lab: "shear·(0,1) = (1,1)" }] }), `<h3>The converse fails</h3>` + invariants([["I", eye(2)], ["shear [[1,1],[0,1]]", [[1,1],[0,1]]]]) + stat("why they aren't similar", "P⁻¹IP = I for every P, so the only matrix similar to I is I itself.") + vd("bad", "Same eigenvalues, not similar.")), "I and the shear share trace 2, det 1, eigenvalues 1, 1, but P⁻¹IP = I always: not similar."),
+  ];
+}
+function shearFrames(){
+  const S = [[1,1],[0,1]], out = [], surv = [];
+  for (let deg = 0; deg < 180; deg += 10){
+    const t = deg*Math.PI/180, x = [Math.cos(t), Math.sin(t)], y = mv(S, x), cr = x[0]*y[1] - x[1]*y[0], ok = Math.abs(cr) < 1e-9;
+    if (ok) surv.push(deg);
+    const P = Plot(440, 340, -2.2, 2.2, -1.6, 1.6, 22).axes();
+    const circ = []; for (let k = 0; k <= 360; k += 4){ const a = k*Math.PI/180; circ.push([Math.cos(a), Math.sin(a)]); } P.poly(circ, "#E1E5E8", 1.5);
+    P.line(x.map(v => -3*v), x.map(v => 3*v), ok ? "var(--good)" : "#D9E0DE", 1, 'stroke-dasharray="4 4"');
+    P.arrow([0,0], x, "var(--c1)", 3); P.arrow([0,0], y, ok ? "var(--good)" : "var(--bad)", 2.5); P.text(y, "S·x", `fill="${ok ? "#1E8A5A" : "#C2413B"}"`, 6, -4);
+    out.push(fr(two(P.svg("shear sweep"), `<h3>Which directions does the shear [[1,1],[0,1]] leave alone?</h3>` + stat(`direction ${deg}°`, `x = ${vs(x, 3)} → S·x = ${vs(y, 3)}<br>cross product ${F(cr, 4)}: <b class="${ok ? "ok" : "bad"}">${ok ? "same line, survives" : "turned"}</b>`) + stat("survivors so far", surv.length ? surv.map(d => d + "°").join(", ") : "none")), `${deg}°: ${ok ? "survives" : "turned off its line"}`));
+  }
+  out.push(fr(out[0].html.replace("<h3>", `${vd("bad", "Only 0° survives: one eigenvector line, for a repeated eigenvalue.")}<h3>`) + stat("why", "S − I = [[0,1],[0,0]] has rank " + rank2([[0,1],[0,0]]) + ": (S − I)v = 0 only forces v's second coordinate to 0. NumPy's eig returns the columns (1, 0) and (−1, 0): the same line twice. The matrix is defective."), "Only one survivor, 0°: the shear is defective, so it can't be diagonalized."));
+  return out;
+}
+function jordanFrames(){
+  const M = [[3,1],[-1,1]], e = eig2(M), N = add(M.flat(), [2,0,0,2], -1), Nm = [[N[0], N[1]], [N[2], N[3]]], N2 = mm(Nm, Nm), v2 = [1,0], v1 = mv(Nm, v2), P = [[v1[0], v2[0]], [v1[1], v2[1]]], J = mm(mm(inv2(P), M), P), M10 = mpow(M, 10), J10 = mpow(J, 10);
+  const pic = (stage) => { const G = Plot(440, 320, -1.5, 3.5, -2, 2, 24).axes(); if (stage >= 2){ G.arrow([0,0], v1, "var(--c3)", 3); G.text(v1, "v₁ = (1,−1) eigenvector", 'fill="#5B4B95"', 6, 12); G.arrow([0,0], v2, "var(--c2)", 3); G.text(v2, "v₂ = (1,0)", 'fill="#9A6B0B"', 4, -6); } if (stage >= 3){ const Mv2 = mv(M, v2); G.arrow([0,0], Mv2, "var(--c1)", 2.5); G.text(Mv2, "M·v₂ = 2v₂ + v₁ = (3,−1)", 'fill="#0F8B8D"', -40, 16); G.line([2, 0], Mv2, "#9AA3AD", 1, 'stroke-dasharray="4 3"'); } return G.svg("Jordan chain"); };
+  const h = `<h3>M = [[3, 1], [−1, 1]]</h3>` + eqrow("M =", mat(M, { d: 0 }));
+  const S1 = stat("trace and det", `trace ${F(e.t)}, det ${F(e.d)} → λ² − 4λ + 4 = (λ − 2)²: <b>λ = 2 twice</b>`);
+  const S2 = stat("N = M − 2I", `${mat(Nm, { d: 0 })} rank <b>${rank2(Nm)}</b> → one eigenvector line (defective)<br>N² = ${mat(N2, { d: 0 })}`);
+  const S3 = stat("Jordan chain", "pick v₂ = (1, 0); then v₁ = N·v₂ = <b>" + vs(v1) + "</b> is the eigenvector, and M·v₂ = 2·v₂ + v₁");
+  const S4 = stat("P = [v₁ v₂]", eqrow(mat(P, { d: 0 }), "→ P⁻¹MP =", mat(J, { d: 0 })) + "the eigenvalue on the diagonal, and a 1 for the leak from v₂ into v₁");
+  const S5 = stat("powers: the k·λᵏ⁻¹ term", eqrow("M¹⁰ =", mat(M10, { d: 0 })) + eqrow("J¹⁰ =", mat(J10, { d: 0 })) + `5120 = 10 × 2⁹`);
+  return [
+    fr(two(pic(0), h + S1), "Trace 4, det 4: λ = 2 twice."),
+    fr(two(pic(0), h + S1 + S2), "M − 2I has rank 1 and squares to zero: only one eigenvector line."),
+    fr(two(pic(3), h + S1 + S2 + S3), "The next best vector: (M − 2I)v₂ = v₁, so M·v₂ = 2v₂ + v₁."),
+    fr(two(pic(3), h + S2 + S3 + S4), "In the basis v₁, v₂: P⁻¹MP = [[2,1],[0,2]], the Jordan form."),
+    fr(two(pic(3), h + S4 + S5), "M¹⁰ = [[6144,5120],[−5120,−4096]]; J¹⁰ = [[1024,5120],[0,1024]]: the 5120 is the Jordan term."),
+  ];
+}
+function transientFrames(){
+  const J = [[0.9,1],[0,0.9]], data = []; let Pk = eye(2);
+  for (let k = 0; k <= 80; k++){ data.push({ k, c: Pk[0][1], n: svd2(Pk)[0], d: Math.pow(0.9, k) }); Pk = mm(Pk, J); }
+  let peak = data[0]; data.forEach(r => { if (r.c > peak.c + 1e-12) peak = r; });
+  const ties = data.filter(r => Math.abs(r.c - peak.c) < 1e-9).map(r => r.k);
+  const out = [];
+  for (let K = 0; K <= 80; K += 2){
+    const P = Plot(520, 300, 0, 80, 0, 4.4, 34).frame();
+    for (let y = 0; y <= 4; y++) P.text([0, y], String(y), 'text-anchor="end" fill="#5B6572"', -4, 4);
+    for (let x = 0; x <= 80; x += 20) P.text([x, 0], String(x), 'text-anchor="middle" fill="#5B6572"', 0, 14);
+    const sl = data.slice(0, K + 1);
+    P.poly(sl.map(r => [r.k, r.d]), "var(--c2)", 2); P.poly(sl.map(r => [r.k, r.n]), "var(--c3)", 2, 'stroke-dasharray="5 3"'); P.poly(sl.map(r => [r.k, r.c]), "var(--bad)", 2.5);
+    if (K >= peak.k){ P.dot([peak.k, peak.c], 5, "var(--bad)"); P.text([peak.k, peak.c], `peak ${F(peak.c, 3)} at k = ${ties.join(" and ")}`, 'fill="#C2413B"', 8, -6); }
+    P.add(`<text x="260" y="296" font-size="11" fill="#5B6572" text-anchor="middle">k (number of multiplications)</text>`);
+    const r = data[K];
+    out.push(fr(P.svg("transient growth") + legend([["var(--c2)", "0.9ᵏ (what the eigenvalues promise)"], ["var(--bad)", "corner entry k·0.9ᵏ⁻¹"], ["var(--c3)", "‖Jᵏ‖₂"]]) +
+      `<div class="layout" style="margin-top:8px"><div class="plot">${stat("J = [[0.9, 1], [0, 0.9]], both eigenvalues 0.9", `k = <b>${K}</b>: Jᵏ = ${mat([[Math.pow(0.9, K), r.c], [0, Math.pow(0.9, K)]], { d: 5 })}`)}</div><div class="side">${stat("sizes", `0.9ᵏ = <b>${F(r.d, r.d < 0.01 ? 5 : 3)}</b><br>corner = <b>${F(r.c, 3)}</b><br>‖Jᵏ‖₂ = <b>${F(r.n, r.n < 0.01 ? 5 : 3)}</b>`)}</div></div>`, `k = ${K}: corner ${F(r.c, 3)}, ‖Jᵏ‖₂ ${F(r.n, r.n < 0.01 ? 5 : 3)}, 0.9ᵏ ${F(r.d, r.d < 0.01 ? 5 : 3)}`));
+  }
+  const d10 = data[10], d50 = data[50], d40 = data[40], d79 = data[79];
+  out[out.length - 1].note += ` Summary: the corner climbs to ${F(peak.c, 3)} (k = ${ties.join(" and ")}) before decaying (${F(d40.c, 3)} at k = 40, ${F(d79.c, 3)} at k = 79); ‖Jᵏ‖₂ = ${F(d10.n, 3)} at 10, ${F(d50.n, 3)} at 50.`;
+  return out;
+}
+function fragilityFrames(){
+  const eps = [0, 1e-12, 1e-10, 1e-8, 1e-6, 1e-4, 1e-2], rows = [], out = [];
+  eps.forEach(ep => {
+    const e = eig2([[1,1],[ep,1]]); rows.push([ep, e.vals[0].re, e.vals[1].re]);
+    out.push(fr(`<h3>Nudge the shear: [[1, 1], [ε, 1]]</h3><table class="grid"><tr><th>ε (the nudge)</th><th>eigenvalues 1 ± √ε</th><th>shift √ε</th><th>shift ÷ nudge</th></tr>${rows.map((r, i) => `<tr class="${i === rows.length - 1 ? "hot" : ""}"><td class="num">${r[0] === 0 ? "0" : E(r[0], 0)}</td><td class="num">${Fx(r[1], 6)}, ${Fx(r[2], 6)}</td><td class="num">${r[0] === 0 ? "0" : E(Math.sqrt(r[0]), 0)}</td><td class="num">${r[0] === 0 ? "—" : I(Math.round(Math.sqrt(r[0])/r[0]))}×</td></tr>`).join("")}</table>` +
+      (ep === 1e-2 ? stat("what this means", "A nudge of 10⁻¹⁰ moves the eigenvalues by 10⁻⁵, 100,000 times more. Rounding error is a nudge like that, so a computer can't even tell whether a matrix is defective: libraries use the Schur form and the SVD instead. (NumPy reports the critically damped spring's double eigenvalue −1 as −1 ± 6.7×10⁻⁹ i.)") : ""),
+      ep === 0 ? "ε = 0: eigenvalue 1, twice, and defective." : `ε = ${E(ep, 0)}: eigenvalues ${Fx(e.vals[0].re, 6)} and ${Fx(e.vals[1].re, 6)}, a shift of ${E(Math.sqrt(ep), 0)}.`));
+  });
+  return out;
+}
+function springFrames(){
+  const S = [[0,1],[-1,-2]], e = eig2(S), r = rank2([[1,1],[-1,-1]]);
+  let x = [1, 0], t = 0; const dt = 0.001, pts = [[0, 1]], at = {};
+  const f = v => mv(S, v);
+  while (t < 6 - 1e-9){ const k1 = f(x), k2 = f(add(x, k1, dt/2)), k3 = f(add(x, k2, dt/2)), k4 = f(add(x, k3, dt)); x = x.map((v, i) => v + dt/6*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i])); t += dt; const tr3 = Math.round(t*1000)/1000; if (Math.abs(tr3 - Math.round(tr3*20)/20) < 1e-9) pts.push([tr3, x[0]]); if ([1,2,3].includes(tr3)) at[tr3] = x[0]; }
+  const pic = (stage) => { const P = Plot(480, 280, 0, 6, -0.05, 1.05, 34).frame(); for (let k = 0; k <= 6; k++) P.text([k, -0.05], String(k), 'text-anchor="middle" fill="#5B6572"', 0, 14); [0, 0.5, 1].forEach(y => P.text([0, y], String(y), 'text-anchor="end" fill="#5B6572"', -4, 4)); const g = (fn) => { const q = []; for (let s = 0; s <= 6; s += 0.05) q.push([s, fn(s)]); return q; }; P.poly(g(s => Math.exp(-s)), "var(--c2)", 2, 'stroke-dasharray="5 3"'); if (stage >= 1) P.poly(pts, "var(--c1)", 3); if (stage >= 2) [1,2,3].forEach(k => { P.dot([k, at[k]], 5, "var(--bad)"); P.text([k, at[k]], F(at[k]), 'fill="#C2413B"', 6, -6); }); P.add(`<text x="240" y="276" font-size="11" fill="#5B6572" text-anchor="middle">time t</text>`); return P.svg("critically damped spring"); };
+  const head = `<h3>A critically damped spring: x'' + 2x' + x = 0</h3>` + eqrow("state (x, x'), matrix", mat(S, { d: 0 }));
+  const S1 = stat("eigenvalues", `trace ${F(e.t)}, det ${F(e.d)}, discriminant ${F(e.disc)} → <b>λ = −1 twice</b><br>rank(A + I) = <b>${r}</b>: one eigenvector, defective`);
+  const S2 = stat("released from x = 1 at rest (RK4, dt = 0.001)", [1,2,3].map(k => `t = ${k}: x = <b>${F(at[k])}</b>, (1 + t)e⁻ᵗ = ${F((1 + k)*Math.exp(-k))}`).join("<br>"));
+  return [
+    fr(two(pic(0), head + S1), "The spring's matrix has eigenvalue −1 twice and only one eigenvector."),
+    fr(two(pic(1), head + S1 + stat("the motion", "If the matrix were diagonalizable the answer would only contain e⁻ᵗ. The Jordan 1 adds a t·e⁻ᵗ term.")), "Simulate it: the curve is not a pure e⁻ᵗ (dashed)."),
+    fr(two(pic(2), head + S1 + S2 + vd("ok", "x(t) = (1 + t)e⁻ᵗ: the t comes from the Jordan block.")), "x(1) = 0.7358, x(2) = 0.4060, x(3) = 0.1991, matching (1 + t)e⁻ᵗ."),
+  ];
+}
+presets("pre-jordan", Player("pl-jordan"), [
+  { name: "Change of basis", frames: basisFrames },
+  { name: "Defective shear: direction sweep", frames: shearFrames, speed: 600 },
+  { name: "Jordan form of [[3,1],[−1,1]]", frames: jordanFrames },
+  { name: "Transient growth of Jᵏ", frames: transientFrames, speed: 250 },
+  { name: "Fragility: ε nudge", frames: fragilityFrames, speed: 1000 },
+  { name: "Critically damped spring", frames: springFrames },
+]);
+
+/* =====================================================================
+   TAB 5 — conjugate gradient
+   ===================================================================== */
+const CA = [[30,10],[10,5]], Cb = [38,15], CX = solve(CA, Cb);
+function runGD2(){ const H = CA.map(r => r.map(v => 2*v)), ev = eig2(H), lr = 2/(ev.vals[0].re + ev.vals[1].re); let w = [0,0]; const path = [w.slice()]; let n = 0; while (nrm(add(w, CX, -1)) >= 1e-6 && n < 100000){ const g = add(mv(H, w), Cb.map(v => 2*v), -1); w = add(w, g, -lr); path.push(w.slice()); n++; } return { path, n, lr }; }
+function runSD2(){ let x = [0,0]; const path = [x.slice()]; while (nrm(add(x, CX, -1)) >= 1e-6 && path.length < 100000){ const r = add(Cb, mv(CA, x), -1), a = dot(r, r)/dot(r, mv(CA, r)); x = add(x, r, a); path.push(x.slice()); } return { path, n: path.length - 1 }; }
+function runCG2(){ let x = [0,0], r = Cb.slice(), p = r.slice(); const path = [x.slice()], info = []; while (nrm(add(x, CX, -1)) >= 1e-6 && path.length < 50){ const Ap = mv(CA, p), a = dot(r, r)/dot(p, Ap); x = add(x, p, a); const rn = add(r, Ap, -a), be = dot(rn, rn)/dot(r, r); info.push({ a, be, p: p.slice(), x: x.slice(), r: r.slice() }); p = add(rn, p, be); r = rn; path.push(x.slice()); } return { path, n: path.length - 1, info }; }
+const GD2 = runGD2(), SD2 = runSD2(), CG2 = runCG2();
+function bowl(paths, extra){
+  const P = Plot(460, 420, -0.3, 2.0, -0.4, 2.6, 30);
+  const ev = jacobiEig(CA), A = CA;
+  const t = Math.atan2(2*A[0][1], A[0][0] - A[1][1])/2, u1 = [Math.cos(t), Math.sin(t)], u2 = [-Math.sin(t), Math.cos(t)];
+  const l1 = dot(u1, mv(A, u1)), l2 = dot(u2, mv(A, u2)); void ev;
+  [0.05, 0.2, 0.5, 1, 2, 4, 8, 16, 32].forEach(c => { const pts = []; for (let k = 0; k <= 120; k++){ const a = k/120*2*Math.PI; pts.push(add(add(CX, u1, Math.sqrt(c/l1)*Math.cos(a)), u2, Math.sqrt(c/l2)*Math.sin(a))); } P.poly(pts, "#D9E0DE", 1); });
+  P.axes("slope w", "intercept");
+  P.add(`<text x="${P.sx(CX[0]) + 8}" y="${P.sy(CX[1]) - 8}" font-size="11" fill="#1B2430">(0.8, 1.4)</text>`);
+  P.add(`<polygon points="${P.sx(CX[0])},${P.sy(CX[1]) - 7} ${P.sx(CX[0]) + 6},${P.sy(CX[1]) + 4} ${P.sx(CX[0]) - 6},${P.sy(CX[1]) + 4}" fill="#1B2430"/>`);
+  paths.forEach(p => { if (p.pts.length > 1) P.poly(p.pts, p.c, p.w || 2); p.pts.forEach((q, i) => { if (i === p.pts.length - 1) P.dot(q, 4.5, p.c); }); });
+  (extra || []).forEach(e => e(P));
+  return `<svg viewBox="0 0 460 420" role="img" aria-label="bowl contours"><defs><clipPath id="clipbowl"><rect x="30" y="30" width="400" height="360"/></clipPath></defs><g clip-path="url(#clipbowl)">${P.parts.join("")}</g></svg>`;
+}
+function raceFrames(){
+  const ks = [0,1,2,3,4,5,6,7,8,9,10,12,15,20,30,40,60,80,100,120,140,161];
+  return ks.map(k => {
+    const g = GD2.path.slice(0, Math.min(k, GD2.n) + 1), s = SD2.path.slice(0, Math.min(k, SD2.n) + 1), c = CG2.path.slice(0, Math.min(k, CG2.n) + 1);
+    const done = (n) => k >= n ? `<b class="ok">done in ${n}</b>` : `step ${k}`;
+    return fr(two(bowl([{ pts: g, c: "var(--c2)", w: 1.5 }, { pts: s, c: "var(--c1)", w: 2 }, { pts: c, c: "var(--c3)", w: 3 }]) + legend([["var(--c2)", "gradient descent, best fixed step"], ["var(--c1)", "steepest descent, exact line search"], ["var(--c3)", "conjugate gradient"]]),
+      `<h3>Race to within 10⁻⁶ of (0.8, 1.4)</h3>` + stat("gradient descent (rate " + F(GD2.lr, 6) + " on the loss Σ(wx + b − y)²)", `${done(GD2.n)}; at ${vs(g[g.length - 1], 4)}`) + stat("steepest descent (best step each time)", `${done(SD2.n)}; at ${vs(s[s.length - 1], 4)}`) + stat("conjugate gradient", `${done(CG2.n)}; at ${vs(c[c.length - 1], 4)}`) + (k === 161 ? vd("ok", `${GD2.n} vs. ${SD2.n} vs. ${CG2.n} steps.`) : "")),
+      `step ${k}: GD ${Math.min(k, GD2.n)}/${GD2.n}, steepest ${Math.min(k, SD2.n)}/${SD2.n}, CG ${Math.min(k, CG2.n)}/${CG2.n}`);
+  });
+}
+function cgStepFrames(){
+  const [s0, s1] = CG2.info, p1 = add(add(Cb, mv(CA, s0.x), -1), s0.p, s0.be);
+  const arrows = (k) => [P => { if (k >= 1){ P.arrow([0,0], s0.x, "var(--c3)", 3); P.text(s0.x, "x₁ = " + vs(s0.x, 4), 'fill="#5B4B95"', 8, 14); } if (k >= 2){ const tip = add(s0.x, p1, 0.35); P.arrow(s0.x, tip, "var(--bad)", 2); P.text(tip, "p₁ direction", 'fill="#C2413B"', 6, 0); } if (k >= 3){ P.arrow(s0.x, CX, "var(--c3)", 3); } }];
+  const h = `<h3>Conjugate gradient, by hand</h3>` + stat("start", "x₀ = (0, 0), r₀ = b − Ax₀ = (38, 15), p₀ = r₀");
+  const S1 = stat("step 1", `α₀ = (r₀·r₀)/(p₀ᵀAp₀) = <b>${F(s0.a, 5)}</b><br>x₁ = x₀ + α₀p₀ = <b>${vs(s0.x, 4)}</b> (same as steepest descent's first step)`);
+  const S2 = stat("bend the new residual", `r₁ = ${vs(s1.r, 4)}<br>β₀ = (r₁·r₁)/(r₀·r₀) = <b>${F(s0.be, 6)}</b><br>p₁ = r₁ + β₀p₀ = <b>${vs(p1, 4)}</b>`);
+  const S3 = stat("step 2", `α₁ = <b>${F(s1.a, 4)}</b><br>x₂ = x₁ + α₁p₁ = <b>${vs(s1.x, 6)}</b>`);
+  const S4 = stat("the key property", `p₀ᵀAp₁ = <b>${E(dot(s0.p, mv(CA, p1)), 1)}</b> (zero up to rounding)<br>p₀·p₁ = <b>${F(dot(s0.p, p1), 3)}</b> (not perpendicular on the page)`);
+  return [
+    fr(two(bowl([], arrows(0)), h), "Start at (0,0) with the residual (38, 15) as the first direction."),
+    fr(two(bowl([], arrows(1)), h + S1), "Step 1: α = 0.02989, x₁ = (1.1357, 0.4483)."),
+    fr(two(bowl([], arrows(2)), h + S1 + S2), "β = 0.001361 bends r₁ into p₁ = (−0.5016, 1.4221)."),
+    fr(two(bowl([], arrows(3)), h + S1 + S2 + S3), "Step 2 lands exactly on (0.8, 1.4)."),
+    fr(two(bowl([], arrows(3)), h + S3 + S4 + vd("ok", "A-conjugate: perpendicular in the bowl's own geometry.")), "p₀ᵀAp₁ ≈ 0 but p₀·p₁ = 2.271: conjugate, not perpendicular."),
+  ];
+}
+function cgDiag(d, b, tol, maxit){ const n = d.length; let x = new Array(n).fill(0), r = b.slice(), p = r.slice(); const nb = Math.sqrt(b.reduce((s, v) => s + v*v, 0)); let rr = r.reduce((s, v) => s + v*v, 0), k = 0; const hist = [1]; while (Math.sqrt(rr)/nb > tol && k < maxit){ const Ap = p.map((v, i) => d[i]*v); let pAp = 0; for (let i = 0; i < n; i++) pAp += p[i]*Ap[i]; const a = rr/pAp; x = x.map((v, i) => v + a*p[i]); r = r.map((v, i) => v - a*Ap[i]); let rn = 0; for (let i = 0; i < n; i++) rn += r[i]*r[i]; p = r.map((v, i) => v + rn/rr*p[i]); rr = rn; k++; hist.push(Math.sqrt(rr)/nb); } return { k, hist }; }
+function sdDiag(d, b, tol, maxit, keep){ const n = d.length; let r = b.slice(); const nb = Math.sqrt(b.reduce((s, v) => s + v*v, 0)); let k = 0; const hist = [1]; for (;;){ let rr = 0; for (let i = 0; i < n; i++) rr += r[i]*r[i]; if (Math.sqrt(rr)/nb <= tol || k >= maxit) break; const Ar = r.map((v, i) => d[i]*v); let rAr = 0; for (let i = 0; i < n; i++) rAr += r[i]*Ar[i]; const a = rr/rAr; r = r.map((v, i) => v - a*Ar[i]); k++; if (k <= keep){ let q = 0; for (let i = 0; i < n; i++) q += r[i]*r[i]; hist.push(Math.sqrt(q)/nb); } } return { k, hist }; }
+let KSW = null;
+function kappaData(){ if (KSW) return KSW; const ones = new Array(100).fill(1); KSW = [10, 100, 1000, 10000].map(kap => { const d = Array.from({ length: 100 }, (_, i) => Math.pow(kap, i/99)); return { kap, cg: cgDiag(d, ones, 1e-8, 100000), sd: sdDiag(d, ones, 1e-8, 2000000, 400) }; }); return KSW; }
+function kappaFrames(){
+  const D = kappaData(), cols = ["var(--c1)", "var(--c3)", "var(--c2)", "var(--bad)"], out = [];
+  for (let K = 0; K <= 400; K += 10){
+    const P = Plot(540, 320, 0, 400, -8.5, 0.3, 38).frame();
+    for (let y = 0; y >= -8; y -= 2) P.text([0, y], "10" + sup(y), 'text-anchor="end" fill="#5B6572"', -4, 4);
+    for (let x = 0; x <= 400; x += 100) P.text([x, -8.5], String(x), 'text-anchor="middle" fill="#5B6572"', 0, 14);
+    P.line([0, -8], [400, -8], "#9AA3AD", 1, 'stroke-dasharray="3 3"'); P.line([100, -8.5], [100, 0.3], "#9AA3AD", 1, 'stroke-dasharray="2 4"'); P.text([100, 0.3], "n = 100", 'fill="#5B6572"', 4, 12);
+    D.forEach((r, i) => { const c = r.cg.hist.slice(0, K + 1).map((v, j) => [j, Math.log10(Math.max(v, 1e-9))]); P.poly(c, cols[i], 2.5); const s = r.sd.hist.slice(0, K + 1).map((v, j) => [j, Math.log10(Math.max(v, 1e-9))]); P.poly(s, cols[i], 1.2, 'stroke-dasharray="4 3" opacity="0.8"'); });
+    P.add(`<text x="270" y="316" font-size="11" fill="#5B6572" text-anchor="middle">iteration (solid: CG, dashed: steepest descent)</text>`);
+    const tbl = `<table class="grid"><tr><th>κ</th><th>CG steps</th><th>steepest descent steps</th><th>√κ</th></tr>${D.map((r, i) => `<tr><td class="num" style="color:${cols[i]}">${I(r.kap)}</td><td class="num">${K >= r.cg.k ? "<b>" + r.cg.k + "</b>" : "…"}</td><td class="num">${K >= 400 ? "<b>" + I(r.sd.k) + "</b>" : "…"}</td><td class="num">${F(Math.sqrt(r.kap), 1)}</td></tr>`).join("")}</table>`;
+    out.push(fr(P.svg("residual curves") + legend(D.map((r, i) => [cols[i], "κ = " + I(r.kap)])) + `<h3 style="margin-top:12px">100×100 diagonal matrices, eigenvalues spread from 1 to κ, b = all ones, stop at 10⁻⁸</h3>` + tbl + (K >= 400 ? stat("read it", "Each 10× in κ multiplies steepest descent's steps by about 10, CG's by only about 2 to 2.6. At κ = 1,000 and 10,000 CG passes n = 100: in exact arithmetic it would stop by step 100, but rounding slowly erodes the conjugacy.") : ""),
+      `iteration ${K}` + D.filter(r => r.cg.k <= K && r.cg.k > K - 10).map(r => `: κ = ${I(r.kap)} CG finishes at ${r.cg.k}`).join("")));
+  }
+  return out;
+}
+function polyFrames(){
+  const d = [].concat(new Array(34).fill(1), new Array(33).fill(5), new Array(33).fill(20)), n = 100;
+  let x = new Array(n).fill(0), r = new Array(n).fill(1), p = r.slice(), rr = n; const nb = Math.sqrt(n);
+  let R = [1], Pp = [1]; const polys = [R.slice()], res = [1];
+  const pmul = (a) => [0].concat(a), padd = (a, b, c) => { const L = Math.max(a.length, b.length), o = []; for (let i = 0; i < L; i++) o.push((a[i] || 0) + c*(b[i] || 0)); return o; };
+  for (let k = 0; k < 3; k++){
+    const Ap = p.map((v, i) => d[i]*v); let pAp = 0; for (let i = 0; i < n; i++) pAp += p[i]*Ap[i]; const a = rr/pAp;
+    x = x.map((v, i) => v + a*p[i]); r = r.map((v, i) => v - a*Ap[i]); let rn = 0; for (let i = 0; i < n; i++) rn += r[i]*r[i]; const be = rn/rr;
+    R = padd(R, pmul(Pp), -a); Pp = padd(R, Pp, be); p = r.map((v, i) => v + be*p[i]); rr = rn; polys.push(R.slice()); res.push(Math.sqrt(rr)/nb);
+  }
+  const ev = (c, l) => c.reduce((s, ci, i) => s + ci*Math.pow(l, i), 0);
+  return polys.map((c, k) => {
+    const P = Plot(500, 300, 0, 21.5, -1.6, 1.6, 34).frame(); P.line([0, 0], [21.5, 0], "#9AA3AD", 1);
+    [1, 5, 20].forEach(l => { P.line([l, -1.6], [l, 1.6], "#E1E5E8", 1); P.text([l, -1.6], "λ = " + l, 'text-anchor="middle" fill="#5B6572"', 0, 14); });
+    const pts = []; for (let l = 0; l <= 21.5; l += 0.05) pts.push([l, Math.max(-1.6, Math.min(1.6, ev(c, l)))]); P.poly(pts, "var(--c3)", 2.5);
+    [1, 5, 20].forEach(l => P.dot([l, Math.max(-1.6, Math.min(1.6, ev(c, l)))], 6, "var(--bad)"));
+    return fr(two(P.svg("CG polynomial") + legend([["var(--c3)", "CG's residual polynomial Rₖ(λ)"], ["var(--bad)", "its value at the three eigenvalues"]]),
+      `<h3>Only three distinct eigenvalues: 1, 5, 20 (n = 100)</h3>` + stat(`after ${k} CG step${k === 1 ? "" : "s"}`, `R${"₀₁₂₃"[k]}(1) = ${F(ev(c, 1), 4)}, R(5) = ${F(ev(c, 5), 4)}, R(20) = ${F(ev(c, 20), 4)}<br>relative residual <b>${k === 3 ? E(res[k], 1) : F(res[k], 4)}</b>`) + (k === 3 ? vd("ok", "A degree-3 polynomial with roots at 1, 5 and 20 cancels everything: done at step 3.") : stat("idea", "The residual after k steps is Rₖ(A)·b for the best degree-k polynomial with Rₖ(0) = 1. Once it can vanish at every eigenvalue, CG is finished."))),
+      k === 0 ? "Start: R₀ = 1 everywhere, residual 1." : `Step ${k}: residual ${k === 3 ? E(res[k], 1) : F(res[k], 4)}.`);
+  });
+}
+presets("pre-cg", Player("pl-cg"), [
+  { name: "Race on the regression bowl", frames: raceFrames, speed: 450 },
+  { name: "CG step by step", frames: cgStepFrames },
+  { name: "κ sweep (n = 100)", frames: kappaFrames, speed: 300 },
+  { name: "Three distinct eigenvalues → 3 steps", frames: polyFrames },
+]);
+
+/* =====================================================================
+   TAB 6 — Kronecker product
+   ===================================================================== */
+const KA = [[1,2],[3,4]], KB = [[0,5],[6,7]], KK = kron(KA, KB), KX = [[1,-1],[2,0]];
+const blk = (i, j) => "b" + (Math.floor(i/2)*2 + Math.floor(j/2));
+function buildFrames(){
+  const out = [], names = ["1·B", "2·B", "3·B", "4·B"];
+  for (let s = 0; s <= 4; s++){
+    const M = KK.map((row, i) => row.map((v, j) => (Math.floor(i/2)*2 + Math.floor(j/2)) < s ? F(v, 0) : "·"));
+    out.push(fr(eqrow("A =", mat(KA, { d: 0 }), "B =", mat(KB, { d: 0 })) + eqrow("A ⊗ B =", mat(M, { cls: (i, j) => (Math.floor(i/2)*2 + Math.floor(j/2)) < s ? blk(i, j) : "dim" })) + stat("shape", "(2×2) ⊗ (2×2) = 4×4; in general (m×n) ⊗ (p×q) = (mp)×(nq)") + (s === 4 ? vd("ok", "Every entry of A times every entry of B, in blocks.") : ""),
+      s === 0 ? "Each entry aᵢⱼ of A will become the block aᵢⱼ·B." : `Block ${s}: a = ${KA.flat()[s - 1]}, so this block is ${names[s - 1]}.`));
+  }
+  return out;
+}
+function vecFrames(){
+  const vX = vec(KX), lhs = mv(KK, vX), BX = mm(KB, KX), BXAt = mm(BX, tr(KA)), rhs = vec(BXAt);
+  const A2 = [[1,0,2],[0,1,1]], B2 = [[1,2],[0,1],[3,0]], X2 = [[1,2,3],[4,5,6]], K2 = kron(A2, B2), l2 = mv(K2, vec(X2)), r2 = vec(mm(mm(B2, X2), tr(A2)));
+  const R = rng(30), n = 30, rnd = () => Array.from({ length: n }, () => Array.from({ length: n }, R.g)), A3 = rnd(), B3 = rnd(), X3 = rnd(), md = maxAbsDiff(mv(kron(A3, B3), vec(X3)), vec(mm(mm(B3, X3), tr(A3))));
+  const h = eqrow("A =", mat(KA, { d: 0 }), "B =", mat(KB, { d: 0 }), "X =", mat(KX, { d: 0, cls: (i, j) => j === 0 ? "b0" : "b1" }));
+  const S1 = stat("vec(X): stack the columns", eqrow(mat(vX.map(v => [v]), { d: 0, cls: (i) => i < 2 ? "b0" : "b1" })));
+  const S2 = stat("left side: (A ⊗ B)·vec(X), with the 4×4 matrix", `<b>${vs(lhs)}</b>`);
+  const S3 = stat("right side: B·X·Aᵀ, two small products", eqrow("B·X =", mat(BX, { d: 0 }), "B·X·Aᵀ =", mat(BXAt, { d: 0 })) + `vec(B·X·Aᵀ) = <b>${vs(rhs)}</b>`);
+  const S4 = stat("why: block-row j of A ⊗ B is (aⱼ₁B, aⱼ₂B)", "times (x₁; x₂) gives aⱼ₁Bx₁ + aⱼ₂Bx₂ = B·X·(row j of A)ᵀ = column j of B·X·Aᵀ");
+  const S5 = stat("other shapes and sizes", `A 2×3, B 3×2, X 2×3 → A ⊗ B is ${K2.length}×${K2[0].length}; both sides ${vs(r2)}: max difference <b>${E(maxAbsDiff(l2, r2) || 0, 0)}</b><br>random 30×30 (this page's seed): A ⊗ B is 900×900; max difference <b>${E(md, 1)}</b>`);
+  return [
+    fr(h + S1, "Stack X's columns: vec(X) = (1, 2, −1, 0)."),
+    fr(h + S1 + S2, "(A ⊗ B)·vec(X) = (10, 8, 30, 36)."),
+    fr(h + S1 + S2 + S3, "B·X·Aᵀ = [[10, 30], [8, 36]]; its columns stacked are (10, 8, 30, 36) too."),
+    fr(h + S2 + S3 + S4 + vd("ok", "(A ⊗ B)·vec(X) = vec(B·X·Aᵀ)"), "Each block-row of A ⊗ B builds one column of B·X·Aᵀ."),
+    fr(h + S2 + S3 + S5, `Checked on non-square shapes and on random 30×30 matrices (max difference ${E(md, 1)}).`),
+  ];
+}
+function propFrames(){
+  const eA = eig2(KA).vals.map(z => z.re), eB = eig2(KB).vals.map(z => z.re), prods = []; eA.forEach(a => eB.forEach(b => prods.push(a*b))); prods.sort((a, b) => a - b);
+  const dK = luDet(KK), C = [[2,0],[1,1]], D = [[1,1],[0,2]];
+  const mixed = maxAbsDiff(mm(kron(KA, KB), kron(C, D)).flat(), kron(mm(KA, C), mm(KB, D)).flat());
+  const invd = maxAbsDiff(inv(KK).flat(), kron(inv2(KA), inv2(KB)).flat());
+  const h = eqrow("A ⊗ B =", mat(KK, { d: 0, cls: blk }));
+  const S1 = stat("trace", `tr(A ⊗ B) = <b>${F(trace(KK))}</b> = tr(A)·tr(B) = ${F(trace(KA))} × ${F(trace(KB))}`);
+  const S2 = stat("determinant (by elimination on the 4×4)", `<b>${F(dK, 6)}</b> = det(A)²·det(B)² = (${F(det2(KA))})²·(${F(det2(KB))})²`);
+  const S3 = stat("eigenvalues are all pairwise products", `A: ${eA.map(v => F(v)).join(", ")}; B: ${eB.map(v => F(v)).join(", ")}<br>products: <b>${prods.map(v => F(v)).join(", ")}</b><br>det(A ⊗ B − μI) at each: ${prods.map(m => E(luDet(KK.map((r, i) => r.map((v, j) => v - (i === j ? m : 0)))), 0)).join(", ")} (all ≈ 0, so each is an eigenvalue)`);
+  const S4 = stat("mixed product and inverse", `(A ⊗ B)(C ⊗ D) vs (AC) ⊗ (BD): max difference <b>${mixed === 0 ? "0" : E(mixed, 0)}</b><br>(A ⊗ B)⁻¹ vs A⁻¹ ⊗ B⁻¹: max difference <b>${E(invd, 0)}</b>`);
+  return [
+    fr(h + S1, "Trace 35 = 5 × 7."),
+    fr(h + S1 + S2, "Det 3,600 = (−2)² × (−30)²."),
+    fr(h + S1 + S2 + S3, "Eigenvalues −16.1168, −3.7228, 1.1168, 53.7228: every λ(A)·μ(B)."),
+    fr(h + S1 + S2 + S3 + S4 + vd("ok", "Everything about A ⊗ B comes from A and B separately."), "Mixed product and inverse rules hold."),
+  ];
+}
+function costFrames(){
+  const n = 1000, ent = Math.pow(n, 4), ops2 = 2*Math.pow(n, 3);
+  const P = (k) => { const G = Plot(480, 200, 0, 13, 0, 3, 30); [["build & multiply A⊗B: 10¹² multiplications", 12, "var(--bad)"], ["B·X·Aᵀ: 2×10⁹ multiplications", Math.log10(ops2), "var(--c1)"]].slice(0, k).forEach(([t, v, c], i) => { const y = 2.2 - i*1.2; G.add(`<rect x="${G.sx(0)}" y="${G.sy(y + 0.35)}" width="${(G.sx(v) - G.sx(0)).toFixed(1)}" height="${(G.sy(y - 0.35) - G.sy(y + 0.35)).toFixed(1)}" fill="${c}" rx="4"/>`); G.text([0, y + 0.55], t, "", 2, 0); }); for (let x = 0; x <= 12; x += 3) G.text([x, 0], "10" + sup(x), 'text-anchor="middle" fill="#5B6572"', 0, 14); return G.svg("cost comparison (log scale)"); };
+  const S1 = stat("A, B are 1,000×1,000: A ⊗ B is 10⁶ × 10⁶", `entries: <b>${E(ent, 0)}</b><br>storage at 8 bytes each: <b>${F(8*ent/1e12)} TB</b><br>one matrix-vector product: <b>${E(ent, 0)}</b> multiplications`);
+  const S2 = stat("the vec trick instead", `B·X·Aᵀ: two n×n products, <b>${E(ops2, 0)}</b> multiplications, no extra storage<br>ratio: <b>${I(ent/ops2)}×</b> fewer`);
+  const R = rng(20), m = 20, rnd = () => Array.from({ length: m }, () => Array.from({ length: m }, R.g)), A3 = rnd(), B3 = rnd(), X3 = rnd(), md = maxAbsDiff(mv(kron(A3, B3), vec(X3)), vec(mm(mm(B3, X3), tr(A3))));
+  const S3 = stat("live check at n = 20 (small enough to build)", `A ⊗ B has ${I(m*m*m*m)} entries; the two routes agree to <b>${E(md, 1)}</b>`);
+  return [
+    fr(two(P(1), S1), "At n = 1,000 the Kronecker matrix has 10¹² entries: 8 TB."),
+    fr(two(P(2), S1 + S2), "B·X·Aᵀ costs 2×10⁹ multiplications: 500× fewer, and nothing to store."),
+    fr(two(P(2), S1 + S2 + S3 + vd("ok", "Whenever ⊗ appears, translate it back into small products.")), "At n = 20 both routes can be run, and they agree."),
+  ];
+}
+function sylvFrames(){
+  const A = [[3,1],[0,2]], B = [[1,0],[1,4]], C = [[1,2],[3,4]];
+  const L = kron(eye(2), A).map((r, i) => r.map((v, j) => v + kron(tr(B), eye(2))[i][j])), x = solve(L, vec(C)), X = unvec(x, 2, 2), chk = add(mm(A, X).flat(), mm(X, B).flat());
+  const h = `<h3>Sylvester equation AX + XB = C</h3>` + eqrow("A =", mat(A, { d: 0 }), "B =", mat(B, { d: 0 }), "C =", mat(C, { d: 0 }));
+  const S1 = stat("vec both sides", "vec(AX) = (I ⊗ A)·vec(X), vec(XB) = (Bᵀ ⊗ I)·vec(X)");
+  const S2 = stat("one ordinary 4×4 system", eqrow("I ⊗ A + Bᵀ ⊗ I =", mat(L, { d: 0 })));
+  const S3 = stat("solve it", eqrow("X =", mat(X))) ;
+  const S4 = stat("check AX + XB", `${mat([[chk[0], chk[1]], [chk[2], chk[3]]])} = C <span class="ok">✓</span><br>(SciPy's solve_sylvester gives the same X)`);
+  return [
+    fr(h + S1, "Turn the matrix equation into a vector equation with the vec trick."),
+    fr(h + S1 + S2, "It becomes (I ⊗ A + Bᵀ ⊗ I)·vec(X) = vec(C), a 4×4 system."),
+    fr(h + S2 + S3, "X = [[0.0079, 0.1905], [0.7778, 0.6667]]."),
+    fr(h + S3 + S4, "Plug back in: AX + XB = C."),
+  ];
+}
+function jacFrames(){
+  const R = rng(5), W = Array.from({ length: 3 }, () => Array.from({ length: 4 }, R.g)), X = Array.from({ length: 4 }, () => Array.from({ length: 5 }, R.g));
+  const J = kron(tr(X), eye(3)), d = maxAbsDiff(mv(J, vec(W)), vec(mm(W, X)));
+  return [
+    fr(stat("a layer Y = W·X", "W is 3×4 (weights), X is 4×5 (a batch of 5 inputs), so Y is 3×5") + stat("vec(Y) = (Xᵀ ⊗ I₃)·vec(W)", `the Jacobian ∂vec(Y)/∂vec(W) is Xᵀ ⊗ I₃, shape <b>${J.length}×${J[0].length}</b>`), "The derivative of Y = WX with respect to W, written as a matrix, is Xᵀ ⊗ I."),
+    fr(stat("a layer Y = W·X", "W is 3×4, X is 4×5 (random, fixed seed)") + stat("check", `(Xᵀ ⊗ I₃)·vec(W) vs vec(W·X): max difference <b>${(d === 0 ? "0" : E(d, 0))}</b>`) + stat("why Matrix Calculus never writes it", "Backprop needs ∂L/∂W = (∂L/∂Y)·Xᵀ, which is that 15×12 Jacobian applied through the vec trick, without forming it."), "Multiplying by the 15×12 Jacobian reproduces vec(WX)."),
+  ];
+}
+presets("pre-kron", Player("pl-kron"), [
+  { name: "Build A ⊗ B", frames: buildFrames },
+  { name: "The vec trick", frames: vecFrames },
+  { name: "Eigenvalues, trace, det", frames: propFrames },
+  { name: "Cost at n = 1,000", frames: costFrames },
+  { name: "Sylvester equation", frames: sylvFrames },
+  { name: "Layer Jacobian Xᵀ ⊗ I", frames: jacFrames },
+]);
+
+window.__LA = { GD: GD2.n, SD: SD2.n, CG: CG2.n, kappa: () => kappaData().map(r => [r.kap, r.cg.k, r.sd.k]), players: PLAYERS };
+})();
+</script>
+</body>
+</html>

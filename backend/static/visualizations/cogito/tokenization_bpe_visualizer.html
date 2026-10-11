@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Byte-Pair Encoding, step by step</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.55;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;}
+  h3{font-family:'Kalam',cursive;font-size:16px;margin:0 0 6px;font-weight:400;}
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op.play{border-color:var(--amber);color:var(--amber);}
+  button.op:disabled{opacity:.4;cursor:default;}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .row-label{width:100%;text-align:center;font-size:11.5px;color:var(--chalk-dim);margin-bottom:-4px;}
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:19px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);} .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);} .metric.amber .num{color:var(--amber);}
+  .metric.sel{border-color:var(--blue);background:rgba(127,179,213,0.08);}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;line-height:1.6;}
+  .story-line b{color:var(--chalk);}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:5px 7px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+  table.datatable tr.hl td{background:rgba(255,206,84,0.14);color:var(--amber);font-weight:700;}
+  table.datatable tr.tie td{background:rgba(255,130,102,0.08);}
+  table.datatable td.l{text-align:left;}
+  .cols{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;}
+  .word-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0;min-height:34px;}
+  .freq{font-family:'Kalam',cursive;color:var(--amber);font-size:16px;min-width:38px;}
+  .wname{color:var(--chalk-dim);font-size:11.5px;min-width:62px;}
+  .chip{display:inline-block;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;background:rgba(244,241,232,0.05);transition:background .3s;}
+  .chip.m{border-color:var(--blue);color:var(--blue);}
+  .chip.new{background:rgba(143,209,158,0.22);border-color:var(--green);color:var(--green);}
+  .chip.eow{color:var(--chalk-dim);}
+  .chip.unk{border-color:var(--coral);color:var(--coral);}
+  .chip.hit{background:rgba(255,206,84,0.18);border-color:var(--amber);color:var(--amber);}
+  .rules{list-style:none;padding:0;margin:0;font-size:12.5px;}
+  .rules li{border:1px solid var(--border);border-radius:6px;padding:5px 9px;margin:4px 0;display:flex;justify-content:space-between;gap:8px;}
+  .rules li.done{color:var(--green);border-color:rgba(143,209,158,0.4);}
+  .rules li.skip{color:var(--chalk-dim);}
+  .rules li.cur{color:var(--amber);border-color:var(--amber);background:rgba(255,206,84,0.08);}
+  .rules li.pend{color:var(--chalk-dim);opacity:.6;}
+  .rules li span:last-child{font-size:11px;}
+  .sent{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0;}
+  .gap{width:14px;}
+  .ok{color:var(--green);} .bad{color:var(--coral);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Byte-Pair Encoding, step by step</h1>
+  <p class="sub">Companion to <b>tokenization_bpe_feynman.md</b>. BPE splits every word into characters plus an end-of-word mark <b>&lt;/w&gt;</b>, counts every neighbouring pair (weighted by how often the word occurs), glues the most frequent pair into one new symbol, and repeats. Ties go to the first pair found, scanning the words in order and each word left to right (as in the paper's code). Everything below is computed live in your browser. Every worked example is one click.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="train">1 · Train BPE</button>
+    <button class="tab-btn" data-tab="encode">2 · Encode new words</button>
+    <button class="tab-btn" data-tab="compare">3 · Characters vs words vs subwords</button>
+  </div>
+
+  <!-- ===== TAB 1 ===== -->
+  <div class="tabpage active" id="tab-train">
+    <div class="panel">
+      <h2>The corpus: low ×5, lower ×2, newest ×6, widest ×3</h2>
+      <div class="row">
+        <div class="row-label">One click per merge, or all ten</div>
+        <button class="op" id="trStep">Next merge</button>
+        <button class="op play" id="trPlay">Play all 10</button>
+        <button class="op" id="trEnd">Jump to end</button>
+        <button class="op" id="trReset">Reset</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">merges done</div><div class="num" id="trK"></div></div>
+        <div class="metric blue"><div class="lbl">total symbols (each weighted by frequency)</div><div class="num" id="trTotal"></div></div>
+        <div class="metric green"><div class="lbl">last merge</div><div class="num" id="trLast"></div></div>
+      </div>
+      <div id="trWords"></div>
+      <div class="story-line" id="trStory"></div>
+    </div>
+    <div class="cols">
+      <div class="panel">
+        <h2>Pair counts right now (sorted by count)</h2>
+        <table class="datatable" id="trPairs"></table>
+      </div>
+      <div class="panel">
+        <h2>The merge list so far</h2>
+        <ol class="rules" id="trRules"></ol>
+        <div class="story-line" id="trCheck"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB 2 ===== -->
+  <div class="tabpage" id="tab-encode">
+    <div class="panel">
+      <h2>Tokenize a word: split into characters, then apply the 10 merges in order</h2>
+      <div class="row">
+        <div class="row-label">One-click words (each one plays through the merge list)</div>
+        <button class="op enw" data-w="lowest">lowest</button>
+        <button class="op enw" data-w="newer">newer</button>
+        <button class="op enw" data-w="low">low</button>
+        <button class="op enw" data-w="zebra">zebra</button>
+      </div>
+      <div class="row">
+        <button class="op" id="enStep">Step (next rule)</button>
+        <button class="op play" id="enPlay">Play</button>
+        <button class="op" id="enEnd">Jump to end</button>
+        <button class="op" id="enReset">Back to characters</button>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">rules tried</div><div class="num" id="enK"></div></div>
+        <div class="metric blue"><div class="lbl">tokens</div><div class="num" id="enN"></div></div>
+      </div>
+      <div class="word-row" id="enChips" style="justify-content:center"></div>
+      <div class="story-line" id="enStory"></div>
+    </div>
+    <div class="panel">
+      <h2>The learned merge list (from tab 1), applied top to bottom</h2>
+      <ol class="rules" id="enRules"></ol>
+    </div>
+  </div>
+
+  <!-- ===== TAB 3 ===== -->
+  <div class="tabpage" id="tab-compare">
+    <div class="panel">
+      <h2>One sentence, three vocabularies: "low lower newest widest lowest"</h2>
+      <div class="row">
+        <div class="row-label">One-click schemes</div>
+        <button class="op cmp" data-s="chars">Characters</button>
+        <button class="op cmp" data-s="words">Whole words</button>
+        <button class="op cmp" data-s="bpe">BPE subwords (10 merges)</button>
+      </div>
+      <div class="metric-row" id="cmpMetrics"></div>
+      <div class="sent" id="cmpChips" style="justify-content:center"></div>
+      <div class="story-line" id="cmpStory"></div>
+    </div>
+    <div class="panel">
+      <h2>BPE length as merges are added (0 merges = plain characters)</h2>
+      <div class="row">
+        <button class="op" id="cmStep">Add one merge</button>
+        <button class="op play" id="cmPlay">Play 0 → 10</button>
+        <button class="op" id="cmEnd">Jump to end</button>
+        <button class="op" id="cmReset">Reset to 0</button>
+      </div>
+      <div class="sent" id="cmChips" style="justify-content:center"></div>
+      <table class="datatable" id="cmTable"></table>
+      <div class="story-line" id="cmStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Part 5 of tokenization_bpe_feynman.md</b>
+    (<a href="../deep_learning/tokenization_bpe_feynman.md">tokenization_bpe_feynman.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const EOW = "</w>";
+  const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const CORPUS = [["low",5],["lower",2],["newest",6],["widest",3]];
+  const N_MERGES = 10;
+
+  // ---------- BPE core ----------
+  const split = w => w.split("").concat([EOW]);
+  // pair counts in scan order: words in corpus order, symbols left to right
+  function countPairs(words){
+    const m = new Map();
+    words.forEach(([syms,f]) => {
+      for (let i=0;i<syms.length-1;i++){
+        const k = syms[i]+"\u0001"+syms[i+1];
+        m.set(k,(m.get(k)||0)+f);
+      }
+    });
+    return m;
+  }
+  // first key with the maximum count (same as Python max(pairs, key=pairs.get))
+  function best(m){
+    let bk=null, bv=-1;
+    for (const [k,v] of m) if (v>bv){ bk=k; bv=v; }
+    return bk ? {a:bk.split("\u0001")[0], b:bk.split("\u0001")[1], n:bv} : null;
+  }
+  function applyMerge(syms,a,b){
+    const out=[]; let hit=false;
+    for (let i=0;i<syms.length;i++){
+      if (i<syms.length-1 && syms[i]===a && syms[i+1]===b){ out.push(a+b); i++; hit=true; }
+      else out.push(syms[i]);
+    }
+    return {syms:out, hit};
+  }
+  const total = words => words.reduce((s,[sy,f])=>s+sy.length*f,0);
+
+  // full training run, recording every state
+  const STATES = [];
+  (function train(){
+    let words = CORPUS.map(([w,f])=>[split(w),f]);
+    for (let k=0;k<=N_MERGES;k++){
+      const pairs = countPairs(words), win = best(pairs);
+      STATES.push({words, pairs, win, total: total(words)});
+      if (k===N_MERGES) break;
+      words = words.map(([s,f])=>[applyMerge(s,win.a,win.b).syms,f]);
+    }
+  })();
+  const MERGES = STATES.slice(0,N_MERGES).map(s=>s.win);
+  function encode(word,k){
+    let s = split(word);
+    for (let i=0;i<(k===undefined?MERGES.length:k);i++) s = applyMerge(s,MERGES[i].a,MERGES[i].b).syms;
+    return s;
+  }
+  const EXPECT_TOTAL = [95,86,77,68,61,54,48,42,36,31,28];
+  const EXPECT_COUNT = [9,9,9,7,7,6,6,6,5,3];
+
+  function chip(sym, extra){
+    const cls = ["chip"];
+    if (sym===EOW) cls.push("eow"); else if (sym.length>1) cls.push("m");
+    if (extra) cls.push(extra);
+    return '<span class="'+cls.join(" ")+'">'+esc(sym)+'</span>';
+  }
+  const pairTxt = (a,b) => esc(a)+" + "+esc(b);
+
+  // ---------- timers ----------
+  let timers=[];
+  function stopTimers(){ timers.forEach(clearTimeout); timers=[]; }
+  function playSteps(stepFn, canStep, ms){
+    stopTimers();
+    const tick = () => { if (!canStep()) return; stepFn(); timers.push(setTimeout(tick, ms)); };
+    tick();
+  }
+
+  // ---------- tabs ----------
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => {
+    stopTimers();
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    $("tab-"+btn.dataset.tab).classList.add("active");
+  }));
+
+  // ================= TAB 1: TRAIN =================
+  let tk = 0;
+  function renderTrain(){
+    const st = STATES[tk], last = tk>0 ? MERGES[tk-1] : null;
+    $("trK").textContent = tk+" / "+N_MERGES;
+    $("trTotal").textContent = (tk>0 ? "95 → " : "")+st.total;
+    $("trLast").innerHTML = last ? pairTxt(last.a,last.b)+" ("+last.n+")" : "—";
+    $("trWords").innerHTML = st.words.map(([syms,f],i) =>
+      '<div class="word-row"><span class="freq">×'+f+'</span><span class="wname">'+CORPUS[i][0]+'</span>'+
+      syms.map(s => chip(s, last && s===last.a+last.b ? "new" : "")).join("")+
+      '<span class="wname" style="margin-left:8px">= '+syms.length+' × '+f+' = '+syms.length*f+'</span></div>').join("");
+    // pair table
+    const rows = [...st.pairs].map(([k,v],i)=>({a:k.split("\u0001")[0], b:k.split("\u0001")[1], n:v, order:i}));
+    rows.sort((x,y)=> y.n-x.n || x.order-y.order);
+    const win = st.win, top = win ? win.n : 0, ties = rows.filter(r=>r.n===top);
+    let h = '<tr><th>pair</th><th>count</th><th>found in</th><th>scan order</th></tr>';
+    rows.forEach(r => {
+      const isWin = tk<N_MERGES && r.a===win.a && r.b===win.b;
+      const isTie = tk<N_MERGES && !isWin && r.n===top;
+      const from = st.words.map(([syms,f],i)=>{
+        let c=0; for(let j=0;j<syms.length-1;j++) if(syms[j]===r.a&&syms[j+1]===r.b) c++;
+        return c ? CORPUS[i][0]+" ×"+f : null; }).filter(Boolean).join(", ");
+      h += '<tr class="'+(isWin?"hl":isTie?"tie":"")+'"><td>'+pairTxt(r.a,r.b)+(isWin?" ← next merge":isTie?" (tie, found later)":"")+
+           '</td><td>'+r.n+'</td><td class="l">'+from+'</td><td>'+(r.order+1)+'</td></tr>';
+    });
+    $("trPairs").innerHTML = h;
+    // merge list
+    $("trRules").innerHTML = MERGES.map((m,i) => i<tk
+      ? '<li class="done"><span>'+(i+1)+'. '+pairTxt(m.a,m.b)+' → '+esc(m.a+m.b)+'</span><span>count '+m.n+' · total '+STATES[i+1].total+'</span></li>'
+      : i===tk ? '<li class="cur"><span>'+(i+1)+'. next: '+pairTxt(m.a,m.b)+'</span><span>count '+m.n+'</span></li>' : '').join("");
+    // story
+    let s;
+    if (tk===0) s = '<b>Start:</b> 95 symbols. The top count is <b>9</b>, shared three ways ('+ties.map(r=>pairTxt(r.a,r.b)).join(", ")+'). <b>e + s</b> is found first in the scan (inside "newest"), so it wins the tie.';
+    else if (tk<N_MERGES) s = 'Merge '+tk+' glued <b>'+pairTxt(last.a,last.b)+'</b> ('+last.n+' times): total '+STATES[tk-1].total+' → <b>'+st.total+'</b>. Next up: <b>'+pairTxt(win.a,win.b)+'</b> ('+win.n+(ties.length>1?', tied with '+(ties.length-1)+' other pair(s); first found wins':'')+').';
+    else s = '<b>Done:</b> ten merges, 95 → <b>28</b> symbols. "est&lt;/w&gt;" became a token after only three merges because two frequent words share it.';
+    $("trStory").innerHTML = s;
+    if (tk===N_MERGES){
+      const okT = STATES.every((x,i)=>x.total===EXPECT_TOTAL[i]), okC = MERGES.every((m,i)=>m.n===EXPECT_COUNT[i]);
+      $("trCheck").innerHTML = (okT&&okC) ? '<span class="ok">✓ matches the tutorial table: every count and every total (95 → 28).</span>' : '<span class="bad">✗ mismatch with the tutorial table</span>';
+    } else $("trCheck").textContent = "";
+    $("trStep").disabled = tk>=N_MERGES;
+  }
+  $("trStep").addEventListener("click", ()=>{ stopTimers(); if(tk<N_MERGES){tk++; renderTrain();} });
+  $("trPlay").addEventListener("click", ()=>{ tk=0; renderTrain(); playSteps(()=>{tk++; renderTrain();}, ()=>tk<N_MERGES, 900); });
+  $("trEnd").addEventListener("click", ()=>{ stopTimers(); tk=N_MERGES; renderTrain(); });
+  $("trReset").addEventListener("click", ()=>{ stopTimers(); tk=0; renderTrain(); });
+
+  // ================= TAB 2: ENCODE =================
+  let ew="lowest", ek=0, eSyms=split(ew), eLog=[];
+  function renderEnc(){
+    document.querySelectorAll(".enw").forEach(b=>b.classList.toggle("active", b.dataset.w===ew));
+    const lastHit = ek>0 && eLog[ek-1] ? MERGES[ek-1] : null;
+    $("enK").textContent = ek+" / "+N_MERGES;
+    $("enN").textContent = eSyms.length;
+    $("enChips").innerHTML = '<span class="wname">"'+ew+'" →</span>'+eSyms.map(s=>chip(s, lastHit && s===lastHit.a+lastHit.b ? "new":"")).join("");
+    $("enRules").innerHTML = MERGES.map((m,i)=>{
+      const cls = i<ek ? (eLog[i]?"done":"skip") : i===ek ? "cur" : "pend";
+      const tag = i<ek ? (eLog[i]?"applied":"no match, skipped") : i===ek ? "next" : "";
+      return '<li class="'+cls+'"><span>'+(i+1)+'. '+pairTxt(m.a,m.b)+' → '+esc(m.a+m.b)+'</span><span>'+tag+'</span></li>'; }).join("");
+    let s;
+    if (ek===0) s = 'Start: "'+ew+'" as characters plus &lt;/w&gt;: <b>'+eSyms.length+'</b> symbols. Now try each merge rule in the order it was learned.';
+    else if (ek<N_MERGES) s = 'Rule '+ek+' ('+pairTxt(MERGES[ek-1].a,MERGES[ek-1].b)+') '+(eLog[ek-1]?'<b>applied</b>':'found no match')+'. Tokens now: <b>'+eSyms.length+'</b>.';
+    else {
+      const fin = '[' + eSyms.map(esc).join(", ") + ']';
+      const note = {lowest:'"lowest" never appeared in the corpus, yet it splits into two learned pieces.',
+        newer:'"new" was learned from "newest"; "er" was never merged, so it stays as letters.',
+        low:'The whole word is a single token.',
+        zebra:'No rule matched, so it falls back to single characters. It still encodes: nothing is ever "unknown."'}[ew];
+      s = 'Final: <b>'+fin+'</b> ('+eSyms.length+' token'+(eSyms.length>1?'s':'')+'). '+note;
+    }
+    $("enStory").innerHTML = s;
+    $("enStep").disabled = ek>=N_MERGES;
+  }
+  function encStep(){ const r = applyMerge(eSyms, MERGES[ek].a, MERGES[ek].b); eSyms=r.syms; eLog[ek]=r.hit; ek++; renderEnc(); }
+  function encReset(){ ek=0; eSyms=split(ew); eLog=[]; renderEnc(); }
+  function encPlay(){ encReset(); playSteps(encStep, ()=>ek<N_MERGES, 700); }
+  document.querySelectorAll(".enw").forEach(b=>b.addEventListener("click", ()=>{ ew=b.dataset.w; encPlay(); }));
+  $("enStep").addEventListener("click", ()=>{ stopTimers(); if(ek<N_MERGES) encStep(); });
+  $("enPlay").addEventListener("click", encPlay);
+  $("enEnd").addEventListener("click", ()=>{ stopTimers(); while(ek<N_MERGES) encStep(); });
+  $("enReset").addEventListener("click", ()=>{ stopTimers(); encReset(); });
+
+  // ================= TAB 3: COMPARE =================
+  const SENT = ["low","lower","newest","widest","lowest"];
+  const WORD_VOCAB = new Set(CORPUS.map(c=>c[0]));
+  const SCHEMES = {
+    chars: {name:"Characters (+ &lt;/w&gt; per word)", cls:"amber", seg: w => split(w)},
+    words: {name:"Whole words (corpus vocabulary)", cls:"coral", seg: w => [WORD_VOCAB.has(w)? w : "[UNK]"]},
+    bpe:   {name:"BPE subwords (10 merges)", cls:"green", seg: w => encode(w)}
+  };
+  const count = key => SENT.reduce((n,w)=>n+SCHEMES[key].seg(w).length,0);
+  let cs="bpe";
+  function renderCmp(){
+    document.querySelectorAll(".cmp").forEach(b=>b.classList.toggle("active", b.dataset.s===cs));
+    $("cmpMetrics").innerHTML = Object.keys(SCHEMES).map(k=>
+      '<div class="metric '+SCHEMES[k].cls+(k===cs?" sel":"")+'"><div class="lbl">'+SCHEMES[k].name+'</div><div class="num" id="cnt-'+k+'">'+count(k)+' tokens</div></div>').join("");
+    $("cmpChips").innerHTML = SENT.map(w=>SCHEMES[cs].seg(w).map(s=>chip(s, s==="[UNK]"?"unk":"")).join("")).join('<span class="gap"></span>');
+    const unk = SENT.filter(w=>!WORD_VOCAB.has(w));
+    $("cmpStory").innerHTML = {
+      chars: '<b>'+count("chars")+'</b> tokens: every word spelled letter by letter. Tiny vocabulary, but the longest sequence.',
+      words: '<b>'+count("words")+'</b> tokens, the shortest, but "'+unk.join('", "')+'" is not in the word list, so it becomes a useless <span class="bad">[UNK]</span>. Its meaning is lost.',
+      bpe:   '<b>'+count("bpe")+'</b> tokens: common words are one token, and the unseen "lowest" becomes low + est&lt;/w&gt;. Nothing is unknown, and the sequence is '+(count("chars")/count("bpe")).toFixed(1)+'× shorter than characters.'
+    }[cs];
+  }
+  document.querySelectorAll(".cmp").forEach(b=>b.addEventListener("click", ()=>{ cs=b.dataset.s; renderCmp(); }));
+
+  let ck=0;
+  const sentLen = k => SENT.reduce((n,w)=>n+encode(w,k).length,0);
+  function renderCm(){
+    $("cmChips").innerHTML = SENT.map(w=>encode(w,ck).map(s=>chip(s)).join("")).join('<span class="gap"></span>');
+    let h='<tr><th>merges</th>'; for(let k=0;k<=N_MERGES;k++) h+='<th>'+k+'</th>'; h+='</tr><tr><td>tokens</td>';
+    for(let k=0;k<=N_MERGES;k++) h+= k<=ck ? '<td'+(k===ck?' style="color:var(--amber);font-weight:700"':'')+'>'+sentLen(k)+'</td>' : '<td>·</td>';
+    $("cmTable").innerHTML = h+'</tr>';
+    $("cmStory").innerHTML = ck===0 ? 'With 0 merges BPE is just characters: <b>'+sentLen(0)+'</b> tokens.'
+      : 'After merge '+ck+' ('+pairTxt(MERGES[ck-1].a,MERGES[ck-1].b)+'): <b>'+sentLen(ck)+'</b> tokens'+(ck===N_MERGES?' (down from '+sentLen(0)+').':'.');
+    $("cmStep").disabled = ck>=N_MERGES;
+  }
+  $("cmStep").addEventListener("click", ()=>{ stopTimers(); if(ck<N_MERGES){ck++; renderCm();} });
+  $("cmPlay").addEventListener("click", ()=>{ ck=0; renderCm(); playSteps(()=>{ck++; renderCm();}, ()=>ck<N_MERGES, 700); });
+  $("cmEnd").addEventListener("click", ()=>{ stopTimers(); ck=N_MERGES; renderCm(); });
+  $("cmReset").addEventListener("click", ()=>{ stopTimers(); ck=0; renderCm(); });
+
+  // expose for testing
+  window.__bpe = {STATES, MERGES, encode, count, sentLen};
+
+  renderTrain(); renderEnc(); renderCmp(); renderCm();
+})();
+</script>
+</body>
+</html>

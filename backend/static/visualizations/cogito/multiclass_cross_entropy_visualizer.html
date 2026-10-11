@@ -92,6 +92,34 @@
     </div>
   </div>
 
+  <div class="panel" id="lsPanel">
+    <h2>Label Smoothing (Part 5)</h2>
+    <p class="sub">Replace the one-hot target with <b>1&minus;&epsilon;</b> for the true class and <b>&epsilon;/(K&minus;1)</b> for each other class, then run gradient descent (learning rate 1.0) on the raw scores, starting from all zeros. Dashed line: the derived optimum gap ln((1&minus;&epsilon;)(K&minus;1)/&epsilon;). Hard labels have no finite optimum.</p>
+    <div class="row">
+      <button class="op ls-preset active" data-k="3" data-e="0.1">K=3, &epsilon;=0.1</button>
+      <button class="op ls-preset" data-k="10" data-e="0.1">K=10, &epsilon;=0.1</button>
+      <button class="op ls-preset" data-k="3" data-e="0.2">K=3, &epsilon;=0.2</button>
+      <button class="op ls-preset" data-k="3" data-e="0">Hard labels (&epsilon;=0)</button>
+    </div>
+    <div class="row">
+      <button class="op" id="lsStep">Step (&times;10 steps)</button>
+      <button class="op" id="lsPlay">Play</button>
+      <button class="op" id="lsEnd">Jump to end (10,000 steps)</button>
+      <button class="op" id="lsReset">Reset</button>
+      <button class="op" id="lsCal">Calibration experiment</button>
+    </div>
+    <svg id="lsSvg" width="640" height="240" viewBox="0 0 640 240"></svg>
+    <div class="metric-row">
+      <div class="metric blue"><div class="lbl">step</div><div class="num" id="lsT">0</div></div>
+      <div class="metric green"><div class="lbl">logit gap z_true &minus; z_other</div><div class="num" id="lsGap">-</div></div>
+      <div class="metric amber"><div class="lbl">derived optimum gap</div><div class="num" id="lsOpt">-</div></div>
+      <div class="metric coral"><div class="lbl">q_true / loss (min loss)</div><div class="num" id="lsQ">-</div></div>
+    </div>
+    <div class="story-line" id="lsStory"></div>
+    <table class="datatable" id="lsCalTable" style="display:none;"></table>
+    <svg id="lsCalSvg" width="640" height="200" viewBox="0 0 640 200" style="display:none;"></svg>
+  </div>
+
   <footer>
     <b>Fully offline &amp; private</b> — everything runs locally in this page (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../supervised/multiclass_cross_entropy_feynman.md">Multi-Class Cross-Entropy</a>.
   </footer>
@@ -255,6 +283,51 @@
     update();
   });
 
+
+  // ---------- Label smoothing (Part 5) ----------
+  const LS = { K:3, eps:0.1, t:0, z:null, hist:[], timer:null, checkpoints:{} };
+  function lsTarget(){ const y = new Array(LS.K).fill(LS.eps>0 ? LS.eps/(LS.K-1) : 0); y[0] = 1-LS.eps; return y; }
+  function lsReset(){ if (LS.timer){ clearInterval(LS.timer); LS.timer=null; } LS.t=0; LS.z=new Array(LS.K).fill(0); LS.hist=[[0,0]]; LS.checkpoints={}; lsRender(); }
+  function lsStep(n){ const y=lsTarget(); for (let i=0;i<n && LS.t<10000;i++){ const q=softmax(LS.z); for (let k=0;k<LS.K;k++) LS.z[k]-=1.0*(q[k]-y[k]); LS.t++; const gap=LS.z[0]-LS.z[1]; if ([10,100,1000,10000].includes(LS.t)) LS.checkpoints[LS.t]=gap; if (LS.t<=100 || LS.t%25===0) LS.hist.push([LS.t,gap]); } }
+  function lsRender(){
+    const svg=document.getElementById("lsSvg"); svg.innerHTML="";
+    const W=640,H=240,pad=46, X0=pad, X1=W-20, Y0=H-34, Y1=16;
+    const px = t => X0 + Math.log10(1+t)/4.0001*(X1-X0);   // log scale, steps 0..10,000
+    const opt = LS.eps>0 ? Math.log((1-LS.eps)*(LS.K-1)/LS.eps) : null;
+    const ymax = 12; const py = g => Y0 - g/ymax*(Y0-Y1);
+    svg.appendChild(el("line",{x1:X0,y1:Y0,x2:X1,y2:Y0,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:X0,y1:Y0,x2:X0,y2:Y1,stroke:"var(--chalk-dim)"}));
+    [0,2,4,6,8,10,12].forEach(g=>svg.appendChild(el("text",{x:X0-8,y:py(g)+4,"text-anchor":"end","font-size":10,fill:"var(--chalk-dim)"},String(g))));
+    [1,10,100,1000,10000].forEach(t=>{ svg.appendChild(el("line",{x1:px(t),y1:Y0,x2:px(t),y2:Y0+4,stroke:"var(--chalk-dim)"})); svg.appendChild(el("text",{x:px(t),y:Y0+16,"text-anchor":"middle","font-size":10,fill:"var(--chalk-dim)"},t.toLocaleString())); });
+    svg.appendChild(el("text",{x:X1,y:Y0+30,"text-anchor":"end","font-size":10.5,fill:"var(--chalk-dim)"},"training step (log scale)"));
+    if (opt!==null){ svg.appendChild(el("line",{x1:X0,y1:py(opt),x2:X1,y2:py(opt),stroke:"var(--amber)","stroke-dasharray":"6 4"})); svg.appendChild(el("text",{x:X0+6,y:py(opt)-6,"font-size":11,fill:"var(--amber)"},"derived optimum "+opt.toFixed(4))); }
+    const d = LS.hist.map((p,i)=>(i?"L":"M")+px(p[0]).toFixed(1)+" "+py(Math.min(ymax,p[1])).toFixed(1)).join(" ");
+    svg.appendChild(el("path",{d, fill:"none", stroke:"var(--green)", "stroke-width":2.2}));
+    const q=softmax(LS.z), y=lsTarget(); let loss=0, minLoss=0; for (let k=0;k<LS.K;k++){ if (y[k]>0){ loss-=y[k]*Math.log(q[k]); minLoss-=y[k]*Math.log(y[k]); } }
+    document.getElementById("lsT").textContent = LS.t.toLocaleString();
+    document.getElementById("lsGap").textContent = (LS.z[0]-LS.z[1]).toFixed(4);
+    document.getElementById("lsOpt").textContent = opt===null ? "∞ (none)" : opt.toFixed(4);
+    document.getElementById("lsQ").textContent = q[0].toFixed(4)+" / "+loss.toFixed(4)+" ("+minLoss.toFixed(4)+")";
+    const cp = Object.keys(LS.checkpoints).map(k=>"step "+Number(k).toLocaleString()+": "+LS.checkpoints[k].toFixed(4)).join("   ");
+    document.getElementById("lsStory").textContent = "K="+LS.K+", ε="+LS.eps+", target ["+y.slice(0,Math.min(4,LS.K)).map(v=>v.toFixed(4)).join(", ")+(LS.K>4?", ...":"")+"].  Gap checkpoints: "+(cp||"(press Step / Play / Jump to end)");
+  }
+  document.querySelectorAll(".ls-preset").forEach(b=>b.addEventListener("click",()=>{ document.querySelectorAll(".ls-preset").forEach(x=>x.classList.remove("active")); b.classList.add("active"); LS.K=parseInt(b.dataset.k,10); LS.eps=parseFloat(b.dataset.e); lsReset(); }));
+  document.getElementById("lsStep").addEventListener("click",()=>{ lsStep(10); lsRender(); });
+  document.getElementById("lsPlay").addEventListener("click",()=>{ if (LS.timer){ clearInterval(LS.timer); LS.timer=null; return; } if (LS.t>=10000) lsReset(); LS.timer=setInterval(()=>{ const n = LS.t<100 ? 2 : (LS.t<1000 ? 20 : 200); lsStep(n); lsRender(); if (LS.t>=10000){ clearInterval(LS.timer); LS.timer=null; } }, 60); });
+  document.getElementById("lsEnd").addEventListener("click",()=>{ if (LS.timer){ clearInterval(LS.timer); LS.timer=null; } lsStep(10000); lsRender(); });
+  document.getElementById("lsReset").addEventListener("click", lsReset);
+  // Python-verified calibration experiment (numpy run reported in Part 5; the training data is random, so the table is embedded, not re-simulated)
+  const CAL = [ {e:"0 (hard)",tr:1.000,te:0.724,conf:0.949,ece:0.225,nll:1.771}, {e:"0.05",tr:1.000,te:0.674,conf:0.845,ece:0.171,nll:0.983}, {e:"0.1",tr:1.000,te:0.696,conf:0.783,ece:0.088,nll:0.759}, {e:"0.2",tr:0.989,te:0.718,conf:0.690,ece:0.033,nll:0.667}, {e:"0.3",tr:0.989,te:0.731,conf:0.610,ece:0.123,nll:0.692} ];
+  document.getElementById("lsCal").addEventListener("click",()=>{
+    const t=document.getElementById("lsCalTable"); t.style.display="";
+    t.innerHTML="<tr><th>ε</th><th>train acc</th><th>test acc</th><th>avg confidence</th><th>ECE</th><th>test cross-entropy</th></tr>"+CAL.map(r=>`<tr><td>${r.e}</td><td>${r.tr.toFixed(3)}</td><td>${r.te.toFixed(3)}</td><td>${r.conf.toFixed(3)}</td><td class="${r.ece<0.05?"active":""}">${r.ece.toFixed(3)}</td><td>${r.nll.toFixed(3)}</td></tr>`).join("");
+    const sv=document.getElementById("lsCalSvg"); sv.style.display=""; sv.innerHTML="";
+    const base=176, sc=130;
+    CAL.forEach((r,i)=>{ const x=60+i*115; [[r.conf,"var(--coral)"],[r.te,"var(--blue)"]].forEach(([v,c],j)=>{ sv.appendChild(el("rect",{x:x+j*36,y:base-v*sc,width:32,height:v*sc,fill:c,opacity:0.85})); sv.appendChild(el("text",{x:x+j*36+16,y:base-v*sc-5,"text-anchor":"middle","font-size":10.5,fill:"var(--chalk)"},v.toFixed(3))); }); sv.appendChild(el("text",{x:x+34,y:base+16,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"ε = "+r.e)); });
+    sv.appendChild(el("rect",{x:60,y:6,width:12,height:12,fill:"var(--coral)"})); sv.appendChild(el("text",{x:78,y:16,"font-size":11,fill:"var(--chalk-dim)"},"average confidence"));
+    sv.appendChild(el("rect",{x:220,y:6,width:12,height:12,fill:"var(--blue)"})); sv.appendChild(el("text",{x:238,y:16,"font-size":11,fill:"var(--chalk-dim)"},"test accuracy  (3 classes, 40 features, 90 training examples; numpy-verified run)"));
+  });
+  lsReset();
   update();
 })();
 </script>

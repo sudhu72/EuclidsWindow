@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roots of Equations, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12px; color:var(--ink-soft); min-width:150px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:52px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.8; white-space:pre-line; }
+  .cardgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
+  .fieldcard{ border:1px solid var(--line); background:#fff; border-radius:10px; padding:12px 14px; cursor:pointer; transition:border-color .15s, background .15s; }
+  .fieldcard:hover{ background:var(--accent-soft); }
+  .fieldcard.active{ border-color:var(--accent); background:var(--accent-soft); }
+  .fieldcard .name{ font-weight:700; font-size:13px; margin-bottom:4px; }
+  .fieldcard .fn{ font-family:"IBM Plex Mono", monospace; font-size:11.5px; color:var(--accent); }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px; margin-top:24px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion visualizer</div>
+    <h1>Roots of Equations, Made Visible</h1>
+    <p>Three tabs, each companion to <b>Roots of Equations — Why We Hunt for Zero, and What It's Actually For</b>: the same "find where f(x)=0" question relabeled across ten fields, an investment's real rate of return found live, and a ray of light hitting a sphere.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="disguises">Many Disguises</button>
+    <button class="tab" data-tab="irr">IRR Solver</button>
+    <button class="tab" data-tab="ray">Ray–Sphere Intersection</button>
+  </div>
+
+  <!-- TAB 1: MANY DISGUISES -->
+  <div class="panel active" id="panel-disguises">
+    <div class="card">
+      <h2>The same question, ten costumes</h2>
+      <p class="sub">Click a field. The diagram below relabels itself, but the underlying question — "for which input is this function exactly zero?" — never changes.</p>
+      <div class="cardgrid" id="fieldcards"></div>
+      <svg id="disgsvg" viewBox="0 0 480 220"></svg>
+      <div class="caption" id="disg-caption"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: IRR SOLVER -->
+  <div class="panel" id="panel-irr">
+    <div class="card">
+      <h2>What is this investment actually earning you?</h2>
+      <p class="sub">Part 4's worked example. Defaults reproduce it exactly: pay $1,000 today, receive $400 at the end of each of the next 3 years &rarr; IRR &asymp; 9.701%. Drag the cash flows and watch the root move.</p>
+      <div class="row"><label>Initial outlay (year 0)</label><input type="range" id="cf0" min="-2000" max="-200" step="10" value="-1000"><span class="readout" id="cf0-r">-1000</span></div>
+      <div class="row"><label>Year 1 cash flow</label><input type="range" id="cf1" min="0" max="1200" step="10" value="400"><span class="readout" id="cf1-r">400</span></div>
+      <div class="row"><label>Year 2 cash flow</label><input type="range" id="cf2" min="0" max="1200" step="10" value="400"><span class="readout" id="cf2-r">400</span></div>
+      <div class="row"><label>Year 3 cash flow</label><input type="range" id="cf3" min="0" max="1200" step="10" value="400"><span class="readout" id="cf3-r">400</span></div>
+      <svg id="irrsvg" viewBox="0 0 480 260"></svg>
+      <div class="steplog" id="irr-readout"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: RAY-SPHERE -->
+  <div class="panel" id="panel-ray">
+    <div class="card">
+      <h2>Where does a ray of light hit a sphere?</h2>
+      <p class="sub">Part 5's worked example. Defaults reproduce it exactly: ray from the origin along the x-axis, sphere centered at (5,2) radius 3 &rarr; hits at t=2.764 and t=7.236. Drag the ray's direction and the sphere to change the discriminant.</p>
+      <div class="row"><label>Ray direction angle</label><input type="range" id="rayangle" min="-60" max="60" step="1" value="0"><span class="readout" id="rayangle-r">0&deg;</span></div>
+      <div class="row"><label>Sphere center x</label><input type="range" id="cx" min="0" max="10" step="0.2" value="5"><span class="readout" id="cx-r">5.0</span></div>
+      <div class="row"><label>Sphere center y</label><input type="range" id="cy" min="-4" max="4" step="0.2" value="2"><span class="readout" id="cy-r">2.0</span></div>
+      <div class="row"><label>Sphere radius</label><input type="range" id="crad" min="0.5" max="4" step="0.1" value="3"><span class="readout" id="crad-r">3.0</span></div>
+      <svg id="raysvg" viewBox="0 0 480 300"></svg>
+      <div class="steplog" id="ray-readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Roots of Equations — Why We Hunt for Zero, and What It's Actually For</b> (<code>../roots-of-equations.md</code>). All defaults reproduce the tutorial's own Python-verified worked examples exactly.
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+const svgNS='http://www.w3.org/2000/svg';
+function el(tag,attrs){ const e=document.createElementNS(svgNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+// ---------- TAB 1: MANY DISGUISES ----------
+const fields = [
+  {name:'Business', fn:'profit(x) = revenue(x) − cost(x)', q:'When does this product turn profitable?', xlabel:'quantity sold', ylabel:'profit'},
+  {name:'Physics', fn:'height(t)', q:'When does a thrown object land?', xlabel:'time', ylabel:'height'},
+  {name:'Economics', fn:'supply(p) − demand(p)', q:'What price clears the market?', xlabel:'price', ylabel:'excess supply'},
+  {name:'Linear Algebra', fn:'det(A − λI)', q:"A matrix's eigenvalues", xlabel:'λ', ylabel:'det'},
+  {name:'Engineering', fn:'characteristic polynomial', q:'Is this bridge or amplifier stable?', xlabel:'frequency', ylabel:'response'},
+  {name:'Numerical Analysis', fn:'f(x) = x² − 2', q:'√2, with no closed form', xlabel:'x', ylabel:'f(x)'},
+  {name:'Finance', fn:'NPV(r)', q:"What's this investment's real return?", xlabel:'rate r', ylabel:'NPV'},
+  {name:'Computer Graphics', fn:'at² + bt + c', q:'Where does a ray hit a sphere?', xlabel:'t', ylabel:'distance to surface'},
+  {name:'Machine Learning', fn:"L'(w)", q:'Where does training actually stop?', xlabel:'w', ylabel:"L'(w)"},
+];
+let activeField = 6; // Finance, matches the file's central worked examples emphasis
+function renderFieldCards(){
+  const wrap = document.getElementById('fieldcards');
+  wrap.innerHTML='';
+  fields.forEach((f,i)=>{
+    const c=document.createElement('div');
+    c.className='fieldcard'+(i===activeField?' active':'');
+    c.innerHTML='<div class="name">'+f.name+'</div><div class="fn">'+f.fn+'</div>';
+    c.addEventListener('click', ()=>{ activeField=i; renderFieldCards(); renderDisguise(); });
+    wrap.appendChild(c);
+  });
+}
+function renderDisguise(){
+  const f = fields[activeField];
+  const svg = document.getElementById('disgsvg');
+  svg.innerHTML='';
+  const ox=60, oy=110, w=400, h=90;
+  svg.appendChild(el('line',{x1:ox,y1:oy,x2:ox+w,y2:oy,stroke:'#B7BEC4','stroke-width':1.5}));
+  svg.appendChild(el('line',{x1:ox,y1:oy-h,x2:ox,y2:oy+h,stroke:'#B7BEC4','stroke-width':1}));
+  // draw a generic curve crossing zero at a fixed point, with a seeded wiggle keyed to activeField for variety
+  const seed = activeField*37;
+  let d='M '+ox+' '+(oy - 40*Math.sin(seed*0.3));
+  const pts=[];
+  for(let px=0; px<=w; px+=8){
+    const xx = px/w*10 - 5;
+    const val = Math.sin(xx*0.8 + seed*0.5)*0.6 + (xx-1)*0.25;
+    const py = oy - val*40;
+    pts.push([ox+px,py]);
+  }
+  d = 'M '+pts.map(p=>p[0]+' '+p[1]).join(' L ');
+  svg.appendChild(el('path',{d:d, fill:'none', stroke:'#463A73','stroke-width':2.5}));
+  // find zero crossing(s) approx
+  for(let i=1;i<pts.length;i++){
+    const y0=pts[i-1][1]-oy, y1=pts[i][1]-oy;
+    if(y0*y1<0){
+      const t=Math.abs(y0)/(Math.abs(y0)+Math.abs(y1));
+      const zx = pts[i-1][0] + t*(pts[i][0]-pts[i-1][0]);
+      svg.appendChild(el('circle',{cx:zx,cy:oy,r:7,fill:'#D9636B'}));
+      const lbl=el('text',{x:zx+10,y:oy-10,'font-size':'11.5','font-family':'IBM Plex Mono, monospace',fill:'#D9636B','font-weight':'700'});
+      lbl.textContent='root'; svg.appendChild(lbl);
+    }
+  }
+  const xlab=el('text',{x:ox+w-4,y:oy+20,'font-size':'11.5','font-family':'IBM Plex Mono, monospace',fill:'#5B6572','text-anchor':'end'});
+  xlab.textContent = f.xlabel; svg.appendChild(xlab);
+  const flab=el('text',{x:ox+8,y:oy-h+16,'font-size':'12','font-family':'IBM Plex Mono, monospace',fill:'#463A73','font-weight':'700'});
+  flab.textContent = f.fn; svg.appendChild(flab);
+  document.getElementById('disg-caption').textContent = f.name+' — "'+f.q+'"  →  find the root of  '+f.fn;
+}
+renderFieldCards(); renderDisguise();
+
+// ---------- TAB 2: IRR SOLVER ----------
+function npv(r, cfs){ let s=0; for(let t=0;t<cfs.length;t++) s += cfs[t]/Math.pow(1+r,t); return s; }
+function npvPrime(r, cfs){ let s=0; for(let t=0;t<cfs.length;t++) s += -t*cfs[t]/Math.pow(1+r,t+1); return s; }
+function renderIRR(){
+  const cf0=parseFloat(document.getElementById('cf0').value);
+  const cf1=parseFloat(document.getElementById('cf1').value);
+  const cf2=parseFloat(document.getElementById('cf2').value);
+  const cf3=parseFloat(document.getElementById('cf3').value);
+  document.getElementById('cf0-r').textContent=cf0.toFixed(0);
+  document.getElementById('cf1-r').textContent=cf1.toFixed(0);
+  document.getElementById('cf2-r').textContent=cf2.toFixed(0);
+  document.getElementById('cf3-r').textContent=cf3.toFixed(0);
+  const cfs=[cf0,cf1,cf2,cf3];
+
+  // bisection between 0 and 2 (assuming npv(0) and npv(2) have opposite signs; fall back gracefully)
+  let lo=0.0001, hi=3.0;
+  let n0=npv(lo,cfs), n1=npv(hi,cfs);
+  let irr=null, converged=true;
+  if(n0*n1>0){ converged=false; }
+  else{
+    for(let i=0;i<60;i++){
+      const mid=(lo+hi)/2;
+      if(npv(lo,cfs)*npv(mid,cfs)<=0) hi=mid; else lo=mid;
+    }
+    irr=(lo+hi)/2;
+  }
+
+  const svg=document.getElementById('irrsvg'); svg.innerHTML='';
+  const ox=60, oy=140, w=400, h=110;
+  svg.appendChild(el('line',{x1:ox,y1:oy,x2:ox+w,y2:oy,stroke:'#B7BEC4','stroke-width':1.5}));
+  svg.appendChild(el('line',{x1:ox,y1:oy-h,x2:ox,y2:oy+h,stroke:'#B7BEC4','stroke-width':1}));
+  const rMax=0.9;
+  let path=[];
+  let maxAbs=1;
+  for(let i=0;i<=100;i++){
+    const r=i/100*rMax;
+    const v=npv(r,cfs);
+    maxAbs=Math.max(maxAbs, Math.abs(v));
+  }
+  for(let i=0;i<=100;i++){
+    const r=i/100*rMax;
+    const v=npv(r,cfs);
+    const px=ox + (r/rMax)*w;
+    const py=oy - (v/maxAbs)*(h-10);
+    path.push([px,py]);
+  }
+  svg.appendChild(el('path',{d:'M '+path.map(p=>p[0]+' '+p[1]).join(' L '), fill:'none', stroke:'#463A73','stroke-width':2.5}));
+  const xlab=el('text',{x:ox+w-4,y:oy+20,'font-size':'11.5','font-family':'IBM Plex Mono, monospace',fill:'#5B6572','text-anchor':'end'});
+  xlab.textContent='rate r →'; svg.appendChild(xlab);
+  const ylab=el('text',{x:ox+6,y:oy-h+14,'font-size':'11.5','font-family':'IBM Plex Mono, monospace',fill:'#463A73','font-weight':'700'});
+  ylab.textContent='NPV(r)'; svg.appendChild(ylab);
+
+  if(converged){
+    const px=ox+(irr/rMax)*w;
+    svg.appendChild(el('circle',{cx:px,cy:oy,r:8,fill:'#D9636B'}));
+    const lbl=el('text',{x:px+10,y:oy-8,'font-size':'12','font-family':'IBM Plex Mono, monospace',fill:'#D9636B','font-weight':'700'});
+    lbl.textContent='IRR = '+(irr*100).toFixed(3)+'%'; svg.appendChild(lbl);
+  }
+
+  document.getElementById('irr-readout').textContent = converged ?
+    ('cash flows: ['+cfs.join(', ')+']\nNPV(0) = '+npv(0.0001,cfs).toFixed(2)+'   NPV(0.9) = '+npv(0.9,cfs).toFixed(2)+'\nIRR (bisection) = '+(irr*100).toFixed(4)+'%   NPV(IRR) ≈ '+npv(irr,cfs).toFixed(6)) :
+    ('cash flows: ['+cfs.join(', ')+']\nNo sign change in NPV between r=0 and r=3 -- no IRR in this range for these cash flows.');
+}
+['cf0','cf1','cf2','cf3'].forEach(id=> document.getElementById(id).addEventListener('input', renderIRR));
+renderIRR();
+
+// ---------- TAB 3: RAY-SPHERE ----------
+function dot(a,b){ return a[0]*b[0]+a[1]*b[1]; }
+function renderRay(){
+  const angleDeg=parseFloat(document.getElementById('rayangle').value);
+  const cx=parseFloat(document.getElementById('cx').value);
+  const cy=parseFloat(document.getElementById('cy').value);
+  const crad=parseFloat(document.getElementById('crad').value);
+  document.getElementById('rayangle-r').textContent=angleDeg.toFixed(0)+'°';
+  document.getElementById('cx-r').textContent=cx.toFixed(1);
+  document.getElementById('cy-r').textContent=cy.toFixed(1);
+  document.getElementById('crad-r').textContent=crad.toFixed(1);
+
+  const rad = angleDeg*Math.PI/180;
+  const O=[0,0], D=[Math.cos(rad), Math.sin(rad)], C=[cx,cy], r=crad;
+  const OC=[O[0]-C[0], O[1]-C[1]];
+  const a=dot(D,D), b=2*dot(D,OC), c=dot(OC,OC)-r*r;
+  const disc = b*b - 4*a*c;
+
+  const svg=document.getElementById('raysvg'); svg.innerHTML='';
+  const scale=25, ox=90, oy=200;
+  svg.appendChild(el('line',{x1:0,y1:oy,x2:480,y2:oy,stroke:'#D9E0DE'}));
+  svg.appendChild(el('line',{x1:ox,y1:0,x2:ox,y2:300,stroke:'#D9E0DE'}));
+
+  // sphere
+  const scx=ox+cx*scale, scy=oy-cy*scale, srad=r*scale;
+  svg.appendChild(el('circle',{cx:scx,cy:scy,r:srad,fill:'#EFEBFA',stroke:'#5B4B95','stroke-width':2}));
+
+  // ray direction, extend far
+  const farT=12;
+  const rx2=ox+D[0]*farT*scale, ry2=oy-D[1]*farT*scale;
+  const rayColor = disc<0 ? '#9AA3AC' : '#0F8B8D';
+  svg.appendChild(el('line',{x1:ox,y1:oy,x2:rx2,y2:ry2,stroke:rayColor,'stroke-width':2.5}));
+  svg.appendChild(el('circle',{cx:ox,cy:oy,r:5,fill:'#1B2430'}));
+
+  let readout = 'a='+a.toFixed(3)+'  b='+b.toFixed(3)+'  c='+c.toFixed(3)+'\ndiscriminant = b²−4ac = '+disc.toFixed(3)+'\n';
+  if(disc<0){
+    readout += 'No real roots -- the ray misses the sphere entirely.';
+  } else {
+    const t1=(-b-Math.sqrt(disc))/(2*a);
+    const t2=(-b+Math.sqrt(disc))/(2*a);
+    [t1,t2].forEach((t,i)=>{
+      if(t>=0){
+        const hx=O[0]+t*D[0], hy=O[1]+t*D[1];
+        const px=ox+hx*scale, py=oy-hy*scale;
+        svg.appendChild(el('circle',{cx:px,cy:py,r:7,fill: i===0?'#D9636B':'#D9A62E'}));
+      }
+    });
+    readout += (disc===0? 'One repeated root (tangent graze): ' : 'Two roots: ')+'t1='+t1.toFixed(3)+', t2='+t2.toFixed(3);
+  }
+  document.getElementById('ray-readout').textContent = readout;
+}
+['rayangle','cx','cy','crad'].forEach(id=> document.getElementById(id).addEventListener('input', renderRay));
+renderRay();
+</script>
+</body>
+</html>

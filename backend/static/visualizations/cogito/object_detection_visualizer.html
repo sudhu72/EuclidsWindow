@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Object Detection, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#8d9c91;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --violet:#c3a6ff; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:28px 24px 60px;}
+  .wrap{max-width:1100px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 18px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:19px;margin:0 0 10px;}
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:18px;flex-wrap:wrap;}
+  .tab-btn{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 15px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tabpage{display:none;} .tabpage.active{display:block;}
+  button.op{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:#22362c;color:var(--chalk);border-radius:8px;padding:8px 13px;cursor:pointer;}
+  button.op.active{background:var(--amber);color:#1a1405;border-color:var(--amber);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.ctl{font-family:inherit;font-size:12.5px;font-weight:700;border:1px solid var(--blue);background:transparent;color:var(--blue);border-radius:8px;padding:7px 13px;cursor:pointer;}
+  .row{display:flex;justify-content:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
+  .note{text-align:center;font-size:11.5px;color:var(--chalk-dim);margin:-4px 0 10px;}
+  .two{display:flex;gap:18px;align-items:flex-start;}
+  .two > *{flex:1 1 0;min-width:0;}
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:8px auto;width:100%;height:auto;}
+  .calc{background:rgba(0,0,0,0.22);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.65;white-space:pre-wrap;}
+  .big{font-family:'Kalam',cursive;font-size:22px;color:var(--amber);}
+  table.dt{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px;}
+  table.dt th, table.dt td{border:1px solid var(--border);padding:5px 7px;text-align:center;}
+  table.dt th{color:var(--chalk-dim);font-weight:500;}
+  tr.cur td{background:rgba(255,206,84,0.14);}
+  .tp{color:var(--green);font-weight:700;} .fp{color:var(--coral);font-weight:700;}
+  .kept{color:var(--green);font-weight:700;} .removed{color:var(--coral);} .pending{color:var(--blue);}
+  .story{text-align:center;font-size:13px;color:var(--chalk);margin-top:10px;min-height:20px;}
+  .log{font-size:12.5px;line-height:1.6;max-height:260px;overflow:auto;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:14px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Object Detection and Segmentation, live</h1>
+  <p class="sub">Every worked example from <i>object_detection_and_segmentation_feynman.md</i> is a one-click preset. Presets show the finished result. Press Reset, then Step or Play, to watch it happen one move at a time.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="iou">1 · IoU</button>
+    <button class="tab-btn" data-tab="anchor">2 · Anchor boxes</button>
+    <button class="tab-btn" data-tab="nms">3 · NMS</button>
+    <button class="tab-btn" data-tab="yolo">4 · YOLO grid</button>
+    <button class="tab-btn" data-tab="map">5 · mAP</button>
+    <button class="tab-btn" data-tab="unet">6 · U-Net shapes</button>
+    <button class="tab-btn" data-tab="dice">7 · Dice loss</button>
+  </div>
+
+  <!-- ============ IoU ============ -->
+  <div class="tabpage active" id="tab-iou"><div class="panel">
+    <h2>Intersection over Union: overlap ÷ total covered area</h2>
+    <div class="row" id="iouPresets">
+      <button class="op" data-p="partial">Partial overlap (0.2308)</button>
+      <button class="op" data-p="half">Half-width shift (0.3333)</button>
+      <button class="op" data-p="contained">Contained (0.25)</button>
+      <button class="op" data-p="onepx">Off by 1 px (0.6807)</button>
+      <button class="op" data-p="identical">Identical (1)</button>
+      <button class="op" data-p="disjoint">Disjoint (0)</button>
+    </div>
+    <p class="note">Optional: drag either box to move it, or drag its small corner square to resize it (snaps to half units).</p>
+    <div class="two">
+      <svg id="iouSvg" viewBox="0 0 520 520"></svg>
+      <div><div class="calc" id="iouCalc"></div><div class="story" id="iouStory"></div></div>
+    </div>
+  </div></div>
+
+  <!-- ============ Anchors ============ -->
+  <div class="tabpage" id="tab-anchor"><div class="panel">
+    <h2>Anchor boxes: pick the template that fits best, then learn a small nudge</h2>
+    <div class="row" id="anPresets">
+      <button class="op" data-p="all">The standing person vs. 3 anchors</button>
+      <button class="op" data-p="square">Square anchor only</button>
+      <button class="op" data-p="tall">Tall anchor only</button>
+      <button class="op" data-p="wide">Wide anchor only</button>
+      <button class="op" data-p="count">How many anchors per image?</button>
+    </div>
+    <div class="two">
+      <svg id="anSvg" viewBox="0 0 440 440"></svg>
+      <div><div class="calc" id="anCalc"></div><div class="story" id="anStory"></div></div>
+    </div>
+  </div></div>
+
+  <!-- ============ NMS ============ -->
+  <div class="tabpage" id="tab-nms"><div class="panel">
+    <h2>Non-maximum suppression, one comparison at a time</h2>
+    <div class="row" id="nmsPresets">
+      <button class="op" data-p="0.5">Threshold 0.5: keeps A, D, F</button>
+      <button class="op" data-p="0.3">Threshold 0.3: too aggressive</button>
+      <button class="op" data-p="0.9">Threshold 0.9: too lenient</button>
+    </div>
+    <div class="row">
+      <button class="ctl" id="nmsReset">Reset</button><button class="ctl" id="nmsStep">Step</button>
+      <button class="ctl" id="nmsPlay">Play</button><button class="ctl" id="nmsEnd">Jump to end</button>
+    </div>
+    <div class="two">
+      <svg id="nmsSvg" viewBox="0 0 590 440"></svg>
+      <div><table class="dt" id="nmsTable"></table><div class="calc log" id="nmsLog" style="margin-top:10px"></div></div>
+    </div>
+    <div class="story" id="nmsStory"></div>
+  </div></div>
+
+  <!-- ============ YOLO ============ -->
+  <div class="tabpage" id="tab-yolo"><div class="panel">
+    <h2>YOLO: a 7 × 7 grid where each cell answers for objects centred inside it</h2>
+    <div class="row" id="yoPresets">
+      <button class="op" data-p="encode">Encode the dog (row 4, col 3)</button>
+      <button class="op" data-p="decode">Decode a prediction (score 0.72)</button>
+      <button class="op" data-p="size">Output size (7 × 7 × 30 = 1,470)</button>
+    </div>
+    <p class="note">Optional: in "Encode", click anywhere on the image to move the dog's centre there.</p>
+    <div class="two">
+      <svg id="yoSvg" viewBox="0 0 480 480"></svg>
+      <div><div class="calc" id="yoCalc"></div><svg id="yoStrip" viewBox="0 0 480 120" style="display:none"></svg><div class="story" id="yoStory"></div></div>
+    </div>
+  </div></div>
+
+  <!-- ============ mAP ============ -->
+  <div class="tabpage" id="tab-map"><div class="panel">
+    <h2>Average precision: walk down the ranked detections, then take the area</h2>
+    <div class="row" id="mapPresets">
+      <button class="op" data-p="dog50">Dog, IoU ≥ 0.5 (AP 0.65)</button>
+      <button class="op" data-p="dog75">Dog, IoU ≥ 0.75 (AP 0.25)</button>
+      <button class="op" data-p="dog11">Dog, 11-point rule (0.6545)</button>
+      <button class="op" data-p="cat50">Cat, IoU ≥ 0.5 (AP 0.8333)</button>
+      <button class="op" data-p="mean">mAP over dog + cat (0.7417)</button>
+    </div>
+    <div class="row">
+      <button class="ctl" id="mapReset">Reset</button><button class="ctl" id="mapStep">Step</button>
+      <button class="ctl" id="mapPlay">Play</button><button class="ctl" id="mapEnd">Jump to end</button>
+    </div>
+    <div class="two">
+      <div><table class="dt" id="mapTable"></table><div class="calc" id="mapCalc" style="margin-top:10px"></div></div>
+      <svg id="mapSvg" viewBox="0 0 460 400"></svg>
+    </div>
+    <div class="story" id="mapStory"></div>
+  </div></div>
+
+  <!-- ============ U-Net ============ -->
+  <div class="tabpage" id="tab-unet"><div class="panel">
+    <h2>U-Net: shrink to understand, grow back to locate, skip connections carry the detail</h2>
+    <div class="row" id="unPresets">
+      <button class="op" data-p="u572">Original U-Net: 572 → 388</button>
+      <button class="op" data-p="u256">Padded U-Net: 256 → 256</button>
+      <button class="op" data-p="tc1">Transposed conv 1-D: [1,2] → [1,2,3,4,2]</button>
+      <button class="op" data-p="tc2">Transposed conv 2-D: 2×2 → 4×4</button>
+    </div>
+    <div class="row">
+      <button class="ctl" id="unReset">Reset</button><button class="ctl" id="unStep">Step</button>
+      <button class="ctl" id="unPlay">Play</button><button class="ctl" id="unEnd">Jump to end</button>
+    </div>
+    <svg id="unSvg" viewBox="0 0 760 420"></svg>
+    <div class="calc log" id="unLog" style="max-height:none"></div>
+    <div class="story" id="unStory"></div>
+  </div></div>
+
+  <!-- ============ Dice ============ -->
+  <div class="tabpage" id="tab-dice"><div class="panel">
+    <h2>Dice and IoU: score the object's overlap, not the sea of background</h2>
+    <div class="row" id="diPresets">
+      <button class="op" data-p="shift">Shifted square (Dice 0.6667, IoU 0.5)</button>
+      <button class="op" data-p="tumour">1% tumour: 99% accuracy, Dice 0</button>
+      <button class="op" data-p="soft">Soft Dice on 4 pixels (0.8293)</button>
+    </div>
+    <p class="note">Optional: in "Shifted square", click cells to toggle the prediction on or off.</p>
+    <div class="two">
+      <svg id="diSvg" viewBox="0 0 420 420"></svg>
+      <div><div class="calc" id="diCalc"></div><div class="story" id="diStory"></div></div>
+    </div>
+  </div></div>
+
+  <footer>
+    Companion to <b>Object Detection and Segmentation</b>
+    (<a href="../deep_learning/object_detection_and_segmentation_feynman.md">object_detection_and_segmentation_feynman.md</a>). Open directly in any browser. No install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, text){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; return e; }
+function clear(n){ while (n.firstChild) n.removeChild(n.firstChild); }
+function $(id){ return document.getElementById(id); }
+function fx(x, d){ return Number(x).toFixed(d); }
+const C = { chalk:"#f4f1e8", dim:"#8d9c91", amber:"#ffce54", coral:"#ff8266", green:"#8fd19e", blue:"#7fb3d5", violet:"#c3a6ff" };
+function iou(a, b){
+  const ix = Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0]));
+  const iy = Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+  const I = ix * iy, areaA = (a[2]-a[0])*(a[3]-a[1]), areaB = (b[2]-b[0])*(b[3]-b[1]), U = areaA + areaB - I;
+  return { I, U, areaA, areaB, ix, iy, v: U > 0 ? I / U : 0,
+           box: (ix > 0 && iy > 0) ? [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])] : null };
+}
+function markActive(groupId, p){ document.querySelectorAll("#" + groupId + " .op").forEach(b => b.classList.toggle("active", b.dataset.p === p)); }
+function bindPresets(groupId, fn){ document.querySelectorAll("#" + groupId + " .op").forEach(b => b.addEventListener("click", () => fn(b.dataset.p))); }
+function Stepper(prefix, getN, render){
+  const s = { i: 0, timer: null };
+  s.stop = () => { if (s.timer) clearInterval(s.timer); s.timer = null; };
+  s.go = i => { s.i = Math.max(0, Math.min(getN(), i)); render(s.i); };
+  $(prefix + "Reset").onclick = () => { s.stop(); s.go(0); };
+  $(prefix + "Step").onclick = () => { s.stop(); s.go(s.i + 1); };
+  $(prefix + "End").onclick = () => { s.stop(); s.go(getN()); };
+  $(prefix + "Play").onclick = () => { s.stop(); if (s.i >= getN()) s.go(0);
+    s.timer = setInterval(() => { if (s.i >= getN()) { s.stop(); return; } s.go(s.i + 1); }, 750); };
+  return s;
+}
+function svgPoint(svg, evt){ const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+
+// tabs (also honours #hash)
+function showTab(name){
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".tabpage").forEach(p => p.classList.toggle("active", p.id === "tab-" + name));
+}
+document.querySelectorAll(".tab-btn").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+// ================= 1. IoU =================
+const IOU_PRESETS = {
+  partial:   { A:[1,1,5,5], B:[3,2,7,6], story:"Each box is 16 square units; they share 6. IoU = 6 / 26 = 0.2308." },
+  half:      { A:[0,0,4,4], B:[2,0,6,4], story:"B covers exactly half of A, yet IoU is only 1/3, because the union grew by the half B sticks out." },
+  contained: { A:[0,0,4,4], B:[1,1,3,3], story:"B lies entirely inside A. 'How much of B is covered' would say 100%; IoU says 0.25, because A claims 12 extra units." },
+  onepx:     { A:[0,0,10,10], B:[1,1,11,11], story:"A 10 × 10 box off by just one unit in x and y: IoU 81 / 119 = 0.6807, comfortably above the usual 0.5 bar." },
+  identical: { A:[0,0,4,4], B:[0,0,4,4], story:"Perfect match: intersection = union, IoU = 1." },
+  disjoint:  { A:[0,0,2,2], B:[3,3,5,5], story:"No shared area: IoU = 0, however close the boxes are." }
+};
+const iouState = { A:[1,1,5,5], B:[3,2,7,6], preset:"partial" };
+const IS = 40, IM = 20; // 40 px per unit, 20 px margin; world 0..12
+function renderIoU(){
+  const svg = $("iouSvg"); clear(svg);
+  for (let k = 0; k <= 12; k++){
+    svg.appendChild(el("line", { x1:IM+k*IS, y1:IM, x2:IM+k*IS, y2:IM+12*IS, stroke:"rgba(244,241,232,0.07)" }));
+    svg.appendChild(el("line", { x1:IM, y1:IM+k*IS, x2:IM+12*IS, y2:IM+k*IS, stroke:"rgba(244,241,232,0.07)" }));
+    if (k % 2 === 0){ svg.appendChild(el("text", { x:IM+k*IS, y:IM-6, fill:C.dim, "font-size":10, "text-anchor":"middle" }, k)); svg.appendChild(el("text", { x:IM-4, y:IM+k*IS+4, fill:C.dim, "font-size":10, "text-anchor":"end" }, k)); }
+  }
+  const r = iou(iouState.A, iouState.B);
+  [["A", iouState.A, C.blue], ["B", iouState.B, C.coral]].forEach(([nm, b, col]) => {
+    const g = el("g", { "data-box":nm, style:"cursor:move" });
+    g.appendChild(el("rect", { x:IM+b[0]*IS, y:IM+b[1]*IS, width:(b[2]-b[0])*IS, height:(b[3]-b[1])*IS, fill:col, "fill-opacity":0.16, stroke:col, "stroke-width":2.5 }));
+    g.appendChild(el("text", { x:IM+b[0]*IS+5, y:IM+b[1]*IS+15, fill:col, "font-size":13, "font-weight":700 }, nm));
+    svg.appendChild(g);
+    svg.appendChild(el("rect", { "data-handle":nm, x:IM+b[2]*IS-6, y:IM+b[3]*IS-6, width:12, height:12, fill:col, style:"cursor:nwse-resize" }));
+  });
+  if (r.box){ const q = r.box; svg.appendChild(el("rect", { x:IM+q[0]*IS, y:IM+q[1]*IS, width:(q[2]-q[0])*IS, height:(q[3]-q[1])*IS, fill:C.amber, "fill-opacity":0.55, "pointer-events":"none" })); }
+  const A = iouState.A, B = iouState.B;
+  $("iouCalc").innerHTML =
+    `A = (${A.join(", ")})   area ${A[2]-A[0]} × ${A[3]-A[1]} = ${r.areaA}\n` +
+    `B = (${B.join(", ")})   area ${B[2]-B[0]} × ${B[3]-B[1]} = ${r.areaB}\n\n` +
+    `intersection = ${r.ix} wide × ${r.iy} tall = <b style="color:${C.amber}">${r.I}</b>\n` +
+    `union = ${r.areaA} + ${r.areaB} − ${r.I} = ${r.U}\n\n` +
+    `IoU = ${r.I} / ${r.U} = <span class="big" id="iouVal">${fx(r.v, 4)}</span>\n` +
+    `counts as a correct detection at IoU ≥ 0.5?  <b style="color:${r.v >= 0.5 ? C.green : C.coral}">${r.v >= 0.5 ? "yes" : "no"}</b>`;
+  $("iouStory").textContent = iouState.preset === "custom" ? "Your own boxes. The amber area is the intersection." : IOU_PRESETS[iouState.preset].story;
+  markActive("iouPresets", iouState.preset);
+}
+function setIoU(p){ const q = IOU_PRESETS[p]; iouState.A = q.A.slice(); iouState.B = q.B.slice(); iouState.preset = p; renderIoU(); }
+bindPresets("iouPresets", setIoU);
+(function(){
+  const svg = $("iouSvg"); let drag = null;
+  const snap = v => Math.round(v * 2) / 2;
+  svg.addEventListener("pointerdown", e => {
+    const t = e.target, h = t.getAttribute("data-handle"), g = t.parentNode && t.parentNode.getAttribute && t.parentNode.getAttribute("data-box");
+    const p = svgPoint(svg, e), wx = (p.x - IM) / IS, wy = (p.y - IM) / IS;
+    if (h) drag = { nm:h, mode:"resize" };
+    else if (g) drag = { nm:g, mode:"move", ox:wx, oy:wy, start:iouState[g].slice() };
+    if (drag){ svg.setPointerCapture(e.pointerId); e.preventDefault(); }
+  });
+  svg.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const p = svgPoint(svg, e), wx = (p.x - IM) / IS, wy = (p.y - IM) / IS, b = iouState[drag.nm];
+    if (drag.mode === "move"){
+      const w = drag.start[2]-drag.start[0], h = drag.start[3]-drag.start[1];
+      let x = snap(drag.start[0] + wx - drag.ox), y = snap(drag.start[1] + wy - drag.oy);
+      x = Math.max(0, Math.min(12 - w, x)); y = Math.max(0, Math.min(12 - h, y));
+      iouState[drag.nm] = [x, y, x + w, y + h];
+    } else {
+      b[2] = Math.max(b[0] + 0.5, Math.min(12, snap(wx))); b[3] = Math.max(b[1] + 0.5, Math.min(12, snap(wy)));
+    }
+    iouState.preset = "custom"; renderIoU();
+  });
+  const end = () => { drag = null; };
+  svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
+})();
+
+// ================= 2. Anchors =================
+const GT = [70, 40, 130, 160];
+const ANCHORS = { square:{ w:80, h:80, col:C.blue }, tall:{ w:56, h:112, col:C.green }, wide:{ w:112, h:56, col:C.violet } };
+function anchorBox(a){ return [96 - a.w/2, 96 - a.h/2, 96 + a.w/2, 96 + a.h/2]; }
+function renderAnchor(p){
+  markActive("anPresets", p);
+  const svg = $("anSvg"); clear(svg);
+  const S = 2, M = 20; // world 0..200 → 400 px
+  for (let k = 0; k <= 200; k += 20){
+    svg.appendChild(el("line", { x1:M+k*S, y1:M, x2:M+k*S, y2:M+400, stroke:"rgba(244,241,232,0.06)" }));
+    svg.appendChild(el("line", { x1:M, y1:M+k*S, x2:M+400, y2:M+k*S, stroke:"rgba(244,241,232,0.06)" }));
+  }
+  const rect = (b, col, extra) => el("rect", Object.assign({ x:M+b[0]*S, y:M+b[1]*S, width:(b[2]-b[0])*S, height:(b[3]-b[1])*S, fill:"none", stroke:col, "stroke-width":2.5 }, extra || {}));
+  const names = p === "all" || p === "count" ? ["square", "tall", "wide"] : [p];
+  let best = null, lines = "";
+  names.forEach(n => { const r = iou(GT, anchorBox(ANCHORS[n])); if (!best || r.v > best.v) best = { n, v:r.v }; });
+  names.forEach(n => { const a = ANCHORS[n], b = anchorBox(a), r = iou(GT, b), isBest = names.length > 1 && n === best.n;
+    svg.appendChild(rect(b, a.col, { "stroke-dasharray": isBest ? "" : "7 5", "stroke-width": isBest ? 3.5 : 2 }));
+    lines += `${n.padEnd(6)} anchor ${String(a.w).padStart(3)} × ${String(a.h).padEnd(3)}  IoU = <b style="color:${a.col}">${fx(r.v, 4)}</b>${isBest ? "  ← responsible" : ""}\n`; });
+  svg.appendChild(rect(GT, C.amber, { "stroke-width":3, fill:C.amber, "fill-opacity":0.10 }));
+  svg.appendChild(el("text", { x:M+GT[0]*S+4, y:M+GT[1]*S-6, fill:C.amber, "font-size":12, "font-weight":700 }, "true box: person 60 × 120"));
+  svg.appendChild(el("circle", { cx:M+100*S, cy:M+100*S, r:4, fill:C.amber }));
+  svg.appendChild(el("circle", { cx:M+96*S, cy:M+96*S, r:4, fill:C.chalk }));
+  svg.appendChild(el("text", { x:M+96*S-8, y:M+96*S-8, fill:C.chalk, "font-size":11, "text-anchor":"end" }, "anchor centre (96, 96)"));
+  let txt = `true box: centre (100, 100), 60 wide × 120 tall\nanchors: centre (96, 96)\n\n${lines}`;
+  const a = ANCHORS[names.length > 1 ? best.n : p];
+  txt += `\nnudge the ${names.length > 1 ? best.n : p} anchor learns to predict:\n` +
+    `tx = (100 − 96) / ${a.w} = ${fx(4 / a.w, 4)}\nty = (100 − 96) / ${a.h} = ${fx(4 / a.h, 4)}\n` +
+    `tw = ln(60 / ${a.w}) = ${fx(Math.log(60 / a.w), 4)}\nth = ln(120 / ${a.h}) = ${fx(Math.log(120 / a.h), 4)}`;
+  if (p === "count") txt = `Faster R-CNN: 3 sizes × 3 shapes = 9 anchors per position\nfeature map ≈ 60 × 40 = 2,400 positions\n\n60 × 40 × 9 = <span class="big" id="anCount">${(60*40*9).toLocaleString("en-US")}</span> anchors per image\n\nAlmost all of them sit on background. That flood of candidates is why NMS (tab 3) exists.\n\n` + lines;
+  $("anCalc").innerHTML = txt;
+  $("anStory").textContent = p === "all" ? "The tall anchor fits the standing person best (0.8147), so it alone is trained to report this person, using four small nudges near zero." :
+    p === "count" ? "Every one of these 21,600 anchors gets an 'object or not?' score in every image." :
+    `Only the ${p} anchor shown: IoU ${fx(iou(GT, anchorBox(ANCHORS[p])).v, 4)}. The bigger the nudges, the harder they are to learn; the tall anchor needs the smallest.`;
+}
+bindPresets("anPresets", renderAnchor);
+
+// ================= 3. NMS =================
+const NMS_BOXES = [
+  { n:"A", b:[10,10,50,50], s:0.95, what:"dog #1" }, { n:"B", b:[12,8,52,48], s:0.90, what:"duplicate of A" },
+  { n:"C", b:[8,14,46,54], s:0.80, what:"duplicate of A" }, { n:"D", b:[60,20,100,70], s:0.85, what:"the cat" },
+  { n:"E", b:[64,24,102,72], s:0.70, what:"duplicate of D" }, { n:"F", b:[24,14,64,54], s:0.60, what:"dog #2, behind A" } ];
+const BOXCOL = { A:"#7fb3d5", B:"#9ecbe6", C:"#5f97bd", D:"#c3a6ff", E:"#a88be6", F:"#ffce54" };
+const nmsState = { thr:0.5, events:[] };
+function nmsEvents(thr){
+  let rem = NMS_BOXES.slice().sort((a, b) => b.s - a.s).map(o => o.n); const ev = [];
+  const get = n => NMS_BOXES.find(o => o.n === n);
+  while (rem.length){ const best = rem.shift(); ev.push({ t:"keep", a:best }); const nxt = [];
+    rem.forEach(r => { const v = iou(get(best).b, get(r).b).v; const remove = v > thr; ev.push({ t:"cmp", a:best, b:r, v, remove }); if (!remove) nxt.push(r); });
+    rem = nxt; }
+  return ev;
+}
+function renderNMS(i){
+  const ev = nmsState.events.slice(0, i), status = {}; NMS_BOXES.forEach(o => status[o.n] = "pending");
+  ev.forEach(e => { if (e.t === "keep") status[e.a] = "kept"; else if (e.remove) status[e.b] = "removed"; });
+  const last = ev[ev.length - 1];
+  const svg = $("nmsSvg"); clear(svg); const S = 5, M = 20;
+  NMS_BOXES.forEach(o => { const st = status[o.n], col = BOXCOL[o.n], b = o.b;
+    const hl = last && (last.a === o.n || last.b === o.n);
+    svg.appendChild(el("rect", { x:M+b[0]*S, y:M+b[1]*S, width:(b[2]-b[0])*S, height:(b[3]-b[1])*S, fill: st === "kept" ? col : "none", "fill-opacity":0.13,
+      stroke: st === "removed" ? C.coral : col, "stroke-width": hl ? 4.5 : (st === "kept" ? 3 : 1.6), "stroke-dasharray": st === "removed" ? "6 5" : "", opacity: st === "removed" ? 0.45 : 1 }));
+  });
+  NMS_BOXES.forEach(o => { const b = o.b, st = status[o.n];
+    // label positions in world units: [x, y, anchor]
+    const lp = { A:[11,13.5,"start"], B:[52,6,"end"], C:[8,58,"start"], D:[61,24.5,"start"], E:[102,76,"end"], F:[63,52.5,"end"] }[o.n];
+    svg.appendChild(el("text", { x:M+lp[0]*S, y:M+lp[1]*S, "text-anchor":lp[2], fill: st === "removed" ? C.coral : BOXCOL[o.n], "font-size":13, "font-weight":700 }, `${o.n} ${o.s.toFixed(2)}${st === "kept" ? " ✓" : st === "removed" ? " ✗" : ""}`)); });
+  svg.appendChild(el("text", { x:M, y:432, fill:C.dim, "font-size":11 }, `threshold ${nmsState.thr}: remove a box if its IoU with a kept box is above ${nmsState.thr}`));
+  const sorted = NMS_BOXES.slice().sort((a, b) => b.s - a.s);
+  $("nmsTable").innerHTML = "<tr><th>box</th><th>confidence</th><th>really</th><th>status</th></tr>" +
+    sorted.map(o => `<tr${last && (last.a === o.n || last.b === o.n) ? ' class="cur"' : ""}><td style="color:${BOXCOL[o.n]};font-weight:700">${o.n}</td><td>${o.s.toFixed(2)}</td><td>${o.what}</td><td class="${status[o.n]}">${status[o.n]}</td></tr>`).join("");
+  let k = 0;
+  $("nmsLog").innerHTML = ev.length ? ev.map(e => e.t === "keep" ? `<b class="kept">keep ${e.a}</b> (highest confidence left)` :
+      `  ${++k}: IoU(${e.a}, ${e.b}) = ${fx(e.v, 3)} ${e.remove ? "&gt; " + nmsState.thr + ' → <span class="removed">remove ' + e.b + "</span>" : "≤ " + nmsState.thr + " → " + e.b + " stays"}`).join("\n")
+    : "Sorted by confidence: A 0.95, B 0.90, D 0.85, C 0.80, E 0.70, F 0.60.\nPress Step.";
+  const kept = NMS_BOXES.filter(o => status[o.n] === "kept").map(o => o.n);
+  const done = i >= nmsState.events.length;
+  $("nmsStory").innerHTML = !done ? `Step ${i} of ${nmsState.events.length}.` :
+    `Result: <b id="nmsResult">${kept.join(", ")}</b>. ` + (nmsState.thr === 0.5 ? "Exactly the three real objects: dog #1, the cat, and dog #2." :
+      nmsState.thr === 0.3 ? "Dog #2 (F) was lost: its IoU 0.413 with A is above 0.3. Too low a threshold deletes real objects that stand close together." :
+      "Nothing overlaps above 0.9, so every duplicate survives. Too high a threshold removes nothing.");
+}
+const nmsStep = Stepper("nms", () => nmsState.events.length, renderNMS);
+function setNMS(p){ nmsState.thr = parseFloat(p); nmsState.events = nmsEvents(nmsState.thr); markActive("nmsPresets", p); nmsStep.stop(); nmsStep.go(nmsState.events.length); }
+bindPresets("nmsPresets", setNMS);
+
+// ================= 4. YOLO =================
+const yoState = { mode:"encode", cx:200, cy:300, w:128, h:192 };
+function renderYOLO(){
+  markActive("yoPresets", yoState.mode);
+  const svg = $("yoSvg"); clear(svg); const M = 16, cell = 64;
+  svg.appendChild(el("rect", { x:M, y:M, width:448, height:448, fill:"rgba(127,179,213,0.05)", stroke:C.dim }));
+  let hr = -1, hc = -1;
+  if (yoState.mode === "encode"){ hc = Math.floor(yoState.cx / cell); hr = Math.floor(yoState.cy / cell); }
+  if (yoState.mode === "decode"){ hr = 2; hc = 5; }
+  if (yoState.mode === "size"){ hr = 0; hc = 0; }
+  if (hr >= 0) svg.appendChild(el("rect", { x:M+hc*cell, y:M+hr*cell, width:cell, height:cell, fill:C.amber, "fill-opacity":0.28 }));
+  for (let k = 0; k <= 7; k++){
+    svg.appendChild(el("line", { x1:M+k*cell, y1:M, x2:M+k*cell, y2:M+448, stroke:"rgba(244,241,232,0.22)" }));
+    svg.appendChild(el("line", { x1:M, y1:M+k*cell, x2:M+448, y2:M+k*cell, stroke:"rgba(244,241,232,0.22)" }));
+    if (k < 7){ svg.appendChild(el("text", { x:M+k*cell+cell/2, y:M-4, fill:C.dim, "font-size":10, "text-anchor":"middle" }, "col " + k));
+      svg.appendChild(el("text", { x:M+3, y:M+k*cell+12, fill:C.dim, "font-size":9 }, "r" + k)); }
+  }
+  const strip = $("yoStrip"); strip.style.display = "none";
+  if (yoState.mode === "encode"){
+    const { cx, cy, w, h } = yoState;
+    svg.appendChild(el("rect", { x:M+cx-w/2, y:M+cy-h/2, width:w, height:h, fill:"none", stroke:C.green, "stroke-width":3 }));
+    svg.appendChild(el("circle", { cx:M+cx, cy:M+cy, r:5, fill:C.coral }));
+    svg.appendChild(el("text", { x:M+cx-w/2+4, y:M+cy-h/2-6, fill:C.green, "font-size":13, "font-weight":700 }, "dog"));
+    const x = (cx - hc*cell) / cell, y = (cy - hr*cell) / cell;
+    $("yoCalc").innerHTML = `dog box: centre (${cx}, ${cy}), ${w} × ${h} pixels, image 448 × 448, cells 448 / 7 = 64 px\n\n` +
+      `column = floor(${cx} / 64) = ${hc}\nrow    = floor(${cy} / 64) = ${hr}   → <b style="color:${C.amber}">cell (row ${hr}, col ${hc})</b> is responsible\n\n` +
+      `x = (${cx} − ${hc}·64) / 64 = <b>${fx(x, 4)}</b>   (centre inside the cell)\ny = (${cy} − ${hr}·64) / 64 = <b>${fx(y, 4)}</b>\n` +
+      `w = ${w} / 448 = <b>${fx(w / 448, 4)}</b>   (size relative to the whole image)\nh = ${h} / 448 = <b>${fx(h / 448, 4)}</b>`;
+    $("yoStory").textContent = (cx === 200 && cy === 300) ? "The red dot (the box centre) lands in row 4, col 3, so only that cell is trained to report this dog." : "Your own centre: the highlighted cell is now the responsible one.";
+  } else if (yoState.mode === "decode"){
+    const cx = (5 + 0.5) * cell, cy = (2 + 0.5) * cell, s = 0.25 * 448;
+    svg.appendChild(el("rect", { x:M+cx-s/2, y:M+cy-s/2, width:s, height:s, fill:C.violet, "fill-opacity":0.12, stroke:C.violet, "stroke-width":3 }));
+    svg.appendChild(el("circle", { cx:M+cx, cy:M+cy, r:5, fill:C.coral }));
+    $("yoCalc").innerHTML = `cell (row 2, col 5) outputs x = 0.5, y = 0.5, w = 0.25, h = 0.25\nconfidence = 0.8, P(dog) = 0.9\n\n` +
+      `centre = ((5 + 0.5)·64, (2 + 0.5)·64) = (${cx}, ${cy})\nsize   = 0.25 · 448 = ${s} pixels\n` +
+      `box    = (${cx - s/2}, ${cy - s/2}, ${cx + s/2}, ${cy + s/2})\n\nscore for "dog" = 0.8 × 0.9 = <span class="big" id="yoScore">${fx(0.8 * 0.9, 2)}</span>`;
+    $("yoStory").textContent = "Decoding reverses the encoding. Afterwards, NMS removes duplicates from neighbouring cells.";
+  } else {
+    $("yoCalc").innerHTML = `every one of the 7 × 7 = 49 cells outputs:\n  2 boxes × (x, y, w, h, confidence) = 10 numbers\n  20 class probabilities (PASCAL VOC)  = 20 numbers\n  per cell: 2 × 5 + 20 = 30\n\n` +
+      `whole output = 7 × 7 × 30 = <span class="big" id="yoSize">${(7 * 7 * (2 * 5 + 20)).toLocaleString("en-US")}</span> numbers, always`;
+    strip.style.display = "block"; clear(strip);
+    const labels = ["x","y","w","h","c","x","y","w","h","c"]; const cw = 15;
+    for (let k = 0; k < 30; k++){
+      const col = k < 5 ? C.green : k < 10 ? C.violet : C.blue;
+      strip.appendChild(el("rect", { x:15 + k*cw, y:30, width:cw - 2, height:34, fill:col, "fill-opacity":0.5 }));
+      strip.appendChild(el("text", { x:15 + k*cw + 6, y:52, fill:C.chalk, "font-size":9, "text-anchor":"middle" }, k < 10 ? labels[k] : String(k - 9)));
+    }
+    strip.appendChild(el("text", { x:15, y:20, fill:C.green, "font-size":11 }, "box 1"));
+    strip.appendChild(el("text", { x:90, y:20, fill:C.violet, "font-size":11 }, "box 2"));
+    strip.appendChild(el("text", { x:165, y:20, fill:C.blue, "font-size":11 }, "20 class probabilities"));
+    strip.appendChild(el("text", { x:15, y:90, fill:C.dim, "font-size":11 }, "the 30 numbers of the highlighted cell (row 0, col 0)"));
+    $("yoStory").textContent = "A fixed-size output gives a variable-length answer: every cell always answers, and most say 'nothing here' with low confidence.";
+  }
+}
+function setYOLO(p){ yoState.mode = p; if (p === "encode"){ yoState.cx = 200; yoState.cy = 300; } renderYOLO(); }
+bindPresets("yoPresets", setYOLO);
+$("yoSvg").addEventListener("click", e => { if (yoState.mode !== "encode") return; const p = svgPoint($("yoSvg"), e);
+  yoState.cx = Math.max(1, Math.min(447, Math.round(p.x - 16))); yoState.cy = Math.max(1, Math.min(447, Math.round(p.y - 16))); renderYOLO(); });
+
+// ================= 5. mAP =================
+const DOG = { name:"dog", ngt:4, dets:[ { s:0.95, v:0.82, g:1 }, { s:0.90, v:0.71, g:2 }, { s:0.80, v:0.65, g:1 }, { s:0.70, v:0.30, g:1 }, { s:0.60, v:0.55, g:3 }, { s:0.40, v:0.00, g:null } ] };
+const CAT = { name:"cat", ngt:2, dets:[ { s:0.90, v:0.78, g:1 }, { s:0.70, v:0.20, g:1 }, { s:0.50, v:0.66, g:2 } ] };
+function judge(cls, thr){
+  const used = {}; let tp = 0, fp = 0;
+  return cls.dets.map(d => { let ok = false, why;
+    if (d.g !== null && d.v >= thr && !used[d.g]){ ok = true; used[d.g] = true; why = `IoU ${fx(d.v, 2)} ≥ ${thr} with ${cls.name} ${d.g}`; }
+    else if (d.g === null || d.v === 0) why = "matches nothing";
+    else if (d.v < thr) why = `IoU ${fx(d.v, 2)} < ${thr}`;
+    else why = `${cls.name} ${d.g} already claimed (duplicate)`;
+    if (ok) tp++; else fp++;
+    return { d, ok, why, P: tp / (tp + fp), R: tp / cls.ngt }; });
+}
+function apAll(rows, ngt){
+  const R = [0].concat(rows.map(r => r.R)).concat([1]), P = [0].concat(rows.map(r => r.P)).concat([0]);
+  for (let i = P.length - 2; i >= 0; i--) P[i] = Math.max(P[i], P[i + 1]);
+  let a = 0; const steps = [];
+  for (let i = 1; i < R.length; i++) if (R[i] !== R[i - 1]){ a += (R[i] - R[i - 1]) * P[i]; steps.push([R[i - 1], R[i], P[i]]); }
+  return { a, steps };
+}
+function ap11(rows){ let s = 0, pts = [];
+  for (let k = 0; k <= 10; k++){ const t = k / 10; let m = 0; rows.forEach(r => { if (r.R >= t - 1e-9) m = Math.max(m, r.P); }); s += m; pts.push([t, m]); }
+  return { a: s / 11, pts }; }
+const mapState = { p:"dog50" };
+function mapConf(){ const p = mapState.p;
+  if (p === "mean") return { classes:[DOG, CAT], thr:0.5 };
+  return { classes:[p === "cat50" ? CAT : DOG], thr: p === "dog75" ? 0.75 : 0.5, eleven: p === "dog11" }; }
+function mapN(){ const c = mapConf(); return c.classes.reduce((s, k) => s + k.dets.length, 0); }
+function renderMap(i){
+  const conf = mapConf(), svg = $("mapSvg"); clear(svg);
+  const X0 = 50, Y0 = 350, W = 380, H = 310, px = r => X0 + r * W, py = p => Y0 - p * H;
+  for (let k = 0; k <= 4; k++){ const t = k / 4;
+    svg.appendChild(el("line", { x1:px(0), y1:py(t), x2:px(1), y2:py(t), stroke:"rgba(244,241,232,0.08)" }));
+    svg.appendChild(el("text", { x:X0 - 6, y:py(t) + 4, fill:C.dim, "font-size":10, "text-anchor":"end" }, t.toFixed(2)));
+    svg.appendChild(el("text", { x:px(t), y:Y0 + 16, fill:C.dim, "font-size":10, "text-anchor":"middle" }, t.toFixed(2))); }
+  svg.appendChild(el("line", { x1:X0, y1:Y0, x2:X0 + W, y2:Y0, stroke:C.dim })); svg.appendChild(el("line", { x1:X0, y1:Y0, x2:X0, y2:Y0 - H, stroke:C.dim }));
+  svg.appendChild(el("text", { x:X0 + W / 2, y:Y0 + 34, fill:C.dim, "font-size":11, "text-anchor":"middle" }, "recall (fraction of real objects found)"));
+  svg.appendChild(el("text", { x:14, y:Y0 - H / 2, fill:C.dim, "font-size":11, "text-anchor":"middle", transform:`rotate(-90 14 ${Y0 - H / 2})` }, "precision"));
+  let left = i, html = "", calc = "", aps = [];
+  const cols = [C.blue, C.violet];
+  conf.classes.forEach((cls, ci) => {
+    const all = judge(cls, conf.thr), n = Math.max(0, Math.min(cls.dets.length, left)); left -= n;
+    const rows = all.slice(0, n), col = cols[ci];
+    const full = n === cls.dets.length;
+    if (rows.length){
+      const st = apAll(rows, cls.ngt);
+      if (!conf.eleven) st.steps.forEach(s => { if (s[2] > 0) svg.appendChild(el("rect", { x:px(s[0]), y:py(s[2]), width:(s[1] - s[0]) * W, height:s[2] * H, fill:col, "fill-opacity":0.16 })); });
+      let d = `M ${px(0)} ${py(1)}`; rows.forEach(r => { d += ` L ${px(r.R)} ${py(r.P)}`; });
+      svg.appendChild(el("path", { d, fill:"none", stroke:col, "stroke-width":1.5, "stroke-dasharray":"4 4" }));
+      rows.forEach((r, k) => svg.appendChild(el("circle", { cx:px(r.R), cy:py(r.P), r: k === rows.length - 1 ? 7 : 5, fill: r.ok ? C.green : C.coral, stroke:col, "stroke-width":2 })));
+      if (conf.eleven && full){ const e = ap11(rows); e.pts.forEach(q => svg.appendChild(el("rect", { x:px(q[0]) - 4, y:py(q[1]) - 4, width:8, height:8, fill:C.amber })));
+        calc += `11-point rule: max precision at recall ≥ 0, 0.1, …, 1:\n  ${e.pts.map(q => fx(q[1], 1)).join(", ")}\n  sum ${fx(e.pts.reduce((s, q) => s + q[1], 0), 1)} / 11 = <span class="big" id="mapVal">${fx(e.a, 4)}</span>\n(the exact staircase area is ${fx(st.a, 4)})\n`; }
+      else if (full){ aps.push(st.a);
+        calc += `AP(${cls.name}) = ${st.steps.filter(s => s[2] > 0).map(s => `${fx(s[1] - s[0], 2)}·${fx(s[2], 3)}`).join(" + ")} = <b style="color:${col}">${fx(st.a, 4)}</b>\n`; }
+      else calc += `${cls.name}: ${n} of ${cls.dets.length} detections judged so far\n`;
+    }
+    html += `<tr><th colspan="6" style="color:${col}">${cls.name}: ${cls.ngt} real ${cls.name}s, IoU threshold ${conf.thr}</th></tr><tr><th>#</th><th>conf.</th><th>why</th><th>TP/FP</th><th>precision</th><th>recall</th></tr>` +
+      all.map((r, k) => k < n ? `<tr${k === n - 1 && left === 0 && i > 0 ? ' class="cur"' : ""}><td>${k + 1}</td><td>${fx(r.d.s, 2)}</td><td>${r.why}</td><td class="${r.ok ? "tp" : "fp"}">${r.ok ? "TP" : "FP"}</td><td>${fx(r.P, 3)}</td><td>${fx(r.R, 2)}</td></tr>` :
+        `<tr style="opacity:.35"><td>${k + 1}</td><td>${fx(r.d.s, 2)}</td><td>?</td><td></td><td></td><td></td></tr>`).join("");
+  });
+  if (conf.classes.length === 2 && aps.length === 2) calc += `\nmAP@0.5 = (${fx(aps[0], 4)} + ${fx(aps[1], 4)}) / 2 = <span class="big" id="mapVal">${fx((aps[0] + aps[1]) / 2, 4)}</span>`;
+  else if (aps.length === 1 && conf.classes.length === 1) calc += `\n<span class="big" id="mapVal">AP = ${fx(aps[0], 4)}</span>`;
+  $("mapTable").innerHTML = html; $("mapCalc").innerHTML = calc || "Press Step to judge the first (most confident) detection.";
+  const done = i >= mapN();
+  $("mapStory").textContent = !done ? `Detection ${i} of ${mapN()}. Green dots are true positives, red are false positives; the shaded staircase is the area so far.` :
+    { dog50:"Precision stays 1.0 up to recall 0.5, then 0.6 up to 0.75. Dog 4 is never found, so the last quarter of recall adds nothing: AP = 0.65.",
+      dog75:"At the stricter IoU 0.75 only the first detection fits tightly enough. Recall is stuck at 0.25, so AP collapses to 0.25.",
+      dog11:"The older PASCAL VOC 2007 rule samples the staircase at 11 recall points (amber squares): 0.6545 instead of the exact area 0.65.",
+      cat50:"Cat: TP, FP, TP over 2 real cats. AP = 0.5·1.0 + 0.5·0.667 = 0.8333.",
+      mean:"mAP is simply the average of the per-class APs." }[mapState.p];
+}
+const mapStep = Stepper("map", mapN, renderMap);
+function setMap(p){ mapState.p = p; markActive("mapPresets", p); mapStep.stop(); mapStep.go(mapN()); }
+bindPresets("mapPresets", setMap);
+
+// ================= 6. U-Net and transposed convolution =================
+function unetOps(s0, padded){
+  const ops = [], k = padded ? 0 : 2, enc = []; let s = s0, ch = 64;
+  ops.push({ kind:"in", txt:`input image ${s} × ${s} × 1 channel` });
+  for (let L = 0; L <= 4; L++){
+    const a = s; s -= k; ops.push({ L, kind:"enc", s, ch, txt:`level ${L}: 3×3 conv${padded ? " (padding 1)" : ""}: ${a} → ${s}, ${ch} channels` });
+    const b = s; s -= k; ops.push({ L, kind:"enc", s, ch, txt:`level ${L}: 3×3 conv${padded ? " (padding 1)" : ""}: ${b} → ${s}, ${ch} channels` });
+    enc[L] = s;
+    if (L < 4){ ops.push({ L, kind:"pool", s:s / 2, txt:`2×2 max-pool: ${s} → ${s / 2}` }); s /= 2; ch *= 2; }
+  }
+  for (let L = 3; L >= 0; L--){
+    const up = (s - 1) * 2 + 2;
+    ops.push({ L, kind:"up", s:up, txt:`up: 2×2 transposed conv, stride 2: (${s} − 1)·2 + 2 = ${up}; channels ${ch} → ${ch / 2}` }); ch /= 2;
+    if (!padded) ops.push({ L, kind:"skip", s:up, txt:`skip: crop the copied level-${L} map ${enc[L]} → ${up} (trim ${(enc[L] - up) / 2} px per side), concatenate: ${ch} + ${ch} = ${2 * ch} channels` });
+    else ops.push({ L, kind:"skip", s:up, txt:`skip: level-${L} map is already ${enc[L]}, concatenate: ${ch} + ${ch} = ${2 * ch} channels` });
+    const a = up; s = up - k; ops.push({ L, kind:"dec", s, ch, txt:`level ${L}: 3×3 conv: ${a} → ${s}, ${2 * ch} → ${ch} channels` });
+    const b = s; s -= k; ops.push({ L, kind:"dec", s, ch, txt:`level ${L}: 3×3 conv: ${b} → ${s}, ${ch} channels` });
+  }
+  ops.push({ kind:"out", s, txt:`1×1 conv → output ${s} × ${s} × 2 classes (one score per pixel per class)` });
+  return ops;
+}
+function tconvFrames(x, kern, stride, twoD){
+  const frames = [];
+  if (!twoD){ const out = new Array((x.length - 1) * stride + kern.length).fill(0);
+    frames.push({ out:out.slice(), stamps:[], txt:`input [${x.join(", ")}], kernel [${kern.join(", ")}], stride ${stride}\noutput length = (${x.length} − 1)·${stride} + ${kern.length} = ${out.length}` });
+    x.forEach((v, i) => { const st = kern.map(k => k * v); st.forEach((q, j) => out[i * stride + j] += q);
+      frames.push({ out:out.slice(), stamps:x.slice(0, i + 1).map((vv, ii) => ({ at:ii * stride, vals:kern.map(k => k * vv) })), txt:`input ${v} stamps ${v} × [${kern.join(", ")}] = [${st.join(", ")}] at positions ${i * stride}–${i * stride + kern.length - 1}` }); });
+    frames.push({ out:out.slice(), stamps:frames[frames.length - 1].stamps, final:true, txt:`sum of the stamps: [${out.join(", ")}]   (overlapping positions add)` });
+  } else { const H = x.length, Wd = x[0].length, kh = kern.length, kw = kern[0].length, oh = (H - 1) * stride + kh, ow = (Wd - 1) * stride + kw;
+    const out = Array.from({ length:oh }, () => new Array(ow).fill(0));
+    frames.push({ out:out.map(r => r.slice()), txt:`input [[${x.map(r => r.join(",")).join("],[")}]], kernel 2×2 of ones, stride ${stride}\noutput size = (${H} − 1)·${stride} + ${kh} = ${oh} by ${ow}` });
+    for (let i = 0; i < H; i++) for (let j = 0; j < Wd; j++){ for (let a = 0; a < kh; a++) for (let b = 0; b < kw; b++) out[i * stride + a][j * stride + b] += x[i][j] * kern[a][b];
+      frames.push({ out:out.map(r => r.slice()), hi:[i * stride, j * stride], txt:`input ${x[i][j]} at (${i}, ${j}) stamps a 2×2 block of ${x[i][j]}s at rows ${i * stride}–${i * stride + 1}, cols ${j * stride}–${j * stride + 1}` }); }
+    frames.push({ out:out.map(r => r.slice()), final:true, txt:`result: [[${out.map(r => r.join(",")).join("],\n         [")}]]` });
+  }
+  return frames;
+}
+const unState = { p:"u572", ops:[], frames:[] };
+function unN(){ return unState.p.startsWith("u") ? unState.ops.length - 1 : unState.frames.length - 1; }
+function renderUNet(i){
+  const svg = $("unSvg"); clear(svg);
+  if (unState.p.startsWith("u")){
+    const ops = unState.ops, done = ops.slice(0, i + 1), cur = ops[i];
+    const pos = (kind, L) => { const BW = 120, BH = 44;
+      if (kind === "enc" && L === 4) return { x:320, y:330, w:BW, h:BH };
+      return kind === "enc" ? { x:14 + L * 70, y:18 + L * 78, w:BW, h:BH } : { x:760 - 14 - BW - L * 70, y:18 + L * 78, w:BW, h:BH }; };
+    const last = {}; done.forEach(o => { if (o.kind === "enc" || o.kind === "dec") last[o.kind + o.L] = o; if (o.kind === "skip") last["skip" + o.L] = o; });
+    for (let L = 0; L <= 4; L++){ ["enc", "dec"].forEach(kind => { if (kind === "dec" && L === 4) return; const q = pos(kind, L), o = last[kind + L];
+      const isCur = cur && cur.L === L && (cur.kind === kind || (kind === "enc" && cur.kind === "pool") || (kind === "dec" && (cur.kind === "up" || cur.kind === "skip")));
+      svg.appendChild(el("rect", { x:q.x, y:q.y, width:q.w, height:q.h, rx:6, fill: o ? (kind === "enc" ? "rgba(127,179,213,0.25)" : "rgba(143,209,158,0.25)") : "rgba(244,241,232,0.03)", stroke: isCur ? C.amber : C.dim, "stroke-width": isCur ? 3 : 1 }));
+      svg.appendChild(el("text", { x:q.x + q.w / 2, y:q.y + 18, fill:C.chalk, "font-size":12, "text-anchor":"middle", "font-weight":700 }, o ? `${o.s} × ${o.s}` : "?"));
+      svg.appendChild(el("text", { x:q.x + q.w / 2, y:q.y + 35, fill:C.dim, "font-size":10.5, "text-anchor":"middle" }, o ? `${o.ch} channels` : (L === 4 ? "bottom" : kind === "enc" ? "encoder " + L : "decoder " + L))); }); }
+    for (let L = 0; L <= 3; L++){ if (!last["skip" + L]) continue; const a = pos("enc", L), b = pos("dec", L);
+      svg.appendChild(el("line", { x1:a.x + a.w, y1:a.y + 22, x2:b.x, y2:b.y + 22, stroke:C.amber, "stroke-width":2, "stroke-dasharray":"7 4" }));
+      svg.appendChild(el("text", { x:(a.x + a.w + b.x) / 2, y: L === 3 ? a.y + 60 : a.y + 16, fill:C.amber, "font-size":10.5, "text-anchor":"middle" }, unState.p === "u572" ? `copy + crop → ${last["skip" + L].s}` : "copy")); }
+    svg.appendChild(el("text", { x:380, y:404, fill:C.dim, "font-size":11, "text-anchor":"middle" }, "down = 2×2 max-pool (halve) · up = 2×2 transposed conv, stride 2 (double) · dashed = skip connection"));
+    $("unLog").innerHTML = done.map((o, k) => k === i ? `<b style="color:${C.amber}">${o.txt}</b>` : o.txt).join("\n");
+    $("unLog").scrollTop = 1e6;
+    $("unStory").innerHTML = i < ops.length - 1 ? `Step ${i} of ${ops.length - 1}.` :
+      (unState.p === "u572" ? `Done: 572 in, <b id="unOut">388</b> out. Unpadded convs trim 2 px each, so the output is smaller and the skips must be cropped.` :
+        `Done: 256 in, <b id="unOut">256</b> out. With padding every conv keeps the size, so levels are clean halvings and no cropping is needed.`);
+  } else {
+    const fr = unState.frames[i], twoD = unState.p === "tc2";
+    if (!twoD){ const cw = 70, x0 = 200;
+      svg.appendChild(el("text", { x:20, y:50, fill:C.dim, "font-size":13 }, "input")); [1, 2].forEach((v, k) => { svg.appendChild(el("rect", { x:x0 + k * 2 * cw, y:28, width:cw - 6, height:36, fill:"rgba(127,179,213,0.3)", stroke:C.blue })); svg.appendChild(el("text", { x:x0 + k * 2 * cw + 32, y:52, fill:C.chalk, "font-size":15, "text-anchor":"middle" }, v)); });
+      (fr.stamps || []).forEach((st, k) => { svg.appendChild(el("text", { x:20, y:130 + k * 60, fill:C.dim, "font-size":13 }, `stamp ${k + 1}`));
+        st.vals.forEach((q, j) => { svg.appendChild(el("rect", { x:x0 + (st.at + j) * cw, y:108 + k * 60, width:cw - 6, height:36, fill: k ? "rgba(195,166,255,0.3)" : "rgba(143,209,158,0.3)", stroke: k ? C.violet : C.green }));
+          svg.appendChild(el("text", { x:x0 + (st.at + j) * cw + 32, y:132 + k * 60, fill:C.chalk, "font-size":15, "text-anchor":"middle" }, q)); }); });
+      svg.appendChild(el("text", { x:20, y:290, fill:C.dim, "font-size":13 }, "output (sum)"));
+      fr.out.forEach((q, j) => { svg.appendChild(el("rect", { x:x0 + j * cw, y:268, width:cw - 6, height:40, fill: fr.final ? "rgba(255,206,84,0.35)" : "rgba(244,241,232,0.06)", stroke: j === 2 ? C.amber : C.dim, "stroke-width": j === 2 ? 2.5 : 1 }));
+        svg.appendChild(el("text", { x:x0 + j * cw + 32, y:294, fill:C.chalk, "font-size":16, "text-anchor":"middle", "font-weight":700 }, q)); });
+      svg.appendChild(el("text", { x:x0 + 2 * cw + 32, y:330, fill:C.amber, "font-size":11, "text-anchor":"middle" }, "overlap: 1 + 2"));
+    } else { const cs = 60, x0 = 360, y0 = 60;
+      const inp = [[1, 2], [3, 4]];
+      svg.appendChild(el("text", { x:60, y:40, fill:C.dim, "font-size":13 }, "input 2×2"));
+      inp.forEach((r, a) => r.forEach((v, b) => { svg.appendChild(el("rect", { x:60 + b * cs, y:y0 + a * cs, width:cs - 4, height:cs - 4, fill:"rgba(127,179,213,0.3)", stroke:C.blue }));
+        svg.appendChild(el("text", { x:60 + b * cs + 28, y:y0 + a * cs + 35, fill:C.chalk, "font-size":17, "text-anchor":"middle" }, v)); }));
+      svg.appendChild(el("text", { x:x0, y:40, fill:C.dim, "font-size":13 }, "output 4×4 (stride 2, kernel 2×2 of ones)"));
+      fr.out.forEach((r, a) => r.forEach((v, b) => { const hi = fr.hi && a >= fr.hi[0] && a < fr.hi[0] + 2 && b >= fr.hi[1] && b < fr.hi[1] + 2;
+        svg.appendChild(el("rect", { x:x0 + b * cs, y:y0 + a * cs, width:cs - 4, height:cs - 4, fill: hi ? "rgba(255,206,84,0.4)" : v ? "rgba(143,209,158,0.22)" : "rgba(244,241,232,0.04)", stroke:C.dim }));
+        svg.appendChild(el("text", { x:x0 + b * cs + 28, y:y0 + a * cs + 35, fill:C.chalk, "font-size":17, "text-anchor":"middle" }, v)); }));
+    }
+    $("unLog").innerHTML = unState.frames.slice(0, i + 1).map((f, k) => k === i ? `<b style="color:${C.amber}">${f.txt}</b>` : f.txt).join("\n");
+    $("unStory").innerHTML = i < unState.frames.length - 1 ? `Step ${i} of ${unState.frames.length - 1}.` :
+      (twoD ? `Done: each input value became a 2×2 block, <b id="unOut">4×4</b>. With learned kernel weights, the network learns how to fill in detail.` :
+        `Done: <b id="unOut">[${fr.out.join(", ")}]</b>. Stamps placed 2 apart overlap at position 2, and overlaps add.`);
+  }
+}
+const unStep = Stepper("un", unN, renderUNet);
+function setUNet(p){ unState.p = p;
+  if (p === "u572") unState.ops = unetOps(572, false); else if (p === "u256") unState.ops = unetOps(256, true);
+  else if (p === "tc1") unState.frames = tconvFrames([1, 2], [1, 2, 1], 2, false);
+  else unState.frames = tconvFrames([[1, 2], [3, 4]], [[1, 1], [1, 1]], 2, true);
+  markActive("unPresets", p); unStep.stop(); unStep.go(unN()); }
+bindPresets("unPresets", setUNet);
+
+// ================= 7. Dice =================
+const diState = { p:"shift", truth:[], pred:[] };
+function shiftMasks(){ const T = [], P = []; for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++){ T.push(r >= 1 && r <= 3 && c >= 1 && c <= 3 ? 1 : 0); P.push(r >= 1 && r <= 3 && c >= 2 && c <= 4 ? 1 : 0); } return { T, P }; }
+function renderDice(){
+  markActive("diPresets", diState.p === "custom" ? "" : diState.p);
+  const svg = $("diSvg"); clear(svg);
+  if (diState.p === "shift" || diState.p === "custom"){
+    const cs = 64, M = 18; let I = 0, sT = 0, sP = 0;
+    diState.truth.forEach((t, k) => { const p = diState.pred[k], r = Math.floor(k / 6), c = k % 6; I += t * p; sT += t; sP += p;
+      const fill = t && p ? C.green : p ? C.blue : t ? "rgba(255,206,84,0.15)" : "rgba(244,241,232,0.03)";
+      const g = el("rect", { "data-cell":k, x:M + c * cs, y:M + r * cs, width:cs - 3, height:cs - 3, fill, "fill-opacity": t && p ? 0.6 : p ? 0.45 : 1, stroke: t ? C.amber : C.dim, "stroke-width": t ? 2.5 : 1, style:"cursor:pointer" });
+      svg.appendChild(g); });
+    const dice = sT + sP ? 2 * I / (sT + sP) : 1, j = sT + sP - I ? I / (sT + sP - I) : 1;
+    $("diCalc").innerHTML = `amber outline = true object (|T| = ${sT})\nblue = predicted only, green = predicted and true\n|P| = ${sP},  overlap |P ∩ T| = ${I}\n\n` +
+      `Dice = 2·${I} / (${sP} + ${sT}) = <span class="big" id="diVal">${fx(dice, 4)}</span>\nIoU  = ${I} / (${sP} + ${sT} − ${I}) = <b>${fx(j, 4)}</b>\ncheck: 2·IoU / (1 + IoU) = ${fx(2 * j / (1 + j), 4)}\n\nDice loss = 1 − Dice = ${fx(1 - dice, 4)}`;
+    $("diStory").textContent = diState.p === "shift" ? "The prediction is the true square shifted one column right: 6 of 9 pixels overlap." : "Your own prediction. Click cells to toggle them.";
+  } else if (diState.p === "tumour"){
+    const M = 10, S = 4; svg.appendChild(el("rect", { x:M, y:M, width:400, height:400, fill:"rgba(127,179,213,0.10)", stroke:C.dim }));
+    svg.appendChild(el("rect", { x:M + 55 * S, y:M + 30 * S, width:10 * S, height:10 * S, fill:"none", stroke:C.amber, "stroke-width":2.5 }));
+    svg.appendChild(el("text", { x:M + 55 * S + 20, y:M + 30 * S - 8, fill:C.amber, "font-size":12, "text-anchor":"middle" }, "tumour: 10 × 10 = 100 px"));
+    svg.appendChild(el("text", { x:M + 200, y:M + 300, fill:C.dim, "font-size":13, "text-anchor":"middle" }, "100 × 100 scan; network predicts 'background' everywhere"));
+    $("diCalc").innerHTML = `scan: 100 × 100 = 10,000 pixels, tumour = 100 pixels (1%)\nprediction: background everywhere (|P| = 0)\n\npixel accuracy = 9,900 / 10,000 = <b style="color:${C.green}">${fx(9900 / 10000 * 100, 2)}%</b>\n` +
+      `Dice = 2·0 / (0 + 100) = <span class="big" id="diVal">${fx(0, 4)}</span>`;
+    $("diStory").textContent = "Accuracy says 99%; Dice says the network found nothing, which is the truth.";
+  } else {
+    const p = [0.9, 0.8, 0.3, 0.1], t = [1, 1, 0, 0], cs = 90, M = 25;
+    p.forEach((v, k) => { svg.appendChild(el("rect", { x:M + k * cs, y:120, width:cs - 8, height:cs - 8, fill:C.blue, "fill-opacity":v * 0.8, stroke: t[k] ? C.amber : C.dim, "stroke-width": t[k] ? 3 : 1 }));
+      svg.appendChild(el("text", { x:M + k * cs + 41, y:170, fill:C.chalk, "font-size":17, "text-anchor":"middle", "font-weight":700 }, "p=" + v));
+      svg.appendChild(el("text", { x:M + k * cs + 41, y:240, fill: t[k] ? C.amber : C.dim, "font-size":13, "text-anchor":"middle" }, "truth " + t[k])); });
+    svg.appendChild(el("text", { x:210, y:90, fill:C.dim, "font-size":12, "text-anchor":"middle" }, "brighter = more confident 'object'; amber outline = truly object"));
+    const sp = p.reduce((a, b) => a + b, 0), st = 2, spt = p.reduce((a, v, k) => a + v * t[k], 0), d = 2 * spt / (sp + st), jj = spt / (sp + st - spt);
+    $("diCalc").innerHTML = `Σ p·t = 0.9 + 0.8 = ${fx(spt, 1)}\nΣ p = ${fx(sp, 1)},  Σ t = ${st}\n\nsoft Dice = 2·${fx(spt, 1)} / (${fx(sp, 1)} + ${st}) = <span class="big" id="diVal">${fx(d, 4)}</span>\nDice loss = 1 − ${fx(d, 4)} = ${fx(1 - d, 4)}\n\n` +
+      `soft IoU = ${fx(spt, 1)} / (${fx(sp + st, 1)} − ${fx(spt, 1)}) = ${fx(jj, 4)}\nIoU loss = ${fx(1 - jj, 4)}`;
+    $("diStory").textContent = "Using probabilities instead of hard 0/1 pixels makes the score smooth, so gradient descent can push it up.";
+  }
+}
+function setDice(p){ diState.p = p; if (p === "shift"){ const m = shiftMasks(); diState.truth = m.T; diState.pred = m.P; } renderDice(); }
+bindPresets("diPresets", setDice);
+$("diSvg").addEventListener("click", e => { const k = e.target.getAttribute && e.target.getAttribute("data-cell"); if (k === null || k === undefined) return;
+  diState.pred[+k] = 1 - diState.pred[+k]; diState.p = "custom"; renderDice(); });
+
+// initial state
+setIoU("partial"); renderAnchor("all"); setNMS("0.5"); setYOLO("encode"); setMap("dog50"); setUNet("u572"); setDice("shift");
+const h = (location.hash || "").replace("#", ""); if (h && document.getElementById("tab-" + h)) showTab(h);
+})();
+</script>
+</body>
+</html>

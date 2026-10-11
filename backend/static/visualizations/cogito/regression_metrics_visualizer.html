@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regression metrics, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --purple:#b39ddb; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{overflow-x:hidden;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.5;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  h3{font-family:'Kalam',cursive;font-size:15px;font-weight:400;margin:14px 0 4px;color:var(--chalk-dim);text-align:center;}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--amber);color:#1b1500;border-color:var(--amber);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .hint{text-align:center;font-size:11.5px;color:var(--chalk-dim);margin:-6px 0 10px;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:10px auto;width:100%;height:auto;max-width:100%;}
+  svg text{font-family:'JetBrains Mono',monospace;}
+
+  .tscroll{width:100%;overflow-x:auto;}
+  table.dtbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.dtbl th, table.dtbl td{border:1px solid var(--border);padding:6px 7px;text-align:center;white-space:nowrap;}
+  table.dtbl th{color:var(--chalk-dim);font-weight:700;}
+  table.dtbl tr.tot td{font-weight:700;border-top:2px solid var(--chalk-dim);}
+  table.dtbl td.big{color:var(--coral);font-weight:700;}
+  table.dtbl td.sq{color:var(--blue);}
+  table.dtbl td.lin{color:var(--amber);}
+  .minibar{display:inline-block;height:9px;border-radius:2px;background:var(--coral);vertical-align:middle;margin-left:6px;}
+  .caption{font-size:11.5px;color:var(--chalk-dim);text-align:center;margin-top:6px;}
+
+  .metric-row{display:flex;justify-content:center;gap:12px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 12px;min-width:120px;flex:1 1 120px;max-width:200px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+  .metric.purple .num{color:var(--purple);}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:640px){
+    body{padding:20px 12px 40px;}
+    .panel{padding:14px 12px;}
+    .twocol{grid-template-columns:1fr;}
+    h1{font-size:22px;}
+    table.dtbl{font-size:10px;}
+    table.dtbl th, table.dtbl td{padding:4px 2px;white-space:normal;word-break:break-word;}
+    .minibar{display:block;margin:3px auto 0;}
+    .col-actual{display:none;}
+  }
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk);margin-top:12px;min-height:20px;line-height:1.55;white-space:pre-line;}
+  .story-line b{color:var(--amber);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Regression Metrics, Live: MAE, MSE, RMSE, Huber</h1>
+  <p class="sub">Companion to <b>model_evaluation_metrics_feynman.md</b>, Part 7. Five houses, actual prices 200, 220, 250, 270, 300 (thousands). Every button below plays a fully worked scenario: all the arithmetic is done on screen, nothing to calculate by hand. error = prediction &minus; actual.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="t1">1. Same MAE, different RMSE</button>
+    <button class="tab-btn" data-tab="t2">2. Huber's &delta;</button>
+    <button class="tab-btn" data-tab="t3">3. Mean vs median</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <div class="tabpage active" id="t1">
+    <div class="panel">
+      <h2>Same MAE, different RMSE</h2>
+      <div class="row">
+        <button class="op" id="btnA">Model A</button>
+        <button class="op" id="btnB">Model B</button>
+        <button class="op" id="btnAB">Compare A vs B</button>
+      </div>
+      <div class="hint">Model A: a little off on every house. Model B: perfect on four, badly wrong on one.</div>
+      <h3 id="barTitle">Each house's error (prediction &minus; actual)</h3>
+      <svg id="errSvg" viewBox="0 0 640 260"></svg>
+      <div id="tables1"></div>
+      <div id="metrics1"></div>
+      <div class="story-line" id="story1"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div class="tabpage" id="t2">
+    <div class="panel">
+      <h2>Huber's &delta;: where squaring stops</h2>
+      <div class="row">
+        <button class="op" id="btnD5">&delta; = 5</button>
+        <button class="op" id="btnD15">&delta; = 15</button>
+        <button class="op" id="btnD40">&delta; = 40</button>
+      </div>
+      <div class="hint">Applied to Model B's errors: 0, 0, 0, 0, +40. Blue band = squared zone (|e| &le; &delta;); amber = straight-line zone.</div>
+      <svg id="huberSvg" viewBox="0 0 640 300"></svg>
+      <div id="tables2"></div>
+      <div id="metrics2"></div>
+      <div class="story-line" id="story2"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3 -->
+  <div class="tabpage" id="t3">
+    <div class="panel">
+      <h2>Mean vs median: the best single constant</h2>
+      <div class="row">
+        <button class="op" id="btnCmse">Best constant under MSE</button>
+        <button class="op" id="btnCmae">Best constant under MAE</button>
+        <button class="op" id="btnCno">Remove the outlier (100)</button>
+      </div>
+      <div class="hint" id="dataHint">Data: 1, 2, 3, 4, 100. The model must predict one number c for every point. Every c from 0 to 30 is scanned.</div>
+      <h3 id="lineTitle">The data on a number line (100 is off the chart, shown at the arrow)</h3>
+      <svg id="lineSvg" viewBox="0 0 640 90"></svg>
+      <div class="twocol">
+        <div><h3>MSE(c) = mean of (x &minus; c)&sup2;</h3><svg id="mseSvg" viewBox="0 0 320 230"></svg></div>
+        <div><h3>MAE(c) = mean of |x &minus; c|</h3><svg id="maeSvg" viewBox="0 0 320 230"></svg></div>
+      </div>
+      <div id="tables3"></div>
+      <div id="metrics3"></div>
+      <div class="story-line" id="story3"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>model_evaluation_metrics_feynman.md</b>, Part 7
+    (<a href="../supervised/model_evaluation_metrics_feynman.md">model_evaluation_metrics_feynman.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const ACTUAL = [200,220,250,270,300];
+  const PRED = { A:[210,215,245,280,290], B:[200,220,250,270,340] };
+  const COLOR = { A:'#7fb3d5', B:'#ff8266' };
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // ---------- math ----------
+  function errors(pred){ return pred.map((p,i)=>p-ACTUAL[i]); }
+  function huber(e,d){ const a=Math.abs(e); return a<=d ? 0.5*e*e : d*(a-0.5*d); }
+  function mean(a){ return a.reduce((s,v)=>s+v,0)/a.length; }
+  function metrics(errs,d){
+    const mae = mean(errs.map(Math.abs));
+    const mse = mean(errs.map(e=>e*e));
+    return { mae, mse, rmse:Math.sqrt(mse), huber:mean(errs.map(e=>huber(e,d))) };
+  }
+  window.__rm = { errors, huber, metrics, PRED, ACTUAL };
+
+  function fmt(v,dp){ const s = (+v).toFixed(dp===undefined?2:dp); return s.indexOf('.')<0 ? s : s.replace(/0+$/,'').replace(/\.$/,''); }
+  function f1(v){ return (+v).toFixed(1); }
+  function f2(v){ return (+v).toFixed(2); }
+  function sgn(e){ return e>0 ? '+'+e : (e<0 ? '−'+Math.abs(e) : '0'); }
+  function num(v){ return v.toLocaleString('en-US'); }
+
+  function el(tag, attrs, parent, text){
+    const n = document.createElementNS(NS, tag);
+    for(const k in attrs) n.setAttribute(k, attrs[k]);
+    if(text!==undefined) n.textContent = text;
+    if(parent) parent.appendChild(n);
+    return n;
+  }
+  function clear(svg){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+  function setActive(ids, on){ ids.forEach(id=>document.getElementById(id).classList.toggle('active', id===on)); }
+
+  // ---------- tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+  window.showTab = function(id){ document.querySelector('.tab-btn[data-tab="'+id+'"]').click(); };
+
+  // ---------- TAB 1 ----------
+  function drawErrorBars(models){
+    const svg = document.getElementById('errSvg'); clear(svg);
+    const W=640,H=260, L=50, R=20, T=20, B=40;
+    const maxE = 45;
+    const y = v => T + (H-T-B)/2 - v/maxE*(H-T-B)/2;
+    [-40,-20,0,20,40].forEach(v=>{
+      el('line',{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:v===0?'rgba(244,241,232,0.5)':'rgba(244,241,232,0.08)','stroke-width':v===0?1.5:1},svg);
+      el('text',{x:L-8,y:y(v)+4,'text-anchor':'end','font-size':11,fill:'#7f8f83'},svg,v>0?'+'+v:String(v));
+    });
+    const slot = (W-L-R)/5;
+    const bw = models.length===2 ? slot*0.3 : slot*0.5;
+    for(let i=0;i<5;i++){
+      const cx = L + slot*(i+0.5);
+      el('text',{x:cx,y:H-20,'text-anchor':'middle','font-size':11,fill:'#f4f1e8'},svg,'house '+(i+1));
+      el('text',{x:cx,y:H-6,'text-anchor':'middle','font-size':10,fill:'#7f8f83'},svg,'actual '+ACTUAL[i]);
+      models.forEach((m,k)=>{
+        const e = errors(PRED[m])[i];
+        const x = models.length===2 ? cx + (k===0?-bw-2:2) : cx - bw/2;
+        const y0 = y(0), y1 = y(e);
+        if(e!==0){
+          el('rect',{x:x,y:Math.min(y0,y1),width:bw,height:Math.abs(y1-y0),fill:COLOR[m],rx:2},svg);
+        } else {
+          el('rect',{x:x,y:y0-1.5,width:bw,height:3,fill:COLOR[m]},svg);
+        }
+        el('text',{x:x+bw/2,y:e>=0? y1-5 : y1+13,'text-anchor':'middle','font-size':11,'font-weight':700,fill:COLOR[m]},svg,sgn(e));
+      });
+    }
+    if(models.length===2){
+      el('rect',{x:L+10,y:T-4,width:10,height:10,fill:COLOR.A},svg);
+      el('text',{x:L+25,y:T+5,'font-size':11,fill:'#f4f1e8'},svg,'Model A');
+      el('rect',{x:L+100,y:T-4,width:10,height:10,fill:COLOR.B},svg);
+      el('text',{x:L+115,y:T+5,'font-size':11,fill:'#f4f1e8'},svg,'Model B');
+    }
+  }
+
+  function houseTable(m, d){
+    const errs = errors(PRED[m]);
+    let h = '<h3 style="color:'+COLOR[m]+'">Model '+m+', house by house (Huber uses &delta; = '+d+')</h3><div class="tscroll"><table class="dtbl"><tr><th>house</th><th class="col-actual">actual</th><th class="col-actual">pred</th><th>error e</th><th>|e|</th><th>e&sup2;</th><th>Huber(e)</th></tr>';
+    let sa=0, ss=0, sh=0;
+    errs.forEach((e,i)=>{
+      const a=Math.abs(e), s=e*e, hu=huber(e,d);
+      sa+=a; ss+=s; sh+=hu;
+      const w = Math.max(s>0?2:0, Math.round(s/1600*70));
+      const hnote = a<=d ? '&frac12;&middot;'+a+'&sup2; = '+fmt(hu) : d+'&middot;('+a+' &minus; '+fmt(d/2)+') = '+fmt(hu);
+      h += '<tr><td>'+(i+1)+'</td><td class="col-actual">'+ACTUAL[i]+'</td><td class="col-actual">'+PRED[m][i]+'</td><td>'+sgn(e)+'</td><td>'+a+'</td>'+
+           '<td class="'+(s>=1000?'big':'')+'">'+num(s)+'<span class="minibar" style="width:'+w+'px"></span></td>'+
+           '<td class="'+(a<=d?'sq':'lin')+'">'+hnote+'</td></tr>';
+    });
+    const M = metrics(errs,d);
+    h += '<tr class="tot"><td>sum &rarr; mean (&divide; 5)</td><td class="col-actual"></td><td class="col-actual"></td><td></td><td>'+sa+' &rarr; '+f1(M.mae)+'</td><td>'+num(ss)+' &rarr; '+fmt(M.mse)+'</td><td>'+fmt(sh)+' &rarr; '+f1(M.huber)+'</td></tr>';
+    h += '</table></div><div class="caption">RMSE = &radic;MSE = &radic;'+fmt(M.mse)+' = '+f2(M.rmse)+'. The red bars in the e&sup2; column are drawn to scale.</div>';
+    return h;
+  }
+
+  function metricCards(M, tag){
+    return '<div class="metric-row">'+
+      '<div class="metric green"><div class="lbl">MAE'+tag+'</div><div class="num">'+f1(M.mae)+'</div></div>'+
+      '<div class="metric blue"><div class="lbl">MSE'+tag+'</div><div class="num">'+fmt(M.mse)+'</div></div>'+
+      '<div class="metric coral"><div class="lbl">RMSE'+tag+'</div><div class="num">'+f2(M.rmse)+'</div></div>'+
+      '<div class="metric amber"><div class="lbl">Huber (&delta;=15)'+tag+'</div><div class="num">'+f1(M.huber)+'</div></div></div>';
+  }
+
+  function show1(mode){
+    setActive(['btnA','btnB','btnAB'], mode==='A'?'btnA':mode==='B'?'btnB':'btnAB');
+    const d = 15;
+    if(mode==='AB'){
+      drawErrorBars(['A','B']);
+      const MA = metrics(errors(PRED.A),d), MB = metrics(errors(PRED.B),d);
+      document.getElementById('tables1').innerHTML = houseTable('A',d) + houseTable('B',d);
+      const row = (name, a, b, f) => '<tr><td>'+name+'</td><td>'+f(a)+'</td><td>'+f(b)+'</td><td class="'+(Math.abs(b/a-1)<1e-9?'':'big')+'">'+(b/a).toFixed(2)+'&times;</td></tr>';
+      document.getElementById('metrics1').innerHTML =
+        '<h3>Side by side</h3><div class="tscroll"><table class="dtbl"><tr><th>metric</th><th style="color:'+COLOR.A+'">Model A</th><th style="color:'+COLOR.B+'">Model B</th><th>B &divide; A</th></tr>'+
+        row('MAE',MA.mae,MB.mae,f1)+row('MSE',MA.mse,MB.mse,fmt)+row('RMSE',MA.rmse,MB.rmse,f2)+row('Huber (&delta;=15)',MA.huber,MB.huber,f1)+
+        '<tr><td>RMSE &divide; MAE</td><td>'+(MA.rmse/MA.mae).toFixed(2)+'</td><td>'+(MB.rmse/MB.mae).toFixed(2)+'</td><td></td></tr></table></div>';
+      document.getElementById('story1').innerHTML =
+        'MAE calls it a tie: <b>8.0 vs 8.0</b>. RMSE says B is more than twice as bad: <b>8.37 vs 17.89</b>.\n'+
+        'Why? Squaring. A\'s misses of 5 and 10 become only 25 and 100, but B\'s single miss of 40 becomes <b>1,600</b>, which swamps everything.\n'+
+        'Both metrics are telling the truth; they answer different questions. RMSE &ge; MAE always, equal only when every |error| is the same size.';
+    } else {
+      drawErrorBars([mode]);
+      const M = metrics(errors(PRED[mode]),d);
+      document.getElementById('tables1').innerHTML = houseTable(mode,d);
+      document.getElementById('metrics1').innerHTML = metricCards(M,' — Model '+mode);
+      document.getElementById('story1').innerHTML = mode==='A'
+        ? 'Model A misses every house by a little: |errors| 10, 5, 5, 10, 10.\nMAE = 40 &divide; 5 = <b>8.0</b>. Squares 100, 25, 25, 100, 100 sum to 350, so MSE = <b>70</b> and RMSE = &radic;70 = <b>8.37</b>, only slightly above MAE because the misses are similar in size.\nEvery miss is &le; 15, so Huber is &frac12;e&sup2; throughout: 175 &divide; 5 = <b>35.0</b>.'
+        : 'Model B is perfect on four houses and off by 40 on house 5.\nMAE = 40 &divide; 5 = <b>8.0</b>, the same as Model A. But 40&sup2; = <b>1,600</b>, so MSE = 1,600 &divide; 5 = <b>320</b> and RMSE = &radic;320 = <b>17.89</b>.\n40 is beyond &delta; = 15, so Huber switches to the straight line: 15&middot;(40 &minus; 7.5) = 487.5, and 487.5 &divide; 5 = <b>97.5</b>.';
+    }
+  }
+  document.getElementById('btnA').onclick = ()=>show1('A');
+  document.getElementById('btnB').onclick = ()=>show1('B');
+  document.getElementById('btnAB').onclick = ()=>show1('AB');
+  window.show1 = show1;
+
+  // ---------- TAB 2 ----------
+  function show2(d){
+    setActive(['btnD5','btnD15','btnD40'], 'btnD'+d);
+    const svg = document.getElementById('huberSvg'); clear(svg);
+    const W=640,H=300,L=56,R=20,T=18,B=36;
+    const xMin=-50,xMax=50, yMax=1300;
+    const x = v => L + (v-xMin)/(xMax-xMin)*(W-L-R);
+    const y = v => T + (1 - Math.min(v,yMax)/yMax)*(H-T-B);
+    // zones
+    el('rect',{x:x(-d),y:T,width:x(d)-x(-d),height:H-T-B,fill:'rgba(127,179,213,0.14)'},svg);
+    el('rect',{x:L,y:T,width:x(-d)-L,height:H-T-B,fill:'rgba(255,206,84,0.07)'},svg);
+    el('rect',{x:x(d),y:T,width:W-R-x(d),height:H-T-B,fill:'rgba(255,206,84,0.07)'},svg);
+    [0,200,400,600,800,1000,1200].forEach(v=>{
+      el('line',{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:'rgba(244,241,232,0.08)'},svg);
+      el('text',{x:L-6,y:y(v)+4,'text-anchor':'end','font-size':10.5,fill:'#7f8f83'},svg,String(v));
+    });
+    [-40,-20,0,20,40].forEach(v=>{
+      el('text',{x:x(v),y:H-B+16,'text-anchor':'middle','font-size':10.5,fill:'#7f8f83'},svg,v>0?'+'+v:String(v));
+    });
+    el('text',{x:(L+W-R)/2,y:H-4,'text-anchor':'middle','font-size':11,fill:'#7f8f83'},svg,'error e');
+    el('line',{x1:x(-d),x2:x(-d),y1:T,y2:H-B,stroke:'#7fb3d5','stroke-dasharray':'4 3'},svg);
+    el('line',{x1:x(d),x2:x(d),y1:T,y2:H-B,stroke:'#7fb3d5','stroke-dasharray':'4 3'},svg);
+    el('text',{x:x(d)+4,y:H-B-8,'font-size':11,fill:'#7fb3d5'},svg,'δ = '+d);
+    // curves
+    let p1='', p2='';
+    for(let e=xMin;e<=xMax;e+=0.5){
+      p1 += (p1?'L':'M')+x(e).toFixed(1)+','+y(0.5*e*e).toFixed(1);
+      p2 += (p2?'L':'M')+x(e).toFixed(1)+','+y(huber(e,d)).toFixed(1);
+    }
+    el('path',{d:p1,fill:'none',stroke:'rgba(244,241,232,0.35)','stroke-width':1.5,'stroke-dasharray':'5 4'},svg);
+    el('path',{d:p2,fill:'none',stroke:'#ffce54','stroke-width':2.5},svg);
+    el('text',{x:x(-34),y:T+12,'font-size':11,fill:'rgba(244,241,232,0.6)'},svg,'- - pure ½e²');
+    el('text',{x:x(-34),y:T+27,'font-size':11,fill:'#ffce54'},svg,'— Huber(e)');
+    // points for B's errors
+    const errs = errors(PRED.B);
+    const h40 = huber(40,d);
+    el('circle',{cx:x(0),cy:y(0),r:6,fill:'#8fd19e'},svg);
+    el('text',{x:x(0)-10,y:y(0)-8,'text-anchor':'end','font-size':11,fill:'#8fd19e'},svg,'4 houses: e=0');
+    el('circle',{cx:x(40),cy:y(h40),r:6,fill:'#ff8266'},svg);
+    el('text',{x:x(40)-8,y:y(h40)-10,'text-anchor':'end','font-size':11,'font-weight':700,fill:'#ff8266'},svg,'house 5: e=+40 → '+fmt(h40));
+    el('line',{x1:x(40),x2:x(40),y1:y(h40),y2:y(800),stroke:'rgba(255,130,102,0.5)','stroke-dasharray':'2 3'},svg);
+    el('circle',{cx:x(40),cy:y(800),r:3.5,fill:'rgba(244,241,232,0.5)'},svg);
+    if(d<40) el('text',{x:x(40)-8,y:y(800)+4,'text-anchor':'end','font-size':10.5,fill:'rgba(244,241,232,0.6)'},svg,'pure ½e² would give 800');
+
+    let h = '<div class="tscroll"><table class="dtbl"><tr><th>house</th><th>error e</th><th>zone (&delta; = '+d+')</th><th>Huber contribution</th></tr>';
+    let sum=0;
+    errs.forEach((e,i)=>{
+      const a=Math.abs(e), hu=huber(e,d); sum+=hu;
+      const sq = a<=d;
+      const how = sq ? '&frac12;&middot;'+a+'&sup2; = '+fmt(hu) : d+'&middot;('+a+' &minus; '+fmt(d/2)+') = '+fmt(hu);
+      h += '<tr><td>'+(i+1)+'</td><td>'+sgn(e)+'</td><td class="'+(sq?'sq':'lin')+'">'+(sq?'squared (|e| &le; &delta;)':'straight line (|e| &gt; &delta;)')+'</td><td class="'+(sq?'sq':'lin')+'">'+how+'</td></tr>';
+    });
+    h += '<tr class="tot"><td colspan="3">sum &rarr; mean (&divide; 5)</td><td>'+fmt(sum)+' &rarr; '+f1(sum/5)+'</td></tr></table></div>';
+    document.getElementById('tables2').innerHTML = h;
+    const M = metrics(errs,d);
+    document.getElementById('metrics2').innerHTML = '<div class="metric-row">'+
+      '<div class="metric amber"><div class="lbl">Huber (&delta;='+d+')</div><div class="num">'+f1(M.huber)+'</div></div>'+
+      '<div class="metric blue"><div class="lbl">&frac12;&middot;MSE (pure squared)</div><div class="num">'+fmt(M.mse/2)+'</div></div>'+
+      '<div class="metric green"><div class="lbl">MAE</div><div class="num">'+f1(M.mae)+'</div></div></div>';
+    const stories = {
+      5: 'With &delta; = 5 the squared zone is tiny. The miss of 40 is far outside it, so it is charged on the straight line: 5&middot;(40 &minus; 2.5) = <b>187.5</b>, mean <b>37.5</b>.\nSmall &delta; = Huber behaves almost like MAE (scaled by &delta;): the outlier gets no extra punishment for being big.',
+      15: 'With &delta; = 15 (the doc\'s setting), 40 is still outside the squared zone: 15&middot;(40 &minus; 7.5) = <b>487.5</b>, mean <b>97.5</b>.\nThe zeros sit in the squared zone (contributing 0). Ordinary misses up to 15 would be squared; the big one grows only linearly.',
+      40: 'With &delta; = 40 the squared zone reaches all the way to 40, so the miss is squared: &frac12;&middot;40&sup2; = <b>800</b>, mean <b>160</b>.\nThat is exactly &frac12;&middot;MSE (320 &divide; 2). Once &delta; covers every error, Huber is just (half) MSE, and the outlier dominates again.'
+    };
+    document.getElementById('story2').innerHTML = stories[d];
+  }
+  document.getElementById('btnD5').onclick = ()=>show2(5);
+  document.getElementById('btnD15').onclick = ()=>show2(15);
+  document.getElementById('btnD40').onclick = ()=>show2(40);
+  window.show2 = show2;
+
+  // ---------- TAB 3 ----------
+  const DATA_FULL = [1,2,3,4,100], DATA_NO = [1,2,3,4];
+  function mseC(data,c){ return mean(data.map(x=>(x-c)*(x-c))); }
+  function maeC(data,c){ return mean(data.map(x=>Math.abs(x-c))); }
+  function scanBest(data, f){
+    // scan c = 0..30 in steps of 0.5; return best c (middle of any flat tie range) and value
+    let best=Infinity, cs=[];
+    for(let k=0;k<=60;k++){
+      const c=k/2, v=f(data,c);
+      if(v<best-1e-9){ best=v; cs=[c]; } else if(Math.abs(v-best)<1e-9){ cs.push(c); }
+    }
+    return { c:(cs[0]+cs[cs.length-1])/2, lo:cs[0], hi:cs[cs.length-1], v:f(data,(cs[0]+cs[cs.length-1])/2) };
+  }
+  window.__rm.scanBest = scanBest; window.__rm.mseC = mseC; window.__rm.maeC = maeC;
+
+  function drawLoss(svgId, data, f, best, color, highlight, label){
+    const svg = document.getElementById(svgId); clear(svg);
+    const W=320,H=230,L=46,R=12,T=14,B=32;
+    let yMin=Infinity,yMax=-Infinity;
+    for(let k=0;k<=300;k++){ const v=f(data,k/10); yMin=Math.min(yMin,v); yMax=Math.max(yMax,v); }
+    const pad=(yMax-yMin)*0.08; yMin=Math.max(0,yMin-pad); yMax+=pad;
+    const x = c => L + c/30*(W-L-R);
+    const y = v => T + (1-(v-yMin)/(yMax-yMin))*(H-T-B);
+    [0,5,10,15,20,25,30].forEach(c=>{
+      el('line',{x1:x(c),x2:x(c),y1:T,y2:H-B,stroke:'rgba(244,241,232,0.06)'},svg);
+      el('text',{x:x(c),y:H-B+14,'text-anchor':'middle','font-size':10,fill:'#7f8f83'},svg,String(c));
+    });
+    el('text',{x:(L+W-R)/2,y:H-4,'text-anchor':'middle','font-size':10.5,fill:'#7f8f83'},svg,'constant prediction c');
+    for(let i=0;i<=3;i++){
+      const v = yMin + (yMax-yMin)*i/3;
+      el('text',{x:L-5,y:y(v)+4,'text-anchor':'end','font-size':9.5,fill:'#7f8f83'},svg,v>=100?Math.round(v).toString():v.toFixed(1));
+    }
+    let p='';
+    for(let k=0;k<=300;k++){ const c=k/10; p+=(p?'L':'M')+x(c).toFixed(1)+','+y(f(data,c)).toFixed(1); }
+    el('path',{d:p,fill:'none',stroke:color,'stroke-width':highlight?2.8:1.8,opacity:highlight?1:0.55},svg);
+    if(best.hi>best.lo) el('line',{x1:x(best.lo),x2:x(best.hi),y1:y(best.v),y2:y(best.v),stroke:'#ffce54','stroke-width':5,opacity:0.5},svg);
+    el('line',{x1:x(best.c),x2:x(best.c),y1:T+16,y2:H-B,stroke:'#ffce54','stroke-dasharray':'3 3',opacity:0.7},svg);
+    el('circle',{cx:x(best.c),cy:y(best.v),r:highlight?6.5:5,fill:'#ffce54',stroke:'#16221c','stroke-width':1.5},svg);
+    const anchor = x(best.c) < L+60 ? 'start' : (x(best.c) > W-R-60 ? 'end' : 'middle');
+    el('text',{x:x(best.c),y:T+10,'text-anchor':anchor,'font-size':11,'font-weight':700,fill:'#ffce54'},svg,label);
+  }
+
+  function drawNumberLine(data){
+    const svg = document.getElementById('lineSvg'); clear(svg);
+    const W=640,H=90,L=24,R=40;
+    const x = v => L + Math.min(v,30)/30*(W-L-R);
+    const yl=50;
+    el('line',{x1:L,x2:W-R+20,y1:yl,y2:yl,stroke:'rgba(244,241,232,0.4)'},svg);
+    [0,5,10,15,20,25,30].forEach(v=>{
+      el('line',{x1:x(v),x2:x(v),y1:yl-4,y2:yl+4,stroke:'rgba(244,241,232,0.4)'},svg);
+      el('text',{x:x(v),y:yl+18,'text-anchor':'middle','font-size':10,fill:'#7f8f83'},svg,String(v));
+    });
+    data.forEach(v=>{
+      if(v<=30) el('circle',{cx:x(v),cy:yl,r:5,fill:'#f4f1e8'},svg);
+      else {
+        el('path',{d:'M'+(W-R+6)+','+(yl-7)+'L'+(W-R+20)+','+yl+'L'+(W-R+6)+','+(yl+7)+'Z',fill:'#ff8266'},svg);
+        el('text',{x:W-R+14,y:yl-12,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#ff8266'},svg,'100');
+      }
+    });
+    const mu = mean(data);
+    const sorted = data.slice().sort((a,b)=>a-b), n=sorted.length;
+    const med = n%2 ? sorted[(n-1)/2] : (sorted[n/2-1]+sorted[n/2])/2;
+    el('line',{x1:x(mu),x2:x(mu),y1:yl-26,y2:yl-6,stroke:'#7fb3d5','stroke-width':2},svg);
+    el('text',{x:x(mu),y:yl-30,'text-anchor':'middle','font-size':11,fill:'#7fb3d5'},svg,'mean '+fmt(mu));
+    el('line',{x1:x(med),x2:x(med),y1:yl+22,y2:yl+32,stroke:'#8fd19e','stroke-width':2},svg);
+    el('text',{x:x(med)+(Math.abs(med-mu)<1?0:0),y:yl+44>H?H-2:yl+38,'text-anchor':'start','font-size':11,fill:'#8fd19e'},svg,' median '+fmt(med));
+    return {mu, med};
+  }
+
+  function show3(mode){
+    setActive(['btnCmse','btnCmae','btnCno'], mode==='mse'?'btnCmse':mode==='mae'?'btnCmae':'btnCno');
+    const data = mode==='no' ? DATA_NO : DATA_FULL;
+    document.getElementById('dataHint').textContent = 'Data: '+data.join(', ')+'. The model must predict one number c for every point. Every c from 0 to 30 (step 0.5) is scanned.';
+    document.getElementById('lineTitle').textContent = mode==='no' ? 'The data on a number line (outlier removed)' : 'The data on a number line (100 is off the chart, shown at the arrow)';
+    const s = drawNumberLine(data);
+    const bMSE = scanBest(data, mseC), bMAE = scanBest(data, maeC);
+    drawLoss('mseSvg', data, mseC, bMSE, '#7fb3d5', mode!=='mae', 'min at c = '+fmt(bMSE.c));
+    drawLoss('maeSvg', data, maeC, bMAE, '#8fd19e', mode!=='mse', bMAE.hi>bMAE.lo ? 'flat min '+fmt(bMAE.lo)+'–'+fmt(bMAE.hi)+', mid '+fmt(bMAE.c) : 'min at c = '+fmt(bMAE.c));
+
+    const cands = mode==='no' ? [1,2,2.5,3,4,10] : [2,3,4,10,20,22,24];
+    let h = '<h3>A few candidates from the scan</h3><div class="tscroll"><table class="dtbl"><tr><th>c</th><th>MSE(c)</th><th>MAE(c)</th></tr>';
+    cands.forEach(c=>{
+      const m1=mseC(data,c), m2=maeC(data,c);
+      const b1 = Math.abs(m1-bMSE.v)<1e-9, b2 = Math.abs(m2-bMAE.v)<1e-9;
+      h += '<tr><td>'+fmt(c)+'</td><td class="'+(b1?'sq':'')+'" style="'+(b1?'font-weight:700':'')+'">'+fmt(m1)+(b1?' ← lowest':'')+'</td>'+
+           '<td style="'+(b2?'color:#8fd19e;font-weight:700':'')+'">'+fmt(m2)+(b2?' ← lowest':'')+'</td></tr>';
+    });
+    h += '</table></div>';
+    document.getElementById('tables3').innerHTML = h;
+    document.getElementById('metrics3').innerHTML = '<div class="metric-row">'+
+      '<div class="metric blue"><div class="lbl">best c under MSE</div><div class="num">'+fmt(bMSE.c)+'</div></div>'+
+      '<div class="metric blue"><div class="lbl">mean of data</div><div class="num">'+fmt(s.mu)+'</div></div>'+
+      '<div class="metric green"><div class="lbl">best c under MAE</div><div class="num">'+fmt(bMAE.c)+'</div></div>'+
+      '<div class="metric green"><div class="lbl">median of data</div><div class="num">'+fmt(s.med)+'</div></div></div>';
+    const stories = {
+      mse: 'Under MSE the lowest point of the curve is at <b>c = 22</b>, exactly the mean: (1+2+3+4+100) &divide; 5 = 110 &divide; 5 = 22.\nThe outlier 100 drags the best guess far away from the four typical points, because squaring makes its distance of ~80 enormous. Minimum MSE = '+fmt(bMSE.v)+'.',
+      mae: 'Under MAE the lowest point is at <b>c = 3</b>, exactly the median (the middle of 1, 2, 3, 4, 100).\nMoving c toward 100 lowers one distance but raises four others equally, so MAE refuses to chase the outlier. Minimum MAE = '+fmt(bMAE.v)+'.',
+      no: 'Without the outlier (data 1, 2, 3, 4): mean = 10 &divide; 4 = <b>2.5</b>, median = <b>2.5</b>.\nMSE\'s minimum jumps from 22 to 2.5; MAE\'s barely moves (3 to 2.5, and any c from 2 to 3 ties, the midpoint 2.5 is the median).\nOne point moved MSE\'s answer by 19.5. That is what "MSE follows the mean, MAE follows the median" means.'
+    };
+    document.getElementById('story3').innerHTML = stories[mode];
+  }
+  document.getElementById('btnCmse').onclick = ()=>show3('mse');
+  document.getElementById('btnCmae').onclick = ()=>show3('mae');
+  document.getElementById('btnCno').onclick = ()=>show3('no');
+  window.show3 = show3;
+
+  show1('AB');
+  show2(15);
+  show3('mse');
+})();
+</script>
+</body>
+</html>

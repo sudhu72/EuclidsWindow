@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Attention's Math Connections, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:230px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:90px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:560px;height:auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:7px 9px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Attention's Math Connections, live</h1>
+  <p class="sub">Three demos, all built from the identical [0,3,0,0] score row and 4-token attention matrix §3.3.2 verifies by hand: temperature and entropy, a complete-graph view, and a live Nadaraya-Watson kernel regression running the exact same formula as softmax attention.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="temp">Temperature &amp; Entropy</button>
+    <button class="tab-btn" data-tab="graph">Complete-Graph View</button>
+    <button class="tab-btn" data-tab="kernel">Kernel Regression</button>
+  </div>
+
+  <!-- ==================== TAB 1: TEMPERATURE & ENTROPY ==================== -->
+  <div class="tabpage active" id="tab-temp">
+    <div class="panel">
+      <h2>Softmax IS a Boltzmann Distribution — Drag the Temperature</h2>
+      <p class="sub">Raw scores fixed at [0, 3, 0, 0] — "it" scoring "animal" (position 2) far above everything else, exactly §3.2's worked example. The divisor plays the role of temperature: bigger = flatter, smaller = sharper.</p>
+      <div class="slider-row"><label for="tempDiv">Divisor ("temperature")</label><input type="range" id="tempDiv" min="0.3" max="12" step="0.1" value="1.4142"><output id="tempDivOut">1.41</output></div>
+      <div class="row">
+        <button class="op" onclick="setTemp(0.5)">Cold (0.5)</button>
+        <button class="op" onclick="setTemp(1.4142)">Tutorial's √2</button>
+        <button class="op" onclick="setTemp(10)">Hot (10)</button>
+      </div>
+      <svg id="tempSvg" viewBox="0 0 480 180"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">entropy</div><div class="num" id="tempEntropy">—</div></div>
+        <div class="metric coral"><div class="lbl">max possible (4 outcomes)</div><div class="num">2.0000 bits</div></div>
+        <div class="metric amber"><div class="lbl">row sums to</div><div class="num" id="tempSum">—</div></div>
+      </div>
+      <div class="story-line" id="tempStory"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: COMPLETE GRAPH ==================== -->
+  <div class="tabpage" id="tab-graph">
+    <div class="panel">
+      <h2>The Tutorial's 4-Token Attention Matrix, Drawn as a Graph</h2>
+      <p class="sub">Every token is a node; every attention weight is a directed, weighted edge. Pick whose row of edges to display.</p>
+      <div class="row">
+        <button class="op active" id="btnThe" onclick="setGraphToken(0)">"The"</button>
+        <button class="op" id="btnAnimal" onclick="setGraphToken(1)">"animal"</button>
+        <button class="op" id="btnStreet" onclick="setGraphToken(2)">"street"</button>
+        <button class="op" id="btnIt" onclick="setGraphToken(3)">"it"</button>
+      </div>
+      <svg id="graphSvg" viewBox="0 0 480 320"></svg>
+      <div class="story-line" id="graphStory"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: KERNEL REGRESSION ==================== -->
+  <div class="tabpage" id="tab-kernel">
+    <div class="panel">
+      <h2>Nadaraya-Watson Kernel Regression = Softmax Attention</h2>
+      <p class="sub">Four training points (x,y): (1,10), (2,12), (3,11), (8,50). Drag the query x — the SAME weighted-average machinery as softmax(QK)·V, just with "similarity" as a hand-picked Gaussian instead of a learned dot product.</p>
+      <div class="slider-row"><label for="kQuery">Query x</label><input type="range" id="kQuery" min="0" max="9" step="0.1" value="2.5"><output id="kQueryOut">2.5</output></div>
+      <div class="slider-row"><label for="kBandwidth">Kernel bandwidth (how "local")</label><input type="range" id="kBandwidth" min="0.3" max="4" step="0.1" value="1.0"><output id="kBandwidthOut">1.0</output></div>
+      <svg id="kernelSvg" viewBox="0 0 480 220"></svg>
+      <table class="datatable" id="kTable"></table>
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">predicted ŷ(x)</div><div class="num" id="kPred">—</div></div>
+      </div>
+      <div class="story-line">This IS attention's formula: normalized similarity weights, times the training "Values" (y), summed.</div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>§3.3.2 of ml_deep_learning_llm_feynman_tutorial.md</b>
+    (<a href="../deep_learning/ml_deep_learning_llm_feynman_tutorial.md">ml_deep_learning_llm_feynman_tutorial.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  function softmax(arr){
+    const m = Math.max(...arr);
+    const ex = arr.map(v=>Math.exp(v-m));
+    const s = ex.reduce((a,b)=>a+b,0);
+    return ex.map(v=>v/s);
+  }
+  function entropyBits(p){
+    return -p.reduce((s,v)=> v>0 ? s + v*Math.log2(v) : s, 0);
+  }
+
+  // ==================== TAB 1: TEMPERATURE & ENTROPY ====================
+  const TOKEN_NAMES = ["The","animal","street","it"];
+  const RAW_SCORES = [0,3,0,0];
+  function drawTempBars(probs){
+    const svg = document.getElementById("tempSvg");
+    svg.innerHTML = "";
+    const W=480,H=180, padB=30, padT=20, gap=100, barW=60;
+    svg.appendChild(el("line",{x1:20,y1:H-padB,x2:W-20,y2:H-padB,stroke:"var(--chalk-dim)"}));
+    probs.forEach((p,i)=>{
+      const x = 40 + i*gap;
+      const h = p*(H-padB-padT);
+      svg.appendChild(el("rect",{x, y:H-padB-h, width:barW, height:h, fill:"var(--blue)", opacity:0.85, rx:4}));
+      svg.appendChild(el("text",{x:x+barW/2, y:H-padB-h-8, "text-anchor":"middle", "font-size":11, fill:"var(--chalk)"}, p.toFixed(4)));
+      svg.appendChild(el("text",{x:x+barW/2, y:H-padB+16, "text-anchor":"middle", "font-size":11, fill:"var(--chalk-dim)"}, TOKEN_NAMES[i]));
+    });
+  }
+  function updateTemp(){
+    const div = parseFloat(document.getElementById("tempDiv").value);
+    document.getElementById("tempDivOut").textContent = div.toFixed(2);
+    const scaled = RAW_SCORES.map(v=>v/div);
+    const probs = softmax(scaled);
+    const H = entropyBits(probs);
+    document.getElementById("tempEntropy").textContent = H.toFixed(4)+" bits";
+    document.getElementById("tempSum").textContent = probs.reduce((a,b)=>a+b,0).toFixed(4);
+    document.getElementById("tempStory").textContent = div < 1
+      ? "Low temperature (small divisor): the distribution is nearly one-hot — almost all weight on 'animal.'"
+      : (div > 6 ? "High temperature (large divisor): nearly uniform — entropy climbing toward the 2-bit maximum."
+                 : "Intermediate temperature: confident, but not certain.");
+    drawTempBars(probs);
+  }
+  window.setTemp = function(v){ document.getElementById("tempDiv").value = v; updateTemp(); };
+  document.getElementById("tempDiv").addEventListener("input", updateTemp);
+  updateTemp();
+
+  // ==================== TAB 2: COMPLETE GRAPH ====================
+  const ATTN_MATRIX = [
+    [0.25,0.25,0.25,0.25],
+    [0.25,0.25,0.25,0.25],
+    [0.25,0.25,0.25,0.25],
+    [0.0882,0.7355,0.0882,0.0882],
+  ];
+  let graphToken = 0;
+  function drawGraph(rowIdx){
+    const svg = document.getElementById("graphSvg");
+    svg.innerHTML = "";
+    const cx=240, cy=160, r=110;
+    const positions = TOKEN_NAMES.map((_,i)=>{
+      const angle = -Math.PI/2 + i*(2*Math.PI/4);
+      return {x: cx+r*Math.cos(angle), y: cy+r*Math.sin(angle)};
+    });
+    const weights = ATTN_MATRIX[rowIdx];
+    // draw edges from rowIdx to every other node (including self-loop, drawn as a small circle)
+    positions.forEach((p,j)=>{
+      const w = weights[j];
+      if(j===rowIdx){
+        svg.appendChild(el("circle",{cx:p.x, cy:p.y-28, r:16, fill:"none", stroke:"var(--amber)", "stroke-width": Math.max(1,w*10)}));
+      } else {
+        const from = positions[rowIdx];
+        svg.appendChild(el("line",{x1:from.x, y1:from.y, x2:p.x, y2:p.y, stroke:"var(--amber)", "stroke-width": Math.max(1,w*10), opacity:0.85}));
+      }
+      const midx = (positions[rowIdx].x+p.x)/2, midy=(positions[rowIdx].y+p.y)/2;
+      if(j!==rowIdx){
+        svg.appendChild(el("text",{x:midx, y:midy-6, "text-anchor":"middle", "font-size":10, fill:"var(--chalk-dim)"}, w.toFixed(3)));
+      }
+    });
+    positions.forEach((p,i)=>{
+      svg.appendChild(el("circle",{cx:p.x, cy:p.y, r:26, fill: i===rowIdx?"var(--blue)":"var(--bg-panel)", stroke:"var(--chalk-dim)", "stroke-width":1.5}));
+      svg.appendChild(el("text",{x:p.x, y:p.y+4, "text-anchor":"middle", "font-size":11, fill: i===rowIdx? "#0c1a23":"var(--chalk)"}, TOKEN_NAMES[i]));
+    });
+  }
+  window.setGraphToken = function(i){
+    graphToken = i;
+    ["btnThe","btnAnimal","btnStreet","btnIt"].forEach((id,idx)=> document.getElementById(id).classList.toggle("active", idx===i));
+    document.getElementById("graphStory").textContent = i===3
+      ? "'it' sends most of its edge-weight to 'animal' (0.7355) — a lopsided, informative graph neighborhood."
+      : `"${TOKEN_NAMES[i]}" spreads its edge-weight perfectly evenly across all four nodes, including itself — an uninformative, maximum-entropy neighborhood.`;
+    drawGraph(i);
+  };
+  setGraphToken(0);
+
+  // ==================== TAB 3: KERNEL REGRESSION ====================
+  const TRAIN_X = [1,2,3,8];
+  const TRAIN_Y = [10,12,11,50];
+  function gaussianKernel(x,xi,h){ return Math.exp(-0.5*((x-xi)/h)**2); }
+  function drawKernel(query, bandwidth, weights){
+    const svg = document.getElementById("kernelSvg");
+    svg.innerHTML = "";
+    const W=480,H=220, padL=40, padB=30, padT=20;
+    const xMin=0, xMax=9, yMin=0, yMax=55;
+    function xPix(x){ return padL + (x-xMin)/(xMax-xMin)*(W-padL-20); }
+    function yPix(y){ return H-padB - (y-yMin)/(yMax-yMin)*(H-padB-padT); }
+    svg.appendChild(el("line",{x1:padL,y1:H-padB,x2:W-20,y2:H-padB,stroke:"var(--chalk-dim)"}));
+    svg.appendChild(el("line",{x1:padL,y1:padT,x2:padL,y2:H-padB,stroke:"var(--chalk-dim)"}));
+    TRAIN_X.forEach((x,i)=>{
+      svg.appendChild(el("circle",{cx:xPix(x), cy:yPix(TRAIN_Y[i]), r:5+weights[i]*10, fill:"var(--green)", opacity:0.85}));
+      svg.appendChild(el("text",{x:xPix(x), y:yPix(TRAIN_Y[i])-12, "text-anchor":"middle", "font-size":10, fill:"var(--chalk-dim)"}, `(${x},${TRAIN_Y[i]})`));
+    });
+    svg.appendChild(el("line",{x1:xPix(query),y1:padT,x2:xPix(query),y2:H-padB, stroke:"var(--coral)", "stroke-width":1.5, "stroke-dasharray":"4,4"}));
+    const pred = weights.reduce((s,w,i)=>s+w*TRAIN_Y[i], 0);
+    svg.appendChild(el("circle",{cx:xPix(query), cy:yPix(pred), r:6, fill:"var(--amber)"}));
+    svg.appendChild(el("text",{x:xPix(query), y:padT-4, "text-anchor":"middle", "font-size":11, fill:"var(--coral)"}, "query x = "+query.toFixed(1)));
+  }
+  function updateKernel(){
+    const query = parseFloat(document.getElementById("kQuery").value);
+    const bandwidth = parseFloat(document.getElementById("kBandwidth").value);
+    document.getElementById("kQueryOut").textContent = query.toFixed(1);
+    document.getElementById("kBandwidthOut").textContent = bandwidth.toFixed(1);
+    const rawW = TRAIN_X.map(xi => gaussianKernel(query, xi, bandwidth));
+    const total = rawW.reduce((a,b)=>a+b,0);
+    const normW = rawW.map(w=>w/total);
+    const pred = normW.reduce((s,w,i)=>s+w*TRAIN_Y[i],0);
+    let html = "<tr><th>x_i</th>" + TRAIN_X.map(x=>`<th>${x}</th>`).join("") + "</tr>";
+    html += "<tr><th>y_i</th>" + TRAIN_Y.map(y=>`<td>${y}</td>`).join("") + "</tr>";
+    html += "<tr><th>raw kernel weight</th>" + rawW.map(w=>`<td>${w.toFixed(4)}</td>`).join("") + "</tr>";
+    html += "<tr><th>normalized weight</th>" + normW.map(w=>`<td>${w.toFixed(4)}</td>`).join("") + "</tr>";
+    document.getElementById("kTable").innerHTML = html;
+    document.getElementById("kPred").textContent = pred.toFixed(3);
+    drawKernel(query, bandwidth, normW);
+  }
+  ["kQuery","kBandwidth"].forEach(id => document.getElementById(id).addEventListener("input", updateKernel));
+  updateKernel();
+})();
+</script>
+</body>
+</html>

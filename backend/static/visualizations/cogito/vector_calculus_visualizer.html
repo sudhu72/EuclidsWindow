@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vector Calculus Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; min-width:0; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .sub code, .caption code, .stat code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  .caption{ font-size:13.5px; color:var(--ink); margin-top:12px; line-height:1.6; min-height:40px; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .ctrl .count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .layout > .plot{ flex:1 1 420px; min-width:0; }
+  .layout > .side{ flex:1 1 260px; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  svg text{ font-family:"IBM Plex Mono", monospace; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; overflow-wrap:anywhere; }
+  .stat .k{ color:var(--ink-soft); font-size:11.5px; letter-spacing:.03em; display:block; }
+  .stat b{ color:var(--accent); }
+  .stat b.ok, .ok{ color:var(--good); } .stat b.bad, .bad{ color:var(--bad); }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .legend span::before{ content:""; display:inline-block; width:12px; height:3px; margin-right:6px; vertical-align:middle; background:currentColor; }
+  .presetlabel{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:14px 0 6px; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Multivariable and Vector Calculus</div>
+    <h1>Directions, Volumes, Flows, Best Paths</h1>
+    <p>Every worked example from the file is a one-click preset. Animated presets play themselves; use Step, Play, Jump to end, or Reset to control them. Every number on this page is computed live by the page's own script.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dir">1 · Directional Derivative</button>
+    <button class="tab" data-tab="dbl">2 · Double Integrals</button>
+    <button class="tab" data-tab="polar">3 · Polar &amp; the Gaussian</button>
+    <button class="tab" data-tab="field">4 · Divergence &amp; Curl</button>
+    <button class="tab" data-tab="line">5 · Line Integrals &amp; Theorems</button>
+    <button class="tab" data-tab="var">6 · Calculus of Variations</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <div class="panel active" id="panel-dir">
+    <div class="card">
+      <h2>How steep is it in direction <code style="font-size:.8em">u</code>?</h2>
+      <p class="sub">Contours of <code>f(x, y) = x² + 3y²</code>; the dot is <code>p = (1, 1)</code>. Purple: the gradient direction <code>∇f = (2, 6)</code>. Teal: the direction <code>u</code> you walk. The page measures the slope with a tiny step (no formula) and compares it with <code>∇f · u</code>.</p>
+      <div class="presetbar" id="dirPresets"></div>
+      <div class="ctrl" id="dirCtrl"></div>
+      <div class="layout">
+        <div class="plot"><svg id="dirSvg" viewBox="0 0 440 440" role="img" aria-label="Contour map with gradient and direction arrows"></svg>
+          <div class="legend"><span style="color:var(--c3)">gradient direction</span><span style="color:var(--c1)">walking direction u</span><span style="color:var(--c2)">contour through p (slope 0)</span></div>
+        </div>
+        <div class="side"><div class="stat" id="dirInfo"></div>
+          <div class="presetlabel">slope D<sub>u</sub>f against the angle of u</div>
+          <svg id="dirPlot" viewBox="0 0 320 200" role="img" aria-label="Directional derivative versus angle"></svg>
+        </div>
+      </div>
+      <div class="caption" id="dirCaption"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div class="panel" id="panel-dbl">
+    <div class="card">
+      <h2>A double integral is a volume, and you can slice it either way</h2>
+      <p class="sub">Columns: <code>f(x, y) = x·y²</code> over <code>0 ≤ x ≤ 2</code>, <code>0 ≤ y ≤ 3</code> (exact volume 18). Fubini: the same volume as a stack of slices, in either order. Triangle: <code>∫₀¹∫ₓ¹ e^(y²) dy dx</code>, impossible one way, one line the other way.</p>
+      <div class="presetbar" id="dblPresets"></div>
+      <div class="ctrl" id="dblCtrl"></div>
+      <div class="layout">
+        <div class="plot"><svg id="dblSvg" viewBox="0 0 440 440" role="img" aria-label="Region seen from above"></svg></div>
+        <div class="side"><div class="stat" id="dblInfo"></div>
+          <svg id="dblSide" viewBox="0 0 320 260" role="img" aria-label="Columns in 3D or the current slice"></svg>
+        </div>
+      </div>
+      <div class="caption" id="dblCaption"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3 -->
+  <div class="panel" id="panel-polar">
+    <div class="card">
+      <h2>Polar coordinates and <code style="font-size:.8em">∫e^(−x²)dx = √π</code></h2>
+      <p class="sub">A thin ring at radius <code>r</code> has area <code>2πr·dr</code>: the Jacobian's <code>r</code>. Adding rings of height <code>e^(−r²)</code> builds the volume of the round Gaussian hill, which is <code>I²</code>, the square of the one-dimensional bell-curve area.</p>
+      <div class="presetbar" id="polPresets"></div>
+      <div class="ctrl" id="polCtrl"></div>
+      <div class="layout">
+        <div class="plot"><svg id="polSvg" viewBox="0 0 440 440" role="img" aria-label="Rings or squares filling the plane"></svg></div>
+        <div class="side"><div class="stat" id="polInfo"></div>
+          <div class="presetlabel">running total against radius</div>
+          <svg id="polPlot" viewBox="0 0 320 220" role="img" aria-label="Cumulative sum"></svg>
+        </div>
+      </div>
+      <div class="caption" id="polCaption"></div>
+    </div>
+  </div>
+
+  <!-- TAB 4 -->
+  <div class="panel" id="panel-field">
+    <div class="card">
+      <h2>Spreading out (divergence) and swirling (curl)</h2>
+      <p class="sub">Arrows show each field. The ring of 16 dust specks around the probe point <code>(0.5, 0.3)</code> drifts with the flow; the paddle wheel turns at half the curl. Shading shows divergence or curl everywhere (teal positive, red negative).</p>
+      <div class="presetbar" id="fldPresets"></div>
+      <div class="presetbar"><button class="op active" id="shadeDiv">shade: divergence</button><button class="op" id="shadeCurl">shade: curl</button></div>
+      <div class="ctrl" id="fldCtrl"></div>
+      <div class="layout">
+        <div class="plot"><svg id="fldSvg" viewBox="0 0 460 460" role="img" aria-label="Vector field"></svg></div>
+        <div class="side"><div class="stat" id="fldInfo"></div></div>
+      </div>
+      <div class="caption" id="fldCaption"></div>
+    </div>
+  </div>
+
+  <!-- TAB 5 -->
+  <div class="panel" id="panel-line">
+    <div class="card">
+      <h2>Work along a path, and the boundary that knows the inside</h2>
+      <p class="sub">A walker moves along each path and the page adds up <code>F · dr</code> (work) or <code>F · n ds</code> (flux out), using 20,000 small steps per path. Pale arrows show the field.</p>
+      <div class="presetbar" id="linPresets"></div>
+      <div class="ctrl" id="linCtrl"></div>
+      <div class="layout">
+        <div class="plot"><svg id="linSvg" viewBox="0 0 460 460" role="img" aria-label="Paths through a vector field"></svg>
+          <div class="legend" id="linLegend"></div></div>
+        <div class="side"><div class="stat" id="linInfo"></div></div>
+      </div>
+      <div class="caption" id="linCaption"></div>
+    </div>
+  </div>
+
+  <!-- TAB 6 -->
+  <div class="panel" id="panel-var">
+    <div class="card">
+      <h2>The best function: shortest, fastest, and the one nature picks</h2>
+      <p class="sub">Brachistochrone presets race beads sliding without friction from rest (<code>g = 9.81 m/s²</code>), shown at quarter speed. Height is drawn downward from the start. The optimizer presets start from a bad guess and improve it with no formula for the answer.</p>
+      <div class="presetbar" id="varPresets"></div>
+      <div class="ctrl" id="varCtrl"></div>
+      <div class="layout">
+        <div class="plot"><svg id="varSvg" viewBox="0 0 460 400" role="img" aria-label="Curves"></svg>
+          <div class="legend" id="varLegend"></div></div>
+        <div class="side"><div class="stat" id="varInfo"></div></div>
+      </div>
+      <div class="caption" id="varCaption"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>math/multivariable-and-vector-calculus.md</code>. Values match the file: max slope 6.3246 = |∇f| at 71.57°; volume 18; (e − 1)/2 = 0.859141; ∫e^(−x²)dx = 1.7724538509 = √π; circulation 2π; path-independent work 2; Green 3π/2 = 4.712389; brachistochrone 0.5829 s vs 0.6386 s straight; least action −g²/3 = −32.0787; Gaussian entropy 1.418939.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const PI = Math.PI, g = 9.81;
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+}));
+
+/* ---------- helpers ---------- */
+const fx = (x, d) => { const m = 10 ** d; const r = Math.round(x * m) / m; return (Object.is(r, -0) ? 0 : r).toFixed(d); };
+function makeView(svg, xmin, xmax, ymin, ymax, W, H, pad){
+  pad = pad || 0;
+  const sx = x => pad + (x - xmin) / (xmax - xmin) * (W - 2*pad);
+  const sy = y => H - pad - (y - ymin) / (ymax - ymin) * (H - 2*pad);
+  return { svg, sx, sy, W, H, xmin, xmax, ymin, ymax, pad };
+}
+function el(tag, attrs, parent){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(parent, x, y, s, attrs){
+  const t = el("text", Object.assign({ x, y, "font-size": 12, fill: "var(--ink)" }, attrs || {}), parent);
+  t.textContent = s; return t;
+}
+function line(v, a, b, attrs, parent){
+  return el("line", Object.assign({ x1: v.sx(a[0]), y1: v.sy(a[1]), x2: v.sx(b[0]), y2: v.sy(b[1]) }, attrs), parent || v.svg);
+}
+function dot(v, p, r, fill, parent, extra){
+  return el("circle", Object.assign({ cx: v.sx(p[0]), cy: v.sy(p[1]), r, fill }, extra || {}), parent || v.svg);
+}
+function poly(v, pts, attrs, parent){
+  return el("polyline", Object.assign({ points: pts.map(p => `${v.sx(p[0]).toFixed(1)},${v.sy(p[1]).toFixed(1)}`).join(" "), fill: "none" }, attrs), parent || v.svg);
+}
+function arrow(v, a, b, color, w, parent){
+  const g0 = el("g", {}, parent || v.svg);
+  const x1 = v.sx(a[0]), y1 = v.sy(a[1]), x2 = v.sx(b[0]), y2 = v.sy(b[1]);
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 0.5) return g0;
+  const ux = (x2 - x1) / L, uy = (y2 - y1) / L, hl = Math.min(10, L * 0.45) * (w / 2.5 + 0.4), hw = hl * 0.5;
+  el("line", { x1, y1, x2: x2 - ux * hl * 0.7, y2: y2 - uy * hl * 0.7, stroke: color, "stroke-width": w, "stroke-linecap": "round" }, g0);
+  el("polygon", { points: `${x2},${y2} ${x2 - ux*hl - uy*hw},${y2 - uy*hl + ux*hw} ${x2 - ux*hl + uy*hw},${y2 - uy*hl - ux*hw}`, fill: color }, g0);
+  return g0;
+}
+function axes(v, parent, color){
+  if (v.ymin < 0 && v.ymax > 0) line(v, [v.xmin, 0], [v.xmax, 0], { stroke: color || "#9AA3AD", "stroke-width": 1 }, parent);
+  if (v.xmin < 0 && v.xmax > 0) line(v, [0, v.ymin], [0, v.ymax], { stroke: color || "#9AA3AD", "stroke-width": 1 }, parent);
+}
+function contourPath(v, F, level, nx, ny){
+  const xs = [], ys = [];
+  for (let i = 0; i <= nx; i++) xs.push(v.xmin + (v.xmax - v.xmin) * i / nx);
+  for (let j = 0; j <= ny; j++) ys.push(v.ymin + (v.ymax - v.ymin) * j / ny);
+  const G = [];
+  for (let j = 0; j <= ny; j++){ const row = []; for (let i = 0; i <= nx; i++) row.push(F(xs[i], ys[j]) - level); G.push(row); }
+  let d = "";
+  const P = (x, y) => `${v.sx(x).toFixed(1)},${v.sy(y).toFixed(1)}`;
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++){
+    const q = [G[j][i], G[j][i+1], G[j+1][i+1], G[j+1][i]];
+    const c = [[xs[i], ys[j]], [xs[i+1], ys[j]], [xs[i+1], ys[j+1]], [xs[i], ys[j+1]]];
+    const pts = [];
+    for (let e = 0; e < 4; e++){
+      const a = q[e], b = q[(e+1)%4];
+      if ((a < 0) !== (b < 0)){ const t = a / (a - b), A = c[e], B = c[(e+1)%4]; pts.push([A[0] + (B[0]-A[0])*t, A[1] + (B[1]-A[1])*t]); }
+    }
+    for (let k = 0; k + 1 < pts.length; k += 2) d += `M${P(pts[k][0], pts[k][1])}L${P(pts[k+1][0], pts[k+1][1])}`;
+  }
+  return d;
+}
+function heat(v, F, n, scale, parent){
+  const dw = (v.sx(v.xmax) - v.sx(v.xmin)) / n, dh = (v.sy(v.ymin) - v.sy(v.ymax)) / n;
+  const g0 = el("g", {}, parent || v.svg);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++){
+    const x = v.xmin + (i + 0.5) * (v.xmax - v.xmin) / n, y = v.ymin + (j + 0.5) * (v.ymax - v.ymin) / n;
+    const z = F(x, y); if (!isFinite(z)) continue;
+    const a = Math.min(1, Math.abs(z) / scale) * 0.42;
+    const base = z >= 0 ? [15,139,141] : [194,65,59];
+    el("rect", { x: (v.sx(v.xmin) + i*dw).toFixed(1), y: (v.sy(v.ymax) + (n-1-j)*dh).toFixed(1), width: (dw+0.6).toFixed(1), height: (dh+0.6).toFixed(1), fill: `rgb(${base.map(c => Math.round(251 + (c - 251)*a)).join(",")})` }, g0);
+  }
+  return g0;
+}
+const tealShade = a => `rgb(${[15,139,141].map(c => Math.round(251 + (c - 251) * Math.max(0, Math.min(1, a)))).join(",")})`;
+function simpson(f, a, b, n){ n = n || 2000; if (n % 2) n++; const h = (b - a) / n; let s = f(a) + f(b); for (let i = 1; i < n; i++) s += f(a + i*h) * (i % 2 ? 4 : 2); return s * h / 3; }
+function presetButtons(sel, defs, onPick, initial){
+  const btns = [];
+  defs.forEach((d, i) => {
+    const b = document.createElement("button"); b.className = "op"; b.textContent = d.t;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); onPick(d, i, true); });
+    $(sel).appendChild(b); btns.push(b);
+  });
+  if (initial !== undefined){ btns[initial].classList.add("active"); onPick(defs[initial], initial, false); }
+  return btns;
+}
+/* frame player: spec = { n, draw(i), ms } */
+function makePlayer(sel){
+  const root = $(sel);
+  root.innerHTML = `<button class="op" data-a="step">Step ▸</button><button class="op" data-a="play">▶ Play</button><button class="op" data-a="end">Jump to end ⏭</button><button class="op" data-a="reset">↺ Reset</button><span class="count"></span>`;
+  const pb = root.querySelector('[data-a="play"]'), cnt = root.querySelector(".count");
+  const P = { spec: null, i: 0, t: null };
+  P.draw = () => { P.spec.draw(P.i); cnt.textContent = P.spec.n > 1 ? `frame ${P.i + 1} of ${P.spec.n}` : "single view"; };
+  P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+  P.play = () => {
+    if (P.t){ P.stop(); return; }
+    if (P.i >= P.spec.n - 1){ P.i = 0; P.draw(); }
+    const tick = () => { if (P.i >= P.spec.n - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, P.spec.ms || 60); };
+    P.t = setTimeout(tick, P.spec.ms || 60); pb.textContent = "❚❚ Pause";
+  };
+  P.load = (spec, auto) => { P.stop(); P.spec = spec; P.i = 0; P.draw(); if (auto && spec.n > 1) P.play(); };
+  P.jump = () => { P.stop(); P.i = P.spec.n - 1; P.draw(); };
+  root.addEventListener("click", e => {
+    const a = e.target.dataset && e.target.dataset.a; if (!a || !P.spec) return;
+    if (a === "play") return P.play();
+    P.stop();
+    if (a === "step" && P.i < P.spec.n - 1) P.i++;
+    if (a === "end") P.i = P.spec.n - 1;
+    if (a === "reset") P.i = 0;
+    P.draw();
+  });
+  return P;
+}
+const T = {}; // exposed results for tests
+
+/* ================= TAB 1: directional derivative ================= */
+(function(){
+  const f = (x, y) => x*x + 3*y*y, p = [1, 1], G = [2, 6], GN = Math.hypot(2, 6), GA = Math.atan2(6, 2) * 180 / PI;
+  const fd = th => { const u = [Math.cos(th*PI/180), Math.sin(th*PI/180)], h = 1e-6; return (f(p[0] + h*u[0], p[1] + h*u[1]) - f(p[0] - h*u[0], p[1] - h*u[1])) / (2*h); };
+  const svg = $("#dirSvg"), plot = $("#dirPlot");
+  const v = makeView(svg, -0.4, 2.4, -0.4, 2.4, 440, 440, 20);
+  const pv = makeView(plot, 0, 360, -7.5, 7.5, 320, 200, 22);
+  function base(){
+    svg.innerHTML = "";
+    [0.5, 1, 2, 4, 7, 10, 14, 19].forEach(L => el("path", { d: contourPath(v, f, L, 90, 90), fill: "none", stroke: L === 4 ? "var(--c2)" : "#B9C9D2", "stroke-width": L === 4 ? 2.2 : 1 }, svg));
+    axes(v, svg);
+    txt(svg, v.sx(1.55), v.sy(0.62), "f = 4", { fill: "#8a6a10", "font-size": 11 });
+    arrow(v, p, [p[0] + G[0]/GN, p[1] + G[1]/GN], "var(--c3)", 3);
+    txt(svg, v.sx(p[0] + G[0]/GN) + 6, v.sy(p[1] + G[1]/GN) + 4, `∇f = (2, 6), |∇f| = ${fx(GN, 4)}`, { fill: "var(--c3)", "font-size": 11 });
+  }
+  function plotBase(){
+    plot.innerHTML = "";
+    axes(pv, plot);
+    [0, 90, 180, 270, 360].forEach(a => txt(plot, pv.sx(a) - 8, pv.sy(-7.5) + 14, `${a}°`, { "font-size": 9.5, fill: "var(--ink-soft)" }));
+    [-6, 6].forEach(s => txt(plot, 2, pv.sy(s) + 3, String(s), { "font-size": 9.5, fill: "var(--ink-soft)" }));
+    const th = []; for (let a = 0; a <= 360; a += 2) th.push([a, 2*Math.cos(a*PI/180) + 6*Math.sin(a*PI/180)]);
+    poly(pv, th, { stroke: "#C9C2E3", "stroke-width": 2 }, plot);
+    line(pv, [GA, -7.5], [GA, 7.5], { stroke: "var(--c3)", "stroke-dasharray": "3 3", "stroke-width": 1 }, plot);
+  }
+  function show(th, extra){
+    base();
+    const u = [Math.cos(th*PI/180), Math.sin(th*PI/180)];
+    const tc = [-G[1]/GN, G[0]/GN];
+    line(v, [p[0] - 0.9*tc[0], p[1] - 0.9*tc[1]], [p[0] + 0.9*tc[0], p[1] + 0.9*tc[1]], { stroke: "var(--c2)", "stroke-dasharray": "5 4", "stroke-width": 1.5 });
+    arrow(v, p, [p[0] + u[0], p[1] + u[1]], "var(--c1)", 3);
+    dot(v, p, 5, "var(--ink)");
+    const s = fd(th), dotp = G[0]*u[0] + G[1]*u[1];
+    let phi = Math.abs(((th - GA) % 360 + 540) % 360 - 180);
+    $("#dirInfo").innerHTML = `<span class="k">angle of u</span><b>${fx(th, 2)}°</b>, u = (${fx(u[0], 4)}, ${fx(u[1], 4)})` +
+      `<span class="k">slope measured with a tiny step</span><b>${fx(s, 6)}</b>` +
+      `<span class="k">∇f · u = 2·u₁ + 6·u₂</span><b>${fx(dotp, 6)}</b>` +
+      `<span class="k">|∇f| · cos φ, φ = angle from ∇f</span>${fx(GN, 4)} × cos ${fx(phi, 2)}° = <b>${fx(GN*Math.cos(phi*PI/180), 6)}</b>` + (extra || "");
+    return s;
+  }
+  const P = makePlayer("#dirCtrl");
+  const fixed = (th, cap) => ({ n: 1, draw: () => { plotBase(); const s = show(th); dot(pv, [th, s], 4.5, "var(--c1)", plot); $("#dirCaption").innerHTML = cap; } });
+  const sweep = () => {
+    const pts = []; for (let k = 0; k <= 720; k++){ const a = k / 2; pts.push([a, fd(a)]); }
+    let best = 0, worst = 0; pts.forEach((q, k) => { if (q[1] > pts[best][1]) best = k; if (q[1] < pts[worst][1]) worst = k; });
+    T.dirMax = pts[best]; T.dirMin = pts[worst];
+    return { n: 721, ms: 10, draw: i => {
+      plotBase();
+      poly(pv, pts.slice(0, i + 1), { stroke: "var(--c1)", "stroke-width": 2 }, plot);
+      let b = 0; for (let k = 0; k <= i; k++) if (pts[k][1] > pts[b][1]) b = k;
+      dot(pv, pts[b], 4, "var(--c3)", plot);
+      dot(pv, pts[i], 4.5, "var(--c1)", plot);
+      show(pts[i][0], `<span class="k">steepest found so far (${i + 1} of 721 directions)</span><b>${fx(pts[b][1], 5)}</b> at ${fx(pts[b][0], 1)}°`);
+      $("#dirCaption").innerHTML = i < 720 ? `Sweeping u all the way around in half-degree steps and measuring the slope each time (teal curve, measured; pale curve, the formula ∇f·u).` :
+        `Done. The steepest of all 721 measured directions is <b>${fx(pts[best][0], 1)}°</b> with slope <b>${fx(pts[best][1], 5)}</b>, next to the gradient's ${fx(GA, 2)}° and |∇f| = ${fx(GN, 5)}. The steepest descent is at <b>${fx(pts[worst][0], 1)}°</b>, exactly opposite. The slope curve is a pure cosine wave, |∇f| cos φ.`;
+    } };
+  };
+  presetButtons("#dirPresets", [
+    { t: "East (1, 0)", s: () => fixed(0, "Walking due east only feels the x-slope: ∂f/∂x = 2.") },
+    { t: "North (0, 1)", s: () => fixed(90, "Walking due north only feels the y-slope: ∂f/∂y = 6.") },
+    { t: "Diagonal 45°", s: () => fixed(45, "Half east, half north: (2 + 6)/√2 = 5.656854. Two partial derivatives are enough for every direction.") },
+    { t: "Along the gradient", s: () => fixed(GA, "Along ∇f the angle φ is 0, cos φ = 1, and the slope is the biggest possible: |∇f| = √40 = 6.324555.") },
+    { t: "Along the contour", s: () => fixed(GA + 90, "At right angles to ∇f, cos φ = 0: slope 0. You are walking along the level curve f = 4 (gold), so the gradient is perpendicular to contours.") },
+    { t: "Sweep all 720 directions ▶", s: sweep },
+  ], (d, i, auto) => P.load(d.s(), auto), 5);
+})();
+
+/* ================= TAB 2: double integrals ================= */
+(function(){
+  const f = (x, y) => x * y * y;
+  const svg = $("#dblSvg"), side = $("#dblSide");
+  const P = makePlayer("#dblCtrl");
+  const iso = (x, y, z) => [150 + x*70 - y*40, 236 - x*16 - y*20 - z*8.5];
+  const isoPoly = (pts, attrs) => el("polygon", Object.assign({ points: pts.map(q => iso(...q).map(c => c.toFixed(1)).join(",")).join(" ") }, attrs), side);
+  function isoFrame(){
+    side.innerHTML = "";
+    isoPoly([[0,0,0],[2,0,0],[2,3,0],[0,3,0]], { fill: "#F1F4F4", stroke: "#B9C9D2" });
+    txt(side, iso(2,0,0)[0] - 4, iso(2,0,0)[1] + 14, "x = 2", { "font-size": 10, fill: "var(--ink-soft)" });
+    txt(side, iso(0,3,0)[0] - 10, iso(0,3,0)[1] + 14, "y = 3", { "font-size": 10, fill: "var(--ink-soft)" });
+  }
+  function columns(n){
+    const dx = 2/n, dy = 3/n, cells = [];
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) cells.push({ i, j, h: f((i + .5)*dx, (j + .5)*dy) });
+    const total = cells.reduce((s, c) => s + c.h * dx * dy, 0);
+    const v = makeView(svg, -0.2, 2.2, -0.3, 3.3, 440, 440, 26);
+    const per = n <= 10 ? 1 : n;  // 100×100: one row per frame
+    const nFrames = Math.ceil(cells.length / per);
+    let drawnRows = -1, rowsG = null, hmax = f(2, 3);
+    function region(){
+      svg.innerHTML = "";
+      el("rect", { x: v.sx(0), y: v.sy(3), width: v.sx(2) - v.sx(0), height: v.sy(0) - v.sy(3), fill: "#FBFCFC", stroke: "var(--c0)" }, svg);
+      txt(svg, v.sx(0) - 4, v.sy(0) + 16, "0", { "font-size": 11 }); txt(svg, v.sx(2) - 4, v.sy(0) + 16, "2", { "font-size": 11 });
+      txt(svg, v.sx(0) - 16, v.sy(3) + 4, "3", { "font-size": 11 });
+      rowsG = el("g", {}, svg); drawnRows = -1;
+    }
+    return { n: nFrames, ms: n <= 4 ? 220 : n <= 10 ? 35 : 30, draw: k => {
+      const upto = Math.min(cells.length, (k + 1) * per);
+      if (n === 100){
+        if (drawnRows < 0 || k < drawnRows) region();
+        for (let r = drawnRows + 1; r <= k; r++){
+          for (let i = 0; i < n; i++){ const c = cells[r*n + i];
+            el("rect", { x: v.sx(c.i*dx).toFixed(2), y: v.sy((c.j+1)*dy).toFixed(2), width: (v.sx(dx) - v.sx(0) + 0.3).toFixed(2), height: (v.sy(0) - v.sy(dy) + 0.3).toFixed(2), fill: tealShade(0.08 + 0.85*c.h/hmax) }, rowsG); }
+        }
+        drawnRows = k;
+      } else {
+        region();
+        for (let q = 0; q < upto; q++){ const c = cells[q];
+          el("rect", { x: v.sx(c.i*dx), y: v.sy((c.j+1)*dy), width: v.sx(dx) - v.sx(0), height: v.sy(0) - v.sy(dy), fill: tealShade(0.08 + 0.85*c.h/hmax), stroke: "#fff", "stroke-width": n <= 4 ? 1.5 : 0.6 }, rowsG);
+          if (n <= 4) txt(rowsG, v.sx((c.i + .5)*dx) - 16, v.sy((c.j + .5)*dy) + 4, fx(c.h, 3), { "font-size": 11 });
+        }
+      }
+      isoFrame();
+      if (n <= 10){
+        const shown = cells.slice(0, upto).slice().sort((a, b) => (b.i + b.j) - (a.i + a.j));
+        shown.forEach(c => {
+          const x0 = c.i*dx, x1 = x0 + dx, y0 = c.j*dy, y1 = y0 + dy, h = c.h, col = tealShade(0.15 + 0.8*h/hmax);
+          isoPoly([[x0,y0,0],[x1,y0,0],[x1,y0,h],[x0,y0,h]], { fill: col, stroke: "#fff", "stroke-width": 0.5 });
+          isoPoly([[x0,y0,0],[x0,y1,0],[x0,y1,h],[x0,y0,h]], { fill: col, stroke: "#fff", "stroke-width": 0.5, opacity: 0.85 });
+          isoPoly([[x0,y0,h],[x1,y0,h],[x1,y1,h],[x0,y1,h]], { fill: col, stroke: "#fff", "stroke-width": 0.5, opacity: 0.7 });
+        });
+      } else {
+        for (let a = 0; a <= 10; a++){ const xx = a * 0.2, pts = []; for (let b = 0; b <= 30; b++){ const yy = b * 0.1; pts.push(iso(xx, yy, f(xx, yy))); }
+          el("polyline", { points: pts.map(q => q.join(",")).join(" "), fill: "none", stroke: "var(--c1)", "stroke-width": 0.8 }, side); }
+        for (let b = 0; b <= 15; b++){ const yy = b * 0.2, pts = []; for (let a = 0; a <= 20; a++){ const xx = a * 0.1; pts.push(iso(xx, yy, f(xx, yy))); }
+          el("polyline", { points: pts.map(q => q.join(",")).join(" "), fill: "none", stroke: "var(--c1)", "stroke-width": 0.8 }, side); }
+        txt(side, 10, 18, "the surface z = x·y² (wireframe)", { "font-size": 10, fill: "var(--ink-soft)" });
+      }
+      const run = cells.slice(0, upto).reduce((s, c) => s + c.h * dx * dy, 0);
+      T["cols" + n] = total;
+      $("#dblInfo").innerHTML = `<span class="k">${n} × ${n} columns, each base ${fx(dx, 3)} × ${fx(dy, 3)}</span>columns added: <b>${upto}</b> of ${cells.length}` +
+        `<span class="k">sum of column volumes so far</span><b style="font-size:18px">${fx(run, 5)}</b><span class="k">exact volume</span>18`;
+      $("#dblCaption").innerHTML = upto < cells.length ? `Each column's height is f at the centre of its little square; its volume is height × base area.` :
+        `All ${cells.length} columns: <b>${fx(total, 5)}</b>. ${n === 4 ? "Coarse, but already close to 18." : n === 10 ? "Closer." : "Within 0.0005 of 18: thinner columns, better fit."}`;
+    } };
+  }
+  function slices(order){
+    const N = 20, v = makeView(svg, -0.2, 2.2, -0.3, 3.3, 440, 440, 26);
+    const len = order === "x" ? 2 : 3, w = len / N;
+    const strip = k => { const a = k*w, b = a + w; return order === "x" ? 9 * (b*b - a*a) / 2 : 2 * (b**3 - a**3) / 3; };
+    const sliceArea = c => order === "x" ? 9*c : 2*c*c;
+    return { n: N, ms: 260, draw: k => {
+      svg.innerHTML = "";
+      el("rect", { x: v.sx(0), y: v.sy(3), width: v.sx(2) - v.sx(0), height: v.sy(0) - v.sy(3), fill: "#FBFCFC", stroke: "var(--c0)" }, svg);
+      for (let q = 0; q <= k; q++){
+        const a = q*w, b = a + w;
+        const r = order === "x" ? { x: v.sx(a), y: v.sy(3), width: v.sx(b) - v.sx(a), height: v.sy(0) - v.sy(3) } : { x: v.sx(0), y: v.sy(b), width: v.sx(2) - v.sx(0), height: v.sy(a) - v.sy(b) };
+        el("rect", Object.assign(r, { fill: q === k ? "var(--c2)" : tealShade(0.35), opacity: q === k ? 0.75 : 0.6, stroke: "#fff", "stroke-width": 0.8 }), svg);
+      }
+      txt(svg, v.sx(0) - 4, v.sy(0) + 16, "0", { "font-size": 11 }); txt(svg, v.sx(2) - 4, v.sy(0) + 16, "x = 2", { "font-size": 11 }); txt(svg, v.sx(0) - 16, v.sy(3) + 4, "3", { "font-size": 11 });
+      const c = (k + .5) * w;
+      side.innerHTML = "";
+      const sv = order === "x" ? makeView(side, 0, 3, 0, 18.5, 320, 260, 28) : makeView(side, 0, 2, 0, 18.5, 320, 260, 28);
+      axes(sv, side);
+      const prof = []; const top = order === "x" ? 3 : 2;
+      for (let t = 0; t <= 60; t++){ const s = top * t / 60; prof.push([s, order === "x" ? f(c, s) : f(s, c)]); }
+      el("polygon", { points: [[0,0], ...prof, [top, 0]].map(q => `${sv.sx(q[0]).toFixed(1)},${sv.sy(q[1]).toFixed(1)}`).join(" "), fill: "var(--c2)", opacity: 0.35 }, side);
+      poly(sv, prof, { stroke: "#8a6a10", "stroke-width": 2 }, side);
+      txt(side, 34, 18, order === "x" ? `slice at x = ${fx(c, 2)}: height x·y² against y` : `slice at y = ${fx(c, 3)}: height x·y² against x`, { "font-size": 10.5, fill: "var(--ink-soft)" });
+      txt(side, 34, 34, `slice area = ${order === "x" ? "9x" : "2y²"} = ${fx(sliceArea(c), 4)}`, { "font-size": 11, fill: "#8a6a10" });
+      let run = 0; for (let q = 0; q <= k; q++) run += strip(q);
+      T["fub" + order] = run;
+      $("#dblInfo").innerHTML = `<span class="k">${order === "x" ? "inner integral over y first: ∫₀³ x·y² dy = 9x" : "inner integral over x first: ∫₀² x·y² dx = 2y²"}</span>` +
+        `slices done: <b>${k + 1}</b> of ${N}<span class="k">volume so far (each slab = ∫ slice area)</span><b style="font-size:18px">${fx(run, 6)}</b>`;
+      $("#dblCaption").innerHTML = k < N - 1 ? `Bread-slicing: each slice's area is an ordinary one-variable integral; stacking the slabs gives the volume.` :
+        `Total <b>${fx(run, 6)}</b>. ${order === "x" ? "Then ∫₀² 9x dx = 18." : "Then ∫₀³ 2y² dy = 18."} Fubini: same loaf, sliced the other way, same volume.`;
+    } };
+  }
+  function triangle(mode){
+    const N = 20, v = makeView(svg, -0.12, 1.12, -0.12, 1.12, 440, 440, 26), w = 1 / N;
+    const inner = x => simpson(y => Math.exp(y*y), x, 1, 400);
+    const strip = mode === "stuck" ? (k => simpson(inner, k*w, (k+1)*w, 20)) : (k => 0.5 * (Math.exp(((k+1)*w)**2) - Math.exp((k*w)**2)));
+    const exact = (Math.E - 1) / 2;
+    return { n: N, ms: 260, draw: k => {
+      svg.innerHTML = "";
+      el("polygon", { points: [[0,0],[1,1],[0,1]].map(q => `${v.sx(q[0])},${v.sy(q[1])}`).join(" "), fill: "#FBFCFC", stroke: "var(--c0)", "stroke-width": 1.5 }, svg);
+      for (let q = 0; q <= k; q++){
+        const a = q*w, b = a + w;
+        const pts = mode === "stuck" ? [[a, a], [b, b], [b, 1], [a, 1]] : [[0, a], [a, a], [b, b], [0, b]];
+        el("polygon", { points: pts.map(t => `${v.sx(t[0]).toFixed(1)},${v.sy(t[1]).toFixed(1)}`).join(" "), fill: q === k ? "var(--c2)" : tealShade(0.35), opacity: q === k ? 0.75 : 0.6, stroke: "#fff", "stroke-width": 0.6 }, svg);
+      }
+      line(v, [0, 0], [1, 1], { stroke: "var(--c0)", "stroke-dasharray": "4 3" });
+      txt(svg, v.sx(0.62), v.sy(0.52), "y = x", { "font-size": 11, fill: "var(--ink-soft)" });
+      txt(svg, v.sx(0) - 4, v.sy(0) + 16, "0", { "font-size": 11 }); txt(svg, v.sx(1) - 4, v.sy(0) + 16, "1", { "font-size": 11 }); txt(svg, v.sx(0) - 16, v.sy(1) + 4, "1", { "font-size": 11 });
+      const c = (k + .5) * w;
+      side.innerHTML = "";
+      const sv = makeView(side, 0, 1, 0, 2.9, 320, 260, 28); axes(sv, side);
+      const prof = [];
+      if (mode === "stuck"){ for (let t = 0; t <= 50; t++){ const y = c + (1 - c) * t / 50; prof.push([y, Math.exp(y*y)]); } }
+      else { for (let t = 0; t <= 50; t++){ const x = c * t / 50; prof.push([x, Math.exp(c*c)]); } }
+      el("polygon", { points: [[prof[0][0], 0], ...prof, [prof[prof.length-1][0], 0]].map(q => `${sv.sx(q[0]).toFixed(1)},${sv.sy(q[1]).toFixed(1)}`).join(" "), fill: "var(--c2)", opacity: 0.35 }, side);
+      poly(sv, prof, { stroke: "#8a6a10", "stroke-width": 2 }, side);
+      txt(side, 34, 18, mode === "stuck" ? `slice at x = ${fx(c, 3)}: e^(y²) for y from x to 1` : `slice at y = ${fx(c, 3)}: e^(y²) is constant in x`, { "font-size": 10.5, fill: "var(--ink-soft)" });
+      txt(side, 34, 34, mode === "stuck" ? `area = ∫ e^(y²) dy: no formula, computer only` : `area = y·e^(y²) = ${fx(c*Math.exp(c*c), 4)}`, { "font-size": 11, fill: mode === "stuck" ? "var(--bad)" : "#8a6a10" });
+      let run = 0; for (let q = 0; q <= k; q++) run += strip(q);
+      T["tri" + mode] = run;
+      $("#dblInfo").innerHTML = `<span class="k">${mode === "stuck" ? "vertical slices (dy inside): ∫ₓ¹ e^(y²) dy has no antiderivative" : "horizontal slices (dx inside): ∫₀^y e^(y²) dx = y·e^(y²)"}</span>` +
+        `slices done: <b>${k + 1}</b> of ${N}<span class="k">volume so far</span><b style="font-size:18px">${fx(run, 7)}</b><span class="k">(e − 1)/2</span>${fx(exact, 7)}`;
+      $("#dblCaption").innerHTML = k < N - 1 ? (mode === "stuck" ? `Slicing at fixed x: each slice needs ∫ e^(y²) dy, which has no formula. The page can still add it up numerically, but by hand you're stuck.` : `Slicing at fixed y: x runs from 0 to y, and the height e^(y²) doesn't depend on x, so each slice is just y·e^(y²).`) :
+        `Total <b>${fx(run, 7)}</b> = (e − 1)/2. ${mode === "stuck" ? "Correct, but only because a computer did every slice numerically." : "And by hand: ∫₀¹ y·e^(y²) dy = [½e^(y²)]₀¹ = (e − 1)/2. Same region, same volume, one line."}`;
+    } };
+  }
+  presetButtons("#dblPresets", [
+    { t: "Columns 4 × 4", s: () => columns(4) },
+    { t: "Columns 10 × 10", s: () => columns(10) },
+    { t: "Columns 100 × 100", s: () => columns(100) },
+    { t: "Fubini: slice at fixed x", s: () => slices("x") },
+    { t: "Fubini: slice at fixed y", s: () => slices("y") },
+    { t: "e^(y²): vertical slices (stuck)", s: () => triangle("stuck") },
+    { t: "e^(y²): swap the order (easy)", s: () => triangle("easy") },
+  ], (d, i, auto) => P.load(d.s(), auto), 0);
+})();
+
+/* ================= TAB 3: polar & Gaussian ================= */
+(function(){
+  const svg = $("#polSvg"), plot = $("#polPlot");
+  const P = makePlayer("#polCtrl");
+  const annulus = (v, r0, r1, a0, a1) => {
+    const cx = v.sx(0), cy = v.sy(0), k = (v.sx(1) - v.sx(0));
+    if (a1 - a0 >= 2*PI - 1e-9){
+      const R1 = r1*k, R0 = r0*k;
+      return `M${cx + R1},${cy} A${R1},${R1} 0 1 0 ${cx - R1},${cy} A${R1},${R1} 0 1 0 ${cx + R1},${cy} Z` + (R0 > 0 ? ` M${cx + R0},${cy} A${R0},${R0} 0 1 1 ${cx - R0},${cy} A${R0},${R0} 0 1 1 ${cx + R0},${cy} Z` : "");
+    }
+    const p = (r, a) => `${(cx + r*k*Math.cos(a)).toFixed(2)},${(cy - r*k*Math.sin(a)).toFixed(2)}`;
+    return `M${p(r0, a0)} L${p(r1, a0)} A${r1*k},${r1*k} 0 0 0 ${p(r1, a1)} L${p(r0, a1)} A${r0*k},${r0*k} 0 0 1 ${p(r0, a0)} Z`;
+  };
+  function plotFrame(xmax, ymax, curve, targets){
+    plot.innerHTML = "";
+    const pv = makeView(plot, 0, xmax, 0, ymax, 320, 220, 26);
+    axes(pv, plot);
+    line(pv, [0, 0], [xmax, 0], { stroke: "#9AA3AD" }, plot); line(pv, [0, 0], [0, ymax], { stroke: "#9AA3AD" }, plot);
+    targets.forEach(([y, lab, col]) => { line(pv, [0, y], [xmax, y], { stroke: col, "stroke-dasharray": "4 3" }, plot); txt(plot, pv.sx(xmax) - 120, pv.sy(y) - 4, lab, { "font-size": 10, fill: col }); });
+    if (curve){ const pts = []; for (let t = 0; t <= 100; t++){ const x = xmax * t / 100; pts.push([x, curve(x)]); } poly(pv, pts, { stroke: "#C9C2E3", "stroke-width": 2 }, plot); }
+    txt(plot, pv.sx(xmax) - 10, pv.sy(0) + 16, "R", { "font-size": 10, fill: "var(--ink-soft)" });
+    for (let t = 1; t <= xmax; t++) txt(plot, pv.sx(t) - 3, pv.sy(0) + 14, String(t), { "font-size": 9.5, fill: "var(--ink-soft)" });
+    return pv;
+  }
+  function rings(N, withR){
+    const Rmax = 4, dr = Rmax / N, v = makeView(svg, -4.3, 4.3, -4.3, 4.3, 440, 440, 10);
+    const contrib = k => { const r = (k + .5) * dr; return 2*PI * (withR ? r : 1) * Math.exp(-r*r) * dr; };
+    const cum = []; let s = 0; for (let k = 0; k < N; k++){ s += contrib(k); cum.push(s); }
+    T["rings" + N + (withR ? "" : "noR")] = s;
+    const target = withR ? PI : Math.pow(PI, 1.5);
+    const curve = withR ? (R => PI * (1 - Math.exp(-R*R))) : (R => 2*PI*simpson(r => Math.exp(-r*r), 0, R, 200));
+    return { n: N, ms: N > 100 ? 25 : 90, draw: k => {
+      svg.innerHTML = "";
+      for (let q = 0; q <= k; q++){ const r = (q + .5) * dr;
+        el("path", { d: annulus(v, q*dr, (q+1)*dr, 0, 2*PI), "fill-rule": "evenodd", fill: q === k ? "var(--c2)" : tealShade(0.08 + 0.85*Math.exp(-r*r)), stroke: N <= 40 ? "#fff" : "none", "stroke-width": 0.5 }, svg); }
+      axes(v, svg, "rgba(90,100,110,0.5)");
+      [1, 2, 3, 4].forEach(R => el("circle", { cx: v.sx(0), cy: v.sy(0), r: v.sx(R) - v.sx(0), fill: "none", stroke: "#C9D3D8", "stroke-dasharray": "3 4" }, svg));
+      txt(svg, v.sx(1) + 2, v.sy(0) - 4, "r=1", { "font-size": 10, fill: "var(--ink-soft)" }); txt(svg, v.sx(2) + 2, v.sy(0) - 4, "r=2", { "font-size": 10, fill: "var(--ink-soft)" });
+      const pv = plotFrame(4, withR ? 3.6 : 6.2, curve, withR ? [[PI, "π = 3.14159", "var(--c3)"]] : [[Math.pow(PI, 1.5), "π^1.5 = 5.5683", "var(--bad)"], [PI, "π (correct)", "var(--c3)"]]);
+      poly(pv, cum.slice(0, k + 1).map((c, q) => [(q + 1) * dr, c]), { stroke: withR ? "var(--c1)" : "var(--bad)", "stroke-width": 2 }, plot);
+      dot(pv, [(k + 1) * dr, cum[k]], 4, withR ? "var(--c1)" : "var(--bad)", plot);
+      const r = (k + .5) * dr;
+      $("#polInfo").innerHTML = `<span class="k">ring ${k + 1} of ${N}, radius ${fx(r, 3)}</span>` +
+        (withR ? `area 2πr·dr = ${fx(2*PI*r*dr, 5)}, height e^(−r²) = ${fx(Math.exp(-r*r), 5)}` : `<span class="bad">area taken as 2π·dr = ${fx(2*PI*dr, 5)} (the r is missing)</span>`) +
+        `<span class="k">running total</span><b style="font-size:18px">${fx(cum[k], 5)}</b>` +
+        `<span class="k">exact inside R = ${fx((k + 1)*dr, 2)}</span>${fx(curve((k + 1)*dr), 5)}`;
+      $("#polCaption").innerHTML = k < N - 1 ? (withR ? `Each ring adds (area 2πr·dr) × (height e^(−r²)). Near the centre the rings are tall but thin in area; far out they're wide but almost flat.` : `The same rings, but with the area exchange rate forgotten: every ring is treated as if it had area 2π·dr, as if it were near the centre.`) :
+        (withR ? `${N} rings out to r = 4: <b>${fx(s, 5)}</b>. The exact volume is π(1 − e^(−16)) ≈ π. Inside R = 1 there's ${fx(PI*(1 - Math.exp(-1)), 5)}, inside R = 2 already ${fx(PI*(1 - Math.exp(-4)), 5)}.` :
+          `Without the r the total is <b>${fx(s, 4)}</b> = π^1.5 (the 1D bell area √π/2 × 2π), not π. Forgetting the Jacobian gives a wrong answer, not a slightly-off one.`);
+    } };
+  }
+  function disk(){
+    const NR = 10, NA = 24, v = makeView(svg, -1.2, 1.2, -1.2, 1.2, 440, 440, 12), dr = 1 / NR, da = 2*PI / NA;
+    const cum = []; let s = 0; for (let k = 0; k < NR; k++){ s += NA * (k + .5) * dr * dr * da; cum.push(s); }
+    T.disk = s;
+    return { n: NR, ms: 260, draw: k => {
+      svg.innerHTML = "";
+      for (let q = 0; q <= k; q++) for (let a = 0; a < NA; a++)
+        el("path", { d: annulus(v, q*dr, (q+1)*dr, a*da, (a+1)*da), fill: q === k ? "var(--c2)" : tealShade(0.25 + 0.04*q), stroke: "#fff", "stroke-width": 0.8 }, svg);
+      el("circle", { cx: v.sx(0), cy: v.sy(0), r: v.sx(1) - v.sx(0), fill: "none", stroke: "var(--c0)" }, svg);
+      const pv = plotFrame(1, 3.6, R => PI*R*R, [[PI, "π = 3.14159", "var(--c3)"]]);
+      poly(pv, cum.slice(0, k + 1).map((c, q) => [(q + 1) * dr, c]), { stroke: "var(--c1)", "stroke-width": 2 }, plot);
+      dot(pv, [(k + 1) * dr, cum[k]], 4, "var(--c1)", plot);
+      const r = (k + .5) * dr;
+      $("#polInfo").innerHTML = `<span class="k">ring ${k + 1} of ${NR}: ${NA} patches, each r·dr·dθ</span>${fx(r, 2)} × ${fx(dr, 2)} × ${fx(da, 4)} = ${fx(r*dr*da, 5)}` +
+        `<span class="k">area so far</span><b style="font-size:18px">${fx(cum[k], 6)}</b><span class="k">exact πR²</span>${fx(PI*((k + 1)*dr)**2, 6)}`;
+      $("#polCaption").innerHTML = k < NR - 1 ? `Every patch spans the same dr and dθ, but outer patches are bigger: their area is r·dr·dθ. The r is |det J| for (r, θ) → (x, y).` : `Total <b>${fx(s, 6)}</b> = π, the unit disk's area, from ∫₀^{2π}∫₀¹ r dr dθ.`;
+    } };
+  }
+  function squares(){
+    const N = 40, d = 8 / N, v = makeView(svg, -4.3, 4.3, -4.3, 4.3, 440, 440, 10);
+    const rowSum = j => { const y = -4 + (j + .5)*d; let s = 0; for (let i = 0; i < N; i++){ const x = -4 + (i + .5)*d; s += Math.exp(-x*x - y*y) * d * d; } return s; };
+    const cum = []; let s = 0; for (let j = 0; j < N; j++){ s += rowSum(j); cum.push(s); }
+    T.squares = s;
+    return { n: N, ms: 70, draw: k => {
+      svg.innerHTML = "";
+      for (let j = 0; j <= k; j++) for (let i = 0; i < N; i++){ const x = -4 + (i + .5)*d, y = -4 + (j + .5)*d;
+        el("rect", { x: v.sx(x - d/2), y: v.sy(y + d/2), width: v.sx(d) - v.sx(0) + 0.3, height: v.sy(0) - v.sy(d) + 0.3, fill: j === k ? "var(--c2)" : tealShade(0.08 + 0.85*Math.exp(-x*x - y*y)) }, svg); }
+      axes(v, svg, "rgba(90,100,110,0.5)");
+      plot.innerHTML = "";
+      const pv = makeView(plot, -4, 4, 0, 3.6, 320, 220, 26);
+      line(pv, [-4, 0], [4, 0], { stroke: "#9AA3AD" }, plot);
+      line(pv, [-4, PI], [4, PI], { stroke: "var(--c3)", "stroke-dasharray": "4 3" }, plot); txt(plot, 30, pv.sy(PI) - 4, "π = 3.14159", { "font-size": 10, fill: "var(--c3)" });
+      poly(pv, cum.slice(0, k + 1).map((c, q) => [-4 + (q + 1) * d, c]), { stroke: "var(--c1)", "stroke-width": 2 }, plot);
+      txt(plot, pv.sx(4) - 54, pv.sy(0) + 16, "row's top y", { "font-size": 10, fill: "var(--ink-soft)" });
+      $("#polInfo").innerHTML = `<span class="k">Cartesian squares, ${N} × ${N} over [−4, 4]²</span>rows done: <b>${k + 1}</b> of ${N}<span class="k">running total</span><b style="font-size:18px">${fx(cum[k], 8)}</b>`;
+      $("#polCaption").innerHTML = k < N - 1 ? `The same round hill, measured with ordinary dx·dy squares instead of rings.` : `Total <b>${fx(s, 8)}</b>: the same π, the long way round. Squares fit a round hill badly but still work numerically; only the rings make it doable by hand.`;
+    } };
+  }
+  function sqrtPi(){
+    const I = simpson(x => Math.exp(-x*x), -8, 8, 4000); T.gauss1d = I;
+    const steps = [
+      [`<span class="k">step 1: name the unknown</span>I = ∫ e^(−x²) dx (no antiderivative exists)`, "Call the bell-curve area I. We can't integrate it directly."],
+      [`<span class="k">step 2: square it</span>I² = ∫∫ e^(−(x² + y²)) dx dy, a round hill`, "Multiply two copies with different letters: a double integral of a hill that depends only on r² = x² + y²."],
+      [`<span class="k">step 3: polar, with the r</span>I² = ∫₀^{2π} ∫₀^∞ e^(−r²) · r dr dθ = 2π × ½ = <b>π</b>`, "The r makes r·e^(−r²) the exact derivative of −½e^(−r²), so the inner integral is ½."],
+      [`<span class="k">step 4: take the square root</span>I = √π = <b style="font-size:18px">${fx(Math.sqrt(PI), 10)}</b><span class="k">this page's direct 1D integral (Simpson, 4,000 pieces)</span><b style="font-size:18px">${fx(I, 10)}</b>`, `Both agree to 10 decimal places: ∫ e^(−x²) dx = √π.`],
+    ];
+    return { n: steps.length, ms: 1300, draw: k => {
+      svg.innerHTML = "";
+      const v = makeView(svg, -3.2, 3.2, -0.2, 1.25, 440, 440, 20);
+      const pts = []; for (let t = 0; t <= 200; t++){ const x = -3.2 + 6.4 * t / 200; pts.push([x, Math.exp(-x*x)]); }
+      el("polygon", { points: [[-3.2, 0], ...pts, [3.2, 0]].map(q => `${v.sx(q[0]).toFixed(1)},${v.sy(q[1]).toFixed(1)}`).join(" "), fill: tealShade(0.4) }, svg);
+      poly(v, pts, { stroke: "var(--c1)", "stroke-width": 2.2 });
+      axes(v, svg);
+      txt(svg, v.sx(-0.6), v.sy(0.35), k >= 3 ? `area = √π ≈ ${fx(I, 4)}` : "area = I = ?", { "font-size": 14, fill: "var(--ink)" });
+      plotFrame(4, 3.6, R => PI * (1 - Math.exp(-R*R)), [[PI, "I² = π", "var(--c3)"]]);
+      $("#polInfo").innerHTML = steps.slice(0, k + 1).map(s => s[0]).join("");
+      $("#polCaption").innerHTML = steps[k][1];
+    } };
+  }
+  presetButtons("#polPresets", [
+    { t: "Unit disk area = π", s: disk },
+    { t: "Gaussian hill: 40 rings", s: () => rings(40, true) },
+    { t: "Gaussian hill: 200 rings", s: () => rings(200, true) },
+    { t: "Mistake: forget the r", s: () => rings(200, false) },
+    { t: "Same hill with squares", s: squares },
+    { t: "So ∫e^(−x²)dx = √π", s: sqrtPi },
+  ], (d, i, auto) => P.load(d.s(), auto), 1);
+})();
+
+/* ================= TAB 4: divergence & curl ================= */
+(function(){
+  const FIELDS = [
+    { t: "Source (x, y)", F: (x, y) => [x, y], cap: "Arrows point straight out and grow with distance. The dust ring expands (area × e^(div·t) = e^(2t)) without turning: divergence 2, curl 0." },
+    { t: "Rotation (−y, x)", F: (x, y) => [-y, x], cap: "Every arrow circles the origin. The ring keeps its area (divergence 0) and the paddle wheel turns steadily (curl 2, so it spins at 1 radian per second)." },
+    { t: "Shear (y, 0)", F: (x, y) => [y, 0], cap: "Every arrow is horizontal (east above the x-axis, west below), with no visible swirl, yet the curl is −1: arrows above the probe point further east than those below, so the paddle wheel is pushed harder on top and turns clockwise. The ring is smeared into an ellipse but keeps its area." },
+    { t: "Gradient of x²y", F: (x, y) => [2*x*y, x*x], cap: "A gradient field always has curl 0 (no paddle-wheel spin anywhere): walking uphill can't bring you round in a circle. Its divergence 2y varies, 0.6 at the probe." },
+    { t: "Vortex (−y, x)/(x² + y²)", F: (x, y) => { const r2 = x*x + y*y; return [-y / r2, x / r2]; }, cap: "Looks like pure swirl, but away from the origin the curl is 0: the flow slows with distance exactly enough that a small paddle wheel carried along doesn't spin. The dust ring orbits the origin and gets sheared, but keeps its area. The origin itself is a hole; tab 5 shows the 2π hiding there." },
+  ];
+  const svg = $("#fldSvg"), v = makeView(svg, -2, 2, -2, 2, 460, 460, 10), probe = [0.5, 0.3];
+  let shade = "div", cur = 0;
+  const P = makePlayer("#fldCtrl");
+  const dc = (F, x, y) => { const h = 1e-5; const a = F(x + h, y), b = F(x - h, y), c = F(x, y + h), d = F(x, y - h);
+    return [(a[0] - b[0]) / (2*h) + (c[1] - d[1]) / (2*h), (a[1] - b[1]) / (2*h) - (c[0] - d[0]) / (2*h)]; };
+  const circleMeas = (F, c, r) => { const M = 720; let flux = 0, circ = 0;
+    for (let k = 0; k < M; k++){ const t = (k + .5) * 2*PI / M, q = F(c[0] + r*Math.cos(t), c[1] + r*Math.sin(t)), dt = 2*PI / M;
+      flux += (q[0]*Math.cos(t) + q[1]*Math.sin(t)) * r * dt; circ += (-q[0]*Math.sin(t) + q[1]*Math.cos(t)) * r * dt; }
+    return [flux / (PI*r*r), circ / (PI*r*r)]; };
+  const rk4 = (F, p, h) => { const k1 = F(p[0], p[1]), k2 = F(p[0] + h/2*k1[0], p[1] + h/2*k1[1]), k3 = F(p[0] + h/2*k2[0], p[1] + h/2*k2[1]), k4 = F(p[0] + h*k3[0], p[1] + h*k3[1]);
+    return [p[0] + h/6*(k1[0] + 2*k2[0] + 2*k3[0] + k4[0]), p[1] + h/6*(k1[1] + 2*k2[1] + 2*k3[1] + k4[1])]; };
+  const shoelace = pts => { let s = 0; for (let i = 0; i < pts.length; i++){ const a = pts[i], b = pts[(i + 1) % pts.length]; s += a[0]*b[1] - b[0]*a[1]; } return Math.abs(s) / 2; };
+  function spec(Fd){
+    const F = Fd.F, NF = 80, dt = 0.0125, R0 = 0.25;
+    const ring0 = []; for (let k = 0; k < 16; k++){ const a = 2*PI*k/16; ring0.push([probe[0] + R0*Math.cos(a), probe[1] + R0*Math.sin(a)]); }
+    const fine0 = []; for (let k = 0; k < 120; k++){ const a = 2*PI*k/120; fine0.push([probe[0] + R0*Math.cos(a), probe[1] + R0*Math.sin(a)]); }
+    const hist = [ring0], fineH = [fine0];
+    for (let f = 1; f < NF; f++){
+      const sub = (q) => { let p = q; for (let s = 0; s < 4; s++) p = rk4(F, p, dt/4); return p; };
+      hist.push(hist[f-1].map(sub)); fineH.push(fineH[f-1].map(sub));
+    }
+    const [dv, cu] = dc(F, probe[0], probe[1]), [fa, ca] = circleMeas(F, probe, 0.05);
+    T["fld" + FIELDS.indexOf(Fd)] = { div: dv, curl: cu, fluxA: fa, circA: ca };
+    return { n: NF, ms: 45, draw: k => {
+      svg.innerHTML = "";
+      heat(v, (x, y) => { const r = dc(F, x, y); return shade === "div" ? r[0] : r[1]; }, 46, 2.5);
+      axes(v, svg);
+      for (let i = 0; i <= 16; i++) for (let j = 0; j <= 16; j++){
+        const x = -2 + i * 0.25, y = -2 + j * 0.25, q = F(x, y), m = Math.hypot(q[0], q[1]);
+        if (!isFinite(m) || m < 1e-9) continue;
+        const L = 0.2 * Math.tanh(m / 1.2) / m;
+        arrow(v, [x - q[0]*L/2, y - q[1]*L/2], [x + q[0]*L/2, y + q[1]*L/2], "#56606B", 1.2);
+      }
+      el("polygon", { points: fineH[k].map(p => `${v.sx(p[0]).toFixed(1)},${v.sy(p[1]).toFixed(1)}`).join(" "), fill: "rgba(217,166,46,0.18)", stroke: "var(--c2)", "stroke-width": 1 }, svg);
+      hist[k].forEach(p => dot(v, p, 3.2, "var(--c2)", svg, { stroke: "#8a6a10", "stroke-width": 0.6 }));
+      const t = k * dt, ang = cu / 2 * t, c0 = hist[k].reduce((s, p) => [s[0] + p[0]/16, s[1] + p[1]/16], [0, 0]);
+      const wg = el("g", {}, svg);
+      for (let b = 0; b < 4; b++){ const a = ang + b * PI / 2; line(v, c0, [c0[0] + 0.14*Math.cos(a), c0[1] + 0.14*Math.sin(a)], { stroke: "var(--c3)", "stroke-width": 3, "stroke-linecap": "round" }, wg); }
+      dot(v, c0, 3, "var(--c3)", wg);
+      const areaRatio = shoelace(fineH[k]) / shoelace(fine0);
+      $("#fldInfo").innerHTML = `<span class="k">field</span><b>${Fd.t}</b>` +
+        `<span class="k">at the probe (0.5, 0.3), from the formulas</span>divergence ∂P/∂x + ∂Q/∂y = <b>${fx(dv, 4)}</b><br>curl ∂Q/∂x − ∂P/∂y = <b>${fx(cu, 4)}</b>` +
+        `<span class="k">from the definitions, circle of radius 0.05</span>flux out ÷ area = <b>${fx(fa, 4)}</b><br>circulation ÷ area = <b>${fx(ca, 4)}</b>` +
+        `<span class="k">dust ring after t = ${fx(t, 3)}</span>area ÷ starting area = <b>${fx(areaRatio, 4)}</b>${FIELDS.indexOf(Fd) === 0 ? ` (e^(2t) = ${fx(Math.exp(2*t), 4)})` : ""}<br>paddle wheel turned ${fx(ang * 180 / PI, 1)}° (curl/2 × t)`;
+      $("#fldCaption").innerHTML = Fd.cap;
+    } };
+  }
+  presetButtons("#fldPresets", FIELDS, (d, i, auto) => { cur = i; P.load(spec(d), auto); }, 0);
+  const setShade = s => { shade = s; $("#shadeDiv").classList.toggle("active", s === "div"); $("#shadeCurl").classList.toggle("active", s === "curl"); P.stop(); P.draw(); };
+  $("#shadeDiv").addEventListener("click", () => setShade("div"));
+  $("#shadeCurl").addEventListener("click", () => setShade("curl"));
+})();
+
+/* ================= TAB 5: line integrals & theorems ================= */
+(function(){
+  const svg = $("#linSvg"), P = makePlayer("#linCtrl"), M = 20000;
+  const rot = (x, y) => [-y, x], grad = (x, y) => [2*x*y, x*x], vort = (x, y) => { const r2 = x*x + y*y; return [-y / r2, x / r2]; };
+  const COLS = ["var(--c1)", "var(--c3)", "var(--c2)", "var(--bad)"];
+  const sample = (r, a, b) => { const pts = []; for (let k = 0; k <= M; k++) pts.push(r(a + (b - a) * k / M)); return pts; };
+  const segs = list => { const out = []; list.forEach(([p, q]) => { for (let k = 0; k < M / 4; k++){ const t = k / (M / 4); out.push([p[0] + (q[0] - p[0])*t, p[1] + (q[1] - p[1])*t]); } }); out.push(list[list.length - 1][1]); return out; };
+  const circ = (c, R, a0, a1) => sample(t => [c[0] + R*Math.cos(t), c[1] + R*Math.sin(t)], a0, a1);
+  function cumWork(F, pts, kind){
+    const out = [0]; let s = 0;
+    for (let k = 0; k + 1 < pts.length; k++){
+      const a = pts[k], b = pts[k+1], m = [(a[0] + b[0])/2, (a[1] + b[1])/2], q = F(m[0], m[1]), dx = b[0] - a[0], dy = b[1] - a[1];
+      s += kind === "flux" ? q[0]*dy - q[1]*dx : q[0]*dx + q[1]*dy; out.push(s);
+    }
+    return out;
+  }
+  function scene(def){
+    const v = makeView(svg, def.view[0], def.view[1], def.view[2], def.view[3], 460, 460, 14);
+    const paths = def.paths.map((p, i) => ({ ...p, col: p.col || COLS[i], cum: cumWork(def.F, p.pts, def.kind) }));
+    const NF = 100;
+    T["lin_" + def.id] = paths.map(p => p.cum[p.cum.length - 1]);
+    return { n: NF + 1, ms: 40, draw: f => {
+      svg.innerHTML = "";
+      axes(v, svg);
+      const sx = (def.view[1] - def.view[0]) / 14;
+      for (let x = def.view[0] + sx/2; x < def.view[1]; x += sx) for (let y = def.view[2] + sx/2; y < def.view[3]; y += sx){
+        const q = def.F(x, y), m = Math.hypot(q[0], q[1]); if (!isFinite(m) || m < 1e-9) continue;
+        const L = sx * 0.75 * Math.tanh(m / (def.scale || 1.5)) / m;
+        arrow(v, [x - q[0]*L/2, y - q[1]*L/2], [x + q[0]*L/2, y + q[1]*L/2], "#B7C2CB", 1);
+      }
+      if (def.region) def.region(v, svg);
+      if (def.hole) { dot(v, [0, 0], 6, "#fff", svg, { stroke: "var(--bad)", "stroke-width": 2 }); txt(svg, v.sx(0) + 8, v.sy(0) + 16, "hole", { "font-size": 11, fill: "var(--bad)" }); }
+      let html = "";
+      paths.forEach(p => {
+        const thin = q => q.filter((_, i) => i % 25 === 0 || i === q.length - 1);
+        poly(v, thin(p.pts), { stroke: p.col, "stroke-width": 1.2, opacity: 0.35, "stroke-dasharray": "4 3" });
+        const k = Math.round(Math.min(f, NF) / NF * (p.pts.length - 1));
+        poly(v, thin(p.pts.slice(0, k + 1)), { stroke: p.col, "stroke-width": 3 });
+        dot(v, p.pts[0], 4, "var(--ink)");
+        dot(v, p.pts[k], 6, p.col, svg, { stroke: "#fff", "stroke-width": 1.5 });
+        html += `<span class="k" style="color:${p.col}">${p.name}</span>${def.kind === "flux" ? "flux out" : "work"} so far: <b style="font-size:17px">${fx(p.cum[k], 6)}</b>`;
+      });
+      if (def.inside) html += `<span class="k">${def.inside[0]}</span><b>${fx(def.inside[1], 6)}</b>`;
+      html += `<span class="k">expected</span>${def.expect}`;
+      $("#linInfo").innerHTML = html;
+      $("#linLegend").innerHTML = paths.map(p => `<span style="color:${p.col}">${p.name}</span>`).join("");
+      $("#linCaption").innerHTML = f < NF ? def.during : def.after(paths.map(p => p.cum[p.cum.length - 1]));
+    } };
+  }
+  const polarInside = (fn) => { let s = 0; const NA = 200; for (let j = 0; j < NA; j++){ const a = (j + .5) * 2*PI / NA; s += simpson(r => fn(r*Math.cos(a), r*Math.sin(a)) * r, 0, 1, 200) * (2*PI / NA); } return s; };
+  const gridInside = (fn) => { let s = 0; const N = 400; for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) s += fn((i + .5) / N, (j + .5) / N) / (N*N); return s; };
+  const diskRegion = (v, s) => el("circle", { cx: v.sx(0), cy: v.sy(0), r: v.sx(1) - v.sx(0), fill: "rgba(91,75,149,0.08)" }, s);
+  const DEFS = [
+    { t: "Rotation field, unit circle (2π)", id: "rot", F: rot, view: [-1.6, 1.6, -1.6, 1.6], kind: "work",
+      paths: [{ name: "counter-clockwise unit circle", pts: circ([0, 0], 1, 0, 2*PI) }], expect: "2π = 6.283185",
+      during: "On the unit circle the field (−y, x) points exactly along the path with strength 1, so every bit of length adds the same work.",
+      after: r => `Total work <b>${fx(r[0], 6)}</b> = 2π: strength 1 × length 2π.` },
+    { t: "Gradient field: 3 paths, same work", id: "grad", F: grad, view: [-0.4, 1.8, -0.4, 2.6], kind: "work", scale: 3,
+      paths: [{ name: "straight line", pts: sample(t => [t, 2*t], 0, 1) }, { name: "parabola y = 2x²", pts: sample(t => [t, 2*t*t], 0, 1) },
+        { name: "wiggly path", pts: sample(t => [t + 0.3*Math.sin(3*PI*t), 2*t + 0.5*Math.sin(2*PI*t)], 0, 1) }],
+      expect: "φ(1, 2) − φ(0, 0) = 1²·2 − 0 = 2 for every path",
+      during: "F = ∇(x²y). Three very different routes from (0, 0) to (1, 2), with the work added up along each.",
+      after: r => `All three: <b>${r.map(x => fx(x, 6)).join(", ")}</b>. A conservative field only cares about the endpoints: work = φ(end) − φ(start) = 2.` },
+    { t: "Rotation field: 2 paths, different work", id: "rot2", F: rot, view: [-0.3, 1.5, -0.3, 1.5], kind: "work",
+      paths: [{ name: "straight diagonal", pts: sample(t => [t, t], 0, 1) }, { name: "east, then north", pts: segs([[[0, 0], [1, 0]], [[1, 0], [1, 1]]]) }],
+      region: (v, s) => el("polygon", { points: [[0,0],[1,0],[1,1]].map(q => `${v.sx(q[0])},${v.sy(q[1])}`).join(" "), fill: "rgba(91,75,149,0.10)" }, s),
+      expect: "0 and 1; difference = curl × triangle area = 2 × ½ = 1",
+      during: "From (0, 0) to (1, 1). Along the diagonal the field is always at right angles to the path; along the corner route it isn't.",
+      after: r => `Diagonal <b>${fx(r[0], 6)}</b>, corner <b>${fx(r[1], 6)}</b>. The difference ${fx(r[1] - r[0], 6)} is the circulation around the shaded triangle, which Green's theorem says is curl (2) × area (½) = 1. Not conservative.` },
+    { t: "Green: (−y³, x³) on the unit disk", id: "green", F: (x, y) => [-(y**3), x**3], view: [-1.5, 1.5, -1.5, 1.5], kind: "work", scale: 1.5,
+      paths: [{ name: "boundary circle", pts: circ([0, 0], 1, 0, 2*PI) }], region: diskRegion,
+      inside: ["inside: ∬ curl F dA = ∬ (3x² + 3y²) dA (page's grid sum)", polarInside((x, y) => 3*x*x + 3*y*y)], expect: "3π/2 = 4.712389 both ways",
+      during: "Walking the edge of the disk, adding up the circulation. The shaded inside is where the curl 3x² + 3y² lives.",
+      after: r => `Boundary <b>${fx(r[0], 6)}</b>, inside <b>${fx(polarInside((x, y) => 3*x*x + 3*y*y), 6)}</b>: the edge knew the inside. Both are 3π/2.` },
+    { t: "Green: (xy, x² + y) on the unit square", id: "square", F: (x, y) => [x*y, x*x + y], view: [-0.4, 1.4, -0.4, 1.4], kind: "work", scale: 2,
+      paths: [{ name: "bottom", pts: sample(t => [t, 0], 0, 1) }, { name: "right", pts: sample(t => [1, t], 0, 1) }, { name: "top", pts: sample(t => [1 - t, 1], 0, 1) }, { name: "left", pts: sample(t => [0, 1 - t], 0, 1) }],
+      region: (v, s) => el("rect", { x: v.sx(0), y: v.sy(1), width: v.sx(1) - v.sx(0), height: v.sy(0) - v.sy(1), fill: "rgba(91,75,149,0.10)" }, s),
+      inside: ["inside: ∬ curl F dA = ∬ (2x − x) dA = ∬ x dA", gridInside((x, y) => x)], expect: "0 + 1.5 − 0.5 − 0.5 = 0.5 = ∬ x dA",
+      during: "The four edges are walked counter-clockwise at the same time.",
+      after: r => `Edges: <b>${r.map(x => fx(x, 4)).join(", ")}</b>, sum <b>${fx(r.reduce((a, b) => a + b, 0), 6)}</b>; inside <b>${fx(gridInside((x, y) => x), 6)}</b>. Green's theorem on a square.` },
+    { t: "Divergence theorem: flux of (x, y)", id: "flux", F: (x, y) => [x, y], view: [-1.5, 1.5, -1.5, 1.5], kind: "flux", scale: 1.5,
+      paths: [{ name: "flux out through the circle", pts: circ([0, 0], 1, 0, 2*PI) }], region: diskRegion,
+      inside: ["inside: ∬ div F dA = 2 × area π", 2*PI], expect: "2π = 6.283185 both ways",
+      during: "Now adding F · n ds: how much flows out through each bit of the edge.",
+      after: r => `Flux out <b>${fx(r[0], 6)}</b> = divergence 2 × area π. Count at the doors instead of inside every room.` },
+    { t: "Vortex: loops around the hole (2π)", id: "vort", F: vort, view: [-1.5, 1.5, -1.5, 1.5], kind: "work", scale: 2, hole: true,
+      paths: [{ name: "unit circle", pts: circ([0, 0], 1, 0, 2*PI) }, { name: "tiny circle r = 0.1", pts: circ([0, 0], 0.1, 0, 2*PI) },
+        { name: "square around the origin", pts: segs([[[-0.5,-0.5],[0.5,-0.5]],[[0.5,-0.5],[0.5,0.5]],[[0.5,0.5],[-0.5,0.5]],[[-0.5,0.5],[-0.5,-0.5]]]) }],
+      expect: "2π for every loop that goes once around the hole",
+      during: "The vortex has curl 0 everywhere except the origin, where it isn't defined: a hole.",
+      after: r => `Unit circle <b>${fx(r[0], 6)}</b>, tiny circle <b>${fx(r[1], 6)}</b>, square <b>${fx(r[2], 6)}</b>. Shrinking the loop doesn't help: it can't shrink past the hole, so the 2π stays. Curl 0 is not enough without "no holes".` },
+    { t: "Vortex: a loop away from the hole (0)", id: "vort0", F: vort, view: [-1, 4.5, -2.75, 2.75], kind: "work", scale: 1, hole: true,
+      paths: [{ name: "circle centred (3, 0), r = 1", pts: circ([3, 0], 1, 0, 2*PI) }], expect: "0 (no hole inside, curl 0 inside)",
+      during: "The same vortex, around a circle that doesn't enclose the origin.",
+      after: r => `Work <b>${fx(r[0], 9)}</b>: zero. With no hole inside, curl 0 really does mean zero circulation.` },
+    { t: "Vortex: over the top vs under (π, −π)", id: "vort2", F: vort, view: [-1.5, 1.5, -1.5, 1.5], kind: "work", scale: 2, hole: true,
+      paths: [{ name: "upper semicircle (1,0)→(−1,0)", pts: circ([0, 0], 1, 0, PI) }, { name: "lower semicircle (1,0)→(−1,0)", pts: circ([0, 0], 1, 0, -PI) }],
+      expect: "π and −π: path-dependent",
+      during: "Same start (1, 0), same end (−1, 0), passing on opposite sides of the hole.",
+      after: r => `Over the top <b>${fx(r[0], 6)}</b>, underneath <b>${fx(r[1], 6)}</b>. The difference, 2π, is the loop around the hole. That's why the vortex has no potential.` },
+    { t: "Shoelace area = Green (14.5)", id: "shoe", F: (x, y) => [-y/2, x/2], view: [-0.8, 5.8, -0.8, 5.0], kind: "work", scale: 4,
+      paths: [{ name: "around the quadrilateral", pts: segs([[[0,0],[4,0]],[[4,0],[5,3]],[[5,3],[1,4]],[[1,4],[0,0]]]) }],
+      region: (v, s) => el("polygon", { points: [[0,0],[4,0],[5,3],[1,4]].map(q => `${v.sx(q[0])},${v.sy(q[1])}`).join(" "), fill: "rgba(91,75,149,0.10)" }, s),
+      inside: ["shoelace formula ½|Σ(xᵢyᵢ₊₁ − xᵢ₊₁yᵢ)|", 0.5*Math.abs(0*0 - 4*0 + 4*3 - 5*0 + 5*4 - 1*3 + 1*0 - 0*4)], expect: "area 14.5",
+      during: "F = (−y, x)/2 has curl exactly 1, so its circulation around any loop is the area inside.",
+      after: r => `Circulation <b>${fx(r[0], 6)}</b> = area. That's why the shoelace formula (and a planimeter) can find an area from the outline alone.` },
+  ];
+  presetButtons("#linPresets", DEFS, (d, i, auto) => P.load(scene(d), auto), 0);
+})();
+
+/* ================= TAB 6: calculus of variations ================= */
+(function(){
+  const svg = $("#varSvg"), P = makePlayer("#varCtrl");
+  const segT = (x0, y0, x1, y1) => 2 * Math.hypot(x1 - x0, y1 - y0) / (Math.sqrt(2*g*Math.max(y0, 0)) + Math.sqrt(2*g*Math.max(y1, 0)));
+  function cycloid(X, Y, n){
+    let lo = 1e-6, hi = 2*PI - 1e-6; const fr = t => (t - Math.sin(t)) / (1 - Math.cos(t)) - X / Y;
+    for (let k = 0; k < 200; k++){ const m = (lo + hi) / 2; if (fr(m) > 0) hi = m; else lo = m; }
+    const th = (lo + hi) / 2, R = Y / (1 - Math.cos(th)), pts = [];
+    for (let k = 0; k <= n; k++){ const t = th * (k / n) ** 1.5; pts.push([R * (t - Math.sin(t)), R * (1 - Math.cos(t))]); }
+    return { th, R, pts, exactT: th * Math.sqrt(R / g) };
+  }
+  const timed = pts => { const ts = [0]; for (let k = 0; k + 1 < pts.length; k++) ts.push(ts[k] + segT(pts[k][0], pts[k][1], pts[k+1][0], pts[k+1][1])); return ts; };
+  const lengthOf = pts => { let s = 0; for (let k = 0; k + 1 < pts.length; k++) s += Math.hypot(pts[k+1][0] - pts[k][0], pts[k+1][1] - pts[k][1]); return s; };
+  const at = (pts, ts, t) => { if (t >= ts[ts.length - 1]) return pts[pts.length - 1]; let lo = 0, hi = ts.length - 1; while (hi - lo > 1){ const m = (lo + hi) >> 1; if (ts[m] <= t) lo = m; else hi = m; }
+    const u = (t - ts[lo]) / (ts[hi] - ts[lo] || 1); return [pts[lo][0] + (pts[hi][0] - pts[lo][0])*u, pts[lo][1] + (pts[hi][1] - pts[lo][1])*u]; };
+  const lin = (a, b, n) => { const o = []; for (let k = 0; k <= n; k++) o.push([a[0] + (b[0] - a[0])*k/n, a[1] + (b[1] - a[1])*k/n]); return o; };
+  const down = (v, p) => [p[0], -p[1]];   // depth drawn downward
+  function race(X, Y, which){
+    const C = cycloid(X, Y, 4000);
+    const curves = [{ name: "cycloid", pts: C.pts, col: "var(--c3)" }];
+    if (which === "full"){
+      const qc = []; for (let k = 0; k <= 4000; k++){ const s = (PI/2) * (k / 4000) ** 1.5; qc.push([1 - Math.cos(s), Math.sin(s)]); }
+      curves.push({ name: "quarter circle", pts: qc, col: "var(--c2)" });
+    }
+    curves.push({ name: "straight ramp", pts: lin([0, 0], [X, Y], 50), col: "var(--c1)" });
+    if (which === "full") curves.push({ name: "drop, then slide", pts: lin([0, 0], [0, Y], 2000).concat(lin([0, Y], [X, Y], 50).slice(1)), col: "var(--bad)" });
+    curves.forEach(c => { c.ts = timed(c.pts); c.T = c.ts[c.ts.length - 1]; c.L = lengthOf(c.pts); });
+    T["race" + X] = curves.map(c => [c.name, c.T, c.L]); T["cyc" + X] = C;
+    const maxD = Math.max(Y, ...C.pts.map(p => p[1]));
+    const v = makeView(svg, -0.08*X - 0.05, X*1.08 + 0.05, -(maxD*1.12 + 0.05), 0.12*maxD + 0.08, 460, 400, 18);
+    const dt = 0.01, Tmax = Math.max(...curves.map(c => c.T)), NF = Math.ceil(Tmax / dt) + 2;
+    return { n: NF, ms: 40, draw: f => {
+      const t = Math.min(f * dt, Tmax + dt);
+      svg.innerHTML = "";
+      line(v, [v.xmin, 0], [v.xmax, 0], { stroke: "#9AA3AD" });
+      line(v, [v.xmin, -Y], [v.xmax, -Y], { stroke: "#D9E0DE", "stroke-dasharray": "3 4" });
+      txt(svg, v.sx(0) - 6, v.sy(0) - 8, "A", { "font-weight": 600 }); txt(svg, v.sx(X) + 6, v.sy(-Y) + 4, "B", { "font-weight": 600 });
+      curves.forEach(c => poly(v, c.pts.filter((_, i) => i % 20 === 0 || i === c.pts.length - 1).map(p => down(v, p)), { stroke: c.col, "stroke-width": 2.2, opacity: 0.75 }));
+      curves.forEach(c => dot(v, down(v, at(c.pts, c.ts, t)), 7, c.col, svg, { stroke: "#fff", "stroke-width": 1.5 }));
+      txt(svg, 20, 22, `t = ${fx(Math.min(t, Tmax), 2)} s`, { "font-size": 13, "font-weight": 600 });
+      const order = curves.slice().sort((a, b) => a.T - b.T);
+      $("#varInfo").innerHTML = `<span class="k">A = (0, 0) to B = (${X} m across, ${Y} m down)</span>` +
+        order.map(c => `<span class="k" style="color:${c.col}">${c.name} · length ${fx(c.L, 3)} m</span>${t >= c.T ? `arrived: <b>${fx(c.T, 4)} s</b>` : "sliding…"}`).join("") +
+        `<span class="k">cycloid from the formula θ√(R/g)</span>${fx(C.exactT, 4)} s (R = ${fx(C.R, 4)}, θ up to ${fx(C.th, 3)})`;
+      $("#varLegend").innerHTML = curves.map(c => `<span style="color:${c.col}">${c.name}</span>`).join("");
+      $("#varCaption").innerHTML = t < Tmax ? (which === "full" ? "The straight ramp is shortest, but its bead starts slowly. The cycloid plunges first, builds speed early, and spends the rest of the trip fast." : "B is far away and only a little lower. The fastest wire dives below B and climbs back up.") :
+        (which === "full" ? `Final order: ${order.map(c => `${c.name} ${fx(c.T, 4)} s`).join(", ")}. The shortest path comes third.` :
+          `Cycloid <b>${fx(curves[0].T, 4)} s</b>, dipping to ${fx(Math.max(...C.pts.map(p => p[1])), 3)} m deep, below the finish; straight ramp <b>${fx(curves[1].T, 4)} s</b>. Going down and back up is almost twice as fast.`);
+    } };
+  }
+  function wiggles(){
+    const eps = [0, 0.05, 0.1, 0.2, 0.3], cols = ["var(--c1)", "var(--c2)", "var(--c3)", "#B07A2A", "var(--bad)"];
+    const curves = eps.map(e => { const pts = []; for (let k = 0; k <= 2000; k++){ const x = k / 2000; pts.push([x, x + e*Math.sin(PI*x)]); } return { e, pts, L: lengthOf(pts) }; });
+    T.wiggle = curves.map(c => c.L);
+    const v = makeView(svg, -0.1, 1.1, -0.1, 1.45, 460, 400, 18);
+    return { n: eps.length, ms: 900, draw: f => {
+      svg.innerHTML = ""; axes(v, svg);
+      curves.slice(0, f + 1).forEach((c, i) => poly(v, c.pts.filter((_, k) => k % 20 === 0), { stroke: cols[i], "stroke-width": i === f ? 3 : 1.5, opacity: i === f ? 1 : 0.5 }));
+      dot(v, [0, 0], 5, "var(--ink)"); dot(v, [1, 1], 5, "var(--ink)");
+      $("#varInfo").innerHTML = `<span class="k">y = x + ε·sin(πx), from (0, 0) to (1, 1)</span>` + curves.slice(0, f + 1).map((c, i) => `<span class="k" style="color:${cols[i]}">ε = ${c.e}</span>length <b>${fx(c.L, 6)}</b>`).join("");
+      $("#varLegend").innerHTML = "";
+      $("#varCaption").innerHTML = f === 0 ? "The straight line: length √2 = 1.414214. Euler–Lagrange with L = √(1 + y'²) says y' is constant." : `Every wiggle makes it longer. Euler–Lagrange promised exactly this: the straight line is where small wiggles stop helping.`;
+    } };
+  }
+  function lineOpt(){
+    const N = 20, xs = []; for (let i = 0; i <= N; i++) xs.push(i / N);
+    let y = xs.map(x => x + 0.3*Math.sin(PI*x) + 0.15*Math.sin(3*PI*x)); y[0] = 0; y[N] = 1;
+    const len = yy => { let s = 0; for (let i = 0; i < N; i++) s += Math.hypot(xs[i+1] - xs[i], yy[i+1] - yy[i]); return s; };
+    const hist = [y.slice()];
+    for (let f = 1; f <= 120; f++){ for (let s = 0; s < 5; s++) for (let i = 1; i < N; i++) y[i] = (y[i-1] + y[i+1]) / 2; hist.push(y.slice()); }
+    T.lineOpt = [len(hist[0]), len(hist[120]), Math.max(...hist[120].map((q, i) => Math.abs(q - xs[i])))];
+    const v = makeView(svg, -0.1, 1.1, -0.1, 1.45, 460, 400, 18);
+    return { n: hist.length, ms: 45, draw: f => {
+      svg.innerHTML = ""; axes(v, svg);
+      line(v, [0, 0], [1, 1], { stroke: "#C9C2E3", "stroke-width": 6 });
+      poly(v, hist[0].map((q, i) => [xs[i], q]), { stroke: "var(--c0)", "stroke-dasharray": "4 3" });
+      poly(v, hist[f].map((q, i) => [xs[i], q]), { stroke: "var(--c1)", "stroke-width": 2.5 });
+      hist[f].forEach((q, i) => dot(v, [xs[i], q], 3, "var(--c1)"));
+      const dev = Math.max(...hist[f].map((q, i) => Math.abs(q - xs[i])));
+      $("#varInfo").innerHTML = `<span class="k">20 straight segments; 19 movable points</span>sweeps done: <b>${f * 5}</b><span class="k">length</span><b style="font-size:18px">${fx(len(hist[f]), 7)}</b><span class="k">√2</span>${fx(Math.SQRT2, 7)}<span class="k">largest distance from the straight line</span>${dev.toExponential(2)}`;
+      $("#varLegend").innerHTML = `<span style="color:var(--c0)">bumpy start</span><span style="color:var(--c1)">current path</span><span style="color:#C9C2E3">straight line (for reference)</span>`;
+      $("#varCaption").innerHTML = f < hist.length - 1 ? "Each sweep moves every point to the spot that makes its two neighbouring segments as short as possible (the midpoint of its neighbours). Nobody tells it about straight lines." : `From length ${fx(len(hist[0]), 6)} down to <b>${fx(len(hist[f]), 7)}</b>; the path is now the straight line to within ${dev.toExponential(1)}.`;
+    } };
+  }
+  function brachOpt(){
+    const N = 30, X = 1, Y = 1, xs = []; for (let i = 0; i <= N; i++) xs.push(X * i / N);
+    let y = xs.map(x => Y * x / X);
+    const total = yy => { let t = 0; for (let i = 0; i < N; i++) t += segT(xs[i], yy[i], xs[i+1], yy[i+1]); return t; };
+    const local = (i, val) => segT(xs[i-1], y[i-1], xs[i], val) + segT(xs[i], val, xs[i+1], y[i+1]);
+    const hist = [y.slice()];
+    for (let f = 1; f <= 100; f++){
+      for (let i = 1; i < N; i++){
+        let a = 1e-6, b = 2.5; const r = (Math.sqrt(5) - 1) / 2; let c = b - r*(b - a), d = a + r*(b - a), fc = local(i, c), fd = local(i, d);
+        for (let k = 0; k < 50; k++){ if (fc < fd){ b = d; d = c; fd = fc; c = b - r*(b - a); fc = local(i, c); } else { a = c; c = d; fc = fd; d = a + r*(b - a); fd = local(i, d); } }
+        y[i] = Math.max(1e-6, y[i] + 1.6 * ((a + b) / 2 - y[i]));
+      }
+      hist.push(y.slice());
+    }
+    const C = cycloid(X, Y, 3000);
+    const cycAt = x => { let a = 0, b = C.th; for (let k = 0; k < 80; k++){ const m = (a + b) / 2; if (C.R * (m - Math.sin(m)) > x) b = m; else a = m; } return C.R * (1 - Math.cos((a + b) / 2)); };
+    const dev = yy => Math.max(...yy.map((q, i) => Math.abs(q - cycAt(xs[i]))));
+    T.brachOpt = [total(hist[0]), total(hist[100]), dev(hist[100])];
+    const v = makeView(svg, -0.1, 1.1, -1.15, 0.12, 460, 400, 18);
+    return { n: hist.length, ms: 70, draw: f => {
+      svg.innerHTML = ""; line(v, [-0.1, 0], [1.1, 0], { stroke: "#9AA3AD" });
+      poly(v, C.pts.filter((_, k) => k % 15 === 0).map(p => [p[0], -p[1]]), { stroke: "#C9C2E3", "stroke-width": 6 });
+      poly(v, hist[0].map((q, i) => [xs[i], -q]), { stroke: "var(--c0)", "stroke-dasharray": "4 3" });
+      poly(v, hist[f].map((q, i) => [xs[i], -q]), { stroke: "var(--c3)", "stroke-width": 2.5 });
+      hist[f].forEach((q, i) => dot(v, [xs[i], -q], 3, "var(--c3)"));
+      $("#varInfo").innerHTML = `<span class="k">30 straight segments from (0, 0) to (1, 1 down)</span>sweeps done: <b>${f}</b><span class="k">travel time</span><b style="font-size:18px">${fx(total(hist[f]), 5)} s</b><span class="k">true cycloid, θ√(R/g)</span>${fx(C.exactT, 5)} s<span class="k">largest distance from the cycloid</span>${fx(dev(hist[f]), 4)} m`;
+      $("#varLegend").innerHTML = `<span style="color:var(--c0)">straight-ramp start</span><span style="color:var(--c3)">current wire</span><span style="color:#C9C2E3">true cycloid (for reference)</span>`;
+      $("#varCaption").innerHTML = f < hist.length - 1 ? "Each sweep slides every point up or down to whatever depth makes the bead's time over its two neighbouring segments smallest (a golden-section search), slightly over-relaxed." :
+        `From ${fx(total(hist[0]), 4)} s (the straight ramp) to <b>${fx(total(hist[f]), 4)} s</b>, a 30-segment wire within ${fx(dev(hist[f]), 3)} m of the cycloid everywhere. The file's SciPy run with 60 segments gets 0.58347 s.`;
+    } };
+  }
+  function action(){
+    const S = e => simpson(t => { const xd = g*(1 - t) + e*PI/2*Math.cos(PI*t/2), x = g*t*(2 - t)/2 + e*Math.sin(PI*t/2); return 0.5*xd*xd - g*x; }, 0, 2, 2000);
+    const eps = [0, 0.5, 1, -1], cols = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--bad)"];
+    const vals = eps.map(S); T.action = vals;
+    const N = 40, dt = 2 / N; let x = new Array(N + 1).fill(0); const hist = [x.slice()];
+    for (let f = 1; f <= 80; f++){ for (let s = 0; s < 4; s++) for (let i = 1; i < N; i++) x[i] = -0.85*x[i] + 1.85*((x[i-1] + x[i+1]) / 2 + g*dt*dt/2); hist.push(x.slice()); }
+    const Sd = xx => { let s = 0; for (let i = 0; i < N; i++){ const vv = (xx[i+1] - xx[i]) / dt, xm = (xx[i] + xx[i+1]) / 2; s += (0.5*vv*vv - g*xm) * dt; } return s; };
+    const truth = t => g*t*(2 - t)/2;
+    T.actionOpt = [Sd(hist[80]), Math.max(...hist[80].map((q, i) => Math.abs(q - truth(i*dt))))];
+    const v = makeView(svg, -0.1, 2.1, -1.2, 6.4, 460, 400, 22);
+    const nA = eps.length, NF = nA + hist.length;
+    return { n: NF, ms: 120, draw: f => {
+      svg.innerHTML = ""; axes(v, svg);
+      txt(svg, v.sx(2) - 30, v.sy(0) + 16, "t = 2 s", { "font-size": 10, fill: "var(--ink-soft)" }); txt(svg, v.sx(0) + 4, v.sy(6.2), "height x (m)", { "font-size": 10, fill: "var(--ink-soft)" });
+      const curve = e => { const pts = []; for (let k = 0; k <= 100; k++){ const t = 2*k/100; pts.push([t, truth(t) + e*Math.sin(PI*t/2)]); } return pts; };
+      if (f < nA){
+        eps.slice(0, f + 1).forEach((e, i) => poly(v, curve(e), { stroke: cols[i], "stroke-width": i === f ? 3 : 1.5, opacity: i === f ? 1 : 0.5 }));
+        $("#varInfo").innerHTML = `<span class="k">action S = ∫₀² (½ẋ² − g·x) dt, ball thrown up, m = 1</span>` + eps.slice(0, f + 1).map((e, i) => `<span class="k" style="color:${cols[i]}">${e === 0 ? "true path x = g·t(2 − t)/2" : `true path + ${e}·sin(πt/2)`}</span>S = <b>${fx(vals[i], 4)}</b>`).join("") + `<span class="k">−g²/3</span>${fx(-g*g/3, 4)}`;
+        $("#varLegend").innerHTML = "";
+        $("#varCaption").innerHTML = f === 0 ? `The real path, a parabola peaking at ${fx(truth(1), 3)} m. Its action is −g²/3.` : "Any wiggle, up or down, raises the action. The true path is the one where the action is smallest.";
+      } else {
+        const h = f - nA, xx = hist[h];
+        poly(v, curve(0), { stroke: "#C9C2E3", "stroke-width": 6 });
+        poly(v, xx.map((q, i) => [i*dt, q]), { stroke: "var(--c1)", "stroke-width": 2.5 });
+        xx.forEach((q, i) => dot(v, [i*dt, q], 2.6, "var(--c1)"));
+        const dv = Math.max(...xx.map((q, i) => Math.abs(q - truth(i*dt))));
+        $("#varInfo").innerHTML = `<span class="k">blind search: 39 movable heights, start "ball never moves"</span>sweeps: <b>${h * 4}</b><span class="k">discrete action</span><b style="font-size:18px">${fx(Sd(xx), 4)}</b><span class="k">largest distance from the parabola</span>${dv.toExponential(2)} m`;
+        $("#varLegend").innerHTML = `<span style="color:var(--c1)">optimizer's path</span><span style="color:#C9C2E3">true parabola (for reference)</span>`;
+        $("#varCaption").innerHTML = h < hist.length - 1 ? "Each sweep sets every height to the value that makes the action smallest given its neighbours (that's the discrete Euler–Lagrange equation), over-relaxed to go faster." : `The action-minimizing path is the parabola, to within ${dv.toExponential(1)} m. Newton's F = ma, found by minimizing a single number.`;
+      }
+    } };
+  }
+  function maxent(){
+    const dens = [
+      { name: "Gaussian", col: "var(--c1)", p: x => Math.exp(-x*x/2) / Math.sqrt(2*PI), a: -12, b: 12 },
+      { name: "Laplace", col: "var(--c2)", p: x => { const bb = 1/Math.SQRT2; return Math.exp(-Math.abs(x)/bb) / (2*bb); }, a: -12, b: 12 },
+      { name: "uniform", col: "var(--bad)", p: x => Math.abs(x) <= Math.sqrt(3) ? 1/(2*Math.sqrt(3)) : 0, a: -Math.sqrt(3), b: Math.sqrt(3) },
+    ];
+    dens.forEach(d => { d.var = simpson(x => x*x*d.p(x), d.a, d.b, 6000); d.H = simpson(x => { const q = d.p(x); return q > 0 ? -q*Math.log(q) : 0; }, d.a, d.b, 6000); });
+    T.maxent = dens.map(d => [d.name, d.var, d.H]);
+    const v = makeView(svg, -4, 4, -0.03, 0.75, 460, 400, 22);
+    return { n: 4, ms: 1100, draw: f => {
+      svg.innerHTML = ""; axes(v, svg);
+      dens.slice(0, Math.min(f + 1, 3)).forEach(d => { const pts = []; for (let k = 0; k <= 400; k++){ const x = -4 + 8*k/400; pts.push([x, d.p(x)]); } poly(v, pts, { stroke: d.col, "stroke-width": 2.5 }); });
+      $("#varInfo").innerHTML = `<span class="k">all three have mean 0 and variance 1 (checked)</span>` + dens.slice(0, Math.min(f + 1, 3)).map(d => `<span class="k" style="color:${d.col}">${d.name} · variance ${fx(d.var, 4)}</span>entropy <b>${fx(d.H, 6)}</b>`).join("") + `<span class="k">½ ln(2πe)</span>${fx(0.5*Math.log(2*PI*Math.E), 6)}`;
+      $("#varLegend").innerHTML = dens.map(d => `<span style="color:${d.col}">${d.name}</span>`).join("");
+      $("#varCaption").innerHTML = f < 3 ? "Entropy H = −∫ p ln p measures how spread out and unpredictable a density is. Same mean, same variance, different shapes." : "The Gaussian has the most entropy: Euler–Lagrange with constraints on total probability and variance gives p ∝ e^(λx²). It's the least committal choice when all you know is a mean and a variance.";
+    } };
+  }
+  presetButtons("#varPresets", [
+    { t: "Brachistochrone race to (1, 1)", s: () => race(1, 1, "full") },
+    { t: "Far and shallow: (3, 0.5)", s: () => race(3, 0.5, "two") },
+    { t: "Shortest path: wiggles add length", s: wiggles },
+    { t: "Optimizer finds the straight line", s: lineOpt },
+    { t: "Optimizer finds the cycloid", s: brachOpt },
+    { t: "Least action: thrown ball", s: action },
+    { t: "Maximum entropy → Gaussian", s: maxent },
+  ], (d, i, auto) => P.load(d.s(), auto), 0);
+})();
+
+window.__VC = T;
+})();
+</script>
+</body>
+</html>

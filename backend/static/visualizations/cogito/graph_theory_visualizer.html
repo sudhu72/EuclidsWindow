@@ -46,6 +46,7 @@
   .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:44px; text-align:center; }
   table.dt{ border-collapse:collapse; margin:14px auto; font-family:"IBM Plex Mono",monospace; font-size:13px; }
   table.dt th, table.dt td{ border:1px solid var(--line); padding:6px 10px; text-align:center; }
+  table.dt td.win{ color:var(--good); font-weight:700; }
   table.dt th{ background:var(--accent-soft); color:var(--accent); font-weight:600; }
   .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.8; word-break:break-word; }
   .verdict b{ color:var(--accent); }
@@ -54,8 +55,40 @@
   .colorpicker{ display:flex; gap:6px; margin:10px 0; justify-content:center; }
   .swatch{ width:32px; height:32px; border-radius:8px; border:2px solid var(--line); cursor:pointer; }
   .swatch.active{ border-color:var(--ink); }
+  .scrollx{ max-width:100%; overflow-x:auto; }
+  .mstGrid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; margin-top:14px; }
+  .mstMini{ border:1px solid var(--line); border-radius:10px; padding:6px; text-align:center; font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:#fff; }
+  .mstMini svg{ margin:2px auto 4px; }
+  .mstMini.win{ border:2px solid var(--good); background:#E8F5F4; }
+  .mstMini.win b{ color:var(--good); }
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+  /* ---- one-click step player (pp-*) for the Bellman-Ford / Floyd-Warshall tab ---- */
+  .pp-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;justify-content:center;}
+  button.pp-op{font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:inherit;}
+  button.pp-op:hover{background:var(--accent-soft);border-color:var(--accent);}
+  button.pp-op.pp-active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .pp-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;margin:6px 0;}
+  button.pp-ctl{font-size:12.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:7px 12px;cursor:pointer;font-family:inherit;}
+  button.pp-ctl:hover{background:var(--accent-soft);}
+  button.pp-ctl:disabled{opacity:.4;cursor:default;}
+  button.pp-ctl.pp-on{border-color:var(--accent);color:var(--accent);}
+  .pp-speed{display:flex;gap:4px;align-items:center;font-size:11.5px;color:var(--ink-soft);margin-left:8px;}
+  .pp-speed button.pp-ctl{padding:4px 8px;font-size:11px;}
+  .pp-stepnum{color:var(--ink-soft);font-size:12px;font-family:"IBM Plex Mono",monospace;}
+  .pp-status{font-family:"IBM Plex Mono",monospace;font-size:13px;background:var(--accent-soft);border-radius:10px;padding:12px 16px;margin-top:10px;line-height:1.75;min-height:56px;}
+  .pp-status b{color:var(--accent);}
+  .pp-res{display:block;margin-top:4px;color:var(--good);font-weight:700;}
+  .pp-stage{margin-top:10px;}
+  .pp-stage svg{max-width:520px;}
+  table.pp-t{border-collapse:collapse;margin:10px auto;font-family:"IBM Plex Mono",monospace;font-size:13px;}
+  table.pp-t th,table.pp-t td{border:1px solid var(--line);padding:6px 10px;text-align:center;min-width:38px;}
+  table.pp-t th{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+  table.pp-t td.chg{background:#FBF1D9;color:#8A6110;font-weight:700;}
+  table.pp-t td.via{background:#E8F5F4;color:var(--good);font-weight:700;}
+  table.pp-t td.bad{background:#FBE6E8;color:var(--warn);font-weight:700;}
+  table.pp-t td.ok{color:var(--good);font-weight:700;}
+  table.pp-t td.wrong{color:var(--warn);font-weight:700;}
 </style>
 </head>
 <body>
@@ -63,7 +96,7 @@
   <header>
     <div class="eyebrow">Companion to Graph Theory</div>
     <h1>Graph Theory, Made Visible</h1>
-    <p>Five verified demos on the same "bowtie" graph and the real Königsberg bridges: classify a walk as you build it, watch Euler's degree-parity theorem decide a 300-year-old puzzle live, assemble a valid spanning tree, color a graph without conflicts, and watch a matrix quietly count walks.</p>
+    <p>Eight verified demos on the same "bowtie" graph and the real Königsberg bridges: classify a walk as you build it, watch Euler's degree-parity theorem decide a 300-year-old puzzle live, assemble a valid spanning tree, color a graph without conflicts, watch a matrix quietly count walks, step through Dijkstra's shortest paths, build the cheapest spanning tree with Kruskal's and Prim's algorithms, and handle negative edges and all-pairs distances with Bellman-Ford and Floyd-Warshall.</p>
   </header>
 
   <div class="tabs">
@@ -72,6 +105,9 @@
     <button class="tab" data-tab="spanning">Spanning Tree Builder</button>
     <button class="tab" data-tab="coloring">Graph Coloring</button>
     <button class="tab" data-tab="matrix">Adjacency Matrix &amp; Walks</button>
+    <button class="tab" data-tab="dijkstra">Dijkstra's Algorithm</button>
+    <button class="tab" data-tab="mst">Minimum Spanning Tree</button>
+    <button class="tab" data-tab="bellman">Bellman-Ford &amp; Floyd-Warshall</button>
   </div>
 
   <!-- ============ TAB: WALK CLASSIFIER ============ -->
@@ -161,6 +197,69 @@
       <table class="dt" id="matrixTable"></table>
       <div class="verdict" id="matrixVerdict"></div>
       <div class="caption"><b>Why it matters:</b> matrix multiplication was invented for entirely different reasons, yet raising an adjacency matrix to the k-th power always, automatically, counts every walk of length k between every pair of vertices.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: DIJKSTRA'S ALGORITHM ============ -->
+  <div class="panel" id="panel-dijkstra">
+    <div class="card">
+      <h2>Step Through the Priority Queue, One Pop at a Time</h2>
+      <p class="sub"><b>What's happening:</b> the same bowtie graph, now weighted. Pick a source vertex, then click "Step" to pop the currently-cheapest not-yet-finalized vertex, relax its neighbors, and watch the tentative-distance table update live.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> from source A, step all the way through and watch E's tentative distance actually improve mid-run (11 → 10) the step after D gets popped — proof that "first discovered" and "final" are not the same claim.</p>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <label style="min-width:auto;">Source:</label>
+        <button class="op active" data-dijkstrasource="A">A</button>
+        <button class="op" data-dijkstrasource="B">B</button>
+        <button class="op" data-dijkstrasource="C">C</button>
+        <button class="op" data-dijkstrasource="D">D</button>
+        <button class="op" data-dijkstrasource="E">E</button>
+      </div>
+      <svg id="dijkstraSvg" viewBox="0 0 400 240"></svg>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op" id="dijkstraStep">Step ▶</button>
+        <button class="op" id="dijkstraRunAll">Run all ▶▶</button>
+        <button class="op" id="dijkstraReset">Reset</button>
+      </div>
+      <table class="dt" id="dijkstraTable"></table>
+      <div class="verdict" id="dijkstraLog">Pick a source and click Step to begin.</div>
+      <div class="caption"><b>Why it matters:</b> the moment a vertex is popped with the smallest tentative distance remaining, no unexplored detour could ever beat it — because every edge weight is non-negative. That's the entire correctness argument, made watchable one pop at a time.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: MINIMUM SPANNING TREE ============ -->
+  <div class="panel" id="panel-mst">
+    <div class="card">
+      <h2>Kruskal and Prim, One Edge at a Time</h2>
+      <p class="sub"><b>What's happening:</b> the same weighted bowtie graph as the Dijkstra tab (A-B=2, A-C=5, B-C=3, C-D=1, D-E=4, E-C=6). Each preset button plays the worked example from Part 4C: the edge being considered turns gold, then green if it's added to the tree or red-dashed if it's rejected, with the reason shown in the log. The running total and (for Kruskal) the Union-Find groups update after every step.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click "Kruskal: run all" and confirm the total is 10, with A-C and E-C rejected because their ends were already connected. Then click "Prim: run all" and confirm Prim finds the same four edges and the same total, 10. Finally click "Show all 9 spanning trees" to check that 10 really is the cheapest.</p>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op" id="mstKruskalStep">Kruskal: step ▶</button>
+        <button class="op" id="mstKruskalAll">Kruskal: run all ▶▶</button>
+      </div>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op" id="mstPrimStep">Prim from A: step ▶</button>
+        <button class="op" id="mstPrimAll">Prim: run all ▶▶</button>
+      </div>
+      <div class="row" style="gap:6px; justify-content:center;">
+        <button class="op" id="mstBrute">Show all 9 spanning trees (brute force)</button>
+        <button class="op" id="mstReset">Reset</button>
+      </div>
+      <svg id="mstSvg" viewBox="0 0 400 240"></svg>
+      <div class="verdict" id="mstStatus"></div>
+      <div class="verdict" id="mstLog">Pick a preset above to begin.</div>
+      <div class="mstGrid" id="mstGrid"></div>
+      <div class="caption"><b>Why it matters:</b> both algorithms are greedy, yet both land on the same cheapest tree that brute force finds. Kruskal never rejects an edge for its price, only because its two ends are already joined (it would close a loop). That's the cut property, visible one edge at a time.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BELLMAN-FORD & FLOYD-WARSHALL (Part 4D) ============ -->
+  <div class="panel" id="panel-bellman">
+    <div class="card">
+      <h2>Negative Edges: Relax Everything, V &minus; 1 Times</h2>
+      <p class="sub"><b>What's happening:</b> every worked example from Part 4D is a one-click preset that plays itself. <b>Step</b> moves one edge (or one round, or one stopover) at a time, <b>Play</b> animates, <b>Jump to end</b> shows the answer. Negative edge weights are drawn in red; the number under each vertex is its current distance from the source.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click "Dijkstra trips on a negative edge" and watch A get finalized at 2 one step too early. Then click "Bellman-Ford on the same graph" and watch the round-by-round relaxation get A = 1. "Worst edge order" shows why V &minus; 1 rounds can really be needed; "Negative cycle" shows the extra round that catches one.</p>
+      <div id="pp-bellman"></div>
+      <div class="caption"><b>Why it matters:</b> Dijkstra's speed comes from trusting a vertex the moment it's popped, and a negative edge is exactly what breaks that trust. Bellman-Ford trusts nothing: it re-checks every edge, every round, which is slower (O(V&middot;E)) but correct with negative weights, and it can tell you when no answer exists.</div>
     </div>
   </div>
 
@@ -555,6 +654,608 @@
     renderMatrix();
   });
   renderMatrix();
+
+  /* =========================================================
+     TAB: DIJKSTRA'S ALGORITHM
+     ========================================================= */
+  const DIJKSTRA_WEIGHTS = { "A-B":2, "A-C":5, "B-C":3, "C-D":1, "D-E":4, "C-E":6 };
+  function dijkstraWeight(u,v){ return DIJKSTRA_WEIGHTS[edgeKey(u,v)]; }
+  function dijkstraNeighbors(v){
+    return BOWTIE_EDGES.filter(([a,b]) => a===v || b===v).map(([a,b]) => a===v ? b : a);
+  }
+  function computeDijkstraTrace(source){
+    const verts = Object.keys(BOWTIE_POS);
+    const dist = {}; verts.forEach(v => dist[v] = Infinity);
+    dist[source] = 0;
+    const visited = new Set();
+    const pq = [[0, source]];
+    const trace = [];
+    while (pq.length){
+      pq.sort((a,b)=>a[0]-b[0]);
+      const [d,u] = pq.shift();
+      if (visited.has(u)){
+        trace.push({type:"skip", vertex:u, dist:d, snapshot:Object.assign({},dist)});
+        continue;
+      }
+      visited.add(u);
+      const relaxed = [];
+      dijkstraNeighbors(u).forEach(v => {
+        if (visited.has(v)) return;
+        const nd = d + dijkstraWeight(u,v);
+        if (nd < dist[v]){
+          const old = dist[v];
+          dist[v] = nd;
+          pq.push([nd, v]);
+          relaxed.push({to:v, old, next:nd});
+        }
+      });
+      trace.push({type:"pop", vertex:u, dist:d, relaxed, snapshot:Object.assign({},dist)});
+    }
+    return trace;
+  }
+  let dijkstraSource = "A";
+  let dijkstraTrace = computeDijkstraTrace(dijkstraSource);
+  let dijkstraStepIdx = 0;
+  function fmtDist(v){ return v===Infinity ? "∞" : String(v); }
+  function renderDijkstra(){
+    const svg = document.getElementById("dijkstraSvg");
+    const stepsShown = dijkstraTrace.slice(0, dijkstraStepIdx);
+    const finalized = new Set(stepsShown.filter(s=>s.type==="pop").map(s=>s.vertex));
+    const currentStep = stepsShown.length ? stepsShown[stepsShown.length-1] : null;
+    const currentVertex = currentStep ? currentStep.vertex : null;
+    const relaxedEdges = new Set();
+    if (currentStep && currentStep.type==="pop"){
+      currentStep.relaxed.forEach(r => relaxedEdges.add(edgeKey(currentStep.vertex, r.to)));
+    }
+    drawGraph(svg, BOWTIE_POS, BOWTIE_EDGES, {
+      vertexColor: (v) => v===currentVertex ? "var(--pB)" : (finalized.has(v) ? "var(--good)" : "var(--accent)"),
+      edgeColor: (key) => relaxedEdges.has(key) ? "var(--pB)" : "var(--ink-soft)",
+      edgeWidth: (key) => relaxedEdges.has(key) ? 4 : 2,
+    });
+    BOWTIE_EDGES.forEach(([u,v]) => {
+      const [x1,y1] = BOWTIE_POS[u], [x2,y2] = BOWTIE_POS[v];
+      const mx = (x1+x2)/2, my = (y1+y2)/2;
+      svg.appendChild(el("text",{x:mx,y:my-6,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":11,fill:"var(--accent)","font-weight":"700"}, String(dijkstraWeight(u,v))));
+    });
+    const verts = Object.keys(BOWTIE_POS);
+    const dist = currentStep ? currentStep.snapshot : Object.fromEntries(verts.map(v=>[v, v===dijkstraSource?0:Infinity]));
+    const table = document.getElementById("dijkstraTable");
+    table.innerHTML = "<tr><th>vertex</th>"+verts.map(v=>`<th>${v}</th>`).join("")+"</tr>"+
+      "<tr><td>dist from "+dijkstraSource+"</td>"+verts.map(v=>`<td${finalized.has(v)?' class="win"':''}>${fmtDist(dist[v])}</td>`).join("")+"</tr>"+
+      "<tr><td>finalized?</td>"+verts.map(v=>`<td>${finalized.has(v)?"✓":""}</td>`).join("")+"</tr>";
+    const log = document.getElementById("dijkstraLog");
+    if (!stepsShown.length){
+      log.innerHTML = `Source: <b>${dijkstraSource}</b>. Click Step to pop the first vertex.`;
+    } else {
+      log.innerHTML = stepsShown.map(s => {
+        if (s.type==="skip") return `pop (${s.vertex}, dist=${s.dist}) &rarr; stale queue entry, skipped (already finalized cheaper).`;
+        let line = `pop (<b>${s.vertex}</b>, dist=${s.dist}) &rarr; finalized.`;
+        if (s.relaxed.length) line += " " + s.relaxed.map(r=>`relax ${s.vertex}&rarr;${r.to}: ${fmtDist(r.old)} &rarr; ${r.next}`).join("; ");
+        else line += " no relaxations (every neighbor already finalized or no improvement).";
+        return line;
+      }).join("<br>");
+    }
+    document.getElementById("dijkstraStep").disabled = dijkstraStepIdx >= dijkstraTrace.length;
+  }
+  document.getElementById("dijkstraStep").addEventListener("click", () => {
+    if (dijkstraStepIdx < dijkstraTrace.length){ dijkstraStepIdx++; renderDijkstra(); }
+  });
+  document.getElementById("dijkstraRunAll").addEventListener("click", () => {
+    dijkstraStepIdx = dijkstraTrace.length; renderDijkstra();
+  });
+  document.getElementById("dijkstraReset").addEventListener("click", () => {
+    dijkstraStepIdx = 0; renderDijkstra();
+  });
+  document.querySelectorAll("[data-dijkstrasource]").forEach(btn => btn.addEventListener("click", function(){
+    document.querySelectorAll("[data-dijkstrasource]").forEach(b=>b.classList.remove("active"));
+    this.classList.add("active");
+    dijkstraSource = this.dataset.dijkstrasource;
+    dijkstraTrace = computeDijkstraTrace(dijkstraSource);
+    dijkstraStepIdx = 0;
+    renderDijkstra();
+  }));
+  renderDijkstra();
+
+  /* =========================================================
+     TAB: MINIMUM SPANNING TREE (Kruskal, Prim, brute force)
+     ========================================================= */
+  // Edge list as named in the tutorial (E-C keeps its "E-C" label; edgeKey gives "C-E")
+  const MST_EDGES = [
+    {u:"A",v:"B",w:2}, {u:"A",v:"C",w:5}, {u:"B",v:"C",w:3},
+    {u:"C",v:"D",w:1}, {u:"D",v:"E",w:4}, {u:"E",v:"C",w:6},
+  ];
+  const MST_VERTS = Object.keys(BOWTIE_POS);
+  const MST_W = {}; MST_EDGES.forEach(e => MST_W[edgeKey(e.u,e.v)] = e.w);
+  const MST_LABEL = {}; MST_EDGES.forEach(e => MST_LABEL[edgeKey(e.u,e.v)] = e.u+"-"+e.v);
+
+  // path between two vertices using only the given tree edges (for "already connected via ..." text)
+  function mstTreePath(treeKeys, from, to){
+    const adj = {}; MST_VERTS.forEach(v=>adj[v]=[]);
+    treeKeys.forEach(k => { const [a,b]=k.split("-"); adj[a].push(b); adj[b].push(a); });
+    const prev = {}; const seen = new Set([from]); const q=[from];
+    while(q.length){ const c=q.shift(); if(c===to) break; adj[c].forEach(n=>{ if(!seen.has(n)){ seen.add(n); prev[n]=c; q.push(n);} }); }
+    if(!seen.has(to)) return null;
+    const path=[to]; let c=to; while(c!==from){ c=prev[c]; path.push(c); }
+    return path.reverse().join("-");
+  }
+
+  function computeKruskal(){
+    const sorted = MST_EDGES.slice().sort((a,b)=>a.w-b.w);
+    const parent = {}; MST_VERTS.forEach(v=>parent[v]=v);
+    function find(x){ while(parent[x]!==x) x=parent[x]; return x; }
+    function groups(){
+      const g = {}; MST_VERTS.forEach(v => { const r=find(v); (g[r]=g[r]||[]).push(v); });
+      return Object.values(g).map(a=>"{"+a.sort().join(",")+"}").sort().join(" ");
+    }
+    const tree = []; let total = 0; const steps = [];
+    sorted.forEach(e => {
+      const key = edgeKey(e.u,e.v), label = e.u+"-"+e.v;
+      const ru = find(e.u), rv = find(e.v);
+      if (ru === rv){
+        const via = mstTreePath(tree, e.u, e.v);
+        steps.push({key, label, w:e.w, add:false, total, groups:groups(), tree:tree.slice(),
+          reason:`SKIP — ${e.u} and ${e.v} already connected (via ${via}), so this would close a loop`});
+      } else {
+        const gu = MST_VERTS.filter(v=>find(v)===ru).sort().join(","), gv = MST_VERTS.filter(v=>find(v)===rv).sort().join(",");
+        parent[ru] = rv; tree.push(key); total += e.w;
+        let reason = `ADD — joins {${gu}} with {${gv}}`;
+        if (tree.length === MST_VERTS.length-1) reason += ` · ${tree.length} edges = V − 1: tree complete`;
+        steps.push({key, label, w:e.w, add:true, total, groups:groups(), tree:tree.slice(), reason});
+      }
+    });
+    return steps;
+  }
+
+  function computePrim(start){
+    const inTree = new Set([start]); const tree = []; let total = 0; const steps = [];
+    let pq = [];
+    function pushFrom(x){ MST_EDGES.forEach(e => {
+      if (e.u!==x && e.v!==x) return;
+      const other = e.u===x ? e.v : e.u;
+      if (!inTree.has(other)) pq.push({from:x, to:other, w:e.w, key:edgeKey(e.u,e.v)});
+    }); }
+    pushFrom(start);
+    while (pq.length){
+      pq.sort((a,b)=>a.w-b.w);
+      const queueBefore = pq.map(q=>`${q.from}-${q.to}=${q.w}`).join(", ");
+      const treeBefore = "{"+[...inTree].join(",")+"}";
+      const c = pq.shift();
+      const label = `${c.from}-${c.to}`;
+      if (inTree.has(c.to)){
+        steps.push({key:c.key, label, w:c.w, add:false, total, tree:tree.slice(), inTree:new Set(inTree), treeBefore, queueBefore,
+          reason:`SKIP — leftover queue entry: both ${c.from} and ${c.to} are already in the tree`});
+        continue;
+      }
+      // other live edges still crossing out of the tree (stale entries excluded)
+      const others = pq.filter(q=>!inTree.has(q.to)).map(q=>`${q.from}-${q.to}=${q.w}`);
+      inTree.add(c.to); tree.push(c.key); total += c.w;
+      let reason = `ADD ${c.to} — cheapest edge leaving the tree`;
+      if (others.length) reason += ` (beats ${others.join(", ")})`;
+      steps.push({key:c.key, label, w:c.w, add:true, total, tree:tree.slice(), inTree:new Set(inTree), treeBefore, queueBefore, reason});
+      pushFrom(c.to);
+    }
+    return steps;
+  }
+
+  function computeBruteForce(){
+    const trees = [];
+    const n = MST_EDGES.length;
+    for (let mask=0; mask<(1<<n); mask++){
+      const pick = MST_EDGES.filter((_,i)=>mask&(1<<i));
+      if (pick.length !== MST_VERTS.length-1) continue;
+      const parent = {}; MST_VERTS.forEach(v=>parent[v]=v);
+      function find(x){ while(parent[x]!==x) x=parent[x]; return x; }
+      let ok = true;
+      pick.forEach(e => { const a=find(e.u), b=find(e.v); if(a===b) ok=false; else parent[a]=b; });
+      if (!ok) continue;
+      trees.push({keys:pick.map(e=>edgeKey(e.u,e.v)), labels:pick.map(e=>e.u+"-"+e.v), total:pick.reduce((s,e)=>s+e.w,0)});
+    }
+    trees.sort((a,b)=>a.total-b.total);
+    return trees;
+  }
+
+  const MST_KRUSKAL = computeKruskal();
+  const MST_PRIM = computePrim("A");
+  const MST_BRUTE = computeBruteForce();
+  let mstMode = null, mstIdx = 0;
+
+  function drawMstGraph(svg, opts){
+    drawGraph(svg, BOWTIE_POS, BOWTIE_EDGES, opts);
+    BOWTIE_EDGES.forEach(([u,v]) => {
+      const [x1,y1] = BOWTIE_POS[u], [x2,y2] = BOWTIE_POS[v];
+      const fs = opts.fontSize||11;
+      // vertical edges: put the weight beside the line (outside the bowtie) so it isn't drawn on top of it
+      const lx = x1===x2 ? x1 + (x1<200 ? -fs : fs) : (x1+x2)/2;
+      const ly = x1===x2 ? (y1+y2)/2 + fs*0.35 : (y1+y2)/2 - fs*0.55;
+      svg.appendChild(el("text",{x:lx,y:ly,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":fs,fill:"var(--accent)","font-weight":"700"}, String(MST_W[edgeKey(u,v)])));
+    });
+    if (opts.dashed){
+      svg.querySelectorAll("line").forEach(ln => {
+        const k = MST_VERTS.find(a => BOWTIE_POS[a][0]==ln.getAttribute("x1") && BOWTIE_POS[a][1]==ln.getAttribute("y1"));
+        const b = MST_VERTS.find(a => BOWTIE_POS[a][0]==ln.getAttribute("x2") && BOWTIE_POS[a][1]==ln.getAttribute("y2"));
+        if (k && b && opts.dashed.has(edgeKey(k,b)) && ln.getAttribute("stroke")!=="transparent") ln.setAttribute("stroke-dasharray","8,7");
+      });
+    }
+  }
+
+  function renderMst(){
+    const svg = document.getElementById("mstSvg");
+    const status = document.getElementById("mstStatus");
+    const log = document.getElementById("mstLog");
+    const grid = document.getElementById("mstGrid");
+    grid.innerHTML = "";
+    const steps = mstMode==="kruskal" ? MST_KRUSKAL : mstMode==="prim" ? MST_PRIM : null;
+
+    if (mstMode === "brute"){
+      const best = MST_BRUTE[0];
+      const bestSet = new Set(best.keys);
+      drawMstGraph(svg, {
+        edgeColor: k => bestSet.has(k) ? "var(--good)" : "var(--line)",
+        edgeWidth: k => bestSet.has(k) ? 5 : 2,
+      });
+      const uniqueMin = MST_BRUTE.filter(t=>t.total===best.total).length === 1;
+      status.innerHTML = `Spanning trees found: <b>${MST_BRUTE.length}</b> &nbsp;·&nbsp; weights: <b>${MST_BRUTE.map(t=>t.total).join(", ")}</b><br>` +
+        `Minimum: <span class="big" style="color:var(--good)">${best.total}</span> (${uniqueMin?"unique":"tied"}) = ${best.labels.join(", ")}`;
+      log.innerHTML = "Brute force: every 4-edge subset of the 6 edges was checked; the ones that connect all 5 vertices with no cycle are the spanning trees below, sorted cheapest first.";
+      MST_BRUTE.forEach((t,i) => {
+        const div = document.createElement("div");
+        div.className = "mstMini" + (i===0 ? " win" : "");
+        const mini = document.createElementNS("http://www.w3.org/2000/svg","svg");
+        mini.setAttribute("viewBox","0 0 400 240");
+        const set = new Set(t.keys);
+        drawMstGraph(mini, {
+          edgeColor: k => set.has(k) ? (i===0 ? "var(--good)" : "var(--accent)") : "var(--line)",
+          edgeWidth: k => set.has(k) ? 7 : 3, fontSize:22,
+        });
+        div.appendChild(mini);
+        const cap = document.createElement("div");
+        cap.innerHTML = `<b>total ${t.total}</b>${i===0?" ← minimum":""}<br>${t.labels.join(" ")}`;
+        div.appendChild(cap);
+        grid.appendChild(div);
+      });
+      return;
+    }
+
+    const shown = steps ? steps.slice(0, mstIdx) : [];
+    const cur = shown.length ? shown[shown.length-1] : null;
+    const treeSet = new Set(cur ? cur.tree : []);
+    const rejected = new Set(shown.filter(s=>!s.add).map(s=>s.key));
+    drawMstGraph(svg, {
+      edgeColor: k => (cur && k===cur.key) ? (cur.add ? "var(--good)" : "var(--warn)") : treeSet.has(k) ? "var(--good)" : rejected.has(k) ? "var(--warn)" : "var(--ink-soft)",
+      edgeWidth: k => (cur && k===cur.key) ? 7 : treeSet.has(k) ? 5 : rejected.has(k) ? 3 : 2,
+      dashed: new Set([...rejected].filter(k => !(cur && k===cur.key))),
+      vertexColor: v => (mstMode==="prim" && cur && cur.inTree.has(v)) || (mstMode==="prim" && !cur && v==="A") ? "var(--good)" : "var(--accent)",
+    });
+    // mark rejected edges dashed + gold halo on the edge being considered
+    BOWTIE_EDGES.forEach(([u,v]) => {
+      const k = edgeKey(u,v);
+      const [x1,y1] = BOWTIE_POS[u], [x2,y2] = BOWTIE_POS[v];
+      if (cur && k===cur.key){
+        svg.insertBefore(el("line",{x1,y1,x2,y2,stroke:"var(--pB)",["stroke-width"]:14,["stroke-linecap"]:"round",opacity:0.55}), svg.firstChild);
+      }
+      if (rejected.has(k) && !(cur && k===cur.key && cur.add)){
+        const mx=(x1+x2)/2, my=(y1+y2)/2;
+        svg.appendChild(el("text",{x:mx,y:my+16,"text-anchor":"middle","font-family":"IBM Plex Mono, monospace","font-size":14,fill:"var(--warn)","font-weight":"700"}, "✕"));
+      }
+    });
+
+    if (!steps){
+      status.innerHTML = `Running total: <span class="big">0</span> &nbsp;·&nbsp; edges in tree: <b>0</b> of 4`;
+      log.innerHTML = "Pick a preset above to begin.";
+    } else {
+      const total = cur ? cur.total : 0;
+      const done = mstIdx >= steps.length;
+      let st = `<b>${mstMode==="kruskal" ? "Kruskal" : "Prim from A"}</b> &nbsp;·&nbsp; step ${mstIdx} of ${steps.length}<br>` +
+        `Running total: <span class="big">${total}</span> &nbsp;·&nbsp; edges in tree: <b>${treeSet.size}</b> of 4`;
+      if (mstMode==="kruskal") st += `<br>Union-Find groups: <b>${cur ? cur.groups : MST_VERTS.map(v=>"{"+v+"}").join(" ")}</b>`;
+      if (mstMode==="prim") st += `<br>Tree vertices: <b>${cur ? "{"+[...cur.inTree].join(",")+"}" : "{A}"}</b>`;
+      if (done) st += `<br><b style="color:var(--good)">Done — minimum spanning tree: ${[...treeSet].map(k=>MST_LABEL[k]).join(", ")}, total ${total}</b>`;
+      status.innerHTML = st;
+      if (!shown.length){
+        log.innerHTML = mstMode==="kruskal"
+          ? `Edges sorted by weight: <b>${MST_EDGES.slice().sort((a,b)=>a.w-b.w).map(e=>`${e.u}-${e.v}=${e.w}`).join(", ")}</b>. Click step to consider the cheapest.`
+          : `Tree starts as <b>{A}</b>. Click step to add its cheapest outgoing edge.`;
+      } else {
+        log.innerHTML = shown.map(s => {
+          const tag = s.add ? `<b style="color:var(--good)">${s.reason.split(" — ")[0]}</b>` : `<b style="color:var(--warn)">SKIP</b>`;
+          const rest = s.reason.slice(s.reason.indexOf(" — "));
+          const pre = mstMode==="prim" ? `tree ${s.treeBefore}, queue [${s.queueBefore}] → ` : "";
+          const post = mstMode==="kruskal" ? ` &nbsp;·&nbsp; total ${s.total} &nbsp;·&nbsp; groups ${s.groups}` : ` &nbsp;·&nbsp; total ${s.total}`;
+          return `${pre}<b>${s.label} = ${s.w}</b> ${tag}${rest}${post}`;
+        }).join("<br>");
+      }
+    }
+    document.getElementById("mstKruskalStep").disabled = mstMode==="kruskal" && mstIdx >= MST_KRUSKAL.length;
+    document.getElementById("mstPrimStep").disabled = mstMode==="prim" && mstIdx >= MST_PRIM.length;
+  }
+  function mstSetActive(id){
+    ["mstKruskalStep","mstKruskalAll","mstPrimStep","mstPrimAll","mstBrute"].forEach(b => document.getElementById(b).classList.toggle("active", b===id));
+  }
+  document.getElementById("mstKruskalStep").addEventListener("click", () => {
+    if (mstMode!=="kruskal"){ mstMode="kruskal"; mstIdx=0; }
+    if (mstIdx < MST_KRUSKAL.length) mstIdx++;
+    mstSetActive("mstKruskalStep"); renderMst();
+  });
+  document.getElementById("mstKruskalAll").addEventListener("click", () => {
+    mstMode="kruskal"; mstIdx=MST_KRUSKAL.length; mstSetActive("mstKruskalAll"); renderMst();
+  });
+  document.getElementById("mstPrimStep").addEventListener("click", () => {
+    if (mstMode!=="prim"){ mstMode="prim"; mstIdx=0; }
+    if (mstIdx < MST_PRIM.length) mstIdx++;
+    mstSetActive("mstPrimStep"); renderMst();
+  });
+  document.getElementById("mstPrimAll").addEventListener("click", () => {
+    mstMode="prim"; mstIdx=MST_PRIM.length; mstSetActive("mstPrimAll"); renderMst();
+  });
+  document.getElementById("mstBrute").addEventListener("click", () => {
+    mstMode="brute"; mstIdx=0; mstSetActive("mstBrute"); renderMst();
+  });
+  document.getElementById("mstReset").addEventListener("click", () => {
+    mstMode=null; mstIdx=0; mstSetActive(null); renderMst();
+  });
+  renderMst();
+})();
+</script>
+<script>
+"use strict";
+/* ===== Part 4D: Bellman-Ford and Floyd-Warshall (pure step generators; checked in node against the tutorial's Python) ===== */
+const BF = {};
+BF.INF = Infinity;
+BF.fmt = d => d === Infinity ? '∞' : String(d);
+BF.G1 = { pos:{S:[60,130],A:[220,50],B:[220,210],C:[380,130]},
+  edges:[['S','A',2],['S','B',5],['B','A',-4],['A','C',1]] };
+BF.G2 = { pos:BF.G1.pos, edges:BF.G1.edges.concat([['C','B',-3]]) };
+BF.CHAIN = { pos:{P0:[40,130],P1:[150,130],P2:[260,130],P3:[370,130],P4:[480,130]},
+  rev:[['P3','P4',1],['P2','P3',1],['P1','P2',1],['P0','P1',1]] };
+BF.CHAIN.fwd = BF.CHAIN.rev.slice().reverse();
+BF.FW = { pos:{1:[90,60],2:[390,60],3:[90,210],4:[390,210]},
+  edges:[[1,3,-2],[3,4,2],[4,2,-1],[2,1,4],[2,3,3]] };
+BF.FWNEG = { pos:{1:[90,60],2:[390,60],3:[240,210]}, edges:[[1,2,1],[2,3,-2],[3,1,0]] };
+
+BF.svg = function(G, edges, o){
+  o = o || {};
+  const W = Math.max(...Object.values(G.pos).map(p=>p[0])) + 60;
+  let s = `<svg viewBox="0 0 ${W} 260" xmlns="http://www.w3.org/2000/svg"><defs>` +
+    ['ink','hot','good','warn'].map(k=>`<marker id="bfArr-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${{ink:'#5B6572',hot:'#D9A62E',good:'#0F8B8D',warn:'#D9636B'}[k]}"/></marker>`).join('') + '</defs>';
+  edges.forEach(([u,v,w],k) => {
+    const [x1,y1] = G.pos[u], [x2,y2] = G.pos[v];
+    const dx = x2-x1, dy = y2-y1, L = Math.hypot(dx,dy), ux = dx/L, uy = dy/L;
+    const twin = edges.some(([a,b]) => a===v && b===u);
+    const off = twin ? 7 : 0, nx = -uy*off, ny = ux*off;
+    const sx = x1 + ux*24 + nx, sy = y1 + uy*24 + ny, ex = x2 - ux*26 + nx, ey = y2 - uy*26 + ny;
+    const st = (o.edgeState && o.edgeState(k,u,v)) || 'ink';
+    const col = {ink:'#5B6572',hot:'#D9A62E',good:'#0F8B8D',warn:'#D9636B'}[st];
+    s += `<line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="${col}" stroke-width="${st==='ink'?2:4}" marker-end="url(#bfArr-${st})"/>`;
+    const mx = (sx+ex)/2 + (dy===0 ? 0 : (dx===0 ? (x1<240 ? -14 : 14) : -uy*14)), my = (sy+ey)/2 + (dy===0 ? -10 : (dx===0 ? 4 : ux*14));
+    s += `<text x="${mx}" y="${my}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="700" fill="${w<0?'#D9636B':'#463A73'}">${w}</text>`;
+  });
+  Object.entries(G.pos).forEach(([v,[x,y]]) => {
+    const fill = (o.vertexColor && o.vertexColor(v)) || '#463A73';
+    s += `<circle cx="${x}" cy="${y}" r="20" fill="${fill}" stroke="#fff" stroke-width="2"/>`;
+    s += `<text x="${x}" y="${y+5}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="700" fill="#fff">${v}</text>`;
+    if (o.label) { const t = o.label(v); if (t !== undefined) s += `<text x="${x}" y="${y < 100 ? y-28 : y+40}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" font-weight="700" fill="#1B2430">${t}</text>`; }
+  });
+  return s + '</svg>';
+};
+BF.distTable = function(verts, rows, truth){
+  // rows: [{label, dist:{v:d}, changed:Set}]
+  return `<table class="pp-t"><tr><th></th>${verts.map(v=>`<th>${v}</th>`).join('')}</tr>` +
+    rows.map(r => `<tr><th>${r.label}</th>${verts.map(v => {
+      const d = r.dist[v]; let c = r.changed && r.changed.has(v) ? 'chg' : '';
+      if (r.check && truth) c = d === truth[v] ? 'ok' : 'wrong';
+      return `<td class="${c}">${BF.fmt(d)}</td>`; }).join('')}</tr>`).join('') + '</table>';
+};
+
+/* textbook Dijkstra (finalize on pop) on a graph with a negative edge */
+BF.dijkstraTrap = function(){
+  const G = BF.G1, verts = Object.keys(G.pos), dist = {}, done = new Set(), steps = [];
+  verts.forEach(v => dist[v] = Infinity); dist.S = 0;
+  const truth = BF.bellmanFord(verts, G.edges, 'S').dist;
+  const draw = (hl) => BF.svg(G, G.edges, { edgeState:(k)=> hl===k ? 'hot' : 'ink',
+      vertexColor: v => done.has(v) ? '#0F8B8D' : '#463A73', label: v => BF.fmt(dist[v]) });
+  steps.push({note:'Directed graph with one <b>negative</b> edge, B→A = −4. Textbook Dijkstra from S: pop the cheapest unfinished vertex, mark it <b>final</b>, relax its out-edges. Green = finalized.', html: draw(-1)});
+  let pq = [[0,'S']];
+  while (pq.length){
+    pq.sort((a,b)=>a[0]-b[0]); const [d,u] = pq.shift();
+    if (done.has(u)) continue;
+    done.add(u);
+    const msgs = [];
+    G.edges.forEach(([a,b,w],k) => { if (a!==u) return;
+      if (done.has(b)) { msgs.push(`${u}→${b}: ${d}+(${w}) = ${d+w} would beat ${dist[b]}, but <b>${b} is already final</b>, so it is ignored`); return; }
+      if (d + w < dist[b]) { msgs.push(`relax ${u}→${b}: ${BF.fmt(dist[b])} → ${d+w}`); dist[b] = d+w; pq.push([dist[b], b]); }
+      else msgs.push(`${u}→${b}: ${d+w} is no better than ${dist[b]}`);
+    });
+    steps.push({note:`pop <b>${u}</b> (dist ${d}), finalize it. ${msgs.join('; ') || 'no out-edges'}.`, html: draw(G.edges.findIndex(([a,b,w]) => a===u && w<0))});
+  }
+  const rows = [{label:'Dijkstra', dist:Object.assign({},dist), check:true}, {label:'true (Bellman-Ford)', dist:truth}];
+  steps.push({note:'Dijkstra finalized A = 2 before it ever looked at B, so the cheaper route S→B→A = 5 + (−4) = 1 arrived too late. A is wrong, and so is everything reached through A (C).',
+    html: BF.svg(G, G.edges, {vertexColor:()=> '#0F8B8D', label: v => BF.fmt(dist[v])}) + BF.distTable(verts, rows, truth),
+    res:'Dijkstra: A = 2, C = 3 (wrong). True shortest: A = 1 (S→B→A), C = 2 (S→B→A→C).'});
+  return {steps, dist};
+};
+
+BF.bellmanFord = function(verts, edges, src, maxRounds){
+  const dist = {}; verts.forEach(v => dist[v] = Infinity); dist[src] = 0;
+  const log = []; let rounds = 0;
+  const R = maxRounds || verts.length - 1;
+  for (let r = 1; r <= R; r++){
+    rounds = r; const changed = new Set(); const rlog = [];
+    edges.forEach(([u,v,w],k) => {
+      const before = dist[v];
+      const better = dist[u] + w < dist[v];
+      if (better){ dist[v] = dist[u] + w; changed.add(v); }
+      rlog.push({k,u,v,w,du:dist[u],before,after:dist[v],better});
+    });
+    log.push({round:r, edges:rlog, dist:Object.assign({},dist), changed});
+    if (!changed.size) break;
+  }
+  return {dist, log, rounds};
+};
+
+BF.bfPreset = function(G, src, title, opts){
+  opts = opts || {};
+  const verts = Object.keys(G.pos), steps = [], dist = {};
+  verts.forEach(v => dist[v] = Infinity); dist[src] = 0;
+  const hist = [{label:'start', dist:Object.assign({},dist)}];
+  const draw = (hk, st) => BF.svg(G, G.edges, {edgeState:(k)=> k===hk ? st : 'ink', label: v => BF.fmt(dist[v]),
+      vertexColor: v => v===src ? '#0F8B8D' : '#463A73'}) + BF.distTable(verts, hist);
+  steps.push({note: title, html: draw(-1)});
+  const V = verts.length; let negative = false, roundsUsed = 0;
+  for (let r = 1; r <= V; r++){
+    const isCheck = r === V; let changed = new Set();
+    G.edges.forEach(([u,v,w],k) => {
+      const cand = dist[u] + w, better = cand < dist[v];
+      const prev = dist[v];
+      if (better && !isCheck){ dist[v] = cand; changed.add(v); }
+      if (better && isCheck){ changed.add(v); }
+      if (!opts.coarse){
+        const tag = isCheck ? `check round ${r}` : `round ${r}`;
+        const msg = dist[u] === Infinity ? `${u} not reached yet (∞), skip.` :
+          better ? (isCheck ? `${BF.fmt(dist[u])} + (${w}) = ${cand} &lt; ${BF.fmt(prev)}: <b>still improving after V − 1 rounds</b>.` : `${BF.fmt(dist[u])} + (${w}) = ${cand} &lt; ${BF.fmt(prev)}: <b>relax</b>, ${v} = ${cand}.`) :
+          `${BF.fmt(dist[u])} + (${w}) = ${cand} is not better than ${BF.fmt(prev)}.`;
+        steps.push({note:`${tag}, edge ${u}→${v} (${w}): ${msg}`, html: draw(k, better ? (isCheck ? 'warn' : 'good') : 'hot')});
+      }
+    });
+    if (!isCheck){
+      roundsUsed = r;
+      hist.push({label:`after round ${r}`, dist:Object.assign({},dist), changed});
+      steps.push({note:`End of round ${r}: ${changed.size ? `changed ${[...changed].join(', ')}.` : '<b>nothing changed</b>, so no later round can change anything either: stop early.'}`, html: draw(-1)});
+      if (!changed.size) break;
+      if (r === V-1) steps.push({note:`That was round V − 1 = ${V-1}. One more pass over every edge: if anything still improves, a negative cycle is reachable.`, html: draw(-1)});
+    } else {
+      negative = changed.size > 0;
+      steps.push({note: negative ? `Check round: ${[...changed].join(', ')} still improved. A real shortest path never needs more than V − 1 = ${V-1} edges, so an improvement now means a <b>negative cycle</b>.` : 'Check round: nothing improved, so there is no reachable negative cycle and the distances are final.', html: draw(-1)});
+    }
+  }
+  return {steps, dist, negative, roundsUsed};
+};
+
+BF.chainPreset = function(order){
+  const G = {pos:BF.CHAIN.pos, edges: BF.CHAIN[order]};
+  const verts = Object.keys(G.pos), dist = {}; verts.forEach(v => dist[v] = Infinity); dist.P0 = 0;
+  const steps = [], hist = [{label:'start', dist:Object.assign({},dist)}];
+  const draw = (chg) => BF.svg(G, G.edges, {edgeState:(k,u,v)=> chg && chg.has(v) ? 'good' : 'ink', label: v => BF.fmt(dist[v]),
+      vertexColor: v => dist[v] < Infinity ? '#0F8B8D' : '#463A73'}) + BF.distTable(verts, hist);
+  steps.push({note:`A chain P0→P1→P2→P3→P4, every edge weight 1. The edge list is processed in this order each round: <b>${G.edges.map(([u,v])=>`${u}→${v}`).join(', ')}</b>.`, html: draw()});
+  let rounds = 0;
+  for (let r = 1; r <= verts.length - 1; r++){
+    const changed = new Set();
+    G.edges.forEach(([u,v,w]) => { if (dist[u] + w < dist[v]) { dist[v] = dist[u] + w; changed.add(v); } });
+    rounds = r;
+    hist.push({label:`after round ${r}`, dist:Object.assign({},dist), changed});
+    steps.push({note: changed.size ? `Round ${r}: ${[...changed].map(v=>`${v} = ${dist[v]}`).join(', ')}.${order==='rev' ? ` Each round the news travels <b>one edge</b> further, because the edge that could use it was already processed earlier in the round.` : ''}` : `Round ${r}: nothing changed, stop early.`, html: draw(changed)});
+    if (!changed.size) break;
+  }
+  steps[steps.length-1].res = order === 'rev' ? `Worst order: all ${rounds} = V − 1 rounds were needed. A shortest path can have up to V − 1 edges, and each round is only guaranteed to settle one more of them.` : `Lucky order: everything settled in round 1; round 2 confirmed no change (${rounds} rounds run). The V − 1 bound is for the worst order.`;
+  return {steps, rounds, dist};
+};
+
+BF.fwStages = function(n, edges){
+  const d = []; for (let i=0;i<n;i++){ d.push([]); for (let j=0;j<n;j++) d[i].push(i===j?0:Infinity); }
+  edges.forEach(([u,v,w]) => { d[u-1][v-1] = Math.min(d[u-1][v-1], w); });
+  const stages = [{k:0, d:d.map(r=>r.slice()), changed:[]}];
+  for (let k=0;k<n;k++){
+    const changed = [];
+    for (let i=0;i<n;i++) for (let j=0;j<n;j++) if (d[i][k] + d[k][j] < d[i][j]){ changed.push({i,j,old:d[i][j],nw:d[i][k]+d[k][j]}); d[i][j] = d[i][k] + d[k][j]; }
+    stages.push({k:k+1, d:d.map(r=>r.slice()), changed});
+  }
+  return stages;
+};
+BF.fwTable = function(d, changed, k, neg){
+  const n = d.length;
+  return `<table class="pp-t"><tr><th>from \\ to</th>${d.map((_,j)=>`<th>${j+1}</th>`).join('')}</tr>` +
+    d.map((row,i) => `<tr><th>${i+1}</th>${row.map((x,j) => {
+      let c = '';
+      if (changed && changed.some(ch => ch.i===i && ch.j===j)) c = 'chg';
+      else if (k && (i===k-1 || j===k-1)) c = 'via';
+      if (neg && i===j && x<0) c = 'bad';
+      return `<td class="${c}">${BF.fmt(x)}</td>`; }).join('')}</tr>`).join('') + '</table>';
+};
+BF.fwPreset = function(G, n, isNeg){
+  const stages = BF.fwStages(n, G.edges), steps = [];
+  const draw = (k) => BF.svg(G, G.edges, {vertexColor: v => +v===k ? '#D9A62E' : '#463A73'});
+  steps.push({note:`Start: d[i][j] = the direct edge i→j if there is one, 0 on the diagonal, ∞ otherwise. No stopovers allowed yet.`, html: draw(0) + BF.fwTable(stages[0].d)});
+  for (let s=1; s<stages.length; s++){
+    const st = stages[s];
+    const list = st.changed.length ? st.changed.map(ch => `d[${ch.i+1}][${ch.j+1}]: ${BF.fmt(ch.old)} → ${ch.nw} (via ${s}: ${BF.fmt(stages[s-1].d[ch.i][s-1])} + ${BF.fmt(stages[s-1].d[s-1][ch.j])})`).join('; ') : 'no entry improves';
+    steps.push({note:`k = ${s}: now vertex <b>${s}</b> may be used as a stopover. For every pair, is i→${s}→j cheaper than the best so far? ${list}.`, html: draw(s) + BF.fwTable(st.d, st.changed, s, isNeg)});
+  }
+  const fin = stages[stages.length-1].d;
+  if (isNeg){
+    const diag = fin.map((r,i)=>r[i]);
+    steps[steps.length-1].res = `Diagonal = [${diag.join(', ')}]: a vertex that can reach itself for less than 0 sits on a negative cycle (1→2→3→1 costs 1 − 2 + 0 = −1).`;
+  } else steps[steps.length-1].res = `Final all-pairs table, rows = from: [${fin.map(r=>'['+r.map(BF.fmt).join(', ')+']').join(', ')}]. Three nested loops over 4 vertices: 4³ = 64 checks.`;
+  return {steps, final: fin};
+};
+
+
+/* ---------- one-click step player (shared pattern: Prev / Step / Play / End / Reset) ---------- */
+function ppMount(root, presets, opts){
+  opts = opts || {};
+  root.innerHTML =
+    '<div class="pp-presets"></div>' +
+    '<div class="pp-controls">' +
+      '<button class="pp-ctl" data-a="prev">&larr; Prev</button>' +
+      '<button class="pp-ctl" data-a="step">Step &rarr;</button>' +
+      '<button class="pp-ctl" data-a="play">&#9654; Play</button>' +
+      '<button class="pp-ctl" data-a="end">Jump to end &#8677;</button>' +
+      '<button class="pp-ctl" data-a="reset">&#8634; Reset</button>' +
+      '<span class="pp-stepnum"></span>' +
+      '<span class="pp-speed">speed ' +
+        '<button class="pp-ctl" data-speed="1800">slow</button>' +
+        '<button class="pp-ctl pp-on" data-speed="1000">normal</button>' +
+        '<button class="pp-ctl" data-speed="400">fast</button></span>' +
+    '</div>' +
+    '<div class="pp-status"></div>' +
+    '<div class="pp-stage"></div>';
+  const q = s => root.querySelector(s);
+  const P = q('.pp-presets');
+  let steps = [{note:'Click a preset above.', html:''}], idx = 0, timer = null, speed = 1000;
+  P.innerHTML = presets.map((p,i)=>`<button class="pp-op" data-i="${i}">${p.name}</button>`).join('');
+  function render(){
+    const s = steps[idx];
+    q('.pp-stage').innerHTML = s.html || '';
+    q('.pp-status').innerHTML = s.note + (s.res && idx === steps.length-1 ? `<span class="pp-res">${s.res}</span>` : '');
+    q('.pp-stepnum').textContent = `step ${idx+1} / ${steps.length}`;
+    const last = idx === steps.length-1;
+    q('[data-a=prev]').disabled = idx === 0;
+    q('[data-a=step]').disabled = last; q('[data-a=end]').disabled = last;
+    q('[data-a=play]').innerHTML = timer ? '&#10074;&#10074; Pause' : (last && steps.length > 1 ? '&#9654; Replay' : '&#9654; Play');
+  }
+  function stop(){ if(timer){ clearTimeout(timer); timer = null; } }
+  function tick(){ if(idx < steps.length-1) idx++; if(idx >= steps.length-1){ timer = null; render(); return; } render(); timer = setTimeout(tick, speed); }
+  function play(){ if(timer){ stop(); render(); return; } if(idx >= steps.length-1) idx = 0; timer = setTimeout(tick, speed); render(); }
+  function load(i, autoplay){
+    stop(); steps = presets[i].gen(); idx = 0;
+    [...P.children].forEach((b,j)=>b.classList.toggle('pp-active', j === i));
+    render(); if(autoplay) play();
+  }
+  [...P.children].forEach(b => b.onclick = () => load(+b.dataset.i, true));
+  q('[data-a=prev]').onclick = () => { stop(); idx = Math.max(0, idx-1); render(); };
+  q('[data-a=step]').onclick = () => { stop(); idx = Math.min(steps.length-1, idx+1); render(); };
+  q('[data-a=end]').onclick = () => { stop(); idx = steps.length-1; render(); };
+  q('[data-a=reset]').onclick = () => { stop(); idx = 0; render(); };
+  q('[data-a=play]').onclick = play;
+  root.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => {
+    speed = +b.dataset.speed; root.querySelectorAll('[data-speed]').forEach(x => x.classList.toggle('pp-on', x === b));
+  });
+  if(opts.initial !== undefined) load(opts.initial, false); else render();
+  return { load };
+}
+
+(function(){
+  const G1 = BF.G1, G2 = BF.G2;
+  ppMount(document.getElementById('pp-bellman'), [
+    {name:'Dijkstra trips on a negative edge', gen:()=>BF.dijkstraTrap().steps},
+    {name:'Bellman-Ford on the same graph', gen:()=>{ const r = BF.bfPreset(G1,'S','Bellman-Ford from S. Every round relaxes <b>every</b> edge in the fixed order S→A, S→B, B→A, A→C. Nothing is ever "final" until the rounds stop.');
+      r.steps[r.steps.length-1].res = `Distances: S = 0, A = ${r.dist.A}, B = ${r.dist.B}, C = ${r.dist.C}. Round 1 already found them; round 2 changed nothing, so it stopped early (V − 1 = 3 rounds was the most it could need).`; return r.steps; }},
+    {name:'Worst edge order: V − 1 rounds needed', gen:()=>BF.chainPreset('rev').steps},
+    {name:'Same chain, lucky order: 1 round', gen:()=>BF.chainPreset('fwd').steps},
+    {name:'Negative cycle: the V-th round still improves', gen:()=>{ const r = BF.bfPreset(G2,'S','Add C→B = −3. Now B→A→C→B costs −4 + 1 − 3 = <b>−6</b>: a negative cycle. Run V − 1 = 3 rounds, then one check round.', {coarse:true});
+      r.steps[r.steps.length-1].res = `After 3 rounds: A = ${r.dist.A}, B = ${r.dist.B}, C = ${r.dist.C}, and the check round still improves. Every lap of the cycle lowers the cost by 6, so "shortest path" has no answer: Bellman-Ford reports a negative cycle.`; return r.steps; }},
+    {name:'Floyd-Warshall: allow stopovers 1, 2, 3, 4', gen:()=>BF.fwPreset(BF.FW,4).steps},
+    {name:'Floyd-Warshall spots a negative cycle', gen:()=>BF.fwPreset(BF.FWNEG,3,true).steps},
+  ], {initial:0});
 })();
 </script>
 </body>

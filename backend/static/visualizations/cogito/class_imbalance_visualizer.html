@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Imbalance, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+  .caption{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12px; color:var(--ink-soft); min-width:150px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:52px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.8; white-space:pre-line; }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px; margin-top:24px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion visualizer</div>
+    <h1>Class Imbalance, Made Visible</h1>
+    <p>Two tabs, each reproducing a verified worked example from <b>Class Imbalance — The Feynman Way</b>: SMOTE's interpolation formula placing a synthetic point exactly where predicted, and the same mechanism generating a synthetic point directly inside majority-class territory.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="smote">SMOTE Interpolation</button>
+    <button class="tab" data-tab="contamination">Majority Contamination</button>
+  </div>
+
+  <!-- TAB 1: SMOTE INTERPOLATION -->
+  <div class="panel active" id="panel-smote">
+    <div class="card">
+      <h2>x_synthetic = x&#7522; + gap &times; (x_zi &minus; x&#7522;)</h2>
+      <p class="sub">Part 2's worked example. Defaults reproduce it exactly: x&#7522;=[2.0,3.0], nearest neighbor x_zi=[2.5,3.5], gap=0.4 &rarr; synthetic=[2.2,3.2]. Drag the gap and watch the synthetic point slide along the segment.</p>
+      <div class="row">
+        <label>gap</label>
+        <input type="range" id="gap" min="0" max="1" step="0.01" value="0.4">
+        <span class="readout" id="gap-r">0.40</span>
+      </div>
+      <svg id="smotesvg" viewBox="0 0 480 260"></svg>
+      <div class="steplog" id="smote-readout"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: MAJORITY CONTAMINATION -->
+  <div class="panel" id="panel-contamination">
+    <div class="card">
+      <h2>Two minority points, straddling a majority-class pocket</h2>
+      <p class="sub">Part 2's verified limitation. Two minority points (red) sit far apart with real majority-class points (blue) directly on the line between them. Drag the gap and watch the synthetic point land exactly on top of a majority point at gap=0.5, reproducing the tutorial's verified contamination.</p>
+      <div class="row">
+        <label>gap</label>
+        <input type="range" id="gap2" min="0" max="1" step="0.01" value="0.5">
+        <span class="readout" id="gap2-r">0.50</span>
+      </div>
+      <svg id="contamsvg" viewBox="0 0 480 200"></svg>
+      <div class="steplog" id="contam-readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Class Imbalance — The Feynman Way</b> (<code>../foundations/class_imbalance_feynman.md</code>). All defaults reproduce the tutorial's own Python-verified worked examples exactly.
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+const svgNS='http://www.w3.org/2000/svg';
+function el(tag,attrs){ const e=document.createElementNS(svgNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+// ---------- TAB 1: SMOTE INTERPOLATION ----------
+const minorityPoints = [[2.0,3.0],[2.5,3.5],[1.8,4.2]];
+function renderSmote(){
+  const gap = parseFloat(document.getElementById('gap').value);
+  document.getElementById('gap-r').textContent = gap.toFixed(2);
+
+  const xi = minorityPoints[0];
+  const others = minorityPoints.slice(1);
+  const dists = others.map(p => Math.hypot(p[0]-xi[0], p[1]-xi[1]));
+  const nnIdx = dists[0] < dists[1] ? 0 : 1;
+  const xzi = others[nnIdx];
+  const synthetic = [xi[0] + gap*(xzi[0]-xi[0]), xi[1] + gap*(xzi[1]-xi[1])];
+
+  const svg = document.getElementById('smotesvg'); svg.innerHTML='';
+  const scale=60, ox=60, oy=230;
+  function toSvg(p){ return [ox+p[0]*scale, oy-p[1]*scale]; }
+  svg.appendChild(el('line',{x1:ox,y1:20,x2:ox,y2:oy,stroke:'#D9E0DE'}));
+  svg.appendChild(el('line',{x1:ox,y1:oy,x2:440,y2:oy,stroke:'#D9E0DE'}));
+
+  // segment between xi and xzi
+  const [sx1,sy1] = toSvg(xi), [sx2,sy2] = toSvg(xzi);
+  svg.appendChild(el('line',{x1:sx1,y1:sy1,x2:sx2,y2:sy2,stroke:'#D9A62E','stroke-width':2,'stroke-dasharray':'5,4'}));
+
+  minorityPoints.forEach((p,i)=>{
+    const [x,y] = toSvg(p);
+    svg.appendChild(el('circle',{cx:x,cy:y,r:7,fill:'#D9636B'}));
+    const lbl=el('text',{x:x+10,y:y-8,'font-size':'11.5','font-family':'IBM Plex Mono, monospace',fill:'#D9636B','font-weight':'700'});
+    lbl.textContent = i===0?'xi=['+p[0]+','+p[1]+']' : (i-1===nnIdx? 'x_zi=['+p[0]+','+p[1]+']' : '[other minority]');
+    svg.appendChild(lbl);
+  });
+
+  const [px,py] = toSvg(synthetic);
+  svg.appendChild(el('circle',{cx:px,cy:py,r:8,fill:'none',stroke:'#463A73','stroke-width':3}));
+  const plbl = el('text',{x:px+10,y:py+16,'font-size':'12','font-family':'IBM Plex Mono, monospace',fill:'#463A73','font-weight':'700'});
+  plbl.textContent = 'synthetic=['+synthetic[0].toFixed(2)+','+synthetic[1].toFixed(2)+']';
+  svg.appendChild(plbl);
+
+  document.getElementById('smote-readout').textContent =
+    'xi = ['+xi.join(', ')+']\nnearest neighbor x_zi = ['+xzi.join(', ')+']\n'+
+    'x_synthetic = xi + '+gap.toFixed(2)+' × (x_zi − xi) = ['+synthetic[0].toFixed(2)+', '+synthetic[1].toFixed(2)+']';
+}
+document.getElementById('gap').addEventListener('input', renderSmote);
+renderSmote();
+
+// ---------- TAB 2: MAJORITY CONTAMINATION ----------
+const minorityA = [1.0,1.0], minorityB=[5.0,1.0];
+const majorityPoints = [[2.0,1.0],[2.5,1.0],[3.0,1.0],[3.5,1.0],[4.0,1.0]];
+function renderContam(){
+  const gap = parseFloat(document.getElementById('gap2').value);
+  document.getElementById('gap2-r').textContent = gap.toFixed(2);
+  const synthetic = [minorityA[0]+gap*(minorityB[0]-minorityA[0]), minorityA[1]+gap*(minorityB[1]-minorityA[1])];
+
+  const svg = document.getElementById('contamsvg'); svg.innerHTML='';
+  const scale=70, ox=30, oy=100;
+  function toSvg(p){ return [ox+p[0]*scale, oy-(p[1]-1)*scale]; }
+  svg.appendChild(el('line',{x1:20,y1:oy,x2:440,y2:oy,stroke:'#D9E0DE'}));
+
+  const [ax,ay]=toSvg(minorityA), [bx,by]=toSvg(minorityB);
+  svg.appendChild(el('line',{x1:ax,y1:ay,x2:bx,y2:by,stroke:'#D9A62E','stroke-width':2,'stroke-dasharray':'5,4'}));
+
+  [minorityA,minorityB].forEach(p=>{
+    const [x,y]=toSvg(p);
+    svg.appendChild(el('circle',{cx:x,cy:y,r:8,fill:'#D9636B'}));
+  });
+  majorityPoints.forEach(p=>{
+    const [x,y]=toSvg(p);
+    svg.appendChild(el('circle',{cx:x,cy:y,r:7,fill:'#0F8B8D'}));
+  });
+  const [sx,sy]=toSvg(synthetic);
+  svg.appendChild(el('circle',{cx:sx,cy:sy,r:10,fill:'none',stroke:'#463A73','stroke-width':3}));
+
+  let minDist = Infinity;
+  majorityPoints.forEach(p=>{ const d=Math.hypot(p[0]-synthetic[0],p[1]-synthetic[1]); if(d<minDist) minDist=d; });
+
+  document.getElementById('contam-readout').textContent =
+    'minority_a=['+minorityA.join(',')+']  minority_b=['+minorityB.join(',')+']\n'+
+    'synthetic = ['+synthetic[0].toFixed(2)+', '+synthetic[1].toFixed(2)+']\n'+
+    'distance to nearest majority point: '+minDist.toFixed(4)+
+    (minDist < 1e-6 ? '  → lands EXACTLY on a real majority-class point' : '');
+}
+document.getElementById('gap2').addEventListener('input', renderContam);
+renderContam();
+</script>
+</body>
+</html>

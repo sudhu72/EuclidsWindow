@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Distributed training, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --purple:#b39ddb; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 16px;line-height:1.55;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;}
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button.op.play{border-color:var(--amber);color:var(--amber);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .row-label{width:100%;text-align:center;font-size:11.5px;color:var(--chalk-dim);margin-bottom:-4px;}
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:210px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:70px;text-align:right;font-size:16px;}
+  input[type="range"]{width:100%;}
+  input[type="number"], select{background:var(--bg);border:1px solid var(--border);color:var(--chalk);
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:6px;padding:4px 6px;width:110px;}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:6px 8px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13.5px;}
+  table.datatable tr.hl td{background:rgba(255,206,84,0.12);color:var(--amber);font-weight:700;}
+  table.datatable td.good{color:var(--green);} table.datatable td.bad{color:var(--coral);}
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;max-width:100%;height:auto;}
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:19px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);} .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);} .metric.amber .num{color:var(--amber);} .metric.purple .num{color:var(--purple);}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;line-height:1.6;}
+  .story-line b{color:var(--chalk);}
+  .legend{display:flex;justify-content:center;gap:18px;font-size:11.5px;color:var(--chalk-dim);margin-top:2px;flex-wrap:wrap;}
+  .legend span.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Distributed Training, Live</h1>
+  <p class="sub">Companion to <b>distributed_training_feynman.md</b>. Every worked example in that file is a one-click preset here, computed live by the same algorithms the file verified in NumPy.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="mem">Memory per GPU</button>
+    <button class="tab-btn" data-tab="ring">Ring All-Reduce</button>
+    <button class="tab-btn" data-tab="pipe">Pipeline Bubble</button>
+    <button class="tab-btn" data-tab="accum">Gradient Accumulation</button>
+    <button class="tab-btn" data-tab="ckpt">Activation Checkpointing</button>
+    <button class="tab-btn" data-tab="tp">Tensor Parallelism</button>
+  </div>
+
+  <!-- ===================== MEMORY ===================== -->
+  <div class="tabpage active" id="tab-mem">
+    <div class="panel">
+      <h2>Training state per GPU: plain data parallel vs. ZeRO-1 / 2 / 3 (FSDP)</h2>
+      <p class="sub">Mixed-precision Adam: FP16 weight (2 bytes) + FP16 gradient (2) + FP32 master weight, m and v (12) = 16 bytes per parameter. Activations are not included.</p>
+      <div class="row">
+        <button class="op mem-preset" data-p="7" data-n="1" data-s="DP">7 B on one GPU</button>
+        <button class="op mem-preset" data-p="7.5" data-n="64" data-s="Z3">ZeRO paper: 7.5 B on 64 GPUs</button>
+        <button class="op mem-preset" data-p="7" data-n="8" data-s="Z3">7 B on 8 GPUs, ZeRO-3</button>
+        <button class="op mem-preset" data-p="7" data-n="64" data-s="Z2">7 B on 64 GPUs, ZeRO-2</button>
+        <button class="op mem-preset" data-p="70" data-n="64" data-s="Z3">70 B on 64 GPUs, ZeRO-3</button>
+      </div>
+      <div class="slider-row">
+        <label for="memP">Parameters (billions)</label><input type="number" id="memP" step="0.5" min="0.1" value="7">
+        <label for="memN" style="min-width:60px;">GPUs</label><input type="number" id="memN" step="1" min="1" value="8">
+        <label for="memCap" style="min-width:150px;">GPU memory (GB)</label><input type="number" id="memCap" step="1" min="1" value="80">
+      </div>
+      <div class="row">
+        <button class="op mem-stage" data-s="DP">plain data parallel</button>
+        <button class="op mem-stage" data-s="Z1">ZeRO-1</button>
+        <button class="op mem-stage" data-s="Z2">ZeRO-2</button>
+        <button class="op mem-stage active" data-s="Z3">ZeRO-3 / FSDP</button>
+      </div>
+      <svg id="memSvg" width="760" height="260" viewBox="0 0 760 260"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#7fb3d5"></span>FP16 weights</span>
+        <span><span class="sw" style="background:#8fd19e"></span>FP16 gradients</span>
+        <span><span class="sw" style="background:#ffce54"></span>FP32 master + Adam m, v</span>
+        <span><span class="sw" style="background:#ff8266"></span>GPU memory limit</span>
+      </div>
+      <table class="datatable" id="memTable"></table>
+      <div class="story-line" id="memStory"></div>
+    </div>
+  </div>
+
+  <!-- ===================== RING ===================== -->
+  <div class="tabpage" id="tab-ring">
+    <div class="panel">
+      <h2>Ring all-reduce, one step at a time</h2>
+      <p class="sub">Each GPU passes one chunk to its right-hand neighbour per step. First N−1 steps (reduce-scatter): the receiver adds the chunk to its own. Next N−1 steps (all-gather): the receiver overwrites its copy with the finished sum.</p>
+      <div class="row">
+        <button class="op ring-preset" data-n="4">4 GPUs: the worked example</button>
+        <button class="op ring-preset" data-n="8">8 GPUs: GPU i holds (i+1) everywhere</button>
+      </div>
+      <div class="row">
+        <button class="op" id="ringPrev">◀ previous step</button>
+        <button class="op" id="ringNext">next step ▶</button>
+        <button class="op play" id="ringPlay">▶ play all</button>
+        <button class="op" id="ringEnd">jump to the end</button>
+        <button class="op" id="ringReset">back to the start</button>
+      </div>
+      <svg id="ringSvg" width="900" height="380" viewBox="0 0 900 380"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">step</div><div class="num" id="ringStep">-</div></div>
+        <div class="metric blue"><div class="lbl">numbers sent by each GPU so far</div><div class="num" id="ringSent">-</div></div>
+        <div class="metric green"><div class="lbl">formula 2(N−1)/N × S</div><div class="num" id="ringFormula">-</div></div>
+      </div>
+      <div class="story-line" id="ringStory"></div>
+    </div>
+    <div class="panel">
+      <h2>Why the ring scales: a 14 GB gradient (7 B parameters in FP16)</h2>
+      <div class="slider-row"><label for="ringBW">GPUs N</label><input type="range" id="ringBW" min="1" max="10" step="1" value="3"><output id="ringBWOut">8</output></div>
+      <table class="datatable" id="ringTable"></table>
+      <div class="story-line">The ring's per-GPU traffic levels off at 2 × 14 = 28 GB however many GPUs join; the parameter server's grows with every GPU.</div>
+    </div>
+  </div>
+
+  <!-- ===================== PIPELINE ===================== -->
+  <div class="tabpage" id="tab-pipe">
+    <div class="panel">
+      <h2>Pipeline parallelism: the bubble</h2>
+      <p class="sub">GPipe schedule: every micro-batch goes forward through all stages, then backward in reverse. A stage can start a micro-batch only when the previous stage has finished it and it has finished the previous micro-batch. Grey = idle (the bubble).</p>
+      <div class="row">
+        <button class="op pipe-preset" data-p="4" data-m="1">p = 4, m = 1</button>
+        <button class="op pipe-preset" data-p="4" data-m="4">p = 4, m = 4</button>
+        <button class="op pipe-preset" data-p="4" data-m="8">p = 4, m = 8</button>
+        <button class="op pipe-preset" data-p="4" data-m="16">p = 4, m = 16</button>
+        <button class="op pipe-preset" data-p="4" data-m="32">p = 4, m = 32</button>
+        <button class="op pipe-preset" data-p="8" data-m="8">p = 8, m = 8</button>
+        <button class="op pipe-preset" data-p="8" data-m="32">p = 8, m = 32</button>
+      </div>
+      <div class="slider-row"><label for="pipeP">Pipeline stages p</label><input type="range" id="pipeP" min="1" max="8" step="1" value="4"><output id="pipePOut">4</output></div>
+      <div class="slider-row"><label for="pipeM">Micro-batches m</label><input type="range" id="pipeM" min="1" max="32" step="1" value="4"><output id="pipeMOut">4</output></div>
+      <div class="slider-row"><label for="pipeB">Backward time ÷ forward time</label><input type="range" id="pipeB" min="1" max="2" step="1" value="1"><output id="pipeBOut">1</output></div>
+      <svg id="pipeSvg" width="960" height="300" viewBox="0 0 960 300"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#7fb3d5"></span>forward</span>
+        <span><span class="sw" style="background:#8fd19e"></span>backward</span>
+        <span><span class="sw" style="background:rgba(244,241,232,0.12)"></span>idle (bubble)</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">total time (units)</div><div class="num" id="pipeT">-</div></div>
+        <div class="metric coral"><div class="lbl">idle fraction, counted</div><div class="num" id="pipeSim">-</div></div>
+        <div class="metric green"><div class="lbl">formula (p−1)/(m+p−1)</div><div class="num" id="pipeF">-</div></div>
+      </div>
+      <div class="story-line" id="pipeStory"></div>
+    </div>
+  </div>
+
+  <!-- ===================== ACCUMULATION ===================== -->
+  <div class="tabpage" id="tab-accum">
+    <div class="panel">
+      <h2>Gradient accumulation: 4 micro-batches of 8 = one batch of 32</h2>
+      <p class="sub">Linear regression, 3 weights, squared-error loss, 32 examples: xᵢ = [sin i, cos 1.3i, (i mod 5) − 2], yᵢ = xᵢ·[1, −2, 0.5] + 0.1 sin 7i, starting weights w = [0.3, 0.1, −0.2].</p>
+      <div class="row">
+        <button class="op acc-preset" data-mode="right">4 × 8, divided by 4</button>
+        <button class="op acc-preset" data-mode="nodiv">4 × 8, forgot to divide</button>
+        <button class="op acc-preset" data-mode="naive">20 + 12, plain average of the two</button>
+        <button class="op acc-preset" data-mode="weighted">20 + 12, weighted by size</button>
+        <button class="op acc-preset" data-mode="steps">5 SGD steps, both ways</button>
+      </div>
+      <table class="datatable" id="accTable"></table>
+      <div class="story-line" id="accStory"></div>
+    </div>
+  </div>
+
+  <!-- ===================== CHECKPOINTING ===================== -->
+  <div class="tabpage" id="tab-ckpt">
+    <div class="panel">
+      <h2>Activation checkpointing: keep a bookmark every k layers</h2>
+      <p class="sub">A chain of L layers xᵢ₊₁ = tanh(aᵢ·xᵢ). Only every k-th layer input is saved; in the backward pass each segment is re-run from its checkpoint. The gradient is computed both ways, live, and compared.</p>
+      <div class="row">
+        <button class="op ck-preset" data-l="16" data-k="1">L = 16, no checkpointing</button>
+        <button class="op ck-preset" data-l="16" data-k="2">L = 16, k = 2</button>
+        <button class="op ck-preset" data-l="16" data-k="4">L = 16, k = 4 (√L)</button>
+        <button class="op ck-preset" data-l="16" data-k="8">L = 16, k = 8</button>
+        <button class="op ck-preset" data-l="16" data-k="16">L = 16, k = 16</button>
+        <button class="op ck-preset" data-l="64" data-k="1">L = 64, none</button>
+        <button class="op ck-preset" data-l="64" data-k="8">L = 64, k = 8 (√L)</button>
+      </div>
+      <div class="slider-row"><label for="ckL">Layers L</label><input type="range" id="ckL" min="2" max="64" step="1" value="16"><output id="ckLOut">16</output></div>
+      <div class="slider-row"><label for="ckK">Checkpoint every k layers</label><input type="range" id="ckK" min="1" max="64" step="1" value="4"><output id="ckKOut">4</output></div>
+      <svg id="ckSvg" width="960" height="150" viewBox="0 0 960 150"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#ffce54"></span>saved checkpoint</span>
+        <span><span class="sw" style="background:#7fb3d5"></span>thrown away, rebuilt in the backward pass</span>
+      </div>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">saved checkpoints</div><div class="num" id="ckSaved">-</div></div>
+        <div class="metric blue"><div class="lbl">most activations held at once</div><div class="num" id="ckPeak">-</div></div>
+        <div class="metric coral"><div class="lbl">forward layer evaluations</div><div class="num" id="ckFwd">-</div></div>
+        <div class="metric purple"><div class="lbl">total compute vs. none (bwd = 2× fwd)</div><div class="num" id="ckCost">-</div></div>
+        <div class="metric green"><div class="lbl">gradient difference vs. plain backprop</div><div class="num" id="ckDiff">-</div></div>
+      </div>
+      <div class="story-line" id="ckStory"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TENSOR PARALLEL ===================== -->
+  <div class="tabpage" id="tab-tp">
+    <div class="panel">
+      <h2>Tensor parallelism: split W by columns, V by rows</h2>
+      <p class="sub">Feed-forward block z = ReLU(x W) V with x = [1, 2], W = [[1, −1, 2, 1], [0, 1, −3, 3]], V = [1, 2, 1, 1]. Blue = GPU 1's share, green = GPU 2's share.</p>
+      <div class="row">
+        <button class="op tp-preset" data-mode="one">one GPU</button>
+        <button class="op tp-preset" data-mode="col">2 GPUs: column split (right)</button>
+        <button class="op tp-preset" data-mode="row">2 GPUs: row split, ReLU before the sum (wrong)</button>
+      </div>
+      <svg id="tpSvg" width="900" height="300" viewBox="0 0 900 300"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">GPU 1 partial</div><div class="num" id="tp1">-</div></div>
+        <div class="metric green"><div class="lbl">GPU 2 partial</div><div class="num" id="tp2">-</div></div>
+        <div class="metric amber"><div class="lbl">result after all-reduce</div><div class="num" id="tpZ">-</div></div>
+        <div class="metric purple"><div class="lbl">one-GPU answer</div><div class="num" id="tpTrue">-</div></div>
+      </div>
+      <div class="story-line" id="tpStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <a href="../deep_learning/distributed_training_feynman.md">distributed_training_feynman.md</a>. Everything runs locally in this page; nothing is sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const svgNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, text){
+    const e = document.createElementNS(svgNS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  const $ = id => document.getElementById(id);
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    $("tab-" + btn.dataset.tab).classList.add("active");
+  }));
+  function setActive(sel, btn){ document.querySelectorAll(sel).forEach(b => b.classList.remove("active")); if (btn) btn.classList.add("active"); }
+  function fmtGB(v){ return (v >= 100 ? v.toFixed(1) : v >= 10 ? (Math.round(v*100)/100).toString() : (Math.round(v*1000)/1000).toString()) + " GB"; }
+
+  // ===================== MEMORY =====================
+  let memStage = "Z3";
+  const STAGES = [
+    {k:"DP", name:"plain data parallel"}, {k:"Z1", name:"ZeRO-1 (split optimizer states)"},
+    {k:"Z2", name:"ZeRO-2 (+ split gradients)"}, {k:"Z3", name:"ZeRO-3 / FSDP (+ split weights)"}
+  ];
+  function memParts(stage, psi, n){ // GB
+    const w = 2*psi, g = 2*psi, o = 12*psi;
+    if (stage === "DP") return [w, g, o];
+    if (stage === "Z1") return [w, g, o/n];
+    if (stage === "Z2") return [w, g/n, o/n];
+    return [w/n, g/n, o/n];
+  }
+  function renderMem(){
+    const psi = parseFloat($("memP").value), n = Math.max(1, parseInt($("memN").value, 10)), cap = parseFloat($("memCap").value);
+    if (!(psi > 0) || !(cap > 0)) return;
+    const rows = STAGES.map(s => { const p = memParts(s.k, psi, n); return {s, p, t: p[0]+p[1]+p[2]}; });
+    const svg = $("memSvg"); svg.innerHTML = "";
+    const W = 760, H = 260, padL = 200, padR = 30, top = 20, rowH = 50;
+    const maxV = Math.max(cap, ...rows.map(r => r.t)) * 1.05;
+    const sx = v => (v/maxV)*(W-padL-padR);
+    rows.forEach((r, i) => {
+      const y = top + i*rowH;
+      svg.appendChild(el("text",{x:padL-10,y:y+22,"text-anchor":"end","font-size":11.5,fill: r.s.k === memStage ? "#ffce54" : "#f4f1e8","font-weight": r.s.k === memStage ? 700 : 400}, r.s.name));
+      let x = padL;
+      ["#7fb3d5","#8fd19e","#ffce54"].forEach((c, j) => {
+        const w = sx(r.p[j]);
+        svg.appendChild(el("rect",{x:x,y:y+6,width:Math.max(0.5,w),height:26,fill:c,opacity: r.s.k === memStage ? 0.95 : 0.55}));
+        x += w;
+      });
+      svg.appendChild(el("text",{x:x+6,y:y+24,"font-size":11.5,fill: r.t > cap ? "#ff8266" : "#8fd19e"}, fmtGB(r.t)));
+    });
+    const cx = padL + sx(cap);
+    svg.appendChild(el("line",{x1:cx,y1:top-6,x2:cx,y2:top+4*rowH,stroke:"#ff8266","stroke-width":2,"stroke-dasharray":"5,4"}));
+    svg.appendChild(el("text",{x:cx,y:top+4*rowH+16,"text-anchor":"middle","font-size":11,fill:"#ff8266"}, cap + " GB GPU"));
+    let html = "<tr><th>Strategy</th><th>FP16 weights</th><th>FP16 gradients</th><th>optimizer states</th><th>total per GPU</th><th>fits in " + cap + " GB?</th></tr>";
+    rows.forEach(r => {
+      html += `<tr class="${r.s.k === memStage ? "hl" : ""}"><td>${r.s.name}</td><td>${fmtGB(r.p[0])}</td><td>${fmtGB(r.p[1])}</td><td>${fmtGB(r.p[2])}</td><td>${fmtGB(r.t)}</td><td class="${r.t <= cap ? "good" : "bad"}">${r.t <= cap ? "yes" : "no"}</td></tr>`;
+    });
+    $("memTable").innerHTML = html;
+    const sel = rows.find(r => r.s.k === memStage);
+    $("memStory").innerHTML = `${psi} B parameters × 16 bytes = <b>${fmtGB(16*psi)}</b> of training state in total. With ${n} GPU${n>1?"s":""} and ${sel.s.name}, each GPU holds <b>${fmtGB(sel.t)}</b>` +
+      (sel.t <= cap ? ", which fits in " + cap + " GB (activations still need room on top)." : ", which does not fit in " + cap + " GB.") +
+      (memStage === "Z3" ? " ZeRO-3 costs about 1.5× the communication of plain data parallelism; ZeRO-1 and ZeRO-2 cost the same as it." : "");
+  }
+  ["memP","memN","memCap"].forEach(id => $(id).addEventListener("input", renderMem));
+  document.querySelectorAll(".mem-stage").forEach(b => b.addEventListener("click", () => { memStage = b.dataset.s; setActive(".mem-stage", b); renderMem(); }));
+  document.querySelectorAll(".mem-preset").forEach(b => b.addEventListener("click", () => {
+    $("memP").value = b.dataset.p; $("memN").value = b.dataset.n; memStage = b.dataset.s;
+    setActive(".mem-stage", document.querySelector('.mem-stage[data-s="' + memStage + '"]'));
+    setActive(".mem-preset", b); renderMem();
+  }));
+  renderMem();
+
+  // ===================== RING =====================
+  let ring = null, ringIdx = 0, ringTimer = null;
+  function buildRing(n){
+    let arrs;
+    if (n === 4) arrs = [[1,2,3,4],[10,20,30,40],[100,200,300,400],[1000,2000,3000,4000]];
+    else arrs = Array.from({length:n}, (_, i) => Array(n).fill(i+1));
+    const S = arrs[0].length;
+    let state = arrs.map(a => a.slice());       // chunk size 1 (S = n)
+    const snaps = [{state: state.map(r => r.slice()), sends: [], sent: 0, phase: "start"}];
+    let sent = 0;
+    for (let step = 0; step < n-1; step++){
+      const msgs = [];
+      for (let i = 0; i < n; i++){ const c = ((i-step) % n + n) % n; msgs.push([i, (i+1)%n, c, state[i][c]]); }
+      msgs.forEach(([src, dst, c, v]) => { state[dst][c] += v; });
+      sent += 1;
+      snaps.push({state: state.map(r => r.slice()), sends: msgs, sent, phase: "reduce-scatter"});
+    }
+    for (let step = 0; step < n-1; step++){
+      const msgs = [];
+      for (let i = 0; i < n; i++){ const c = ((i+1-step) % n + n) % n; msgs.push([i, (i+1)%n, c, state[i][c]]); }
+      msgs.forEach(([src, dst, c, v]) => { state[dst][c] = v; });
+      sent += 1;
+      snaps.push({state: state.map(r => r.slice()), sends: msgs, sent, phase: "all-gather"});
+    }
+    const total = arrs[0].map((_, j) => arrs.reduce((s, a) => s + a[j], 0));
+    return {n, S, snaps, total};
+  }
+  function renderRing(){
+    const {n, S, snaps, total} = ring, snap = snaps[ringIdx];
+    const svg = $("ringSvg"); svg.innerHTML = "";
+    const cellW = n === 4 ? 70 : 52, cellH = n === 4 ? 44 : 30, left = 140, top = 40;
+    for (let c = 0; c < n; c++) svg.appendChild(el("text",{x:left + c*cellW + cellW/2, y:top-12, "text-anchor":"middle","font-size":11,fill:"#7f8f83"}, "chunk " + c));
+    const recv = {};
+    snap.sends.forEach(([src, dst, c]) => { recv[dst + "," + c] = src; });
+    for (let i = 0; i < n; i++){
+      const y = top + i*(cellH+6);
+      svg.appendChild(el("text",{x:left-14,y:y+cellH/2+4,"text-anchor":"end","font-size":12,fill:"#f4f1e8","font-weight":700}, "GPU " + i));
+      for (let c = 0; c < n; c++){
+        const v = snap.state[i][c], done = v === total[c];
+        const got = recv[i + "," + c] !== undefined;
+        svg.appendChild(el("rect",{x:left + c*cellW, y:y, width:cellW-4, height:cellH, rx:5,
+          fill: done ? "rgba(143,209,158,0.28)" : "rgba(244,241,232,0.05)", stroke: got ? "#ffce54" : "rgba(244,241,232,0.14)", "stroke-width": got ? 2 : 1}));
+        svg.appendChild(el("text",{x:left + c*cellW + (cellW-4)/2, y:y+cellH/2+4, "text-anchor":"middle","font-size": n === 4 ? 13 : 11, fill: done ? "#8fd19e" : "#f4f1e8"}, String(v)));
+      }
+    }
+    // ring diagram
+    const cx = left + n*cellW + 150, cy = top + (n*(cellH+6))/2, R = n === 4 ? 95 : 115;
+    for (let i = 0; i < n; i++){
+      const a1 = -Math.PI/2 + 2*Math.PI*i/n, a2 = -Math.PI/2 + 2*Math.PI*((i+1)%n)/n;
+      const x1 = cx + R*Math.cos(a1), y1 = cy + R*Math.sin(a1), x2 = cx + R*Math.cos(a2), y2 = cy + R*Math.sin(a2);
+      const active = snap.sends.length > 0;
+      svg.appendChild(el("line",{x1:x1,y1:y1,x2:x2,y2:y2,stroke: active ? "#ffce54" : "#7f8f83","stroke-width": active ? 2.5 : 1.2, opacity:0.8}));
+      if (active){
+        const m = snap.sends[i];
+        svg.appendChild(el("text",{x:(x1+x2)/2 + 10*Math.cos((a1+a2)/2), y:(y1+y2)/2 + 10*Math.sin((a1+a2)/2), "text-anchor":"middle","font-size":10,fill:"#ffce54"}, "c" + m[2] + ":" + m[3]));
+      }
+    }
+    for (let i = 0; i < n; i++){
+      const a = -Math.PI/2 + 2*Math.PI*i/n;
+      svg.appendChild(el("circle",{cx:cx + R*Math.cos(a), cy:cy + R*Math.sin(a), r:17, fill:"#1b2b23", stroke:"#7fb3d5","stroke-width":2}));
+      svg.appendChild(el("text",{x:cx + R*Math.cos(a), y:cy + R*Math.sin(a)+4, "text-anchor":"middle","font-size":11,fill:"#7fb3d5","font-weight":700}, "G" + i));
+    }
+    const steps = 2*(n-1);
+    $("ringStep").textContent = ringIdx + " / " + steps + (ringIdx ? " (" + snap.phase + ")" : "");
+    $("ringSent").textContent = snap.sent;
+    $("ringFormula").textContent = "2·" + (n-1) + "/" + n + "·" + S + " = " + (2*(n-1)/n*S);
+    let story;
+    if (ringIdx === 0) story = "Each GPU starts with its own gradient. Target: every GPU ends with the element-wise sum [" + total.join(", ") + "].";
+    else if (snap.phase === "reduce-scatter") story = "Reduce-scatter step " + ringIdx + ": each GPU sent one chunk to its right-hand neighbour, who <b>added</b> it (yellow outline = just received). " + (ringIdx === n-1 ? "Now each GPU holds one finished chunk (green)." : "");
+    else story = "All-gather step " + (ringIdx - (n-1)) + ": finished chunks travel around the ring and <b>overwrite</b> stale copies." + (ringIdx === steps ? " Done: every GPU holds [" + total.join(", ") + "], and each sent exactly " + snap.sent + " numbers." : "");
+    $("ringStory").innerHTML = story;
+  }
+  function stopRing(){ if (ringTimer){ clearInterval(ringTimer); ringTimer = null; } }
+  function loadRing(n){ stopRing(); ring = buildRing(n); ringIdx = 0; renderRing(); }
+  document.querySelectorAll(".ring-preset").forEach(b => b.addEventListener("click", () => { setActive(".ring-preset", b); loadRing(parseInt(b.dataset.n, 10)); }));
+  $("ringNext").addEventListener("click", () => { stopRing(); ringIdx = Math.min(ring.snaps.length-1, ringIdx+1); renderRing(); });
+  $("ringPrev").addEventListener("click", () => { stopRing(); ringIdx = Math.max(0, ringIdx-1); renderRing(); });
+  $("ringEnd").addEventListener("click", () => { stopRing(); ringIdx = ring.snaps.length-1; renderRing(); });
+  $("ringReset").addEventListener("click", () => { stopRing(); ringIdx = 0; renderRing(); });
+  $("ringPlay").addEventListener("click", () => {
+    stopRing(); ringIdx = 0; renderRing();
+    ringTimer = setInterval(() => { if (ringIdx >= ring.snaps.length-1){ stopRing(); return; } ringIdx++; renderRing(); }, 900);
+  });
+  loadRing(4);
+  setActive(".ring-preset", document.querySelector(".ring-preset"));
+
+  const RING_NS = [1,2,4,8,16,32,64,128,256,512,1024];
+  function renderRingTable(){
+    const idx = parseInt($("ringBW").value, 10), N = RING_NS[idx];
+    $("ringBWOut").textContent = N;
+    let html = "<tr><th>GPUs N</th><th>ring: each GPU sends 2(N−1)/N × 14 GB</th><th>parameter server receives (N−1) × 14 GB</th></tr>";
+    [2,4,8,64,1024].concat(N === 1 || [2,4,8,64,1024].includes(N) ? [] : [N]).sort((a,b) => a-b).forEach(k => {
+      const r = 2*(k-1)/k*14, s = (k-1)*14;
+      html += `<tr class="${k === N ? "hl" : ""}"><td>${k}</td><td>${(Math.round(r*100)/100)} GB</td><td>${s.toLocaleString()} GB</td></tr>`;
+    });
+    $("ringTable").innerHTML = html;
+  }
+  $("ringBW").addEventListener("input", renderRingTable);
+  renderRingTable();
+
+  // ===================== PIPELINE =====================
+  function gpipe(p, m, tf, tb){
+    const F = [], B = [];
+    for (let s = 0; s < p; s++){ F.push(new Array(m).fill(0)); B.push(new Array(m).fill(0)); }
+    for (let j = 0; j < m; j++) for (let s = 0; s < p; s++){
+      const start = Math.max(s > 0 ? F[s-1][j] : 0, j > 0 ? F[s][j-1] : 0);
+      F[s][j] = start + tf;
+    }
+    let tF = 0; F.forEach(r => r.forEach(v => { tF = Math.max(tF, v); }));
+    for (let j = 0; j < m; j++) for (let s = p-1; s >= 0; s--){
+      const start = Math.max(s < p-1 ? B[s+1][j] : tF, j > 0 ? B[s][j-1] : tF);
+      B[s][j] = start + tb;
+    }
+    let T = 0; B.forEach(r => r.forEach(v => { T = Math.max(T, v); }));
+    return {F, B, T, bubble: 1 - m*(tf+tb)/T};
+  }
+  function renderPipe(){
+    const p = parseInt($("pipeP").value, 10), m = parseInt($("pipeM").value, 10), tb = parseInt($("pipeB").value, 10);
+    $("pipePOut").textContent = p; $("pipeMOut").textContent = m; $("pipeBOut").textContent = tb;
+    const {F, B, T, bubble} = gpipe(p, m, 1, tb);
+    const svg = $("pipeSvg"); svg.innerHTML = "";
+    const left = 80, right = 20, top = 20, rowH = Math.min(32, 250/p);
+    const ux = (960 - left - right)/T;
+    for (let s = 0; s < p; s++){
+      const y = top + s*rowH;
+      svg.appendChild(el("rect",{x:left,y:y,width:T*ux,height:rowH-4,fill:"rgba(244,241,232,0.10)"}));
+      svg.appendChild(el("text",{x:left-10,y:y+rowH/2+2,"text-anchor":"end","font-size":11,fill:"#f4f1e8"}, "stage " + (s+1)));
+      for (let j = 0; j < m; j++){
+        const fx = left + (F[s][j]-1)*ux;
+        svg.appendChild(el("rect",{x:fx+0.5,y:y,width:ux-1,height:rowH-4,fill:"#7fb3d5"}));
+        const bx = left + (B[s][j]-tb)*ux;
+        svg.appendChild(el("rect",{x:bx+0.5,y:y,width:tb*ux-1,height:rowH-4,fill:"#8fd19e"}));
+        if (ux > 16){
+          svg.appendChild(el("text",{x:fx+ux/2,y:y+rowH/2+2,"text-anchor":"middle","font-size":9.5,fill:"#0c1a23"}, "F" + (j+1)));
+          svg.appendChild(el("text",{x:bx+tb*ux/2,y:y+rowH/2+2,"text-anchor":"middle","font-size":9.5,fill:"#0c1a23"}, "B" + (j+1)));
+        }
+      }
+    }
+    const yb = top + p*rowH + 16;
+    svg.setAttribute("viewBox", "0 0 960 " + (yb + 14)); svg.setAttribute("height", yb + 14);
+    svg.appendChild(el("text",{x:left,y:yb,"font-size":10.5,fill:"#7f8f83"}, "time → (0 to " + T + " units; one forward of one micro-batch on one stage = 1 unit)"));
+    const formula = (p-1)/(m+p-1);
+    $("pipeT").textContent = T;
+    $("pipeSim").textContent = (bubble*100).toFixed(1) + "%";
+    $("pipeF").textContent = (p-1) + "/" + (m+p-1) + " = " + (formula*100).toFixed(1) + "%";
+    $("pipeStory").innerHTML = "Each stage is busy for " + m*(1+tb) + " of " + T + " units. " +
+      (p === 1 ? "With one stage there is no pipeline, so no bubble." :
+       m === 1 ? "With one micro-batch, only one stage works at a time: the pipeline is mostly bubble." :
+       m >= 4*p ? "Many more micro-batches than stages: the fill-up and drain-out at the ends are a small fraction of the run." :
+       "Add micro-batches and the grey corners stay the same size while the busy middle grows.");
+  }
+  ["pipeP","pipeM","pipeB"].forEach(id => $(id).addEventListener("input", () => { setActive(".pipe-preset", null); renderPipe(); }));
+  document.querySelectorAll(".pipe-preset").forEach(b => b.addEventListener("click", () => {
+    $("pipeP").value = b.dataset.p; $("pipeM").value = b.dataset.m; $("pipeB").value = 1; setActive(".pipe-preset", b); renderPipe();
+  }));
+  renderPipe();
+
+  // ===================== ACCUMULATION =====================
+  const NX = 32, Xd = [], Yd = [], WTRUE = [1,-2,0.5], W0 = [0.3,0.1,-0.2];
+  for (let i = 0; i < NX; i++){
+    const x = [Math.sin(i), Math.cos(1.3*i), (i % 5) - 2];
+    Xd.push(x); Yd.push(x[0]*WTRUE[0] + x[1]*WTRUE[1] + x[2]*WTRUE[2] + 0.1*Math.sin(7*i));
+  }
+  function grad(lo, hi, w){
+    const g = [0,0,0], n = hi - lo;
+    for (let i = lo; i < hi; i++){
+      const r = Xd[i][0]*w[0] + Xd[i][1]*w[1] + Xd[i][2]*w[2] - Yd[i];
+      for (let j = 0; j < 3; j++) g[j] += 2*Xd[i][j]*r/n;
+    }
+    return g;
+  }
+  const add = (a, b) => a.map((v, i) => v + b[i]);
+  const scl = (a, s) => a.map(v => v*s);
+  const maxDiff = (a, b) => Math.max(...a.map((v, i) => Math.abs(v - b[i])));
+  const f6 = a => "[" + a.map(v => v.toFixed(6)).join(", ") + "]";
+  function accum4(w){ let g = [0,0,0]; for (let k = 0; k < 4; k++) g = add(g, grad(8*k, 8*k+8, w)); return g; }
+  function renderAcc(mode){
+    const full = grad(0, NX, W0);
+    let rows = [], story = "";
+    if (mode === "right"){
+      const g = scl(accum4(W0), 1/4);
+      rows = [["full batch of 32", f6(full), "-"], ["4 micro-batches of 8, summed, ÷ 4", f6(g), maxDiff(full, g).toExponential(1)]];
+      story = "Identical up to floating-point rounding: the average of 32 losses is the average of four averages of 8, and gradients are linear.";
+    } else if (mode === "nodiv"){
+      const g = accum4(W0);
+      rows = [["full batch of 32", f6(full), "-"], ["4 micro-batches of 8, summed, NOT divided", f6(g), "ratio " + (g[0]/full[0]).toFixed(4) + "×"]];
+      story = "Forgetting the ÷ 4 makes the gradient exactly 4× too big, which acts like a 4× larger learning rate.";
+    } else if (mode === "naive" || mode === "weighted"){
+      const g1 = grad(0, 20, W0), g2 = grad(20, 32, W0);
+      const g = mode === "naive" ? scl(add(g1, g2), 1/2) : scl(add(scl(g1, 20), scl(g2, 12)), 1/32);
+      rows = [["full batch of 32", f6(full), "-"], ["micro-batch of 20 (its mean gradient)", f6(g1), "-"], ["micro-batch of 12 (its mean gradient)", f6(g2), "-"],
+        [mode === "naive" ? "(g₁ + g₂) / 2  (wrong)" : "(20·g₁ + 12·g₂) / 32  (right)", f6(g), maxDiff(full, g).toExponential(1)]];
+      story = mode === "naive" ? "Unequal micro-batches: a plain average of the two means over-weights the 12 examples in the small micro-batch, so the gradient is off."
+                               : "Weighting each micro-batch by its size gives back the exact full-batch gradient.";
+    } else {
+      let w1 = W0.slice(), w2 = W0.slice();
+      for (let s = 0; s < 5; s++){ w1 = add(w1, scl(grad(0, NX, w1), -0.05)); w2 = add(w2, scl(scl(accum4(w2), 1/4), -0.05)); }
+      rows = [["weights after 5 SGD steps (lr 0.05), full batch", f6(w1), "-"], ["weights after 5 SGD steps, 4 × 8 accumulated", f6(w2), maxDiff(w1, w2).toExponential(1)]];
+      story = "Not just one gradient: a whole training run with accumulation lands on the same weights.";
+    }
+    $("accTable").innerHTML = "<tr><th>What</th><th>Value</th><th>Difference from full batch</th></tr>" +
+      rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+    $("accStory").textContent = story;
+  }
+  document.querySelectorAll(".acc-preset").forEach(b => b.addEventListener("click", () => { setActive(".acc-preset", b); renderAcc(b.dataset.mode); }));
+  renderAcc("right"); setActive(".acc-preset", document.querySelector(".acc-preset"));
+
+  // ===================== CHECKPOINTING =====================
+  function coef(i){ return 0.8 + 0.5*Math.sin(1.7*i + 0.3); }
+  function ckRun(L, k){
+    const x0 = 0.7;
+    // plain
+    const acts = [x0]; for (let i = 0; i < L; i++) acts.push(Math.tanh(coef(i)*acts[i]));
+    let gp = 1; for (let i = L-1; i >= 0; i--){ const y = acts[i+1]; gp = gp*(1-y*y)*coef(i); }
+    // checkpointed
+    let fwd = 0; const saved = {0: x0}; let x = x0;
+    for (let i = 0; i < L; i++){ x = Math.tanh(coef(i)*x); fwd++; if ((i+1) % k === 0 && i+1 < L) saved[i+1] = x; }
+    const starts = Object.keys(saved).map(Number).sort((a, b) => a - b);
+    let g = 1, peak = 0;
+    for (let si = starts.length-1; si >= 0; si--){
+      const s = starts[si], e = Math.min(s+k, L);
+      const seg = [saved[s]];
+      for (let i = s; i < e-1; i++){ seg.push(Math.tanh(coef(i)*seg[seg.length-1])); fwd++; }
+      peak = Math.max(peak, starts.length + seg.length - 1);
+      for (let i = e-1; i >= s; i--){ const y = Math.tanh(coef(i)*seg[i-s]); g = g*(1-y*y)*coef(i); }
+    }
+    return {saved: starts.length, peak, fwd, diff: Math.abs(g - gp), g, gp, starts};
+  }
+  function renderCk(){
+    let L = parseInt($("ckL").value, 10), k = parseInt($("ckK").value, 10);
+    if (k > L){ k = L; $("ckK").value = k; }
+    $("ckLOut").textContent = L; $("ckKOut").textContent = k;
+    const r = ckRun(L, k);
+    const svg = $("ckSvg"); svg.innerHTML = "";
+    const left = 20, w = (920)/L, set = new Set(r.starts);
+    for (let i = 0; i < L; i++){
+      svg.appendChild(el("rect",{x:left + i*w, y:40, width:Math.max(1, w-2), height:46, rx:3, fill: set.has(i) ? "#ffce54" : "#7fb3d5", opacity: set.has(i) ? 0.95 : 0.4}));
+      if (w > 24) svg.appendChild(el("text",{x:left + i*w + w/2 - 1, y:68, "text-anchor":"middle","font-size":10,fill:"#0c1a23"}, "L" + (i+1)));
+    }
+    svg.appendChild(el("text",{x:left,y:24,"font-size":11,fill:"#7f8f83"}, "input to each layer: saved (yellow) or rebuilt from the previous checkpoint (blue)"));
+    svg.appendChild(el("text",{x:left,y:112,"font-size":11,fill:"#7f8f83"}, "gradient dLoss/dx₀: plain = " + r.gp.toPrecision(10) + ", checkpointed = " + r.g.toPrecision(10)));
+    $("ckSaved").textContent = r.saved;
+    $("ckPeak").textContent = r.peak + " (vs " + L + ")";
+    $("ckFwd").textContent = r.fwd + " (vs " + L + ")";
+    $("ckCost").textContent = ((r.fwd + 2*L)/(3*L)).toFixed(3) + "×";
+    $("ckDiff").textContent = r.diff === 0 ? "0 (exact)" : r.diff.toExponential(1);
+    let best = 1, bestV = Infinity;
+    for (let kk = 1; kk <= L; kk++){ const v = Math.ceil(L/kk) + kk; if (v < bestV){ bestV = v; best = kk; } }
+    $("ckStory").innerHTML = (k === 1 ? "No checkpointing: every layer's input is kept for the backward pass." :
+      "Memory is about L/k checkpoints plus k layers rebuilt inside one segment.") +
+      " For L = " + L + ", the best k is <b>" + best + "</b> (√L ≈ " + Math.sqrt(L).toFixed(2) + "). The gradient is the same either way: checkpointing only changes what is stored, not what is computed.";
+  }
+  ["ckL","ckK"].forEach(id => $(id).addEventListener("input", () => { setActive(".ck-preset", null); renderCk(); }));
+  document.querySelectorAll(".ck-preset").forEach(b => b.addEventListener("click", () => {
+    $("ckL").value = b.dataset.l; $("ckK").value = b.dataset.k; setActive(".ck-preset", b); renderCk();
+  }));
+  renderCk();
+
+  // ===================== TENSOR PARALLEL =====================
+  const TX = [1,2], TW = [[1,-1,2,1],[0,1,-3,3]], TV = [1,2,1,1];
+  const relu = v => Math.max(0, v);
+  function renderTP(mode){
+    const xw = [0,1,2,3].map(c => TX[0]*TW[0][c] + TX[1]*TW[1][c]);
+    const h = xw.map(relu);
+    const truth = h.reduce((s, v, c) => s + v*TV[c], 0);
+    const svg = $("tpSvg"); svg.innerHTML = "";
+    const C1 = "#7fb3d5", C2 = "#8fd19e", NEU = "#f4f1e8";
+    function cellRow(x0, y, vals, colors, label){
+      svg.appendChild(el("text",{x:x0-10,y:y+20,"text-anchor":"end","font-size":11.5,fill:"#7f8f83"}, label));
+      vals.forEach((v, i) => {
+        svg.appendChild(el("rect",{x:x0 + i*56, y:y, width:50, height:30, rx:5, fill:"rgba(244,241,232,0.05)", stroke: colors[i], "stroke-width":2}));
+        svg.appendChild(el("text",{x:x0 + i*56 + 25, y:y+20, "text-anchor":"middle","font-size":13, fill: colors[i]}, String(v)));
+      });
+    }
+    let p1 = "-", p2 = "-", z = truth, story;
+    const X0 = 330;
+    if (mode === "one"){
+      cellRow(X0, 20, TW[0], [NEU,NEU,NEU,NEU], "W row 0");
+      cellRow(X0, 56, TW[1], [NEU,NEU,NEU,NEU], "W row 1");
+      cellRow(X0, 110, xw, [NEU,NEU,NEU,NEU], "x W  (x = [1, 2])");
+      cellRow(X0, 150, h, [NEU,NEU,NEU,NEU], "ReLU(x W)");
+      cellRow(X0, 190, TV, [NEU,NEU,NEU,NEU], "V");
+      story = "One GPU: ReLU([1, 1, −4, 7]) = [1, 1, 0, 7]; times V = 1·1 + 1·2 + 0·1 + 7·1 = <b>10</b>.";
+    } else if (mode === "col"){
+      const cc = [C1,C1,C2,C2];
+      cellRow(X0, 20, TW[0], cc, "W row 0");
+      cellRow(X0, 56, TW[1], cc, "W row 1");
+      cellRow(X0, 110, xw, cc, "each GPU: its columns of x W");
+      cellRow(X0, 150, h, cc, "each GPU: ReLU of its own columns");
+      cellRow(X0, 190, TV, cc, "each GPU: its rows of V");
+      p1 = h[0]*TV[0] + h[1]*TV[1]; p2 = h[2]*TV[2] + h[3]*TV[3]; z = p1 + p2;
+      story = "Column split: each GPU holds whole hidden columns, so ReLU sees complete numbers. GPU 1: 1·1 + 1·2 = 3. GPU 2: 0·1 + 7·1 = 7. One all-reduce: 3 + 7 = <b>10</b>, the same as one GPU.";
+    } else {
+      const r1 = TW[0].map(v => relu(TX[0]*v)), r2 = TW[1].map(v => relu(TX[1]*v));
+      const hs = r1.map((v, i) => v + r2[i]);
+      cellRow(X0, 20, TW[0].map(v => TX[0]*v), [C1,C1,C1,C1], "GPU 1: x₀ · W row 0");
+      cellRow(X0, 56, TW[1].map(v => TX[1]*v), [C2,C2,C2,C2], "GPU 2: x₁ · W row 1");
+      cellRow(X0, 110, r1, [C1,C1,C1,C1], "GPU 1: ReLU too early");
+      cellRow(X0, 150, r2, [C2,C2,C2,C2], "GPU 2: ReLU too early");
+      cellRow(X0, 190, hs, ["#ff8266","#ff8266","#ff8266","#ff8266"], "sum (should be [1, 1, 0, 7])");
+      p1 = r1.reduce((s, v, c) => s + v*TV[c], 0); p2 = r2.reduce((s, v, c) => s + v*TV[c], 0); z = p1 + p2;
+      story = "Row split: each GPU holds only part of the sum inside the ReLU. ReLU(part) + ReLU(part) is not ReLU(whole): [1, 2, 2, 7] instead of [1, 1, 0, 7], and the answer comes out <b>14 instead of 10</b>.";
+    }
+    $("tp1").textContent = p1; $("tp2").textContent = p2; $("tpZ").textContent = z; $("tpTrue").textContent = truth;
+    $("tpStory").innerHTML = story;
+  }
+  document.querySelectorAll(".tp-preset").forEach(b => b.addEventListener("click", () => { setActive(".tp-preset", b); renderTP(b.dataset.mode); }));
+  renderTP("col"); setActive(".tp-preset", document.querySelector('.tp-preset[data-mode="col"]'));
+})();
+</script>
+</body>
+</html>

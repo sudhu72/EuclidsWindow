@@ -59,12 +59,13 @@
 <body>
 <div class="wrap">
   <h1>Feature Scaling: fit(), transform(), and why it helps</h1>
-  <p class="sub">Three tabs, one underlying rule: measure a ruler from training data only, then use that exact ruler everywhere.</p>
+  <p class="sub">Four tabs, one underlying rule: measure a ruler from training data only, then use that exact ruler everywhere — and inside cross-validation, re-measure it inside every fold.</p>
 
   <div class="tabs">
     <button class="tabbtn active" data-tab="fit">Fit &amp; Transform</button>
     <button class="tabbtn" data-tab="leak">Data Leakage</button>
     <button class="tabbtn" data-tab="model">Why It Helps the Model</button>
+    <button class="tabbtn" data-tab="cvleak">Leakage Inside CV</button>
   </div>
 
   <!-- ============ TAB 1: FIT & TRANSFORM ============ -->
@@ -140,6 +141,43 @@
         <div class="metric amber"><div class="lbl">steps to converge</div><div class="num" id="mSteps">-</div></div>
       </div>
       <div class="story-line" id="modelStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: LEAKAGE INSIDE CV ============ -->
+  <div class="tabpanel" id="tab-cvleak">
+    <div class="panel">
+      <h2>Preprocess once, then cross-validate — or re-fit inside every fold?</h2>
+      <p class="sub">Every Part 4 experiment, one click each, recomputed live: a seeded random generator, a nearest-centroid classifier (predict the class whose average point is closer), 5 folds. Cross-checked digit for digit against a Python port of this exact code.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op cvp" data-preset="sel100">Noise selection · 100 cols</button>
+        <button class="op cvp" data-preset="sel1000">Noise selection · 1,000 cols</button>
+        <button class="op cvp" data-preset="sel5000">Noise selection · 5,000 cols</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op cvp" data-preset="te10">Target encoding · 10 levels</button>
+        <button class="op cvp" data-preset="te50">Target encoding · 50 levels</button>
+        <button class="op cvp" data-preset="te200">Target encoding · 200 levels</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op cvp" data-preset="scale">Scaling before the split</button>
+        <button class="op cvp" data-preset="tleak">Target leakage (refund_issued)</button>
+        <button class="op" id="btnCvSeed">↻ Try another random seed</button>
+        <span class="readout" id="cvSeedOut">seed 7</span>
+      </div>
+      <div class="cols">
+        <div>
+          <div class="col-title" id="cvStripTitle">Which rows the preprocessing step learned from</div>
+          <svg id="cvStrip" width="380" height="230" viewBox="0 0 380 230"></svg>
+        </div>
+        <div>
+          <div class="col-title">Accuracy on each held-out fold</div>
+          <svg id="cvBars" width="440" height="230" viewBox="0 0 440 230"></svg>
+        </div>
+      </div>
+      <div class="plot-caption" id="cvLegend"></div>
+      <div class="metric-row" id="cvMetrics"></div>
+      <div class="story-line" id="cvStory" style="max-width:900px;margin-left:auto;margin-right:auto;"></div>
     </div>
   </div>
 
@@ -374,6 +412,199 @@
   });
   document.getElementById("btnReplay").addEventListener("click", renderModel);
   renderModel();
+})();
+</script>
+<script>
+/* Leakage-inside-CV lab: deterministic (mulberry32-seeded) so every number matches the tutorial's Python port exactly. */
+// ---- deterministic leakage lab (shared by visualizer) ----
+function mulberry32(a){return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function shuffledLabels(rnd,n){const y=[];for(let i=0;i<n;i++)y.push(i<n/2?0:1);for(let i=n-1;i>0;i--){const j=Math.floor(rnd()*(i+1));const t=y[i];y[i]=y[j];y[j]=t;}return y;}
+function folds(n,K){const f=[];for(let i=0;i<n;i++)f.push(Math.floor(i*K/n));return f;}
+function centroidPredict(X,y,trIdx,teIdx,cols){
+  const c0=new Array(cols.length).fill(0),c1=new Array(cols.length).fill(0);let n0=0,n1=0;
+  for(const i of trIdx){const t=y[i]?c1:c0;if(y[i])n1++;else n0++;for(let j=0;j<cols.length;j++)t[j]+=X[i][cols[j]];}
+  for(let j=0;j<cols.length;j++){c0[j]/=n0;c1[j]/=n1;}
+  let correct=0;
+  for(const i of teIdx){let d0=0,d1=0;for(let j=0;j<cols.length;j++){const v=X[i][cols[j]];d0+=(v-c0[j])**2;d1+=(v-c1[j])**2;}const p=d1<d0?1:0;if(p===y[i])correct++;}
+  return correct;
+}
+function topK(X,y,rows,p,k){
+  const s=[];
+  for(let j=0;j<p;j++){let a0=0,a1=0,n0=0,n1=0;for(const i of rows){if(y[i]){a1+=X[i][j];n1++;}else{a0+=X[i][j];n0++;}}s.push([Math.abs(a1/n1-a0/n0),j]);}
+  s.sort((a,b)=>b[0]-a[0]||a[1]-b[1]);return s.slice(0,k).map(e=>e[1]);
+}
+function noiseSelection(p,k,seed){
+  const n=60,K=5,rnd=mulberry32(seed);const y=shuffledLabels(rnd,n);
+  const X=[];for(let i=0;i<n;i++){const r=[];for(let j=0;j<p;j++)r.push(2*rnd()-1);X.push(r);}
+  const f=folds(n,K),all=[...Array(n).keys()];
+  const leakCols=topK(X,y,all,p,k);const leak=[],honest=[];
+  for(let q=0;q<K;q++){const tr=all.filter(i=>f[i]!==q),te=all.filter(i=>f[i]===q);
+    leak.push(centroidPredict(X,y,tr,te,leakCols)/te.length);
+    honest.push(centroidPredict(X,y,tr,te,topK(X,y,tr,p,k))/te.length);}
+  return {leak,honest};
+}
+function targetEncoding(nCat,smooth,seed){
+  const n=400,K=5,rnd=mulberry32(seed);const cat=[],y=[];
+  for(let i=0;i<n;i++){cat.push(Math.floor(rnd()*nCat));y.push(rnd()<0.5?1:0);}
+  const f=folds(n,K),all=[...Array(n).keys()];
+  function fitEnc(rows){let g=0;for(const i of rows)g+=y[i];g/=rows.length;const s={},c={};for(const i of rows){s[cat[i]]=(s[cat[i]]||0)+y[i];c[cat[i]]=(c[cat[i]]||0)+1;}
+    return {g,enc:k=>(k in c)?(s[k]+smooth*g)/(c[k]+smooth):g};}
+  const leakE=fitEnc(all);const leak=[],honest=[];
+  for(let q=0;q<K;q++){const tr=all.filter(i=>f[i]!==q),te=all.filter(i=>f[i]===q);
+    const hE=fitEnc(tr);let a=0,b=0;
+    for(const i of te){if(((leakE.enc(cat[i])>leakE.g)?1:0)===y[i])a++;if(((hE.enc(cat[i])>hE.g)?1:0)===y[i])b++;}
+    leak.push(a/te.length);honest.push(b/te.length);}
+  return {leak,honest};
+}
+function scalingLeak(seed){
+  const n=60,K=5,rnd=mulberry32(seed);const y=shuffledLabels(rnd,n);const X=[];
+  for(let i=0;i<n;i++){const a=(2*rnd()-1)+0.6*y[i];const b=1000*((2*rnd()-1)+0.6*y[i]);X.push([a,b]);}
+  const f=folds(n,K),all=[...Array(n).keys()];
+  function fitS(rows){const m=[0,0],s=[0,0];for(const i of rows){m[0]+=X[i][0];m[1]+=X[i][1];}m[0]/=rows.length;m[1]/=rows.length;
+    for(const i of rows){s[0]+=(X[i][0]-m[0])**2;s[1]+=(X[i][1]-m[1])**2;}s[0]=Math.sqrt(s[0]/rows.length);s[1]=Math.sqrt(s[1]/rows.length);
+    return X.map(r=>[(r[0]-m[0])/s[0],(r[1]-m[1])/s[1]]);}
+  const XL=fitS(all);const leak=[],honest=[],raw=[];
+  for(let q=0;q<K;q++){const tr=all.filter(i=>f[i]!==q),te=all.filter(i=>f[i]===q);
+    leak.push(centroidPredict(XL,y,tr,te,[0,1])/te.length);
+    honest.push(centroidPredict(fitS(tr),y,tr,te,[0,1])/te.length);
+    raw.push(centroidPredict(X,y,tr,te,[0,1])/te.length);}
+  return {leak,honest,raw};
+}
+function targetLeakage(seed){
+  const n=300,K=5,rnd=mulberry32(seed);const X=[],y=[];
+  for(let i=0;i<n;i++){const yi=rnd()<0.5?1:0;y.push(yi);X.push([(2*rnd()-1)+0.5*yi,(2*rnd()-1),yi+0.3*(2*rnd()-1)]);}
+  const f=folds(n,K),all=[...Array(n).keys()];const withL=[],without=[],deploy=[];
+  const Xd=X.map(r=>[r[0],r[1],0+0.3*(2*rnd()-1)]); // at prediction time the outcome hasn't happened yet
+  for(let q=0;q<K;q++){const tr=all.filter(i=>f[i]!==q),te=all.filter(i=>f[i]===q);
+    withL.push(centroidPredict(X,y,tr,te,[0,1,2])/te.length);
+    without.push(centroidPredict(X,y,tr,te,[0,1])/te.length);
+    const XX=X.map((r,i)=>f[i]===q?Xd[i]:r);deploy.push(centroidPredict(XX,y,tr,te,[0,1,2])/te.length);}
+  return {withL,without,deploy};
+}
+
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if(text!==undefined) e.textContent = text;
+    return e;
+  }
+  const mean = a => a.reduce((s,v)=>s+v,0)/a.length;
+  const PRESETS = {
+    sel100:{kind:"sel",p:100,seed:7}, sel1000:{kind:"sel",p:1000,seed:7}, sel5000:{kind:"sel",p:5000,seed:7},
+    te10:{kind:"te",nCat:10,seed:11}, te50:{kind:"te",nCat:50,seed:11}, te200:{kind:"te",nCat:200,seed:11},
+    scale:{kind:"scale",seed:2}, tleak:{kind:"tleak",seed:5}
+  };
+  let cur = "sel5000", seedOffset = 0;
+
+  function run(){
+    const P = PRESETS[cur], seed = P.seed + seedOffset;
+    document.getElementById("cvSeedOut").textContent = "seed " + seed + (seedOffset ? " (redrawn)" : " (as in the tutorial)");
+    let series, story, stripMode;
+    if(P.kind==="sel"){
+      const r = noiseSelection(P.p, 10, seed);
+      series = [{name:"leaky: select 10 columns on all 60 rows, then CV", vals:r.leak, color:"var(--coral)"},
+                {name:"honest: select inside each fold", vals:r.honest, color:"var(--green)"}];
+      stripMode = "leak";
+      story = `60 rows, ${P.p.toLocaleString()} columns of pure noise, random labels. Leaky CV says ${mean(r.leak).toFixed(3)}; honest CV says ${mean(r.honest).toFixed(3)}. There is nothing to learn — the leaky score is the selector having peeked at every held-out fold's labels. More noise columns = more lucky matches to pick from = a bigger lie.`;
+    } else if(P.kind==="te"){
+      const r = targetEncoding(P.nCat, 0, seed);
+      series = [{name:"leaky: category means from all 400 rows", vals:r.leak, color:"var(--coral)"},
+                {name:"honest: means re-computed in each training fold", vals:r.honest, color:"var(--green)"}];
+      stripMode = "leak";
+      story = `400 rows, a category with ${P.nCat} levels, random labels; predict 1 when a row's encoded value beats the overall average. Leaky ${mean(r.leak).toFixed(3)} vs. honest ${mean(r.honest).toFixed(3)}. With ${P.nCat} levels there are about ${Math.round(400/P.nCat)} rows per level, so each row's own label is about 1/${Math.round(400/P.nCat)} of its own encoding.`;
+    } else if(P.kind==="scale"){
+      const r = scalingLeak(seed);
+      series = [{name:"leaky: scaler fit on all 60 rows", vals:r.leak, color:"var(--coral)"},
+                {name:"honest: scaler fit in each training fold", vals:r.honest, color:"var(--green)"},
+                {name:"no scaling at all", vals:r.raw, color:"var(--chalk-dim)"}];
+      stripMode = "leak";
+      story = `Two real features, one 1000× bigger than the other. Leaky ${mean(r.leak).toFixed(3)} vs. honest ${mean(r.honest).toFixed(3)} — a scaler learns only a mean and a std per column and never looks at labels, so its leak barely moves the score (redraw the seed: it wobbles by a row either way). Skipping scaling entirely (${mean(r.raw).toFixed(3)}) hurts far more.`;
+    } else {
+      const r = targetLeakage(seed);
+      series = [{name:"CV with refund_issued (recorded after churn)", vals:r.withL, color:"var(--coral)"},
+                {name:"same model at prediction time (no refunds yet)", vals:r.deploy, color:"var(--amber)"},
+                {name:"honest model without that column", vals:r.without, color:"var(--green)"}];
+      stripMode = "column";
+      story = `CV looks superb (${mean(r.withL).toFixed(3)}) because every fold contains the leaked column. At prediction time nobody has a refund yet, and the same model drops to ${mean(r.deploy).toFixed(3)} — below the honest model's ${mean(r.without).toFixed(3)}. No splitting trick can catch this: the fix is asking "would I know this value when I predict?"`;
+    }
+    drawStrip(stripMode);
+    drawBars(series);
+    document.getElementById("cvLegend").innerHTML = series.map(s=>`<span style="color:${s.color}">■</span> ${s.name}`).join(" &nbsp;·&nbsp; ") + ` &nbsp;·&nbsp; dashed line = 0.5 (coin flip)`;
+    const m = document.getElementById("cvMetrics"); m.innerHTML = "";
+    series.forEach(s => {
+      const d = document.createElement("div"); d.className = "metric"; d.style.borderColor = s.color;
+      d.innerHTML = `<div class="lbl">${s.name.split(":")[0].split("(")[0]} · mean</div><div class="num" style="color:${s.color}">${mean(s.vals).toFixed(3)}</div>`;
+      m.appendChild(d);
+    });
+    if(series.length>=2){
+      const d = document.createElement("div"); d.className = "metric amber";
+      d.innerHTML = `<div class="lbl">gap (first bar − second bar)</div><div class="num">${(mean(series[0].vals)-mean(series[1].vals)).toFixed(3)}</div>`;
+      m.appendChild(d);
+    }
+    document.getElementById("cvStory").textContent = story;
+    document.querySelectorAll(".cvp").forEach(b => b.classList.toggle("active", b.dataset.preset===cur));
+  }
+
+  function drawStrip(mode){
+    const svg = document.getElementById("cvStrip"); svg.innerHTML = "";
+    const x0=70, w=56, h=26, gap=8;
+    if(mode==="column"){
+      document.getElementById("cvStripTitle").textContent = "The leak is a column, not a fold: every fold has it";
+      const cols=["tenure","usage","refund_issued"];
+      cols.forEach((c,j)=>{
+        svg.appendChild(el("text",{x:x0+j*100+45,y:22,"text-anchor":"middle",fill:j===2?"var(--coral)":"var(--chalk)","font-size":11},c));
+        for(let q=0;q<5;q++){
+          svg.appendChild(el("rect",{x:x0+j*100,y:34+q*(h+gap),width:90,height:h,rx:4,fill:j===2?"rgba(255,130,102,.35)":"rgba(127,179,213,.25)",stroke:j===2?"var(--coral)":"var(--border)"}));
+        }
+      });
+      for(let q=0;q<5;q++) svg.appendChild(el("text",{x:8,y:34+q*(h+gap)+17,fill:"var(--chalk-dim)","font-size":11},"fold "+(q+1)));
+      return;
+    }
+    document.getElementById("cvStripTitle").textContent = "Which rows the preprocessing step learned from";
+    ["leaky","honest"].forEach((kind,side)=>{
+      const ox = side*190;
+      svg.appendChild(el("text",{x:ox+95,y:14,"text-anchor":"middle",fill:kind==="leaky"?"var(--coral)":"var(--green)","font-size":11,"font-weight":700},kind==="leaky"?"leaky: fit once, all rows":"honest: fit per fold"));
+      for(let q=0;q<5;q++){
+        for(let b=0;b<5;b++){
+          const isTest = b===q;
+          const seen = kind==="leaky" ? true : !isTest;
+          svg.appendChild(el("rect",{x:ox+46+b*28,y:28+q*38,width:24,height:26,rx:3,
+            fill:isTest?"rgba(255,206,84,.18)":"rgba(127,179,213,.28)",
+            stroke:seen?(kind==="leaky"&&isTest?"var(--coral)":"var(--chalk-dim)"):"transparent",
+            "stroke-width":seen&&isTest?2.6:1}));
+          if(isTest) svg.appendChild(el("text",{x:ox+58+b*28,y:45+q*38,"text-anchor":"middle",fill:"var(--amber)","font-size":10},"test"));
+        }
+        svg.appendChild(el("text",{x:ox+4,y:46+q*38,fill:"var(--chalk-dim)","font-size":10},"fold "+(q+1)));
+      }
+    });
+    svg.appendChild(el("text",{x:190,y:216,"text-anchor":"middle",fill:"var(--chalk-dim)","font-size":10},"outlined = rows the selector/encoder/scaler learned from"));
+    svg.appendChild(el("text",{x:190,y:228,"text-anchor":"middle",fill:"var(--chalk-dim)","font-size":10},"amber \"test\" = the held-out fold being scored"));
+  }
+
+  function drawBars(series){
+    const svg = document.getElementById("cvBars"); svg.innerHTML = "";
+    const W=440,H=230,padL=40,padB=30,padT=12;
+    const Y = v => H-padB - v*(H-padB-padT);
+    for(const t of [0,0.25,0.5,0.75,1]){
+      svg.appendChild(el("line",{x1:padL,y1:Y(t),x2:W-8,y2:Y(t),stroke:"var(--border)","stroke-width":1,"stroke-dasharray":t===0.5?"5 4":"", opacity:t===0.5?1:0.6}));
+      svg.appendChild(el("text",{x:padL-6,y:Y(t)+4,"text-anchor":"end",fill:"var(--chalk-dim)","font-size":10},t.toFixed(2)));
+    }
+    const groupW=(W-padL-8)/5, bw=Math.min(22,(groupW-14)/series.length);
+    for(let q=0;q<5;q++){
+      const gx = padL + q*groupW + (groupW - bw*series.length)/2;
+      series.forEach((s,k)=>{
+        const v=s.vals[q];
+        svg.appendChild(el("rect",{x:gx+k*bw,y:Y(v),width:bw-2,height:Y(0)-Y(v),fill:s.color,opacity:0.85}));
+      });
+      svg.appendChild(el("text",{x:padL+q*groupW+groupW/2,y:H-10,"text-anchor":"middle",fill:"var(--chalk-dim)","font-size":11},"fold "+(q+1)));
+    }
+  }
+
+  document.querySelectorAll(".cvp").forEach(b => b.addEventListener("click", () => { cur=b.dataset.preset; seedOffset=0; run(); }));
+  document.getElementById("btnCvSeed").addEventListener("click", () => { seedOffset++; run(); });
+  run();
 })();
 </script>
 </body>

@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hessian and Curvature</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; min-width:0; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  h3{ font-family:"Fraunces", serif; font-size:16px; font-weight:600; margin:0 0 8px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .sub code, .caption code, .stat code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  .caption{ font-size:13.5px; color:var(--ink); margin-top:12px; line-height:1.6; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .presetlabel{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:4px 0 8px; }
+  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .layout > .plot{ flex:1 1 400px; min-width:0; }
+  .layout > .side{ flex:1 1 250px; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  svg text{ font-family:"IBM Plex Mono", monospace; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; overflow-wrap:anywhere; }
+  .stat .k{ color:var(--ink-soft); font-size:11.5px; letter-spacing:.03em; display:block; }  /* no uppercase: labels contain math (λ, x, y) */
+  .stat b{ color:var(--accent); }
+  .ok, .stat b.ok{ color:var(--good); } .bad, .stat b.bad, .stat .k.bad{ color:var(--bad); }
+  .verdict{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin-top:12px; }
+  .verdict.ok{ color:var(--good); } .verdict.bad{ color:var(--bad); } .verdict.mid{ color:#9A6B0B; }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .legend span::before{ content:""; display:inline-block; width:12px; height:3px; margin-right:6px; vertical-align:middle; background:currentColor; }
+  .tablewrap{ overflow-x:auto; max-width:100%; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  th, td{ padding:7px 9px; border-bottom:1px solid var(--line); text-align:left; }
+  th{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); font-weight:600; }
+  td.num{ font-family:"IBM Plex Mono",monospace; text-align:right; white-space:nowrap; }
+  tr.hot td{ background:#FCEFC8; }
+  .chol{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:1.8; }
+  .chol div{ padding:3px 0; border-bottom:1px dashed var(--line); }
+  .chol div:last-child{ border-bottom:none; }
+  .twin{ display:flex; gap:16px; flex-wrap:wrap; }
+  .twin > div{ flex:1 1 280px; min-width:0; }
+  .counters{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .counter{ flex:1 1 150px; min-width:0; background:#F5F4F0; border-radius:10px; padding:8px 12px; font-family:"IBM Plex Mono",monospace; font-size:12px; border-left:4px solid var(--c0); }
+  .counter .n{ font-size:22px; font-weight:600; display:block; color:var(--ink); }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; }
+  @media (max-width:520px){ .card{ padding:18px 14px; } .wrap{ padding-top:28px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to The Hessian and Curvature</div>
+    <h1>The Shape of the Ground</h1>
+    <p>The gradient says which way is downhill. The Hessian says what shape the ground is: a bowl, a flat-floored valley, or a saddle. Every worked example from the file is a one-click preset below, and every number is computed live on this page.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="shape">1 · Quadratic-Form Shapes</button>
+    <button class="tab" data-tab="taylor">2 · Taylor Approximation</button>
+    <button class="tab" data-tab="test">3 · Second-Derivative Test</button>
+    <button class="tab" data-tab="zig">4 · Zigzag vs. Newton</button>
+    <button class="tab" data-tab="rosen">5 · Rosenbrock Race</button>
+  </div>
+
+  <!-- ============ TAB 1 ============ -->
+  <div class="panel active" id="panel-shape">
+    <div class="card">
+      <h2>Five matrices, five shapes of <code style="font-size:.8em">xᵀAx</code></h2>
+      <p class="sub">Each button draws the height <code>xᵀAx</code> over the plane. Teal shading is above zero, red is below zero. The dashed lines are the eigenvector directions, labelled with their eigenvalues (how steeply the surface curves that way). The three dots are the test points <code>(1,1)</code>, <code>(1,−1)</code> and <code>(1,0)</code>.</p>
+      <div class="presetbar" id="shapePresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <svg id="shapeSvg" viewBox="0 0 440 440" role="img" aria-label="Contour map of the quadratic form"></svg>
+          <div class="legend"><span style="color:var(--c1)">height above 0</span><span style="color:var(--bad)">height below 0</span><span style="color:var(--c3)">eigenvector directions</span><span style="color:var(--c2)">test points</span></div>
+          <div class="presetlabel" style="margin-top:14px">the same surface seen from the side</div>
+          <svg id="shape3d" viewBox="0 0 440 260" role="img" aria-label="Pseudo-3D wireframe of the surface"></svg>
+        </div>
+        <div class="side">
+          <div class="stat" id="shapeInfo"></div>
+          <div class="stat" id="shapeHeights"></div>
+          <div class="stat"><span class="k">Cholesky test: try A = L·Lᵀ</span><div class="chol" id="shapeChol"></div></div>
+          <div class="verdict" id="shapeVerdict"></div>
+        </div>
+      </div>
+      <div class="caption" id="shapeCaption"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2 ============ -->
+  <div class="panel" id="panel-taylor">
+    <div class="card">
+      <h2>Height, then tilt, then bend</h2>
+      <p class="sub"><code>f(x, y) = eˣ + x·y²</code> at <code>p = (0, 1)</code>, stepping <code>h = (0.1, 0.1)</code>. The prediction is <code>f(p) + ∇f(p)ᵀh + ½·hᵀHh</code>, built up one term at a time. The top plot slices the surface along the direction of <code>h</code> (the step lands at <code>t = 1</code>). The bottom plot shows each error on a log scale, so tiny errors stay visible.</p>
+      <div class="presetbar" id="taylorPresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <svg id="taylorSvg" viewBox="0 0 600 330" role="img" aria-label="Slice of f along h with the approximation"></svg>
+          <div class="legend"><span style="color:var(--ink)">true f(p + t·h)</span><span style="color:var(--c1)">current approximation</span></div>
+          <svg id="taylorErr" viewBox="0 0 600 170" role="img" aria-label="Errors on a log scale" style="margin-top:12px"></svg>
+        </div>
+        <div class="side">
+          <div class="stat" id="taylorParts"></div>
+          <div class="stat" id="taylorOut"></div>
+        </div>
+      </div>
+      <div class="caption" id="taylorCaption"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3 ============ -->
+  <div class="panel" id="panel-test">
+    <div class="card">
+      <h2>Two flat spots on <code style="font-size:.8em">x³ − 3x + y²</code></h2>
+      <p class="sub">Both points have gradient <code>(0, 0)</code>, so the tilt term is gone and the Hessian alone decides the shape. Contours show the height relative to the critical point: teal is higher, red is lower.</p>
+      <div class="presetbar" id="testPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="testSvg" viewBox="0 0 440 440" role="img" aria-label="Local contours around the critical point"></svg>
+          <div class="legend"><span style="color:var(--c1)" id="testLgHi">higher than f(p)</span><span style="color:var(--bad)" id="testLgLo">lower than f(p)</span><span style="color:var(--c3)">eigen-directions</span></div>
+        </div>
+        <div class="side" id="testSide"></div>
+      </div>
+      <div class="caption" id="testCaption"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4 ============ -->
+  <div class="panel" id="panel-zig">
+    <div class="card">
+      <h2>The regression bowl: zigzag vs. one jump</h2>
+      <p class="sub">Loss <code>Σ(w·x + b − y)²</code> on <code>x = 0…4</code>, <code>y = 1, 3, 2, 5, 4</code>. Hessian <code>[[60, 20], [20, 10]]</code>, a stretched bowl. Each preset starts at <code>(0, 0)</code> (except the last) and runs until it is within 10⁻⁶ of the answer <code>(0.8, 1.4)</code>, or clearly blows up.</p>
+      <div class="presetbar" id="zigPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="zigSvg" viewBox="0 0 460 460" role="img" aria-label="Optimizer path on the regression loss contours"></svg>
+          <div class="legend"><span style="color:var(--c1)">gradient descent</span><span style="color:var(--bad)">diverging run</span><span style="color:var(--c3)">Newton</span><span style="color:var(--c0)">eigen-directions</span></div>
+        </div>
+        <div class="side">
+          <div class="stat" id="zigLive"></div>
+          <div class="stat" id="zigBowl"></div>
+        </div>
+      </div>
+      <div class="caption" id="zigCaption"></div>
+      <div class="tablewrap" style="margin-top:12px"><table id="zigTable"></table></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5 ============ -->
+  <div class="panel" id="panel-rosen">
+    <div class="card">
+      <h2>The banana valley</h2>
+      <p class="sub">Rosenbrock <code>(1 − x)² + 100(y − x²)²</code>, minimum at <code>(1, 1)</code> (the star). Every method starts at <code>(−1.2, 1)</code> and stops within 10⁻⁴ of the minimum. Contours are drawn at heights 0.25, 0.5, 1, 2, 4, … so the flat curved floor shows up.</p>
+      <div class="presetbar" id="rosenPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="rosenSvg" viewBox="0 0 520 560" role="img" aria-label="Rosenbrock contours with optimizer paths"></svg>
+          <div class="legend"><span style="color:var(--c1)">gradient descent (rate 0.001)</span><span style="color:var(--c2)">BFGS</span><span style="color:var(--c3)">Newton</span></div>
+        </div>
+        <div class="side">
+          <div class="counters" id="rosenCounters" style="margin-top:0"></div>
+          <div class="stat" id="rosenInfo" style="margin-top:10px"></div>
+        </div>
+      </div>
+      <div class="caption" id="rosenCaption"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>math/hessian-and-curvature.md</code>. All values are computed in this page's script and match the file: eigenvalues 2.98 and 67.02 (κ = 22.46), 161 and 305 gradient-descent steps, divergence above 0.0298, Newton in one step, and on Rosenbrock 22,845 gradient-descent steps and 5 Newton steps. This page's own BFGS (strong-Wolfe line search) reaches 10⁻⁴ in its own counted number of iterations; SciPy's BFGS reports 34 iterations (gtol 10⁻⁸).
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+}));
+
+/* ---------- helpers ---------- */
+const f4 = x => { const r = Math.round(x*10000)/10000; return (Object.is(r,-0)?0:r).toString(); };
+const f3 = x => { const r = Math.round(x*1000)/1000; return (Object.is(r,-0)?0:r).toString(); };
+const f2 = x => { const r = Math.round(x*100)/100; return (Object.is(r,-0)?0:r).toFixed(2); };
+const mstr = (A, f) => `[[${f(A[0][0])}, ${f(A[0][1])}], [${f(A[1][0])}, ${f(A[1][1])}]]`;
+const fmtInt = n => n.toLocaleString("en-US");
+
+function makeView(svg, xmin, xmax, ymin, ymax, W, H, pad){
+  pad = pad || 0;
+  const sx = x => pad + (x - xmin) / (xmax - xmin) * (W - 2*pad);
+  const sy = y => H - pad - (y - ymin) / (ymax - ymin) * (H - 2*pad);
+  return { svg, sx, sy, W, H, xmin, xmax, ymin, ymax, pad };
+}
+function el(tag, attrs, parent){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(parent, x, y, s, attrs){
+  const t = el("text", Object.assign({ x, y, "font-size": 12, fill: "var(--ink)" }, attrs || {}), parent);
+  t.textContent = s; return t;
+}
+function line(view, a, b, attrs, parent){
+  return el("line", Object.assign({ x1: view.sx(a[0]), y1: view.sy(a[1]), x2: view.sx(b[0]), y2: view.sy(b[1]) }, attrs), parent || view.svg);
+}
+function dot(view, p, r, fill, parent, extra){
+  return el("circle", Object.assign({ cx: view.sx(p[0]), cy: view.sy(p[1]), r, fill }, extra || {}), parent || view.svg);
+}
+function clipRect(view, id){
+  const defs = el("defs", {}, view.svg);
+  const cp = el("clipPath", { id }, defs);
+  el("rect", { x: view.sx(view.xmin), y: view.sy(view.ymax), width: view.sx(view.xmax) - view.sx(view.xmin), height: view.sy(view.ymin) - view.sy(view.ymax) }, cp);
+  return el("g", { "clip-path": `url(#${id})` }, view.svg);
+}
+function axesOf(view, parent){
+  if (view.ymin < 0 && view.ymax > 0) line(view, [view.xmin, 0], [view.xmax, 0], { stroke: "#9AA3AD", "stroke-width": 1 }, parent);
+  if (view.xmin < 0 && view.xmax > 0) line(view, [0, view.ymin], [0, view.ymax], { stroke: "#9AA3AD", "stroke-width": 1 }, parent);
+}
+/* marching squares: returns an SVG path string for one level */
+function contourPath(view, F, level, nx, ny){
+  const xs = [], ys = [];
+  for (let i = 0; i <= nx; i++) xs.push(view.xmin + (view.xmax - view.xmin) * i / nx);
+  for (let j = 0; j <= ny; j++) ys.push(view.ymin + (view.ymax - view.ymin) * j / ny);
+  const G = [];
+  for (let j = 0; j <= ny; j++){ const row = []; for (let i = 0; i <= nx; i++) row.push(F(xs[i], ys[j]) - level); G.push(row); }
+  let d = "";
+  const P = (x, y) => `${view.sx(x).toFixed(1)},${view.sy(y).toFixed(1)}`;
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++){
+    const v = [G[j][i], G[j][i+1], G[j+1][i+1], G[j+1][i]];
+    const c = [[xs[i], ys[j]], [xs[i+1], ys[j]], [xs[i+1], ys[j+1]], [xs[i], ys[j+1]]];
+    const pts = [];
+    for (let e = 0; e < 4; e++){
+      const a = v[e], b = v[(e+1)%4];
+      if ((a < 0) !== (b < 0)){
+        const t = a / (a - b), A = c[e], B = c[(e+1)%4];
+        pts.push([A[0] + (B[0]-A[0])*t, A[1] + (B[1]-A[1])*t]);
+      }
+    }
+    for (let k = 0; k + 1 < pts.length; k += 2) d += `M${P(pts[k][0], pts[k][1])}L${P(pts[k+1][0], pts[k+1][1])}`;
+  }
+  return d;
+}
+function heat(view, F, n, scale, parent){
+  const dw = (view.sx(view.xmax) - view.sx(view.xmin)) / n, dh = (view.sy(view.ymin) - view.sy(view.ymax)) / n;
+  const g = el("g", {}, parent || view.svg);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++){
+    const x = view.xmin + (i + 0.5) * (view.xmax - view.xmin) / n;
+    const y = view.ymin + (j + 0.5) * (view.ymax - view.ymin) / n;
+    const z = F(x, y), a = Math.min(1, Math.abs(z) / scale) * 0.42;
+    const base = z >= 0 ? [15,139,141] : [194,65,59];
+    const col = `rgb(${base.map(c => Math.round(251 + (c - 251)*a)).join(",")})`;
+    el("rect", { x: (view.sx(view.xmin) + i*dw).toFixed(1), y: (view.sy(view.ymax) + (n-1-j)*dh).toFixed(1), width: (dw+0.6).toFixed(1), height: (dh+0.6).toFixed(1), fill: col }, g);
+  }
+  return g;
+}
+/* symmetric 2x2 eigen-decomposition, eigenvalues descending */
+function eigSym(A){
+  const a = A[0][0], b = A[0][1], c = A[1][1];
+  const m = (a + c) / 2, r = Math.sqrt(((a - c) / 2) ** 2 + b * b);
+  const l1 = m + r, l2 = m - r;
+  let v1;
+  if (Math.abs(b) > 1e-12) v1 = [l1 - c, b]; else v1 = (a >= c) ? [1, 0] : [0, 1];
+  const n = Math.hypot(v1[0], v1[1]); v1 = [v1[0]/n, v1[1]/n];
+  const v2 = [-v1[1], v1[0]];
+  return { vals: [l1, l2], vecs: [v1, v2] };
+}
+function classify(vals){
+  const tol = 1e-9;
+  const pos = vals.filter(v => v > tol).length, neg = vals.filter(v => v < -tol).length, zero = vals.length - pos - neg;
+  if (pos === vals.length) return { name: "positive definite (PD)", cls: "ok" };
+  if (neg === vals.length) return { name: "negative definite", cls: "bad" };
+  if (neg === 0 && zero > 0) return { name: "positive semi-definite (PSD), not PD", cls: "mid" };
+  if (pos === 0 && zero > 0) return { name: "negative semi-definite", cls: "mid" };
+  return { name: "indefinite", cls: "bad" };
+}
+const qf = (A, x, y) => A[0][0]*x*x + 2*A[0][1]*x*y + A[1][1]*y*y;
+function inv2(A){ const d = A[0][0]*A[1][1] - A[0][1]*A[1][0]; return [[A[1][1]/d, -A[0][1]/d], [-A[1][0]/d, A[0][0]/d]]; }
+const mv = (A, v) => [A[0][0]*v[0] + A[0][1]*v[1], A[1][0]*v[0] + A[1][1]*v[1]];
+function presetButtons(sel, defs, onPick, initial){
+  const btns = [];
+  defs.forEach((d, i) => {
+    const b = document.createElement("button"); b.className = "op"; b.textContent = d.t;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); onPick(d, i); });
+    $(sel).appendChild(b); btns.push(b);
+  });
+  if (initial !== undefined){ btns[initial].classList.add("active"); onPick(defs[initial], initial); }
+  return btns;
+}
+
+/* ============ TAB 1: shapes ============ */
+const SHAPES = [
+  { t: "Bowl  [[2,0],[0,1]]", name: "bowl", A: [[2,0],[0,1]], cap: "Curves up in every direction: the steeper eigen-direction (λ = 2) is the x-axis, the gentler one (λ = 1) is the y-axis. Every test height is positive, and Cholesky's square roots all stay real." },
+  { t: "Tilted bowl  [[2,1],[1,2]]", name: "tilted bowl", A: [[2,1],[1,2]], cap: "Still a bowl, just rotated 45°: the off-diagonal 1 turns the main directions to (1,1) (λ = 3, steep) and (1,−1) (λ = 1, gentle). That is why the height at (1,1) is 6 but at (1,−1) only 2." },
+  { t: "Valley  [[1,1],[1,1]]", name: "valley", A: [[1,1],[1,1]], cap: "One eigenvalue is exactly 0: along (1,−1) the floor is perfectly flat (height 0 at (1,−1)). It never goes below zero, so it's PSD, but there's no single lowest point, only a gutter. Cholesky hits L₂₂² = 0 and can't finish with a positive diagonal." },
+  { t: "Saddle  [[1,0],[0,−1]]", name: "saddle", A: [[1,0],[0,-1]], cap: "Up along x (λ = 1), down along y (λ = −1): a mountain pass. The heights at (1,1) and (1,−1) are both 0 because the rise and the fall cancel exactly on the diagonals." },
+  { t: "Tilted saddle  [[1,2],[2,1]]", name: "tilted saddle", A: [[1,2],[2,1]], cap: "Up along (1,1) (λ = 3), down along (1,−1) (λ = −1). The height at (1,−1) is −2, a direct witness that it is not a bowl. Cholesky breaks at the second step: L₂₂² = 1 − 2² = −3, the square root of a negative number." },
+];
+const TEST_PTS = [[1,1],[1,-1],[1,0]];
+const shapeView = makeView($("#shapeSvg"), -2, 2, -2, 2, 440, 440, 20);
+
+function cholesky2(A){
+  const a = A[0][0], b = A[0][1], c = A[1][1];
+  const lines = [];
+  if (!(a > 0)){
+    lines.push(`<div class="bad">step 1: L₁₁² = a = ${f4(a)} ≤ 0 → √ fails ✗</div>`);
+    return { ok: false, lines };
+  }
+  const L11 = Math.sqrt(a);
+  lines.push(`<div>step 1: L₁₁ = √a = √${f4(a)} = <b>${f4(L11)}</b> <span class="ok">✓</span></div>`);
+  const L21 = b / L11;
+  lines.push(`<div>step 2: L₂₁ = b / L₁₁ = ${f4(b)} / ${f4(L11)} = <b>${f4(L21)}</b></div>`);
+  const L22sq = c - L21 * L21;
+  const expr = `L₂₂² = c − L₂₁² = ${f4(c)} − ${f4(L21)}² = ${f4(L22sq)}`;
+  if (L22sq > 1e-12){
+    const L22 = Math.sqrt(L22sq);
+    lines.push(`<div>step 3: ${expr} → L₂₂ = <b>${f4(L22)}</b> <span class="ok">✓</span></div>`);
+    lines.push(`<div class="ok">L = [[${f4(L11)}, 0], [${f4(L21)}, ${f4(L22)}]] — works</div>`);
+    return { ok: true, lines };
+  }
+  if (Math.abs(L22sq) <= 1e-12){
+    lines.push(`<div class="bad">step 3: ${expr} → L₂₂ = 0, a zero on the diagonal ✗</div>`);
+    lines.push(`<div class="bad">fails: L can't be invertible, so A is not positive definite</div>`);
+  } else {
+    lines.push(`<div class="bad">step 3: ${expr} → √(${f4(L22sq)}) is not a real number ✗</div>`);
+    lines.push(`<div class="bad">fails: A is not positive definite</div>`);
+  }
+  return { ok: false, lines };
+}
+
+function drawShape(P){
+  const A = P.A, v = shapeView, E = eigSym(A);
+  v.svg.innerHTML = "";
+  const g = clipRect(v, "shapeClip");
+  const F = (x, y) => qf(A, x, y);
+  heat(v, F, 44, 8, g);
+  const levels = [-8,-6,-4,-3,-2,-1,-0.5,0.5,1,2,3,4,6,8];
+  levels.forEach(L => el("path", { d: contourPath(v, F, L, 80, 80), fill: "none", stroke: L > 0 ? "var(--c1)" : "var(--bad)", "stroke-width": (L === 2 || L === -2) ? 1.6 : 0.9, opacity: 0.85 }, g));
+  axesOf(v, g);
+  // eigenvector directions
+  E.vecs.forEach(ev => line(v, [-2.8*ev[0], -2.8*ev[1]], [2.8*ev[0], 2.8*ev[1]], { stroke: "var(--c3)", "stroke-width": 2, "stroke-dasharray": "6 4" }, g));
+  TEST_PTS.forEach(p => {
+    const h = qf(A, p[0], p[1]);
+    dot(v, p, 6, "var(--c2)", g, { stroke: "#fff", "stroke-width": 1.5 });
+    const tx = v.sx(p[0]) + 9, ty = v.sy(p[1]) + (p[1] < 0 ? 16 : (p[1] > 0 ? -6 : 4));
+    el("rect", { x: tx - 3, y: ty - 12, width: 96, height: 17, rx: 4, fill: "rgba(255,255,255,0.9)" }, g);
+    txt(g, tx, ty, `(${p[0]},${p[1]}) → ${f3(h)}`, { "font-weight": 600, fill: h < 0 ? "var(--bad)" : "var(--ink)" });
+  });
+  E.vecs.forEach((ev, k) => {
+    const axisAl = Math.abs(ev[0]) < 0.1 || Math.abs(ev[1]) < 0.1;
+    const sgn = Math.abs(ev[1]) < 0.1 ? -1 : 1, dist = axisAl ? 1.75 : 2.3, lp = [sgn*dist*ev[0], sgn*dist*ev[1]];
+    const tx = Math.max(24, Math.min(v.W - 86, v.sx(lp[0]) + 8)), ty = v.sy(lp[1]) + (Math.abs(ev[1]) < 0.1 ? -10 : 16);
+    el("rect", { x: tx - 3, y: ty - 12, width: 58, height: 17, rx: 4, fill: "rgba(255,255,255,0.88)" }, g);
+    txt(g, tx, ty, `λ = ${f2(E.vals[k]).replace(".00","")}`, { fill: "var(--c3)", "font-weight": 600 });
+  });
+  draw3d(A);
+  const cls = classify(E.vals);
+  $("#shapeInfo").innerHTML =
+    `<span class="k">A (${P.name})</span>${mstr(A, f3)}<br>` +
+    `<span class="k">xᵀAx</span>${f3(A[0][0])}·x₁² ${A[0][1] >= 0 ? "+" : "−"} ${f3(Math.abs(2*A[0][1]))}·x₁x₂ ${A[1][1] >= 0 ? "+" : "−"} ${f3(Math.abs(A[1][1]))}·x₂²<br>` +
+    `<span class="k">eigenvalues</span><b>${f2(E.vals[0])}</b> and <b>${f2(E.vals[1])}</b><br>` +
+    `<span class="k">eigenvectors</span>(${f3(E.vecs[0][0])}, ${f3(E.vecs[0][1])}) and (${f3(E.vecs[1][0])}, ${f3(E.vecs[1][1])})`;
+  $("#shapeHeights").innerHTML = `<span class="k">test-point heights xᵀAx</span>` +
+    TEST_PTS.map(p => { const h = qf(A, p[0], p[1]); return `(${p[0]}, ${p[1]}) → <b class="${h < 0 ? "bad" : (Math.abs(h) < 1e-12 ? "" : "ok")}">${f3(h)}</b>`; }).join("<br>");
+  const ch = cholesky2(A);
+  $("#shapeChol").innerHTML = ch.lines.join("");
+  const vd = $("#shapeVerdict");
+  vd.className = "verdict " + cls.cls;
+  vd.textContent = `Verdict: ${cls.name}. ` + (cls.cls === "ok" ? "A true bowl with one lowest point." : cls.cls === "mid" ? "A valley: never below zero, but flat along one direction." : "A saddle: up one way, down another.");
+  $("#shapeCaption").textContent = P.cap;
+}
+function draw3d(A){
+  const svg = $("#shape3d"); svg.innerHTML = "";
+  const az = -0.6, k = 62, kz = 16, cx = 220, cy = 122, R = 1.5, N = 16, M = 32, zc = 3;
+  const proj = (x, y, z) => {
+    const u = x*Math.cos(az) - y*Math.sin(az), w = x*Math.sin(az) + y*Math.cos(az);
+    return [cx + k*u, cy + k*0.42*w - kz*z];
+  };
+  const Zr = (x, y) => qf(A, x, y);
+  const Z = (x, y) => Math.max(-zc, Math.min(zc, Zr(x, y)));
+  // zero-height reference square first (behind)
+  const sq = [[-R,-R],[R,-R],[R,R],[-R,R],[-R,-R]].map(p => proj(p[0], p[1], 0));
+  el("polyline", { points: sq.map(p => p.map(q => q.toFixed(1)).join(",")).join(" "), fill: "none", stroke: "#9AA3AD", "stroke-dasharray": "3 3" }, svg);
+  const segs = [];
+  for (let pass = 0; pass < 2; pass++) for (let i = 0; i <= N; i++){
+    const c = -R + 2*R*i/N;
+    for (let j = 0; j < M; j++){
+      const t0 = -R + 2*R*j/M, t1 = -R + 2*R*(j+1)/M;
+      const a = pass === 0 ? [c, t0] : [t0, c], b = pass === 0 ? [c, t1] : [t1, c];
+      const zm = Zr((a[0]+b[0])/2, (a[1]+b[1])/2);
+      segs.push({ P: proj(a[0], a[1], Z(a[0], a[1])), Q: proj(b[0], b[1], Z(b[0], b[1])), neg: zm < -1e-9 });
+    }
+  }
+  segs.forEach(sg => el("line", { x1: sg.P[0].toFixed(1), y1: sg.P[1].toFixed(1), x2: sg.Q[0].toFixed(1), y2: sg.Q[1].toFixed(1), stroke: sg.neg ? "var(--bad)" : "var(--c1)", "stroke-width": 1, opacity: 0.8 }, svg));
+  txt(svg, 10, 250, "dashed square = height 0 · heights clipped at ±3", { "font-size": 10.5, fill: "var(--ink-soft)" });
+}
+presetButtons("#shapePresets", SHAPES, P => drawShape(P), 0);
+
+/* ============ TAB 2: Taylor ============ */
+const tf = (x, y) => Math.exp(x) + x*y*y;
+const tgrad = (x, y) => [Math.exp(x) + y*y, 2*x*y];
+const thess = (x, y) => [[Math.exp(x), 2*y], [2*y, 2*x]];
+const TP = [0, 1], TH = [0.1, 0.1];
+const T0 = tf(TP[0], TP[1]), TG = tgrad(TP[0], TP[1]), THs = thess(TP[0], TP[1]);
+const tilt = TG[0]*TH[0] + TG[1]*TH[1];
+const bend = 0.5 * qf(THs, TH[0], TH[1]);
+const TRUE = tf(TP[0] + TH[0], TP[1] + TH[1]);
+const approx = [T0, T0 + tilt, T0 + tilt + bend];
+const errs = approx.map(a => Math.abs(TRUE - a));
+const TNAMES = ["height only", "+ gradient (tilt)", "+ Hessian (bend)"];
+const tview = makeView($("#taylorSvg"), -3, 6, 0.3, 2.9, 600, 330, 34);
+
+function drawTaylor(order){
+  const v = tview; v.svg.innerHTML = "";
+  const g = clipRect(v, "tayClip");
+  // grid
+  for (let t = -3; t <= 6; t++) line(v, [t, v.ymin], [t, v.ymax], { stroke: "#EEF1F0" }, g);
+  for (let y = 0.5; y <= 2.9; y += 0.5) line(v, [v.xmin, y], [v.xmax, y], { stroke: "#EEF1F0" }, g);
+  const gt = t => tf(TP[0] + t*TH[0], TP[1] + t*TH[1]);
+  const at = t => T0 + (order >= 1 ? tilt*t : 0) + (order >= 2 ? bend*t*t : 0);
+  const pts = (fn) => { const a = []; for (let i = 0; i <= 180; i++){ const t = v.xmin + (v.xmax - v.xmin)*i/180; a.push(`${v.sx(t).toFixed(1)},${v.sy(fn(t)).toFixed(1)}`); } return a.join(" "); };
+  el("polyline", { points: pts(gt), fill: "none", stroke: "var(--ink)", "stroke-width": 2.2 }, g);
+  el("polyline", { points: pts(at), fill: "none", stroke: "var(--c1)", "stroke-width": 2.2, "stroke-dasharray": "7 4" }, g);
+  line(v, [1, v.ymin], [1, v.ymax], { stroke: "var(--c2)", "stroke-width": 1.2, "stroke-dasharray": "3 3" }, g);
+  dot(v, [0, T0], 5, "var(--ink)", g);
+  dot(v, [1, TRUE], 5.5, "var(--ink)", g);
+  dot(v, [1, approx[order]], 5.5, "var(--c1)", g, { stroke: "#fff", "stroke-width": 1.5 });
+  txt(v.svg, v.sx(1) + 8, v.sy(v.ymax) + 14, "t = 1: the step h", { fill: "#9A6B0B", "font-size": 11 });
+  txt(v.svg, v.sx(0) + 6, v.sy(T0) + 18, "p (t = 0)", { "font-size": 11 });
+  // axes labels
+  for (let t = -3; t <= 6; t += 1) txt(v.svg, v.sx(t) - 4, v.H - 14, String(t), { "font-size": 10.5, fill: "var(--ink-soft)" });
+  for (let y = 0.5; y <= 2.9; y += 0.5) txt(v.svg, 4, v.sy(y) + 4, y.toFixed(1), { "font-size": 10.5, fill: "var(--ink-soft)" });
+  txt(v.svg, v.W - 180, v.H - 2, "t (multiples of h)", { "font-size": 10.5, fill: "var(--ink-soft)" });
+  drawTaylorErr(order);
+  const parts = [
+    `<span class="k">height f(p)</span>e⁰ + 0·1² = <b>${f3(T0)}</b>`,
+    `<span class="k">gradient ∇f(p) = (eˣ + y², 2xy)</span>(${f3(TG[0])}, ${f3(TG[1])}) · h = ${f3(TG[0])}·0.1 + ${f3(TG[1])}·0.1 = <b>${f3(tilt)}</b>`,
+    `<span class="k">Hessian H(p) = [[eˣ, 2y], [2y, 2x]]</span>${mstr(THs, f3)}<br>½·hᵀHh = ½·(1·0.01 + 2·2·0.01 + 0·0.01) = <b>${f4(bend)}</b>`,
+  ];
+  $("#taylorParts").innerHTML = parts.map((p, i) => `<div style="opacity:${i <= order ? 1 : 0.35}">${p}</div>`).join("<br>");
+  $("#taylorOut").innerHTML =
+    `<span class="k">predicted f(p + h) — ${TNAMES[order]}</span><b>${f3(approx[order])}</b><br>` +
+    `<span class="k">true f(0.1, 1.1) = e^0.1 + 0.1·1.1²</span><b>${TRUE.toFixed(6)}</b><br>` +
+    `<span class="k">error</span><b class="${order === 2 ? "ok" : "bad"}">${errs[order].toFixed(order === 2 ? 4 : 3)}</b>` +
+    (order >= 1 ? `<br><span class="k">error shrank by</span>${f2(errs[order-1]/errs[order])}× from the previous step` : "");
+  $("#taylorCaption").innerHTML = order === 0
+    ? "Height only: a flat plane at 1.000. It ignores that the ground slopes, so it's off by 0.226."
+    : order === 1
+    ? "Adding the tilt (the gradient) gives a tangent plane: 1.200, off by 0.026. Along the slice it's a straight line touching the curve at t = 0."
+    : `Adding the bend (the Hessian's quadratic form) gives a paraboloid: 1.225, off by only 0.001, about ${Math.round(errs[1]/errs[2])}× smaller than the tilt-only error. Near t = 1 the dashed parabola sits on top of the true curve.`;
+}
+function drawTaylorErr(order){
+  const svg = $("#taylorErr"); svg.innerHTML = "";
+  const lo = -4, hi = 0, x0 = 150, x1 = 560;
+  const sx = e => x0 + (Math.log10(e) - lo) / (hi - lo) * (x1 - x0);
+  for (let p = lo; p <= hi; p++){
+    el("line", { x1: sx(10**p), y1: 18, x2: sx(10**p), y2: 140, stroke: "#E3E7EA" }, svg);
+    txt(svg, sx(10**p) - 14, 160, p === 0 ? "1" : `1e${p}`, { "font-size": 10.5, fill: "var(--ink-soft)" });
+  }
+  errs.forEach((e, i) => {
+    const y = 26 + i*40;
+    const on = i <= order;
+    txt(svg, 6, y + 14, TNAMES[i], { "font-size": 11.5, fill: on ? "var(--ink)" : "#B8C0C8" });
+    el("rect", { x: x0, y, width: Math.max(2, sx(e) - x0), height: 20, rx: 4, fill: on ? (i === 2 ? "var(--good)" : i === 1 ? "var(--c2)" : "var(--bad)") : "#E8ECEB" }, svg);
+    if (on) txt(svg, sx(e) + 6, y + 14, e.toFixed(i === 2 ? 4 : 3), { "font-size": 11.5, "font-weight": 600 });
+  });
+}
+presetButtons("#taylorPresets", [{ t: "Height only", o: 0 }, { t: "+ tilt (gradient)", o: 1 }, { t: "+ bend (Hessian)", o: 2 }], d => drawTaylor(d.o), 0);
+
+/* ============ TAB 3: second-derivative test ============ */
+const sf = (x, y) => x*x*x - 3*x + y*y;
+const sgrad = (x, y) => [3*x*x - 3, 2*y];
+const shess = (x, y) => [[6*x, 0], [0, 2]];
+const testSvg = $("#testSvg");
+function drawTest(which){
+  testSvg.innerHTML = "";
+  $("#testLgHi").textContent = which === "both" ? "f above 0" : "higher than f(p)";
+  $("#testLgLo").textContent = which === "both" ? "f below 0" : "lower than f(p)";
+  if (which === "both"){
+    const v = makeView(testSvg, -2.2, 2.2, -2.2, 2.2, 440, 440, 20);
+    const g = clipRect(v, "testClip");
+    heat(v, sf, 44, 5, g);
+    [-6,-4,-3,-2,-1,0,1,2,3,4,6].forEach(L => el("path", { d: contourPath(v, sf, L, 90, 90), fill: "none", stroke: L >= 0 ? "var(--c1)" : "var(--bad)", "stroke-width": L === 2 || L === -2 ? 1.8 : 0.9 }, g));
+    axesOf(v, g);
+    [[1,0,"min"],[-1,0,"saddle"]].forEach(([x, y, n]) => {
+      dot(v, [x, y], 6, "var(--c2)", g, { stroke: "#fff", "stroke-width": 1.5 });
+      const lab = `(${x}, 0) ${n}`;
+      el("rect", { x: v.sx(x) - 33, y: v.sy(y) - 26, width: lab.length*7.3 + 6, height: 18, rx: 4, fill: "rgba(255,255,255,0.9)" }, g);
+      txt(g, v.sx(x) - 30, v.sy(y) - 12, lab, { "font-weight": 600 });
+    });
+    $("#testSide").innerHTML = `<div class="stat"><span class="k">f(x, y) = x³ − 3x + y²</span>∇f = (3x² − 3, 2y) = 0<br>→ x = ±1, y = 0<br><span class="k">Hessian</span>[[6x, 0], [0, 2]]</div>` +
+      `<div class="stat">(1, 0): f = <b>−2</b>, H = [[6, 0], [0, 2]] → <b class="ok">minimum</b><br>(−1, 0): f = <b>2</b>, H = [[−6, 0], [0, 2]] → <b class="bad">saddle</b></div>`;
+    $("#testCaption").textContent = "Here the absolute height is shaded (teal above 0, red below 0). The contour f = −2 shrinks to the single point (1, 0), the bottom of a bowl. The contour f = 2 crosses itself at (−1, 0), the signature of a saddle. Click either point's button to zoom in.";
+    return;
+  }
+  const p = which === "min" ? [1, 0] : [-1, 0];
+  const v = makeView(testSvg, p[0] - 1, p[0] + 1, -1, 1, 440, 440, 20);
+  const fp = sf(p[0], p[1]), G = sgrad(p[0], p[1]), Hm = shess(p[0], p[1]);
+  const E = eigSym(Hm);
+  const rel = (x, y) => sf(x, y) - fp;
+  const g = clipRect(v, "testClip");
+  heat(v, rel, 44, 1, g);
+  [-1.2,-0.8,-0.5,-0.25,-0.1,0.1,0.25,0.5,0.8,1.2].forEach(L => el("path", { d: contourPath(v, rel, L, 90, 90), fill: "none", stroke: L > 0 ? "var(--c1)" : "var(--bad)", "stroke-width": 1 }, g));
+  if (which === "saddle") el("path", { d: contourPath(v, rel, 0, 120, 120), fill: "none", stroke: "var(--ink)", "stroke-width": 1.4, "stroke-dasharray": "4 3" }, g);
+  // eigen-direction arrows
+  const eigsAsc = E.vals.map((l, i) => ({ l, v: E.vecs[i] })).sort((a, b) => a.l - b.l);
+  eigsAsc.forEach(({ l, v: ev }, idx) => {
+    const L = 0.72;
+    line(v, [p[0] - L*ev[0], p[1] - L*ev[1]], [p[0] + L*ev[0], p[1] + L*ev[1]], { stroke: "var(--c3)", "stroke-width": 2.2, "stroke-dasharray": "6 4" }, g);
+    const horiz = Math.abs(ev[0]) > 0.5;
+    const tp = horiz ? [p[0] - 0.95*Math.abs(ev[0]), p[1]] : [p[0], p[1] + 0.5*Math.abs(ev[1])];
+    const s = `${l > 0 ? "uphill" : "downhill"} · λ = ${f3(l)}`;
+    const tx = v.sx(tp[0]) + (horiz ? 0 : 10), ty = v.sy(tp[1]) + (horiz ? -10 : 0);
+    el("rect", { x: tx - 3, y: ty - 12, width: s.length*7.3 + 4, height: 17, rx: 4, fill: "rgba(255,255,255,0.9)" }, g);
+    txt(g, tx, ty, s, { fill: l > 0 ? "var(--c1)" : "var(--bad)", "font-weight": 600 });
+  });
+  dot(v, p, 6.5, "var(--c2)", g, { stroke: "#fff", "stroke-width": 1.5 });
+  txt(g, v.sx(p[0]) + 10, v.sy(p[1]) + 20, `(${p[0]}, 0)`, { "font-weight": 600 });
+  const cls = classify(E.vals);
+  const verdict = cls.cls === "ok" ? "local minimum" : cls.name === "negative definite" ? "local maximum" : "saddle point";
+  $("#testSide").innerHTML =
+    `<div class="stat"><span class="k">point</span>(${p[0]}, ${p[1]})<br><span class="k">f(p)</span><b>${f3(fp)}</b><br>` +
+    `<span class="k">gradient (3x² − 3, 2y)</span>(${f3(G[0])}, ${f3(G[1])}) — a critical point</div>` +
+    `<div class="stat"><span class="k">Hessian [[6x, 0], [0, 2]]</span>${mstr(Hm, f3)}<br>` +
+    `<span class="k">eigenvalues</span><b>${eigsAsc.map(e => f3(e.l)).join("</b>, <b>")}</b></div>` +
+    `<div class="verdict ${cls.cls === "ok" ? "ok" : "bad"}">${cls.cls === "ok" ? "All eigenvalues positive" : "Mixed signs"} → ${verdict}</div>`;
+  $("#testCaption").textContent = which === "min"
+    ? "Every direction goes uphill from (1, 0): the contours are closed ovals around it, stretched along y because the y-curvature (2) is gentler than the x-curvature (6). A true local minimum, height −2."
+    : "The gradient is zero here too, but the dashed black lines (height exactly 2) cross at the point: moving along x goes downhill (λ = −6, red), moving along y goes uphill (λ = 2, teal). A mountain pass, not a minimum or a maximum.";
+}
+presetButtons("#testPresets", [{ t: "Minimum at (1, 0)", w: "min" }, { t: "Saddle at (−1, 0)", w: "saddle" }, { t: "Overview: both points", w: "both" }], d => drawTest(d.w), 0);
+
+/* ============ TAB 4: zigzag vs Newton ============ */
+const RX = [0,1,2,3,4], RY = [1,3,2,5,4];
+const rloss = (w, b) => { let s = 0; for (let i = 0; i < 5; i++){ const r = w*RX[i] + b - RY[i]; s += r*r; } return s; };
+const rgrad = (w, b) => { let gw = 0, gb = 0; for (let i = 0; i < 5; i++){ const r = w*RX[i] + b - RY[i]; gw += 2*r*RX[i]; gb += 2*r; } return [gw, gb]; };
+const RH = (() => { let sxx = 0, sx = 0; RX.forEach(x => { sxx += x*x; sx += x; }); return [[2*sxx, 2*sx], [2*sx, 2*RX.length]]; })();
+const RE = eigSym(RH);
+const LMAX = RE.vals[0], LMIN = RE.vals[1], KAPPA = LMAX / LMIN;
+const RSTAR = (() => { const g0 = rgrad(0, 0); const s = mv(inv2(RH), g0); return [-s[0], -s[1]]; })();
+const LOSS_STAR = rloss(RSTAR[0], RSTAR[1]);
+const RATE_BEST = 2 / (LMIN + LMAX), RATE_INV = 1 / LMAX, RATE_DIV = 2 / LMAX;
+function runGD(lr, start, tol, maxSteps){
+  let w = start[0], b = start[1]; const path = [[w, b]]; let n = 0, diverged = false;
+  while (n < maxSteps){
+    const d = Math.hypot(w - RSTAR[0], b - RSTAR[1]);
+    if (d <= tol) break;
+    if (d > 1e6){ diverged = true; break; }
+    const g = rgrad(w, b); w -= lr*g[0]; b -= lr*g[1]; n++; path.push([w, b]);
+  }
+  return { path, n, diverged };
+}
+const GD_BEST = runGD(RATE_BEST, [0,0], 1e-6, 100000);
+const GD_INV = runGD(RATE_INV, [0,0], 1e-6, 100000);
+const GD_BIG = runGD(0.031, [0,0], 1e-6, 100000);
+function newtonStep(p){ const g = rgrad(p[0], p[1]); const s = mv(inv2(RH), g); return { g, s, q: [p[0] - s[0], p[1] - s[1]] }; }
+
+const ZIG = [
+  { t: "GD, best fixed rate (161 steps)", kind: "gd", run: GD_BEST, lr: RATE_BEST, lrLabel: "2/(λmin + λmax)" },
+  { t: "GD, rate 1/λmax (305 steps)", kind: "gd", run: GD_INV, lr: RATE_INV, lrLabel: "1/λmax" },
+  { t: "Too big a step (0.031): diverges", kind: "gd", run: GD_BIG, lr: 0.031, lrLabel: "0.031 > 2/λmax" },
+  { t: "Newton from (0, 0): 1 step", kind: "newton", start: [0, 0] },
+  { t: "Newton from (5, −5): 1 step", kind: "newton", start: [5, -5] },
+];
+let zigToken = 0;
+function zigBase(wide){
+  const svg = $("#zigSvg"); svg.innerHTML = "";
+  const v = wide ? makeView(svg, -1.5, 6.5, -6.5, 3.5, 460, 460, 20) : makeView(svg, -1, 3, -0.9, 3.1, 460, 460, 20);
+  const g = clipRect(v, "zigClip");
+  const levels = wide ? [1, 5, 20, 60, 150, 300, 600, 1000, 1600, 2400] : [0.2, 0.6, 1.5, 3, 6, 12, 25, 50, 100, 200];
+  levels.forEach(L => el("path", { d: contourPath(v, (w, b) => rloss(w, b) - LOSS_STAR, L, 100, 100), fill: "none", stroke: "#9DB4C0", "stroke-width": 1 }, g));
+  axesOf(v, g);
+  RE.vecs.forEach((ev, k) => {
+    line(v, [RSTAR[0] - 5*ev[0], RSTAR[1] - 5*ev[1]], [RSTAR[0] + 5*ev[0], RSTAR[1] + 5*ev[1]], { stroke: "var(--c0)", "stroke-width": 1, "stroke-dasharray": "5 4", opacity: 0.7 }, g);
+  });
+  if (!wide){
+    const e0 = RE.vecs[0], e1 = RE.vecs[1];
+    const l0 = [RSTAR[0] + 0.55*e0[0], RSTAR[1] + 0.55*e0[1]], l1 = [RSTAR[0] + 1.25*e1[0]*Math.sign(e1[1] || 1), RSTAR[1] + 1.25*Math.abs(e1[1])];
+    [[l0, `steep: λ = ${f2(LMAX)}`], [l1, `shallow: λ = ${f2(LMIN)}`]].forEach(([lp, s]) => {
+      el("rect", { x: v.sx(lp[0]) + 3, y: v.sy(lp[1]) - 12, width: s.length*6.7 + 6, height: 16, rx: 4, fill: "rgba(255,255,255,0.9)" }, g);
+      txt(g, v.sx(lp[0]) + 6, v.sy(lp[1]), s, { "font-size": 11, fill: "var(--ink-soft)" });
+    });
+  }
+  el("path", { d: `M${v.sx(RSTAR[0])} ${v.sy(RSTAR[1]) - 8} l2.5 5.5 6 .5 -4.5 4 1.5 6 -5.5 -3 -5.5 3 1.5 -6 -4.5 -4 6 -.5z`, fill: "var(--c2)", stroke: "#8a6a10", "stroke-width": 0.8 }, g);
+  const pathG = el("g", {}, g);
+  return { v, pathG };
+}
+function zigLive(label, n, p, extra){
+  $("#zigLive").innerHTML = `<span class="k">${label}</span>steps: <b style="font-size:20px">${fmtInt(n)}</b><br>` +
+    `(w, b) = (${f4(p[0])}, ${f4(p[1])})<br>loss = ${isFinite(rloss(p[0], p[1])) ? f4(rloss(p[0], p[1])) : "∞"}<br>` +
+    `distance to (0.8, 1.4) = ${Math.hypot(p[0] - RSTAR[0], p[1] - RSTAR[1]).toExponential(2)}` + (extra || "");
+}
+async function runZig(P){
+  const my = ++zigToken;
+  if (P.kind === "gd"){
+    const { v, pathG } = zigBase(false);
+    const col = P.run.diverged ? "var(--bad)" : "var(--c1)";
+    const path = P.run.path;
+    dot(v, path[0], 5, "var(--ink)", pathG);
+    const total = path.length - 1;
+    const perFrame = P.run.diverged ? 1 : Math.max(1, Math.ceil(total / 110));
+    const frameMs = P.run.diverged ? 30 : 22;
+    let offMapShown = false;
+    for (let i = 1; i <= total; i++){
+      if (my !== zigToken) return;
+      const inV = q => q[0] > v.xmin - 1.5 && q[0] < v.xmax + 1.5 && q[1] > v.ymin - 1.5 && q[1] < v.ymax + 1.5;
+      if (inV(path[i-1]) && inV(path[i])){
+        line(v, path[i-1], path[i], { stroke: col, "stroke-width": 1.6, opacity: 0.9 }, pathG);
+        if (i <= 40 || i % 10 === 0) dot(v, path[i], 2.2, col, pathG);
+      } else if (!offMapShown){
+        offMapShown = true;
+        el("rect", { x: v.sx(v.xmin) + 8, y: v.sy(v.ymax) + 8, width: 250, height: 20, rx: 4, fill: "rgba(255,255,255,0.92)" }, pathG);
+        txt(pathG, v.sx(v.xmin) + 14, v.sy(v.ymax) + 22, `step ${i}: the path has left the map`, { fill: "var(--bad)", "font-weight": 600 });
+      }
+      if (i % perFrame === 0 || i === total){ zigLive(`gradient descent, rate ${f4(P.lr)} (${P.lrLabel})`, i, path[i]); await sleep(frameMs); }
+    }
+    if (my !== zigToken) return;
+    const end = path[total];
+    if (P.run.diverged){
+      zigLive(`gradient descent, rate 0.031 (${P.lrLabel})`, total, end, `<br><b class="bad">diverged: distance passed 10⁶ after ${total} steps</b>`);
+      $("#zigCaption").innerHTML = `Rate 0.031 is just above the limit <b>2/λmax = ${f4(RATE_DIV)}</b>. Along the steep direction each step multiplies the error by |1 − 0.031 × ${f2(LMAX)}| = <b>${f4(Math.abs(1 - 0.031*LMAX))}</b>, which is bigger than 1, so every bounce overshoots a little further. The red path bounces further out each time, leaves the map, and the loss explodes. The counter keeps going until the distance passes 10⁶.`;
+    } else {
+      zigLive(`gradient descent, rate ${f4(P.lr)} (${P.lrLabel})`, total, end, `<br><b class="ok">reached 10⁻⁶ in ${total} steps</b>`);
+      $("#zigCaption").innerHTML = P.run === GD_BEST
+        ? `The best any single fixed rate can do: <b>2/(λmin + λmax) = ${f4(RATE_BEST)}</b>. The first steps bounce across the narrow direction (steep, λ = ${f2(LMAX)}), then the path creeps along the shallow floor (λ = ${f2(LMIN)}). <b>${total} steps.</b>`
+        : `A safe but cautious rate, <b>1/λmax = ${f4(RATE_INV)}</b>: no bouncing across the valley, but the shallow direction now moves even more slowly. <b>${total} steps</b>, almost twice as many.`;
+    }
+  } else {
+    const wide = P.start[0] !== 0 || P.start[1] !== 0;
+    const { v, pathG } = zigBase(wide);
+    const N = newtonStep(P.start);
+    dot(v, P.start, 5, "var(--ink)", pathG);
+    zigLive("Newton's method", 0, P.start);
+    await sleep(300); if (my !== zigToken) return;
+    const L = line(v, P.start, P.start, { stroke: "var(--c3)", "stroke-width": 2.6 }, pathG);
+    for (let k = 1; k <= 20; k++){
+      if (my !== zigToken) return;
+      const t = k / 20, q = [P.start[0] + (N.q[0] - P.start[0])*t, P.start[1] + (N.q[1] - P.start[1])*t];
+      L.setAttribute("x2", v.sx(q[0])); L.setAttribute("y2", v.sy(q[1]));
+      await sleep(25);
+    }
+    dot(v, N.q, 5, "var(--c3)", pathG);
+    const Hi = inv2(RH);
+    zigLive("Newton's method", 1, N.q, `<br><b class="ok">landed on the minimum in 1 step</b>`);
+    $("#zigCaption").innerHTML =
+      `Newton step: <code>w_new = w − H⁻¹∇f(w)</code>. At (${f3(P.start[0])}, ${f3(P.start[1])}) the gradient is (${f3(N.g[0])}, ${f3(N.g[1])}); ` +
+      `H⁻¹ = ${mstr(Hi, f4)}, so H⁻¹∇f = (${f4(N.s[0])}, ${f4(N.s[1])}) and the new point is <b>(${f4(N.q[0])}, ${f4(N.q[1])})</b>, loss <b>${f3(rloss(N.q[0], N.q[1]))}</b>. ` +
+      `The loss is an exact quadratic, so the Taylor model is exact and one step lands at the bottom from anywhere.`;
+  }
+}
+$("#zigBowl").innerHTML =
+  `<span class="k">Hessian 2XᵀX</span>${mstr(RH, f3)}<br>` +
+  `<span class="k">eigenvalues</span><b>${f2(LMIN)}</b> and <b>${f2(LMAX)}</b><br>` +
+  `<span class="k">condition number κ</span><b>${f2(KAPPA)}</b><br>` +
+  `<span class="k">minimum</span>(${f3(RSTAR[0])}, ${f3(RSTAR[1])}), loss ${f3(LOSS_STAR)}<br>` +
+  `<span class="k">divergence limit 2/λmax</span><b>${f4(RATE_DIV)}</b>`;
+$("#zigTable").innerHTML = `<tr><th>method</th><th>rate</th><th>steps to 10⁻⁶</th></tr>` +
+  `<tr><td>gradient descent, best fixed rate 2/(λmin+λmax)</td><td class="num">${f4(RATE_BEST)}</td><td class="num">${GD_BEST.n}</td></tr>` +
+  `<tr><td>gradient descent, 1/λmax</td><td class="num">${f4(RATE_INV)}</td><td class="num">${GD_INV.n}</td></tr>` +
+  `<tr class="hot"><td>gradient descent, too big</td><td class="num">0.031</td><td class="num bad">diverges (|d| &gt; 10⁶ at step ${GD_BIG.n})</td></tr>` +
+  `<tr><td>Newton's method</td><td class="num">—</td><td class="num">1</td></tr>`;
+presetButtons("#zigPresets", ZIG, P => runZig(P), 0);
+
+/* ============ TAB 5: Rosenbrock ============ */
+const rf = (x, y) => (1 - x)**2 + 100*(y - x*x)**2;
+const rgr = (x, y) => [-2*(1 - x) - 400*x*(y - x*x), 200*(y - x*x)];
+const rhe = (x, y) => [[2 - 400*(y - x*x) + 800*x*x, -400*x], [-400*x, 200]];
+const RS = [-1.2, 1], RTOL = 1e-4;
+const near = p => Math.hypot(p[0] - 1, p[1] - 1) <= RTOL;
+function rosenGD(){
+  let p = RS.slice(); const path = [p.slice()]; let n = 0, last = p.slice();
+  while (!near(p) && n < 200000){
+    const g = rgr(p[0], p[1]); p = [p[0] - 0.001*g[0], p[1] - 0.001*g[1]]; n++;
+    if (Math.hypot(p[0] - last[0], p[1] - last[1]) > 0.01 || near(p)){ path.push([p[0], p[1], n]); last = p.slice(); }
+  }
+  path[0] = [RS[0], RS[1], 0];
+  return { path, n };
+}
+function rosenNewton(){
+  let p = RS.slice(); const path = [[p[0], p[1], 0]]; let n = 0;
+  while (!near(p) && n < 100){
+    const s = mv(inv2(rhe(p[0], p[1])), rgr(p[0], p[1])); p = [p[0] - s[0], p[1] - s[1]]; n++; path.push([p[0], p[1], n]);
+  }
+  return { path, n };
+}
+function wolfe(f, gr, x, p){
+  const c1 = 1e-4, c2 = 0.9;
+  const phi = a => f(x[0] + a*p[0], x[1] + a*p[1]);
+  const dphi = a => { const g = gr(x[0] + a*p[0], x[1] + a*p[1]); return g[0]*p[0] + g[1]*p[1]; };
+  const f0 = phi(0), d0 = dphi(0);
+  const zoom = (lo, hi, flo) => {
+    for (let k = 0; k < 60; k++){
+      const a = (lo + hi) / 2, fa = phi(a);
+      if (fa > f0 + c1*a*d0 || fa >= flo) hi = a;
+      else { const da = dphi(a); if (Math.abs(da) <= -c2*d0) return a; if (da*(hi - lo) >= 0) hi = lo; lo = a; flo = fa; }
+    }
+    return (lo + hi) / 2;
+  };
+  let a0 = 0, a1 = 1, fprev = f0;
+  for (let i = 0; i < 40; i++){
+    const f1 = phi(a1);
+    if (f1 > f0 + c1*a1*d0 || (i > 0 && f1 >= fprev)) return zoom(a0, a1, fprev);
+    const d1 = dphi(a1);
+    if (Math.abs(d1) <= -c2*d0) return a1;
+    if (d1 >= 0) return zoom(a1, a0, f1);
+    a0 = a1; fprev = f1; a1 *= 2;
+  }
+  return a1;
+}
+function rosenBFGS(){
+  let x = RS.slice(), Hi = [[1,0],[0,1]], g = rgr(x[0], x[1]), n = 0;
+  const path = [[x[0], x[1], 0]];
+  while (!near(x) && n < 500){
+    const p = mv(Hi, g).map(q => -q);
+    const a = wolfe(rf, rgr, x, p);
+    const xn = [x[0] + a*p[0], x[1] + a*p[1]], gn = rgr(xn[0], xn[1]);
+    const s = [xn[0] - x[0], xn[1] - x[1]], yv = [gn[0] - g[0], gn[1] - g[1]];
+    const sy = s[0]*yv[0] + s[1]*yv[1];
+    if (sy > 1e-12){
+      const r = 1 / sy, Hy = mv(Hi, yv), yHy = yv[0]*Hy[0] + yv[1]*Hy[1];
+      const Hn = [[0,0],[0,0]];
+      for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) Hn[i][j] = Hi[i][j] + (sy + yHy)*r*r*s[i]*s[j] - r*(Hy[i]*s[j] + s[i]*Hy[j]);
+      Hi = Hn;
+    }
+    x = xn; g = gn; n++; path.push([x[0], x[1], n]);
+  }
+  return { path, n };
+}
+const R_GD = rosenGD(), R_NEWTON = rosenNewton(), R_BFGS = rosenBFGS();
+const RMETH = {
+  gd: { name: "gradient descent", col: "var(--c1)", run: R_GD, note: "rate 0.001" },
+  bfgs: { name: "BFGS", col: "var(--c2)", run: R_BFGS, note: "this page's BFGS · SciPy: 34" },
+  newton: { name: "Newton", col: "var(--c3)", run: R_NEWTON, note: "pure Newton, full steps" },
+};
+let rosenToken = 0;
+function rosenBase(){
+  const svg = $("#rosenSvg"); svg.innerHTML = "";
+  const v = makeView(svg, -1.8, 1.8, -3.5, 1.9, 520, 560, 20);
+  const g = clipRect(v, "rosenClip");
+  const levels = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512];
+  levels.forEach((L, i) => el("path", { d: contourPath(v, rf, L, 140, 160), fill: "none", stroke: `rgba(70,58,115,${(0.25 + 0.5*(1 - i/levels.length)).toFixed(2)})`, "stroke-width": 0.9 }, g));
+  axesOf(v, g);
+  // floor of the valley y = x^2
+  const fl = []; for (let i = 0; i <= 60; i++){ const x = -1.8 + 3.6*i/60; fl.push(`${v.sx(x).toFixed(1)},${v.sy(x*x).toFixed(1)}`); }
+  el("polyline", { points: fl.join(" "), fill: "none", stroke: "#C9CFD6", "stroke-width": 1, "stroke-dasharray": "2 4" }, g);
+  el("path", { d: `M${v.sx(1)} ${v.sy(1) - 9} l3 6 6.5 .5 -5 4.5 1.5 6.5 -6 -3.5 -6 3.5 1.5 -6.5 -5 -4.5 6.5 -.5z`, fill: "var(--c2)", stroke: "#8a6a10", "stroke-width": 0.8 }, g);
+  dot(v, RS, 5, "var(--ink)", g);
+  el("rect", { x: v.sx(RS[0]) - 40, y: v.sy(RS[1]) + 8, width: 112, height: 17, rx: 4, fill: "rgba(255,255,255,0.9)" }, g);
+  txt(g, v.sx(RS[0]) - 36, v.sy(RS[1]) + 21, "start (−1.2, 1)", { "font-size": 11, "font-weight": 600 });
+  txt(g, v.sx(1) - 60, v.sy(1) - 14, "min (1, 1)", { "font-size": 11, "font-weight": 600 });
+  return { v, g };
+}
+function rosenCounters(active, counts){
+  $("#rosenCounters").innerHTML = Object.keys(RMETH).filter(k => active.includes(k)).map(k => {
+    const M = RMETH[k], c = counts[k], done = c >= M.run.n;
+    return `<div class="counter" style="border-left-color:${M.col}">${M.name}<span class="n">${fmtInt(c)}${done ? " ✓" : ""}</span>${M.note}</div>`;
+  }).join("");
+}
+async function runRosen(which){
+  const my = ++rosenToken;
+  const { v, g } = rosenBase();
+  const active = which === "race" ? ["gd", "bfgs", "newton"] : [which];
+  const layers = {}, idx = {}, counts = {};
+  active.forEach(k => { layers[k] = el("g", {}, g); idx[k] = 0; counts[k] = 0; });
+  rosenCounters(active, counts);
+  // clock: frames 1..60 advance BFGS/Newton one iteration per frame; GD fast-forwards on its own schedule
+  const FRAMES = 150;
+  const gdTotal = R_GD.n;
+  const gdAt = f => Math.round(gdTotal * (f / FRAMES) ** 1.6);
+  for (let f = 1; f <= FRAMES; f++){
+    if (my !== rosenToken) return;
+    active.forEach(k => {
+      const M = RMETH[k], path = M.run.path;
+      const target = k === "gd" ? gdAt(f) : Math.min(M.run.n, Math.floor(f / 3));
+      while (idx[k] + 1 < path.length && path[idx[k] + 1][2] <= target){
+        const a = path[idx[k]], b = path[idx[k] + 1];
+        line(v, a, b, { stroke: M.col, "stroke-width": k === "gd" ? 2 : 2.2, opacity: 0.95 }, layers[k]);
+        if (k !== "gd") dot(v, b, 3.2, M.col, layers[k]);
+        idx[k]++;
+      }
+      counts[k] = Math.min(target, M.run.n);
+    });
+    rosenCounters(active, counts);
+    if (active.every(k => counts[k] >= RMETH[k].run.n)) break;
+    await sleep(20);
+  }
+  if (my !== rosenToken) return;
+  active.forEach(k => counts[k] = RMETH[k].run.n);
+  rosenCounters(active, counts);
+  const nb = R_BFGS.n;
+  const info = {
+    gd: `Gradient descent follows the steepest slope. In the valley the walls are steep (curvature up to about 1,000) but the floor is nearly flat, so the rate must stay tiny (0.001) and the path creeps along the curved floor: <b>${fmtInt(R_GD.n)} steps</b>.`,
+    bfgs: `BFGS never computes a second derivative. It learns an estimate of the inverse Hessian from how the gradient changes between steps, and uses a line search to choose each step length. This page's implementation (strong-Wolfe line search, identity start) reaches 10⁻⁴ in <b>${nb} iterations</b>; SciPy's BFGS reports <b>34</b> (gtol 10⁻⁸), the figure quoted in the file.`,
+    newton: `Pure Newton divides by the true curvature. Its second step jumps far off the valley to about (0.763, −3.175), because the local quadratic model there points the "bottom of the bowl" way down; but the steps after that land in the valley and converge fast: <b>${R_NEWTON.n} steps</b>.`,
+    race: `Same start, same finish line: <b>gradient descent ${fmtInt(R_GD.n)}</b> steps, <b>BFGS ${nb}</b> iterations (this page; SciPy reports 34), <b>Newton ${R_NEWTON.n}</b>. The counters run on a shared clock, but gradient descent's counter is fast-forwarded, because at one step per tick it would take minutes.`,
+  };
+  $("#rosenCaption").innerHTML = info[which];
+  $("#rosenInfo").innerHTML = `<span class="k">steps to within 10⁻⁴ of (1, 1)</span>` +
+    `gradient descent (0.001): <b>${fmtInt(R_GD.n)}</b><br>BFGS: <b>${nb}</b> here · SciPy <b>34</b><br>Newton: <b>${R_NEWTON.n}</b><br>` +
+    `<span class="k">Newton's iterates</span>` + R_NEWTON.path.slice(1).map(p => `${p[2]}: (${f3(p[0])}, ${f3(p[1])})`).join("<br>");
+}
+presetButtons("#rosenPresets", [
+  { t: "Race all three", w: "race" },
+  { t: "Gradient descent (22,845 steps)", w: "gd" },
+  { t: "BFGS", w: "bfgs" },
+  { t: "Newton (5 steps)", w: "newton" },
+], d => runRosen(d.w), 0);
+
+// expose for tests
+window.__HC = { GD_BEST: GD_BEST.n, GD_INV: GD_INV.n, GD_BIG: GD_BIG.n, R_GD: R_GD.n, R_BFGS: R_BFGS.n, R_NEWTON: R_NEWTON.n, LMIN, LMAX, KAPPA, RSTAR, LOSS_STAR, approx, TRUE };
+})();
+</script>
+</body>
+</html>

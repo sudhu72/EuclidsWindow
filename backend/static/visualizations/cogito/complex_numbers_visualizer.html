@@ -69,6 +69,8 @@
     <button class="tab" data-tab="multiply">Multiplication = Rotate &amp; Scale</button>
     <button class="tab" data-tab="bombelli">Bombelli's Bridge</button>
     <button class="tab" data-tab="roots">Roots of Unity</button>
+    <button class="tab" data-tab="polyroots">Polynomial Roots</button>
+    <button class="tab" data-tab="cancel">Cancellation Trick</button>
   </div>
 
   <!-- ============ TAB 1: COMPLEX PLANE ============ -->
@@ -129,6 +131,51 @@
       <svg id="rootsSvg" viewBox="0 0 320 320"></svg>
       <div class="verdict" id="rootsVerdict"></div>
       <div class="caption"><b>Why it matters:</b> this is the Fundamental Theorem of Algebra, made visible — every one of the n roots is real and present, just not always on the real number line.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: POLYNOMIAL ROOTS ============ -->
+  <div class="panel" id="panel-polyroots">
+    <div class="card">
+      <h2>Every Polynomial's Roots, Found and Plotted</h2>
+      <p class="sub"><b>What's happening:</b> a <b>polynomial</b> is just a sum of whole-number powers of `x`, each scaled by a coefficient — `a·x⁴ + b·x³ + c·x² + d·x + e` below. A <b>root</b> is any `x` that makes the whole expression equal 0 — where the curve would cross (or, for a complex root, "would cross if the real number line went far enough," which it never does). This panel finds every one of them — real or complex — using the same iterative "guess, then correct" idea as Newton's method, run on all the roots simultaneously, and plots every one on the complex plane.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> load "x⁴−1" and compare against the Roots of Unity tab — same four points, `1, i, −1, −i`, found this time by generic root-hunting instead of the unit-circle shortcut. Then load "x²+x+1" and watch a plain quadratic (no `x³` or `x⁴` at all) produce two roots that never touch the real axis — exactly the "no real solution" case Part D of the Algebra Toolkit flags, now shown to have an answer after all, just not a real one.</p>
+      <div class="presetbar" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="op" id="pr-preset-1">x²−5x+6 (2 real roots)</button>
+        <button class="op" id="pr-preset-2">x²+x+1 (0 real, 2 complex)</button>
+        <button class="op" id="pr-preset-3">x³−x (3 real roots)</button>
+        <button class="op" id="pr-preset-4">x⁴−1 (2 real + 2 complex)</button>
+        <button class="op" id="pr-preset-5">x⁴+1 (0 real, 4 complex)</button>
+      </div>
+      <div class="row"><label>a (x⁴)</label><input type="range" id="prA" min="-4" max="4" step="1" value="0"><span class="readout" id="prAOut">0</span></div>
+      <div class="row"><label>b (x³)</label><input type="range" id="prB" min="-4" max="4" step="1" value="0"><span class="readout" id="prBOut">0</span></div>
+      <div class="row"><label>c (x²)</label><input type="range" id="prC" min="-4" max="4" step="1" value="1"><span class="readout" id="prCOut">1</span></div>
+      <div class="row"><label>d (x¹)</label><input type="range" id="prD" min="-6" max="6" step="1" value="-5"><span class="readout" id="prDOut">-5</span></div>
+      <div class="row"><label>e (x⁰)</label><input type="range" id="prE" min="-6" max="6" step="1" value="6"><span class="readout" id="prEOut">6</span></div>
+      <svg id="prSvg" viewBox="0 0 320 320"></svg>
+      <div class="verdict" id="prVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this is the Fundamental Theorem of Algebra in its general form — a degree-`n` polynomial always has exactly `n` roots once complex numbers are allowed, real ones landing on the horizontal axis and the rest paired up symmetrically above and below it. It's also, underneath, the exact same "characteristic polynomial" root-hunt that <a href="../eigenvalues-and-eigenvectors.md">finding a matrix's eigenvalues</a> boils down to.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6: CANCELLATION TRICK ============ -->
+  <div class="panel" id="panel-cancel">
+    <div class="card">
+      <h2>n Runners on a Circular Track</h2>
+      <p class="sub"><b>What's happening:</b> take the `n`-th roots of unity, raise each one to the `k`-th power, and walk them <b>tip-to-tail</b> in order — arrow 1 starts where the last one ended. This chains together exactly the sum `Σ(n-th roots of unity)ᵏ`, one step at a time, so you can watch whether it cancels or reinforces instead of just being told the answer.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> load "n=3, k=1 (cancels)" and watch the walk trace a triangle that snaps shut exactly back at the start — zero net displacement. Then load "n=3, k=3 (reinforces)" and watch the exact same 3 steps instead line up into one straight line — no cancellation at all, because every angle collapsed to the same direction. "n=6, k=2" shows the prettier case: the walk still cancels to exactly zero, just by tracing two overlapping triangles instead of one hexagon.</p>
+      <div class="presetbar" style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="op" id="ct-preset-1">n=3, k=1 (cancels)</button>
+        <button class="op" id="ct-preset-2">n=3, k=3 (reinforces)</button>
+        <button class="op" id="ct-preset-3">n=5, k=2 (cancels)</button>
+        <button class="op" id="ct-preset-4">n=4, k=4 (reinforces)</button>
+        <button class="op" id="ct-preset-5">n=6, k=2 (prettier cancel)</button>
+      </div>
+      <div class="row"><label>n</label><input type="range" id="ctN" min="2" max="8" step="1" value="3"><span class="readout" id="ctNOut">3</span></div>
+      <div class="row"><label>k</label><input type="range" id="ctK" min="0" max="24" step="1" value="1"><span class="readout" id="ctKOut">1</span></div>
+      <svg id="ctSvg" viewBox="0 0 320 320"></svg>
+      <div class="verdict" id="ctVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this all-or-nothing cancel-or-reinforce behavior — never partial — is the exact mechanism behind the roots-of-unity filter (extracting only the counting-problem terms you want) and why the Fast Fourier Transform can tell which frequencies are really present in a signal at all.</div>
     </div>
   </div>
 
@@ -302,6 +349,153 @@
   }
   rootsN.addEventListener("input", renderRoots);
   renderRoots();
+
+  /* =========================================================
+     TAB 5 — POLYNOMIAL ROOTS (Durand–Kerner method)
+     ========================================================= */
+  function cdiv(a,b){ const denom=b[0]*b[0]+b[1]*b[1]; return [(a[0]*b[0]+a[1]*b[1])/denom, (a[1]*b[0]-a[0]*b[1])/denom]; }
+  function cabs(a){ return Math.hypot(a[0],a[1]); }
+  function polyEval(coeffs, x){
+    let result=[0,0];
+    for(let i=0;i<coeffs.length;i++) result = [result[0]*x[0]-result[1]*x[1]+coeffs[i], result[0]*x[1]+result[1]*x[0]];
+    return result;
+  }
+  function trimLeadingZeros(coeffs){
+    let i=0;
+    while(i<coeffs.length-1 && Math.abs(coeffs[i])<1e-9) i++;
+    return coeffs.slice(i);
+  }
+  function findPolyRoots(coeffsFull){
+    const coeffs = trimLeadingZeros(coeffsFull);
+    const n = coeffs.length-1;
+    if(n<=0) return [];
+    const lead = coeffs[0];
+    const maxAbs = Math.max(...coeffs.map(Math.abs),1);
+    const radius = 1 + maxAbs/Math.max(Math.abs(lead),1e-9);
+    let roots = [];
+    for(let k=0;k<n;k++){
+      const theta = 2*Math.PI*k/n + 0.35;
+      roots.push([radius*Math.cos(theta), radius*Math.sin(theta)]);
+    }
+    for(let iter=0; iter<150; iter++){
+      roots = roots.map((xi,i) => {
+        let denom=[lead,0];
+        for(let j=0;j<n;j++){ if(j!==i) denom = cmul(denom, [xi[0]-roots[j][0], xi[1]-roots[j][1]]); }
+        const pxi = polyEval(coeffs, xi);
+        const delta = cdiv(pxi, denom);
+        return [xi[0]-delta[0], xi[1]-delta[1]];
+      });
+    }
+    return roots.map(([re,im]) => [Math.abs(re)<1e-4?0:re, Math.abs(im)<1e-4?0:im]);
+  }
+  function polyString(a,b,c,d,e){
+    const terms = [];
+    const push = (coef, powStr) => {
+      if(Math.abs(coef)<1e-9) return;
+      const sign = coef>0 ? (terms.length?" + ":"") : (terms.length?" − ":"−");
+      const mag = Math.abs(coef);
+      const coefStr = (mag===1 && powStr) ? "" : fmt(mag);
+      terms.push(`${sign}${coefStr}${powStr}`);
+    };
+    push(a,"x⁴"); push(b,"x³"); push(c,"x²"); push(d,"x"); push(e,"");
+    return (terms.length ? terms.join("") : "0") + " = 0";
+  }
+  const prA=document.getElementById("prA"), prB=document.getElementById("prB"), prC=document.getElementById("prC"),
+        prD=document.getElementById("prD"), prE=document.getElementById("prE");
+  function renderPolyRoots(){
+    const a=parseFloat(prA.value), b=parseFloat(prB.value), c=parseFloat(prC.value), d=parseFloat(prD.value), e=parseFloat(prE.value);
+    prAOut.textContent=a; prBOut.textContent=b; prCOut.textContent=c; prDOut.textContent=d; prEOut.textContent=e;
+    const roots = findPolyRoots([a,b,c,d,e]);
+    const scale=44;
+    const svg = document.getElementById("prSvg");
+    svg.innerHTML = "";
+    drawAxes(svg,scale);
+    let realCount=0, complexCount=0;
+    const seen = [];
+    roots.forEach((z) => {
+      const isReal = z[1]===0;
+      if(isReal) realCount++; else complexCount++;
+      const dupKey = z.map(v=>v.toFixed(2)).join(",");
+      const dupIdx = seen.filter(k=>k===dupKey).length;
+      seen.push(dupKey);
+      const [px0,py0] = P(z[0],z[1],scale);
+      const px = px0 + dupIdx*7, py = py0 - dupIdx*7;
+      svg.appendChild(el("circle",{cx:px,cy:py,r:6,fill: isReal ? "var(--c1)" : "var(--c3)"}));
+      svg.appendChild(txt(px+10,py-8, `${fmt(z[0])}${z[1]>0?"+":(z[1]<0?"−":"")}${z[1]!==0?fmt(Math.abs(z[1]))+"i":""}`, isReal?"var(--c1)":"var(--c3)", 11.5, "start", "700"));
+    });
+    const check = roots.map(z => cabs(polyEval(trimLeadingZeros([a,b,c,d,e]), z))).reduce((m,v)=>Math.max(m,v), 0);
+    document.getElementById("prVerdict").innerHTML =
+      `${polyString(a,b,c,d,e)} — degree ${trimLeadingZeros([a,b,c,d,e]).length-1}, so exactly ${roots.length} root(s) must exist.<br>`+
+      `<span style="color:var(--c1)">■</span> ${realCount} real root(s) &nbsp; <span style="color:var(--c3)">■</span> ${complexCount} non-real complex root(s).<br>`+
+      `Every root plugged back in gives |p(root)| ≤ <b>${check.toExponential(2)}</b> — as close to exactly 0 as floating-point allows.`;
+  }
+  [prA,prB,prC,prD,prE].forEach(inp => inp.addEventListener("input", renderPolyRoots));
+  function setPoly(a,b,c,d,e){ prA.value=a; prB.value=b; prC.value=c; prD.value=d; prE.value=e; renderPolyRoots(); }
+  document.getElementById("pr-preset-1").addEventListener("click", () => setPoly(0,0,1,-5,6));
+  document.getElementById("pr-preset-2").addEventListener("click", () => setPoly(0,0,1,1,1));
+  document.getElementById("pr-preset-3").addEventListener("click", () => setPoly(0,1,0,-1,0));
+  document.getElementById("pr-preset-4").addEventListener("click", () => setPoly(1,0,0,0,-1));
+  document.getElementById("pr-preset-5").addEventListener("click", () => setPoly(1,0,0,0,1));
+  renderPolyRoots();
+
+  /* =========================================================
+     TAB 6 — CANCELLATION TRICK (roots of unity, tip-to-tail walk)
+     ========================================================= */
+  const ctN=document.getElementById("ctN"), ctK=document.getElementById("ctK");
+  function drawArrow2(svg, from, to, color, lw){
+    svg.appendChild(el("line",{x1:from[0],y1:from[1],x2:to[0],y2:to[1],stroke:color,["stroke-width"]:lw||2}));
+    const ang = Math.atan2(to[1]-from[1], to[0]-from[0]);
+    const ah=7;
+    const p1=[to[0]-ah*Math.cos(ang-0.4), to[1]-ah*Math.sin(ang-0.4)];
+    const p2=[to[0]-ah*Math.cos(ang+0.4), to[1]-ah*Math.sin(ang+0.4)];
+    svg.appendChild(el("polygon",{points:`${to[0]},${to[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]}`,fill:color}));
+  }
+  function renderCancel(){
+    const n=parseInt(ctN.value,10), k=parseInt(ctK.value,10);
+    ctNOut.textContent=n; ctKOut.textContent=k;
+    const pts=[[0,0]];
+    let x=0,y=0;
+    for(let j=0;j<n;j++){
+      const theta = 2*Math.PI*j*k/n;
+      x += Math.cos(theta); y += Math.sin(theta);
+      pts.push([x,y]);
+    }
+    const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+    const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+    const spanX=Math.max(maxX-minX,0.5), spanY=Math.max(maxY-minY,0.5);
+    const scale=Math.min(240/spanX, 240/spanY, 70);
+    const cx0=(minX+maxX)/2, cy0=(minY+maxY)/2;
+    function toPx(p){ return [160+(p[0]-cx0)*scale, 160-(p[1]-cy0)*scale]; }
+    const svg=document.getElementById("ctSvg");
+    svg.innerHTML="";
+    const pxPts = pts.map(toPx);
+    for(let i=0;i<pxPts.length-1;i++){
+      drawArrow2(svg, pxPts[i], pxPts[i+1], "var(--accent)", 2);
+    }
+    pxPts.slice(1,-1).forEach(p => svg.appendChild(el("circle",{cx:p[0],cy:p[1],r:3.5,fill:"var(--c2)"})));
+    const sumX=pts[n][0], sumY=pts[n][1];
+    const cancels = Math.hypot(sumX,sumY) < 1e-6;
+    svg.appendChild(el("circle",{cx:pxPts[0][0],cy:pxPts[0][1],r: cancels?11:8, fill:"none", stroke:"var(--c1)", ["stroke-width"]:2.5}));
+    svg.appendChild(txt(pxPts[0][0], pxPts[0][1]-16, "start", "var(--c1)", 11, "middle", "700"));
+    if(!cancels){
+      svg.appendChild(el("circle",{cx:pxPts[n][0],cy:pxPts[n][1],r:7,fill:"var(--c3)"}));
+      svg.appendChild(txt(pxPts[n][0], pxPts[n][1]+20, "end", "var(--c3)", 11, "middle", "700"));
+    }
+    document.getElementById("ctVerdict").innerHTML =
+      `Σ(${n}-th roots of unity)^${k} = (${fmt(sumX)}, ${fmt(sumY)})<br>`+
+      `k mod n = <b>${k%n}</b> &nbsp;→&nbsp; `+
+      (cancels
+        ? `<span class="good-t">perfect cancellation — the walk returns exactly to "start."</span>`
+        : `<span class="good-t">perfect reinforcement — sum = n = <b>${n}</b>, a straight line of that length.</span>`);
+  }
+  [ctN,ctK].forEach(inp => inp.addEventListener("input", renderCancel));
+  function setCancel(n,k){ ctN.value=n; ctK.value=k; renderCancel(); }
+  document.getElementById("ct-preset-1").addEventListener("click", () => setCancel(3,1));
+  document.getElementById("ct-preset-2").addEventListener("click", () => setCancel(3,3));
+  document.getElementById("ct-preset-3").addEventListener("click", () => setCancel(5,2));
+  document.getElementById("ct-preset-4").addEventListener("click", () => setCancel(4,4));
+  document.getElementById("ct-preset-5").addEventListener("click", () => setCancel(6,2));
+  renderCancel();
 })();
 </script>
 </body>

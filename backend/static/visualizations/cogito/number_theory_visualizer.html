@@ -101,6 +101,23 @@
   .cols2{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
   .col2{ flex:1; min-width:260px; }
 
+  /* ---- Euler's Theorem ---- */
+  .eulerpresets{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .eulerpresets button.op{ text-align:left; white-space:normal; }
+  .eulerout .rsaflow{ overflow-wrap:anywhere; }
+  .eulerout h4{ font-family:"Fraunces",serif; font-size:15px; margin:14px 0 6px; }
+  .eulergrid{ display:grid; grid-template-columns:repeat(10, minmax(0,1fr)); gap:5px; margin:6px 0 4px; }
+  .eulergrid .scell{ color:#fff; font-weight:600; border:none; aspect-ratio:auto; height:36px; font-size:13px; }
+  .eulergrid .scell.plain{ background:#F5F4F0; color:var(--ink); font-weight:400; border:1px solid var(--line); }
+  .eulergrid .scell.shared{ background:#fff; color:var(--ink); border:2px solid var(--c2); }
+  .eulergrid .scell.ok{ background:var(--c1); }
+  .elines{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); gap:4px 14px; font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:#F5F4F0; border-radius:8px; padding:12px 14px; }
+  .eulerout .bad{ color:var(--c4); }
+  .eulerout .good{ color:var(--c1); }
+  .eblocks{ display:grid; grid-template-columns:repeat(auto-fill, minmax(270px,1fr)); gap:10px; }
+  .eblocks .rsaflow{ font-size:12.5px; line-height:1.7; }
+  @media (max-width:560px){ .eulergrid{ grid-template-columns:repeat(5, minmax(0,1fr)); } #panel-euler .card{ padding:18px 16px; } }
+
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer b{ color:var(--ink); }
 </style>
@@ -121,6 +138,10 @@
     <button class="tab" data-tab="fermat">Fermat's Chairs</button>
     <button class="tab" data-tab="rsa">RSA Round Trip</button>
     <button class="tab" data-tab="dh">Diffie–Hellman / ECDH</button>
+    <button class="tab" data-tab="totient">Totient Calculator</button>
+    <button class="tab" data-tab="euler">Euler's Theorem</button>
+    <button class="tab" data-tab="crt">CRT Solver</button>
+    <button class="tab" data-tab="qr">Quadratic Residues</button>
   </div>
 
   <!-- ============ MODULAR CLOCK ============ -->
@@ -252,6 +273,63 @@
       <div class="row"><label>Bob's private b</label><input type="range" id="ecB" min="1" max="49" step="1" value="19"><span class="readout" id="ecBOut">19</span></div>
       <div class="rsaflow" id="ecFlow"></div>
       <div class="caption"><b>Why it matters:</b> neither row ever sends the private number itself — only a one-way "mixed" public value — and both rows reach the identical shared secret purely because the underlying operation (modular exponentiation, or elliptic-curve point addition) commutes. ECDH reaches the same security with far smaller numbers, which is why TLS 1.3 uses it, not classic DH, on almost every HTTPS connection today.</div>
+    </div>
+  </div>
+
+  <!-- ============ TOTIENT CALCULATOR ============ -->
+  <div class="panel" id="panel-totient">
+    <div class="card">
+      <h2>Which Numbers Below N Are Actually Coprime to It?</h2>
+      <p class="sub"><b>What's happening:</b> type any N and watch every integer from 1 to N get checked live for a shared factor with N — the survivors (green) are exactly what Euler's totient function φ(N) counts. The product formula's prediction is checked against this direct count in real time.</p>
+      <div class="row"><label>N</label><input type="number" id="totientN" min="1" max="200" value="33"><button class="op" id="totientGo" style="margin-left:8px;">Compute</button></div>
+      <div class="sievegrid" id="totientGrid"></div>
+      <div class="verdict" id="totientVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the same φ(33)=20 the RSA tab hands you as a given is derived here from nothing but "count the coprimes" — checked two independent ways, exactly like the tutorial's own text.</div>
+    </div>
+  </div>
+
+  <!-- ============ EULER'S THEOREM ============ -->
+  <div class="panel" id="panel-euler">
+    <div class="card">
+      <h2>Euler's Theorem — Why RSA Decryption Actually Works</h2>
+      <p class="sub"><b>What's happening:</b> Fermat's <span class="formula">a^(p−1) ≡ 1</span> only works when the modulus is prime. RSA's modulus <span class="formula">n = 33 = 3 × 11</span> is not. Euler's fix: use <span class="formula">φ(n)</span> instead of <span class="formula">n − 1</span>, so <span class="formula">a^φ(n) ≡ 1 (mod n)</span> for every <span class="formula">a</span> sharing no factor with <span class="formula">n</span>. Here <span class="formula">φ(33) = 20</span>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click any button below. Each one plays a fully worked example from the tutorial, every step computed and shown line by line — nothing to work out by hand. Powers are computed by repeated squaring, so you can see each intermediate remainder.</p>
+      <div class="eulerpresets">
+        <button class="op" data-euler="fermatfail">1 · Fermat's shortcut fails for n=33 (4^32)</button>
+        <button class="op" data-euler="euler">2 · Euler: a^20 mod 33 for six values of a</button>
+        <button class="op" data-euler="shuffle">3 · Why: multiplying the 20 coprime numbers by 4 just shuffles them</button>
+        <button class="op" data-euler="rsa">4 · RSA unwinding: m=4 → encrypt → decrypt (m^21 = m^20 · m)</button>
+        <button class="op" data-euler="wrinkle">5 · The wrinkle: m=3 (shares a factor) still round-trips</button>
+        <button class="op" data-euler="all">6 · Check all 33 messages</button>
+      </div>
+      <div class="eulerout" id="eulerOut"></div>
+      <div class="caption"><b>Why it matters:</b> RSA picks keys with <span class="formula">e × d ≡ 1 (mod φ(n))</span> so the combined exponent is "a multiple of φ(n), plus one" — and Euler's theorem erases the multiple. Computing <span class="formula">φ(n) = (p−1)(q−1)</span> needs the secret primes, which is exactly the trapdoor.</div>
+    </div>
+  </div>
+
+  <!-- ============ CRT SOLVER ============ -->
+  <div class="panel" id="panel-crt">
+    <div class="card">
+      <h2>Solve Two Remainders at Once</h2>
+      <p class="sub"><b>What's happening:</b> enter two coprime moduli and their target remainders. The construction below builds the unique solution mod their product, step by step — cross-checked live against a brute-force search over the same range.</p>
+      <div class="row"><label>x ≡</label><input type="number" id="crtA1" value="2" style="width:50px;"><span style="margin:0 6px;">(mod</span><input type="number" id="crtN1" value="3" style="width:50px;"><span style="margin-left:6px;">)</span></div>
+      <div class="row"><label>x ≡</label><input type="number" id="crtA2" value="3" style="width:50px;"><span style="margin:0 6px;">(mod</span><input type="number" id="crtN2" value="5" style="width:50px;"><span style="margin-left:6px;">)</span></div>
+      <button class="op" id="crtGo">Solve</button>
+      <div class="verdict" id="crtVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this exact construction — not just an existence proof — is what real RSA-CRT decryption runs, twice, on numbers hundreds of digits long, every time an HTTPS connection decrypts something.</div>
+    </div>
+  </div>
+
+  <!-- ============ QUADRATIC RESIDUES ============ -->
+  <div class="panel" id="panel-qr">
+    <div class="card">
+      <h2>Which Remainders Are Actually Squares?</h2>
+      <p class="sub"><b>What's happening:</b> pick a prime p and watch every nonzero remainder get squared mod p. Quadratic residues (green) are the results that actually show up; non-residues (red outline) never appear as anyone's square.</p>
+      <div class="row"><label>Prime p</label><input type="range" id="qrP" min="5" max="23" step="2" value="11"><span class="readout" id="qrPOut">11</span></div>
+      <div class="sievegrid" id="qrGrid"></div>
+      <div class="row" style="margin-top:14px;"><label>Check a value</label><input type="number" id="qrCheck" value="4" style="width:60px;"><button class="op" id="qrCheckGo" style="margin-left:8px;">Run Euler's criterion</button></div>
+      <div class="verdict" id="qrVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> squaring is always exactly 2-to-1 on the nonzero remainders, so exactly half ever show up as a square, for any odd prime — Euler's criterion tells you which half without squaring anything.</div>
     </div>
   </div>
 
@@ -647,6 +725,303 @@
     renderDH(); renderEC();
   });
   renderDH(); renderEC();
+
+  /* =========================================================
+     TOTIENT CALCULATOR
+     ========================================================= */
+  function primeFactorsOf(n){
+    const factors = new Set();
+    let m = n, d = 2;
+    while(d*d <= m){
+      while(m % d === 0){ factors.add(d); m = Math.floor(m/d); }
+      d++;
+    }
+    if(m > 1) factors.add(m);
+    return [...factors];
+  }
+  function totientFormula(n){
+    const pf = primeFactorsOf(n);
+    let phi = n;
+    pf.forEach(p => { phi = phi * (p-1) / p; });
+    return Math.round(phi);
+  }
+  function renderTotient(){
+    const n = Math.max(1, Math.min(200, parseInt(document.getElementById("totientN").value, 10) || 1));
+    const grid = document.getElementById("totientGrid");
+    grid.innerHTML = "";
+    let coprimeCount = 0;
+    for(let k = 1; k <= n; k++){
+      const isCoprime = gcd(k, n) === 1;
+      if(isCoprime) coprimeCount++;
+      const cell = document.createElement("div");
+      cell.className = "scell" + (isCoprime ? " prime" : " crossed");
+      cell.textContent = k;
+      grid.appendChild(cell);
+    }
+    const formula = totientFormula(n);
+    const pf = primeFactorsOf(n);
+    const formulaStr = pf.map(p => `(1 - 1/${p})`).join(" × ");
+    const verdict = document.getElementById("totientVerdict");
+    verdict.innerHTML =
+      `Direct count of integers 1..${n} coprime to ${n}: <b>${coprimeCount}</b><br>` +
+      `Product formula: ${n} × ${formulaStr || "(n is 1, no prime factors)"} = <b>${formula}</b><br>` +
+      (formula === coprimeCount ? `<b style="color:var(--c1)">✓ both methods agree — φ(${n}) = ${coprimeCount}</b>` : `✗ mismatch (shouldn't happen — check input)`);
+  }
+  document.getElementById("totientGo").addEventListener("click", renderTotient);
+  document.getElementById("totientN").addEventListener("keydown", (e) => { if(e.key === "Enter") renderTotient(); });
+  renderTotient();
+
+  /* =========================================================
+     EULER'S THEOREM — one-click worked presets (n = 33, φ = 20)
+     ========================================================= */
+  const EU_N = 33, EU_PHI = 20, EU_E = 7, EU_D = 3;
+  // Square-and-multiply with every intermediate remainder recorded.
+  // All intermediates stay below 33² so plain Numbers are exact.
+  function powSteps(a, e, n){
+    const lines = [];
+    const base = ((a % n) + n) % n;
+    const pw = {1: base};
+    lines.push(`${a}^1 mod ${n} = <b>${base}</b>`);
+    for(let k = 1; 2*k <= e; k *= 2){
+      const sq = pw[k] * pw[k];
+      pw[2*k] = sq % n;
+      lines.push(`${a}^${2*k} = (${a}^${k})² ≡ ${pw[k]}² = ${sq} → mod ${n} = <b>${pw[2*k]}</b>`);
+    }
+    const parts = [];
+    for(let k = 1, r = e; r > 0; k *= 2, r >>= 1) if(r & 1) parts.unshift(k);
+    let result;
+    if(e === 0){ result = 1 % n; lines.push(`${a}^0 = 1`); }
+    else if(parts.length === 1){ result = pw[parts[0]]; }
+    else {
+      lines.push(`${e} = ${parts.join(" + ")}, so ${a}^${e} = ${parts.map(p => `${a}^${p}`).join(" × ")}`);
+      let acc = pw[parts[0]], sum = parts[0];
+      for(let i = 1; i < parts.length; i++){
+        const prod = acc * pw[parts[i]];
+        const newAcc = prod % n;
+        lines.push(`${a}^${sum + parts[i]} = ${a}^${sum} × ${a}^${parts[i]} ≡ ${acc} × ${pw[parts[i]]} = ${prod} → mod ${n} = <b>${newAcc}</b>`);
+        acc = newAcc; sum += parts[i];
+      }
+      result = acc;
+    }
+    lines.push(`<b>⇒ ${a}^${e} mod ${n} = ${result}</b>`);
+    return { lines, result };
+  }
+  const hueOf = v => `hsl(${(v*47) % 360},55%,40%)`;
+  const coprimes33 = []; for(let k = 1; k < EU_N; k++) if(gcd(k, EU_N) === 1) coprimes33.push(k);
+  function flow(lines){ return `<div class="rsaflow">${lines.join("<br>")}</div>`; }
+  function verdict(html){ return `<div class="verdict">${html}</div>`; }
+  function tick(ok){ return ok ? `<span class="good">✓</span>` : `<span class="bad">✗</span>`; }
+
+  const eulerPresets = {
+    fermatfail(){
+      const s = powSteps(4, EU_N - 1, EU_N);
+      const f11 = powSteps(4, 10, 11);
+      return `<h4>If 33 were prime, Fermat would promise 4^(33−1) = 4^32 ≡ 1 (mod 33). Let's check.</h4>` +
+        flow(s.lines) +
+        verdict(`4^32 mod 33 = <b>${s.result}</b>, not 1 ${tick(s.result === 1)} — Fermat's pattern genuinely fails, because 33 = 3 × 11 is not prime.`) +
+        `<h4>Contrast: with a genuinely prime modulus (11), Fermat holds</h4>` +
+        flow(f11.lines) +
+        verdict(`4^(11−1) mod 11 = <b>${f11.result}</b> ${tick(f11.result === 1)} — so the problem is the composite modulus, not the number 4. Euler's theorem (next button) repairs it by swapping n − 1 = 32 for φ(33) = 20.`);
+    },
+    euler(){
+      const as = [2, 4, 5, 7, 10, 32];
+      let allOne = true;
+      const blocks = as.map(a => {
+        const g = gcd(a, EU_N);
+        const s = powSteps(a, EU_PHI, EU_N);
+        if(s.result !== 1) allOne = false;
+        return flow([`gcd(${a}, 33) = ${g} → coprime ${tick(g === 1)}`, ...s.lines, `${tick(s.result === 1)} remainder 1`]);
+      });
+      return `<h4>φ(33) = 33 × (1 − 1/3) × (1 − 1/11) = 20, so Euler predicts a^20 ≡ 1 (mod 33) for every a coprime to 33</h4>` +
+        `<div class="eblocks">${blocks.join("")}</div>` +
+        verdict(as.map(a => `${a}^20 mod 33 = <b>${modPow(a, EU_PHI, EU_N)}</b>`).join(" · ") + `<br>` +
+          (allOne ? `<b class="good">✓ all six equal 1 — Euler's theorem, verified</b>` : `<span class="bad">✗ mismatch</span>`));
+    },
+    shuffle(){
+      const a = 4;
+      const imgs = coprimes33.map(k => (a*k) % EU_N);
+      const cell = v => `<div class="scell" style="background:${hueOf(v)}">${v}</div>`;
+      const sortedImgs = [...imgs].sort((x,y) => x-y);
+      const sameSet = sortedImgs.every((v,i) => v === coprimes33[i]);
+      const distinct = new Set(imgs).size;
+      let P = 1; coprimes33.forEach(k => P = (P*k) % EU_N);
+      let Q = 1; imgs.forEach(k => Q = (Q*k) % EU_N);
+      const Pinv = modInverse(P, EU_N);
+      const a20 = modPow(a, EU_PHI, EU_N);
+      const mapLines = coprimes33.map((k,i) => `${k} × 4 = ${4*k} → mod 33 = <b>${imgs[i]}</b>`);
+      return `<h4>Row A — the ${coprimes33.length} numbers from 1 to 32 coprime to 33 (in order)</h4>` +
+        `<div class="eulergrid">${coprimes33.map(cell).join("")}</div>` +
+        `<h4>Row B — each one multiplied by 4, mod 33 (same position = same starting number)</h4>` +
+        `<div class="eulergrid">${imgs.map(cell).join("")}</div>` +
+        `<p class="caption" style="margin-top:4px;">Each number keeps its own color in both rows: Row B contains exactly the same colored tiles as Row A, just in a different order.</p>` +
+        `<h4>Every multiplication, worked</h4>` +
+        `<div class="elines">${mapLines.map(l => `<div>${l}</div>`).join("")}</div>` +
+        verdict(
+          `Row B sorted: {${sortedImgs.join(", ")}}<br>` +
+          `Row A:        {${coprimes33.join(", ")}}<br>` +
+          `${tick(sameSet)} identical sets · ${distinct} distinct values out of 20 (no collisions) · none outside the set<br>` +
+          `Product of Row A mod 33 = <b>${P}</b> &nbsp;·&nbsp; product of Row B mod 33 = <b>${Q}</b> ${tick(P === Q)} (a shuffle can't change a product)<br>` +
+          `But Row B's product is also 4^20 × (Row A's product), so 4^20 × ${P} ≡ ${P} (mod 33)<br>` +
+          `${P} has an inverse mod 33 (${P} × ${Pinv} = ${P*Pinv} ≡ 1), so cancel it: <b>4^20 ≡ 1 (mod 33)</b>${P === 1 ? " (here the product happens to be 1 itself, so the cancelling step is trivial)" : ""}<br>` +
+          `Direct check: 4^20 mod 33 = <b>${a20}</b> ${tick(a20 === 1)}`);
+    },
+    rsa(){
+      const m = 4;
+      const enc = powSteps(m, EU_E, EU_N);
+      const dec = powSteps(enc.result, EU_D, EU_N);
+      const e20 = powSteps(m, EU_PHI, EU_N);
+      const e21 = powSteps(m, EU_E*EU_D, EU_N);
+      const k = Math.floor(EU_E*EU_D / EU_PHI), r = (EU_E*EU_D) % EU_PHI;
+      return `<h4>Keys: n = 33, φ(33) = 20, public e = 7, private d = 3</h4>` +
+        flow([`e × d = ${EU_E} × ${EU_D} = ${EU_E*EU_D} = ${k} × ${EU_PHI} + ${r} &nbsp;→ one more than a multiple of φ(n) ${tick(r === 1)}`]) +
+        `<h4>Step 1 · Encrypt m = 4 with the public key: c = 4^7 mod 33</h4>` + flow(enc.lines) +
+        `<h4>Step 2 · Decrypt c = ${enc.result} with the private key: ${enc.result}^3 mod 33</h4>` + flow(dec.lines) +
+        verdict(`4 → encrypt → <b>${enc.result}</b> → decrypt → <b>${dec.result}</b> ${tick(dec.result === m)} original message recovered`) +
+        `<h4>Why it worked: (m^7)^3 = m^21 = m^20 · m, and Euler says m^20 ≡ 1</h4>` +
+        `<div class="eblocks">${flow(["Euler's part — 4^20:", ...e20.lines])}${flow(["The whole thing — 4^21 directly:", ...e21.lines])}</div>` +
+        verdict(`4^21 = 4^20 · 4 ≡ ${e20.result} · 4 = <b>${(e20.result*4) % EU_N}</b> (mod 33) &nbsp;·&nbsp; direct 4^21 mod 33 = <b>${e21.result}</b> ${tick(e21.result === m)}<br>` +
+          `Euler's theorem erases the "multiple of 20" in the exponent, leaving m^1 = m.`);
+    },
+    wrinkle(){
+      const m = 3;
+      const g = gcd(m, EU_N);
+      const e20 = powSteps(m, EU_PHI, EU_N);
+      const e21 = powSteps(m, EU_E*EU_D, EU_N);
+      const enc = powSteps(m, EU_E, EU_N);
+      const dec = powSteps(enc.result, EU_D, EU_N);
+      const f11 = powSteps(m, 10, 11);
+      const mod3 = modPow(m, 21, 3), mod11 = modPow(m, 21, 11);
+      const crtHits = []; for(let x = 0; x < EU_N; x++) if(x % 3 === mod3 && x % 11 === mod11) crtHits.push(x);
+      return `<h4>m = 3 shares a factor with 33: gcd(3, 33) = ${g}, so Euler's theorem does NOT apply</h4>` +
+        `<div class="eblocks">${flow(["3^20 (Euler would want 1):", ...e20.lines])}${flow(["3^21 (what RSA actually computes):", ...e21.lines])}</div>` +
+        verdict(`3^20 mod 33 = <b>${e20.result}</b> — not 1 ${tick(e20.result === 1)} (Euler doesn't apply)<br>` +
+          `yet 3^21 mod 33 = <b>${e21.result}</b> ${tick(e21.result === m)} — the message still comes back`) +
+        `<h4>The actual RSA round trip for m = 3</h4>` +
+        `<div class="eblocks">${flow([`Encrypt: 3^7 mod 33`, ...enc.lines])}${flow([`Decrypt: ${enc.result}^3 mod 33`, ...dec.lines])}</div>` +
+        verdict(`3 → encrypt → <b>${enc.result}</b> → decrypt → <b>${dec.result}</b> ${tick(dec.result === m)}`) +
+        `<h4>Why: check one prime at a time, then glue with the Chinese Remainder Theorem</h4>` +
+        flow([
+          `mod 3: 3 ≡ 0, so 3^21 ≡ 0^21 = <b>${mod3}</b> ≡ 3 (mod 3) ${tick(mod3 === m % 3)}`,
+          `mod 11 (prime, so Fermat works): 3^10 mod 11 = ${f11.result} ${tick(f11.result === 1)}`,
+          `&nbsp;&nbsp;3^21 = (3^10)² · 3 ≡ ${f11.result}² · 3 = <b>${mod11}</b> (mod 11) ${tick(mod11 === m % 11)}`,
+          `CRT: the only x in 0..32 with x ≡ ${mod3} (mod 3) and x ≡ ${mod11} (mod 11) is <b>${crtHits.join(", ")}</b> ${tick(crtHits.length === 1 && crtHits[0] === m)}`
+        ]);
+    },
+    all(){
+      let okCount = 0, coprimeCount = 0;
+      const cells = [], lines = [];
+      for(let m = 0; m < EU_N; m++){
+        const c = modPow(m, EU_E, EU_N), back = modPow(c, EU_D, EU_N);
+        const ok = back === m, cop = gcd(m, EU_N) === 1;
+        if(ok) okCount++; if(cop) coprimeCount++;
+        cells.push(`<div class="scell ${ok ? (cop ? "ok" : "shared") : "plain"}">${m}</div>`);
+        lines.push(`<div>m=${m} → c=${c} → <b>${back}</b> ${tick(ok)}${cop ? "" : " <span style=\"color:#9A6F0F\">(shares a factor)</span>"}</div>`);
+      }
+      return `<h4>Every possible message m = 0..32: encrypt with c = m^7 mod 33, decrypt with c^3 mod 33</h4>` +
+        `<div class="eulergrid">${cells.join("")}</div>` +
+        `<div class="legend"><span><span class="dot" style="background:var(--c1)"></span>coprime to 33 (Euler applies) — round-trips</span><span><span class="dot" style="background:#fff; border:2px solid var(--c2)"></span>shares factor 3 or 11 — round-trips anyway</span></div>` +
+        `<h4 style="margin-top:12px;">All 33 round trips, worked</h4>` +
+        `<div class="elines">${lines.join("")}</div>` +
+        verdict(`<b>${okCount} / ${EU_N}</b> messages recovered exactly ${tick(okCount === EU_N)}<br>` +
+          `${coprimeCount} coprime to 33 (= φ(33) ${tick(coprimeCount === EU_PHI)}) + ${EU_N - coprimeCount} sharing a factor = ${EU_N}`);
+    }
+  };
+  function runEulerPreset(name){
+    document.querySelectorAll('#panel-euler [data-euler]').forEach(b => b.classList.toggle("active", b.dataset.euler === name));
+    document.getElementById("eulerOut").innerHTML = eulerPresets[name]();
+  }
+  document.querySelectorAll('#panel-euler [data-euler]').forEach(btn => {
+    btn.addEventListener("click", () => runEulerPreset(btn.dataset.euler));
+  });
+  runEulerPreset("fermatfail");
+
+  /* =========================================================
+     CRT SOLVER
+     ========================================================= */
+  function renderCRT(){
+    const a1 = parseInt(document.getElementById("crtA1").value, 10) || 0;
+    const n1 = parseInt(document.getElementById("crtN1").value, 10) || 1;
+    const a2 = parseInt(document.getElementById("crtA2").value, 10) || 0;
+    const n2 = parseInt(document.getElementById("crtN2").value, 10) || 1;
+    const verdict = document.getElementById("crtVerdict");
+    if(gcd(n1, n2) !== 1){
+      verdict.innerHTML = `moduli ${n1} and ${n2} are not coprime (gcd=${gcd(n1,n2)}) — the Chinese Remainder Theorem's guarantee doesn't apply here.`;
+      return;
+    }
+    const M = n1 * n2;
+    // brute-force search
+    const bruteHits = [];
+    for(let x = 0; x < M; x++){
+      if(((x % n1) + n1) % n1 === a1 && ((x % n2) + n2) % n2 === a2) bruteHits.push(x);
+    }
+    // constructive solution
+    const M1 = M / n1, M2 = M / n2;
+    const y1 = modInverse(M1, n1);
+    const y2 = modInverse(M2, n2);
+    const constructed = (((a1 * M1 * y1 + a2 * M2 * y2) % M) + M) % M;
+    verdict.innerHTML =
+      `Brute-force search 0..${M-1}: solution(s) found = <b>${bruteHits.join(", ")}</b><br>` +
+      `Construction: M=${M}, M1=${M1}, M2=${M2}, y1=inverse(${M1},${n1})=${y1}, y2=inverse(${M2},${n2})=${y2}<br>` +
+      `x = (${a1}×${M1}×${y1} + ${a2}×${M2}×${y2}) mod ${M} = <b>${constructed}</b><br>` +
+      (bruteHits.length === 1 && bruteHits[0] === constructed ? `<b style="color:var(--c1)">✓ construction matches the unique brute-force solution</b>` : `✗ mismatch`);
+  }
+  document.getElementById("crtGo").addEventListener("click", renderCRT);
+  renderCRT();
+
+  /* =========================================================
+     QUADRATIC RESIDUES
+     ========================================================= */
+  function renderQR(){
+    const p = parseInt(document.getElementById("qrP").value, 10);
+    document.getElementById("qrPOut").textContent = p;
+    const squares = new Map(); // result -> [roots]
+    for(let a = 1; a < p; a++){
+      const s = (a*a) % p;
+      if(!squares.has(s)) squares.set(s, []);
+      squares.get(s).push(a);
+    }
+    const residueSet = new Set(squares.keys());
+    const grid = document.getElementById("qrGrid");
+    grid.innerHTML = "";
+    for(let a = 1; a < p; a++){
+      const isQR = residueSet.has(a);
+      const cell = document.createElement("div");
+      cell.className = "scell" + (isQR ? " prime" : "");
+      if(!isQR) cell.style.border = "1.5px solid var(--c4)";
+      cell.textContent = a;
+      grid.appendChild(cell);
+    }
+    document.getElementById("qrCheck").max = p - 1;
+  }
+  function runEulerCriterion(){
+    const p = parseInt(document.getElementById("qrP").value, 10);
+    let a = parseInt(document.getElementById("qrCheck").value, 10);
+    a = ((a % p) + p) % p;
+    if(a === 0){ document.getElementById("qrVerdict").textContent = "pick a nonzero value"; return; }
+    let crit = 1n;
+    const base = BigInt(a), mod = BigInt(p), exp = BigInt((p-1)/2);
+    crit = modPowBig(base, exp, mod);
+    const isQR = crit === 1n;
+    const squares = new Map();
+    for(let k = 1; k < p; k++){ const s=(k*k)%p; if(!squares.has(s)) squares.set(s, []); squares.get(s).push(k); }
+    const directCheck = squares.has(a);
+    document.getElementById("qrVerdict").innerHTML =
+      `Euler's criterion: ${a}^${(p-1)/2} mod ${p} = <b>${crit}</b> → ${isQR ? "quadratic residue (+1)" : "non-residue (-1)"}<br>` +
+      `Direct table lookup: ${a} is ${directCheck ? `a QR (square roots: ${squares.get(a).join(", ")})` : "a non-residue"}<br>` +
+      (isQR === directCheck ? `<b style="color:var(--c1)">✓ Euler's criterion agrees with the direct table</b>` : `✗ mismatch`);
+  }
+  function modPowBig(base, exp, mod){
+    let result = 1n; base = base % mod;
+    while(exp > 0n){
+      if(exp % 2n === 1n) result = (result * base) % mod;
+      exp = exp / 2n;
+      base = (base * base) % mod;
+    }
+    return result;
+  }
+  document.getElementById("qrP").addEventListener("input", renderQR);
+  document.getElementById("qrCheckGo").addEventListener("click", runEulerCriterion);
+  renderQR();
 
 })();
 </script>

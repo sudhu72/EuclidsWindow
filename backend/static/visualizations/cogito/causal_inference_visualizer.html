@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cause or Coincidence — Causal Inference, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.7; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  .good-t{ color:var(--c1); font-weight:700; } .bad-t{ color:var(--c3); font-weight:700; }
+  .note{ font-family:Inter, sans-serif; font-size:13px; }
+  table.po{ border-collapse:collapse; width:100%; font-family:"IBM Plex Mono", monospace; font-size:13px; margin-top:6px; }
+  table.po th, table.po td{ border:1px solid var(--line); padding:5px 8px; text-align:center; }
+  table.po th{ background:#F5F4F0; font-weight:600; color:var(--ink-soft); }
+  td.seen{ background:#E3F3F1; font-weight:700; color:var(--c1); }
+  td.hidden{ color:#A8AFB8; background:#FAFAF8; }
+  td.effect{ font-weight:700; color:var(--c3); }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to the Feynman Math Tutorial · Causal Inference</div>
+    <h1>Cause or Coincidence?</h1>
+    <p>A treatment that wins in every subgroup and loses overall, the outcome you can never see, a drug that looks harmful only because doctors give it to the sickest patients, a coin flip that fixes all of it, and three little arrow diagrams that tell you when adjusting helps and when it quietly hurts. Every number comes from a fixed-seed simulation, so each click shows exactly the numbers in the doc.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Each panel reads top to bottom: <b>what's happening</b>, a <b>Try this</b>, and <b>why it matters</b>. Every worked example is one button.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="simpson">Simpson's Paradox</button>
+    <button class="tab" data-tab="po">Potential Outcomes</button>
+    <button class="tab" data-tab="rand">Confounded vs. Randomized</button>
+    <button class="tab" data-tab="dag">DAGs: Fork, Chain, Collider</button>
+  </div>
+
+  <!-- ============ TAB 1: SIMPSON ============ -->
+  <div class="panel active" id="panel-simpson">
+    <div class="card">
+      <h2>The Kidney-Stone Reversal</h2>
+      <p class="sub"><b>What's happening:</b> the real 1986 kidney-stone data (Charig et al.). Treatment A was open surgery, Treatment B a less invasive keyhole procedure. Each button shows the same 700 patients sliced a different way.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press "Combined" (B looks better), then "Split by stone size" (A wins both), then "Who got which treatment?" to see the reason, and finally "Adjusted" for the fair comparison.</p>
+      <div class="row">
+        <button class="op active" data-simp="agg">Combined (aggregate)</button>
+        <button class="op" data-simp="strat">Split by stone size (stratified)</button>
+        <button class="op" data-simp="who">Who got which treatment?</button>
+        <button class="op" data-simp="adj">Adjusted (same patient mix for both)</button>
+      </div>
+      <svg id="simpSvg" viewBox="0 0 700 270"></svg>
+      <div class="verdict" id="simpVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> stone size is a <em>confounder</em>: it pushed doctors toward a treatment <em>and</em> changed the odds of success. The combined numbers mix the treatment's effect with the case mix it was handed.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: POTENTIAL OUTCOMES ============ -->
+  <div class="panel" id="panel-po">
+    <div class="card">
+      <h2>Two Futures per Patient, and You Only Get to See One</h2>
+      <p class="sub"><b>What's happening:</b> the doc's simulated hospital (10,000 patients, fixed seed 11). Each patient has two <em>potential outcomes</em>: Y(1), recovered if treated, and Y(0), recovered if not. The simulation knows both; reality shows you only the one matching the treatment they actually got.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> press "What the hospital sees" (half of every row is a question mark), then "God's-eye view" to reveal the missing column. Patients #23 and #33 are the only two in the first 40 for whom the treatment changes anything.</p>
+      <div class="row">
+        <button class="op active" data-po="seen">What the hospital sees</button>
+        <button class="op" data-po="god">God's-eye view (both outcomes)</button>
+        <button class="op" data-po="ate">Average over all 10,000</button>
+      </div>
+      <div id="poTable"></div>
+      <div class="verdict" id="poVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> an individual causal effect is Y(1) − Y(0), and one of those two numbers is always missing. This is the <em>fundamental problem of causal inference</em>. Every method in the doc is a way of filling in the missing column fairly, on average.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: CONFOUNDED vs RANDOMIZED ============ -->
+  <div class="panel" id="panel-rand">
+    <div class="card">
+      <h2>The Same 10,000 Patients, Two Ways of Choosing Who Gets Treated</h2>
+      <p class="sub"><b>What's happening:</b> half the patients are severe cases. Without treatment, mild cases recover 80% of the time and severe cases 30%. The treatment adds exactly <b>+10 percentage points</b> for everyone: that's the known true effect. Only <em>who gets treated</em> changes between buttons.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> "Confounded" (doctors treat the sickest: the treatment looks <em>harmful</em>), then "Randomized" (a coin flip decides: the truth comes back), then "Confounded, compared within severity", then "Repeat 200 times" to see that neither result was luck.</p>
+      <div class="row">
+        <button class="op active" data-rand="conf">Confounded: doctors treat the sickest</button>
+        <button class="op" data-rand="rand">Randomized: a coin flip decides</button>
+        <button class="op" data-rand="strat">Confounded, compared within severity</button>
+        <button class="op" data-rand="repeat">Repeat each design 200 times</button>
+      </div>
+      <svg id="randSvg" viewBox="0 0 700 290"></svg>
+      <div class="verdict" id="randVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> randomization doesn't remove severity, it makes severity <em>unrelated</em> to who got treated, so the two groups are alike in every way except the treatment. That's why an A/B test can measure causation and a dashboard of observational data can't, on its own.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: DAGS ============ -->
+  <div class="panel" id="panel-dag">
+    <div class="card">
+      <h2>Three Shapes of Arrow, Three Different Rules</h2>
+      <p class="sub"><b>What's happening:</b> a DAG (directed acyclic graph) is just a diagram of what causes what: an arrow from X to Y means "X directly affects Y". Three tiny shapes cover most of the trouble. For each, the simulation shows what happens to the X-Y relationship when you do and don't "control for" the middle variable.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> in the fork, adjusting <em>fixes</em> the answer; in the chain, adjusting <em>erases</em> a real effect; in the collider, adjusting (here, looking only at the people who got selected) <em>creates</em> a relationship out of nothing.</p>
+      <div class="row">
+        <button class="op active" data-dag="fork">Fork: a common cause (confounder)</button>
+        <button class="op" data-dag="chain">Chain: a middle step (mediator)</button>
+        <button class="op" data-dag="collider">Collider: a common effect (selection)</button>
+      </div>
+      <div style="display:flex; gap:14px; flex-wrap:wrap;">
+        <div style="flex:0 0 260px;"><svg id="dagSvg" viewBox="0 0 260 260"></svg></div>
+        <div style="flex:1; min-width:300px;"><svg id="dagResSvg" viewBox="0 0 420 260"></svg></div>
+      </div>
+      <div class="verdict" id="dagVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> "control for everything you can measure" is wrong advice. Control for forks (common causes), don't control for chains if you want the total effect, and never control for colliders. The data alone can't tell you which shape you have; the causal story has to.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Simulations use the fixed-seed mulberry32 generator, reimplemented bit-for-bit in the doc's Python check, so every number here matches the doc. Companion to <a href="../causal-inference-basics.md">Causal Inference Basics</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs){ const e=document.createElementNS("http://www.w3.org/2000/svg",tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+  function txt(x,y,str,color,size,anchor,weight){ const t=el("text",{x,y,["text-anchor"]:anchor||"middle","font-family":"IBM Plex Mono, monospace","font-size":size||12,fill:color||"var(--ink)"}); if(weight) t.setAttribute("font-weight",weight); t.textContent=str; return t; }
+  const tabs=document.querySelectorAll(".tab");
+  tabs.forEach(t=>t.addEventListener("click",()=>{ tabs.forEach(x=>x.classList.remove("active")); t.classList.add("active"); document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active")); document.getElementById("panel-"+t.dataset.tab).classList.add("active"); }));
+  function setActive(panel, attr, key){ document.querySelectorAll(`#panel-${panel} [data-${attr}]`).forEach(b=>b.classList.toggle("active", b.dataset[attr]===key)); }
+  const pct=v=>(100*v).toFixed(1)+"%";
+  const pts=v=>(v>=0?"+":"−")+Math.abs(100*v).toFixed(1)+" pts";
+
+  /* ---------- seeded RNG (identical to the doc's Python mulberry32) ---------- */
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function gauss(rng){ let u=0,v=0; while(u===0)u=rng(); while(v===0)v=rng(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+  /* ---------- the simulated hospital ---------- */
+  // severe ~ 50%; confounded: P(treat)=0.8 if severe else 0.2; randomized: 0.5.
+  // untreated recovery: mild 0.8, severe 0.3; treatment adds exactly +0.10 (shared u couples Y0 and Y1).
+  function hospital(design, N, seed){
+    const rng=mulberry32(seed), P=[];
+    for(let i=0;i<N;i++){
+      const sev=rng()<0.5;
+      const pT= design==="rand"?0.5:(sev?0.8:0.2);
+      const t=rng()<pT;
+      const u=rng(), base=sev?0.3:0.8;
+      const y0=u<base?1:0, y1=u<base+0.1?1:0;
+      P.push({id:i+1,sev,t,y0,y1,y:t?y1:y0});
+    }
+    return P;
+  }
+  function summarize(P){
+    const mean=(arr,f)=>arr.reduce((s,p)=>s+f(p),0)/arr.length;
+    const T=P.filter(p=>p.t), C=P.filter(p=>!p.t);
+    const out={N:P.length, ate:mean(P,p=>p.y1-p.y0), nT:T.length, nC:C.length, yT:mean(T,p=>p.y), yC:mean(C,p=>p.y), sevT:mean(T,p=>p.sev?1:0), sevC:mean(C,p=>p.sev?1:0)};
+    out.naive=out.yT-out.yC; out.strata={}; out.adj=0;
+    [false,true].forEach(s=>{ const S=P.filter(p=>p.sev===s), ST=S.filter(p=>p.t), SC=S.filter(p=>!p.t);
+      const o={n:S.length,nT:ST.length,nC:SC.length,yT:mean(ST,p=>p.y),yC:mean(SC,p=>p.y)}; o.diff=o.yT-o.yC; out.strata[s?"severe":"mild"]=o; out.adj+=S.length/P.length*o.diff; });
+    return out;
+  }
+  const HOSP={conf:hospital("conf",10000,11), rand:hospital("rand",10000,11)};
+  const SUM={conf:summarize(HOSP.conf), rand:summarize(HOSP.rand)};
+
+  /* ================= TAB 1: SIMPSON ================= */
+  const KS={A:{small:[81,87],large:[192,263]}, B:{small:[234,270],large:[55,80]}};
+  function renderSimpson(key){
+    const svg=document.getElementById("simpSvg"); svg.innerHTML="";
+    const W=700,H=270,baseY=210,top=40,plotH=baseY-top;
+    const rA={small:81/87,large:192/263,all:273/350}, rB={small:234/270,large:55/80,all:289/350};
+    const pSmall=(87+270)/700, pLarge=(263+80)/700;
+    const adjA=pSmall*rA.small+pLarge*rA.large, adjB=pSmall*rB.small+pLarge*rB.large;
+    const bar=(x,v,col,lab,sub)=>{ const h=v*plotH; svg.appendChild(el("rect",{x,y:baseY-h,width:70,height:h,fill:col,["fill-opacity"]:0.75,stroke:"var(--ink)",["stroke-width"]:0.6})); svg.appendChild(txt(x+35,baseY-h-8,lab,col,13,"middle","700")); if(sub) svg.appendChild(txt(x+35,baseY+16,sub,"var(--ink-soft)",10.5)); };
+    let groups, title, v;
+    if(key==="agg"){ groups=[["All 700 patients",rA.all,rB.all,"273/350","289/350"]]; title="success rate, all patients combined";
+      v=`Combined: A succeeds <b>273/350 = ${pct(rA.all)}</b>, B succeeds <b>289/350 = ${pct(rB.all)}</b>. <span class="bad-t">B looks better by ${(100*(rB.all-rA.all)).toFixed(1)} points.</span>`; }
+    if(key==="strat"){ groups=[["Small stones",rA.small,rB.small,"81/87","234/270"],["Large stones",rA.large,rB.large,"192/263","55/80"],["Combined",rA.all,rB.all,"273/350","289/350"]]; title="success rate, split by stone size";
+      v=`Small stones: A <b>${pct(rA.small)}</b> vs B ${pct(rB.small)} → <span class="good-t">A wins</span><br>Large stones: A <b>${pct(rA.large)}</b> vs B ${pct(rB.large)} → <span class="good-t">A wins</span><br>Combined: A ${pct(rA.all)} vs B <b>${pct(rB.all)}</b> → <span class="bad-t">B wins</span>. Same patients, no arithmetic error.`; }
+    if(key==="adj"){ groups=[["Combined (raw)",rA.all,rB.all,"case mix differs","case mix differs"],["Adjusted",adjA,adjB,"51% small, 49% large","51% small, 49% large"]]; title="raw vs. adjusted: give both treatments the same patient mix";
+      v=`Adjustment formula: success(A) = P(small)·success(A | small) + P(large)·success(A | large), with P(small) = 357/700 = ${(pSmall).toFixed(2)} and P(large) = 343/700 = ${pLarge.toFixed(2)} for <em>both</em> treatments.<br>`+
+        `A: ${pSmall.toFixed(2)} × ${pct(rA.small)} + ${pLarge.toFixed(2)} × ${pct(rA.large)} = <span class="big">${pct(adjA)}</span><br>`+
+        `B: ${pSmall.toFixed(2)} × ${pct(rB.small)} + ${pLarge.toFixed(2)} × ${pct(rB.large)} = <span class="big">${pct(adjB)}</span><br>`+
+        `<span class="good-t">On the same mix of patients, A is ahead by ${(100*(adjA-adjB)).toFixed(1)} points.</span> This is the right comparison <em>because</em> stone size is a common cause (a fork), not a consequence of the treatment.`; }
+    if(key==="who"){
+      title="share of each treatment's patients who had LARGE (harder) stones";
+      const sA=263/350, sB=80/350;
+      bar(200,sA,"var(--c1)",pct(sA),"263 of 350"); bar(430,sB,"var(--c2)",pct(sB),"80 of 350");
+      svg.appendChild(txt(235,baseY+34,"Treatment A","var(--ink)",12,"middle","600")); svg.appendChild(txt(465,baseY+34,"Treatment B","var(--ink)",12,"middle","600"));
+      v=`Treatment A was given the hard cases: <b>${pct(sA)}</b> of its patients had large stones, vs. only <b>${pct(sB)}</b> of B's. Large stones fail more often under <em>either</em> treatment (73.0% and 68.8% success vs. 93.1% and 86.7% for small). So A's combined rate is dragged down by its case mix, not by being worse.`;
+    } else {
+      const gw=(W-80)/groups.length;
+      groups.forEach((g,i)=>{ const gx=40+i*gw+gw/2; bar(gx-80,g[1],"var(--c1)",pct(g[1]),g[3]); bar(gx+10,g[2],"var(--c2)",pct(g[2]),g[4]); svg.appendChild(txt(gx,baseY+38,g[0],"var(--ink)",12,"middle","600")); });
+    }
+    svg.appendChild(el("line",{x1:20,y1:baseY,x2:W-20,y2:baseY,stroke:"var(--ink)",["stroke-width"]:1.3}));
+    svg.appendChild(txt(20,18,title,"var(--ink-soft)",11,"start","600"));
+    if(key!=="who"){ svg.appendChild(el("rect",{x:W-210,y:8,width:12,height:12,fill:"var(--c1)"})); svg.appendChild(txt(W-192,18,"A (open surgery)","var(--ink)",11,"start")); svg.appendChild(el("rect",{x:W-210,y:24,width:12,height:12,fill:"var(--c2)"})); svg.appendChild(txt(W-192,34,"B (keyhole)","var(--ink)",11,"start")); }
+    document.getElementById("simpVerdict").innerHTML=v;
+    setActive("simpson","simp",key);
+  }
+  document.querySelectorAll("#panel-simpson [data-simp]").forEach(b=>b.addEventListener("click",()=>renderSimpson(b.dataset.simp)));
+  renderSimpson("agg");
+
+  /* ================= TAB 2: POTENTIAL OUTCOMES ================= */
+  function renderPO(key){
+    const P=HOSP.conf, S=SUM.conf;
+    const rows=P.slice(0,12).concat([P[22],P[32]]);
+    let h=`<table class="po"><tr><th>patient</th><th>severity</th><th>treated?</th><th>Y(1): recovers if treated</th><th>Y(0): recovers if not</th><th>effect Y(1) − Y(0)</th></tr>`;
+    rows.forEach(p=>{
+      const show1 = key!=="seen" || p.t, show0 = key!=="seen" || !p.t;
+      const c1 = p.t?"seen":(key==="seen"?"hidden":""), c0 = !p.t?"seen":(key==="seen"?"hidden":"");
+      const eff = key==="seen" ? "?" : String(p.y1-p.y0);
+      h+=`<tr><td>#${p.id}</td><td>${p.sev?"severe":"mild"}</td><td>${p.t?"yes":"no"}</td><td class="${c1}">${show1?p.y1:"?"}</td><td class="${c0}">${show0?p.y0:"?"}</td><td class="${key!=="seen"&&p.y1!==p.y0?"effect":""}">${eff}</td></tr>`;
+      if(p.id===12) h+=`<tr><td colspan="6" style="color:var(--ink-soft)">… patients 13–22 …</td></tr>`;
+      if(p.id===23) h+=`<tr><td colspan="6" style="color:var(--ink-soft)">… patients 24–32 …</td></tr>`;
+    });
+    h+=`</table>`;
+    document.getElementById("poTable").innerHTML = key==="ate" ? "" : h;
+    let v;
+    if(key==="seen") v=`Shaded = the one outcome that actually happened. "?" = the <b>counterfactual</b>: what would have happened under the other choice. It is never observed, for anyone. Patient #23 (severe, treated) recovered; would they have recovered anyway? The data can't say.`;
+    else if(key==="god") v=`Revealed: for most patients the treatment changes nothing (both outcomes equal). <b>#23</b> (severe, treated) recovers <em>only because</em> of the treatment: Y(1) = 1, Y(0) = 0. <b>#33</b> (mild, untreated) would have recovered only if treated, a benefit nobody ever saw. In the simulation the treatment helps exactly the patients whose hidden luck falls in a 10-point window, which is how "+10 points" is built in.`;
+    else v=`Averaging Y(1) − Y(0) over all ${S.N.toLocaleString()} patients (possible only inside a simulation): <b>average treatment effect (ATE) = ${pts(S.ate)}</b>, close to the designed +10 (the gap is sampling luck).<br>`+
+      `What the confounded hospital can actually compute, treated vs. untreated recovery: ${pct(S.yT)} − ${pct(S.yC)} = <span class="big bad-t">${pts(S.naive)}</span>. Wrong sign, roughly double the size. See the next tab for why.`;
+    document.getElementById("poVerdict").innerHTML=v;
+    setActive("po","po",key);
+  }
+  document.querySelectorAll("#panel-po [data-po]").forEach(b=>b.addEventListener("click",()=>renderPO(b.dataset.po)));
+  renderPO("seen");
+
+  /* ================= TAB 3: CONFOUNDED vs RANDOMIZED ================= */
+  let REPEAT=null;
+  function runRepeat(){
+    if(REPEAT) return REPEAT;
+    REPEAT={conf:[],rand:[]};
+    for(let s=1;s<=200;s++){ REPEAT.conf.push(summarize(hospital("conf",1000,s)).naive); REPEAT.rand.push(summarize(hospital("rand",1000,s)).naive); }
+    return REPEAT;
+  }
+  function renderRand(key){
+    const svg=document.getElementById("randSvg"); svg.innerHTML="";
+    const W=700,H=290, baseY=220, top=40, plotH=baseY-top;
+    let v="";
+    const bar=(x,val,col,lab,w)=>{ w=w||64; const h=val*plotH; svg.appendChild(el("rect",{x,y:baseY-h,width:w,height:h,fill:col,["fill-opacity"]:0.75,stroke:"var(--ink)",["stroke-width"]:0.6})); svg.appendChild(txt(x+w/2,baseY-h-7,lab,col,12,"middle","700")); };
+    if(key==="conf"||key==="rand"){
+      const S=SUM[key];
+      svg.appendChild(txt(20,18,"left: recovery rate in each group · right: share of each group that is SEVERE","var(--ink-soft)",11,"start","600"));
+      bar(70,S.yT,"var(--c1)",pct(S.yT)); bar(150,S.yC,"var(--c2)",pct(S.yC));
+      svg.appendChild(txt(102,baseY+18,"treated","var(--ink)",11.5,"middle","600")); svg.appendChild(txt(182,baseY+18,"untreated","var(--ink)",11.5,"middle","600"));
+      svg.appendChild(txt(142,baseY+40,"recovered","var(--ink-soft)",11));
+      bar(420,S.sevT,"var(--c3)",pct(S.sevT)); bar(500,S.sevC,"var(--c3)",pct(S.sevC));
+      svg.appendChild(txt(452,baseY+18,"treated","var(--ink)",11.5,"middle","600")); svg.appendChild(txt(532,baseY+18,"untreated","var(--ink)",11.5,"middle","600"));
+      svg.appendChild(txt(492,baseY+40,"share severe","var(--ink-soft)",11));
+      if(key==="conf") v=`Assignment: severe patients treated 80% of the time, mild ones 20%.<br>Treated recover <b>${pct(S.yT)}</b>, untreated <b>${pct(S.yC)}</b> → naive effect <span class="big bad-t">${pts(S.naive)}</span>, yet the true effect is <b>+10 pts</b> (in-sample ATE ${pts(S.ate)}).<br>Why: the treated group is <b>${pct(S.sevT)}</b> severe, the untreated only <b>${pct(S.sevC)}</b>. The comparison is mostly "sick vs. healthy", not "treated vs. untreated". By hand, with exact probabilities: 0.2×0.9 + 0.8×0.4 = 0.50 vs. 0.8×0.8 + 0.2×0.3 = 0.70, a naive gap of exactly −20 pts.`;
+      else v=`Assignment: a fair coin, regardless of severity.<br>Treated recover <b>${pct(S.yT)}</b>, untreated <b>${pct(S.yC)}</b> → simple difference <span class="big good-t">${pts(S.naive)}</span>, matching the true +10 (in-sample ATE ${pts(S.ate)}).<br>Why: both groups are now about half severe (<b>${pct(S.sevT)}</b> vs <b>${pct(S.sevC)}</b>). The coin can't "know" who is sick, so severity can't line up with treatment. Same people, same severity, same luck; only the assignment rule changed.`;
+    } else if(key==="strat"){
+      const S=SUM.conf;
+      svg.appendChild(txt(20,18,"confounded hospital, recovery rate compared WITHIN each severity level","var(--ink-soft)",11,"start","600"));
+      [["mild",80],["severe",400]].forEach(([k,x])=>{ const o=S.strata[k]; bar(x,o.yT,"var(--c1)",pct(o.yT)); bar(x+80,o.yC,"var(--c2)",pct(o.yC));
+        svg.appendChild(txt(x+32,baseY+18,`treated (${o.nT})`,"var(--ink)",10.5,"middle","600")); svg.appendChild(txt(x+112,baseY+18,`untreated (${o.nC})`,"var(--ink)",10.5,"middle","600"));
+        svg.appendChild(txt(x+72,baseY+40,`${k} patients: ${pts(o.diff)}`,"var(--c1)",12,"middle","700")); });
+      const m=S.strata.mild, s=S.strata.severe;
+      v=`Within mild patients: ${pct(m.yT)} − ${pct(m.yC)} = <b>${pts(m.diff)}</b>. Within severe patients: ${pct(s.yT)} − ${pct(s.yC)} = <b>${pts(s.diff)}</b>. Both positive.<br>`+
+        `<b>Adjusted effect</b> = P(mild)·(mild gap) + P(severe)·(severe gap) = ${(m.n/S.N).toFixed(4)} × ${(100*m.diff).toFixed(2)} + ${(s.n/S.N).toFixed(4)} × ${(100*s.diff).toFixed(2)} = <span class="big good-t">${pts(S.adj)}</span><br>`+
+        `<span class="note">Adjustment recovers the truth from the very same confounded data, but <b>only because severity was measured</b>. An unmeasured confounder can't be stratified on; only randomization handles those.</span>`;
+    } else {
+      const R=runRepeat();
+      svg.appendChild(txt(20,18,"200 experiments of 1,000 patients each: where does each design's simple difference land?","var(--ink-soft)",11,"start","600"));
+      const lo=-0.35, hi=0.25, bw=0.01, nb=Math.round((hi-lo)/bw);
+      const px=v=>40+(v-lo)/(hi-lo)*620;
+      const hist=a=>{ const c=new Array(nb).fill(0); a.forEach(x=>{ const i=Math.floor((x-lo)/bw); if(i>=0&&i<nb) c[i]++; }); return c; };
+      const hc=hist(R.conf), hr=hist(R.rand), mx=Math.max(...hc,...hr);
+      [[hc,"var(--c3)"],[hr,"var(--c1)"]].forEach(([c,col])=>c.forEach((k,i)=>{ if(!k) return; const h=k/mx*plotH; svg.appendChild(el("rect",{x:px(lo+i*bw)+0.5,y:baseY-h,width:620/nb-1,height:h,fill:col,["fill-opacity"]:0.7})); }));
+      svg.appendChild(el("line",{x1:40,y1:baseY,x2:660,y2:baseY,stroke:"var(--ink)",["stroke-width"]:1.3}));
+      for(let t=-0.3;t<=0.2001;t+=0.1){ svg.appendChild(txt(px(t),baseY+16,(t>=0?"+":"")+(100*t).toFixed(0),"var(--ink-soft)",10.5)); }
+      svg.appendChild(txt(350,baseY+34,"simple difference, treated − untreated (percentage points)","var(--ink-soft)",10.5));
+      [[0.1,"true +10","var(--ink)"],[0,"0","var(--ink-soft)"]].forEach(([x,l,c])=>{ svg.appendChild(el("line",{x1:px(x),y1:top-6,x2:px(x),y2:baseY,stroke:c,["stroke-width"]:1.5,["stroke-dasharray"]:"5 3"})); svg.appendChild(txt(px(x),top-10,l,c,11,"middle","700")); });
+      const stat=a=>{ const m=a.reduce((s,x)=>s+x,0)/a.length; return {m, sd:Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/a.length), min:Math.min(...a), max:Math.max(...a)}; };
+      const c=stat(R.conf), r=stat(R.rand);
+      svg.appendChild(txt(px(c.m),top+14,"confounded","var(--c3)",12,"middle","700")); svg.appendChild(txt(px(r.m)+40,top+14,"randomized","var(--c1)",12,"middle","700"));
+      v=`<span class="bad-t">Confounded</span>: average <b>${pts(c.m)}</b> (spread ±${(100*c.sd).toFixed(1)} pts); even the luckiest of 200 runs was ${pts(c.max)}, still the wrong sign.<br>`+
+        `<span class="good-t">Randomized</span>: average <b>${pts(r.m)}</b> (spread ±${(100*r.sd).toFixed(1)} pts), centered on the truth. Individual runs range from ${pts(r.min)} to ${pts(r.max)}: that leftover wobble is ordinary sampling noise, the thing p-values and confidence intervals measure.<br>`+
+        `<span class="note">More data shrinks the randomized wobble. More data does nothing for confounding bias: it just makes the wrong answer more precise.</span>`;
+    }
+    svg.appendChild(el("line",{x1:20,y1:baseY,x2:W-20,y2:baseY,stroke:"var(--ink)",["stroke-width"]:1.3}));
+    document.getElementById("randVerdict").innerHTML=v;
+    setActive("rand","rand",key);
+  }
+  document.querySelectorAll("#panel-rand [data-rand]").forEach(b=>b.addEventListener("click",()=>renderRand(b.dataset.rand)));
+  renderRand("conf");
+
+  /* ================= TAB 4: DAGS ================= */
+  function chainSim(N,seed){ const rng=mulberry32(seed), P=[]; for(let i=0;i<N;i++){ const d=rng()<0.5, m=rng()<(d?0.8:0.3), y=rng()<(m?0.1:0.3); P.push({d,m,y:y?1:0}); } return P; }
+  function colliderSim(N,seed,thr){ const rng=mulberry32(seed), P=[]; for(let i=0;i<N;i++){ const x=gauss(rng), z=gauss(rng); P.push({x,z,sel:x+z>thr}); } return P; }
+  function corr(P){ const n=P.length, mx=P.reduce((s,p)=>s+p.x,0)/n, mz=P.reduce((s,p)=>s+p.z,0)/n; let sxz=0,sxx=0,szz=0; P.forEach(p=>{ sxz+=(p.x-mx)*(p.z-mz); sxx+=(p.x-mx)**2; szz+=(p.z-mz)**2; }); return sxz/Math.sqrt(sxx*szz); }
+  const CHAIN=chainSim(10000,11), COLL=colliderSim(2000,5,1.5);
+  function drawDag(shape){
+    const svg=document.getElementById("dagSvg"); svg.innerHTML="";
+    const defs=el("defs",{}); const mk=el("marker",{id:"arr",viewBox:"0 0 10 10",refX:"9",refY:"5",markerWidth:"7",markerHeight:"7",orient:"auto-start-reverse"}); mk.appendChild(el("path",{d:"M 0 0 L 10 5 L 0 10 z",fill:"var(--ink)"})); defs.appendChild(mk); svg.appendChild(defs);
+    const node=(x,y,lab,sub,col)=>{ svg.appendChild(el("circle",{cx:x,cy:y,r:30,fill:"#fff",stroke:col||"var(--ink)",["stroke-width"]:2.2})); svg.appendChild(txt(x,y+4,lab,col||"var(--ink)",12,"middle","700")); if(sub) svg.appendChild(txt(x,y+48,sub,"var(--ink-soft)",10)); };
+    const arrow=(x1,y1,x2,y2,dash)=>{ const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy), ux=dx/L, uy=dy/L; svg.appendChild(el("line",{x1:x1+ux*32,y1:y1+uy*32,x2:x2-ux*34,y2:y2-uy*34,stroke:"var(--ink)",["stroke-width"]:2,["marker-end"]:"url(#arr)",["stroke-dasharray"]:dash||"none"})); };
+    if(shape==="fork"){ node(130,60,"Sev","severity","var(--c3)"); node(55,190,"T","treatment"); node(205,190,"Y","recovery"); arrow(130,60,55,190); arrow(130,60,205,190); arrow(55,190,205,190); svg.appendChild(txt(130,20,"T ← Sev → Y","var(--ink)",12,"middle","700")); }
+    if(shape==="chain"){ node(45,130,"D","drug"); node(130,130,"M","BP ctrl","var(--c3)"); node(215,130,"Y","heart att."); arrow(45,130,130,130); arrow(130,130,215,130); svg.appendChild(txt(130,40,"D → M → Y","var(--ink)",12,"middle","700")); }
+    if(shape==="collider"){ node(55,70,"X","talent"); node(205,70,"Z","looks"); node(130,200,"S","selected","var(--c3)"); arrow(55,70,130,200); arrow(205,70,130,200); svg.appendChild(txt(130,20,"X → S ← Z","var(--ink)",12,"middle","700")); }
+  }
+  function renderDag(key){
+    drawDag(key);
+    const svg=document.getElementById("dagResSvg"); svg.innerHTML="";
+    const baseY=200, top=40, plotH=baseY-top;
+    let v="";
+    const bar=(x,val,col,lab,sub,scale)=>{ const h=Math.abs(val)*scale; const y=val>=0?baseY-h:baseY; svg.appendChild(el("rect",{x,y,width:70,height:Math.max(h,1),fill:col,["fill-opacity"]:0.75})); svg.appendChild(txt(x+35,val>=0?y-7:y+h+14,lab,col,12,"middle","700")); svg.appendChild(txt(x+35,232,sub,"var(--ink-soft)",10.5)); };
+    if(key==="fork"){
+      const S=SUM.conf; const sc=plotH/0.3*0.55;
+      svg.appendChild(txt(10,18,"estimated effect of T on Y (true: +10 pts)","var(--ink-soft)",11,"start","600"));
+      const zero=120; svg.appendChild(el("line",{x1:20,y1:zero,x2:410,y2:zero,stroke:"var(--ink)",["stroke-width"]:1.2}));
+      const b2=(x,val,col,lab,sub)=>{ const h=Math.abs(val)*sc*1.6; const y=val>=0?zero-h:zero; svg.appendChild(el("rect",{x,y,width:80,height:h,fill:col,["fill-opacity"]:0.75})); svg.appendChild(txt(x+40,val>=0?y-7:y+h+15,lab,col,12,"middle","700")); svg.appendChild(txt(x+40,248,sub,"var(--ink-soft)",10.5)); };
+      b2(40,S.naive,"var(--c3)",pts(S.naive),"ignore Sev"); b2(170,S.adj,"var(--c1)",pts(S.adj),"adjust for Sev"); b2(300,SUM.rand.naive,"var(--c1)",pts(SUM.rand.naive),"randomize T");
+      v=`<b>Fork</b>: severity causes both who gets treated and who recovers. It opens a "backdoor" path T ← Sev → Y that carries non-causal association.<br>Ignoring it: <span class="bad-t">${pts(S.naive)}</span>. Adjusting for it (compare within severity, then average): <span class="good-t">${pts(S.adj)}</span>. Randomizing T (cuts the Sev → T arrow): <span class="good-t">${pts(SUM.rand.naive)}</span>.<br><b>Rule: adjust for common causes.</b>`;
+    } else if(key==="chain"){
+      const mean=(a,f)=>a.reduce((s,p)=>s+f(p),0)/a.length;
+      const D1=CHAIN.filter(p=>p.d), D0=CHAIN.filter(p=>!p.d), total=mean(D1,p=>p.y)-mean(D0,p=>p.y);
+      let adj=0; const st={};
+      [true,false].forEach(m=>{ const S=CHAIN.filter(p=>p.m===m), a=S.filter(p=>p.d), b=S.filter(p=>!p.d); st[m]={n:S.length,diff:mean(a,p=>p.y)-mean(b,p=>p.y)}; adj+=S.length/CHAIN.length*st[m].diff; });
+      const sc=plotH/0.12;
+      svg.appendChild(txt(10,18,"effect of D on heart-attack rate (true total effect: −10 pts)","var(--ink-soft)",11,"start","600"));
+      const zero=60; svg.appendChild(el("line",{x1:20,y1:zero,x2:410,y2:zero,stroke:"var(--ink)",["stroke-width"]:1.2}));
+      const b2=(x,val,col,lab,sub)=>{ const h=Math.abs(val)*sc; const y=val>=0?zero-h:zero; svg.appendChild(el("rect",{x,y,width:90,height:Math.max(h,1.5),fill:col,["fill-opacity"]:0.75})); svg.appendChild(txt(x+45,val>=0?y-7:y+h+15,lab,col,12,"middle","700")); svg.appendChild(txt(x+45,248,sub,"var(--ink-soft)",10.5)); };
+      b2(60,total,"var(--c1)",pts(total),"don't adjust"); b2(250,adj,"var(--c3)",pts(adj),"adjust for M");
+      v=`<b>Chain</b>: a randomized drug D lowers heart attacks <em>by</em> controlling blood pressure M (80% controlled on the drug vs. 30% off it; 10% vs. 30% heart-attack risk). No other route.<br>Total effect, not adjusting: <span class="good-t">${pts(total)}</span> (exact: 0.14 − 0.24 = −10 pts).<br>"Controlling for" M: within controlled-BP patients ${pts(st[true].diff)}, within uncontrolled ${pts(st[false].diff)}, averaged <span class="bad-t">${pts(adj)}</span>: the real benefit vanishes, because M <em>is</em> the benefit.<br><b>Rule: don't adjust for a mediator if you want the total effect.</b>`;
+    } else {
+      const rAll=corr(COLL), S=COLL.filter(p=>p.sel), rSel=corr(S), rRej=corr(COLL.filter(p=>!p.sel));
+      const cx=210, cy=135, sc=32;
+      svg.appendChild(el("line",{x1:20,y1:cy,x2:400,y2:cy,stroke:"var(--line)",["stroke-width"]:1})); svg.appendChild(el("line",{x1:cx,y1:22,x2:cx,y2:250,stroke:"var(--line)",["stroke-width"]:1}));
+      COLL.forEach(p=>{ const X=cx+p.x*sc, Y=cy-p.z*sc; if(X<20||X>400||Y<22||Y>250) return; svg.appendChild(el("circle",{cx:X,cy:Y,r:p.sel?2.6:1.6,fill:p.sel?"var(--c3)":"var(--ink-soft)",["fill-opacity"]:p.sel?0.85:0.25})); });
+      // selection boundary x+z=1.5
+      svg.appendChild(el("line",{x1:cx+(-1.6)*sc,y1:cy-(3.1)*sc,x2:cx+(3.8)*sc,y2:cy-(-2.3)*sc,stroke:"var(--c3)",["stroke-width"]:1.3,["stroke-dasharray"]:"5 3"}));
+      svg.appendChild(txt(10,16,"talent (→) vs looks (↑): grey = everyone, red = selected","var(--ink-soft)",11,"start","600"));
+      v=`<b>Collider</b>: talent X and looks Z are generated <em>independently</em> (2,000 people). Someone gets selected (cast, hired, admitted) if talent + looks &gt; 1.5.<br>Everyone: correlation r = <span class="good-t">${rAll.toFixed(3)}</span> (none). Only the ${S.length} selected: r = <span class="big bad-t">${rSel.toFixed(3)}</span>. Among the rejected: r = ${rRej.toFixed(3)}.<br>Among selected people, the less talented ones <em>must</em> be better looking (or they wouldn't have made the cut), so a negative link appears out of nothing. This is <b>collider bias</b> (Berkson's paradox).<br><b>Rule: never condition on a common effect</b>, and watch out when your dataset itself is a selected group.`;
+    }
+    document.getElementById("dagVerdict").innerHTML=v;
+    setActive("dag","dag",key);
+  }
+  document.querySelectorAll("#panel-dag [data-dag]").forEach(b=>b.addEventListener("click",()=>renderDag(b.dataset.dag)));
+  renderDag("fork");
+})();
+</script>
+</body>
+</html>

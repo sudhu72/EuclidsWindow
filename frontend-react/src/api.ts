@@ -32,6 +32,8 @@ export async function streamTutor(
     history?: ChatMsg[];
     learnerLevel?: string;
     sessionId?: string;
+    /** Bypass the curated keyword tier (see TutorStreamRequest.skip_curated). */
+    skipCurated?: boolean;
     onMeta?: (m: TutorMeta) => void;
     onAids?: (a: TutorAids) => void;
   },
@@ -46,6 +48,7 @@ export async function streamTutor(
       history: opts.history ?? [],
       learner_level: opts.learnerLevel ?? "teen",
       session_id: opts.sessionId,
+      skip_curated: opts.skipCurated ?? false,
     }),
     signal,
   });

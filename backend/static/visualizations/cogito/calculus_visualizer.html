@@ -71,6 +71,7 @@
     <button class="tab" data-tab="taylor">Taylor Tower</button>
     <button class="tab" data-tab="motion">Motion Vectors</button>
     <button class="tab" data-tab="gears">Gears</button>
+    <button class="tab" data-tab="rules">Derivative Rules</button>
   </div>
 
   <!-- ============ TAB 1: ZOOM IN (local linearity) ============ -->
@@ -218,6 +219,36 @@
           </div>
           <div class="stat" id="gearStat"></div>
           <div class="caption"><b>Why it matters:</b> <code>θ_A = (r_B/r_A)·θ_B</code> and <code>θ_B = (r_C/r_B)·θ_C</code> chain together into <code>θ_A = (r_C/r_A)·θ_C</code> — the same "outer rate times inner rate, middle term cancels" shape as <code>d/dx f(g(x)) = f'(g(x))·g'(x)</code>, just with plain numbers instead of derivative symbols.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: DERIVATIVE RULES ============ -->
+  <div class="panel" id="panel-rules">
+    <div class="card">
+      <h2>The Rest of the Rulebook: Product, Quotient, ln x, and p − y</h2>
+      <p class="sub"><b>What's happening:</b> every rule here comes from a picture, not a memorized formula. The <b>product rule</b> is a rectangle whose two sides both grow. The <b>quotient rule</b> is the product rule plus the chain rule. <b>(ln x)' = 1/x</b> is eˣ's graph mirrored across y = x, which flips every slope upside down. Chained together, they give the <b>log-loss gradient p − y</b>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with <em>Product rule</em> and drag <em>dx</em> toward 0. The coral corner square disappears much faster than the two strips. Then step through the other presets. Each one shows the rule's answer next to a finite-difference check, so you never have to take a number on trust.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" data-drpreset="product">Product rule: growing rectangle</button>
+        <button class="op" data-drpreset="sig0">Quotient rule: sigmoid at z = 0</button>
+        <button class="op" data-drpreset="sig2">Quotient rule: sigmoid at z = 2</button>
+        <button class="op" data-drpreset="ln">ln x as mirrored eˣ</button>
+        <button class="op" data-drpreset="ll1">Log-loss gradient (y = 1, z = 0.5)</button>
+        <button class="op" data-drpreset="ll0">Log-loss gradient (y = 0, z = 2)</button>
+      </div>
+      <div class="cols">
+        <div class="col" style="min-width:340px;">
+          <canvas id="drCanvas" width="520" height="380"></canvas>
+          <div class="legend" id="drLegend"></div>
+        </div>
+        <div class="col">
+          <div class="row" id="drRowDx"><label>dx</label><input type="range" id="drDx" min="0" max="100" step="1" value="100"><span class="readout" id="drDxOut">0.100</span></div>
+          <div class="row" id="drRowZ"><label>z</label><input type="range" id="drZ" min="-6" max="6" step="0.05" value="0"><span class="readout" id="drZOut">0.00</span></div>
+          <div class="row" id="drRowA"><label>x</label><input type="range" id="drA" min="0.3" max="3.5" step="0.05" value="2"><span class="readout" id="drAOut">2.00</span></div>
+          <div class="stat" id="drStat">Pick a preset.</div>
+          <div class="caption" id="drCaption"></div>
         </div>
       </div>
     </div>
@@ -633,6 +664,109 @@
   }
   drawZoom(); drawTaylor(); drawFTC(); drawMotion(); drawGears();
   requestAnimationFrame(loop);
+})();
+</script>
+<script>
+/* ===== Derivative Rules tab (self-contained) ===== */
+(function(){
+  "use strict";
+  const cv=document.getElementById("drCanvas"), ctx=cv.getContext("2d"), W=cv.width, H=cv.height;
+  const st=document.getElementById("drStat"), cap=document.getElementById("drCaption"), leg=document.getElementById("drLegend");
+  const dxS=document.getElementById("drDx"), zS=document.getElementById("drZ"), aS=document.getElementById("drA");
+  function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function f4(v){ const r=Math.round(v*10000)/10000; return (Math.abs(r)<5e-5?0:r).toFixed(4); }
+  function fd(f,x){ const h=1e-5; return (f(x+h)-f(x-h))/(2*h); }
+  const sig=z=>1/(1+Math.exp(-z));
+  let mode="product", yLabel=1;
+  function rows(dx,z,a){ document.getElementById("drRowDx").style.display=dx?"flex":"none"; document.getElementById("drRowZ").style.display=z?"flex":"none"; document.getElementById("drRowA").style.display=a?"flex":"none"; }
+  function legend(items){ leg.innerHTML=items.map(i=>`<span><span class="sw" style="background:${i[0]}"></span>${i[1]}</span>`).join(""); }
+  function view(xmin,xmax,ymin,ymax){ const r={x0:40,y0:14,w:W-56,h:H-44};
+    return {r, X:x=>r.x0+(x-xmin)/(xmax-xmin)*r.w, Y:y=>r.y0+r.h-(y-ymin)/(ymax-ymin)*r.h, xmin,xmax,ymin,ymax}; }
+  function frame(v,step){
+    ctx.clearRect(0,0,W,H); ctx.fillStyle=css('--plot')||"#FBFBF8"; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle=css('--grid')||"#E4E9E7"; ctx.lineWidth=1; ctx.fillStyle=css('--ink-soft'); ctx.font="11px IBM Plex Mono, monospace";
+    for(let g=Math.ceil(v.xmin/step)*step; g<=v.xmax+1e-9; g+=step){ const p=v.X(g); ctx.beginPath(); ctx.moveTo(p,v.r.y0); ctx.lineTo(p,v.r.y0+v.r.h); ctx.stroke(); ctx.fillText(String(Math.round(g*100)/100),p-6,v.r.y0+v.r.h+14); }
+    for(let g=Math.ceil(v.ymin/step)*step; g<=v.ymax+1e-9; g+=step){ const p=v.Y(g); ctx.beginPath(); ctx.moveTo(v.r.x0,p); ctx.lineTo(v.r.x0+v.r.w,p); ctx.stroke(); ctx.fillText(String(Math.round(g*100)/100),v.r.x0-30,p+4); }
+    ctx.strokeStyle=css('--ink-soft'); ctx.lineWidth=1.3;
+    if(v.ymin<=0&&v.ymax>=0){ ctx.beginPath(); ctx.moveTo(v.r.x0,v.Y(0)); ctx.lineTo(v.r.x0+v.r.w,v.Y(0)); ctx.stroke(); }
+    if(v.xmin<=0&&v.xmax>=0){ ctx.beginPath(); ctx.moveTo(v.X(0),v.r.y0); ctx.lineTo(v.X(0),v.r.y0+v.r.h); ctx.stroke(); }
+  }
+  function curve(v,f,color,lw,dash){ ctx.save(); ctx.beginPath(); ctx.rect(v.r.x0,v.r.y0,v.r.w,v.r.h); ctx.clip(); ctx.strokeStyle=color; ctx.lineWidth=lw||2.5; ctx.setLineDash(dash||[]); ctx.beginPath(); let pen=false;
+    for(let px=0;px<=v.r.w;px++){ const x=v.xmin+(v.xmax-v.xmin)*px/v.r.w, y=f(x); if(!isFinite(y)){pen=false;continue;} const Y=v.Y(y); if(Y<-2000||Y>2000){pen=false;continue;} if(!pen){ctx.moveTo(v.r.x0+px,Y);pen=true;} else ctx.lineTo(v.r.x0+px,Y); }
+    ctx.stroke(); ctx.restore(); }
+  function dot(v,x,y,color){ ctx.fillStyle=color; ctx.beginPath(); ctx.arc(v.X(x),v.Y(y),5,0,2*Math.PI); ctx.fill(); }
+  function tangent(v,x0,y0,m,color){ curve(v,x=>y0+m*(x-x0),color,2,[6,4]); }
+
+  function drawProduct(){
+    rows(true,false,false);
+    const dx=0.001*Math.pow(100, dxS.value/100); document.getElementById("drDxOut").textContent=dx.toFixed(3);
+    const x=1, F=x*x, G=Math.sin(x), F1=(x+dx)*(x+dx), G1=Math.sin(x+dx), dF=F1-F, dG=G1-G;
+    const v=view(0,1.5,0,1.1); frame(v,0.25);
+    const P=(xx,yy,ww,hh,col)=>{ ctx.fillStyle=col; ctx.fillRect(v.X(xx),v.Y(yy+hh),v.X(xx+ww)-v.X(xx),v.Y(yy)-v.Y(yy+hh)); };
+    P(0,0,F,G,"rgba(70,58,115,0.12)");
+    P(F,0,dF,G,"rgba(15,139,141,0.55)");      // g·df (side strip)
+    P(0,G,F,dG,"rgba(217,166,46,0.65)");      // f·dg (top strip)
+    P(F,G,dF,dG,"rgba(217,99,107,0.85)");     // corner
+    ctx.strokeStyle=css('--accent'); ctx.lineWidth=2; ctx.strokeRect(v.X(0),v.Y(G),v.X(F)-v.X(0),v.Y(0)-v.Y(G));
+    ctx.fillStyle=css('--ink'); ctx.font="12px IBM Plex Mono, monospace";
+    ctx.fillText("width f = x² = "+f4(F),v.X(0.05),v.Y(0)-8); ctx.fillText("height g = sin x = "+f4(G),v.X(0.05),v.Y(G)-8-Math.max(0,v.Y(G)-v.Y(G+dG)));
+    legend([["rgba(70,58,115,0.35)","old area f·g"],["rgba(15,139,141,0.75)","side strip g·df"],["rgba(217,166,46,0.85)","top strip f·dg"],["rgba(217,99,107,0.9)","corner df·dg"]]);
+    const rule=2*Math.sin(1)+Math.cos(1), num=fd(t=>t*t*Math.sin(t),1);
+    st.innerHTML=`<b>f = x², g = sin x, at x = 1</b><br>side strip g·df = ${f4(G*dF)}<br>top strip f·dg = ${f4(F*dG)}<br>corner df·dg = ${f4(dF*dG)}<br>sum = ${f4(G*dF+F*dG+dF*dG)} = true change ${f4(F1*G1-F*G)}<br><b>corner ÷ dx = ${f4(dF*dG/dx)}</b> → 0 as dx → 0<br>(total change) ÷ dx = ${f4((F1*G1-F*G)/dx)}<br>rule f'g + fg' = 2·sin 1 + cos 1 = <span class="big">${f4(rule)}</span><br>finite difference = ${f4(num)}`;
+    cap.innerHTML="<b>Why it matters:</b> the corner is a small amount times a small amount, so it vanishes even after dividing by dx. Only the two strips survive, and that's why the product rule has exactly two terms.";
+  }
+  function drawSig(){
+    rows(false,true,false);
+    const z=parseFloat(zS.value); document.getElementById("drZOut").textContent=z.toFixed(2);
+    const v=view(-6,6,-0.1,1.1); frame(v,1);
+    curve(v,sig,css('--curve')); const p=sig(z), d=p*(1-p);
+    tangent(v,z,p,d,css('--tan')); dot(v,z,p,css('--accum'));
+    legend([[css('--curve'),"σ(z) = 1/(1+e^(−z))"],[css('--tan'),"tangent, slope σ'(z)"]]);
+    const q=Math.exp(-z)/Math.pow(1+Math.exp(-z),2);
+    st.innerHTML=`<b>σ = f/g with f = 1, g = 1 + e^(−z)</b><br>f' = 0, g' = −e^(−z)<br>quotient rule: (f'g − fg')/g² = e^(−z)/(1+e^(−z))² = ${f4(q)}<br>tidied form σ(1 − σ): σ = ${f4(p)}, so σ(1−σ) = <span class="big">${f4(d)}</span><br>finite difference = ${f4(fd(sig,z))}`;
+    cap.innerHTML="<b>Why it matters:</b> the sigmoid turns a score into a probability in logistic regression and in neural-network output layers. Its slope σ(1 − σ) is the second gear in the log-loss gradient.";
+  }
+  function drawLn(){
+    rows(false,false,true);
+    const a=parseFloat(aS.value); document.getElementById("drAOut").textContent=a.toFixed(2);
+    const v=view(-2.5,4,-2.5,4); frame(v,1);
+    curve(v,x=>x,"#9AA1AA",1.4,[4,4]);
+    curve(v,Math.exp,css('--curve')); curve(v,Math.log,css('--accum'));
+    const la=Math.log(a);
+    tangent(v,la,a,a,css('--tan')); tangent(v,a,la,1/a,css('--bad'));
+    dot(v,la,a,css('--curve')); dot(v,a,la,css('--accum'));
+    ctx.strokeStyle="#9AA1AA"; ctx.setLineDash([2,3]); ctx.beginPath(); ctx.moveTo(v.X(la),v.Y(a)); ctx.lineTo(v.X(a),v.Y(la)); ctx.stroke(); ctx.setLineDash([]);
+    legend([[css('--curve'),"eˣ"],[css('--accum'),"ln x"],["#9AA1AA","mirror line y = x"],[css('--tan'),"tangent to eˣ"],[css('--bad'),"tangent to ln x"]]);
+    st.innerHTML=`<b>matching points</b><br>on eˣ: (ln ${a.toFixed(2)}, ${a.toFixed(2)}) = (${f4(la)}, ${f4(a)})<br>on ln x: (${f4(a)}, ${f4(la)}), the same point mirrored<br>slope of eˣ there = e^(ln x) = x = ${f4(fd(Math.exp,la))}<br>slope of ln x = 1 ÷ that = <span class="big">${f4(1/a)}</span><br>finite difference of ln at ${a.toFixed(2)} = ${f4(fd(Math.log,a))}`;
+    cap.innerHTML="<b>Why it matters:</b> mirroring across y = x swaps rise and run, so every slope turns into its reciprocal. Because eˣ is its own derivative, its slope at height x is x, which makes ln's slope 1/x. That 1/x is the first gear of every log-loss gradient.";
+  }
+  function drawLL(){
+    rows(false,true,false);
+    const z=parseFloat(zS.value); document.getElementById("drZOut").textContent=z.toFixed(2);
+    const y=yLabel, L=t=>-(y*Math.log(sig(t))+(1-y)*Math.log(1-sig(t)));
+    const v=view(-6,6,-0.5,6.5); frame(v,1);
+    curve(v,L,css('--curve')); const p=sig(z);
+    tangent(v,z,L(z),p-y,css('--tan')); dot(v,z,L(z),css('--accum'));
+    legend([[css('--curve'),"log loss L(z) for y = "+y],[css('--tan'),"tangent, slope dL/dz"]]);
+    const g1=-y/p+(1-y)/(1-p), g2=p*(1-p);
+    st.innerHTML=`<b>L = −[y·ln p + (1−y)·ln(1−p)], p = σ(z), y = ${y}</b><br>p = σ(${z.toFixed(2)}) = ${f4(p)}<br>gear 1 (needs (ln x)' = 1/x): dL/dp = −y/p + (1−y)/(1−p) = ${f4(g1)}<br>gear 2 (quotient rule): dp/dz = p(1−p) = ${f4(g2)}<br>product = ${f4(g1*g2)}<br>p − y = <span class="big">${f4(p-y)}</span><br>finite difference of L = ${f4(fd(L,z))}`;
+    cap.innerHTML="<b>Why it matters:</b> the 1/p from the logarithm cancels exactly against the p in the sigmoid's slope, leaving the gradient \"prediction minus truth.\" This is the gradient that logistic regression and every sigmoid-output network train on.";
+  }
+  function draw(){ ({product:drawProduct,sig:drawSig,ln:drawLn,ll:drawLL})[mode](); }
+  const P={
+    product:()=>{ mode="product"; dxS.value=100; },
+    sig0:()=>{ mode="sig"; zS.value=0; },
+    sig2:()=>{ mode="sig"; zS.value=2; },
+    ln:()=>{ mode="ln"; aS.value=2; },
+    ll1:()=>{ mode="ll"; yLabel=1; zS.value=0.5; },
+    ll0:()=>{ mode="ll"; yLabel=0; zS.value=2; }
+  };
+  document.querySelectorAll("[data-drpreset]").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("[data-drpreset]").forEach(x=>x.classList.remove("active")); b.classList.add("active");
+    P[b.dataset.drpreset](); draw(); }));
+  [dxS,zS,aS].forEach(s=>s.addEventListener("input",draw));
+  document.querySelector('[data-drpreset="product"]').classList.add("active");
+  draw();
 })();
 </script>
 </body>

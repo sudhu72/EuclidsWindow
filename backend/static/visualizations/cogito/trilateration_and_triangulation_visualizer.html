@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trilateration and Triangulation, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#1F6F63; --accent-soft:#E4F0ED;
+    --c1:#1F6F63; --c2:#D9A62E; --c3:#C1524A; --c4:#5B4B95;
+    --good:#1F6F63; --bad:#C1524A;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1020px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  label.field{ font-size:12.5px; color:var(--ink-soft); display:block; margin-bottom:4px; }
+  input[type=range]{ width:220px; vertical-align:middle; }
+  .slider-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+  .slider-row .val{ font-family:"IBM Plex Mono", monospace; color:var(--accent); font-weight:600; min-width:60px; text-align:right; }
+  svg{ width:100%; max-width:600px; height:auto; display:block; margin:14px auto; background:#F8F6F2; border-radius:10px; }
+  .statgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:14px 0; }
+  .stat{ background:var(--accent-soft); border-radius:10px; padding:12px 14px; }
+  .stat .n{ font-family:"IBM Plex Mono",monospace; font-size:18px; font-weight:600; color:var(--accent); }
+  .stat .l{ font-size:11.5px; color:var(--ink-soft); margin-top:2px; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.8; white-space:pre-line; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Trilateration and Triangulation</div>
+    <h1>Pinning Down a Point, Two Ways</h1>
+    <p>Drag the sliders in either tab and watch the exact numbers from the tutorial recompute live — three circles solving for a hidden point, or a baseline and two angles solving for a distant one.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="trilat">Trilateration</button>
+    <button class="tab" data-tab="triang">Triangulation</button>
+  </div>
+
+  <!-- ============ TAB: TRILATERATION ============ -->
+  <div class="panel active" id="panel-trilat">
+    <div class="card">
+      <h2>Three Distances, One Point</h2>
+      <p class="sub"><b>What's happening:</b> anchors A=(0,0), B=(10,0), C=(0,10) are fixed, matching the tutorial's own worked example. Drag the hidden target's true (x,y) and watch the three circles — and the algebra that recovers it exactly — update live. Then drag the clock-bias slider and watch the recovered point drift away from the truth.</p>
+      <div class="slider-row"><label class="field" style="margin:0;">Target x</label><input type="range" id="tx" min="0.5" max="9.5" step="0.1" value="4"><span class="val" id="txVal">4.0</span></div>
+      <div class="slider-row"><label class="field" style="margin:0;">Target y</label><input type="range" id="ty" min="0.5" max="9.5" step="0.1" value="3"><span class="val" id="tyVal">3.0</span></div>
+      <div class="slider-row"><label class="field" style="margin:0;">Clock bias (added to every distance)</label><input type="range" id="bias" min="-1.5" max="1.5" step="0.05" value="0"><span class="val" id="biasVal">0.00</span></div>
+      <svg id="trilatSvg" viewBox="0 0 600 600"></svg>
+      <div class="statgrid">
+        <div class="stat"><div class="n" id="rA">—</div><div class="l">distance to A</div></div>
+        <div class="stat"><div class="n" id="rB">—</div><div class="l">distance to B</div></div>
+        <div class="stat"><div class="n" id="rC">—</div><div class="l">distance to C</div></div>
+        <div class="stat"><div class="n" id="posError">—</div><div class="l">recovered vs. true error</div></div>
+      </div>
+      <div class="verdict" id="trilatVerdict"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: TRIANGULATION ============ -->
+  <div class="panel" id="panel-triang">
+    <div class="card">
+      <h2>A Baseline and Two Angles, One Distant Point</h2>
+      <p class="sub"><b>What's happening:</b> drag the baseline length and the two angles measured at each end. Both the Law-of-Sines route and a completely independent coordinate-geometry route are computed live, and should always agree.</p>
+      <div class="slider-row"><label class="field" style="margin:0;">Baseline D-E (m)</label><input type="range" id="baseline" min="50" max="150" step="1" value="100"><span class="val" id="baselineVal">100</span></div>
+      <div class="slider-row"><label class="field" style="margin:0;">Angle at D (degrees)</label><input type="range" id="angleD" min="20" max="90" step="1" value="62"><span class="val" id="angleDVal">62</span></div>
+      <div class="slider-row"><label class="field" style="margin:0;">Angle at E (degrees)</label><input type="range" id="angleE" min="20" max="90" step="1" value="78"><span class="val" id="angleEVal">78</span></div>
+      <svg id="triangSvg" viewBox="0 0 600 420"></svg>
+      <div class="statgrid">
+        <div class="stat"><div class="n" id="angleT">—</div><div class="l">third angle, at T</div></div>
+        <div class="stat"><div class="n" id="distDT">—</div><div class="l">D to T (Law of Sines)</div></div>
+        <div class="stat"><div class="n" id="distET">—</div><div class="l">E to T (Law of Sines)</div></div>
+        <div class="stat"><div class="n" id="crossCheck">—</div><div class="l">E to T, from coordinates</div></div>
+      </div>
+      <div class="verdict" id="triangVerdict"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Trilateration and Triangulation — The Feynman Way</b>, part of
+    <a href="../README.md">Building Mathematical Intuition From First Principles</a>.
+    Open in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+function el(tag, attrs, text){
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  if(text!==undefined) e.textContent = text;
+  return e;
+}
+
+// ================= TRILATERATION =================
+const ANCHORS = { A:[0,0], B:[10,0], C:[0,10] };
+function dist(p1,p2){ return Math.hypot(p1[0]-p2[0], p1[1]-p2[1]); }
+
+function solveTrilateration(rA, rB, rC){
+  // subtract circle A from B, and A from C -> linear 2x2 system
+  const [x1,y1] = ANCHORS.A, [x2,y2] = ANCHORS.B, [x3,y3] = ANCHORS.C;
+  const a1 = 2*(x2-x1), b1 = 2*(y2-y1);
+  const c1 = rA*rA - rB*rB + (x2*x2+y2*y2) - (x1*x1+y1*y1);
+  const a2 = 2*(x3-x1), b2 = 2*(y3-y1);
+  const c2 = rA*rA - rC*rC + (x3*x3+y3*y3) - (x1*x1+y1*y1);
+  // solve [[a1,b1],[a2,b2]] . [x,y] = [c1,c2]
+  const det = a1*b2 - a2*b1;
+  const x = (c1*b2 - c2*b1)/det;
+  const y = (a1*c2 - a2*c1)/det;
+  return [x,y];
+}
+
+// coordinate transform: model space [0,10]x[0,10] -> svg space [60,540]x[540,60] (flip y)
+const PAD = 60, SIZE = 480;
+function toSvg(p){ return [PAD + p[0]/10*SIZE, PAD+SIZE - p[1]/10*SIZE]; }
+
+function renderTrilat(){
+  const tx = parseFloat(document.getElementById("tx").value);
+  const ty = parseFloat(document.getElementById("ty").value);
+  const bias = parseFloat(document.getElementById("bias").value);
+  document.getElementById("txVal").textContent = tx.toFixed(1);
+  document.getElementById("tyVal").textContent = ty.toFixed(1);
+  document.getElementById("biasVal").textContent = bias.toFixed(2);
+
+  const target = [tx, ty];
+  const rA_true = dist(target, ANCHORS.A);
+  const rB_true = dist(target, ANCHORS.B);
+  const rC_true = dist(target, ANCHORS.C);
+  const rA = rA_true + bias, rB = rB_true + bias, rC = rC_true + bias;
+
+  document.getElementById("rA").textContent = rA.toFixed(3);
+  document.getElementById("rB").textContent = rB.toFixed(3);
+  document.getElementById("rC").textContent = rC.toFixed(3);
+
+  const recovered = solveTrilateration(rA, rB, rC);
+  const err = dist(recovered, target);
+  document.getElementById("posError").textContent = err.toFixed(4);
+
+  const svg = document.getElementById("trilatSvg");
+  svg.innerHTML = "";
+  const scale = SIZE/10;
+  // circles (radius scaled)
+  const colors = {A:"var(--c1)", B:"var(--c2)", C:"var(--c4)"};
+  [["A",rA],["B",rB],["C",rC]].forEach(([name,r])=>{
+    const [cx,cy] = toSvg(ANCHORS[name]);
+    svg.appendChild(el("circle",{cx,cy,r:Math.max(0,r*scale),fill:"none",stroke:colors[name],"stroke-width":2,opacity:0.7}));
+  });
+  // anchors
+  Object.keys(ANCHORS).forEach(name=>{
+    const [px,py] = toSvg(ANCHORS[name]);
+    svg.appendChild(el("circle",{cx:px,cy:py,r:6,fill:colors[name]}));
+    svg.appendChild(el("text",{x:px+10,y:py-10,"font-size":13,"font-family":"IBM Plex Mono, monospace",fill:colors[name],"font-weight":600},name));
+  });
+  // true target
+  const [ttx,tty] = toSvg(target);
+  svg.appendChild(el("circle",{cx:ttx,cy:tty,r:7,fill:"none",stroke:"var(--ink)","stroke-width":2}));
+  svg.appendChild(el("text",{x:ttx+10,y:tty+18,"font-size":12,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink-soft)"},"true"));
+  // recovered target
+  const [rtx,rty] = toSvg(recovered);
+  svg.appendChild(el("circle",{cx:rtx,cy:rty,r:5,fill:"var(--bad)"}));
+  svg.appendChild(el("text",{x:rtx+10,y:rty+2,"font-size":12,"font-family":"IBM Plex Mono, monospace",fill:"var(--bad)"},"recovered"));
+
+  const v = document.getElementById("trilatVerdict");
+  v.textContent = Math.abs(bias) < 1e-6
+    ? `With no clock bias, the recovered point lands exactly on the true point -- error ${err.toFixed(6)} (floating-point noise only).`
+    : `A clock bias of ${bias.toFixed(2)} shifts every "measured" distance by the same amount, and the recovered point drifts ${err.toFixed(4)} units away from the truth -- exactly the structural error a real GPS receiver would see without a 4th satellite to solve for this bias.`;
+}
+["tx","ty","bias"].forEach(id=>document.getElementById(id).addEventListener("input", renderTrilat));
+renderTrilat();
+
+// ================= TRIANGULATION =================
+function renderTriang(){
+  const baseline = parseFloat(document.getElementById("baseline").value);
+  const angleD = parseFloat(document.getElementById("angleD").value);
+  const angleE = parseFloat(document.getElementById("angleE").value);
+  document.getElementById("baselineVal").textContent = baseline.toFixed(0);
+  document.getElementById("angleDVal").textContent = angleD.toFixed(0);
+  document.getElementById("angleEVal").textContent = angleE.toFixed(0);
+
+  const angleT = 180 - angleD - angleE;
+  document.getElementById("angleT").textContent = angleT.toFixed(1)+"°";
+
+  if(angleT <= 0){
+    document.getElementById("triangVerdict").textContent = "These two angles sum to 180° or more -- no valid triangle exists. Reduce one of them.";
+    document.getElementById("distDT").textContent = "—";
+    document.getElementById("distET").textContent = "—";
+    document.getElementById("crossCheck").textContent = "—";
+    document.getElementById("triangSvg").innerHTML = "";
+    return;
+  }
+
+  const rad = d => d*Math.PI/180;
+  const DT = baseline * Math.sin(rad(angleE)) / Math.sin(rad(angleT));
+  const ET = baseline * Math.sin(rad(angleD)) / Math.sin(rad(angleT));
+  document.getElementById("distDT").textContent = DT.toFixed(2)+" m";
+  document.getElementById("distET").textContent = ET.toFixed(2)+" m";
+
+  // coordinates: D=(0,0), E=(baseline,0), T from D's angle+distance
+  const D = [0,0], E = [baseline,0];
+  const T = [DT*Math.cos(rad(angleD)), DT*Math.sin(rad(angleD))];
+  const crossCheck = Math.hypot(T[0]-E[0], T[1]-E[1]);
+  document.getElementById("crossCheck").textContent = crossCheck.toFixed(2)+" m";
+
+  // render
+  const svg = document.getElementById("triangSvg");
+  svg.innerHTML = "";
+  const W=600,H=420, padX=60, padY=60;
+  const maxX = Math.max(D[0],E[0],T[0]), maxY = Math.max(D[1],E[1],T[1],1);
+  const sx = (W-2*padX)/Math.max(maxX,1), sy = (H-2*padY)/Math.max(maxY,1);
+  const s = Math.min(sx,sy);
+  function pt(p){ return [padX + p[0]*s, H-padY - p[1]*s]; }
+  const [dx,dy] = pt(D), [ex,ey] = pt(E), [txp,typ] = pt(T);
+
+  svg.appendChild(el("line",{x1:dx,y1:dy,x2:ex,y2:ey,stroke:"var(--c1)","stroke-width":2.5}));
+  svg.appendChild(el("line",{x1:dx,y1:dy,x2:txp,y2:typ,stroke:"var(--c2)","stroke-width":2}));
+  svg.appendChild(el("line",{x1:ex,y1:ey,x2:txp,y2:typ,stroke:"var(--c4)","stroke-width":2}));
+  [[D,"D",dx,dy,"var(--c1)"],[E,"E",ex,ey,"var(--c1)"],[T,"T",txp,typ,"var(--c3)"]].forEach(([_,name,px,py,color])=>{
+    svg.appendChild(el("circle",{cx:px,cy:py,r:6,fill:color}));
+    svg.appendChild(el("text",{x:px+8,y:py-8,"font-size":14,"font-family":"IBM Plex Mono, monospace",fill:color,"font-weight":600},name));
+  });
+  svg.appendChild(el("text",{x:(dx+ex)/2,y:dy+18,"text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono, monospace",fill:"var(--c1)"},"baseline = "+baseline.toFixed(0)+"m"));
+
+  document.getElementById("triangVerdict").textContent =
+    `Law of Sines gives E-to-T = ${ET.toFixed(2)}m; computing T's position from D's angle and distance, then measuring straight-line distance back to E from those coordinates, independently gives ${crossCheck.toFixed(2)}m -- the two completely different routes agree.`;
+}
+["baseline","angleD","angleE"].forEach(id=>document.getElementById(id).addEventListener("input", renderTriang));
+renderTriang();
+</script>
+</body>
+</html>

@@ -70,6 +70,31 @@
 
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+
+  /* ---- Relations (step-through presets) ---- */
+  #panel-relations .rl-presets{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  #panel-relations .rl-ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; }
+  #panel-relations .rl-ctrl .rl-count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  #panel-relations .rl-stage{ min-height:160px; }
+  #panel-relations .rl-log{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.75; max-height:260px; overflow:auto; }
+  #panel-relations .rl-log div{ color:var(--ink-soft); } #panel-relations .rl-log div.cur{ color:var(--ink); font-weight:600; }
+  #panel-relations .rl-box{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13.5px; margin-bottom:10px; line-height:1.8; }
+  #panel-relations .rl-box .k{ display:block; color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+  #panel-relations .rl-box b{ color:var(--accent); }
+  #panel-relations .rl-flex{ display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; }
+  #panel-relations table.rl-grid{ border-collapse:separate; border-spacing:3px; font-family:"IBM Plex Mono",monospace; font-size:12px; }
+  #panel-relations table.rl-grid th{ color:var(--ink-soft); font-weight:600; padding:0 4px; }
+  #panel-relations table.rl-grid td{ width:30px; height:30px; border-radius:6px; background:#F3F5F4; border:1px solid var(--line); text-align:center; color:#fff; font-weight:700; }
+  #panel-relations table.rl-grid.small td{ width:16px; height:16px; border-radius:3px; }
+  #panel-relations table.rl-grid td.in{ background:var(--accent); border-color:var(--accent); }
+  #panel-relations table.rl-grid td.w{ outline:3px solid var(--c4); outline-offset:1px; }
+  #panel-relations table.rl-grid td.miss{ background:#FBE3E4; border:2px dashed var(--c4); }
+  #panel-relations .rl-checks div{ font-family:"IBM Plex Mono",monospace; font-size:13.5px; margin:4px 0; }
+  #panel-relations .good{ color:#1E8A5A; font-weight:700; } #panel-relations .bad{ color:#C2413B; font-weight:700; }
+  #panel-relations .rl-classes{ display:flex; gap:10px; flex-wrap:wrap; margin:6px 0; }
+  #panel-relations .rl-class{ font-family:"IBM Plex Mono",monospace; font-size:14px; padding:6px 12px; border-radius:20px; color:#fff; }
+  #panel-relations .rl-parts{ display:flex; gap:16px; flex-wrap:wrap; }
+  #panel-relations .rl-part{ background:#FBFCFC; border:1px solid var(--line); border-radius:10px; padding:8px 10px; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:13px; }
 </style>
 </head>
 <body>
@@ -85,6 +110,7 @@
     <button class="tab" data-tab="hotel">Hilbert's Hotel</button>
     <button class="tab" data-tab="diag">Cantor's Diagonal</button>
     <button class="tab" data-tab="fnmachine">Function Machine</button>
+    <button class="tab" data-tab="relations">Relations</button>
   </div>
 
   <!-- ============ TAB 1: VENN DIAGRAM ============ -->
@@ -181,6 +207,18 @@
       <svg viewBox="0 0 480 320" id="fnSvg"></svg>
       <div class="verdict" id="fnVerdict"></div>
       <div class="caption"><b>Why it matters:</b> a red-ringed dot means two arrows landed on it — a collision, breaking injective. A gray dot with no incoming arrow breaks surjective. At equal codomain size, watch these two failures always arrive together — never one without the other.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: RELATIONS ============ -->
+  <div class="panel" id="panel-relations">
+    <div class="card">
+      <h2>Relations, Equivalence Classes, and Union-Find</h2>
+      <p class="sub">A relation is a grid of pairs: a filled cell in row a, column b means a ~ b. Reflexive = the whole diagonal is filled; symmetric = the grid is its own mirror image across the diagonal; transitive = a ~ b and b ~ c always force a ~ c. Every preset plays itself; use Step, Play, Jump to end or Reset.</p>
+      <div class="rl-presets" id="rlPresets"></div>
+      <div class="rl-ctrl"><button class="op" data-rl="step">Step ▸</button><button class="op" data-rl="play">▶ Play</button><button class="op" data-rl="end">Jump to end ⏭</button><button class="op" data-rl="reset">↺ Reset</button><span class="rl-count"></span></div>
+      <div class="rl-stage" id="rlStage"></div>
+      <div class="rl-log" id="rlLog"></div>
     </div>
   </div>
 
@@ -565,6 +603,124 @@
     renderFn();
   })();
 
+})();
+</script>
+<script>
+/* ================= RELATIONS (presets for set-theory.md Part 2.2) ================= */
+(function(){
+  "use strict";
+  const COLORS = ["#463A73", "#0F8B8D", "#D9A62E", "#D9636B", "#5B4B95", "#6B7280"];
+  const box = (k, v) => `<div class="rl-box"><span class="k">${k}</span>${v}</div>`;
+  const key = (a, b) => a + "," + b;
+  function build(S, rel){ const R = new Set(); S.forEach(a => S.forEach(b => { if (rel(a, b)) R.add(key(a, b)); })); return R; }
+  function checkRefl(S, R){ for (const a of S) if (!R.has(key(a, a))) return { ok: false, w: [[a, a]], miss: [[a, a]], txt: `(${a},${a}) is missing` }; return { ok: true }; }
+  function checkSym(S, R){ for (const a of S) for (const b of S) if (R.has(key(a, b)) && !R.has(key(b, a))) return { ok: false, w: [[a, b]], miss: [[b, a]], txt: `${a} ~ ${b} but not ${b} ~ ${a}` }; return { ok: true }; }
+  function checkTrans(S, R){ for (const a of S) for (const b of S) for (const c of S) if (R.has(key(a, b)) && R.has(key(b, c)) && !R.has(key(a, c))) return { ok: false, w: [[a, b], [b, c]], miss: [[a, c]], txt: `${a} ~ ${b} and ${b} ~ ${c}, but not ${a} ~ ${c}` }; return { ok: true }; }
+  function grid(S, R, o){
+    o = o || {}; const has = (L, a, b) => L && L.some(p => p[0] === a && p[1] === b);
+    let h = `<table class="rl-grid${o.small ? " small" : ""}"><tr><th></th>${S.map(b => `<th>${o.small ? "" : b}</th>`).join("")}</tr>`;
+    S.forEach(a => { h += `<tr><th>${o.small ? "" : a}</th>` + S.map(b => {
+      const inR = R.has(key(a, b)), col = o.color ? o.color(a) : null;
+      const cls = (inR ? "in" : "") + (has(o.w, a, b) ? " w" : "") + (has(o.miss, a, b) ? " miss" : "");
+      return `<td class="${cls}"${inR && col ? ` style="background:${col};border-color:${col}"` : ""}></td>`; }).join("") + `</tr>`; });
+    return h + `</table>`;
+  }
+  const line = (name, r) => `<div>${r.ok ? `<span class="good">✓</span>` : `<span class="bad">✗</span>`} ${name}${r.ok ? "" : ` — ${r.txt}`}</div>`;
+  function classesOf(S, R){ const out = [], seen = new Set(); S.forEach(a => { if (seen.has(a)) return; const c = S.filter(x => R.has(key(a, x))); c.forEach(x => seen.add(x)); out.push(c); }); return out; }
+  const classHtml = cl => `<div class="rl-classes">${cl.map((c, i) => `<span class="rl-class" style="background:${COLORS[i % COLORS.length]}">{${c.join(", ")}}</span>`).join("")}</div>`;
+
+  function propertyFrames(S, rel, label, desc){
+    const R = build(S, rel), r1 = checkRefl(S, R), r2 = checkSym(S, R), r3 = checkTrans(S, R), eq = r1.ok && r2.ok && r3.ok;
+    const fr = [], head = box("relation", `${label} on {${S.join(", ")}} — ${R.size} pairs`);
+    const view = (o, checks, extra) => head + `<div class="rl-flex">${grid(S, R, o)}<div class="rl-checks">${checks}${extra || ""}</div></div>`;
+    fr.push({ html: view({}, ""), note: `${label}: ${desc}` });
+    fr.push({ html: view(r1.ok ? { w: S.map(a => [a, a]) } : r1, line("reflexive", r1)), note: `reflexive: ${r1.ok ? "every (a,a) is filled (the diagonal)" : r1.txt}` });
+    fr.push({ html: view(r2.ok ? {} : r2, line("reflexive", r1) + line("symmetric", r2)), note: `symmetric: ${r2.ok ? "the grid mirrors across the diagonal" : r2.txt}` });
+    fr.push({ html: view(r3.ok ? {} : r3, line("reflexive", r1) + line("symmetric", r2) + line("transitive", r3)), note: `transitive: ${r3.ok ? "every chain closes" : r3.txt}` });
+    if (eq){
+      const cl = classesOf(S, R), ci = {}; cl.forEach((c, i) => c.forEach(x => ci[x] = i));
+      fr.push({ html: head + `<div class="rl-flex">${grid(S, R, { color: a => COLORS[ci[a] % COLORS.length] })}<div class="rl-checks">${line("reflexive", r1) + line("symmetric", r2) + line("transitive", r3)}<div class="good" style="margin-top:8px">an equivalence relation</div>${box("its classes (a partition)", classHtml(cl))}</div></div>`, note: `Equivalence relation. Classes: ${cl.map(c => "{" + c.join(",") + "}").join(" ")}` });
+    } else {
+      fr.push({ html: view(r3.ok ? (r2.ok ? r1 : r2) : r3, line("reflexive", r1) + line("symmetric", r2) + line("transitive", r3), `<div class="bad" style="margin-top:8px">not an equivalence relation</div><div style="font-family:Inter,sans-serif;font-size:13px;max-width:360px;margin-top:6px">${!r2.ok ? "It's an ordering, not a grouping: belonging together has to go both ways." : "Its \"groups\" would drift along chains: there's no clean way to sort into drawers."}</div>`), note: "Not an equivalence relation, so it doesn't sort into groups." });
+    }
+    return fr;
+  }
+  function countFrames(){
+    const S = [0, 1, 2], pairs = []; S.forEach(a => S.forEach(b => pairs.push([a, b])));
+    let refl = 0, sym = 0, tr = 0; const eqs = [];
+    for (let m = 0; m < 512; m++){
+      const R = new Set(); pairs.forEach((p, k) => { if (m >> k & 1) R.add(key(p[0], p[1])); });
+      const a = checkRefl(S, R).ok, b = checkSym(S, R).ok, c = checkTrans(S, R).ok;
+      refl += a; sym += b; tr += c; if (a && b && c) eqs.push(R);
+    }
+    const nm = ["a", "b", "c"];
+    const parts = eqs.map(R => { const cl = classesOf(S, R), ci = {}; cl.forEach((c, i) => c.forEach(x => ci[x] = i));
+      return `<div class="rl-part">${grid(S, R, { small: true, color: a => COLORS[ci[a]] })}<div style="margin-top:4px">${cl.map(c => c.map(x => nm[x]).join("")).join(" | ")}</div></div>`; });
+    return [
+      { html: box("all relations on {a, b, c}", `9 possible pairs, each in or out: 2⁹ = <b>${pairs.length === 9 ? 512 : "?"}</b> relations — every one checked live below`), note: "2^9 = 512 relations on a 3-element set." },
+      { html: box("all relations on {a, b, c}", "2⁹ = <b>512</b>") + box("how many have each property", `reflexive: <b>${refl}</b> &nbsp; symmetric: <b>${sym}</b> &nbsp; transitive: <b>${tr}</b>`), note: `reflexive ${refl}, symmetric ${sym}, transitive ${tr}` },
+      { html: box("all relations on {a, b, c}", "2⁹ = <b>512</b>") + box("how many have each property", `reflexive: <b>${refl}</b> &nbsp; symmetric: <b>${sym}</b> &nbsp; transitive: <b>${tr}</b>`) + box("all three at once", `<b>${eqs.length}</b> equivalence relations`), note: `all three: ${eqs.length}` },
+      { html: box("all relations on {a, b, c}", "2⁹ = <b>512</b>") + box("how many have each property", `reflexive: <b>${refl}</b> &nbsp; symmetric: <b>${sym}</b> &nbsp; transitive: <b>${tr}</b>`) + box(`the ${eqs.length} equivalence relations, and the partition each one is`, `<div class="rl-parts">${parts.join("")}</div>`) + box("so", `equivalence relations on 3 things = ways to chop 3 things into pieces = <b>${eqs.length}</b> (the Bell number B₃)`), note: `Each of the ${eqs.length} is a partition: abc, ab|c, ac|b, a|bc, a|b|c.` },
+    ];
+  }
+  function fractionFrames(){
+    const F = [[1, 2], [2, 4], [3, 6], [1, 3], [2, 6], [2, 3]], lab = f => `${f[0]}/${f[1]}`;
+    const rel = (x, y) => x[0] * y[1] === x[1] * y[0];
+    const items = [[box("fractions as pairs of whole numbers", F.map(lab).join(", ")), "Six fractions, written as pairs (a, b)."],
+      [box("the rule", "a/b ~ c/d exactly when a·d = b·c (no division needed)"), "a/b ~ c/d when a·d = b·c."],
+      [box("1/2 ~ 2/4?", `1·4 = ${1 * 4}, 2·2 = ${2 * 2} → <span class="good">${rel(F[0], F[1])}</span>`), `1·4 = 2·2, so 1/2 ~ 2/4.`],
+      [box("2/4 ~ 3/6?", `2·6 = ${2 * 6}, 4·3 = ${4 * 3} → <span class="good">${rel(F[1], F[2])}</span>`), `2·6 = 4·3, so 2/4 ~ 3/6.`],
+      [box("1/2 ~ 1/3?", `1·3 = ${1 * 3}, 2·1 = ${2 * 1} → <span class="bad">${rel(F[0], F[3])}</span>`), "1·3 ≠ 2·1, so 1/2 is not ~ 1/3."]];
+    const cl = []; F.forEach(f => { const c = cl.find(c => rel(c[0], f)); if (c) c.push(f); else cl.push([f]); });
+    items.push([box("the classes", `<div class="rl-classes">${cl.map((c, i) => `<span class="rl-class" style="background:${COLORS[i]}">{${c.map(lab).join(", ")}}</span>`).join("")}</div>A rational number <i>is</i> one of these classes; lowest terms just names it by one member.`), `Classes: ${cl.map(c => "{" + c.map(lab).join(", ") + "}").join(" ")}`]);
+    return items.map((_, k) => ({ html: items.slice(0, k + 1).map(i => i[0]).join(""), note: items[k][1] }));
+  }
+  function ufFrames(N, edges, label, extraNote){
+    const parent = Array.from({length: N}, (_, i) => i);
+    const find = x => { while (parent[x] !== x) x = parent[x]; return x; };
+    const S = Array.from({length: N}, (_, i) => i);
+    const groups = () => { const g = {}; S.forEach(v => (g[find(v)] = g[find(v)] || []).push(v)); return Object.values(g); };
+    const view = (note) => box("parent array (each element points toward its class's representative)", `<table class="rl-grid"><tr><th>x</th>${S.map(v => `<th>${v}</th>`).join("")}</tr><tr><th>parent</th>${S.map(v => `<td style="background:#fff;color:#1B2430;border-color:#D9E0DE">${parent[v]}</td>`).join("")}</tr></table>`) + box("classes so far", classHtml(groups())) + (note || "");
+    const fr = [{ html: box("evidence", label) + view(), note: `Start: every element is its own class (${N} classes).` }];
+    edges.forEach(([a, b]) => { const ra = find(a), rb = find(b); if (ra !== rb) parent[ra] = rb;
+      fr.push({ html: box("evidence", label) + box("union", `union(${a}, ${b}): find(${a}) = ${ra}, find(${b}) = ${rb} → point ${ra} at ${rb}`) + view(), note: `union(${a}, ${b}) → ${groups().map(g => "{" + g.join(",") + "}").join(" ")}` }); });
+    // brute-force closure to compare
+    let R = new Set(S.map(v => key(v, v))); edges.forEach(([a, b]) => { R.add(key(a, b)); R.add(key(b, a)); });
+    let changed = true; while (changed){ changed = false; for (const p of [...R]) for (const q of [...R]){ const [a, b] = p.split(","), [c, d] = q.split(","); if (b === c && !R.has(key(a, d))){ R.add(key(a, d)); changed = true; } } }
+    const RS = new Set([...R].map(String)), cb = classesOf(S, RS).map(c => c.join(",")).sort().join(" "), cu = groups().map(c => c.join(",")).sort().join(" ");
+    const ci = {}; classesOf(S, RS).forEach((c, i) => c.forEach(x => ci[x] = i));
+    fr.push({ html: box("evidence", label) + view() + box("check against brute force: reflexive + symmetric + transitive closure of the evidence", `<div class="rl-flex">${grid(S, RS, { color: a => COLORS[ci[a] % COLORS.length] })}<div>${RS.size} pairs; same classes as union-find: <span class="${cb === cu ? "good" : "bad"}">${cb === cu}</span>${extraNote ? "<br>" + extraNote(find) : ""}</div></div>`), note: `Brute-force closure: ${RS.size} pairs, same classes: ${cb === cu}.` + (extraNote ? " " + extraNote(find).replace(/<[^>]+>/g, "") : "") });
+    return fr;
+  }
+  const PRESETS = [
+    ["≤ on {0,1,2,3}", () => propertyFrames([0, 1, 2, 3], (a, b) => a <= b, "a ≤ b", "an ordering")],
+    ["differ by at most 1", () => propertyFrames([0, 1, 2, 3], (a, b) => Math.abs(a - b) <= 1, "|a − b| ≤ 1", "\"close to\"")],
+    ["same remainder mod 3", () => propertyFrames([0, 1, 2, 3, 4, 5, 6, 7, 8], (a, b) => a % 3 === b % 3, "a mod 3 = b mod 3", "same remainder")],
+    ["512 relations, 5 equivalences", countFrames],
+    ["fractions 1/2 ~ 2/4 ~ 3/6", fractionFrames],
+    ["union-find on {0,…,7}", () => ufFrames(8, [[0, 1], [1, 2], [3, 4], [5, 6], [6, 7]], "0~1, 1~2, 3~4, 5~6, 6~7", f => `0 ~ 2? find(0) = ${f(0)}, find(2) = ${f(2)} → <span class="good">${f(0) === f(2)}</span>, though (0,2) was never in the evidence: transitivity`)],
+    ["chaining: 0…5, linked when within 1", () => ufFrames(6, [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]], "link a, b whenever |a − b| ≤ 1", f => `0 and 5 differ by 5, yet find(0) = ${f(0)} = find(5) = ${f(5)}: <span class="bad">one class</span> — "close to" isn't transitive, but union-find always is`)],
+  ];
+  const stage = document.getElementById("rlStage"), log = document.getElementById("rlLog"), cnt = document.querySelector("#panel-relations .rl-count"), pb = document.querySelector('#panel-relations [data-rl="play"]');
+  const P = { frames: [], i: 0, t: null };
+  P.draw = () => { const f = P.frames[P.i]; if (!f) return; stage.innerHTML = f.html;
+    log.innerHTML = P.frames.slice(0, P.i + 1).map((g, j) => g.note ? `<div class="${j === P.i ? "cur" : ""}">${g.note}</div>` : "").join(""); log.scrollTop = log.scrollHeight;
+    cnt.textContent = `step ${P.i + 1} of ${P.frames.length}`; };
+  P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+  P.play = () => { if (P.t){ P.stop(); return; } if (P.i >= P.frames.length - 1){ P.i = 0; P.draw(); }
+    const tick = () => { if (P.i >= P.frames.length - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, 1200); };
+    P.t = setTimeout(tick, 900); pb.textContent = "❚❚ Pause"; };
+  P.load = (fr, auto) => { P.stop(); P.frames = fr; P.i = 0; P.draw(); if (auto) P.play(); };
+  document.querySelector("#panel-relations .rl-ctrl").addEventListener("click", e => {
+    const a = e.target.dataset && e.target.dataset.rl; if (!a) return;
+    if (a === "play") return P.play();
+    P.stop(); if (a === "step" && P.i < P.frames.length - 1) P.i++; if (a === "end") P.i = P.frames.length - 1; if (a === "reset") P.i = 0; P.draw();
+  });
+  const bar = document.getElementById("rlPresets"), btns = [];
+  PRESETS.forEach(([name, fn]) => { const b = document.createElement("button"); b.className = "op pre"; b.textContent = name;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); P.load(fn(), true); });
+    bar.appendChild(b); btns.push(b); });
+  btns[0].classList.add("active"); P.load(PRESETS[0][1](), false);
 })();
 </script>
 </body>

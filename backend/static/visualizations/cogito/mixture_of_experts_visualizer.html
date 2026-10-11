@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mixture-of-Experts, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:180px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:60px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:560px;height:auto;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mixture-of-Experts, live</h1>
+  <p class="sub">Two demos: drag a toy token through a real router and watch top-k selection and sparse activation happen live, then drag a routing-imbalance slider and watch the load-balancing loss respond in real time.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="routing">Routing &amp; Sparse Activation</button>
+    <button class="tab-btn" data-tab="balance">Load Balancing</button>
+  </div>
+
+  <!-- ==================== TAB 1: ROUTING ==================== -->
+  <div class="tabpage active" id="tab-routing">
+    <div class="panel">
+      <h2>4 Experts, Top-k Routing</h2>
+      <p class="sub">Drag the token's own 4 features. The router scores every expert; only the top-k highest-scoring experts actually run.</p>
+      <div class="slider-row"><label for="x0">token feature 0</label><input type="range" id="x0" min="-1" max="1" step="0.05" value="0.5"><output id="x0Out">0.50</output></div>
+      <div class="slider-row"><label for="x1">token feature 1</label><input type="range" id="x1" min="-1" max="1" step="0.05" value="-0.2"><output id="x1Out">-0.20</output></div>
+      <div class="slider-row"><label for="x2">token feature 2</label><input type="range" id="x2" min="-1" max="1" step="0.05" value="0.8"><output id="x2Out">0.80</output></div>
+      <div class="slider-row"><label for="x3">token feature 3</label><input type="range" id="x3" min="-1" max="1" step="0.05" value="0.1"><output id="x3Out">0.10</output></div>
+      <div class="row">
+        <button class="op active" id="btnK1" onclick="setTopK(1)">top-1</button>
+        <button class="op" id="btnK2" onclick="setTopK(2)">top-2</button>
+        <button class="op" id="btnK3" onclick="setTopK(3)">top-3</button>
+      </div>
+      <svg id="routingSvg" viewBox="0 0 480 180"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">total params (4 experts)</div><div class="num" id="totalParams">—</div></div>
+        <div class="metric coral"><div class="lbl">active params (this token)</div><div class="num" id="activeParams">—</div></div>
+        <div class="metric amber"><div class="lbl">total / active ratio</div><div class="num" id="paramRatio">—</div></div>
+      </div>
+      <div class="story-line" id="routingStory"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: LOAD BALANCING ==================== -->
+  <div class="tabpage" id="tab-balance">
+    <div class="panel">
+      <h2>The Auxiliary Load-Balancing Loss</h2>
+      <p class="sub">L_aux = N_experts · Σᵢ fᵢ·Pᵢ. Drag toward "collapsed" and watch the loss climb — the router has a real, trainable incentive not to hoard tokens in one favorite expert.</p>
+      <div class="slider-row"><label for="imbalance">Routing imbalance</label><input type="range" id="imbalance" min="0" max="1" step="0.01" value="0"><output id="imbalanceOut">0.00</output></div>
+      <svg id="balanceSvg" viewBox="0 0 480 200"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">L_aux</div><div class="num" id="lAux">—</div></div>
+        <div class="metric green"><div class="lbl">uniform floor (N=4)</div><div class="num">1.0000</div></div>
+        <div class="metric coral"><div class="lbl">vs. floor</div><div class="num" id="lAuxRatio">—</div></div>
+      </div>
+      <div class="story-line" id="balanceStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>§3.5.4 of ml_deep_learning_llm_feynman_tutorial.md</b>
+    (<a href="../deep_learning/ml_deep_learning_llm_feynman_tutorial.md">ml_deep_learning_llm_feynman_tutorial.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ==================== TAB 1: ROUTING ====================
+  const N_EXPERTS = 4;
+  const PARAMS_PER_EXPERT = 32;
+  const W_ROUTER = [
+    [ 0.9, -0.3,  0.2,  0.1],
+    [-0.4,  0.7,  0.5, -0.2],
+    [ 0.3,  0.2, -0.6,  0.8],
+    [ 0.1, -0.5,  0.4,  0.3],
+  ];
+  let topK = 1;
+  function softmax(v){
+    const m = Math.max(...v);
+    const e = v.map(x=>Math.exp(x-m));
+    const s = e.reduce((a,b)=>a+b,0);
+    return e.map(x=>x/s);
+  }
+  function updateRouting(){
+    const x = [0,1,2,3].map(i => parseFloat(document.getElementById("x"+i).value));
+    [0,1,2,3].forEach(i => document.getElementById("x"+i+"Out").textContent = x[i].toFixed(2));
+    // scores[e] = sum_i x[i]*W_ROUTER[i][e]
+    const scores = [0,0,0,0];
+    for(let e=0;e<N_EXPERTS;e++){
+      let s=0;
+      for(let i=0;i<4;i++) s += x[i]*W_ROUTER[i][e];
+      scores[e]=s;
+    }
+    const order = [0,1,2,3].sort((a,b)=>scores[b]-scores[a]);
+    const selected = order.slice(0, topK);
+    const selScores = selected.map(i=>scores[i]);
+    const weights = softmax(selScores);
+
+    const svg = document.getElementById("routingSvg");
+    svg.innerHTML = "";
+    const W=480,H=180, padB=30, padT=20, gap=110, barW=60;
+    const maxAbs = Math.max(1, ...scores.map(Math.abs));
+    svg.appendChild(el("line",{x1:20,y1:H/2,x2:W-20,y2:H/2,stroke:"var(--chalk-dim)","stroke-width":1}));
+    scores.forEach((s,e)=>{
+      const x0 = 40 + e*gap;
+      const h = (s/maxAbs)*(H/2-padT);
+      const isSelected = selected.includes(e);
+      const color = isSelected ? "var(--green)" : "rgba(244,241,232,0.15)";
+      const y0 = s>=0 ? H/2-h : H/2;
+      svg.appendChild(el("rect",{x:x0, y:y0, width:barW, height:Math.abs(h), fill:color, rx:4}));
+      svg.appendChild(el("text",{x:x0+barW/2, y: s>=0? y0-8 : y0+Math.abs(h)+16, "text-anchor":"middle", "font-size":11, fill: isSelected?"var(--green)":"var(--chalk-dim)"}, s.toFixed(2)));
+      svg.appendChild(el("text",{x:x0+barW/2, y:H-6, "text-anchor":"middle", "font-size":11, fill:"var(--chalk-dim)"}, "expert "+e));
+    });
+
+    const totalParams = N_EXPERTS*PARAMS_PER_EXPERT;
+    const activeParams = topK*PARAMS_PER_EXPERT;
+    document.getElementById("totalParams").textContent = totalParams;
+    document.getElementById("activeParams").textContent = activeParams;
+    document.getElementById("paramRatio").textContent = (totalParams/activeParams).toFixed(2)+"x";
+    document.getElementById("routingStory").innerHTML =
+      `Selected: <b>${selected.map(e=>"expert "+e).join(", ")}</b> with blend weights <b>${weights.map(w=>w.toFixed(3)).join(", ")}</b>. ` +
+      `Experts ${order.slice(topK).join(", ")} run zero compute for this token.`;
+  }
+  window.setTopK = function(k){
+    topK = k;
+    ["btnK1","btnK2","btnK3"].forEach((id,idx)=>document.getElementById(id).classList.toggle("active", idx+1===k));
+    updateRouting();
+  };
+  [0,1,2,3].forEach(i => document.getElementById("x"+i).addEventListener("input", updateRouting));
+  updateRouting();
+
+  // ==================== TAB 2: LOAD BALANCING ====================
+  function updateBalance(){
+    const t = parseFloat(document.getElementById("imbalance").value);
+    document.getElementById("imbalanceOut").textContent = t.toFixed(2);
+    // interpolate from uniform [.25,.25,.25,.25] to collapsed [.94,.02,.02,.02] for f
+    // and [.25,.25,.25,.25] to [.90,.04,.03,.03] for P
+    const fUniform = [0.25,0.25,0.25,0.25];
+    const fCollapsed = [0.94,0.02,0.02,0.02];
+    const pUniform = [0.25,0.25,0.25,0.25];
+    const pCollapsed = [0.90,0.04,0.03,0.03];
+    const f = fUniform.map((v,i)=> v + t*(fCollapsed[i]-v));
+    const p = pUniform.map((v,i)=> v + t*(pCollapsed[i]-v));
+    const N = 4;
+    const lAux = N * f.reduce((s,fi,i)=>s+fi*p[i],0);
+
+    document.getElementById("lAux").textContent = lAux.toFixed(4);
+    document.getElementById("lAuxRatio").textContent = (lAux/1.0).toFixed(2)+"x";
+
+    const svg = document.getElementById("balanceSvg");
+    svg.innerHTML = "";
+    const W=480,H=200, padB=40, padT=20, gap=110, barW=60;
+    svg.appendChild(el("line",{x1:20,y1:H-padB,x2:W-20,y2:H-padB,stroke:"var(--chalk-dim)"}));
+    f.forEach((v,e)=>{
+      const x0 = 40+e*gap;
+      const h = v*(H-padB-padT)/1.0;
+      svg.appendChild(el("rect",{x:x0,y:H-padB-h,width:barW,height:h,fill:"var(--amber)",opacity:0.85,rx:4}));
+      svg.appendChild(el("text",{x:x0+barW/2,y:H-padB-h-8,"text-anchor":"middle","font-size":11,fill:"var(--amber)"},(v*100).toFixed(0)+"%"));
+      svg.appendChild(el("text",{x:x0+barW/2,y:H-14,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"expert "+e));
+    });
+    svg.appendChild(el("text",{x:W/2,y:16,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"fraction of tokens routed to each expert (f)"));
+
+    document.getElementById("balanceStory").textContent = t < 0.1
+      ? "Routing is essentially uniform — L_aux sits right at its theoretical floor."
+      : (t > 0.7 ? "Routing has collapsed onto expert 0 — L_aux has climbed sharply, exactly as intended."
+                  : "Routing is drifting toward one favorite expert — L_aux is already rising.");
+  }
+  document.getElementById("imbalance").addEventListener("input", updateBalance);
+  updateBalance();
+})();
+</script>
+</body>
+</html>

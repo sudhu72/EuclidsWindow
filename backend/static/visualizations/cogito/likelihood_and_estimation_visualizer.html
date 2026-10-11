@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Likelihood and Estimation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; min-width:0; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .sub code, .caption code, .stat code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  .caption{ font-size:13.5px; color:var(--ink); margin-top:12px; line-height:1.6; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .presetlabel{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:4px 0 8px; }
+  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .layout > .plot{ flex:1 1 400px; min-width:0; }
+  .layout > .side{ flex:1 1 250px; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  svg text{ font-family:"IBM Plex Mono", monospace; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; overflow-wrap:anywhere; }
+  .stat .k{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; display:block; }
+  .stat b{ color:var(--accent); }
+  .ok, .stat b.ok{ color:var(--good); } .bad, .stat b.bad, .stat .k.bad{ color:var(--bad); }
+  .verdict{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin-top:12px; }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .legend span::before{ content:""; display:inline-block; width:12px; height:3px; margin-right:6px; vertical-align:middle; background:currentColor; }
+  .tablewrap{ overflow-x:auto; max-width:100%; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  th, td{ padding:7px 9px; border-bottom:1px solid var(--line); text-align:left; }
+  th{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); font-weight:600; }
+  td.num{ font-family:"IBM Plex Mono",monospace; text-align:right; white-space:nowrap; }
+  tr.hot td{ background:#FCEFC8; }
+  tr.best td{ font-weight:600; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; }
+  @media (max-width:520px){ .card{ padding:18px 14px; } .wrap{ padding-top:28px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Likelihood and Estimation</div>
+    <h1>Where Every Loss Function Comes From</h1>
+    <p>Likelihood holds the data fixed and asks how well each explanation fits it. Squared error, cross-entropy and regularization all fall out of that one idea. Every worked example from the file is a one-click preset below, and every number is computed live on this page.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="lik">1 · Likelihood vs. Probability</button>
+    <button class="tab" data-tab="logs">2 · Why Logs</button>
+    <button class="tab" data-tab="sq">3 · Squared Error = NLL</button>
+    <button class="tab" data-tab="ce">4 · Cross-Entropy = NLL</button>
+    <button class="tab" data-tab="map">5 · MAP</button>
+    <button class="tab" data-tab="mom">6 · Moments vs. MLE</button>
+    <button class="tab" data-tab="fi">7 · Fisher Information</button>
+  </div>
+
+  <!-- ============ TAB 1 ============ -->
+  <div class="panel active" id="panel-lik">
+    <div class="card">
+      <h2>7 heads in 10 flips: which coin explains it best?</h2>
+      <p class="sub">One formula, <code>C(10,7) · p⁷ · (1−p)³</code>, read two ways. Hold the data fixed and slide <code>p</code>: that's the <b>likelihood</b> curve. Hold <code>p</code> fixed and vary the outcome: that's a <b>probability</b> distribution.</p>
+      <div class="presetbar" id="likPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="likSvg" viewBox="0 0 600 340" role="img" aria-label="Likelihood curve or probability bars"></svg></div>
+        <div class="side" id="likSide"></div>
+      </div>
+      <div class="caption" id="likCaption"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2 ============ -->
+  <div class="panel" id="panel-logs">
+    <div class="card">
+      <h2>2,000 flips: the product dies, the log survives</h2>
+      <p class="sub">2,000 flips with exactly 1,394 heads, evaluated at <code>p = 0.7</code>. Each flip contributes a factor of 0.7 (heads) or 0.3 (tails). Teal is the running log-likelihood (a sum of logs). Gold is the log of the running product <i>as the computer actually stores it</i>, until the stored product becomes exactly 0.</p>
+      <div class="presetbar" id="logPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="logSvg" viewBox="0 0 600 340" role="img" aria-label="Running product versus running log-likelihood"></svg>
+          <div class="legend"><span style="color:var(--c1)">running log-likelihood</span><span style="color:var(--c2)">ln(stored product)</span><span style="color:var(--bad)">stored product = 0</span></div>
+        </div>
+        <div class="side" id="logSide"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>The coin, solved: the slope is zero at 0.7</h2>
+      <p class="sub">For 7 heads in 10, <code>log L(p) = 7·ln p + 3·ln(1−p)</code> and its slope is <code>7/p − 3/(1−p)</code>. Uphill before the peak, flat at the peak, downhill after.</p>
+      <div class="presetbar" id="slopePresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="slopeSvg" viewBox="0 0 600 320" role="img" aria-label="Log-likelihood curve with tangent lines"></svg></div>
+        <div class="side" id="slopeSide"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>A normal distribution, solved the same way</h2>
+      <p class="sub">Data <code>2, 4, 4, 4, 5, 5, 7, 9</code>. An optimizer climbs the normal log-likelihood over both <code>μ</code> and <code>σ</code>.</p>
+      <div class="presetbar" id="normPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="normSvg" viewBox="0 0 600 280" role="img" aria-label="Data with fitted normal curve"></svg></div>
+        <div class="side" id="normSide"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3 ============ -->
+  <div class="panel" id="panel-sq">
+    <div class="card">
+      <h2>Three candidate lines, ranked two ways</h2>
+      <p class="sub">Five points, <code>x = 1…5</code>, <code>y = 2.1, 3.9, 6.2, 7.8, 10.1</code>, noise assumed bell-shaped with <code>σ = 1</code>. Red segments are the errors. The Gaussian negative log-likelihood is <code>(5/2)·ln(2π) + SSE/2</code>, so both columns always agree on the ranking.</p>
+      <div class="presetbar" id="sqPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="sqSvg" viewBox="0 0 600 360" role="img" aria-label="Points and candidate lines"></svg></div>
+        <div class="side">
+          <div class="tablewrap"><table id="sqTable"></table></div>
+          <div class="stat" id="sqSide" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4 ============ -->
+  <div class="panel" id="panel-ce">
+    <div class="card">
+      <h2>20 students: each one's surprise adds up to the log loss</h2>
+      <p class="sub">Pass/fail vs. hours studied, fitted with logistic regression (refit on this page by Newton's method). Each student costs <code>−ln(probability the model gave to what actually happened)</code>. Total cost = −log-likelihood; divide by 20 and you have the log loss.</p>
+      <div class="presetbar" id="cePresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <svg id="ceTop" viewBox="0 0 600 250" role="img" aria-label="Fitted logistic curve with student outcomes"></svg>
+          <div style="height:10px"></div>
+          <svg id="ceBars" viewBox="0 0 600 250" role="img" aria-label="Each student's surprise as a bar"></svg>
+          <div class="legend"><span style="color:var(--c1)">passed</span><span style="color:var(--c2)">failed</span><span style="color:var(--c3)">model's p(pass)</span></div>
+        </div>
+        <div class="side" id="ceSide"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 5 ============ -->
+  <div class="panel" id="panel-map">
+    <div class="card">
+      <h2>MAP on a coin: a prior tames 3 heads out of 3</h2>
+      <p class="sub">Grey dashed: the prior. Gold: the likelihood (rescaled to area 1 so it fits on the same axis). Teal: the posterior = prior × likelihood. Marks show the MLE, the MAP (posterior peak) and the posterior mean.</p>
+      <div class="presetbar" id="coinPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="coinSvg" viewBox="0 0 600 320" role="img" aria-label="Prior, likelihood and posterior curves"></svg>
+          <div class="legend"><span style="color:#9AA3AD">prior</span><span style="color:var(--c2)">likelihood</span><span style="color:var(--c1)">posterior</span></div>
+        </div>
+        <div class="side" id="coinSide"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Ridge and lasso are MAP with a prior on the weight</h2>
+      <p class="sub">One-weight regression, no intercept: <code>x = 1…5</code>, <code>y = 1.2, 1.9, 3.2, 3.8, 5.1</code>, noise <code>σ² = 1</code>. Each curve is an objective minus its own minimum; the dot is where it bottoms out. Every slope here is found by a numerical minimizer on this page, separately for the scikit-learn objective and for the MAP objective.</p>
+      <div class="presetbar" id="regPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="regSvg" viewBox="0 0 600 300" role="img" aria-label="Objective curves and their minima"></svg>
+          <div class="legend"><span style="color:var(--c0)">OLS / MLE</span><span style="color:var(--c1)">ridge = Gaussian prior</span><span style="color:var(--c3)">lasso = Laplace prior</span></div>
+        </div>
+        <div class="side"><div class="stat" id="regSide"></div></div>
+      </div>
+      <div class="tablewrap" style="margin-top:14px"><table id="regTable"></table></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 6 ============ -->
+  <div class="panel" id="panel-mom">
+    <div class="card">
+      <h2>Uniform(0, θ): method of moments gives an impossible answer</h2>
+      <p class="sub">Values are spread evenly between 0 and an unknown maximum <code>θ</code>. Data: <code>0.2, 0.3, 0.4, 3.0</code>. The shaded band is the range each estimate allows; a data point outside it could not have happened.</p>
+      <div class="presetbar" id="momPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="momSvg" viewBox="0 0 600 350" role="img" aria-label="Data on a number line with theta estimates"></svg></div>
+        <div class="side" id="momSide"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 7 ============ -->
+  <div class="panel" id="panel-fi">
+    <div class="card">
+      <h2>How sure is the estimate? Fisher information</h2>
+      <p class="sub">A sharp log-likelihood peak pins the parameter down; a flat one doesn't. Sharpness is <b>curvature</b>, minus the second derivative at the peak, called the <b>information</b>. One over its square root is the <b>standard error</b>, and one over the information is the <b>Cramér–Rao bound</b>: the smallest variance any unbiased estimator can have.</p>
+      <div class="presetbar" id="fiPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="fiSvg" viewBox="0 0 600 340" role="img" aria-label="Fisher information chart"></svg></div>
+        <div class="side" id="fiSide"></div>
+      </div>
+      <div class="legend" id="fiLegend"></div>
+      <div class="caption" id="fiCaption"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>math/likelihood-and-estimation.md</code>. Every value on this page is computed in the browser and matches the file: <code>L(0.7) = 0.2668</code>, area <code>1/11</code>, log-likelihood <code>−1226.81</code>, NLL <code>4.6482</code>, log loss <code>0.4015</code>, MAP <code>0.8</code>, ridge <code>0.970175</code>, lasso <code>0.960000</code>, MoM <code>1.95</code> vs. MLE <code>3.0</code>, Fisher information <code>47.62</code> vs. <code>476.19</code>, SEs <code>1.7610</code> and <code>0.6287</code>.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+}));
+
+/* ---------- helpers ---------- */
+function el(tag, attrs, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function chart(svg, o){
+  const W = +svg.getAttribute("viewBox").split(" ")[2], H = +svg.getAttribute("viewBox").split(" ")[3];
+  const pad = Object.assign({ l:58, r:18, t:18, b:44 }, o.pad || {});
+  const sx = x => pad.l + (x - o.xmin) / (o.xmax - o.xmin) * (W - pad.l - pad.r);
+  const sy = y => H - pad.b - (y - o.ymin) / (o.ymax - o.ymin) * (H - pad.t - pad.b);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const g = { svg, sx, sy, W, H, pad, o };
+  const ax = el("g", {}, svg);
+  (o.xticks || []).forEach(x => {
+    el("line", { x1:sx(x), y1:pad.t, x2:sx(x), y2:H-pad.b, stroke:"#EEF1F0" }, ax);
+    el("text", { x:sx(x), y:H-pad.b+16, "text-anchor":"middle", "font-size":11, fill:"#5B6572" }, ax, o.xfmt ? o.xfmt(x) : x);
+  });
+  (o.yticks || []).forEach(y => {
+    el("line", { x1:pad.l, y1:sy(y), x2:W-pad.r, y2:sy(y), stroke:"#EEF1F0" }, ax);
+    el("text", { x:pad.l-6, y:sy(y)+4, "text-anchor":"end", "font-size":11, fill:"#5B6572" }, ax, o.yfmt ? o.yfmt(y) : y);
+  });
+  el("line", { x1:pad.l, y1:H-pad.b, x2:W-pad.r, y2:H-pad.b, stroke:"#9AA3AD" }, ax);
+  el("line", { x1:pad.l, y1:pad.t, x2:pad.l, y2:H-pad.b, stroke:"#9AA3AD" }, ax);
+  if (o.xlabel) el("text", { x:(pad.l + W - pad.r)/2, y:H-8, "text-anchor":"middle", "font-size":12, fill:"#1B2430" }, ax, o.xlabel);
+  if (o.ylabel) el("text", { x:14, y:(pad.t + H - pad.b)/2, "text-anchor":"middle", "font-size":12, fill:"#1B2430", transform:`rotate(-90 14 ${(pad.t + H - pad.b)/2})` }, ax, o.ylabel);
+  return g;
+}
+function path(g, pts, attrs){
+  const d = pts.map((p,i) => (i ? "L" : "M") + g.sx(p[0]).toFixed(2) + "," + g.sy(p[1]).toFixed(2)).join("");
+  return el("path", Object.assign({ d, fill:"none" }, attrs), g.svg);
+}
+function area(g, pts, attrs){
+  const d = "M" + g.sx(pts[0][0]) + "," + g.sy(0) + pts.map(p => "L" + g.sx(p[0]).toFixed(2) + "," + g.sy(p[1]).toFixed(2)).join("") + "L" + g.sx(pts[pts.length-1][0]) + "," + g.sy(0) + "Z";
+  return el("path", Object.assign({ d }, attrs), g.svg);
+}
+function text(g, x, y, s, attrs){ return el("text", Object.assign({ x, y, "font-size":12, fill:"#1B2430" }, attrs || {}), g.svg, s); }
+function vline(g, x, attrs){ return el("line", Object.assign({ x1:g.sx(x), x2:g.sx(x), y1:g.pad.t, y2:g.H-g.pad.b, stroke:"#1B2430", "stroke-dasharray":"4 4" }, attrs || {}), g.svg); }
+function presets(container, list, onPick){
+  const bar = $(container);
+  const btns = list.map((p, i) => {
+    const b = document.createElement("button");
+    b.className = "op"; b.textContent = p.name;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); onPick(p, i); });
+    bar.appendChild(b); return b;
+  });
+  return btns;
+}
+const f4 = x => x.toFixed(4);
+const lnGamma = z => { // Lanczos
+  const c = [676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI*z)) - lnGamma(1-z);
+  z -= 1; let x = 0.99999999999980993;
+  for (let i = 0; i < 8; i++) x += c[i] / (z + i + 1);
+  const t = z + 7.5;
+  return 0.5*Math.log(2*Math.PI) + (z+0.5)*Math.log(t) - t + Math.log(x);
+};
+function binom(n, k){ let r = 1; for (let i = 1; i <= k; i++) r = r * (n - k + i) / i; return r; }
+function golden(f, a, b){ // minimize f on [a,b]
+  const gr = (Math.sqrt(5) - 1) / 2;
+  let c = b - gr*(b-a), d = a + gr*(b-a);
+  for (let i = 0; i < 200; i++){
+    if (f(c) < f(d)) b = d; else a = c;
+    c = b - gr*(b-a); d = a + gr*(b-a);
+  }
+  return (a + b) / 2;
+}
+let animToken = {};
+function animate(key, ms, step, done){
+  const tok = animToken[key] = {};
+  const frames = Math.max(1, Math.round(ms / 16));
+  let f = 0;
+  function frame(){
+    if (animToken[key] !== tok) return;
+    const u = Math.min(1, f / frames);
+    step(u);
+    f++;
+    if (u < 1) setTimeout(frame, 16); else if (done) done();
+  }
+  frame();
+}
+function stop(key){ animToken[key] = {}; }
+
+/* ============ TAB 1: Likelihood vs probability ============ */
+const Lcoin = p => binom(10,7) * Math.pow(p,7) * Math.pow(1-p,3);
+const CANDS = [0.3, 0.5, 0.7, 0.9];
+const curvePts = []; for (let i = 0; i <= 200; i++){ const p = i/200; curvePts.push([p, Lcoin(p)]); }
+function likAxes(){
+  return chart($("#likSvg"), { xmin:0, xmax:1, ymin:0, ymax:0.3, xticks:[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1], yticks:[0,0.05,0.1,0.15,0.2,0.25,0.3], xlabel:"candidate p (the data, 7 of 10, is held fixed)", ylabel:"likelihood L(p)", yfmt:y=>y.toFixed(2) });
+}
+function likCandidates(){
+  stop("lik");
+  const g = likAxes();
+  path(g, curvePts, { stroke:"var(--c1)", "stroke-width":2.5 });
+  CANDS.forEach(p => {
+    const v = Lcoin(p), best = p === 0.7;
+    el("line", { x1:g.sx(p), x2:g.sx(p), y1:g.sy(0), y2:g.sy(v), stroke: best ? "var(--accent)" : "#9AA3AD", "stroke-dasharray":"3 3" }, g.svg);
+    el("circle", { cx:g.sx(p), cy:g.sy(v), r: best ? 7 : 5.5, fill: best ? "var(--accent)" : "var(--c2)", stroke:"#fff", "stroke-width":2 }, g.svg);
+    if (best) text(g, g.sx(p), g.sy(v) - 12, "L(" + p + ") = " + f4(v), { "text-anchor":"middle", "font-size":12, "font-weight":700 });
+    else text(g, g.sx(p) - 10, g.sy(v) + (p < 0.7 ? -6 : 18), "L(" + p + ") = " + f4(v), { "text-anchor":"end", "font-size":12 });
+  });
+  const ratio = Lcoin(0.7) / Lcoin(0.5);
+  $("#likSide").innerHTML =
+    CANDS.map(p => `<div class="stat"><span class="k">p = ${p}</span>L(${p}) = C(10,7)·${p}⁷·${(1-p).toFixed(1)}³ = <b>${f4(Lcoin(p))}</b>${p===0.7?' &nbsp;← peak':''}</div>`).join("") +
+    `<div class="stat"><span class="k">compare explanations</span>L(0.7) / L(0.5) = ${f4(Lcoin(0.7))} / ${f4(Lcoin(0.5))} = <b>${ratio.toFixed(2)}×</b></div>`;
+  $("#likCaption").innerHTML = `The peak sits at <b>p = 0.7</b> (7 ÷ 10), so that's the maximum-likelihood estimate. Likelihood only <i>ranks</i> explanations: 0.7 explains "7 heads in 10" about <b>${ratio.toFixed(2)} times</b> better than a fair coin does. It does <i>not</i> say "27% chance the coin is 0.7"; the next preset shows why.`;
+}
+function likArea(){
+  const g = likAxes();
+  const shade = el("path", { fill:"rgba(15,139,141,0.18)" }, g.svg);
+  path(g, curvePts, { stroke:"var(--c1)", "stroke-width":2.5 });
+  const lbl = text(g, g.sx(0.08), g.sy(0.26), "", { "font-size":14, "font-weight":700, fill:"var(--accent)" });
+  const N = 20000;
+  function integ(upto){ let a = 0; const n = Math.max(1, Math.round(N*upto)); const h = upto / n; for (let i = 0; i < n; i++) a += Lcoin((i+0.5)*h) * h; return a; }
+  const total = integ(1);
+  $("#likSide").innerHTML = `<div class="stat"><span class="k">area under L(p), p from 0 to 1</span>midpoint rule, ${N.toLocaleString()} slices: <b id="areaVal">…</b></div>
+    <div class="stat"><span class="k">exact value</span>1/11 = ${(1/11).toFixed(4)}</div>
+    <div class="stat"><span class="k">a real distribution over p would have area</span><b>1</b></div>`;
+  $("#likCaption").innerHTML = `Watch the shaded area fill in. It stops at <b>${total.toFixed(4)} = 1/11</b>, not 1. The likelihood curve was never a probability distribution over <code>p</code>, so reading <code>L(0.7) = 0.27</code> as "27% chance" is wrong. Turning it into probabilities about <code>p</code> needs a prior (tab 5).`;
+  animate("lik", 1600, u => {
+    const up = Math.max(0.001, u);
+    const pts = curvePts.filter(p => p[0] <= up); pts.push([up, Lcoin(up)]);
+    shade.setAttribute("d", "M" + g.sx(0) + "," + g.sy(0) + pts.map(p => "L" + g.sx(p[0]).toFixed(2) + "," + g.sy(p[1]).toFixed(2)).join("") + "L" + g.sx(up) + "," + g.sy(0) + "Z");
+    const a = u >= 1 ? total : integ(up);
+    lbl.textContent = "area so far = " + a.toFixed(4) + (u >= 1 ? "  = 1/11" : "");
+    const av = $("#areaVal"); if (av) av.textContent = a.toFixed(4) + (u >= 1 ? " ✓" : "");
+  });
+}
+function likProb(){
+  stop("lik");
+  const g = chart($("#likSvg"), { xmin:-0.6, xmax:10.6, ymin:0, ymax:0.3, xticks:[0,1,2,3,4,5,6,7,8,9,10], yticks:[0,0.05,0.1,0.15,0.2,0.25,0.3], xlabel:"number of heads k in 10 flips (p = 0.7 held fixed)", ylabel:"probability P(k | p = 0.7)", yfmt:y=>y.toFixed(2) });
+  let sum = 0; const rows = [];
+  for (let k = 0; k <= 10; k++){
+    const v = binom(10,k) * Math.pow(0.7,k) * Math.pow(0.3,10-k); sum += v; rows.push([k, v]);
+    const x0 = g.sx(k - 0.38), x1 = g.sx(k + 0.38);
+    el("rect", { x:x0, y:g.sy(v), width:x1-x0, height:g.sy(0)-g.sy(v), rx:3, fill: k===7 ? "var(--accent)" : "var(--c1)", opacity: k===7 ? 1 : 0.75 }, g.svg);
+    if (v > 0.004) text(g, g.sx(k), g.sy(v) - 5, v.toFixed(3), { "text-anchor":"middle", "font-size":10, fill:"#5B6572" });
+  }
+  text(g, g.sx(7), g.sy(Lcoin(0.7)) - 20, "k = 7: " + f4(Lcoin(0.7)), { "text-anchor":"middle", "font-size":12, "font-weight":700, fill:"var(--accent)" });
+  $("#likSide").innerHTML = `<div class="stat"><span class="k">sum of all 11 bars</span>${rows.map(r=>r[1].toFixed(4)).join(" + ")}<br>= <b>${sum.toFixed(4)}</b></div>
+    <div class="stat"><span class="k">the k = 7 bar</span>P(7 | 0.7) = ${f4(Lcoin(0.7))}, the same number as L(0.7): same formula, different thing held fixed.</div>`;
+  $("#likCaption").innerHTML = `The <b>probability</b> view: fix <code>p = 0.7</code> and ask about every possible outcome. These bars add up to exactly <b>1</b>, as any distribution must. The likelihood view (previous presets) fixes the outcome instead, and its area is only 1/11.`;
+}
+presets("#likPresets", [
+  { name:"The four candidates", run: likCandidates },
+  { name:"Shade the area under L(p)", run: likArea },
+  { name:"Probability view: bars at p = 0.7", run: likProb },
+], p => p.run())[0].click();
+
+/* ============ TAB 2: Why logs ============ */
+const NF = 2000, NH = 1394;
+const flips = []; for (let i = 0; i < NF; i++) flips.push(Math.floor((i+1)*NH/NF) > Math.floor(i*NH/NF) ? 1 : 0);
+const run = []; { let prod = 1, ll = 0; run.push({ i:0, prod, ll });
+  for (let i = 0; i < NF; i++){ const q = flips[i] ? 0.7 : 0.3; prod *= q; ll += Math.log(q); run.push({ i:i+1, prod, ll }); } }
+const headsCount = flips.reduce((a,b)=>a+b,0);
+const zeroAt = run.findIndex(r => r.prod === 0);
+const finalLL = run[NF].ll;
+const log10True = NH*Math.log10(0.7) + (NF-NH)*Math.log10(0.3);
+function fmtProd(v){ return v === 0 ? "0 (exactly)" : v.toExponential(3); }
+function drawLogs(upto){
+  const g = chart($("#logSvg"), { xmin:0, xmax:NF, ymin:-1400, ymax:0, xticks:[0,250,500,750,1000,1250,1500,1750,2000], yticks:[0,-200,-400,-600,-800,-1000,-1200,-1400], xlabel:"flips processed", ylabel:"natural log" });
+  // underflow floor
+  const floor = Math.log(Number.MIN_VALUE);
+  el("line", { x1:g.sx(0), x2:g.sx(NF), y1:g.sy(floor), y2:g.sy(floor), stroke:"var(--bad)", "stroke-dasharray":"2 4", opacity:0.6 }, g.svg);
+  text(g, g.sx(0) + 6, g.sy(floor) + 14, "smallest storable number ≈ 4.9e−324 (ln ≈ " + floor.toFixed(1) + ")", { "text-anchor":"start", "font-size":10.5, fill:"var(--bad)" });
+  const step = 4, llPts = [], prPts = [];
+  for (let i = 0; i <= upto; i += step){ llPts.push([i, run[i].ll]); if (run[i].prod > 0) prPts.push([i, Math.log(run[i].prod)]); }
+  llPts.push([upto, run[upto].ll]); if (run[upto].prod > 0) prPts.push([upto, Math.log(run[upto].prod)]);
+  path(g, prPts, { stroke:"var(--c2)", "stroke-width":5, opacity:0.7 });
+  path(g, llPts, { stroke:"var(--c1)", "stroke-width":2 });
+  if (upto >= zeroAt){
+    vline(g, zeroAt, { stroke:"var(--bad)", "stroke-dasharray":"5 4" });
+    el("circle", { cx:g.sx(zeroAt), cy:g.sy(floor), r:6, fill:"var(--bad)" }, g.svg);
+    text(g, g.sx(zeroAt) - 8, g.sy(-1000), "flip " + zeroAt + ": product becomes 0.0", { "font-size":12, "font-weight":700, fill:"var(--bad)", "text-anchor":"end" });
+    text(g, g.sx(zeroAt) - 8, g.sy(-1000) + 15, "(ln 0 = −∞, off the chart)", { "font-size":11, fill:"var(--bad)", "text-anchor":"end" });
+  }
+  el("circle", { cx:g.sx(upto), cy:g.sy(run[upto].ll), r:5, fill:"var(--c1)" }, g.svg);
+  if (upto === NF) text(g, g.sx(NF) - 10, g.sy(finalLL) + 22, "log-likelihood = " + finalLL.toFixed(2), { "text-anchor":"end", "font-size":12.5, "font-weight":700, fill:"var(--c1)" });
+  const r = run[upto], h = flips.slice(0, upto).reduce((a,b)=>a+b,0);
+  $("#logSide").innerHTML = `<div class="stat"><span class="k">flips so far</span>${upto} (${h} heads, ${upto-h} tails)</div>
+    <div class="stat"><span class="k">product of per-flip probabilities, as stored</span><b class="${r.prod===0?'bad':''}">${fmtProd(r.prod)}</b></div>
+    <div class="stat"><span class="k">log-likelihood = Σ ln(per-flip probability)</span><b>${r.ll.toFixed(2)}</b></div>` +
+    (upto === NF ? `<div class="stat"><span class="k">check</span>${NH}·ln 0.7 + ${NF-NH}·ln 0.3 = ${(NH*Math.log(0.7)+(NF-NH)*Math.log(0.3)).toFixed(2)}<br>true product ≈ 10^${log10True.toFixed(1)} (about 10⁻⁵³³), far below the smallest storable number</div>` : "");
+}
+presets("#logPresets", [
+  { name:"Play all 2,000 flips", run: () => animate("logs", 5000, u => drawLogs(Math.round(u*NF))) },
+  { name:"Jump to the end", run: () => { stop("logs"); drawLogs(NF); } },
+  { name:"Stop just before the product dies", run: () => { stop("logs"); drawLogs(zeroAt - 1); } },
+], p => p.run())[1].click();
+
+// slope check
+const logLc = p => 7*Math.log(p) + 3*Math.log(1-p);
+const dlogLc = p => 7/p - 3/(1-p);
+function drawSlopes(which){
+  const g = chart($("#slopeSvg"), { xmin:0.3, xmax:0.95, ymin:-10, ymax:-5.5, xticks:[0.3,0.4,0.5,0.6,0.7,0.8,0.9], yticks:[-10,-9,-8,-7,-6], xlabel:"p", ylabel:"log L(p)" });
+  const pts = []; for (let i = 0; i <= 200; i++){ const p = 0.3 + 0.65*i/200; pts.push([p, logLc(p)]); }
+  path(g, pts, { stroke:"var(--c1)", "stroke-width":2.5 });
+  const cols = { 0.6:"var(--good)", 0.7:"var(--accent)", 0.8:"var(--bad)" };
+  which.forEach(p => {
+    const y = logLc(p), s = dlogLc(p), dx = 0.07;
+    el("line", { x1:g.sx(p-dx), y1:g.sy(y - s*dx), x2:g.sx(p+dx), y2:g.sy(y + s*dx), stroke:cols[p], "stroke-width":3, "stroke-linecap":"round" }, g.svg);
+    el("circle", { cx:g.sx(p), cy:g.sy(y), r:5.5, fill:cols[p], stroke:"#fff", "stroke-width":2 }, g.svg);
+    const sv = Math.abs(s) < 1e-9 ? "0.00" : (s > 0 ? "+" : "") + s.toFixed(2);
+    text(g, g.sx(p) + (p === 0.6 ? -12 : p === 0.8 ? 12 : 0), g.sy(y) - 14, "slope " + sv, { "text-anchor": p === 0.6 ? "end" : p === 0.8 ? "start" : "middle", "font-size":12, "font-weight":700, fill:cols[p] });
+  });
+  $("#slopeSide").innerHTML = which.map(p => {
+    const s = dlogLc(p), sv = Math.abs(s) < 1e-9 ? "0" : (s > 0 ? "+" : "") + s.toFixed(2);
+    const word = Math.abs(s) < 1e-9 ? "flat: the peak" : s > 0 ? "uphill: go right" : "downhill: go left";
+    return `<div class="stat"><span class="k">p = ${p}</span>7/${p} − 3/${(1-p).toFixed(1)} = ${(7/p).toFixed(2)} − ${(3/(1-p)).toFixed(2)} = <b>${sv}</b><br>${word}</div>`;
+  }).join("") + `<div class="stat"><span class="k">solve slope = 0</span>h/p = (n−h)/(1−p) → p̂ = h/n = 7/10 = <b>0.7</b></div>`;
+}
+presets("#slopePresets", [
+  { name:"Slope at 0.6", w:[0.6] }, { name:"Slope at 0.7", w:[0.7] }, { name:"Slope at 0.8", w:[0.8] }, { name:"All three", w:[0.6,0.7,0.8] },
+], p => drawSlopes(p.w))[3].click();
+
+// normal MLE
+const ND = [2,4,4,4,5,5,7,9];
+const normLL = (mu, s) => ND.reduce((a,x) => a - 0.5*Math.log(2*Math.PI*s*s) - (x-mu)*(x-mu)/(2*s*s), 0);
+function drawNormal(fit){
+  const g = chart($("#normSvg"), { xmin:0, xmax:11, ymin:0, ymax:0.4, xticks:[0,1,2,3,4,5,6,7,8,9,10,11], yticks:[0,0.1,0.2,0.3,0.4], xlabel:"value", ylabel:"density", yfmt:y=>y.toFixed(1) });
+  const cnt = {};
+  ND.forEach(x => { cnt[x] = (cnt[x]||0) + 1; el("circle", { cx:g.sx(x), cy:g.sy(0) - 9 - (cnt[x]-1)*16, r:6.5, fill:"var(--c2)", stroke:"#fff", "stroke-width":1.5 }, g.svg); });
+  if (!fit){ $("#normSide").innerHTML = `<div class="stat">Click <b>Fit μ and σ by maximum likelihood</b>.</div>`; return; }
+  // coordinate ascent with golden-section on each axis
+  let mu = 1, s = 1, iters = 0;
+  for (let it = 0; it < 60; it++){ mu = golden(m => -normLL(m, s), -10, 20); s = golden(v => -normLL(mu, v), 0.05, 20); iters++; }
+  const pts = []; for (let i = 0; i <= 220; i++){ const x = 11*i/220; pts.push([x, Math.exp(-(x-mu)*(x-mu)/(2*s*s)) / Math.sqrt(2*Math.PI*s*s)]); }
+  path(g, pts, { stroke:"var(--c1)", "stroke-width":2.5 });
+  vline(g, mu, { stroke:"var(--accent)" });
+  text(g, g.sx(mu) + 6, g.pad.t + 14, "μ̂ = " + mu.toFixed(3), { "font-size":12, "font-weight":700, fill:"var(--accent)" });
+  const mean = ND.reduce((a,b)=>a+b,0)/ND.length, ss = ND.reduce((a,x)=>a+(x-mean)*(x-mean),0);
+  $("#normSide").innerHTML = `<div class="stat"><span class="k">optimizer result</span>μ̂ = <b>${mu.toFixed(3)}</b> &nbsp; σ̂² = <b>${(s*s).toFixed(3)}</b></div>
+    <div class="stat"><span class="k">sample mean</span>40 / 8 = ${mean.toFixed(3)} (same as μ̂)</div>
+    <div class="stat"><span class="k">Σ(x − x̄)² / n (the MLE)</span>${ss} / 8 = ${(ss/8).toFixed(3)}</div>
+    <div class="stat"><span class="k">Σ(x − x̄)² / (n − 1) (textbook)</span>${ss} / 7 = <b>${(ss/7).toFixed(3)}</b><br>MLE divides by n, so it runs a little small on average.</div>`;
+}
+presets("#normPresets", [
+  { name:"Show the data", fit:false }, { name:"Fit μ and σ by maximum likelihood", fit:true },
+], p => drawNormal(p.fit))[1].click();
+
+/* ============ TAB 3: Squared error = Gaussian NLL ============ */
+const SX = [1,2,3,4,5], SY = [2.1,3.9,6.2,7.8,10.1];
+const sse = (b0,b1) => SX.reduce((a,x,i) => a + Math.pow(SY[i]-b0-b1*x, 2), 0);
+const CONST = 2.5*Math.log(2*Math.PI);
+const nll = (b0,b1) => SX.reduce((a,x,i) => a + 0.5*Math.log(2*Math.PI) + Math.pow(SY[i]-b0-b1*x,2)/2, 0); // σ = 1, computed point by point
+// least squares closed form
+const mx = 3, my = SY.reduce((a,b)=>a+b,0)/5;
+const LSb1 = SX.reduce((a,x,i)=>a+(x-mx)*(SY[i]-my),0) / SX.reduce((a,x)=>a+(x-mx)*(x-mx),0), LSb0 = my - LSb1*mx;
+const LINES = [
+  { name:"Least-squares fit", b0:LSb0, b1:LSb1, col:"var(--c1)" },
+  { name:"0 + 2.00x", b0:0, b1:2, col:"var(--c3)" },
+  { name:"0.5 + 1.8x", b0:0.5, b1:1.8, col:"var(--c2)" },
+];
+const lineLabel = L => `${(+L.b0.toFixed(2))} + ${L.b1.toFixed(2)}x`;
+function drawSq(active, extra){
+  const g = chart($("#sqSvg"), { xmin:0, xmax:6, ymin:0, ymax:12, xticks:[0,1,2,3,4,5,6], yticks:[0,2,4,6,8,10,12], xlabel:"x", ylabel:"y" });
+  const show = active === "all" ? LINES.slice().reverse() : [LINES[active]];
+  show.forEach(L => {
+    path(g, [[0, L.b0], [6, L.b0 + 6*L.b1]], { stroke:L.col, "stroke-width": active === "all" ? 2 : 2.5 });
+    if (active !== "all") SX.forEach((x,i) => el("line", { x1:g.sx(x), x2:g.sx(x), y1:g.sy(SY[i]), y2:g.sy(L.b0+L.b1*x), stroke:"var(--bad)", "stroke-width":2.5 }, g.svg));
+  });
+  if (extra) path(g, [[0, extra.b0], [6, extra.b0 + 6*extra.b1]], { stroke:"var(--accent)", "stroke-width":2.5, "stroke-dasharray":"6 4" });
+  SX.forEach((x,i) => el("circle", { cx:g.sx(x), cy:g.sy(SY[i]), r:6, fill:"var(--ink)", stroke:"#fff", "stroke-width":1.5 }, g.svg));
+  const rank = LINES.map((L,i) => [i, sse(L.b0,L.b1)]).sort((a,b)=>a[1]-b[1]).map(r=>r[0]);
+  $("#sqTable").innerHTML = `<tr><th>line</th><th>SSE</th><th>NLL</th><th>rank</th></tr>` +
+    LINES.map((L,i) => `<tr class="${(active===i||active==="all")?'hot':''} ${i===rank[0]?'best':''}"><td><span style="color:${L.col}">●</span> ${lineLabel(L)}</td><td class="num">${f4(sse(L.b0,L.b1))}</td><td class="num">${f4(nll(L.b0,L.b1))}</td><td class="num">${rank.indexOf(i)+1}</td></tr>`).join("");
+  if (extra) return;
+  if (active === "all"){
+    $("#sqSide").innerHTML = `<span class="k">both columns rank the lines the same</span>SSE order: ${rank.map(i=>lineLabel(LINES[i])).join(" < ")}<br>NLL order: same, because NLL = <b>${CONST.toFixed(4)} + SSE/2</b> and ${CONST.toFixed(4)} = (5/2)·ln(2π) doesn't depend on the line.`;
+  } else {
+    const L = LINES[active], s = sse(L.b0,L.b1);
+    const res = SX.map((x,i) => (SY[i]-L.b0-L.b1*x));
+    $("#sqSide").innerHTML = `<span class="k">${lineLabel(L)}</span>errors: ${res.map(r=>r.toFixed(2)).join(", ")}<br>SSE = Σ error² = <b>${f4(s)}</b><br>NLL = Σ [½·ln(2π) + error²/2] = <b>${f4(nll(L.b0,L.b1))}</b><br>check: ${CONST.toFixed(4)} + ${f4(s)}/2 = ${f4(CONST + s/2)} ✓`;
+  }
+}
+function runGD(){
+  // gradient descent directly on the Gaussian NLL, from a bad start
+  let b0 = 3, b1 = 0.5; const lr = 0.02, total = 6000;
+  const path_ = [[b0,b1]];
+  for (let t = 0; t < total; t++){
+    let g0 = 0, g1 = 0;
+    SX.forEach((x,i) => { const e = (b0 + b1*x) - SY[i]; g0 += e; g1 += e*x; });
+    b0 -= lr*g0; b1 -= lr*g1; if (t % 20 === 19) path_.push([b0,b1]);
+  }
+  animate("sq", 3000, u => {
+    const k = Math.min(path_.length-1, Math.round(u*(path_.length-1)));
+    const [c0, c1] = path_[k];
+    drawSq("all", { b0:c0, b1:c1 });
+    $("#sqSide").innerHTML = `<span class="k">gradient descent on the NLL, step ${Math.min(total, k*20)}</span>line: ${c0.toFixed(4)} + ${c1.toFixed(4)}x<br>NLL = <b>${f4(nll(c0,c1))}</b>` +
+      (u >= 1 ? `<br>landed on <b>${c0.toFixed(2)} + ${c1.toFixed(2)}x</b>, the least-squares line (closed form ${LSb0.toFixed(4)} + ${LSb1.toFixed(4)}x)` : "");
+  });
+}
+presets("#sqPresets", [
+  { name:"Least-squares fit 0.05 + 1.99x", a:0 }, { name:"Line 0 + 2.00x", a:1 }, { name:"Line 0.5 + 1.8x", a:2 },
+  { name:"All three, ranked", a:"all" }, { name:"Minimize the NLL directly", gd:true },
+], p => { stop("sq"); if (p.gd) runGD(); else drawSq(p.a); })[3].click();
+
+/* ============ TAB 4: Cross-entropy = NLL ============ */
+const HRS = [0.50,0.75,1.00,1.25,1.50,1.75,1.75,2.00,2.25,2.50,2.75,3.00,3.25,3.50,4.00,4.25,4.50,4.75,5.00,5.50];
+const PASS = [0,0,0,0,0,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1];
+let B0 = 0, B1 = 0;
+for (let it = 0; it < 50; it++){ // Newton's method on the log-likelihood
+  let g0=0,g1=0,h00=0,h01=0,h11=0;
+  HRS.forEach((h,i) => { const p = 1/(1+Math.exp(-(B0+B1*h))); g0 += p-PASS[i]; g1 += (p-PASS[i])*h; const w = p*(1-p); h00 += w; h01 += w*h; h11 += w*h*h; });
+  const det = h00*h11 - h01*h01; B0 -= (h11*g0 - h01*g1)/det; B1 -= (-h01*g0 + h00*g1)/det;
+}
+const sigm = h => 1/(1+Math.exp(-(B0+B1*h)));
+const STU = HRS.map((h,i) => { const p = sigm(h); const pTrue = PASS[i] ? p : 1-p; return { i, h, y:PASS[i], p, pTrue, cost:-Math.log(pTrue) }; });
+const LL = -STU.reduce((a,s)=>a+s.cost,0);
+function drawCE(mode, spot, upto){
+  const g = chart($("#ceTop"), { xmin:0, xmax:6, ymin:-0.08, ymax:1.08, xticks:[0,1,2,3,4,5,6], yticks:[0,0.25,0.5,0.75,1], xlabel:"hours studied", ylabel:"p(pass)", yfmt:y=>y.toFixed(2), pad:{b:40} });
+  if (mode !== "data"){
+    const pts = []; for (let i = 0; i <= 200; i++){ const h = 6*i/200; pts.push([h, sigm(h)]); }
+    path(g, pts, { stroke:"var(--c3)", "stroke-width":2.5 });
+  }
+  const off = {};
+  STU.forEach(s => {
+    const k = s.h + "_" + s.y; off[k] = (off[k]||0) + 1;
+    const cy = g.sy(s.y) + (s.y ? 1 : -1) * (off[k]-1) * 12;
+    if (spot !== undefined && s.i === spot){
+      el("line", { x1:g.sx(s.h), x2:g.sx(s.h), y1:g.sy(s.p), y2:cy, stroke:"var(--bad)", "stroke-width":2.5 }, g.svg);
+      el("circle", { cx:g.sx(s.h), cy:g.sy(s.p), r:5, fill:"var(--c3)" }, g.svg);
+      text(g, g.sx(s.h) + 10, g.sy(s.p) + (s.y ? 16 : -8), "p(pass) = " + f4(s.p), { "font-size":12, "font-weight":700, fill:"var(--c3)" });
+    }
+    el("circle", { cx:g.sx(s.h), cy, r: spot === s.i ? 8 : 5.5, fill: s.y ? "var(--c1)" : "var(--c2)", stroke: spot === s.i ? "var(--bad)" : "#fff", "stroke-width":2 }, g.svg);
+  });
+  // bars
+  const gb = chart($("#ceBars"), { xmin:-0.6, xmax:19.6, ymin:0, ymax:2, xticks:[], yticks:[0,0.5,1,1.5,2], ylabel:"surprise −ln p", yfmt:y=>y.toFixed(1), pad:{b:40} });
+  STU.forEach(s => text(gb, gb.sx(s.i), gb.H - gb.pad.b + 14, s.h.toFixed(2).replace(/0$/,""), { "text-anchor":"middle", "font-size":9.5, fill:"#5B6572" }));
+  text(gb, (gb.pad.l + gb.W - gb.pad.r)/2, gb.H - 8, "students, sorted by hours studied", { "text-anchor":"middle", "font-size":12 });
+  if (mode === "data" || mode === "model"){
+    $("#ceSide").innerHTML = mode === "data"
+      ? `<div class="stat">Teal dots passed (top), gold dots failed (bottom). Click <b>Fitted model</b>.</div>`
+      : `<div class="stat"><span class="k">fitted by Newton's method on this page</span>p(pass) = σ(b₀ + b₁·hours), &nbsp; b₀ = <b>${B0.toFixed(4)}</b>, b₁ = <b>${B1.toFixed(4)}</b></div>`;
+    return;
+  }
+  const n = upto === undefined ? 20 : upto;
+  let run = 0;
+  STU.forEach(s => {
+    const x0 = gb.sx(s.i - 0.38), x1 = gb.sx(s.i + 0.38), h = Math.min(s.cost, 2);
+    const on = s.i < n;
+    el("rect", { x:x0, y:gb.sy(h), width:x1-x0, height:gb.sy(0)-gb.sy(h), rx:2, fill: s.y ? "var(--c1)" : "var(--c2)", opacity: spot !== undefined ? (s.i === spot ? 1 : 0.25) : (on ? 0.9 : 0.18), stroke: s.i === spot ? "var(--bad)" : "none", "stroke-width":2 }, gb.svg);
+    if (on) run += s.cost;
+  });
+  if (spot !== undefined){
+    const s = STU[spot];
+    text(gb, gb.sx(spot) + (spot > 10 ? -10 : 10), gb.sy(Math.min(s.cost,2)) - 6, s.cost.toFixed(4), { "text-anchor": spot > 10 ? "end" : "start", "font-size":12, "font-weight":700, fill:"var(--bad)" });
+    const what = s.y ? "passed" : "failed";
+    const formula = s.y ? `−ln p = −ln ${f4(s.p)}` : `−ln(1 − p) = −ln ${f4(1-s.p)}`;
+    $("#ceSide").innerHTML = `<div class="stat"><span class="k">student at ${s.h} h, ${what}</span>model's p(pass) = <b>${f4(s.p)}</b> (${(s.p*100).toFixed(2)}%)<br>probability given to what happened = ${f4(s.pTrue)}<br>cost = ${formula} = <b>${f4(s.cost)}</b></div>
+      <div class="caption">${s.y ? "The model thought passing was unlikely, so this pass is a big surprise and one of the largest shares of the total." : "The model expected this failure, so it costs almost nothing."}</div>`;
+    return;
+  }
+  const allDone = n >= 20;
+  $("#ceSide").innerHTML = `<div class="stat"><span class="k">running total of surprises (${n} of 20 students)</span>Σ −ln p = <b>${run.toFixed(4)}</b></div>` +
+    (allDone ? `<div class="stat"><span class="k">the totals</span>log-likelihood = −${run.toFixed(4)} = <b>${LL.toFixed(4)}</b><br>likelihood = e^${LL.toFixed(4)} = <b>${Math.exp(LL).toExponential(3)}</b> (the chance of exactly this pass/fail pattern)<br>average NLL = ${run.toFixed(4)} / 20 = <b>${(run/20).toFixed(4)}</b> = the log loss</div>` : "");
+}
+const ceList = [
+  { name:"The data", run: () => drawCE("data") },
+  { name:"Fitted model", run: () => drawCE("model") },
+  { name:"Each student's surprise", run: () => drawCE("bars") },
+  { name:"Add them up → 0.4015", run: () => animate("ce", 4000, u => drawCE("bars", undefined, Math.round(u*20))) },
+  { name:"Spotlight: 0.5 h, failed", run: () => drawCE("bars", 0) },
+  { name:"Spotlight: 1.75 h, passed", run: () => drawCE("bars", 6) },
+];
+presets("#cePresets", ceList, p => { stop("ce"); p.run(); })[3].click();
+
+/* ============ TAB 5: MAP ============ */
+const betaPdf = (p, a, b) => (p <= 0 || p >= 1) ? ((p <= 0 && a === 1) || (p >= 1 && b === 1) ? Math.exp(lnGamma(a+b)-lnGamma(a)-lnGamma(b)) : 0) : Math.exp(lnGamma(a+b)-lnGamma(a)-lnGamma(b) + (a-1)*Math.log(p) + (b-1)*Math.log(1-p));
+function drawCoin(c){
+  const h = c.h, n = c.n, t = n - h;
+  const grid = []; for (let i = 0; i <= 1000; i++) grid.push(i/1000);
+  const lik = p => Math.pow(p,h)*Math.pow(1-p,t);
+  const likN = p => betaPdf(p, h+1, t+1);      // likelihood rescaled to area 1
+  const prior = c.prior ? (p => betaPdf(p, c.prior[0], c.prior[1])) : null;
+  const pa = c.prior ? c.prior[0] + h : null, pb = c.prior ? c.prior[1] + t : null;
+  const post = c.prior ? (p => betaPdf(p, pa, pb)) : null;
+  // numeric: MLE, MAP by grid argmax; mean by integration
+  const argmax = f => grid.reduce((best, p) => f(p) > f(best) ? p : best, 0);
+  const mle = argmax(lik);
+  const mapNum = post ? argmax(post) : null;
+  let mean = null; if (post){ let s = 0, m = 0; for (let i = 0; i < 20000; i++){ const p = (i+0.5)/20000; s += post(p); m += p*post(p); } mean = m/s; }
+  let ymax = 0; grid.forEach(p => { ymax = Math.max(ymax, likN(p), post ? post(p) : 0, prior ? prior(p) : 0); });
+  ymax = Math.ceil(ymax + 0.5);
+  const yt = []; for (let y = 0; y <= ymax; y++) yt.push(y);
+  const g = chart($("#coinSvg"), { xmin:0, xmax:1, ymin:0, ymax, xticks:[0,0.2,0.4,0.6,0.8,1], yticks:yt, xlabel:"coin's heads probability p", ylabel:"density" });
+  const pts = f => grid.map(p => [p, f(p)]);
+  if (prior) path(g, pts(prior), { stroke:"#9AA3AD", "stroke-width":2.5, "stroke-dasharray":"6 4" });
+  path(g, pts(likN), { stroke:"var(--c2)", "stroke-width":2.5 });
+  if (post) { area(g, pts(post), { fill:"rgba(15,139,141,0.12)" }); path(g, pts(post), { stroke:"var(--c1)", "stroke-width":3 }); }
+  const mark = (x, col, label, dy, left) => { vline(g, x, { stroke:col }); const L = left || x > 0.9; text(g, g.sx(x) + (L ? -6 : 6), g.pad.t + 14 + dy, label, { "font-size":12, "font-weight":700, fill:col, "text-anchor": L ? "end" : "start" }); };
+  mark(mle, "var(--c2)", "MLE " + mle.toFixed(3), 0);
+  if (post){
+    if (Math.abs(mapNum - mle) > 1e-9) mark(mapNum, "var(--c1)", "MAP " + mapNum.toFixed(3), 18);
+    else text(g, g.sx(mle) + (mle > 0.9 ? -6 : 6), g.pad.t + 32, "MAP " + mapNum.toFixed(3) + " (= MLE)", { "font-size":12, "font-weight":700, fill:"var(--c1)", "text-anchor": mle > 0.9 ? "end" : "start" });
+    mark(mean, "var(--c3)", "mean " + mean.toFixed(3), 36, true);
+  }
+  let html = `<div class="stat"><span class="k">data</span>${h} heads, ${t} tails &nbsp;→&nbsp; MLE = ${h}/${n} = <b>${(h/n).toFixed(3)}</b></div>`;
+  if (!post){
+    html += `<div class="caption">With no prior, the estimate trusts 3 flips completely: the coin "never lands tails." Try the priors.</div>`;
+  } else {
+    const modeCF = (pa - 1) / (pa + pb - 2);
+    html += `<div class="stat"><span class="k">prior</span>Beta(${c.prior[0]}, ${c.prior[1]})${c.prior[0]===1&&c.prior[1]===1?' (flat: adds nothing)':' (like one extra head and one extra tail)'}</div>
+      <div class="stat"><span class="k">posterior</span>Beta(${c.prior[0]}+${h}, ${c.prior[1]}+${t}) = <b>Beta(${pa}, ${pb})</b></div>
+      <div class="stat"><span class="k">MAP = posterior peak</span>(${pa}−1)/(${pa}+${pb}−2) = <b>${modeCF.toFixed(3)}</b> (grid search: ${mapNum.toFixed(3)})</div>
+      <div class="stat"><span class="k">posterior mean</span>${pa}/(${pa}+${pb}) = ${pa}/${pa+pb} = <b>${(pa/(pa+pb)).toFixed(3)}</b></div>`;
+    html += `<div class="caption">${Math.abs(modeCF - h/n) < 1e-9 ? "A flat prior adds no information, so MAP equals MLE exactly. The posterior is the rescaled likelihood itself, so the gold curve sits hidden under the teal one." : "The prior pulls the estimate from the absurd 1.0 down to 0.8, still leaning toward heads. The peak (MAP) and the average (mean) answer slightly different questions."}</div>`;
+  }
+  $("#coinSide").innerHTML = html;
+}
+presets("#coinPresets", [
+  { name:"3 of 3, no prior (MLE)", h:3, n:3, prior:null },
+  { name:"3 of 3, flat Beta(1,1)", h:3, n:3, prior:[1,1] },
+  { name:"3 of 3, Beta(2,2) prior", h:3, n:3, prior:[2,2] },
+  { name:"7 of 10, flat Beta(1,1)", h:7, n:10, prior:[1,1] },
+], p => drawCoin(p))[2].click();
+
+// ridge / lasso = MAP
+const RX = [1,2,3,4,5], RY = [1.2,1.9,3.2,3.8,5.1], RN = 5;
+const rsse = w => RX.reduce((a,x,i) => a + Math.pow(RY[i]-w*x, 2), 0);
+const SIG2 = 1, TAU2 = 0.5, LAPB = 0.4, RALPHA = 2, LALPHA = 0.5;
+const OBJ = {
+  ols:        w => rsse(w) / (2*SIG2),                                  // Gaussian NLL (up to a constant)
+  ridgeSk:    w => rsse(w) + RALPHA*w*w,                                // scikit-learn Ridge
+  ridgeMAP:   w => rsse(w) / (2*SIG2) + w*w / (2*TAU2),                 // −log posterior, Gaussian prior
+  lassoSk:    w => rsse(w) / (2*RN) + LALPHA*Math.abs(w),               // scikit-learn Lasso
+  lassoMAP:   w => rsse(w) / (2*SIG2) + Math.abs(w) / LAPB,             // −log posterior, Laplace prior
+};
+const W = {}; for (const k in OBJ) W[k] = golden(OBJ[k], -5, 5);
+const sxyR = RX.reduce((a,x,i)=>a+x*RY[i],0), sxxR = RX.reduce((a,x)=>a+x*x,0);
+const REGROWS = [
+  { key:"ols", g:"ols", name:"ordinary least squares (MLE)", obj:"½·Σ(y − wx)²", cf:`Σxy/Σx² = ${sxyR.toFixed(1)}/${sxxR}` },
+  { key:"ridgeSk", g:"ridge", name:"scikit-learn Ridge, α = 2", obj:"Σ(y − wx)² + 2w²", cf:`Σxy/(Σx² + α) = ${sxyR.toFixed(1)}/${sxxR+RALPHA}` },
+  { key:"ridgeMAP", g:"ridge", name:"MAP, Gaussian prior, σ² = 1, τ² = 0.5", obj:"Σ(y − wx)²/(2σ²) + w²/(2τ²)", cf:`λ = σ²/τ² = ${SIG2/TAU2}` },
+  { key:"lassoSk", g:"lasso", name:"scikit-learn Lasso, α = 0.5", obj:"(1/2n)·Σ(y − wx)² + 0.5·|w|", cf:`(Σxy − nα)/Σx²` },
+  { key:"lassoMAP", g:"lasso", name:"MAP, Laplace prior, b = 0.4", obj:"Σ(y − wx)²/(2σ²) + |w|/b", cf:`(Σxy − σ²/b)/Σx²` },
+];
+function drawReg(which){
+  const g = chart($("#regSvg"), { xmin:0.9, xmax:1.06, ymin:0, ymax:0.12, xticks:[0.9,0.92,0.94,0.96,0.98,1,1.02,1.04,1.06], yticks:[0,0.03,0.06,0.09,0.12], xlabel:"slope w", ylabel:"objective − its min", xfmt:x=>x.toFixed(2), yfmt:y=>y.toFixed(2) });
+  const curves = [
+    { g:"ols", key:"ols", col:"var(--c0)" }, { g:"ridge", key:"ridgeMAP", col:"var(--c1)" }, { g:"lasso", key:"lassoMAP", col:"var(--c3)" },
+  ].filter(c => which === "all" || c.g === which);
+  curves.forEach((c, ci) => {
+    const f = OBJ[c.key], m = f(W[c.key]), pts = [];
+    for (let i = 0; i <= 200; i++){ const w = 0.9 + 0.16*i/200; pts.push([w, Math.min(0.2, f(w) - m)]); }
+    path(g, pts, { stroke:c.col, "stroke-width":2.5 });
+    vline(g, W[c.key], { stroke:c.col });
+    el("circle", { cx:g.sx(W[c.key]), cy:g.sy(0), r:6, fill:c.col, stroke:"#fff", "stroke-width":2 }, g.svg);
+    const lft = c.g !== "ridge";
+    text(g, g.sx(W[c.key]) + (lft ? -6 : 6), g.pad.t + 14 + ci*16, W[c.key].toFixed(6), { "font-size":12, "font-weight":700, fill:c.col, "text-anchor": lft ? "end" : "start" });
+  });
+  $("#regTable").innerHTML = `<tr><th>method</th><th>objective minimized</th><th>fitted slope</th></tr>` +
+    REGROWS.map(r => `<tr class="${which==="all"||r.g===which?'hot':''}"><td>${r.name}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px">${r.obj}</td><td class="num">${W[r.key].toFixed(6)}</td></tr>`).join("");
+  const side = {
+    ols: `<span class="k">no prior = maximum likelihood</span>slope = Σxy/Σx² = ${sxyR.toFixed(1)}/${sxxR} = <b>${W.ols.toFixed(6)}</b>`,
+    ridge: `<span class="k">Gaussian prior → L2 penalty</span>−ln prior = w²/(2τ²), so λ = σ²/τ² = ${SIG2}/${TAU2} = ${SIG2/TAU2} = α<br>scikit-learn Ridge: <b>${W.ridgeSk.toFixed(6)}</b><br>MAP: <b>${W.ridgeMAP.toFixed(6)}</b><br>closed form ${sxyR.toFixed(1)}/(${sxxR}+${RALPHA}) = ${(sxyR/(sxxR+RALPHA)).toFixed(6)}`,
+    lasso: `<span class="k">Laplace prior → L1 penalty</span>−ln prior = |w|/b. Multiply the Lasso objective by n = 5: ½Σ(y−wx)² + nα|w|, so 1/b = nα = 2.5 → b = 0.4<br>scikit-learn Lasso: <b>${W.lassoSk.toFixed(6)}</b><br>MAP: <b>${W.lassoMAP.toFixed(6)}</b>`,
+    all: `<span class="k">the pull toward zero</span>MLE ${W.ols.toFixed(6)} → ridge ${W.ridgeMAP.toFixed(6)} → lasso ${W.lassoMAP.toFixed(6)}<br>Each regularized fit equals its MAP twin to 6 decimals: ${Math.abs(W.ridgeSk-W.ridgeMAP)<5e-7 && Math.abs(W.lassoSk-W.lassoMAP)<5e-7 ? '<b class="ok">✓ identical</b>' : '<b class="bad">✗</b>'}`,
+  };
+  $("#regSide").innerHTML = side[which];
+}
+presets("#regPresets", [
+  { name:"OLS = MLE", w:"ols" }, { name:"Ridge α=2 = Gaussian-prior MAP", w:"ridge" }, { name:"Lasso α=0.5 = Laplace-prior MAP", w:"lasso" }, { name:"All together", w:"all" },
+], p => drawReg(p.w))[3].click();
+
+/* ============ TAB 6: Method of moments vs MLE ============ */
+const MD = [0.2, 0.3, 0.4, 3.0];
+const mMean = MD.reduce((a,b)=>a+b,0)/MD.length, MOM = 2*mMean, MLEt = Math.max(...MD);
+const uLik = th => th < MLEt ? 0 : Math.pow(1/th, MD.length);
+function drawMom(mode){
+  const svg = $("#momSvg");
+  const showL = mode === "mle" || mode === "both";
+  const g = chart(svg, { xmin:0, xmax:5, ymin:0, ymax:0.016, xticks:[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5], yticks:[0,0.004,0.008,0.012,0.016], ylabel:"likelihood L(θ)", yfmt:y=>y.toFixed(3), pad:{ b:150, t:18 } });
+  // number line
+  const NL = 318;
+  el("line", { x1:g.sx(0), x2:g.sx(5), y1:NL, y2:NL, stroke:"#9AA3AD" }, svg);
+  [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5].forEach(x => { el("line", { x1:g.sx(x), x2:g.sx(x), y1:NL-4, y2:NL+4, stroke:"#9AA3AD" }, svg); });
+  text(g, g.pad.l - 6, NL + 4, "data", { "text-anchor":"end", "font-size":11, fill:"#5B6572" });
+  const band = (th, col, label, y) => {
+    el("rect", { x:g.sx(0), y:y - 11, width:g.sx(th)-g.sx(0), height:22, rx:4, fill:col, opacity:0.18 }, svg);
+    el("line", { x1:g.sx(th), x2:g.sx(th), y1:g.pad.t, y2:NL + 6, stroke:col, "stroke-width":2.5, "stroke-dasharray":"6 4" }, svg);
+    text(g, g.sx(th) - 6, y + 4, label, { "font-size":12, "font-weight":700, fill:col, "text-anchor":"end" });
+    text(g, g.pad.l - 6, y + 4, "range", { "text-anchor":"end", "font-size":11, fill:"#5B6572" });
+  };
+  if (showL){
+    const pts1 = []; for (let i = 0; i <= 400; i++){ const th = MLEt + (5 - MLEt)*i/400; pts1.push([th, uLik(th)]); }
+    path(g, [[0,0],[MLEt,0]], { stroke:"var(--c3)", "stroke-width":2.5 });
+    path(g, [[MLEt, 0], [MLEt, uLik(MLEt)]], { stroke:"var(--c3)", "stroke-width":1, "stroke-dasharray":"2 3" });
+    path(g, pts1, { stroke:"var(--c3)", "stroke-width":2.5 });
+    el("circle", { cx:g.sx(MLEt), cy:g.sy(uLik(MLEt)), r:6, fill:"var(--c3)" }, svg);
+    text(g, g.sx(MLEt) + 10, g.sy(uLik(MLEt)) + 4, "peak: L(3.0) = 1/81 = " + uLik(MLEt).toFixed(4), { "font-size":12, "font-weight":700, fill:"var(--c3)" });
+    text(g, g.sx(1.0), g.sy(0.0025), "L = 0 for every θ < 3.0", { "text-anchor":"middle", "font-size":11.5, fill:"var(--bad)", "font-weight":600 });
+    text(g, g.sx(1.0), g.sy(0.0025) + 14, "(3.0 would be impossible)", { "text-anchor":"middle", "font-size":10.5, fill:"var(--bad)" });
+  } else {
+    text(g, g.sx(2.5), g.sy(0.008), "the likelihood curve appears with the MLE presets", { "text-anchor":"middle", "font-size":12, fill:"#9AA3AD" });
+  }
+  if (mode === "mom" || mode === "both") band(MOM, "var(--bad)", "MoM θ = " + MOM.toFixed(2), 250);
+  if (showL) band(MLEt, "var(--good)", "MLE θ = " + MLEt.toFixed(1), 280);
+  text(g, g.sx(0.3), NL + 22, "0.2, 0.3, 0.4", { "text-anchor":"middle", "font-size":11 });
+  text(g, g.sx(3.0), NL + 22, "3.0", { "text-anchor":"middle", "font-size":11 });
+  MD.forEach(x => {
+    const bad = (mode === "mom" || mode === "both") && x > MOM;
+    el("circle", { cx:g.sx(x), cy:NL, r:7, fill: bad ? "var(--bad)" : "var(--c2)", stroke:"#fff", "stroke-width":2 }, svg);
+    if (bad) text(g, g.sx(x) + 10, NL - 10, "✗ impossible if θ = " + MOM.toFixed(2), { "font-size":11.5, "font-weight":700, fill:"var(--bad)" });
+  });
+  let html = `<div class="stat"><span class="k">data</span>${MD.map(x=>x.toFixed(1)).join(", ")}</div>`;
+  if (mode !== "data" && mode !== "mle") html += `<div class="stat"><span class="k">method of moments</span>mean of Uniform(0, θ) is θ/2, so θ̂ = 2 × mean<br>mean = (${MD.map(x=>x.toFixed(1)).join(" + ")}) / 4 = ${mMean.toFixed(3)}<br>θ̂ = 2 × ${mMean.toFixed(3)} = <b class="bad">${MOM.toFixed(2)}</b></div>
+    <div class="stat"><span class="k bad">impossible</span>the data contains 3.0, but θ = ${MOM.toFixed(2)} says no value can exceed ${MOM.toFixed(2)}. The estimate contradicts its own data.</div>`;
+  if (mode === "mle" || mode === "both") html += `<div class="stat"><span class="k">maximum likelihood</span>L(θ) = (1/θ)⁴ if θ ≥ every value, else 0<br>θ < 3.0 → L = 0; θ > 3.0 → L shrinks<br>θ̂ = max value = <b class="ok">${MLEt.toFixed(1)}</b></div>`;
+  $("#momSide").innerHTML = html;
+}
+presets("#momPresets", [
+  { name:"The data", m:"data" }, { name:"Method of moments", m:"mom" }, { name:"Maximum likelihood", m:"mle" }, { name:"Both, with the likelihood curve", m:"both" },
+], p => drawMom(p.m))[3].click();
+
+// expose for testing
+window.__LE = { Lcoin, run, zeroAt, finalLL, headsCount, LINES, sse, nll, B0, B1, LL, STU, W, MOM, MLEt };
+})();
+</script>
+<script>
+/* ===== Tab 7: Fisher information and the Cramér–Rao bound (self-contained) ===== */
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; if (parent) parent.appendChild(e); return e; }
+function chart(svg, o){
+  const W = 600, H = 340, pad = Object.assign({ l:58, r:18, t:18, b:44 }, o.pad || {});
+  const sx = x => pad.l + (x - o.xmin) / (o.xmax - o.xmin) * (W - pad.l - pad.r);
+  const sy = y => H - pad.b - (y - o.ymin) / (o.ymax - o.ymin) * (H - pad.t - pad.b);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  (o.xticks||[]).forEach(x => { el("line",{x1:sx(x),y1:pad.t,x2:sx(x),y2:H-pad.b,stroke:"#EEF1F0"},svg); el("text",{x:sx(x),y:H-pad.b+16,"text-anchor":"middle","font-size":11,fill:"#5B6572"},svg,o.xfmt?o.xfmt(x):x); });
+  (o.yticks||[]).forEach(y => { el("line",{x1:pad.l,y1:sy(y),x2:W-pad.r,y2:sy(y),stroke:"#EEF1F0"},svg); el("text",{x:pad.l-6,y:sy(y)+4,"text-anchor":"end","font-size":11,fill:"#5B6572"},svg,o.yfmt?o.yfmt(y):y); });
+  el("line",{x1:pad.l,y1:H-pad.b,x2:W-pad.r,y2:H-pad.b,stroke:"#9AA3AD"},svg); el("line",{x1:pad.l,y1:pad.t,x2:pad.l,y2:H-pad.b,stroke:"#9AA3AD"},svg);
+  if (o.xlabel) el("text",{x:(pad.l+W-pad.r)/2,y:H-8,"text-anchor":"middle","font-size":12,fill:"#1B2430"},svg,o.xlabel);
+  if (o.ylabel) el("text",{x:14,y:(pad.t+H-pad.b)/2,"text-anchor":"middle","font-size":12,fill:"#1B2430",transform:`rotate(-90 14 ${(pad.t+H-pad.b)/2})`},svg,o.ylabel);
+  return { svg, sx, sy, W, H, pad };
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function line(g, pts, attrs, ymin, ymax){ const d = pts.map((p,i)=>(i?"L":"M")+g.sx(p[0]).toFixed(2)+","+g.sy(clamp(p[1],ymin,ymax)).toFixed(2)).join(""); return el("path",Object.assign({d,fill:"none"},attrs),g.svg); }
+function txt(g, x, y, s, a){ return el("text",Object.assign({x,y,"font-size":12,fill:"#1B2430"},a||{}),g.svg,s); }
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function gaussGen(seed){ const r=mulberry32(seed); return function(){ let u=r(); while(u<=0) u=r(); const v=r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }; }
+const vr = a => { const m = a.reduce((s,x)=>s+x,0)/a.length; return a.reduce((s,x)=>s+(x-m)*(x-m),0)/a.length; };
+const mean = a => a.reduce((s,x)=>s+x,0)/a.length;
+function hist(g, data, lo, hi, bins, color, scale){
+  const w = (hi-lo)/bins, c = new Array(bins).fill(0);
+  data.forEach(x => { const k = Math.floor((x-lo)/w); if (k>=0 && k<bins) c[k]++; });
+  c.forEach((n,k) => { const dens = n/(data.length*w)*(scale||1); el("rect",{x:g.sx(lo+k*w),y:g.sy(dens),width:Math.max(0.5,g.sx(lo+(k+1)*w)-g.sx(lo+k*w)-0.5),height:g.sy(0)-g.sy(dens),fill:color,opacity:0.45},g.svg); });
+}
+const SVG = $("#fiSvg"), SIDE = $("#fiSide"), CAP = $("#fiCaption"), LEG = $("#fiLegend");
+const leg = items => { LEG.innerHTML = items.map(([c,l]) => `<span style="color:${c}"><span style="color:var(--ink-soft)">${l}</span></span>`).join(""); };
+
+/* ---- 1. sharp vs flat ---- */
+function coinLL(h, n, p){ return h*Math.log(p) + (n-h)*Math.log(1-p); }
+function sharpFlat(){
+  const g = chart(SVG, { xmin:0.4, xmax:1.0, ymin:-6, ymax:0.5, xticks:[0.4,0.5,0.6,0.7,0.8,0.9,1.0], yticks:[-6,-5,-4,-3,-2,-1,0], xlabel:"candidate p", ylabel:"log L(p) − log L(0.7)", xfmt:x=>x.toFixed(1) });
+  const rows = [];
+  [[7,10,"var(--c2)"],[70,100,"var(--c1)"]].forEach(([h,n,col]) => {
+    const top = coinLL(h,n,0.7), info = h/0.49 + (n-h)/0.09;
+    const pts = [], par = [];
+    for (let i = 0; i <= 300; i++){ const p = 0.401 + 0.598*i/300; pts.push([p, coinLL(h,n,p)-top]); par.push([p, -0.5*info*(p-0.7)*(p-0.7)]); }
+    line(g, par, { stroke:col, "stroke-width":1.5, "stroke-dasharray":"5 4", opacity:0.9 }, -6, 0.5);
+    line(g, pts, { stroke:col, "stroke-width":2.8 }, -6, 0.5);
+    [0.6,0.8].forEach(p => { const d = coinLL(h,n,p)-top; if (d > -6){ el("circle",{cx:g.sx(p),cy:g.sy(d),r:5,fill:col,stroke:"#fff","stroke-width":1.5},SVG); txt(g, g.sx(p)+(p<0.7?-8:8), g.sy(d)+(n===10?-8:16), d.toFixed(3), { "text-anchor":p<0.7?"end":"start", "font-size":11, "font-weight":700, fill:col }); } });
+    rows.push({ h, n, info, se:1/Math.sqrt(info), d6:coinLL(h,n,0.6)-top, d8:coinLL(h,n,0.8)-top, col });
+  });
+  el("line",{x1:g.sx(0.7),x2:g.sx(0.7),y1:g.sy(0.5),y2:g.sy(-6),stroke:"#1B2430","stroke-dasharray":"3 4"},SVG);
+  txt(g, g.sx(0.7)+6, g.sy(0.2), "both peak at p̂ = 0.7", { "font-size":11 });
+  leg([["var(--c2)","7 of 10 (solid), its curvature parabola (dashed)"],["var(--c1)","70 of 100 (solid), its curvature parabola (dashed)"]]);
+  SIDE.innerHTML = rows.map(r => `<div class="stat"><span class="k">${r.h} heads in ${r.n}</span>drop at 0.6: <b>${r.d6.toFixed(3)}</b> · at 0.8: <b>${r.d8.toFixed(3)}</b><br>information = h/p̂² + (n−h)/(1−p̂)²<br>= ${r.h}/0.49 + ${r.n-r.h}/0.09 = <b>${r.info.toFixed(2)}</b> = n/(p̂(1−p̂))<br>SE = 1/√${r.info.toFixed(2)} = <b>${r.se.toFixed(4)}</b> = √(0.21/${r.n})</div>`).join("") +
+    `<div class="stat"><span class="k">parabola check (100 flips)</span>−½ × ${rows[1].info.toFixed(2)} × 0.1² = <b>${(-0.5*rows[1].info*0.01).toFixed(3)}</b> at both 0.6 and 0.8 (true: ${rows[1].d6.toFixed(3)}, ${rows[1].d8.toFixed(3)})</div>`;
+  CAP.innerHTML = `Same peak, very different sharpness. Ten times the data gives ten times the curvature (<b>47.62 → 476.19</b>) and √10 ≈ 3.16 times smaller standard error (<b>0.1449 → 0.0458</b>). The dashed parabolas use only the curvature at the peak; near 0.7 they hug the true curves.`;
+}
+
+/* ---- 2. Bernoulli information ---- */
+function bernInfo(){
+  const g = chart(SVG, { xmin:0, xmax:1, ymin:0, ymax:30, xticks:[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1], yticks:[0,5,10,15,20,25,30], xlabel:"heads-chance p", ylabel:"information per flip I(p)", xfmt:x=>x.toFixed(1) });
+  const pts = []; for (let i = 1; i < 400; i++){ const p = i/400; pts.push([p, 1/(p*(1-p))]); }
+  line(g, pts, { stroke:"var(--c3)", "stroke-width":2.8 }, 0, 30);
+  [0.5,0.7,0.9].forEach(p => { const I = 1/(p*(1-p)); el("circle",{cx:g.sx(p),cy:g.sy(I),r:6,fill:"var(--accent)",stroke:"#fff","stroke-width":2},SVG); txt(g, g.sx(p), g.sy(I)-12, "I(" + p + ") = " + I.toFixed(2), { "text-anchor":"middle", "font-size":11.5, "font-weight":700 }); });
+  txt(g, g.sx(0.97), g.sy(28), "I(0.99) = 101 ↑", { "text-anchor":"end", "font-size":11, fill:"var(--bad)" });
+  leg([["var(--c3)","I(p) = 1 / (p(1−p))"]]);
+  SIDE.innerHTML = [0.5,0.7,0.9,0.99].map(p => `<div class="stat"><span class="k">p = ${p}</span>I = 1/(${p}×${(1-p).toFixed(2)}) = <b>${(1/(p*(1-p))).toFixed(p===0.99?2:3)}</b><br>bound on SD of p̂, n = 100: √(p(1−p)/100) = <b>${Math.sqrt(p*(1-p)/100).toFixed(4)}</b></div>`).join("") +
+    `<div class="stat"><span class="k">score check (p = 0.7)</span>score = +1/p for heads, −1/(1−p) for tails<br>mean 0, variance 0.7×(1/0.7)² + 0.3×(1/0.3)² = <b>${(0.7/0.49+0.3/0.09).toFixed(3)}</b> = I(0.7)</div>`;
+  CAP.innerHTML = `Information per flip is lowest for a fair coin (<b>4</b>) and grows without limit toward p = 0 or 1. A coin that almost always lands heads gives a nearly constant result, so its rate shows up fast; a fair coin is as noisy as a yes/no can be. The variance of the score (the slope of the log-likelihood) equals the information, the second definition of the same number.`;
+}
+
+/* ---- 3. normal mean ---- */
+function normalMean(){
+  const g = chart(SVG, { xmin:3.5, xmax:6.5, ymin:-8, ymax:0.5, xticks:[3.5,4,4.5,5,5.5,6,6.5], yticks:[-8,-6,-4,-2,0], xlabel:"candidate μ (sample mean x̄ = 5)", ylabel:"log L(μ) − log L(x̄)" });
+  const rows = [];
+  [[25,"var(--c2)"],[100,"var(--c1)"]].forEach(([n,col]) => {
+    const I = n/4, pts = [];
+    for (let i = 0; i <= 300; i++){ const m = 3.5 + 3*i/300; pts.push([m, -0.5*I*(m-5)*(m-5)]); }
+    line(g, pts, { stroke:col, "stroke-width":2.8 }, -8, 0.5);
+    const se = 1/Math.sqrt(I);
+    [5-se,5+se].forEach(x => el("circle",{cx:g.sx(x),cy:g.sy(-0.5),r:5,fill:col,stroke:"#fff","stroke-width":1.5},SVG));
+    rows.push({ n, I, se, col });
+  });
+  el("line",{x1:g.sx(3.5),x2:g.sx(6.5),y1:g.sy(-0.5),y2:g.sy(-0.5),stroke:"#9AA3AD","stroke-dasharray":"3 4"},SVG);
+  txt(g, g.sx(6.45), g.sy(-0.5)-6, "−½: one SE from the peak", { "text-anchor":"end", "font-size":11, fill:"#5B6572" });
+  leg([["var(--c2)","n = 25, σ = 2"],["var(--c1)","n = 100, σ = 2"]]);
+  SIDE.innerHTML = rows.map(r => `<div class="stat"><span class="k">n = ${r.n}, σ = 2</span>log L(μ) = const − (n/(2σ²))·(μ − x̄)²<br>curvature I = n/σ² = ${r.n}/4 = <b>${r.I.toFixed(2)}</b> (the same at every μ)<br>bound 1/I = <b>${(1/r.I).toFixed(4)}</b>, SE = <b>${r.se.toFixed(2)}</b></div>`).join("") +
+    `<div class="stat"><span class="k">sample mean</span>Var(x̄) = σ²/n = 4/25 = <b>0.16</b>: exactly the bound</div>`;
+  CAP.innerHTML = `For a normal mean the log-likelihood is <i>exactly</i> a parabola, so the curvature n/σ² is the same everywhere. The dots mark where it has dropped by ½, one standard error either side of the peak: <b>±0.4</b> for 25 values, <b>±0.2</b> for 100.`;
+}
+
+/* ---- 4. Cramér–Rao simulation ---- */
+let CR = null;
+function crSim(){
+  if (!CR){
+    const g = gaussGen(25), reps = 20000, n = 25, Mn = [], Md = [], F = [], x = new Float64Array(n);
+    for (let r = 0; r < reps; r++){ let s = 0; for (let i = 0; i < n; i++){ x[i] = 5 + 2*g(); s += x[i]; } Mn.push(s/n); F.push(x[0]); const y = Array.from(x).sort((a,b)=>a-b); Md.push(y[(n-1)/2]); }
+    CR = { Mn, Md, F };
+  }
+  const g = chart(SVG, { xmin:3.5, xmax:6.5, ymin:0, ymax:1.1, xticks:[3.5,4,4.5,5,5.5,6,6.5], yticks:[0,0.2,0.4,0.6,0.8,1.0], xlabel:"estimate of the center (truth = 5)", ylabel:"density", yfmt:y=>y.toFixed(1) });
+  hist(g, CR.Md, 3.5, 6.5, 60, "var(--c2)");
+  hist(g, CR.Mn, 3.5, 6.5, 60, "var(--c1)");
+  const pts = []; for (let i = 0; i <= 300; i++){ const m = 3.5 + 3*i/300; pts.push([m, Math.exp(-(m-5)*(m-5)/(2*0.16))/Math.sqrt(2*Math.PI*0.16)]); }
+  line(g, pts, { stroke:"var(--accent)", "stroke-width":2.5 }, 0, 1.1);
+  const vm = vr(CR.Mn), vd = vr(CR.Md), vf = vr(CR.F);
+  leg([["var(--c1)","sample mean (histogram)"],["var(--c2)","sample median (histogram)"],["var(--accent)","bell curve with the bound's variance 0.16"]]);
+  SIDE.innerHTML = `<div class="stat"><span class="k">bound</span>1/I = σ²/n = 4/25 = <b>0.16</b></div>` +
+    [["sample mean",vm,CR.Mn],["sample median",vd,CR.Md],["just the first value",vf,CR.F]].map(([nm,v,a]) => `<div class="stat"><span class="k">${nm}</span>average ${mean(a).toFixed(4)} · variance <b>${v.toFixed(4)}</b><br>= <b>${(v/0.16).toFixed(2)}×</b> the bound</div>`).join("");
+  CAP.innerHTML = `20,000 repeats (seed 25) of "draw 25 values from Normal(5, 2²) and estimate the center." All three estimators are unbiased, but only the <b>mean</b> reaches the Cramér–Rao bound. The <b>median</b>'s histogram is visibly wider (about 1.5× the variance; π/2 for large samples), and using just the first value wastes 24 of the 25 observations (about 25×, off the chart).`;
+}
+
+/* ---- 5. Uniform(0, theta) ---- */
+let UN = null;
+function unifBeat(){
+  if (!UN){ const r = mulberry32(20), reps = 100000, n = 20, U = [], Mo = []; for (let k = 0; k < reps; k++){ let mx = 0, s = 0; for (let i = 0; i < n; i++){ const u = r(); if (u > mx) mx = u; s += u; } U.push(mx*(n+1)/n); Mo.push(2*s/n); } UN = { U, Mo }; }
+  const g = chart(SVG, { xmin:0.6, xmax:1.4, ymin:0, ymax:12, xticks:[0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4], yticks:[0,2,4,6,8,10,12], xlabel:"estimate of θ (truth = 1)", ylabel:"density", xfmt:x=>x.toFixed(1) });
+  hist(g, UN.Mo, 0.6, 1.4, 80, "var(--bad)");
+  hist(g, UN.U, 0.6, 1.4, 80, "var(--good)");
+  leg([["var(--good)","bias-corrected maximum (n+1)/n × max"],["var(--bad)","method of moments 2 × mean"]]);
+  const vu = vr(UN.U), vm = vr(UN.Mo);
+  SIDE.innerHTML = `<div class="stat"><span class="k">(n+1)/n × max, n = 20</span>average ${mean(UN.U).toFixed(4)} · variance <b>${vu.toFixed(5)}</b><br>formula θ²/(n(n+2)) = 1/440 = <b>${(1/440).toFixed(5)}</b>: shrinks like 1/n²</div>
+    <div class="stat"><span class="k">2 × mean</span>average ${mean(UN.Mo).toFixed(4)} · variance <b>${vm.toFixed(4)}</b><br>formula θ²/(3n) = 1/60 = <b>${(1/60).toFixed(4)}</b>: shrinks like 1/n</div>
+    <div class="stat"><span class="k">ratio</span>${(vm/vu).toFixed(2)}× more variance for the method of moments</div>`;
+  CAP.innerHTML = `The Cramér–Rao bound assumes a "regular" model, where the range of possible values doesn't depend on the parameter. Uniform(0, θ) breaks that (θ <i>is</i> the edge of the range), and the maximum-based estimator beats any 1/n rate. 100,000 seeded repeats of 20 values; the histograms are drawn from all of them.`;
+}
+
+/* ---- 6. standard errors from the Hessian ---- */
+const HRS = [0.50,0.75,1.00,1.25,1.50,1.75,1.75,2.00,2.25,2.50,2.75,3.00,3.25,3.50,4.00,4.25,4.50,4.75,5.00,5.50];
+const PASS = [0,0,0,0,0,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1];
+function logitLL(b0, b1){ let s = 0; HRS.forEach((h,i) => { const z = b0 + b1*h; s += PASS[i]*z - Math.log(1 + Math.exp(z)); }); return s; }
+function fitLogit(){
+  let b0 = 0, b1 = 0;
+  for (let it = 0; it < 50; it++){
+    let g0=0,g1=0,h00=0,h01=0,h11=0;
+    HRS.forEach((h,i) => { const p = 1/(1+Math.exp(-(b0+b1*h))); g0 += PASS[i]-p; g1 += (PASS[i]-p)*h; const w = p*(1-p); h00 += w; h01 += w*h; h11 += w*h*h; });
+    const det = h00*h11 - h01*h01; b0 += (h11*g0 - h01*g1)/det; b1 += (-h01*g0 + h00*g1)/det;
+  }
+  let I00=0,I01=0,I11=0; HRS.forEach(h => { const p = 1/(1+Math.exp(-(b0+b1*h))); const w = p*(1-p); I00 += w; I01 += w*h; I11 += w*h*h; });
+  const det = I00*I11 - I01*I01;
+  return { b0, b1, I:[[I00,I01],[I01,I11]], C:[[I11/det,-I01/det],[-I01/det,I00/det]] };
+}
+function profileB0(b1){ let b0 = -b1*2.7875; for (let it = 0; it < 60; it++){ let g=0,h=0; HRS.forEach((x,i) => { const p = 1/(1+Math.exp(-(b0+b1*x))); g += PASS[i]-p; h += p*(1-p); }); b0 += g/h; } return b0; }
+function normCdf(z){ const t = 1/(1+0.2316419*Math.abs(z)), d = 0.3989422804014327*Math.exp(-z*z/2); const q = d*t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429)))); return z > 0 ? 1-q : q; }
+function hessSE(){
+  const F = fitLogit(), se0 = Math.sqrt(F.C[0][0]), se1 = Math.sqrt(F.C[1][1]);
+  const top = logitLL(F.b0, F.b1);
+  const g = chart(SVG, { xmin:0, xmax:3.6, ymin:-4, ymax:0.4, xticks:[0,0.5,1,1.5,2,2.5,3,3.5], yticks:[-4,-3,-2,-1,0], xlabel:"slope b₁ (log-odds per hour), intercept re-fitted for each", ylabel:"log L − max" });
+  const pts = [], par = [];
+  for (let i = 0; i <= 200; i++){ const b1 = 0.02 + 3.56*i/200; pts.push([b1, logitLL(profileB0(b1), b1) - top]); par.push([b1, -0.5*(b1-F.b1)*(b1-F.b1)/F.C[1][1]]); }
+  line(g, par, { stroke:"var(--c2)", "stroke-width":1.8, "stroke-dasharray":"5 4" }, -4, 0.4);
+  line(g, pts, { stroke:"var(--c1)", "stroke-width":2.8 }, -4, 0.4);
+  const lo = F.b1 - 1.96*se1, hi = F.b1 + 1.96*se1;
+  el("rect",{x:g.sx(lo),y:g.sy(0.4),width:g.sx(hi)-g.sx(lo),height:g.sy(-4)-g.sy(0.4),fill:"rgba(70,58,115,0.08)"},SVG);
+  [lo,hi].forEach(x => el("line",{x1:g.sx(x),x2:g.sx(x),y1:g.sy(0.4),y2:g.sy(-4),stroke:"var(--accent)","stroke-dasharray":"3 3"},SVG));
+  txt(g, (g.sx(lo)+g.sx(hi))/2, g.sy(-3.7), `95% interval ${lo.toFixed(2)} to ${hi.toFixed(2)}`, { "text-anchor":"middle", "font-size":11.5, "font-weight":700, fill:"var(--accent)" });
+  const prof = b1 => logitLL(profileB0(b1), b1) - top, cut = -1.920729;
+  const bis = (a, b) => { for (let i = 0; i < 60; i++){ const m = (a+b)/2; if ((prof(a)-cut)*(prof(m)-cut) <= 0) b = m; else a = m; } return (a+b)/2; };
+  const plo = bis(0.05, F.b1), phi = bis(F.b1, 3.6);
+  el("line",{x1:g.sx(0),x2:g.sx(3.6),y1:g.sy(cut),y2:g.sy(cut),stroke:"var(--c1)","stroke-dasharray":"2 3"},SVG);
+  [plo,phi].forEach(x => el("circle",{cx:g.sx(x),cy:g.sy(cut),r:4.5,fill:"var(--c1)"},SVG));
+  txt(g, g.sx(phi)-4, g.sy(cut)-8, `drop of 1.92: ${plo.toFixed(2)} to ${phi.toFixed(2)}`, { "text-anchor":"end", "font-size":11, fill:"var(--c1)", "font-weight":700 });
+  el("circle",{cx:g.sx(F.b1),cy:g.sy(0),r:6,fill:"var(--accent)",stroke:"#fff","stroke-width":2},SVG);
+  txt(g, g.sx(F.b1)+8, g.sy(0)+18, "b̂₁ = " + F.b1.toFixed(3), { "font-size":11.5, "font-weight":700 });
+  // normal fit Hessian, numerical
+  const D = [2,4,4,4,5,5,7,9], nll = (m,s) => D.reduce((a,x) => a - Math.log(s) - 0.5*Math.log(2*Math.PI) - (x-m)*(x-m)/(2*s*s), 0);
+  const e = 1e-4, X = [5,2], Hn = [[0,0],[0,0]];
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++){ const ev = (di,dj) => { const y = X.slice(); y[i] += di; y[j] += dj; return nll(y[0], y[1]); }; Hn[i][j] = (ev(e,e)-ev(e,-e)-ev(-e,e)+ev(-e,-e))/(4*e*e); }
+  const z = F.b1/se1, p = 2*(1-normCdf(Math.abs(z)));
+  leg([["var(--c1)","profile log-likelihood of the slope"],["var(--c2)","parabola from the inverse Fisher information"]]);
+  const f2 = v => (Math.abs(v) < 5e-7 ? 0 : v).toFixed(3);
+  SIDE.innerHTML = `<div class="stat"><span class="k">normal fit of 2,4,4,4,5,5,7,9 at μ̂ = 5, σ̂ = 2</span>Hessian of log L (numerical) = [[${f2(Hn[0][0])}, ${f2(Hn[0][1])}], [${f2(Hn[1][0])}, ${f2(Hn[1][1])}]]<br>invert minus it: variances ${(-1/Hn[0][0]).toFixed(3)}, ${(-1/Hn[1][1]).toFixed(3)}<br>SE(μ̂) = <b>${Math.sqrt(-1/Hn[0][0]).toFixed(4)}</b> · SE(σ̂) = <b>${Math.sqrt(-1/Hn[1][1]).toFixed(4)}</b></div>
+    <div class="stat"><span class="k">20 students: Fisher information XᵀWX</span>[[${F.I[0][0].toFixed(3)}, ${F.I[0][1].toFixed(3)}], [${F.I[1][0].toFixed(3)}, ${F.I[1][1].toFixed(3)}]]<br>inverse (covariance) = [[${F.C[0][0].toFixed(3)}, ${F.C[0][1].toFixed(3)}], [${F.C[1][0].toFixed(3)}, ${F.C[1][1].toFixed(3)}]]</div>
+    <div class="stat"><span class="k">standard errors</span>b₀ = ${F.b0.toFixed(3)}, SE <b>${se0.toFixed(4)}</b><br>b₁ = ${F.b1.toFixed(3)}, SE <b>${se1.toFixed(4)}</b><br>z = ${F.b1.toFixed(3)} / ${se1.toFixed(4)} = <b>${z.toFixed(2)}</b>, p = <b>${p.toFixed(4)}</b></div>`;
+  CAP.innerHTML = `With several parameters the curvature is the <b>Hessian</b> matrix. Minus its expected value is the <b>Fisher information matrix</b>; its inverse is the covariance of the estimates, and the square roots of the diagonal are the standard errors every regression table prints (here <b>1.7610</b> and <b>0.6287</b>, matching Wikipedia's table for this dataset). The dashed parabola, built from that inverse alone, hugs the true profile log-likelihood near the peak. Farther out the true curve is lopsided: where it has dropped by 1.92 (the chi-square 95% cut-off, 3.84 ÷ 2) gives the <b>profile-likelihood interval ${plo.toFixed(2)} to ${phi.toFixed(2)}</b>, against the ±1.96 SE (Wald) interval ${lo.toFixed(2)} to ${hi.toFixed(2)}.`;
+}
+
+const PRESETS = [
+  { name:"Sharp vs. flat: 7 of 10 vs. 70 of 100", f:sharpFlat },
+  { name:"Bernoulli: information per flip 1/(p(1−p))", f:bernInfo },
+  { name:"Normal mean: I = n/σ², exactly a parabola", f:normalMean },
+  { name:"Cramér–Rao: mean vs. median vs. first value", f:crSim },
+  { name:"Beating the bound: Uniform(0, θ)", f:unifBeat },
+  { name:"Standard errors from the Hessian", f:hessSE },
+];
+const bar = $("#fiPresets");
+const btns = PRESETS.map(p => { const b = document.createElement("button"); b.className = "op"; b.textContent = p.name; b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); p.f(); }); bar.appendChild(b); return b; });
+btns[0].click();
+window.__FI = { fitLogit, PRESETS, btns };
+})();
+</script>
+</body>
+</html>

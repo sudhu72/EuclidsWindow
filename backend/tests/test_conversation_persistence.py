@@ -141,6 +141,44 @@ class TestTutorStreamPersistence:
         assert messages[1]["content"] == "Algebra uses letters for unknowns."
 
 
+    def test_skip_curated_bypasses_catalog_and_hint(self, client, monkeypatch):
+        """Gallery prompts send skip_curated: the keyword matcher must not run,
+        and no curated text (answer or hint) may reach the response or the model."""
+        def _boom(q):
+            raise AssertionError("match_topic must not be called when skip_curated is set")
+
+        monkeypatch.setattr(tutor_stream_module._catalog, "match_topic", _boom)
+
+        class _FakeLibrary:
+            def has_strong_match(self, q):
+                return False
+
+        monkeypatch.setattr(tutor_stream_module, "get_library", lambda: _FakeLibrary())
+        seen_hints = []
+
+        def _fake_messages(question, history, curated_hint, level_key):
+            seen_hints.append(curated_hint)
+            return [{"role": "user", "content": question}]
+
+        monkeypatch.setattr(tutor_stream_module._service, "build_reasoning_messages", _fake_messages)
+
+        class _FakeEngine:
+            def chat_stream(self, messages, **kw):
+                yield "KKT says a binding constraint pushes back."
+
+        monkeypatch.setattr(tutor_stream_module, "LocalLLMEngine", _FakeEngine)
+        monkeypatch.setattr(tutor_stream_module, "_closing_aids", lambda req, answer: {})
+
+        resp = client.post(
+            "/api/ai/tutor/stream",
+            json={"question": "Explain the KKT conditions and support vectors.", "skip_curated": True},
+        )
+        assert resp.status_code == 200
+        assert "KKT says a binding constraint pushes back." in resp.text
+        assert '"source": "llm"' in resp.text
+        assert seen_hints == [None]
+
+
 class TestConversationOwnershipRegression:
     def test_anonymous_conversation_still_fetchable_anonymously(self, client):
         resp = client.post("/api/conversations", params={"title": "hi"})

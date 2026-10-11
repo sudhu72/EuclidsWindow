@@ -66,6 +66,7 @@
   <div class="tabs">
     <button class="tab-btn active" data-tab="grams">The Two Grams</button>
     <button class="tab-btn" data-tab="mfcc">Mel Spectrogram → MFCC</button>
+    <button class="tab-btn" data-tab="hmm">HMM Viterbi Trellis</button>
     <button class="tab-btn" data-tab="ctc">CTC Alignment Explorer</button>
   </div>
 
@@ -104,6 +105,28 @@
         <button class="op" id="resetMel">Reset to tutorial's example</button>
       </div>
       <div class="story-line" id="mfccStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-hmm">
+    <div class="panel">
+      <h2>Decode a Loudness Sequence Into Its Most Likely Phoneme Path</h2>
+      <p class="sub">Hidden states: S (silence), V (vowel), C (consonant). Observations: quantized loudness L/M/H. Pick an observation for each frame, then click "Step" to fill the Viterbi trellis one column at a time.</p>
+      <table class="datatable" id="hmmModelTable"></table>
+      <div class="row" id="hmmObsPicker"></div>
+      <div class="row">
+        <button class="op" id="hmmStep">Step ▶</button>
+        <button class="op" id="hmmRunAll">Run all ▶▶</button>
+        <button class="op" id="hmmReset">Reset</button>
+      </div>
+      <table class="datatable" id="hmmTrellisTable"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">Viterbi best path</div><div class="num" id="hmmBestPath">-</div></div>
+        <div class="metric coral"><div class="lbl">Viterbi probability (max)</div><div class="num" id="hmmBestProb">-</div></div>
+        <div class="metric green"><div class="lbl">Brute-force cross-check (81 seqs)</div><div class="num" id="hmmBruteCheck">-</div></div>
+        <div class="metric amber"><div class="lbl">Forward algorithm P(O) (sum)</div><div class="num" id="hmmForward">-</div></div>
+      </div>
+      <div class="story-line" id="hmmStory">Click Step to fill in the first column.</div>
     </div>
   </div>
 
@@ -362,6 +385,161 @@
   }
   renderCtcTable();
   updateCtc();
+
+  // ==================== TAB: HMM VITERBI TRELLIS ====================
+  const HMM_STATES = ["S","V","C"];
+  const HMM_OBS = ["L","M","H"];
+  const HMM_PI = { S:0.6, V:0.3, C:0.1 };
+  const HMM_A = {
+    S: { S:0.5, V:0.4, C:0.1 },
+    V: { S:0.1, V:0.3, C:0.6 },
+    C: { S:0.2, V:0.7, C:0.1 },
+  };
+  const HMM_B = {
+    S: { L:0.7, M:0.2, H:0.1 },
+    V: { L:0.1, M:0.2, H:0.7 },
+    C: { L:0.2, M:0.6, H:0.2 },
+  };
+  let hmmObsSeq = ["L","H","M","H"];
+  let hmmStepIdx = 0; // number of trellis columns filled
+  let hmmV = [];       // V[t][state]
+  let hmmBack = [];    // backpointer[t][state]
+
+  function renderHmmModelTable(){
+    let html = "<tr><th>&pi; (start)</th>" + HMM_STATES.map(s=>`<th>${s}</th>`).join("") + "</tr>";
+    html += "<tr><td>P(start)</td>" + HMM_STATES.map(s=>`<td>${HMM_PI[s]}</td>`).join("") + "</tr>";
+    html += "<tr><th>A (transition)</th>" + HMM_STATES.map(s=>`<th>to ${s}</th>`).join("") + "</tr>";
+    HMM_STATES.forEach(from => {
+      html += `<tr><td>from ${from}</td>` + HMM_STATES.map(to=>`<td>${HMM_A[from][to]}</td>`).join("") + "</tr>";
+    });
+    html += "<tr><th>B (emission)</th>" + HMM_OBS.map(o=>`<th>${o}</th>`).join("") + "</tr>";
+    HMM_STATES.forEach(s => {
+      html += `<tr><td>state ${s}</td>` + HMM_OBS.map(o=>`<td>${HMM_B[s][o]}</td>`).join("") + "</tr>";
+    });
+    document.getElementById("hmmModelTable").innerHTML = html;
+  }
+
+  function renderHmmObsPicker(){
+    const wrap = document.getElementById("hmmObsPicker");
+    wrap.innerHTML = "";
+    hmmObsSeq.forEach((val, i) => {
+      const label = document.createElement("span");
+      label.style.cssText = "font-size:12px;color:var(--chalk-dim);margin-right:4px;";
+      label.textContent = "t="+i+":";
+      wrap.appendChild(label);
+      HMM_OBS.forEach(o => {
+        const b = document.createElement("button");
+        b.className = "op" + (val===o ? " active" : "");
+        b.textContent = o;
+        b.style.marginRight = "2px";
+        b.addEventListener("click", () => { hmmObsSeq[i] = o; hmmReset(); renderHmmObsPicker(); });
+        wrap.appendChild(b);
+      });
+    });
+  }
+
+  function hmmCompute(){
+    const T = hmmObsSeq.length;
+    hmmV = []; hmmBack = [];
+    for (let t=0;t<T;t++){
+      hmmV.push({}); hmmBack.push({});
+      HMM_STATES.forEach(s => {
+        if (t===0){
+          hmmV[t][s] = HMM_PI[s]*HMM_B[s][hmmObsSeq[0]];
+          hmmBack[t][s] = null;
+        } else {
+          let bestPrev=null, bestVal=-1;
+          HMM_STATES.forEach(sp => {
+            const val = hmmV[t-1][sp]*HMM_A[sp][s];
+            if (val>bestVal){ bestVal=val; bestPrev=sp; }
+          });
+          hmmV[t][s] = bestVal*HMM_B[s][hmmObsSeq[t]];
+          hmmBack[t][s] = bestPrev;
+        }
+      });
+    }
+  }
+
+  function hmmBruteForceAndForward(){
+    const T = hmmObsSeq.length;
+    // brute force over all states^T sequences
+    function* seqs(n){
+      if (n===0){ yield []; return; }
+      for (const rest of seqs(n-1)) for (const s of HMM_STATES) yield [...rest, s];
+    }
+    let bestSeq=null, bestP=-1, total=0;
+    for (const seq of seqs(T)){
+      let p = HMM_PI[seq[0]]*HMM_B[seq[0]][hmmObsSeq[0]];
+      for (let t=1;t<T;t++) p *= HMM_A[seq[t-1]][seq[t]]*HMM_B[seq[t]][hmmObsSeq[t]];
+      total += p;
+      if (p>bestP){ bestP=p; bestSeq=seq; }
+    }
+    // forward algorithm (sum) for cross-check with brute-force total
+    let fwd = HMM_STATES.reduce((acc,s)=>{ acc[s]=HMM_PI[s]*HMM_B[s][hmmObsSeq[0]]; return acc; }, {});
+    for (let t=1;t<T;t++){
+      const next = {};
+      HMM_STATES.forEach(s => {
+        next[s] = HMM_STATES.reduce((sum,sp)=>sum+fwd[sp]*HMM_A[sp][s],0) * HMM_B[s][hmmObsSeq[t]];
+      });
+      fwd = next;
+    }
+    const forwardTotal = HMM_STATES.reduce((sum,s)=>sum+fwd[s],0);
+    return { bestSeq, bestP, bruteTotal: total, forwardTotal };
+  }
+
+  function renderHmmTrellis(){
+    const T = hmmObsSeq.length;
+    let html = "<tr><th>state</th>" + hmmObsSeq.slice(0,hmmStepIdx).map((o,t)=>`<th>t=${t} (${o})</th>`).join("") + "</tr>";
+    HMM_STATES.forEach(s => {
+      html += `<tr><td>${s}</td>` + hmmObsSeq.slice(0,hmmStepIdx).map((o,t)=>{
+        const v = hmmV[t] ? hmmV[t][s] : undefined;
+        return `<td>${v!==undefined ? v.toFixed(6) : "-"}</td>`;
+      }).join("") + "</tr>";
+    });
+    document.getElementById("hmmTrellisTable").innerHTML = html;
+    document.getElementById("hmmStep").disabled = hmmStepIdx >= T;
+
+    if (hmmStepIdx === T && T>0){
+      // backtrack
+      let lastState = HMM_STATES.reduce((best,s)=> (hmmV[T-1][s] > hmmV[T-1][best] ? s : best), HMM_STATES[0]);
+      const path = [lastState];
+      for (let t=T-1;t>0;t--){ path.unshift(hmmBack[t][path[0]]); }
+      const bestProb = hmmV[T-1][lastState];
+      const check = hmmBruteForceAndForward();
+      document.getElementById("hmmBestPath").textContent = path.join(", ");
+      document.getElementById("hmmBestProb").textContent = bestProb.toFixed(10);
+      document.getElementById("hmmBruteCheck").textContent = check.bestSeq.join("")===path.join("") && Math.abs(check.bestP-bestProb)<1e-9 ? "MATCH (" + check.bestP.toFixed(10) + ")" : "MISMATCH";
+      document.getElementById("hmmForward").textContent = check.forwardTotal.toFixed(10);
+      document.getElementById("hmmStory").textContent =
+        `Winning path ${path.join(" → ")} with probability ${bestProb.toFixed(10)} -- independently confirmed by brute-force enumeration of all ${Math.pow(3,T)} hidden sequences. ` +
+        `The forward algorithm's sum (${check.forwardTotal.toFixed(10)}) is larger than Viterbi's max, exactly as expected: one sums every path's contribution, the other reports only the single best one.`;
+    } else {
+      document.getElementById("hmmBestPath").textContent = "-";
+      document.getElementById("hmmBestProb").textContent = "-";
+      document.getElementById("hmmBruteCheck").textContent = "-";
+      document.getElementById("hmmForward").textContent = "-";
+      document.getElementById("hmmStory").textContent = hmmStepIdx===0 ? "Click Step to fill in the first column." : "Keep stepping through all "+T+" columns to reveal the winning backtrack path.";
+    }
+  }
+
+  function hmmStep(){
+    if (hmmStepIdx < hmmObsSeq.length){
+      hmmCompute(); // recompute full table (cheap at this size) so edits to obs mid-way stay consistent
+      hmmStepIdx++;
+      renderHmmTrellis();
+    }
+  }
+  function hmmReset(){
+    hmmStepIdx = 0;
+    hmmV = []; hmmBack = [];
+    renderHmmTrellis();
+  }
+  document.getElementById("hmmStep").addEventListener("click", hmmStep);
+  document.getElementById("hmmRunAll").addEventListener("click", () => { while (hmmStepIdx < hmmObsSeq.length) hmmStep(); });
+  document.getElementById("hmmReset").addEventListener("click", hmmReset);
+  renderHmmModelTable();
+  renderHmmObsPicker();
+  renderHmmTrellis();
 })();
 </script>
 </body>

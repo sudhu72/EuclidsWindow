@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Residual connections &amp; gradients</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#16221c;--bg-panel:#1b2b23;--chalk:#f4f1e8;--chalk-dim:#7f8f83;--amber:#ffce54;--coral:#ff8266;--green:#8fd19e;--blue:#7fb3d5;--border:rgba(244,241,232,0.14);}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.55;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;}
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;} .tabpage.active{display:block;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .row-label{width:100%;text-align:center;font-size:11.5px;color:var(--chalk-dim);margin-bottom:-4px;}
+  .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11.5px;color:var(--chalk-dim);margin:4px 0 10px;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .sw{width:14px;height:14px;display:inline-block;border-radius:3px;}
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:6px auto;width:100%;height:auto;max-width:860px;}
+  svg text{font-family:'JetBrains Mono',monospace;}
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);} .metric.coral .num{color:var(--coral);} .metric.green .num{color:var(--green);} .metric.amber .num{color:var(--amber);}
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;line-height:1.6;}
+  .story-line b{color:var(--chalk);}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.datatable th,table.datatable td{border:1px solid var(--border);padding:6px 7px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+  table.datatable tr.hl td{background:rgba(255,206,84,0.12);}
+  .dim{color:var(--chalk-dim);}
+  .terms{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:14px 0;}
+  .term{border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;min-width:110px;font-size:14px;}
+  .term .sz{font-size:11px;color:var(--chalk-dim);margin-top:4px;}
+  .term.id{border:2px solid var(--amber);background:rgba(255,206,84,0.14);color:var(--amber);font-weight:700;}
+  .term.plain{border:2px dashed var(--coral);}
+  .big{font-size:17px;text-align:center;margin:8px 0;}
+  .mats{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:10px 0;}
+  .mat{text-align:center;font-size:12px;}
+  .mat table{border-collapse:collapse;margin:6px auto;border-left:2px solid var(--chalk-dim);border-right:2px solid var(--chalk-dim);}
+  .mat td{padding:4px 8px;font-size:13px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Residual connections keep gradients alive</h1>
+  <p class="sub">Companion to §3.2 of the Jacobian &amp; J-space tutorial. A real simulation runs in your browser: a stack of tanh layers, <b>64</b> units each, weights drawn from N(0, scale²/64) with a seeded random generator (so every click gives the same numbers), one N(0, 1) input vector. A gradient of size 1 starts at the top and is backpropagated to the input, through a <b>plain</b> network (y = F(x)) and a <b>residual</b> one (y = x + F(x)). Your numbers sit next to the tutorial's; they differ a little because the random draws differ. Every example is one click.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="depth">1 · Gradient vs depth</button>
+    <button class="tab-btn" data-tab="path">2 · The identity path</button>
+    <button class="tab-btn" data-tab="jac">3 · Jacobian check</button>
+  </div>
+
+  <div class="tabpage active" id="tab-depth">
+    <div class="panel">
+      <h2>Size of the gradient that reaches the input (log scale)</h2>
+      <div class="row"><div class="row-label">One-click examples (weight scale 0.5, the tutorial's table)</div>
+        <button class="op dp" data-d="5" data-s="0.5">5 layers</button>
+        <button class="op dp" data-d="20" data-s="0.5">20 layers</button>
+        <button class="op dp" data-d="50" data-s="0.5">50 layers</button>
+        <button class="op dp" data-d="50" data-s="1">Caveat: weights twice as big (scale 1.0, 50 layers)</button>
+      </div>
+      <div class="legend"><span><i class="sw" style="background:var(--coral)"></i>plain y = F(x)</span><span><i class="sw" style="background:var(--green)"></i>residual y = x + F(x)</span><span><i class="sw" style="background:var(--amber)"></i>size 1 (where the gradient started)</span></div>
+      <svg id="barPlot" viewBox="0 0 860 330"></svg>
+      <svg id="pathPlot" viewBox="0 0 860 300"></svg>
+      <div class="metric-row" id="depthMetrics"></div>
+      <div class="story-line" id="depthStory"></div>
+      <table class="datatable" id="depthTable"></table>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-path">
+    <div class="panel">
+      <h2>Expand the product of three residual Jacobians</h2>
+      <div class="row"><div class="row-label">One-click examples</div>
+        <button class="op pp" data-p="id">The identity path</button>
+        <button class="op pp" data-p="nums">The one-number version: 0.5⁵⁰, 1.02⁵⁰, 0.98⁵⁰</button>
+      </div>
+      <div id="pathOut"></div>
+      <div class="story-line" id="pathStory"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="tab-jac">
+    <div class="panel">
+      <h2>Jacobian of x + F(x) = I + J<sub>F</sub>, checked by finite differences</h2>
+      <div class="row"><div class="row-label">One-click examples (a random 3-unit layer F(x) = tanh(Wx + b))</div>
+        <button class="op jp" data-seed="3">Jacobian of x + F(x) = I + J_F</button>
+        <button class="op jp" data-seed="11">Same check, a different random layer</button>
+      </div>
+      <div id="jacOut"></div>
+      <div class="story-line" id="jacStory"></div>
+    </div>
+  </div>
+
+  <footer>Companion to <b>§3.2 of jacobian-and-j-space.md</b> (<a href="../../math/jacobian-and-j-space.md">jacobian-and-j-space.md</a>). Open directly in any browser: no install, nothing sent anywhere.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+const C={amber:"#ffce54",coral:"#ff8266",green:"#8fd19e",blue:"#7fb3d5",chalk:"#f4f1e8",dim:"#7f8f83",grid:"rgba(244,241,232,0.10)"};
+const $=id=>document.getElementById(id);
+function rng(seed){let a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
+function gauss(r){let s=null;return function(){if(s!==null){const v=s;s=null;return v;}let u=0;while(u===0)u=r();const v=r(),m=Math.sqrt(-2*Math.log(u));s=m*Math.sin(2*Math.PI*v);return m*Math.cos(2*Math.PI*v);};}
+const SUP={"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","-":"⁻"};
+const sup=s=>String(s).split("").map(c=>SUP[c]).join("");
+function fmt(v){if(v===0)return"0";const a=Math.abs(v);if(a>=0.01&&a<1e4)return a>=10?v.toPrecision(3):v.toPrecision(3);const e=Math.floor(Math.log10(a)),m=v/Math.pow(10,e);return m.toFixed(1)+" × 10"+sup(e);}
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(p,x,y,s,a){const t=el("text",Object.assign({x,y,fill:C.dim,"font-size":11},a||{}),p);t.textContent=s;return t;}
+document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab-btn").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".tabpage").forEach(x=>x.classList.remove("active"));b.classList.add("active");$("tab-"+b.dataset.tab).classList.add("active");}));
+
+// ---------------- simulation ----------------
+const N=64,cache={};
+// returns gradient norm after passing back through each layer: norms[0] = 1 (top), norms[L] = at the input
+function run(L,scale,resid){
+  const key=L+"|"+scale+"|"+resid;if(cache[key])return cache[key];
+  const g=gauss(rng(3+L));let x=new Float64Array(N);for(let i=0;i<N;i++)x[i]=g();const Ws=[],Ds=[];
+  for(let l=0;l<L;l++){const W=new Float64Array(N*N);for(let i=0;i<N*N;i++)W[i]=g()*scale/Math.sqrt(N);const y=new Float64Array(N),d=new Float64Array(N);
+    for(let j=0;j<N;j++){let s=0;for(let k=0;k<N;k++)s+=W[j*N+k]*x[k];const t=Math.tanh(s);d[j]=1-t*t;y[j]=(resid?x[j]:0)+t;}Ws.push(W);Ds.push(d);x=y;}
+  let gr=new Float64Array(N),nn=0;for(let i=0;i<N;i++){gr[i]=g();nn+=gr[i]*gr[i];}nn=Math.sqrt(nn);for(let i=0;i<N;i++)gr[i]/=nn;
+  const norm=a=>Math.sqrt(a.reduce((s,v)=>s+v*v,0)),norms=[norm(gr)];
+  for(let l=L-1;l>=0;l--){const W=Ws[l],d=Ds[l],gx=resid?Float64Array.from(gr):new Float64Array(N);   // residual: the identity path adds gr unchanged
+    for(let j=0;j<N;j++){const gz=gr[j]*d[j];for(let k=0;k<N;k++)gx[k]+=W[j*N+k]*gz;}gr=gx;norms.push(norm(gr));}
+  return cache[key]=norms;
+}
+const DOC={"5|0.5":["0.030","1.37"],"20|0.5":["5.3 × 10⁻⁷","2.93"],"50|0.5":["9.9 × 10⁻¹⁶","6.07"],"50|1":["(not in table)","33"]};
+
+function drawDepth(D,S){
+  document.querySelectorAll(".dp").forEach(b=>b.classList.toggle("active",+b.dataset.d===D&&+b.dataset.s===S));
+  const groups=S===1?[[50,0.5],[50,1]]:[[5,0.5],[20,0.5],[50,0.5]];
+  const vals=groups.map(([d,s])=>({d,s,p:run(d,s,false)[d],r:run(d,s,true)[d]}));
+  // bar chart
+  const svg=$("barPlot");svg.innerHTML="";const W=860,H=330,L=76,R=16,T=16,B=48,lo=-16,hi=2;
+  const sy=e=>T+(hi-e)/(hi-lo)*(H-T-B);
+  for(let e=hi;e>=lo;e-=2){el("line",{x1:L,x2:W-R,y1:sy(e),y2:sy(e),stroke:e===0?C.amber:C.grid,"stroke-dasharray":e===0?"6 4":""},svg);txt(svg,L-6,sy(e)+4,e===0?"1":"10"+sup(e),{"text-anchor":"end"});}
+  txt(svg,14,T+(H-T-B)/2,"gradient size at the input (log)",{"text-anchor":"middle",transform:`rotate(-90 14 ${T+(H-T-B)/2})`});
+  const gw=(W-L-R)/vals.length;
+  vals.forEach((v,i)=>{const x0=L+i*gw,sel=v.d===D&&v.s===S,bw=Math.min(90,gw*0.28);
+    [[v.p,C.coral,-1],[v.r,C.green,1]].forEach(([val,c,side])=>{const e=Math.max(lo,Math.log10(val)),bx=x0+gw/2+(side<0?-bw-6:6),top=Math.min(sy(e),sy(lo)),bot=Math.max(sy(e),sy(lo));
+      el("rect",{x:bx,y:top,width:bw,height:bot-top,fill:c,opacity:sel?1:0.4,rx:3},svg);txt(svg,bx+bw/2,sy(e)-6,fmt(val),{"text-anchor":"middle",fill:sel?C.chalk:C.dim,"font-size":12});});
+    txt(svg,x0+gw/2,H-B+18,v.d+" layers, scale "+v.s,{"text-anchor":"middle",fill:sel?C.amber:C.dim,"font-size":12,"font-weight":sel?700:400});});
+  // path chart: gradient size as it travels back
+  const p=run(D,S,false),r=run(D,S,true),s2=$("pathPlot");s2.innerHTML="";const H2=300;
+  let lo2=Math.floor(Math.max(-16,Math.log10(Math.min(...p)))),hi2=Math.ceil(Math.max(0.5,Math.log10(Math.max(...r)))),st=Math.max(1,Math.ceil((hi2-lo2)/8));
+  const sx=k=>L+k/D*(W-L-R),sy2=e=>T+(hi2-e)/(hi2-lo2)*(H2-T-B);
+  txt(s2,14,T+(H2-T-B)/2,"gradient size on the way back (log)",{"text-anchor":"middle",transform:`rotate(-90 14 ${T+(H2-T-B)/2})`});
+  for(let e=Math.floor(hi2/st)*st;e>=lo2;e-=st){el("line",{x1:L,x2:W-R,y1:sy2(e),y2:sy2(e),stroke:e===0?C.amber:C.grid,"stroke-dasharray":e===0?"6 4":""},s2);txt(s2,L-6,sy2(e)+4,e===0?"1":"10"+sup(e),{"text-anchor":"end"});}
+  const xs=D<=5?1:D<=20?2:5;for(let k=0;k<=D;k+=xs)txt(s2,sx(k),H2-B+16,String(k),{"text-anchor":"middle"});
+  txt(s2,(L+W-R)/2,H2-10,"layers the gradient has passed back through (left: the loss end; right: the input)",{"text-anchor":"middle","font-size":12});
+  [[p,C.coral],[r,C.green]].forEach(([a,c])=>{let d="";a.forEach((v,k)=>{d+=(k?"L":"M")+sx(k).toFixed(1)+","+sy2(Math.max(lo2,Math.log10(v))).toFixed(1);});el("path",{d,stroke:c,"stroke-width":3,fill:"none"},s2);});
+  const doc=DOC[D+"|"+S];
+  $("depthMetrics").innerHTML=`<div class="metric coral"><div class="lbl">plain, ${D} layers, scale ${S}<br>yours · tutorial</div><div class="num">${fmt(p[D])} · ${doc[0]}</div></div><div class="metric green"><div class="lbl">residual, ${D} layers, scale ${S}<br>yours · tutorial</div><div class="num">${fmt(r[D])} · ${doc[1]}</div></div><div class="metric amber"><div class="lbl">residual ÷ plain</div><div class="num">${fmt(r[D]/p[D])}</div></div>`;
+  $("depthStory").innerHTML=S===1?`<b>The honest caveat.</b> With weights twice as big each (I + J<sub>F</sub>) factor can be a little bigger than 1, so the residual gradient <b>grows</b> to ${fmt(r[D])} (tutorial: 33) instead of ${fmt(run(50,0.5,true)[50])} at scale 0.5 (this number swings more with the random draws than the others: other seeds give about 25–33). That is why residual connections are paired with normalization ("Add &amp; Norm").`
+    :`Each plain layer multiplies the gradient by about 0.5, so ${D} layers leave about 0.5${sup(D)} = ${fmt(Math.pow(0.5,D))} of it (you measured ${fmt(p[D])}). The residual network's gradient stays healthy (order 1) all the way back: the identity path carries it through every layer untouched.`;
+  let h=`<tr><th>depth</th><th>plain (yours · tutorial)</th><th>residual (yours · tutorial)</th></tr>`;
+  [[5,0.5],[20,0.5],[50,0.5],[50,1]].forEach(([d,s])=>{const k=d+"|"+s;h+=`<tr${d===D&&s===S?' class="hl"':''}><td>${d} layers${s===1?" (scale 1.0)":""}</td><td><b>${fmt(run(d,s,false)[d])}</b> <span class="dim">· ${DOC[k][0]}</span></td><td><b>${fmt(run(d,s,true)[d])}</b> <span class="dim">· ${DOC[k][1]}</span></td></tr>`;});
+  $("depthTable").innerHTML=h;
+}
+document.querySelectorAll(".dp").forEach(b=>b.addEventListener("click",()=>drawDepth(+b.dataset.d,+b.dataset.s)));
+
+// ---------------- tab 2 ----------------
+function drawPath(mode){
+  document.querySelectorAll(".pp").forEach(b=>b.classList.toggle("active",b.dataset.p===mode));
+  if(mode==="id"){
+    const j=0.5,terms=[["I · I · I",0,"id"],["J₁ · I · I",1],["I · J₂ · I",1],["I · I · J₃",1],["J₁ · J₂ · I",2],["J₁ · I · J₃",2],["I · J₂ · J₃",2],["J₁ · J₂ · J₃",3,"plain"]];
+    $("pathOut").innerHTML=`<div class="big">(I + J₁)(I + J₂)(I + J₃) =</div><div class="terms">`+terms.map(([t,k,c],i)=>`<div class="term ${c||""}">${i?"+ ":""}${t}<div class="sz">${k} J's · size ≈ ${Math.pow(j,k).toFixed(3)}</div></div>`).join("")+`</div>`+
+      `<div class="big"><span style="color:var(--amber)">I · I · I = I</span>: the identity path, size 1 no matter how small the J's are.</div>`+
+      `<div class="big dim">A plain network keeps only the <span style="color:var(--coral)">dashed</span> term J₁J₂J₃ ≈ 0.5³ = ${Math.pow(j,3).toFixed(3)}.</div>`;
+    $("pathStory").innerHTML=`Sizes assume each J shrinks the gradient to about <b>0.5</b> (the plain network's factor in tab 1). With 50 layers there are 2⁵⁰ terms; the plain network keeps only the one with 50 J's (≈ 0.5⁵⁰), while the residual network always has the <b>I · I · … · I</b> term, which no layer can shrink.`;
+  } else {
+    const rows=[["0.5⁵⁰","plain: each layer halves",Math.pow(0.5,50),"8.9 × 10⁻¹⁶","coral"],["0.02⁵⁰","the small J's alone",Math.pow(0.02,50),"zero for practical purposes","coral"],["1.02⁵⁰","residual: 1 + small J",Math.pow(1.02,50),"2.69","green"],["0.98⁵⁰","residual: 1 − small J",Math.pow(0.98,50),"0.364","green"]];
+    $("pathOut").innerHTML=`<div class="metric-row">`+rows.map(r=>`<div class="metric ${r[4]}"><div class="lbl">${r[1]}<br>${r[0]} (tutorial: ${r[3]})</div><div class="num">${fmt(r[2])}</div></div>`).join("")+`</div>`;
+    $("pathStory").innerHTML=`Multiply 50 small factors (0.5 or 0.02) and you get almost nothing; put a <b>1 +</b> in front of each small factor and the product stays between about 0.36 and 2.7: healthy either way.`;
+  }
+}
+document.querySelectorAll(".pp").forEach(b=>b.addEventListener("click",()=>drawPath(b.dataset.p)));
+
+// ---------------- tab 3 ----------------
+function matHTML(title,M,color){return `<div class="mat"><div style="color:${color}">${title}</div><table>`+M.map(r=>"<tr>"+r.map(v=>`<td>${(v>=0?" ":"")+v.toFixed(6)}</td>`).join("")+"</tr>").join("")+"</table></div>";}
+function drawJac(seed){
+  document.querySelectorAll(".jp").forEach(b=>b.classList.toggle("active",+b.dataset.seed===seed));
+  const g=gauss(rng(seed)),W=[0,1,2].map(()=>[0,1,2].map(()=>g())),b=[0,1,2].map(()=>g()*0.5),x=[0,1,2].map(()=>g());
+  const F=v=>[0,1,2].map(i=>Math.tanh(W[i][0]*v[0]+W[i][1]*v[1]+W[i][2]*v[2]+b[i])),G=v=>{const f=F(v);return v.map((xi,i)=>xi+f[i]);};
+  const f0=F(x),JF=[0,1,2].map(i=>[0,1,2].map(j=>(1-f0[i]*f0[i])*W[i][j])),IJ=JF.map((r,i)=>r.map((v,j)=>v+(i===j?1:0)));
+  const h=1e-5,FD=[0,1,2].map(i=>[0,1,2].map(j=>{const xp=x.slice(),xm=x.slice();xp[j]+=h;xm[j]-=h;return (G(xp)[i]-G(xm)[i])/(2*h);}));
+  let md=0;FD.forEach((r,i)=>r.forEach((v,j)=>md=Math.max(md,Math.abs(v-IJ[i][j]))));
+  $("jacOut").innerHTML=`<div class="big dim">at x = (${x.map(v=>v.toFixed(3)).join(", ")}), J<sub>F</sub> = diag(1 − tanh²) · W</div><div class="mats">`+matHTML("J_F (from the formula)",JF,C.blue)+matHTML("I + J_F",IJ,C.amber)+matHTML("measured: [G(x + h·e_j) − G(x − h·e_j)] / 2h for G(x) = x + F(x)",FD,C.green)+`</div>`+
+    `<div class="metric-row"><div class="metric green"><div class="lbl">largest difference, measured vs I + J_F</div><div class="num">${md.toExponential(1)}</div></div><div class="metric amber"><div class="lbl">step size h</div><div class="num">10⁻⁵</div></div></div>`;
+  $("jacStory").innerHTML=`Nudge each input by ±h, see how each output of x + F(x) moves, and divide: the measured Jacobian matches <b>I + J<sub>F</sub></b> to about ${md.toExponential(0)} (rounding error of the finite difference). The diagonal is J<sub>F</sub>'s diagonal plus exactly <b>1</b>: that 1 is the identity path.`;
+}
+document.querySelectorAll(".jp").forEach(b=>b.addEventListener("click",()=>drawJac(+b.dataset.seed)));
+
+drawDepth(50,0.5);drawPath("id");drawJac(3);
+})();
+</script>
+</body>
+</html>

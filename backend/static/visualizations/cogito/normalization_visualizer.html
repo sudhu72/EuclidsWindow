@@ -162,6 +162,21 @@
   @media (prefers-reduced-motion: reduce){
     .barfill, .bar{ transition:none; }
   }
+
+  /* --- Batch vs Layer Norm matrix --- */
+  .matrixwrap{ display:flex; gap:24px; flex-wrap:wrap; }
+  .matrixblock{ flex:1; min-width:240px; }
+  .matrixblock h4{ margin:0 0 8px; font-size:14.5px; font-weight:600; }
+  .mgrid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; }
+  .mgrid input{
+    width:100%; text-align:center; font-family:"IBM Plex Mono", monospace; font-size:12px;
+    border:1px solid var(--line); border-radius:5px; padding:6px 2px; background:#fff; color:var(--ink);
+  }
+  .mgrid .cell{
+    text-align:center; font-family:"IBM Plex Mono", monospace; font-size:12px;
+    border-radius:5px; padding:8px 2px; color:#fff; font-weight:600;
+  }
+  .rowlabel{ font-size:11px; color:var(--ink-soft); text-align:right; padding-right:4px; align-self:center; }
 </style>
 </head>
 <body>
@@ -169,8 +184,8 @@
 
   <header>
     <div class="eyebrow">Companion to the Feynman Math Tutorial · Normalization</div>
-    <h1>Five Lenses</h1>
-    <p>Same underlying numbers, five different ways to make them fairly comparable. Drag anything — every lens updates together, so you can watch one raw value get reshaped five different ways at once.</p>
+    <h1>Six Lenses</h1>
+    <p>Same underlying numbers, six different ways to make them fairly comparable. Drag anything in the first five — every lens updates together. The sixth, Batch vs. Layer Norm, needs a real matrix instead of one list of values, since its whole point is that slicing the identical numbers two different ways gives two genuinely different answers.</p>
   </header>
 
   <!-- THE PROBLEM -->
@@ -239,6 +254,98 @@
       <div class="sliders" id="sliders"></div>
 
       <div class="grid" id="lensGrid"></div>
+    </div>
+  </section>
+
+  <!-- THE SIXTH LENS -->
+  <section>
+    <div class="card">
+      <h2>The sixth lens: Batch vs. Layer Normalization</h2>
+      <p class="sub">The exact matrix already verified in <code>05-machine-learning-bridges.md</code> — four tokens' worth of values, right after a residual add. Edit any cell and watch both normalizations recompute live: Layer Norm slices by <b>row</b> (each token against its own features); Batch Norm slices by <b>column</b> (each feature across all four tokens).</p>
+      <div class="row" style="margin-bottom:14px;">
+        <button class="preset" id="presetMatrixReset">Reset to the verified matrix</button>
+      </div>
+      <div class="matrixwrap">
+        <div class="matrixblock">
+          <h4>Raw input X (edit any cell)</h4>
+          <div class="mgrid" id="rawGrid"></div>
+        </div>
+        <div class="matrixblock">
+          <h4>LayerNorm(X) — row-wise</h4>
+          <div class="mgrid" id="lnGrid"></div>
+        </div>
+        <div class="matrixblock">
+          <h4>BatchNorm(X) — column-wise</h4>
+          <div class="mgrid" id="bnGrid"></div>
+        </div>
+      </div>
+      <p class="caption" style="margin-top:14px; font-size:12.5px; color:var(--ink-soft);" id="matrixCaption"></p>
+    </div>
+  </section>
+
+  <!-- RMSNORM -->
+  <section>
+    <div class="card">
+      <h2>RMSNorm vs. LayerNorm</h2>
+      <p class="sub">LayerNorm: (x − mean) / √var. RMSNorm skips the mean: x / √mean(x²). They agree whenever a row's mean is already 0. ε is left out, as in the tutorial's numbers.</p>
+      <div class="presetbar">
+        <button class="preset rms-preset" data-v="0.9784,-0.0751,0.0722,-0.1832">The "The" row</button>
+        <button class="preset rms-preset" data-v="2,-1,0.5,-1.5">A zero-mean row [2, −1, 0.5, −1.5]</button>
+        <button class="preset rms-preset" data-v="2.9352,-0.2253,0.2166,-0.5496">"The" row × 3</button>
+        <button class="preset rms-preset" data-v="10.9784,9.9249,10.0722,9.8168">"The" row + 10</button>
+      </div>
+      <div class="row" style="margin-bottom:12px;"><label style="width:auto;">Row x (edit):</label></div>
+      <div class="mgrid" id="rmsIn" style="max-width:420px;margin-bottom:14px;"></div>
+      <div class="matrixwrap">
+        <div class="matrixblock"><h4>LayerNorm(x)</h4><div class="mgrid" id="rmsLN"></div></div>
+        <div class="matrixblock"><h4>RMSNorm(x)</h4><div class="mgrid" id="rmsRMS"></div></div>
+      </div>
+      <p class="caption" style="margin-top:14px;font-size:12.5px;color:var(--ink-soft);" id="rmsCaption"></p>
+    </div>
+  </section>
+
+  <!-- BATCH NORM TRAIN VS EVAL -->
+  <section>
+    <div class="card">
+      <h2>Batch Norm: train mode vs. eval mode</h2>
+      <p class="sub">Train mode normalizes with the current batch's own mean and variance. Eval mode uses running statistics, updated during training as running = 0.9 · running + 0.1 · batch (momentum 0.1), starting from mean 0, variance 1. Population variance, ε = 10⁻⁵.</p>
+      <div class="presetbar">
+        <button class="preset bn-preset" data-batch="9,10,11">train mode: x = 9 in [9, 10, 11]</button>
+        <button class="preset bn-preset" data-batch="9,1,2">train mode: x = 9 in [9, 1, 2]</button>
+        <button class="preset bn-preset" data-batch="9">train mode: batch of one [9]</button>
+      </div>
+      <div class="presetbar">
+        <button class="preset bn-steps" data-n="1">eval after 1 training batch</button>
+        <button class="preset bn-steps" data-n="3">eval after 3 batches</button>
+        <button class="preset bn-steps" data-n="10">eval after 10 batches</button>
+        <button class="preset bn-steps" data-n="50">eval after 50 batches</button>
+        <button class="preset bn-steps" data-n="100">eval after 100 batches</button>
+      </div>
+      <div class="row"><label style="width:auto;">Training batches of [4, 6, 8, 10] seen (n)</label>
+        <input type="range" id="bnN" min="0" max="150" step="1" value="100"><span class="readout" id="bnNOut">100</span></div>
+      <svg id="bnSvg" width="900" height="200" viewBox="0 0 900 200" style="width:100%;height:auto;display:block;"></svg>
+      <div class="verdict" id="bnVerdict"></div>
+    </div>
+  </section>
+
+  <!-- DROPOUT -->
+  <section>
+    <div class="card">
+      <h2>Dropout at train time vs. inference time</h2>
+      <p class="sub">Activations [1, 2, 3, 4]. Each is dropped with probability p; survivors are multiplied by 1/(1 − p) ("inverted" dropout). The exact average enumerates all 16 masks, each weighted by its probability.</p>
+      <div class="presetbar">
+        <button class="preset do-preset" data-mode="one" data-p="0.5">one mask [keep, drop, keep, drop], p = 0.5</button>
+        <button class="preset do-preset" data-mode="avg" data-p="0.5">exact average, p = 0.5, with scaling</button>
+        <button class="preset do-preset" data-mode="noscale" data-p="0.5">exact average, p = 0.5, no scaling</button>
+        <button class="preset do-preset" data-mode="avg" data-p="0.2">exact average, p = 0.2, with scaling</button>
+        <button class="preset do-preset" data-mode="noscale" data-p="0.2">exact average, p = 0.2, no scaling</button>
+        <button class="preset do-preset" data-mode="eval" data-p="0.5">inference (model.eval())</button>
+        <button class="preset do-preset" data-mode="forgot" data-p="0.5">forgot model.eval(): two passes</button>
+      </div>
+      <div class="row"><label style="width:auto;">Drop probability p</label>
+        <input type="range" id="doP" min="0" max="0.9" step="0.05" value="0.5"><span class="readout" id="doPOut">0.50</span></div>
+      <svg id="doSvg" width="900" height="210" viewBox="0 0 900 210" style="width:100%;height:auto;display:block;"></svg>
+      <div class="verdict" id="doVerdict"></div>
     </div>
   </section>
 
@@ -427,6 +534,239 @@
 
   render();
   renderDuel();
+
+  // ---------- batch vs layer norm matrix ----------
+  const VERIFIED_MATRIX = [
+    [ 0.9784, -0.0751,  0.0722, -0.1832],
+    [-0.0329,  0.9082,  0.0964, -0.1676],
+    [-0.0088, -0.0524,  1.0317, -0.2025],
+    [-0.0318, -0.0896,  0.0789,  0.8144],
+  ];
+  let matrix = VERIFIED_MATRIX.map(r => r.slice());
+
+  function meanVar(arr){
+    const n = arr.length;
+    const mean = arr.reduce((a,b)=>a+b,0)/n;
+    const variance = arr.reduce((a,b)=>a+(b-mean)**2,0)/n;
+    return [mean, variance];
+  }
+  function layerNormMatrix(m){
+    return m.map(row => {
+      const [mean, variance] = meanVar(row);
+      const std = Math.sqrt(variance + 1e-5);
+      return row.map(v => (v-mean)/std);
+    });
+  }
+  function batchNormMatrix(m){
+    const nRows = m.length, nCols = m[0].length;
+    const out = m.map(r=>r.slice());
+    for(let c=0;c<nCols;c++){
+      const col = m.map(r=>r[c]);
+      const [mean, variance] = meanVar(col);
+      const std = Math.sqrt(variance + 1e-5);
+      for(let r=0;r<nRows;r++) out[r][c] = (m[r][c]-mean)/std;
+    }
+    return out;
+  }
+  function colorFor(v, maxAbs){
+    const t = Math.max(-1, Math.min(1, v/maxAbs));
+    if(t >= 0){
+      const g = Math.round(140 - t*60), b = Math.round(141 - t*40);
+      return `rgb(${Math.round(15+t*20)},${g},${b})`; // toward teal (--c1)
+    } else {
+      const at = -t;
+      return `rgb(${Math.round(217-at*30)},${Math.round(99+at*10)},${Math.round(107)})`; // toward coral (--c4)
+    }
+  }
+  function buildRawGrid(){
+    const grid = document.getElementById("rawGrid");
+    grid.innerHTML = "";
+    for(let r=0;r<4;r++){
+      for(let c=0;c<4;c++){
+        const inp = document.createElement("input");
+        inp.type = "number"; inp.step = "0.01"; inp.value = matrix[r][c];
+        inp.addEventListener("input", ()=>{
+          matrix[r][c] = parseFloat(inp.value) || 0;
+          renderMatrices();
+        });
+        grid.appendChild(inp);
+      }
+    }
+  }
+  function renderStaticGrid(id, m){
+    const grid = document.getElementById(id);
+    grid.innerHTML = "";
+    const flat = m.flat();
+    const maxAbs = Math.max(...flat.map(Math.abs), 0.0001);
+    flat.forEach(v => {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.style.background = colorFor(v, maxAbs);
+      cell.textContent = v.toFixed(3);
+      grid.appendChild(cell);
+    });
+  }
+  function renderMatrices(){
+    const ln = layerNormMatrix(matrix);
+    const bn = batchNormMatrix(matrix);
+    renderStaticGrid("lnGrid", ln);
+    renderStaticGrid("bnGrid", bn);
+    const diff = Math.abs(ln[0][0] - bn[0][0]);
+    document.getElementById("matrixCaption").textContent =
+      `Top-left entry alone: LayerNorm gives ${ln[0][0].toFixed(4)}, BatchNorm gives ${bn[0][0].toFixed(4)} — a difference of ${diff.toFixed(4)}, from the identical raw matrix, purely because one slices by row and the other by column.`;
+  }
+  document.getElementById("presetMatrixReset").addEventListener("click", ()=>{
+    matrix = VERIFIED_MATRIX.map(r => r.slice());
+    buildRawGrid();
+    renderMatrices();
+  });
+  buildRawGrid();
+  renderMatrices();
+  // ---------- RMSNorm vs LayerNorm ----------
+  let rmsRow = [0.9784, -0.0751, 0.0722, -0.1832];
+  function buildRmsIn(){
+    const g = document.getElementById("rmsIn"); g.innerHTML = "";
+    rmsRow.forEach((v, i) => {
+      const inp = document.createElement("input"); inp.type = "number"; inp.step = "0.01"; inp.value = v;
+      inp.addEventListener("input", () => { rmsRow[i] = parseFloat(inp.value) || 0; renderRms(); });
+      g.appendChild(inp);
+    });
+  }
+  function renderRms(){
+    const n = rmsRow.length;
+    const mean = rmsRow.reduce((a, b) => a + b, 0)/n;
+    const vr = rmsRow.reduce((a, b) => a + (b-mean)**2, 0)/n;
+    const ms = rmsRow.reduce((a, b) => a + b*b, 0)/n;
+    const rms = Math.sqrt(ms);
+    const ln = rmsRow.map(v => vr === 0 ? 0 : (v-mean)/Math.sqrt(vr));
+    const rn = rmsRow.map(v => rms === 0 ? 0 : v/rms);
+    renderStaticGrid("rmsLN", [ln]); renderStaticGrid("rmsRMS", [rn]);
+    document.querySelectorAll("#rmsLN .cell").forEach((c, i) => { c.textContent = ln[i].toFixed(4); });
+    document.querySelectorAll("#rmsRMS .cell").forEach((c, i) => { c.textContent = rn[i].toFixed(4); });
+    const ln4 = ln.map(v => v.toFixed(4)), rn4 = rn.map(v => v.toFixed(4));
+    const same = ln4.every((v, i) => v === rn4[i]);
+    const rnMean = rn.reduce((a, b) => a + b, 0)/n;
+    document.getElementById("rmsCaption").textContent =
+      `mean = ${mean.toFixed(4)}, var = ${vr.toFixed(4)}, mean(x²) = ${ms.toFixed(4)} (= var + mean² = ${(vr+mean*mean).toFixed(4)}), RMS = ${rms.toFixed(4)}. ` +
+      `RMSNorm output has RMS 1 and mean ${rnMean.toFixed(4)}. ` +
+      (same ? "The two outputs are identical: this row's mean is 0, so subtracting it changed nothing." :
+       Math.abs(mean) > 2*Math.sqrt(vr) ? "The row's mean is large compared with its spread, so RMSNorm squashes everything toward 1 while LayerNorm is unaffected by the shift." :
+       "They differ because this row's mean isn't 0; LayerNorm removes it, RMSNorm keeps it.");
+  }
+  document.querySelectorAll(".rms-preset").forEach(b => b.addEventListener("click", () => {
+    rmsRow = b.dataset.v.split(",").map(Number); buildRmsIn(); renderRms();
+  }));
+  buildRmsIn(); renderRms();
+
+  // ---------- Batch Norm train vs eval ----------
+  const BN_EPS = 1e-5;
+  let bnBatch = [9, 10, 11], bnMode = "train";
+  function bnRunning(n){
+    let m = 0, v = 1;
+    for (let i = 0; i < n; i++){ m = 0.9*m + 0.1*7; v = 0.9*v + 0.1*5; }
+    return [m, v];
+  }
+  function renderBN(){
+    const n = parseInt(document.getElementById("bnN").value, 10);
+    document.getElementById("bnNOut").textContent = n;
+    const [rm, rv] = bnRunning(n);
+    const svg = document.getElementById("bnSvg"); svg.innerHTML = "";
+    const NS = "http://www.w3.org/2000/svg";
+    function mk(tag, a, t){ const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (t !== undefined) e.textContent = t; svg.appendChild(e); return e; }
+    // running mean curve
+    const L = 60, R = 860, T = 20, B = 160, NMAX = 150;
+    mk("line", {x1:L, y1:B, x2:R, y2:B, stroke:"#5B6572"}); mk("line", {x1:L, y1:T, x2:L, y2:B, stroke:"#5B6572"});
+    const px = k => L + k/NMAX*(R-L), py = v => B - v/8*(B-T);
+    let d1 = "", d2 = "";
+    for (let k = 0; k <= NMAX; k++){ const [a, b] = bnRunning(k); d1 += (k ? " L " : "M ") + px(k) + "," + py(a); d2 += (k ? " L " : "M ") + px(k) + "," + py(b); }
+    mk("path", {d:d1, fill:"none", stroke:"#0F8B8D", "stroke-width":2.4});
+    mk("path", {d:d2, fill:"none", stroke:"#D9A62E", "stroke-width":2.4});
+    mk("line", {x1:L, y1:py(7), x2:R, y2:py(7), stroke:"#0F8B8D", "stroke-dasharray":"4,4", opacity:0.5});
+    mk("line", {x1:L, y1:py(5), x2:R, y2:py(5), stroke:"#D9A62E", "stroke-dasharray":"4,4", opacity:0.5});
+    mk("line", {x1:px(n), y1:T, x2:px(n), y2:B, stroke:"#463A73", "stroke-width":1.5});
+    mk("circle", {cx:px(n), cy:py(rm), r:5, fill:"#0F8B8D"}); mk("circle", {cx:px(n), cy:py(rv), r:5, fill:"#D9A62E"});
+    mk("text", {x:R-4, y:py(7)-6, "text-anchor":"end", "font-size":12, fill:"#0F8B8D"}, "running mean → 7");
+    mk("text", {x:R-4, y:py(5)+16, "text-anchor":"end", "font-size":12, fill:"#D9A62E"}, "running variance → 5");
+    mk("text", {x:L, y:B+22, "font-size":12, fill:"#5B6572"}, "training batches seen (0 to 150); vertical line = n");
+    mk("text", {x:L-6, y:py(0)+4, "text-anchor":"end", "font-size":11, fill:"#5B6572"}, "0");
+    mk("text", {x:L-6, y:py(8)+4, "text-anchor":"end", "font-size":11, fill:"#5B6572"}, "8");
+    const evalOut = (9 - rm)/Math.sqrt(rv + BN_EPS);
+    let html;
+    if (bnMode === "train"){
+      const mean = bnBatch.reduce((a, b) => a + b, 0)/bnBatch.length;
+      const vr = bnBatch.reduce((a, b) => a + (b-mean)**2, 0)/bnBatch.length;
+      const out = (9 - mean)/Math.sqrt(vr + BN_EPS);
+      html = `<b>Train mode</b>, batch [${bnBatch.join(", ")}]: batch mean ${mean.toFixed(4)}, variance ${vr.toFixed(4)} → x = 9 becomes <b>${out.toFixed(4)}</b>. ` +
+        (bnBatch.length === 1 ? "A batch of one is its own mean, so the output is always 0." : "Change the batch and the same input gives a different output.") +
+        ` For comparison, <b>eval mode</b> after ${n} training batches gives ${evalOut.toFixed(4)} for x = 9, whatever else is in the batch.`;
+    } else {
+      html = `<b>Eval mode</b> after ${n} training batch${n === 1 ? "" : "es"}: running mean ${rm.toFixed(4)}, running variance ${rv.toFixed(4)} → x = 9 becomes <b>${evalOut.toFixed(4)}</b>` +
+        (n >= 100 ? " — essentially the settled answer, (9 − 7)/√5 = 0.8944." : `, versus the settled 0.8944: the running statistics haven't caught up yet (mean after n batches = 7 · (1 − 0.9ⁿ)).`);
+    }
+    document.getElementById("bnVerdict").innerHTML = html;
+  }
+  document.getElementById("bnN").addEventListener("input", () => { bnMode = "eval"; renderBN(); });
+  document.querySelectorAll(".bn-preset").forEach(b => b.addEventListener("click", () => { bnMode = "train"; bnBatch = b.dataset.batch.split(",").map(Number); renderBN(); }));
+  document.querySelectorAll(".bn-steps").forEach(b => b.addEventListener("click", () => { bnMode = "eval"; document.getElementById("bnN").value = b.dataset.n; renderBN(); }));
+  renderBN();
+
+  // ---------- Dropout ----------
+  const DO_A = [1, 2, 3, 4];
+  let doMode = "avg";
+  function renderDO(){
+    const p = parseFloat(document.getElementById("doP").value);
+    document.getElementById("doPOut").textContent = p.toFixed(2);
+    const keep = 1 - p;
+    const exactAvg = (scale) => {
+      const E = [0,0,0,0];
+      for (let m = 0; m < 16; m++){
+        let pr = 1; const bits = [0,1,2,3].map(i => (m >> i) & 1);
+        bits.forEach(b => { pr *= b ? keep : p; });
+        bits.forEach((b, i) => { E[i] += pr * DO_A[i] * b * (scale ? 1/keep : 1); });
+      }
+      return E;
+    };
+    let rows = [], verdict = "";
+    const fmt = a => "[" + a.map(v => String(Math.round(v*10000)/10000)).join(", ") + "]";
+    if (doMode === "one"){
+      const mask = [1,0,1,0], out = DO_A.map((v, i) => v*mask[i]/keep);
+      rows = [["input", DO_A], ["mask [keep, drop, keep, drop] × 1/(1 − p)", out]];
+      verdict = `One training-mode pass: survivors are multiplied by 1/(1 − ${p.toFixed(2)}) = ${(1/keep).toFixed(4)}, giving <b>${fmt(out)}</b>.`;
+    } else if (doMode === "avg" || doMode === "noscale"){
+      const E = exactAvg(doMode === "avg");
+      rows = [["input", DO_A], [doMode === "avg" ? "exact average over 16 masks, with 1/(1 − p)" : "exact average over 16 masks, no scaling", E]];
+      verdict = doMode === "avg" ? `With the 1/(1 − p) scaling, the average over all masks is exactly <b>${fmt(E)}</b>, the input itself: inference can simply switch dropout off.`
+        : `Without the scaling, the average is <b>${fmt(E)}</b>, only (1 − p) = ${keep.toFixed(2)} of the input. Inference with everything switched on would then see values 1/(1 − p) = ${(1/keep).toFixed(4)}× larger than training did.`;
+    } else if (doMode === "eval"){
+      rows = [["input", DO_A], ["model.eval(): dropout is the identity", DO_A]];
+      verdict = "Inference: every activation passes through unchanged, no randomness, no scaling.";
+    } else {
+      const m1 = [1,0,1,0], m2 = [0,1,1,1];
+      const o1 = DO_A.map((v, i) => v*m1[i]/keep), o2 = DO_A.map((v, i) => v*m2[i]/keep);
+      rows = [["input", DO_A], ["train-mode pass 1, mask [keep, drop, keep, drop]", o1], ["train-mode pass 2, mask [drop, keep, keep, keep]", o2]];
+      verdict = `Forgot <code>model.eval()</code>: the same input gives <b>${fmt(o1)}</b> and then <b>${fmt(o2)}</b>. Predictions become random.`;
+    }
+    const svg = document.getElementById("doSvg"); svg.innerHTML = "";
+    const NS = "http://www.w3.org/2000/svg";
+    function mk(tag, a, t){ const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (t !== undefined) e.textContent = t; svg.appendChild(e); return e; }
+    const maxV = Math.max(8, ...rows.flatMap(r => r[1]));
+    const groupW = 820/rows.length, base = 170;
+    rows.forEach((r, gi) => {
+      const gx = 50 + gi*groupW, bw = Math.min(40, (groupW-40)/4);
+      r[1].forEach((v, i) => {
+        const h = v/maxV*140;
+        mk("rect", {x:gx + i*(bw+6), y:base-h, width:bw, height:Math.max(h, 0.5), rx:3, fill: ["#6B7280","#0F8B8D","#D9A62E","#5B4B95"][i]});
+        mk("text", {x:gx + i*(bw+6) + bw/2, y:base-h-5, "text-anchor":"middle", "font-size":11, fill:"#1B2430"}, String(Math.round(v*10000)/10000));
+      });
+      mk("text", {x:gx, y:base+18, "font-size":11, fill:"#5B6572"}, r[0].length > 46 ? r[0].slice(0, 46) + "…" : r[0]);
+    });
+    document.getElementById("doVerdict").innerHTML = verdict;
+  }
+  document.getElementById("doP").addEventListener("input", renderDO);
+  document.querySelectorAll(".do-preset").forEach(b => b.addEventListener("click", () => {
+    doMode = b.dataset.mode; document.getElementById("doP").value = b.dataset.p; renderDO();
+  }));
+  renderDO();
 })();
 </script>
 </body>

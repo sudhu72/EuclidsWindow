@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Constrained Optimization and KKT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; min-width:0; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .sub code, .caption code, .stat code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  .caption{ font-size:13.5px; color:var(--ink); margin-top:12px; line-height:1.6; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .presetlabel{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:4px 0 8px; }
+  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .layout > .plot{ flex:1 1 400px; min-width:0; }
+  .layout > .side{ flex:1 1 250px; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  svg text{ font-family:"IBM Plex Mono", monospace; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; overflow-wrap:anywhere; }
+  .stat .k{ color:var(--ink-soft); font-size:11.5px; letter-spacing:.03em; display:block; font-weight:600; } /* no uppercase: it would turn μ into Μ */
+  .stat b{ color:var(--accent); }
+  .stat.dim{ opacity:.45; }
+  .stat.now{ outline:2px solid var(--accent); }
+  .ok, .stat b.ok{ color:var(--good); } .bad, .stat b.bad, .stat .k.bad{ color:var(--bad); }
+  .verdict{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin-top:12px; }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .legend span::before{ content:""; display:inline-block; width:12px; height:3px; margin-right:6px; vertical-align:middle; background:currentColor; }
+  .row{ display:flex; align-items:center; gap:10px; margin:12px 0 4px; flex-wrap:wrap; }
+  .row label{ font-size:12.5px; color:var(--ink-soft); }
+  input[type=range]{ flex:1; min-width:140px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:13px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:60px; text-align:center; }
+  .tablewrap{ overflow-x:auto; max-width:100%; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  th, td{ padding:7px 9px; border-bottom:1px solid var(--line); text-align:left; }
+  th{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.04em; color:var(--ink-soft); font-weight:600; }
+  td.num{ font-family:"IBM Plex Mono",monospace; text-align:right; white-space:nowrap; }
+  tr.hot td{ background:#FCEFC8; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; }
+  @media (max-width:520px){ .card{ padding:18px 14px; } .wrap{ padding-top:28px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Constrained Optimization and KKT</div>
+    <h1>Is the Fence Actually Stopping You?</h1>
+    <p>An inequality constraint is a fence. Either the best point sits well inside it (the fence is slack and its multiplier is zero) or the best point is pressed against it (the fence pushes back with a positive multiplier). Every worked example from the file is a one-click preset below, and every number is computed live on this page.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="fence">1 · Slack vs. Binding</button>
+    <button class="tab" data-tab="kkt">2 · The Four KKT Conditions</button>
+    <button class="tab" data-tab="ridge">3 · Penalty = Budget</button>
+    <button class="tab" data-tab="svm">4 · Support Vectors</button>
+  </div>
+
+  <!-- ============ TAB 1 ============ -->
+  <div class="panel active" id="panel-fence">
+    <div class="card">
+      <h2>Minimize (x − 3)² with a fence x ≤ c</h2>
+      <p class="sub">The unconstrained best is <code>x = 3</code>. The red hatched region is forbidden. The multiplier <code>μ</code> is how hard the fence pushes back, like a dog's leash: zero when slack, positive when taut.</p>
+      <div class="presetbar" id="fencePresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <svg id="fenceSvg" viewBox="0 0 600 340" role="img" aria-label="Parabola with a fence"></svg>
+          <div style="height:10px"></div>
+          <svg id="leashSvg" viewBox="0 0 600 120" role="img" aria-label="Dog on a leash analogy"></svg>
+          <div class="row"><label for="fenceC">or drag the fence, c =</label><input type="range" id="fenceC" min="-0.5" max="6.5" step="0.01" value="5"><span class="readout" id="fenceCOut">5.00</span></div>
+        </div>
+        <div class="side" id="fenceSide"></div>
+      </div>
+      <div class="caption" id="fenceCaption"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2 ============ -->
+  <div class="panel" id="panel-kkt">
+    <div class="card">
+      <h2>Closest point to (2, 2) with x + y ≤ 2</h2>
+      <p class="sub">Minimize <code>f = (x − 2)² + (y − 2)²</code> subject to <code>g = x + y − 2 ≤ 0</code>. Circles are contours of <code>f</code> around the target <code>(2, 2)</code>; the shaded half-plane is allowed. Tick off the four conditions one at a time.</p>
+      <div class="presetbar" id="kktPresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <svg id="kktSvg" viewBox="0 0 524 520" role="img" aria-label="Contours, half-plane and gradients"></svg>
+          <div class="legend"><span style="color:var(--c2)">∇f (objective gradient)</span><span style="color:var(--c3)">μ∇g (fence gradient × multiplier)</span></div>
+          <div class="row"><label for="kktC">or drag the fence, x + y ≤</label><input type="range" id="kktC" min="0" max="5" step="0.01" value="2"><span class="readout" id="kktCOut">2.00</span></div>
+        </div>
+        <div class="side" id="kktSide"></div>
+      </div>
+      <div class="caption" id="kktCaption"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3 ============ -->
+  <div class="panel" id="panel-ridge">
+    <div class="card">
+      <h2>Every budget w² ≤ t has a matching ridge penalty λ</h2>
+      <p class="sub">One-weight regression, no intercept: <code>x = 1…5</code>, <code>y = 1.2, 1.9, 3.2, 3.8, 5.1</code>. Teal: the loss <code>Σ(y − wx)²</code>. Shaded: the budget interval <code>−√t ≤ w ≤ √t</code>. Purple dashed: the ridge objective <code>Σ(y − wx)² + λw²</code> with <code>λ</code> set to the budget's multiplier; its lowest point lands on the same <code>w</code>.</p>
+      <div class="presetbar" id="ridgePresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <svg id="ridgeSvg" viewBox="0 0 600 360" role="img" aria-label="Loss curve with budget interval"></svg>
+          <div class="legend"><span style="color:var(--c1)">loss Σ(y − wx)²</span><span style="color:var(--c3)">ridge objective with λ = μ</span><span style="color:var(--c2)">unregularized best w = 1.0055</span></div>
+          <div class="row"><label for="ridgeT">or drag the budget, t =</label><input type="range" id="ridgeT" min="0.05" max="1.5" step="0.001" value="0.94124"><span class="readout" id="ridgeTOut">0.941240</span></div>
+        </div>
+        <div class="side" id="ridgeSide"></div>
+      </div>
+      <div class="caption" id="ridgeCaption"></div>
+      <div class="tablewrap" style="margin-top:14px"><table id="ridgeTable"></table></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4 ============ -->
+  <div class="panel" id="panel-svm">
+    <div class="card">
+      <h2>Only the points on the street's edge get a multiplier</h2>
+      <p class="sub">The SVM doc's 10 points, hard margin, <code>w = (0.4, 0.4)</code>, <code>b = −3</code>. Each point is labelled with its margin <code>m = yᵢ(w·xᵢ + b)</code> and multiplier <code>α</code>. Complementary slackness says <code>α × (m − 1) = 0</code>, so any point with <code>m &gt; 1</code> must have <code>α = 0</code>.</p>
+      <div class="presetbar" id="svmPresets"></div>
+      <div class="layout">
+        <div class="plot">
+          <svg id="svmSvg" viewBox="0 0 560 540" role="img" aria-label="Two classes, boundary, margins"></svg>
+          <div class="legend"><span style="color:var(--c2)">class −1</span><span style="color:var(--c1)">class +1</span><span style="color:var(--accent)">boundary w·x + b = 0</span><span style="color:#9AA3AD">street edges w·x + b = ±1</span></div>
+        </div>
+        <div class="side" id="svmSide"></div>
+      </div>
+      <div class="caption" id="svmCaption"></div>
+      <div class="tablewrap" style="margin-top:14px"><table id="svmTable"></table></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>math/constrained-optimization-and-kkt.md</code>. Every value on this page is computed in the browser and matches the file: fence at 1 gives <code>μ = 4</code> and shadow price <code>3.99</code>; the 2-D problem gives <code>(1, 1)</code>, <code>μ = 2</code>, rate <code>1.995</code>; the budget <code>t = 0.941240</code> gives <code>w = 0.970175</code> and <code>μ = 2.000000</code>; the SVM's two support vectors carry <code>α = 0.16</code> and rebuild <code>w = (0.4, 0.4)</code>.
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+}));
+
+/* ---------- helpers ---------- */
+function el(tag, attrs, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+let clipN = 0;
+function chart(svg, o){
+  const vb = svg.getAttribute("viewBox").split(" ");
+  const W = +vb[2], H = +vb[3];
+  const pad = Object.assign({ l:58, r:18, t:18, b:44 }, o.pad || {});
+  const sx = x => pad.l + (x - o.xmin) / (o.xmax - o.xmin) * (W - pad.l - pad.r);
+  const sy = y => H - pad.b - (y - o.ymin) / (o.ymax - o.ymin) * (H - pad.t - pad.b);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const defs = el("defs", {}, svg);
+  const cid = "clip" + (++clipN);
+  const cp = el("clipPath", { id:cid }, defs);
+  el("rect", { x:pad.l, y:pad.t, width:W-pad.l-pad.r, height:H-pad.t-pad.b }, cp);
+  ["accent","c1","c2","c3","bad","ink"].forEach(c => {
+    const m = el("marker", { id:cid+"-"+c, viewBox:"0 0 10 10", refX:8, refY:5, markerWidth:7, markerHeight:7, orient:"auto-start-reverse" }, defs);
+    el("path", { d:"M0,0 L10,5 L0,10 z", fill: c === "ink" ? "#1B2430" : "var(--"+c+")" }, m);
+  });
+  const hatch = el("pattern", { id:cid+"-hatch", width:8, height:8, patternUnits:"userSpaceOnUse", patternTransform:"rotate(45)" }, defs);
+  el("line", { x1:0, y1:0, x2:0, y2:8, stroke:"var(--bad)", "stroke-width":2, opacity:0.35 }, hatch);
+  const g = { svg, sx, sy, W, H, pad, o, clip:"url(#"+cid+")", mk: c => "url(#"+cid+"-"+c+")", hatch:"url(#"+cid+"-hatch)" };
+  const ax = el("g", {}, svg);
+  (o.xticks || []).forEach(x => {
+    el("line", { x1:sx(x), y1:pad.t, x2:sx(x), y2:H-pad.b, stroke:"#EEF1F0" }, ax);
+    el("text", { x:sx(x), y:H-pad.b+16, "text-anchor":"middle", "font-size":11, fill:"#5B6572" }, ax, o.xfmt ? o.xfmt(x) : x);
+  });
+  (o.yticks || []).forEach(y => {
+    el("line", { x1:pad.l, y1:sy(y), x2:W-pad.r, y2:sy(y), stroke:"#EEF1F0" }, ax);
+    el("text", { x:pad.l-6, y:sy(y)+4, "text-anchor":"end", "font-size":11, fill:"#5B6572" }, ax, o.yfmt ? o.yfmt(y) : y);
+  });
+  el("line", { x1:pad.l, y1:H-pad.b, x2:W-pad.r, y2:H-pad.b, stroke:"#9AA3AD" }, ax);
+  el("line", { x1:pad.l, y1:pad.t, x2:pad.l, y2:H-pad.b, stroke:"#9AA3AD" }, ax);
+  if (o.xlabel) el("text", { x:(pad.l + W - pad.r)/2, y:H-8, "text-anchor":"middle", "font-size":12, fill:"#1B2430" }, ax, o.xlabel);
+  if (o.ylabel) el("text", { x:14, y:(pad.t + H - pad.b)/2, "text-anchor":"middle", "font-size":12, fill:"#1B2430", transform:`rotate(-90 14 ${(pad.t + H - pad.b)/2})` }, ax, o.ylabel);
+  return g;
+}
+function path(g, pts, attrs){
+  const d = pts.map((p,i) => (i ? "L" : "M") + g.sx(p[0]).toFixed(2) + "," + g.sy(p[1]).toFixed(2)).join("");
+  return el("path", Object.assign({ d, fill:"none", "clip-path":g.clip }, attrs), g.svg);
+}
+function poly(g, pts, attrs){
+  const d = pts.map((p,i) => (i ? "L" : "M") + g.sx(p[0]).toFixed(2) + "," + g.sy(p[1]).toFixed(2)).join("") + "Z";
+  return el("path", Object.assign({ d, "clip-path":g.clip }, attrs), g.svg);
+}
+function text(g, x, y, s, attrs){ return el("text", Object.assign({ x, y, "font-size":12, fill:"#1B2430" }, attrs || {}), g.svg, s); }
+function arrow(g, x1, y1, x2, y2, color, w){ // data coords
+  return el("line", { x1:g.sx(x1), y1:g.sy(y1), x2:g.sx(x2), y2:g.sy(y2), stroke:"var(--"+color+")", "stroke-width":w||3, "marker-end":g.mk(color) }, g.svg);
+}
+function presets(container, list, onPick){
+  const bar = $(container);
+  const btns = list.map((p, i) => {
+    const b = document.createElement("button");
+    b.className = "op"; b.textContent = p.name;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); onPick(p, i); });
+    bar.appendChild(b); return b;
+  });
+  return btns;
+}
+function clearActive(btns){ btns.forEach(x => x.classList.remove("active")); }
+const z = v => Math.abs(v) < 1e-9 ? 0 : v;          // tidy −0 and float dust
+const fx = (v, d) => z(v).toFixed(d);
+let animToken = {};
+function animate(key, ms, step, done){
+  const tok = animToken[key] = {};
+  const frames = Math.max(1, Math.round(ms / 16));
+  let f = 0;
+  function frame(){
+    if (animToken[key] !== tok) return;
+    const u = Math.min(1, f / frames);
+    step(u);
+    f++;
+    if (u < 1) setTimeout(frame, 16); else if (done) done();
+  }
+  frame();
+}
+function stop(key){ animToken[key] = {}; }
+
+/* ============ TAB 1: slack vs binding ============ */
+const f1 = x => (x - 3) * (x - 3);
+function solve1(c){
+  const x = Math.min(3, c);
+  const f = f1(x);
+  const mu = z(Math.max(0, -2 * (x - 3)));   // μ = −f′(x*) when pressed against the fence
+  const slack = z(c - x);
+  return { c, x, f, mu, slack, prod: z(mu * slack) };
+}
+const S1_5 = solve1(5), S1_1 = solve1(1), S1_101 = solve1(1.01);
+const SHADOW1 = (S1_1.f - S1_101.f) / 0.01;
+let fenceMode = "plain";
+function drawFence(c, mode){
+  const s = solve1(c), bind = s.slack === 0;
+  const g = chart($("#fenceSvg"), { xmin:-1, xmax:7, ymin:0, ymax:16, xticks:[-1,0,1,2,3,4,5,6,7], yticks:[0,4,8,12,16], xlabel:"x", ylabel:"f(x) = (x − 3)²" });
+  // forbidden region
+  if (c < 7) el("rect", { x:g.sx(c), y:g.pad.t, width:g.sx(7)-g.sx(c), height:g.sy(0)-g.pad.t, fill:g.hatch }, g.svg);
+  el("line", { x1:g.sx(c), x2:g.sx(c), y1:g.pad.t, y2:g.sy(0), stroke:"var(--bad)", "stroke-width":3 }, g.svg);
+  text(g, g.sx(c) + (c > 5.6 ? -6 : 6), g.pad.t + 16, "fence x ≤ " + c.toFixed(2), { "font-size":12, "font-weight":700, fill:"var(--bad)", "text-anchor": c > 5.6 ? "end" : "start" });
+  if (mode === "shadow"){
+    el("line", { x1:g.sx(1.01), x2:g.sx(1.01), y1:g.pad.t, y2:g.sy(0), stroke:"var(--c3)", "stroke-width":1.5, "stroke-dasharray":"4 3" }, g.svg);
+    text(g, g.sx(1.01) + 6, g.pad.t + 32, "loosened: x ≤ 1.01", { "font-size":11.5, fill:"var(--c3)", "font-weight":600 });
+  }
+  const inPts = [], outPts = [];
+  for (let i = 0; i <= 320; i++){ const x = -1 + 8 * i / 320; (x <= c ? inPts : outPts).push([x, f1(x)]); }
+  if (inPts.length && outPts.length) outPts.unshift([c, f1(c)]);
+  path(g, outPts, { stroke:"#9AA3AD", "stroke-width":2, "stroke-dasharray":"5 4" });
+  path(g, inPts, { stroke:"var(--c1)", "stroke-width":3 });
+  // unconstrained best = the ball
+  el("circle", { cx:g.sx(3), cy:g.sy(0), r:6, fill:"var(--c2)", stroke:"#fff", "stroke-width":2 }, g.svg);
+  if (bind) text(g, g.sx(3) + 8, g.sy(0) - 10, "unconstrained best x = 3", { "text-anchor":"start", "font-size":11, fill:"#8A6A12" });
+  // x*
+  const px = g.sx(s.x), py = g.sy(s.f);
+  if (bind){
+    const L = Math.min(2.2, s.mu * 0.4);
+    if (L > 0.05){
+      arrow(g, s.x, s.f + 1.3, s.x + L, s.f + 1.3, "c2", 3);
+      text(g, g.sx(s.x + L) + 6, g.sy(s.f + 1.3) + 4, "slope pushes right: −f′ = " + fx(s.mu, 2), { "font-size":11.5, fill:"#8A6A12", "font-weight":600 });
+      arrow(g, s.x, s.f - 1.3, s.x - L, s.f - 1.3, "c3", 3);
+      text(g, g.sx(s.x) + 12, g.sy(s.f - 1.3) + 4, "← fence pushes back: μ = " + fx(s.mu, 2), { "font-size":11.5, fill:"var(--c3)", "font-weight":600 });
+    }
+  } else {
+    // slack bracket
+    const yb = 2.8;
+    el("line", { x1:g.sx(s.x), x2:g.sx(c), y1:g.sy(yb), y2:g.sy(yb), stroke:"var(--good)", "stroke-width":2, "marker-end":g.mk("ink"), "marker-start":g.mk("ink") }, g.svg);
+    text(g, (g.sx(s.x) + g.sx(c)) / 2, g.sy(yb) - 7, "slack = " + fx(s.slack, 2), { "text-anchor":"middle", "font-size":12, "font-weight":700, fill:"var(--good)" });
+  }
+  el("circle", { cx:px, cy:py, r:8, fill:"var(--accent)", stroke:"#fff", "stroke-width":2.5 }, g.svg);
+  if (bind) text(g, px + 12, py + 4, "x* = " + fx(s.x, 2) + ", f* = " + fx(s.f, 4), { "font-size":12.5, "font-weight":700, fill:"var(--accent)" });
+  else {
+    el("line", { x1:px, x2:px, y1:py - 8, y2:g.sy(5.2), stroke:"var(--accent)", "stroke-dasharray":"2 3" }, g.svg);
+    text(g, px, g.sy(5.2) - 20, "x* = " + fx(s.x, 2) + ", f* = " + fx(s.f, 4), { "font-size":12.5, "font-weight":700, fill:"var(--accent)", "text-anchor":"middle" });
+    text(g, px, g.sy(5.2) - 6, "(the unconstrained best)", { "font-size":11, fill:"var(--accent)", "text-anchor":"middle" });
+  }
+  if (mode === "shadow"){
+    // zoom inset around x = 1
+    const ix = 330, iy = 44, iw = 230, ih = 130;
+    const zx = x => ix + (x - 0.98) / 0.05 * iw, zy = y => iy + ih - (y - 3.87) / 0.22 * ih;
+    el("rect", { x:ix, y:iy, width:iw, height:ih, fill:"#fff", stroke:"var(--c3)", "stroke-width":1.5, rx:6 }, g.svg);
+    text(g, ix + 8, iy - 6, "zoom: x from 0.98 to 1.03", { "font-size":10.5, fill:"var(--c3)" });
+    let d = ""; for (let i = 0; i <= 50; i++){ const x = 0.98 + 0.05 * i / 50; d += (i ? "L" : "M") + zx(x).toFixed(1) + "," + zy(f1(x)).toFixed(1); }
+    el("path", { d, fill:"none", stroke:"var(--c1)", "stroke-width":2 }, g.svg);
+    [[1, "var(--bad)", "f*(1) = " + fx(S1_1.f, 4)], [1.01, "var(--c3)", "f*(1.01) = " + fx(S1_101.f, 4)]].forEach(([x, col, lab], i) => {
+      el("line", { x1:zx(x), x2:zx(x), y1:zy(f1(x)), y2:iy+ih, stroke:col, "stroke-dasharray": i ? "4 3" : "", "stroke-width":1.5 }, g.svg);
+      el("circle", { cx:zx(x), cy:zy(f1(x)), r:4.5, fill:col }, g.svg);
+      text(g, ix + iw - 8, iy + 18 + 14 * i, (i ? "- - " : "—— ") + lab, { "font-size":10.5, fill:col, "font-weight":700, "text-anchor":"end" });
+    });
+    text(g, ix + iw - 8, iy + 46, "drop " + (S1_1.f - S1_101.f).toFixed(4) + " / 0.01", { "font-size":10.5, fill:"#1B2430", "text-anchor":"end" });
+  }
+  drawLeash(g, s);
+  // side
+  let html = `<div class="stat"><span class="k">fence</span>x ≤ ${c.toFixed(2)} &nbsp;(g(x) = x − ${c.toFixed(2)} ≤ 0)</div>
+    <div class="stat"><span class="k">best allowed point</span>x* = min(3, ${c.toFixed(2)}) = <b>${fx(s.x, 4)}</b><br>f* = (${fx(s.x, 2)} − 3)² = <b>${fx(s.f, 4)}</b></div>
+    <div class="stat"><span class="k">leash pull μ</span>${bind ? `pressed against the fence: μ = −f′(x*) = −2(${fx(s.x,2)} − 3) = <b>${fx(s.mu, 4)}</b>` : `fence not touching: <b>μ = 0</b>`}</div>
+    <div class="stat"><span class="k">slack c − x*</span>${c.toFixed(2)} − ${fx(s.x, 2)} = <b>${fx(s.slack, 4)}</b></div>
+    <div class="stat"><span class="k">complementary slackness</span>μ × slack = ${fx(s.mu, 4)} × ${fx(s.slack, 4)} = <b class="ok">${fx(s.prod, 4)}</b> ✓</div>`;
+  if (mode === "shadow") html += `<div class="stat"><span class="k">shadow price: loosen the fence by 0.01</span>f*(1) = ${fx(S1_1.f, 4)}<br>f*(1.01) = (1.01 − 3)² = ${fx(S1_101.f, 4)}<br>improvement per unit = (${fx(S1_1.f,4)} − ${fx(S1_101.f,4)}) / 0.01 = <b>${SHADOW1.toFixed(2)}</b><br>≈ μ = <b>${fx(S1_1.mu, 0)}</b> ✓</div>`;
+  $("#fenceSide").innerHTML = html;
+  let cap;
+  if (mode === "shadow") cap = `The multiplier is a <b>price</b>. Moving the fence from 1 to 1.01 lowers the best value from ${fx(S1_1.f,4)} to ${fx(S1_101.f,4)}: an improvement of <b>${SHADOW1.toFixed(2)} per unit</b>, matching <code>μ = 4</code>. That is the <b>shadow price</b> of the fence. A slack fence has a shadow price of zero.`;
+  else if (bind) cap = `You can't reach 3, so the best you can do is sit on the fence at ${fx(s.x,2)}. The slope still pushes right with strength ${fx(s.mu,2)}, and the fence pushes back with exactly <code>μ = ${fx(s.mu,2)}</code>. The leash is taut. Slack is 0, so <code>μ × slack = 0</code>.`;
+  else cap = `The best point, 3, is inside the fence, so the fence plays no part: it has ${fx(s.slack,2)} units of room and its multiplier is <code>μ = 0</code>. The leash is slack. The answer is the same as with no fence at all.`;
+  $("#fenceCaption").innerHTML = cap;
+}
+function drawLeash(g, s){
+  const svg = $("#leashSvg");
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const defs = el("defs", {}, svg);
+  ["c2","c3"].forEach(c => { const m = el("marker", { id:"lm-"+c, viewBox:"0 0 10 10", refX:8, refY:5, markerWidth:7, markerHeight:7, orient:"auto" }, defs); el("path", { d:"M0,0 L10,5 L0,10 z", fill:"var(--"+c+")" }, m); });
+  const X = g.sx, ground = 92, bind = s.slack === 0;
+  el("line", { x1:X(-1), x2:X(7), y1:ground, y2:ground, stroke:"#9AA3AD" }, svg);
+  el("text", { x:10, y:18, "font-size":11, fill:"#5B6572" }, svg, "the leash analogy: post at x = −1, leash reaches exactly to the fence");
+  // post
+  el("rect", { x:X(-1) - 4, y:ground - 50, width:8, height:50, fill:"#6B7280", rx:2 }, svg);
+  // reach line at c
+  el("line", { x1:X(s.c), x2:X(s.c), y1:ground - 62, y2:ground, stroke:"var(--bad)", "stroke-dasharray":"4 3", "stroke-width":1.5 }, svg);
+  el("text", { x:X(s.c) + (s.c > 5.6 ? -4 : 4), y:ground + 14, "font-size":10.5, fill:"var(--bad)", "text-anchor": s.c > 5.6 ? "end" : "start" }, svg, "leash end");
+  // ball
+  el("circle", { cx:X(3), cy:ground - 7, r:7, fill:"var(--c2)", stroke:"#fff", "stroke-width":1.5 }, svg);
+  el("text", { x:X(3), y:ground + 14, "font-size":10.5, fill:"#8A6A12", "text-anchor":"middle" }, svg, "ball");
+  // leash
+  const dx = X(s.x), dy = ground - 22, ax = X(-1), ay = ground - 44;
+  if (bind){
+    el("line", { x1:ax, y1:ay, x2:dx, y2:dy, stroke:"var(--c3)", "stroke-width":3 }, svg);
+    if (s.mu > 0.05){
+      el("line", { x1:dx + 12, y1:dy, x2:dx + 48, y2:dy, stroke:"var(--c2)", "stroke-width":3, "marker-end":"url(#lm-c2)" }, svg);
+      el("text", { x:dx + 52, y:dy + 4, "font-size":11, fill:"#8A6A12", "font-weight":600 }, svg, "straining toward the ball");
+      el("text", { x:ax + 12, y:ay - 10, "font-size":11.5, fill:"var(--c3)", "font-weight":700 }, svg, "taut: pull μ = " + fx(s.mu, 2));
+    }
+  } else {
+    const mx = (ax + dx) / 2, my = ground + 18;
+    el("path", { d:`M${ax},${ay} Q${mx},${my} ${dx},${dy}`, fill:"none", stroke:"var(--good)", "stroke-width":2.5 }, svg);
+    el("text", { x:mx, y:ground - 44, "font-size":11.5, fill:"var(--good)", "font-weight":700, "text-anchor":"middle" }, svg, "slack: pull μ = 0");
+  }
+  // dog
+  el("circle", { cx:dx, cy:dy, r:10, fill:"var(--accent)", stroke:"#fff", "stroke-width":2 }, svg);
+  el("text", { x:dx, y:dy + 4, "font-size":10, fill:"#fff", "text-anchor":"middle", "font-weight":700 }, svg, "x*");
+}
+let fenceBtns;
+function setFence(c, mode){ fenceMode = mode; $("#fenceC").value = c; $("#fenceCOut").textContent = c.toFixed(2); drawFence(c, mode); }
+function animateFence(from, to, mode){
+  animate("fence", 900, u => { const e = u < 1 ? from + (to - from) * (1 - Math.pow(1 - u, 3)) : to; setFence(e, u < 1 ? "plain" : mode); });
+}
+let fenceNow = 5;
+fenceBtns = presets("#fencePresets", [
+  { name:"Fence at x ≤ 5 (slack)", c:5, m:"plain" },
+  { name:"Fence at x ≤ 1 (binding)", c:1, m:"plain" },
+  { name:"Shadow price: loosen to 1.01", c:1, m:"shadow" },
+], p => { const from = fenceNow; fenceNow = p.c; animateFence(from, p.c, p.m); });
+$("#fenceC").addEventListener("input", e => { stop("fence"); clearActive(fenceBtns); fenceNow = +e.target.value; setFence(fenceNow, "plain"); });
+setFence(5, "plain"); fenceBtns[0].classList.add("active");
+
+/* ============ TAB 2: four KKT conditions ============ */
+function solve2(c){
+  const bind = c < 4;
+  const p = bind ? [c / 2, c / 2] : [2, 2];
+  const grad = [2 * (p[0] - 2), 2 * (p[1] - 2)];
+  const mu = bind ? z(4 - c) : 0;                   // from ∇f + μ(1,1) = 0
+  const f = (p[0] - 2) ** 2 + (p[1] - 2) ** 2;
+  const gval = z(p[0] + p[1] - c);
+  return { c, p, grad, mu, f, g: gval, stat:[z(grad[0] + mu), z(grad[1] + mu)] };
+}
+const S2 = solve2(2), S2b = solve2(2.01), RATE2 = (S2.f - S2b.f) / 0.01;
+function clipHalf(box, c){ // polygon of box ∩ {x + y ≤ c}
+  const out = [];
+  for (let i = 0; i < box.length; i++){
+    const a = box[i], b = box[(i + 1) % box.length];
+    const ga = a[0] + a[1] - c, gb = b[0] + b[1] - c;
+    if (ga <= 0) out.push(a);
+    if ((ga < 0 && gb > 0) || (ga > 0 && gb < 0)){ const t = ga / (ga - gb); out.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]); }
+  }
+  return out;
+}
+let kktStep = 0, kktC = 2, kktLoosen = false;
+function drawKKT(){
+  const c = kktC, s = solve2(c), step = kktStep;
+  const g = chart($("#kktSvg"), { xmin:-0.5, xmax:3.5, ymin:-0.5, ymax:3.5, xticks:[0,1,2,3], yticks:[0,1,2,3], xlabel:"x", ylabel:"y", pad:{ l:48, r:18, t:18, b:44 } });
+  const box = [[-0.5,-0.5],[3.5,-0.5],[3.5,3.5],[-0.5,3.5]];
+  const hp = clipHalf(box, c);
+  if (hp.length > 2) poly(g, hp, { fill:"rgba(15,139,141,0.13)" });
+  // contours
+  [0.5, 1, 2, 2.5, Math.sqrt(s.f)].forEach((r, ri) => {
+    if (r < 1e-6) return;
+    const pts = []; for (let i = 0; i <= 120; i++){ const a = 2 * Math.PI * i / 120; pts.push([2 + r * Math.cos(a), 2 + r * Math.sin(a)]); }
+    const hot = ri === 4;   // the contour through the answer, f = f*
+    path(g, pts, { stroke: hot ? "var(--c1)" : "#B7C2C0", "stroke-width": hot ? 2.2 : 1.2 });
+  });
+  // fence line
+  const fenceW = step === 2 || step === 4 ? 4 : 2.5;
+  path(g, [[-1, c + 1], [c + 1, -1]], { stroke:"var(--bad)", "stroke-width":fenceW });
+  if (kktLoosen) path(g, [[-1, 2 + 1], [2 + 1, -1]], { stroke:"var(--bad)", "stroke-width":1.2, "stroke-dasharray":"5 3", opacity:0.7 });
+  text(g, g.sx(-0.4), g.sy(-0.35), "allowed: x + y ≤ " + c.toFixed(2), { "font-size":11.5, fill:"var(--c1)", "font-weight":700 });
+  // target
+  el("circle", { cx:g.sx(2), cy:g.sy(2), r:5.5, fill:"var(--c2)", stroke:"#fff", "stroke-width":2 }, g.svg);
+  text(g, g.sx(2) + 9, g.sy(2) - 8, "target (2, 2)", { "font-size":11, fill:"#8A6A12" });
+  // arrows
+  const k = 0.35, P = s.p;
+  if ((step === 1 || step === 5 || kktLoosen) && s.mu > 0.01){
+    arrow(g, P[0], P[1], P[0] + k * s.grad[0], P[1] + k * s.grad[1], "c2", 3.5);
+    text(g, g.sx(P[0] + k * s.grad[0]) - 6, g.sy(P[1] + k * s.grad[1]) + 16, "∇f = (" + fx(s.grad[0],2) + ", " + fx(s.grad[1],2) + ")", { "font-size":11.5, fill:"#8A6A12", "font-weight":700, "text-anchor":"middle" });
+    arrow(g, P[0], P[1], P[0] + k * s.mu, P[1] + k * s.mu, "c3", 3.5);
+    text(g, g.sx(P[0] + k * s.mu) + 8, g.sy(P[1] + k * s.mu) + 4, "μ∇g = " + fx(s.mu,2) + "·(1, 1)", { "font-size":11.5, fill:"var(--c3)", "font-weight":700 });
+  }
+  if (step === 3 && s.mu > 0.01){
+    // fence can only push inward: −μ∇g points into the allowed side
+    arrow(g, P[0], P[1], P[0] - k * s.mu, P[1] - k * s.mu, "c3", 3.5);
+    text(g, g.sx(P[0] - k * s.mu) - 6, g.sy(P[1] - k * s.mu) + 16, "fence push −μ∇g, inward", { "font-size":11.5, fill:"var(--c3)", "font-weight":700, "text-anchor":"middle" });
+  }
+  if (kktLoosen){
+    el("circle", { cx:g.sx(S2.p[0]), cy:g.sy(S2.p[1]), r:4, fill:"var(--bad)" }, g.svg);
+  }
+  el("circle", { cx:g.sx(P[0]), cy:g.sy(P[1]), r:7.5, fill:"var(--accent)", stroke:"#fff", "stroke-width":2.5 }, g.svg);
+  text(g, g.sx(P[0]) - 12, g.sy(P[1]) - 10, "x* = (" + fx(P[0],3) + ", " + fx(P[1],3) + ")", { "font-size":12, "font-weight":700, fill:"var(--accent)", "text-anchor":"end" });
+
+  // side panel: four conditions
+  const conds = [
+    { k:"1 · stationarity: ∇f + μ∇g = 0", v:`∇f = (${fx(s.grad[0],2)}, ${fx(s.grad[1],2)}), ∇g = (1, 1), μ = ${fx(s.mu,2)}<br>(${fx(s.grad[0],2)}, ${fx(s.grad[1],2)}) + ${fx(s.mu,2)}·(1, 1) = <b class="ok">(${fx(s.stat[0],2)}, ${fx(s.stat[1],2)})</b> ✓` },
+    { k:"2 · primal feasibility: g(x*) ≤ 0", v:`${fx(P[0],3)} + ${fx(P[1],3)} = ${fx(P[0]+P[1],3)} ≤ ${c.toFixed(2)} <b class="ok">✓</b>${s.g === 0 ? " (on the fence)" : " (inside)"}` },
+    { k:"3 · dual feasibility: μ ≥ 0", v:`μ = ${fx(s.mu,2)} ≥ 0 <b class="ok">✓</b><br>the fence only pushes you back in` },
+    { k:"4 · complementary slackness: μ·g = 0", v:`g(x*) = ${fx(s.g,3)}, so μ·g = ${fx(s.mu,2)} × ${fx(s.g,3)} = <b class="ok">${fx(s.mu*s.g,3)}</b> ✓` },
+  ];
+  let html = `<div class="stat"><span class="k">solution</span>x* = (${fx(P[0],3)}, ${fx(P[1],3)}), f* = <b>${fx(s.f,5)}</b></div>`;
+  conds.forEach((cd, i) => {
+    const shown = step >= i + 1 || kktLoosen;
+    const cls = !shown ? "dim" : (step === i + 1 ? "now" : "");
+    html += `<div class="stat ${cls}"><span class="k">${cd.k}</span>${shown ? cd.v : "press its button to check"}</div>`;
+  });
+  if (kktLoosen) html += `<div class="stat now"><span class="k">shadow price: loosen to x + y ≤ 2.01</span>f*(2) = 2((4 − 2)/2)² = ${fx(S2.f,5)}<br>f*(2.01) = 2((4 − 2.01)/2)² = ${fx(S2b.f,5)}<br>rate = (${fx(S2.f,5)} − ${fx(S2b.f,5)}) / 0.01 = <b>${RATE2.toFixed(3)}</b> ≈ μ = <b>${fx(S2.mu,0)}</b> ✓</div>`;
+  $("#kktSide").innerHTML = html;
+  const caps = [
+    `The target <code>(2, 2)</code> lies outside the allowed half-plane, so the answer is the closest allowed point, <b>(${fx(P[0],3)}, ${fx(P[1],3)})</b>, where the highlighted contour just touches the fence. Press the four condition buttons in order.`,
+    `<b>Stationarity.</b> The gold arrow <code>∇f</code> and the purple arrow <code>μ∇g</code> are equal and opposite, so they sum to zero. Read physically: downhill (<code>−∇f</code>) points toward the target, out of the region; the fence's push (<code>−μ∇g</code>) points back in, and at the answer they balance exactly.`,
+    `<b>Primal feasibility.</b> The point is allowed: <code>${fx(P[0],3)} + ${fx(P[1],3)} = ${fx(P[0]+P[1],3)} ≤ ${c.toFixed(2)}</code>. Here it sits exactly on the fence line.`,
+    `<b>Dual feasibility.</b> <code>μ = ${fx(s.mu,2)} ≥ 0</code>. A fence can only push you back into the allowed region (the purple arrow), never pull you out.`,
+    `<b>Complementary slackness.</b> The fence is touching (<code>g = 0</code>), so it's allowed a positive <code>μ</code>, and <code>μ·g = 0</code>. All four conditions hold, and because the problem is convex this KKT point is the global minimum.`,
+    `All four conditions hold at once.`,
+  ];
+  let cap = kktLoosen ? `Loosening the fence to <code>x + y ≤ 2.01</code> (the dashed line and small red dot are the old fence and old answer; the shift is tiny) moves the answer to (${fx(P[0],3)}, ${fx(P[1],3)}) and lowers the best value from ${fx(S2.f,5)} to ${fx(S2b.f,5)}: a rate of <b>${RATE2.toFixed(3)}</b> per unit, close to <code>μ = 2</code>. The multiplier is the fence's shadow price.` : caps[step];
+  if (!kktLoosen && c >= 4) cap = `With the fence at <code>x + y ≤ ${c.toFixed(2)}</code> the target <code>(2, 2)</code> is allowed, so the fence is slack: <code>g = ${fx(s.g,2)} &lt; 0</code>, <code>μ = 0</code>, and there are no arrows because nothing needs balancing.`;
+  $("#kktCaption").innerHTML = cap;
+}
+function setKKT(c){ kktC = c; $("#kktC").value = c; $("#kktCOut").textContent = c.toFixed(2); drawKKT(); }
+const kktBtns = presets("#kktPresets", [
+  { name:"The problem", st:0 },
+  { name:"① Stationarity", st:1 },
+  { name:"② Primal feasibility", st:2 },
+  { name:"③ Dual feasibility", st:3 },
+  { name:"④ Complementary slackness", st:4 },
+  { name:"Loosen to x + y ≤ 2.01", st:5, loosen:true },
+], p => { kktStep = p.st; kktLoosen = !!p.loosen; setKKT(p.loosen ? 2.01 : 2); });
+$("#kktC").addEventListener("input", e => { clearActive(kktBtns); kktLoosen = false; kktStep = 5; setKKT(+e.target.value); });
+kktBtns[0].click();
+
+/* ============ TAB 3: penalty = budget ============ */
+const RX = [1,2,3,4,5], RY = [1.2,1.9,3.2,3.8,5.1];
+const Sxy = RX.reduce((a, x, i) => a + x * RY[i], 0), Sxx = RX.reduce((a, x) => a + x * x, 0), Syy = RY.reduce((a, y) => a + y * y, 0);
+const W_OLS = Sxy / Sxx;
+const lossR = w => Syy - 2 * w * Sxy + w * w * Sxx;          // = Σ(y − wx)²
+const ridgeW = lam => Sxy / (Sxx + lam);
+const W_RIDGE2 = ridgeW(2), T_MATCH = W_RIDGE2 * W_RIDGE2;   // 0.941240 to 6 places
+function solve3(t){
+  const r = Math.sqrt(t), bind = r < W_OLS;
+  const w = bind ? r : W_OLS;
+  const mu = bind ? (Sxy - w * Sxx) / w : 0;          // stationarity: −2Sxy + 2wSxx + 2μw = 0
+  return { t, r, w, mu, bind, loss: lossR(w), wr: ridgeW(mu), prod: z(mu * (w * w - t)) };
+}
+function drawRidge(t){
+  const s = solve3(t);
+  const ry = lossR(s.w) + s.mu * s.w * s.w;             // ridge objective at the constrained w
+  const YM = [4,8,12,20,40,60,80,120].find(v => v >= 2.6 * Math.max(ry, 1)) || 120;
+  const g = chart($("#ridgeSvg"), { xmin:-0.3, xmax:1.3, ymin:0, ymax:YM, xticks:[-0.2,0,0.2,0.4,0.6,0.8,1,1.2], yticks:[0,1,2,3,4].map(k => YM * k / 4), xfmt:x=>x.toFixed(1), yfmt:y=>+y.toFixed(1), xlabel:"weight w", ylabel:"objective (y-axis rescales to fit)" });
+  const lo = Math.max(-0.3, -s.r), hi = Math.min(1.3, s.r);
+  el("rect", { x:g.sx(lo), y:g.pad.t, width:g.sx(hi)-g.sx(lo), height:g.sy(0)-g.pad.t, fill:"rgba(15,139,141,0.12)" }, g.svg);
+  [[-s.r, "−√t"], [s.r, "√t"]].forEach(([x, lab]) => {
+    if (x < -0.3 || x > 1.3) return;
+    el("line", { x1:g.sx(x), x2:g.sx(x), y1:g.pad.t, y2:g.sy(0), stroke:"var(--bad)", "stroke-width":2, "stroke-dasharray":"5 3" }, g.svg);
+    text(g, g.sx(x) + 4, g.pad.t + 14, lab + " = " + x.toFixed(4), { "font-size":11, fill:"var(--bad)", "font-weight":600 });
+  });
+  if (-s.r < -0.3) text(g, g.sx(-0.3) + 6, g.sy(0) - 8, "← budget continues to −√t", { "font-size":10.5, fill:"var(--bad)" });
+  const pts = [], rpts = [];
+  for (let i = 0; i <= 320; i++){ const w = -0.3 + 1.6 * i / 320; pts.push([w, lossR(w)]); rpts.push([w, lossR(w) + s.mu * w * w]); }
+  if (s.mu > 0) path(g, rpts, { stroke:"var(--c3)", "stroke-width":2, "stroke-dasharray":"6 4" });
+  path(g, pts, { stroke:"var(--c1)", "stroke-width":3 });
+  // OLS
+  el("circle", { cx:g.sx(W_OLS), cy:g.sy(lossR(W_OLS)), r:5.5, fill:"var(--c2)", stroke:"#fff", "stroke-width":2 }, g.svg);
+  if (s.mu > 0){
+    el("line", { x1:g.sx(s.w), x2:g.sx(s.w), y1:g.sy(ry), y2:g.sy(0), stroke:"var(--c3)", "stroke-dasharray":"2 3" }, g.svg);
+    el("circle", { cx:g.sx(s.w), cy:g.sy(ry), r:6, fill:"var(--c3)", stroke:"#fff", "stroke-width":2 }, g.svg);
+    text(g, g.sx(s.w) - 12, g.sy(ry) - 4, "ridge minimum, λ = " + s.mu.toFixed(2), { "font-size":11.5, fill:"var(--c3)", "font-weight":700, "text-anchor":"end" });
+    text(g, g.sx(s.w) - 12, g.sy(ry) + 10, "(at the same w)", { "font-size":10.5, fill:"var(--c3)", "text-anchor":"end" });
+  }
+  el("circle", { cx:g.sx(s.w), cy:g.sy(s.loss), r:8, fill:"var(--accent)", stroke:"#fff", "stroke-width":2.5 }, g.svg);
+  text(g, g.sx(s.w) - 12, g.sy(s.loss) - 6, s.bind ? "constrained w = " + s.w.toFixed(4) : "w = " + s.w.toFixed(4) + " (the unregularized fit)", { "font-size":12, "font-weight":700, fill:"var(--accent)", "text-anchor":"end" });
+  $("#ridgeSide").innerHTML =
+    `<div class="stat"><span class="k">sums</span>Σxy = ${Sxy.toFixed(1)}, Σx² = ${Sxx}<br>unregularized w = Σxy/Σx² = ${W_OLS.toFixed(4)}, w² = ${(W_OLS*W_OLS).toFixed(4)}</div>
+     <div class="stat"><span class="k">budget</span>w² ≤ t = <b>${s.t.toFixed(6)}</b> → |w| ≤ √t = ${s.r.toFixed(4)}</div>
+     <div class="stat"><span class="k">constrained w</span>${s.bind ? `unregularized w is outside the budget, so w = √t = <b>${s.w.toFixed(6)}</b>` : `unregularized w fits inside: w = <b>${s.w.toFixed(4)}</b>`}</div>
+     <div class="stat"><span class="k">multiplier μ (stationarity)</span>${s.bind ? `μ = (Σxy − w·Σx²) / w<br>= (${Sxy.toFixed(1)} − ${s.w.toFixed(4)}×${Sxx}) / ${s.w.toFixed(4)} = <b>${s.mu.toFixed(s.mu < 10 ? 6 : 2)}</b>` : `budget slack → <b>μ = 0</b>`}</div>
+     <div class="stat"><span class="k">ridge check with λ = μ</span>w = Σxy / (Σx² + λ) = ${Sxy.toFixed(1)} / ${(Sxx + s.mu).toFixed(s.mu ? 4 : 0)} = <b class="ok">${s.wr.toFixed(6)}</b> ✓ same w</div>
+     <div class="stat"><span class="k">complementary slackness</span>μ × (w² − t) = <b class="ok">${fx(s.prod, 6)}</b> ✓</div>`;
+  $("#ridgeCaption").innerHTML = s.bind
+    ? `The budget is <b>binding</b>: the loss wants <code>w = ${W_OLS.toFixed(4)}</code>, which is outside the shaded interval, so the best allowed weight sits on its edge, <code>w = ${s.w.toFixed(4)}</code>. The multiplier is <code>μ = ${s.mu.toFixed(s.mu < 10 ? 6 : 2)}</code>, and a ridge penalty with exactly that <code>λ</code> (purple dashed curve) bottoms out at the same weight.${Math.abs(s.t - T_MATCH) < 1e-9 ? ` This is the file's case: <b>λ = 2</b> ridge gives <code>w = ${W_RIDGE2.toFixed(6)}</code>.` : ""}`
+    : `The budget is <b>slack</b>: <code>t = ${s.t.toFixed(4)} ≥ ${(W_OLS*W_OLS).toFixed(4)}</code>, so the unregularized weight <code>${W_OLS.toFixed(4)}</code> already fits. <code>μ = 0</code>, which means <b>no regularization at all</b>: complementary slackness again.`;
+  document.querySelectorAll("#ridgeTable tr[data-t]").forEach(r => r.classList.toggle("hot", Math.abs(+r.dataset.t - t) < 1e-9));
+}
+const RIDGE_T = [0.25, 0.5, 0.9, T_MATCH, 1.2];
+$("#ridgeTable").innerHTML = `<tr><th>budget t</th><th>√t</th><th>constrained w</th><th>matching λ = μ</th><th>ridge w with that λ</th></tr>` +
+  RIDGE_T.map(t => { const s = solve3(t); return `<tr data-t="${t}"><td class="num">${t.toFixed(t === T_MATCH ? 6 : 2)}</td><td class="num">${s.r.toFixed(4)}</td><td class="num">${s.w.toFixed(4)}</td><td class="num">${s.bind ? s.mu.toFixed(2) : "0 (slack)"}</td><td class="num">${s.wr.toFixed(4)}</td></tr>`; }).join("");
+function setRidge(t){ $("#ridgeT").value = t; $("#ridgeTOut").textContent = t.toFixed(6); drawRidge(t); }
+const ridgeBtns = presets("#ridgePresets", [
+  { name:"t = 0.25", t:0.25 }, { name:"t = 0.5", t:0.5 }, { name:"t = 0.9", t:0.9 },
+  { name:"t = 0.941240 (matches λ = 2)", t:T_MATCH }, { name:"t = 1.2 (slack, μ = 0)", t:1.2 },
+], p => setRidge(p.t));
+$("#ridgeT").addEventListener("input", e => { clearActive(ridgeBtns); setRidge(+e.target.value); });
+ridgeBtns[3].click();
+
+/* ============ TAB 4: support vectors ============ */
+const NEG = [[1,1],[1.5,2],[2,1],[1,2.5],[2.5,2.5]], POS = [[5,5],[5.5,6],[6,5],[5,6.5],[6.5,6.5]];
+const PTS = NEG.map(p => ({ x:p, y:-1 })).concat(POS.map(p => ({ x:p, y:1 })));
+const SW = [0.4, 0.4], SB = -3;                       // scikit-learn's hard-margin fit (from the file)
+const ALPHA = PTS.map(p => (p.x[0] === 2.5 && p.x[1] === 2.5) || (p.x[0] === 5 && p.x[1] === 5) ? 0.16 : 0);
+PTS.forEach((p, i) => { p.m = p.y * (SW[0] * p.x[0] + SW[1] * p.x[1] + SB); p.a = ALPHA[i]; p.cs = z(p.a * (p.m - 1)); });
+const W_REBUILT = PTS.reduce((acc, p) => [acc[0] + p.a * p.y * p.x[0], acc[1] + p.a * p.y * p.x[1]], [0, 0]);
+const SUM_AY = z(PTS.reduce((a, p) => a + p.a * p.y, 0));
+const LABEL_OFF = { "1,1":[0,22,"middle"], "1.5,2":[12,4,"start"], "2,1":[0,22,"middle"], "1,2.5":[0,-24,"middle"], "2.5,2.5":[12,20,"start"],
+  "5,5":[-12,18,"end"], "5.5,6":[12,16,"start"], "6,5":[0,22,"middle"], "5,6.5":[-12,-10,"end"], "6.5,6.5":[0,-24,"middle"] };
+let svmMode = "street", svmStepN = 0;
+function drawSVM(){
+  const mode = svmMode, n = svmStepN;
+  const g = chart($("#svmSvg"), { xmin:0, xmax:8, ymin:0, ymax:8, xticks:[0,1,2,3,4,5,6,7,8], yticks:[0,1,2,3,4,5,6,7,8], xlabel:"x₁", ylabel:"x₂", pad:{ l:44, r:16, t:16, b:44 } });
+  // street band between w·x + b = −1 and +1
+  const line = v => { const k = (v - SB) / SW[0]; return [[k - 9, 9], [k + 1, -1]]; }; // x1 + x2 = (v − b)/0.4
+  const kL = (-1 - SB) / 0.4, kH = (1 - SB) / 0.4;
+  poly(g, [[kL + 1, -1], [kH + 1, -1], [kH - 9, 9], [kL - 9, 9]], { fill:"rgba(70,58,115,0.07)" });
+  path(g, line(-1), { stroke:"#9AA3AD", "stroke-width":1.5, "stroke-dasharray":"6 4" });
+  path(g, line(1), { stroke:"#9AA3AD", "stroke-width":1.5, "stroke-dasharray":"6 4" });
+  path(g, line(0), { stroke:"var(--accent)", "stroke-width":2.5 });
+  text(g, g.sx(7.5) - 4, g.sy(0) - 8, "x₁ + x₂ = 7.5", { "font-size":11, fill:"var(--accent)", "text-anchor":"end", "font-weight":700 });
+  text(g, g.sx(5) + 4, g.sy(0) - 8, "m = 1", { "font-size":10.5, fill:"#6B7280" });
+  text(g, g.sx(7.9), g.sy(2.1) + 4, "m = 1", { "font-size":10.5, fill:"#6B7280", "text-anchor":"end" });
+  // w arrow, drawn from the boundary point (5.5, 2), perpendicular to the boundary
+  const wv = mode === "rebuild" ? (n >= 4 ? W_REBUILT : null) : SW;
+  if (wv){ const sc = 2.2, ox = 5.5, oy = 2; arrow(g, ox, oy, ox + sc * wv[0], oy + sc * wv[1], "accent", 3);
+    text(g, g.sx(ox + sc * wv[0]) + 6, g.sy(oy + sc * wv[1]) + 4, "w = (" + fx(wv[0],2) + ", " + fx(wv[1],2) + ")", { "font-size":11.5, fill:"var(--accent)", "font-weight":700 }); }
+  // rebuild terms as vectors from the origin
+  if (mode === "rebuild"){
+    const sv = PTS.filter(p => p.a > 0).sort((a, b) => b.y - a.y);   // (5,5) first, then (2.5,2.5)
+    sv.forEach((p, i) => {
+      if (n < i + 1) return;
+      el("line", { x1:g.sx(0), y1:g.sy(0), x2:g.sx(p.x[0]), y2:g.sy(p.x[1]), stroke: p.y > 0 ? "var(--c1)" : "var(--c2)", "stroke-width":1.5, "stroke-dasharray":"3 3", opacity:0.8 }, g.svg);
+    });
+  }
+  PTS.forEach(p => {
+    const cx = g.sx(p.x[0]), cy = g.sy(p.x[1]), sv = p.a > 0;
+    const hi = mode === "rebuild" && sv;
+    if (sv) el("circle", { cx, cy, r:13, fill:"none", stroke:"var(--accent)", "stroke-width":2.5 }, g.svg);
+    el("circle", { cx, cy, r:7, fill: p.y > 0 ? "var(--c1)" : "var(--c2)", stroke:"#fff", "stroke-width":2 }, g.svg);
+    const o = LABEL_OFF[p.x.join(",")];
+    const col = sv ? "var(--accent)" : "#5B6572";
+    const dim = mode === "rebuild" && !sv ? 0.45 : 1;
+    const t1 = text(g, cx + o[0], cy + o[1], "m=" + p.m.toFixed(1), { "font-size":10.5, fill:col, "text-anchor":o[2], "font-weight": sv ? 700 : 500, opacity:dim });
+    text(g, cx + o[0], cy + o[1] + 12, "α=" + (p.a ? p.a.toFixed(2) : "0"), { "font-size":10.5, fill:col, "text-anchor":o[2], "font-weight": sv ? 700 : 500, opacity:dim });
+    if (hi) t1.setAttribute("font-size", 11);
+  });
+  // table
+  $("#svmTable").innerHTML = `<tr><th>point xᵢ</th><th>yᵢ</th><th>margin mᵢ = yᵢ(w·xᵢ + b)</th><th>αᵢ</th><th>αᵢ × (mᵢ − 1)</th><th>αᵢyᵢ</th></tr>` +
+    PTS.map(p => `<tr class="${p.a > 0 ? "hot" : ""}"><td class="num">(${p.x[0]}, ${p.x[1]})</td><td class="num">${p.y > 0 ? "+1" : "−1"}</td><td class="num">${p.y > 0 ? "+" : "−"}(0.4·${p.x[0]} + 0.4·${p.x[1]} − 3) = ${fx(p.m,2)}</td><td class="num">${p.a.toFixed(2)}</td><td class="num">${fx(p.cs,4)}</td><td class="num">${fx(p.a*p.y,2)}</td></tr>`).join("");
+  let html = "", cap = "";
+  if (mode === "street"){
+    html = `<div class="stat"><span class="k">the fit</span>w = (${SW[0]}, ${SW[1]}), b = ${SB}<br>boundary 0.4x₁ + 0.4x₂ − 3 = 0, i.e. x₁ + x₂ = 7.5</div>
+      <div class="stat"><span class="k">margins, in data order</span>${PTS.map(p => fx(p.m,1)).join(", ")}</div>
+      <div class="stat"><span class="k">exactly at m = 1</span>${PTS.filter(p => Math.abs(p.m - 1) < 1e-9).map(p => "(" + p.x.join(", ") + ")").join(" and ")}: <b>the support vectors</b> (ringed)</div>`;
+    cap = `Every point obeys its fence <code>yᵢ(w·xᵢ + b) ≥ 1</code>. Eight points are well clear of the street (margins ${fx(Math.min(...PTS.filter(p => p.a === 0).map(p => p.m)),1)} to ${fx(Math.max(...PTS.map(p => p.m)),1)}), so their fences are slack and their multipliers must be <b>0</b>. Only <b>(2.5, 2.5)</b> and <b>(5, 5)</b> sit exactly on the street's edge, and they are the only points with <code>α = 0.16 &gt; 0</code>.`;
+  } else if (mode === "check"){
+    const maxCS = Math.max(...PTS.map(p => Math.abs(p.cs)));
+    html = `<div class="stat"><span class="k">complementary slackness, all 10 points</span>αᵢ × (mᵢ − 1): ${PTS.map(p => fx(p.cs,2)).join(", ")}<br>largest |value| = <b class="ok">${fx(maxCS,4)}</b> ✓</div>
+      <div class="stat"><span class="k">Σ αᵢyᵢ = 0 (from the offset b)</span>0.16·(+1) + 0.16·(−1) + 8 × 0 = <b class="ok">${fx(SUM_AY,4)}</b> ✓</div>
+      <div class="stat"><span class="k">dual feasibility</span>every αᵢ ≥ 0 <b class="ok">✓</b></div>`;
+    cap = `For each point, either the margin is exactly 1 (the fence touches) or <code>α = 0</code> (the fence doesn't push). The table below shows <code>αᵢ × (mᵢ − 1) = 0</code> in every row, and the multipliers balance across the classes: <code>Σ αᵢyᵢ = 0</code>.`;
+  } else {
+    const sv = PTS.filter(p => p.a > 0).sort((a, b) => b.y - a.y);
+    const t = sv.map(p => [p.a * p.y * p.x[0], p.a * p.y * p.x[1]]);
+    const lines = [
+      `<div class="stat ${n >= 1 ? (n === 1 ? "now" : "") : "dim"}"><span class="k">step 1 · support vector (5, 5), y = +1</span>${n >= 1 ? `0.16 · (+1) · (5, 5) = <b>(${fx(t[0][0],2)}, ${fx(t[0][1],2)})</b>` : "…"}</div>`,
+      `<div class="stat ${n >= 2 ? (n === 2 ? "now" : "") : "dim"}"><span class="k">step 2 · support vector (2.5, 2.5), y = −1</span>${n >= 2 ? `0.16 · (−1) · (2.5, 2.5) = <b>(${fx(t[1][0],2)}, ${fx(t[1][1],2)})</b>` : "…"}</div>`,
+      `<div class="stat ${n >= 3 ? "" : "dim"}"><span class="k">step 3 · the other 8 points</span>${n >= 3 ? `α = 0, so each adds 0 · yᵢ · xᵢ = (0, 0)` : "…"}</div>`,
+      `<div class="stat ${n >= 4 ? "now" : "dim"}"><span class="k">step 4 · add them up: w = Σ αᵢyᵢxᵢ</span>${n >= 4 ? `(${fx(t[0][0],2)}, ${fx(t[0][1],2)}) + (${fx(t[1][0],2)}, ${fx(t[1][1],2)}) = <b class="ok">(${fx(W_REBUILT[0],2)}, ${fx(W_REBUILT[1],2)})</b><br>scikit-learn's w = (0.4, 0.4) ✓` : "…"}</div>`,
+    ];
+    html = lines.join("");
+    cap = n >= 4 ? `Stationarity says <code>w = Σ αᵢyᵢxᵢ</code>. Only the two support vectors have <code>α &gt; 0</code>, so <b>they alone rebuild w = (0.4, 0.4)</b>. Move any of the other eight points (without crossing the street) and <code>w</code> doesn't change.` : `Rebuilding <code>w = Σ αᵢyᵢxᵢ</code> one term at a time…`;
+  }
+  $("#svmSide").innerHTML = html;
+  $("#svmCaption").innerHTML = cap;
+}
+function svmRebuild(){
+  svmMode = "rebuild"; svmStepN = 0; drawSVM();
+  const tok = animToken.svm = {};
+  [1, 2, 3, 4].forEach((k, i) => setTimeout(() => { if (animToken.svm !== tok) return; svmStepN = k; drawSVM(); }, 700 * (i + 1)));
+}
+presets("#svmPresets", [
+  { name:"The street and every margin", run: () => { stop("svm"); svmMode = "street"; drawSVM(); } },
+  { name:"Check complementary slackness", run: () => { stop("svm"); svmMode = "check"; drawSVM(); } },
+  { name:"Rebuild w from the support vectors", run: svmRebuild },
+], p => p.run())[0].click();
+
+// expose for testing
+window.__KKT = { S1_5, S1_1, S1_101, SHADOW1, S2, S2b, RATE2, Sxy, Sxx, W_OLS, W_RIDGE2, T_MATCH, ridge: RIDGE_T.map(solve3), PTS: PTS.map(p => ({ x:p.x, m:p.m, a:p.a, cs:p.cs })), W_REBUILT, SUM_AY,
+  goTab: t => document.querySelector('.tab[data-tab="' + t + '"]').click() };
+})();
+</script>
+</body>
+</html>

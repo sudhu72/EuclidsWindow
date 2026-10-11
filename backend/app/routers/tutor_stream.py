@@ -65,6 +65,11 @@ class TutorStreamRequest(BaseModel):
     # from conversation_id, which is the SQL-persisted chat history.
     session_id: Optional[str] = None
     conversation_id: Optional[str] = None
+    # Skip the curated keyword tier entirely. For long, specific prompts (e.g.
+    # the Cogito Gallery's per-visualization requests) the keyword matcher binds
+    # to an unrelated topic ("support vectors" -> Vectors), so neither its canned
+    # answer nor its summary hint should be used.
+    skip_curated: bool = False
 
 
 def _is_followup(question: str, history: List[TutorStreamMessage]) -> bool:
@@ -143,7 +148,7 @@ async def tutor_stream(
 
     # --- Tier 1: curated catalog, unless this is a follow-up or the user's own
     # library covers the question better (the keyword matcher can misfire).
-    topic = await asyncio.to_thread(_catalog.match_topic, req.question)
+    topic = None if req.skip_curated else await asyncio.to_thread(_catalog.match_topic, req.question)
     library_override = await asyncio.to_thread(get_library().has_strong_match, req.question)
     followup = _is_followup(req.question, req.history)
     use_curated = bool(topic) and not followup and not library_override

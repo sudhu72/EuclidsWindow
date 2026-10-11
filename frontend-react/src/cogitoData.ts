@@ -1,4 +1,4 @@
-// Cogito Gallery manifest — 103 self-contained interactive visualizations
+// Cogito Gallery manifest — 153 self-contained interactive visualizations
 // adapted from the Feynman-method "cogito" tutorials, served from
 // /visualizations/cogito/.
 //
@@ -253,6 +253,108 @@ export const GALLERY: GalleryCategory[] = [
         "title": "When There's No Such Thing as Typical",
         "one": "Power laws are what happens when a quantity has no natural typical size at all — the same shape at every scale is why a handful of cities, words, or websites hold a wildly disproportionate share of everything.",
         "prompt": "Explain power laws and scale-free networks from first principles: what scale invariance actually means, why it makes 'the average city size' a meaningless number, and a real generative mechanism that produces a power law from scratch."
+      },
+      {
+        "file": "ones_and_twos_complement_visualizer.html",
+        "title": "Negative Numbers With No Minus Sign",
+        "one": "Three ways to store a negative in bits, why flip-and-add-1 won, overflow, sign extension, and the internet checksum.",
+        "prompt": "Explain one's and two's complement from first principles: how a computer stores negative numbers with no minus sign, why 'flip the bits and add 1' works, why one adder can serve both signed and unsigned numbers, and how overflow and sign extension behave."
+      },
+      {
+        "file": "floating_point_visualizer.html",
+        "title": "Scientific Notation in 64 Switches",
+        "one": "The IEEE-754 bit layout, why 0.1 + 0.2 isn't 0.3, machine epsilon, cancellation, log-sum-exp, and half precision.",
+        "prompt": "Explain floating-point numbers and numerical stability from first principles: how a 64-bit float stores a number, why 0.1 + 0.2 is not exactly 0.3, what machine epsilon and catastrophic cancellation are, and why tricks like log-sum-exp keep computations stable."
+      },
+      {
+        "file": "roots_of_equations_visualizer.html",
+        "title": "Where the Function Hits Zero",
+        "one": "One question in many disguises — break-even, internal rate of return, ray-sphere hits — and the solvers that answer it.",
+        "prompt": "Explain finding the roots of equations from first principles: why so many practical problems reduce to 'where is this function zero?', and how bisection and Newton's method find the answer when no formula exists, with examples like internal rate of return and ray-sphere intersection."
+      },
+      {
+        "file": "trilateration_and_triangulation_visualizer.html",
+        "title": "Pinning Down a Point, Two Ways",
+        "one": "Locate a hidden point from distances (trilateration, like GPS) or from angles (triangulation, like surveying).",
+        "prompt": "Explain trilateration and triangulation from first principles: how GPS finds your position from distances to known points, how surveyors find a position from angles, and why each needs the number of reference points it does."
+      },
+      {
+        "file": "affine_transformations_visualizer.html",
+        "title": "Linear Maps That Are Allowed to Move",
+        "one": "Linear vs. affine maps, homogeneous coordinates, why order matters, and why neural network layers need activations.",
+        "prompt": "Explain affine transformations from first principles: how they differ from linear maps by allowing a shift, how homogeneous coordinates turn a shift into a matrix multiply, why the order of transformations matters, and why stacking affine layers without activations collapses to a single layer."
+      },
+      {
+        "file": "normed_vector_spaces_visualizer.html",
+        "title": "How Long Is a Vector?",
+        "one": "Morph the unit ball from diamond (L1) to circle (L2) to square (L-infinity) and compute any p-norm.",
+        "prompt": "Explain normed vector spaces from first principles: what a norm is, how the L1, L2 and L-infinity norms measure length differently, why their unit balls are a diamond, a circle and a square, and where each shows up in machine learning."
+      },
+      {
+        "file": "four_fundamental_subspaces_visualizer.html",
+        "title": "What a Matrix Can Reach, What It Kills",
+        "one": "Row space, null space, column space and left null space — when Ax = b has a solution, and least squares as a shadow.",
+        "prompt": "Explain the four fundamental subspaces of a matrix from first principles: the row space, null space, column space and left null space, how they decide whether Ax = b can be solved and how many solutions it has, and why least squares is a projection onto the column space."
+      },
+      {
+        "file": "linear_algebra_advanced_visualizer.html",
+        "title": "Six Sharp Tools",
+        "one": "Trace and determinant as eigenvalue sum and product, matrix norms, Cauchy-Schwarz, Jordan form, conjugate gradient, Kronecker products.",
+        "prompt": "Explain six advanced linear algebra tools from first principles: why the trace and determinant are the sum and product of the eigenvalues, what matrix norms measure, the Cauchy-Schwarz inequality, similar matrices and Jordan form, the conjugate gradient method, and the Kronecker product."
+      },
+      {
+        "file": "matrix_calculus_visualizer.html",
+        "title": "Derivatives of Whole Vectors and Matrices",
+        "one": "Four rules, the normal equations, a layer's backward pass, and batch gradients — each checked against finite differences.",
+        "prompt": "Explain matrix calculus from first principles: how to take derivatives with respect to whole vectors and matrices, the handful of rules that cover most of machine learning, how they derive the normal equations, and how they give a neural network layer's backward pass."
+      },
+      {
+        "file": "vector_calculus_visualizer.html",
+        "title": "Directions, Volumes, Flows, Best Paths",
+        "one": "Directional derivatives, double integrals, the Gaussian integral in polar form, divergence and curl, line integrals, calculus of variations.",
+        "prompt": "Explain multivariable and vector calculus from first principles: directional derivatives and the gradient, double integrals, why switching to polar coordinates solves the Gaussian integral, what divergence and curl measure, line integrals and the big theorems, and the calculus of variations."
+      },
+      {
+        "file": "hessian_and_curvature_visualizer.html",
+        "title": "The Shape of the Ground",
+        "one": "Quadratic-form bowls and saddles, second-order Taylor, the second-derivative test, and why Newton's method beats zigzagging descent.",
+        "prompt": "Explain the Hessian and curvature from first principles: how the matrix of second derivatives describes bowls, ridges and saddles, how it gives the second-derivative test in many dimensions, and why using curvature lets Newton's method avoid gradient descent's zigzag."
+      },
+      {
+        "file": "constrained_optimization_and_kkt_visualizer.html",
+        "title": "Is the Fence Actually Stopping You?",
+        "one": "Slack vs. binding constraints, the four KKT conditions, penalties as budgets, and why SVMs have support vectors.",
+        "prompt": "Explain constrained optimization and the KKT conditions from first principles: what a Lagrange multiplier measures, when a constraint is binding versus slack, what each of the four KKT conditions says, and how this explains regularization and the support vectors in an SVM."
+      },
+      {
+        "file": "linear_programming_and_duality_visualizer.html",
+        "title": "Slide the Line to the Corner",
+        "one": "The best answer to a linear program sits at a vertex of the feasible region, and every primal has a dual that prices its constraints.",
+        "prompt": "Explain linear programming and duality from first principles: why the optimum of a linear program always sits at a corner of the feasible region, how the simplex method walks those corners, and what the dual problem means as prices on the constraints."
+      },
+      {
+        "file": "automatic_differentiation_visualizer.html",
+        "title": "Derivatives the Computer Gets Exactly Right",
+        "one": "Dual numbers for forward mode, a reverse-mode computation graph, and when each direction is cheaper.",
+        "prompt": "Explain automatic differentiation from first principles: how dual numbers carry a derivative along with every value in forward mode, how reverse mode walks a computation graph backward, and why reverse mode is what makes training neural networks practical."
+      },
+      {
+        "file": "joint_distributions_visualizer.html",
+        "title": "Two Random Things at Once",
+        "one": "Joint and marginal tables, covariance and correlation, why Var(X + Y) needs a cross term, and the bivariate normal.",
+        "prompt": "Explain joint distributions and covariance from first principles: how a joint table gives marginal and conditional distributions, what covariance and correlation measure, why the variance of a sum includes a covariance term, and what the bivariate normal looks like."
+      },
+      {
+        "file": "likelihood_and_estimation_visualizer.html",
+        "title": "Where Every Loss Function Comes From",
+        "one": "Likelihood vs. probability, why we take logs, squared error and cross-entropy as negative log-likelihood, MAP, and Fisher information.",
+        "prompt": "Explain likelihood and estimation from first principles: how likelihood differs from probability, why we maximize the log-likelihood, how mean squared error and cross-entropy fall out as negative log-likelihoods, what MAP estimation adds, and what Fisher information measures."
+      },
+      {
+        "file": "causal_inference_visualizer.html",
+        "title": "Cause or Coincidence?",
+        "one": "Simpson's paradox on real kidney-stone data, potential outcomes, confounded vs. randomized studies, and forks, chains and colliders.",
+        "prompt": "Explain causal inference from first principles: why correlation is not causation, how Simpson's paradox can reverse a conclusion, what potential outcomes and the average treatment effect are, why randomization removes confounding, and how causal diagrams of forks, chains and colliders tell you what to control for."
       }
     ]
   },
@@ -620,6 +722,204 @@ export const GALLERY: GalleryCategory[] = [
         "title": "The Shape Your Summary Numbers Hide",
         "one": "A mean and standard deviation can describe wildly different-looking datasets identically — histograms, box plots, violin plots, and Q-Q plots each reveal a different way a distribution's shape hides from its own summary statistics.",
         "prompt": "Explain how to read the shape of a data distribution from first principles: what a histogram, box plot, violin plot, and Q-Q plot each show that a mean and standard deviation alone cannot, and why checking shape before trusting summary statistics matters."
+      },
+      {
+        "file": "linear_regression_visualizer.html",
+        "title": "The Line That Fits Best",
+        "one": "Closed form vs. gradient descent landing on the same answer, regression diagnostics, coefficient inference, and multicollinearity.",
+        "prompt": "Explain linear regression from first principles: how the closed-form least-squares solution and gradient descent reach the same line, how to read residual diagnostics, how to tell whether a coefficient is real, and why correlated features make coefficients unstable."
+      },
+      {
+        "file": "logistic_regression_visualizer.html",
+        "title": "From Odds to Probabilities",
+        "one": "Why a straight line fails on yes/no data, probability vs. odds vs. log-odds, reading coefficients, fitting, and perfectly separable data.",
+        "prompt": "Explain logistic regression from first principles: why a straight line fails for yes/no outcomes, how probability, odds and log-odds relate, how to read a coefficient as a change in log-odds, how the model is fitted, and what goes wrong when the data are perfectly separable."
+      },
+      {
+        "file": "regression_metrics_visualizer.html",
+        "title": "Same MAE, Different RMSE",
+        "one": "Five houses show how MAE, MSE, RMSE and Huber loss weigh errors differently, and why mean vs. median matters.",
+        "prompt": "Explain regression metrics from first principles: what MAE, MSE and RMSE each measure, why two models can share an MAE but differ in RMSE, how Huber loss blends the two, and why minimizing absolute error targets the median while squared error targets the mean."
+      },
+      {
+        "file": "multiclass_confusion_matrix_visualizer.html",
+        "title": "Who Got Mistaken for Whom",
+        "one": "Edit a multiclass confusion matrix and watch per-class precision, recall and F1, plus macro vs. micro averages, update live.",
+        "prompt": "Explain the multiclass confusion matrix from first principles: how to read rows and columns, how per-class precision, recall and F1 come from it, and how macro and micro averaging can tell very different stories."
+      },
+      {
+        "file": "class_imbalance_visualizer.html",
+        "title": "Synthetic Minority Samples",
+        "one": "How SMOTE builds a new minority example on the line between two neighbors, and how it can bleed into the majority class.",
+        "prompt": "Explain SMOTE for class imbalance from first principles: how it creates a synthetic minority example by interpolating between a point and its nearest neighbor, and how that interpolation can contaminate the majority class."
+      },
+      {
+        "file": "feature_engineering_and_encoding_visualizer.html",
+        "title": "Turning Categories Into Numbers",
+        "one": "Ordinal vs. one-hot, target encoding and its leak, out-of-fold fixes, frequency encoding, and the hashing trick for high cardinality.",
+        "prompt": "Explain categorical feature encoding from first principles: when ordinal versus one-hot encoding is right, how target encoding works and why it leaks the label, how out-of-fold encoding fixes that, and how frequency encoding and the hashing trick handle categories with thousands of values."
+      },
+      {
+        "file": "missing_data_imputation_visualizer.html",
+        "title": "Filling the Holes Honestly",
+        "one": "MCAR, MAR and MNAR, why mean filling shrinks variance, KNN and MICE imputation, missing indicators, and pipeline leakage.",
+        "prompt": "Explain missing-data imputation from first principles: the difference between data missing completely at random, at random, and not at random, why filling with the mean shrinks variance, how KNN and MICE imputation work, and how imputing before splitting leaks information."
+      },
+      {
+        "file": "hyperparameter_search_visualizer.html",
+        "title": "Grid, Random, or Bayesian?",
+        "one": "Why random search beats a grid when only one knob matters, and how Bayesian optimization decides where to try next.",
+        "prompt": "Explain hyperparameter search from first principles: why random search usually beats grid search when only a few hyperparameters matter, and how Bayesian optimization uses a surrogate model to choose the next setting to try."
+      },
+      {
+        "file": "anomaly_detection_visualizer.html",
+        "title": "Finding the Odd One Out",
+        "one": "Local outlier factor by hand, one-class SVM and its nu, and three detectors disagreeing on the same data.",
+        "prompt": "Explain anomaly detection from first principles: how the local outlier factor compares a point's density to its neighbors', how a one-class SVM draws a boundary around normal data, what its nu parameter controls, and why different detectors flag different points."
+      },
+      {
+        "file": "model_monitoring_and_drift_visualizer.html",
+        "title": "When the World Moves Under the Model",
+        "one": "PSI and the KS test by hand, a simulated year of drift, and when to trigger retraining.",
+        "prompt": "Explain model monitoring and data drift from first principles: how the population stability index and the Kolmogorov-Smirnov test detect a shifted distribution, how drift erodes a deployed model over time, and how to decide when to retrain."
+      },
+      {
+        "file": "weight_initialization_visualizer.html",
+        "title": "Starting the Weights Just Right",
+        "one": "Push a batch through 50 layers and watch activations explode, vanish, or hold steady under Xavier and He initialization.",
+        "prompt": "Explain weight initialization from first principles: why badly scaled initial weights make activations and gradients explode or vanish through many layers, and how Xavier and He initialization choose a variance of about 1/n to keep the signal steady."
+      },
+      {
+        "file": "activation_slopes_visualizer.html",
+        "title": "Activation Slopes and Saturation",
+        "one": "Each activation's local slope multiplies the gradient; see sigmoid saturate through many layers and ReLU die where Leaky ReLU survives.",
+        "prompt": "Explain activation functions through their slopes: why backprop multiplies the gradient by each activation's local derivative, why sigmoid and tanh saturate and shrink gradients through many layers, and how dying ReLU happens and Leaky ReLU avoids it."
+      },
+      {
+        "file": "residual_connections_visualizer.html",
+        "title": "Residual Connections Keep Gradients Alive",
+        "one": "A real stack of tanh layers shows gradients dying with depth, and how the identity path of a skip connection rescues them.",
+        "prompt": "Explain residual connections from first principles: why gradients shrink as they pass back through many layers, how adding a skip connection gives the Jacobian an identity term, and why that lets very deep networks train."
+      },
+      {
+        "file": "dropout_visualizer.html",
+        "title": "Dropout: Raw vs. Inverted",
+        "one": "Drag the keep probability and see why inverted dropout rescales during training so nothing changes at test time.",
+        "prompt": "Explain dropout from first principles: how randomly dropping activations during training acts as regularization, why the expected output shrinks unless you rescale, and why inverted dropout divides by the keep probability during training so inference needs no change."
+      },
+      {
+        "file": "adam_optimizer_visualizer.html",
+        "title": "Momentum, Adaptivity, Adam",
+        "one": "SGD vs. momentum vs. Adam on a stretched valley, Nesterov, AdaGrad vs. RMSprop, and why Adam needs bias correction.",
+        "prompt": "Explain the Adam optimizer from first principles: why plain SGD zigzags or diverges on a stretched valley, how momentum smooths the path, how AdaGrad and RMSprop give each parameter its own step size, and why Adam needs bias correction early in training."
+      },
+      {
+        "file": "learning_rate_schedules_visualizer.html",
+        "title": "Learning-Rate Schedules and Warmup",
+        "one": "Step, cosine and warmup schedules computed exactly, a noisy-SGD race between them, and Adam's blind first step.",
+        "prompt": "Explain learning-rate schedules from first principles: why a learning rate that is good early in training is too large later, how step decay and cosine schedules lower it, and why warmup protects Adam's first steps."
+      },
+      {
+        "file": "rnn_lstm_visualizer.html",
+        "title": "Memory Through Time",
+        "one": "An unrolled RNN with BPTT checked against finite differences, vanishing and exploding gradients, an RNN-vs-LSTM race, clipping, and seq2seq attention.",
+        "prompt": "Explain RNNs and LSTMs from first principles: how a recurrent network carries a hidden state through time, how backpropagation through time computes its gradients, why those gradients vanish or explode, how the LSTM's gates fix that, and how attention improved sequence-to-sequence models."
+      },
+      {
+        "file": "tokenization_bpe_visualizer.html",
+        "title": "Byte-Pair Encoding, Step by Step",
+        "one": "Train BPE by merging the most frequent pair, encode unseen words, and compare characters, words and subwords.",
+        "prompt": "Explain tokenization with byte-pair encoding from first principles: how BPE learns merges by repeatedly joining the most frequent neighboring pair, how it splits words it has never seen, and why subword tokens beat both characters and whole words."
+      },
+      {
+        "file": "positional_encoding_and_rope_visualizer.html",
+        "title": "Where Each Token Sits",
+        "one": "Sinusoidal encodings as rotations, and how RoPE makes attention depend only on the relative offset between tokens.",
+        "prompt": "Explain positional encoding and RoPE from first principles: why attention needs to be told where each token is, how sinusoidal encodings let a fixed rotation shift any position by an offset, and how rotary position embeddings make attention scores depend only on relative position."
+      },
+      {
+        "file": "attention_math_connections_visualizer.html",
+        "title": "Attention's Math Connections",
+        "one": "One attention row seen three ways: temperature and entropy, a complete graph, and kernel regression.",
+        "prompt": "Explain the mathematical connections of self-attention: how the softmax temperature controls the entropy of attention weights, how attention is message passing on a complete graph, and how it is a form of kernel regression."
+      },
+      {
+        "file": "bert_vs_gpt_masking_visualizer.html",
+        "title": "BERT vs. GPT Masking",
+        "one": "Click a token to see what it may attend to under GPT's causal mask vs. BERT's bidirectional one, then run BERT's 80/10/10 recipe.",
+        "prompt": "Explain how BERT and GPT differ through their attention masks: why GPT's causal mask lets each token see only earlier tokens, why BERT sees both directions, and how BERT's 80/10/10 masking recipe trains it."
+      },
+      {
+        "file": "mixture_of_experts_visualizer.html",
+        "title": "Mixture of Experts",
+        "one": "Route a token through a real top-k router, watch sparse activation, and see why load balancing is needed.",
+        "prompt": "Explain mixture-of-experts models from first principles: how a router sends each token to only a few experts, why that gives a large model a small compute cost per token, and why a load-balancing loss is needed to stop all tokens going to the same experts."
+      },
+      {
+        "file": "vision_transformer_and_clip_visualizer.html",
+        "title": "Images as Sequences",
+        "one": "Patchify an image for a Vision Transformer, tune temperature on a CLIP similarity matrix, and classify zero-shot.",
+        "prompt": "Explain Vision Transformers and CLIP from first principles: how an image is cut into patches and treated as a token sequence, how CLIP trains images and captions into a shared embedding space with a contrastive loss, and how that enables zero-shot classification."
+      },
+      {
+        "file": "data_augmentation_and_transfer_learning_visualizer.html",
+        "title": "More Data From Less",
+        "one": "Watch augmentation turn memorization into generalization, and reuse frozen convolution kernels on a new task.",
+        "prompt": "Explain data augmentation and transfer learning from first principles: how augmented copies of training data push a model from memorizing to generalizing, and how a network's learned features can be frozen and reused on a new task with little data."
+      },
+      {
+        "file": "object_detection_visualizer.html",
+        "title": "Find It, Box It, Outline It",
+        "one": "IoU, anchor boxes, non-max suppression, the YOLO grid, mAP, U-Net shapes and Dice loss, each as a worked example.",
+        "prompt": "Explain object detection and segmentation from first principles: how intersection over union scores a box, how anchors and the YOLO grid propose boxes, how non-max suppression removes duplicates, how mAP measures a detector, and how U-Net and Dice loss handle pixel-level segmentation."
+      },
+      {
+        "file": "graph_neural_networks_visualizer.html",
+        "title": "Learning on Graphs",
+        "one": "Watch a vertex aggregate its neighbors in a GCN update, and see that a CNN is just a GNN on a grid.",
+        "prompt": "Explain graph neural networks from first principles: how message passing lets each node aggregate its neighbors' features, what the normalized GCN update does, and why a convolutional network is a special case of a GNN on a grid graph."
+      },
+      {
+        "file": "generative_models_visualizer.html",
+        "title": "VAEs, GANs and Diffusion",
+        "one": "Check the key math live: the VAE's KL term and reparameterization, the GAN game, and diffusion's forward noising and reverse denoising.",
+        "prompt": "Explain generative models from first principles: how a variational autoencoder balances reconstruction against a KL penalty and uses the reparameterization trick, how a GAN pits a generator against a discriminator, and how diffusion models learn to reverse a gradual noising process."
+      },
+      {
+        "file": "preference_optimization_visualizer.html",
+        "title": "How RLHF Actually Works",
+        "one": "The pipeline from pretraining to assistant: reward model, the KL leash, DPO, and GRPO.",
+        "prompt": "Explain how preference optimization turns a language model into an assistant: supervised fine-tuning, training a reward model from human comparisons, why a KL penalty keeps the policy close to the original, and how DPO and GRPO simplify RLHF."
+      },
+      {
+        "file": "interpretability_visualizer.html",
+        "title": "Looking Inside the Model",
+        "one": "Saliency vs. integrated gradients, Grad-CAM, linear probes, superposition and sparse autoencoders, probing vs. patching.",
+        "prompt": "Explain neural network interpretability from first principles: how saliency maps and integrated gradients attribute a prediction to inputs, what Grad-CAM shows, what a linear probe can and cannot prove, why features live in superposition, and how sparse autoencoders and activation patching help."
+      },
+      {
+        "file": "distributed_training_visualizer.html",
+        "title": "Training Across Many GPUs",
+        "one": "Memory per GPU, ring all-reduce, pipeline bubbles, gradient accumulation, activation checkpointing, and tensor parallelism.",
+        "prompt": "Explain distributed training from first principles: how much memory a model needs per GPU, how ring all-reduce averages gradients efficiently, why pipeline parallelism has bubbles, and how gradient accumulation, activation checkpointing and tensor parallelism trade compute, memory and communication."
+      },
+      {
+        "file": "llm_scale_and_inference_visualizer.html",
+        "title": "Model Scale and Inference",
+        "one": "Why more parameters buy accuracy, chain-of-thought compounding, FlashAttention's online softmax, speculative decoding, continuous batching.",
+        "prompt": "Explain how language model scale and inference work: why more parameters buy better approximation, why chain-of-thought helps on multi-step problems, how FlashAttention computes softmax in tiles, and how speculative decoding and continuous batching make serving faster."
+      },
+      {
+        "file": "llm_decoding_strategies_visualizer.html",
+        "title": "Beam Search vs. Greedy Decoding",
+        "one": "Step through generation and watch which candidates beam search keeps and prunes compared with greedy decoding.",
+        "prompt": "Explain how a language model chooses its next tokens: how greedy decoding picks the single most likely token, how beam search keeps several candidates to find a more likely sequence overall, and the trade-offs between them."
+      },
+      {
+        "file": "model_router_visualizer.html",
+        "title": "Which Model Should Answer?",
+        "one": "Three router decision shapes, the economics of a confidence threshold, and why calibration decides whether routing pays off.",
+        "prompt": "Explain model routing from first principles: how a router decides whether a cheap or an expensive model should answer, how the confidence threshold trades cost against quality, and why the router's confidence must be calibrated for that trade to work."
       }
     ]
   },

@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floating Point and Numerical Stability</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --fs:#C2413B; --fe:#0F8B8D; --fm:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:700px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  h3{ font-family:"Fraunces", serif; font-size:16px; font-weight:600; margin:10px 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .sub code, .note code, .stat code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; }
+  .ctrl .count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  .stage{ min-height:180px; padding:6px 0 4px; }
+  .steplog{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.75; max-height:300px; overflow:auto; }
+  .steplog div{ color:var(--ink-soft); padding:1px 0; }
+  .steplog div.cur{ color:var(--ink); font-weight:600; }
+  /* 64 lamps */
+  .bits{ display:flex; flex-wrap:nowrap; gap:1.5px; margin:8px 0 4px; }
+  .bt{ width:11px; height:24px; flex-shrink:0; border-radius:3px; border:1px solid #C9D1CF; background:#F3F5F4; color:#8A939C; font:600 9px "IBM Plex Mono",monospace; display:inline-flex; align-items:flex-end; justify-content:center; padding-bottom:2px; position:relative; }
+  .bt::before{ content:""; position:absolute; top:3px; left:50%; width:5px; height:5px; margin-left:-2.5px; border-radius:50%; background:#C9D1CF; }
+  .bt.on::before{ background:#F2B705; box-shadow:0 0 5px 1px rgba(242,183,5,.7); }
+  .bt.on{ color:var(--ink); background:#FCEFC8; }
+  .bt.s{ border-color:var(--fs); } .bt.e{ border-color:var(--fe); } .bt.m{ border-color:var(--fm); }
+  .bt.gap{ margin-left:6px; }
+  .bits.dim .bt{ opacity:.35; }
+  .bits .bt.hl{ opacity:1; outline:2px solid var(--accent); outline-offset:1px; }
+  .bits.wide .bt{ width:22px; height:30px; font-size:12px; }
+  .legend{ display:flex; gap:16px; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); margin:2px 0 8px; flex-wrap:wrap; }
+  .legend span::before{ content:""; display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px; }
+  .legend .ls::before{ background:var(--fs); } .legend .le::before{ background:var(--fe); } .legend .lm::before{ background:var(--fm); }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; word-break:break-all; }
+  .stat .k{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; display:block; word-break:normal; }
+  .stat b{ color:var(--accent); }
+  .stat .bad{ color:var(--bad); font-weight:700; } .stat .good{ color:var(--good); font-weight:700; }
+  .verdict{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin-top:10px; }
+  .verdict.ok{ color:var(--good); } .verdict.bad{ color:var(--bad); } .verdict.meh{ color:var(--c2); }
+  .note{ font-size:13.5px; color:var(--ink); margin-top:8px; line-height:1.6; }
+  table.t{ border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:12.5px; margin:8px 0; width:100%; }
+  table.t th, table.t td{ border-bottom:1px solid var(--line); padding:5px 8px; text-align:left; vertical-align:top; word-break:break-all; }
+  table.t th{ color:var(--ink-soft); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.05em; word-break:normal; }
+  table.t tr.cur td{ background:var(--accent-soft); }
+  td.bad{ color:var(--bad); font-weight:700; } td.good{ color:var(--good); font-weight:700; }
+  .barrow{ display:flex; align-items:center; gap:10px; font-family:"IBM Plex Mono",monospace; font-size:12.5px; margin:4px 0; }
+  .barrow .lb{ width:120px; text-align:right; color:var(--ink-soft); }
+  .barrow .bar{ height:18px; background:var(--c1); border-radius:4px; }
+  .twin{ display:flex; gap:16px; } .twin > div{ flex:1 1 0; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  svg text{ font-family:"IBM Plex Mono", monospace; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Floating Point and Numerical Stability</div>
+    <h1>Scientific Notation in 64 Switches</h1>
+    <p>Each bit is a switch with a lamp: lit means 1. Red-edged lamps are the sign, teal the exponent, purple the mantissa. Every example is a one-click preset that plays itself; use <b>Step</b> to go one move at a time, <b>Play</b> to watch, or <b>Jump to end</b> for the answer. Every number is computed live by this page's own 64-bit arithmetic, which is the same IEEE 754 arithmetic Python and NumPy use. There's nothing to type.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="bits">1 · Bit layout</button>
+    <button class="tab" data-tab="add">2 · 0.1 + 0.2</button>
+    <button class="tab" data-tab="eps">3 · Epsilon and rounding</button>
+    <button class="tab" data-tab="edge">4 · Overflow and underflow</button>
+    <button class="tab" data-tab="canc">5 · Cancellation</button>
+    <button class="tab" data-tab="lse">6 · Log-sum-exp</button>
+    <button class="tab" data-tab="logp">7 · Log-probabilities</button>
+    <button class="tab" data-tab="half">8 · Half precision</button>
+    <button class="tab" data-tab="kahan">9 · Kahan summation</button>
+  </div>
+
+  <div class="panel active" id="panel-bits"><div class="card">
+    <h2>How a double is built: sign, exponent, mantissa</h2>
+    <p class="sub">value = (−1)<sup>sign</sup> × 1.mantissa × 2<sup>(exponent field − 1023)</sup>. The leading <code>1.</code> is never stored (the "hidden bit"). Exponent fields 0 and 2047 are reserved for zero, subnormals, infinity and NaN.</p>
+    <div class="presetbar" id="pre-bits"></div>
+    <div id="pl-bits"></div>
+  </div></div>
+
+  <div class="panel" id="panel-add"><div class="card">
+    <h2>Every input is rounded to a tick, and so is the answer</h2>
+    <p class="sub">The page adds the <i>exact</i> stored values with whole-number arithmetic, then shows the two doubles (ticks) the true sum falls between and which one IEEE 754 picks: the nearest, with ties going to the tick whose last bit is 0.</p>
+    <div class="presetbar" id="pre-add"></div>
+    <div id="pl-add"></div>
+  </div></div>
+
+  <div class="panel" id="panel-eps"><div class="card">
+    <h2>Machine epsilon: the gap between 1 and the next double</h2>
+    <p class="sub">2<sup>−52</sup> ≈ 2.22 × 10<sup>−16</sup>. Anything smaller than half a tick vanishes when added; above 2<sup>53</sup> the ticks are 2 apart.</p>
+    <div class="presetbar" id="pre-eps"></div>
+    <div id="pl-eps"></div>
+  </div></div>
+
+  <div class="panel" id="panel-edge"><div class="card">
+    <h2>The edges of the range</h2>
+    <p class="sub">Past the top: infinity. Below the bottom: subnormals, then zero. Questions with no answer: NaN, which isn't even equal to itself.</p>
+    <div class="presetbar" id="pre-edge"></div>
+    <div id="pl-edge"></div>
+  </div></div>
+
+  <div class="panel" id="panel-canc"><div class="card">
+    <h2>Catastrophic cancellation: subtracting nearly equal numbers</h2>
+    <p class="sub">The subtraction is exact, but it exposes the rounding errors already in its inputs. The fix is always a rearrangement that avoids the subtraction.</p>
+    <div class="presetbar" id="pre-canc"></div>
+    <div id="pl-canc"></div>
+  </div></div>
+
+  <div class="panel" id="panel-lse"><div class="card">
+    <h2>Softmax and log-sum-exp, naive and stable</h2>
+    <p class="sub">Subtracting the largest score from every score changes nothing mathematically (it cancels top and bottom), but makes the biggest exponent e<sup>0</sup> = 1: no overflow, and a sum of at least 1.</p>
+    <div class="presetbar" id="pre-lse"></div>
+    <div id="pl-lse"></div>
+  </div></div>
+
+  <div class="panel" id="panel-logp"><div class="card">
+    <h2>Multiply probabilities, or add their logs</h2>
+    <p class="sub">The probability of n fair coin flips all landing as observed is 0.5<sup>n</sup>. Watch the product fall off the bottom of the range while the sum of logs stays ordinary.</p>
+    <div class="presetbar" id="pre-logp"></div>
+    <div id="pl-logp"></div>
+  </div></div>
+
+  <div class="panel" id="panel-half"><div class="card">
+    <h2>float32, float16 and bfloat16 side by side</h2>
+    <p class="sub">float16 is 1 / 5 / 10 bits: precise but tiny range (max 65,504). bfloat16 is 1 / 8 / 7: float32's range, about 2–3 digits. Each value is rounded to the nearest number the format can hold.</p>
+    <div class="presetbar" id="pre-half"></div>
+    <div id="pl-half"></div>
+  </div></div>
+
+  <div class="panel" id="panel-kahan"><div class="card">
+    <h2>Kahan summation: keep the change</h2>
+    <p class="sub"><code>y = x − c; t = total + y; c = (t − total) − y; total = t</code>. The variable <code>c</code> holds (minus) whatever the last addition rounded away, and adds it back next time.</p>
+    <div class="presetbar" id="pre-kahan"></div>
+    <div id="pl-kahan"></div>
+  </div></div>
+
+  <footer>
+    Companion to <code>math/floating-point-and-numerical-stability.md</code>. Every value is computed live in this page and matches the values checked in Python there (for example <code>0.1 + 0.2 = 0.30000000000000004</code>, the shortcut variance <code>−128</code>, <code>logsumexp([1000, 1001, 1002]) = 1002.4076059644444</code>, and Kahan's <code>1000000</code>).
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+}));
+
+/* ---------- exact double arithmetic with BigInt ---------- */
+const buf = new DataView(new ArrayBuffer(8));
+function bitsBig(x){ buf.setFloat64(0, x); return buf.getBigUint64(0); }
+function fromBits(b){ buf.setBigUint64(0, b); return buf.getFloat64(0); }
+function bitStr(x){ return bitsBig(x).toString(2).padStart(64, "0"); }
+function hexStr(x){ return "0x" + bitsBig(x).toString(16).toUpperCase().padStart(16, "0"); }
+function fields(x){
+  const b = bitsBig(x);
+  return { sign: Number(b >> 63n), ef: Number((b >> 52n) & 0x7FFn), mf: b & ((1n << 52n) - 1n) };
+}
+/* x = N / 2^1074 exactly (finite x only) */
+function toFix(x){
+  const f = fields(x);
+  let N = f.ef === 0 ? f.mf : ((f.mf | (1n << 52n)) << BigInt(f.ef - 1));
+  return f.sign ? -N : N;
+}
+const P5 = 5n ** 1074n;
+function decStr(N, k){
+  if (k === undefined) k = 1074;
+  const neg = N < 0n; if (neg) N = -N;
+  let D = (k === 1074 ? N * P5 : N * 5n ** BigInt(k)).toString();
+  if (D.length <= k) D = "0".repeat(k - D.length + 1) + D;
+  let ip = D.slice(0, D.length - k), fp = D.slice(D.length - k).replace(/0+$/, "");
+  return (neg ? "−" : "") + ip + (fp ? "." + fp : "");
+}
+const exact = x => decStr(toFix(x));
+/* shorten a long exact decimal: keep n significant digits */
+function sig(s, n){
+  const m = s.match(/^(−?)(\d+)\.?(\d*)$/); if (!m) return s;
+  const ip = m[2], fp = m[3];
+  const sci = (d, e) => m[1] + d[0] + (d.length > 1 ? "." + d.slice(1, n) : "") + (d.length > n ? "…" : "") + " × 10<sup>" + (e < 0 ? "−" + (-e) : e) + "</sup>";
+  if (ip.length > 21) return sci((ip + fp).replace(/0+$/, ""), ip.length - 1);
+  if (ip === "0" && /^0{9}/.test(fp)){ const lead = fp.match(/^0*/)[0].length; return sci(fp.slice(lead), -(lead + 1)); }
+  if (ip !== "0"){ const all = ip + fp; return all.length <= n ? s : m[1] + (ip.length >= n ? ip : ip + "." + fp.slice(0, n - ip.length)) + "…"; }
+  const lead = fp.match(/^0*/)[0].length;
+  if (fp.length - lead <= n) return s;
+  return m[1] + "0." + fp.slice(0, lead + n) + "…";
+}
+const nextUp = x => x === 0 ? 5e-324 : (x > 0 ? fromBits(bitsBig(x) + 1n) : fromBits(bitsBig(x) - 1n));
+const nextDown = x => -nextUp(-x);
+const ulp = x => nextUp(Math.abs(x)) - Math.abs(x);
+const S = x => Object.is(x, -0) ? "−0" : String(x).replace("e+", "e").replace(/-/g, "−");
+const fmtArr = (a, d) => "[" + a.map(v => (isFinite(v) && d != null) ? v.toFixed(d) : S(v)).join(", ") + "]";
+
+/* ---------- drawing ---------- */
+function bitsRow(bs, layout, o){
+  o = o || {};
+  const [sb, eb] = layout; // sign bits, exponent bits
+  return `<div class="bits${o.dim ? " dim" : ""}${o.wide ? " wide" : ""}">` + [...bs].map((c, j) => {
+    const f = j < sb ? "s" : j < sb + eb ? "e" : "m";
+    const gap = (j === sb || j === sb + eb) ? " gap" : "";
+    const hl = o.hl && o.hl.includes(f) ? " hl" : "";
+    return `<span class="bt ${f}${c === "1" ? " on" : ""}${gap}${hl}">${c}</span>`;
+  }).join("") + `</div>`;
+}
+const legend = (a, b, c) => `<div class="legend"><span class="ls">sign (${a})</span><span class="le">exponent (${b})</span><span class="lm">mantissa (${c})</span></div>`;
+const dblRow = (x, o) => bitsRow(bitStr(x), [1, 11], o);
+const stat = (k, v) => `<div class="stat"><span class="k">${k}</span>${v}</div>`;
+const vd = (cls, t) => `<div class="verdict ${cls}">${t}</div>`;
+
+/* ---------- the player (same as the other math visualizers) ---------- */
+function Player(id){
+  const root = $("#" + id);
+  root.innerHTML = `<div class="ctrl"><button class="op" data-act="step">Step ▸</button><button class="op" data-act="play">▶ Play</button><button class="op" data-act="end">Jump to end ⏭</button><button class="op" data-act="reset">↺ Reset</button><span class="count"></span></div><div class="stage"></div><div class="steplog"></div>`;
+  const stage = root.querySelector(".stage"), log = root.querySelector(".steplog"), cnt = root.querySelector(".count"), pb = root.querySelector('[data-act="play"]');
+  const P = { frames: [], i: 0, t: null };
+  P.draw = () => {
+    const f = P.frames[P.i]; if (!f) return;
+    stage.innerHTML = f.html;
+    log.innerHTML = P.frames.slice(0, P.i + 1).map((g, j) => g.note ? `<div class="${j === P.i ? "cur" : ""}">${g.note}</div>` : "").join("");
+    log.scrollTop = log.scrollHeight;
+    cnt.textContent = `step ${P.i + 1} of ${P.frames.length}`;
+  };
+  P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+  P.play = () => {
+    if (P.t){ P.stop(); return; }
+    if (P.i >= P.frames.length - 1){ P.i = 0; P.draw(); }
+    const tick = () => { if (P.i >= P.frames.length - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, 1300); };
+    P.t = setTimeout(tick, 900); pb.textContent = "❚❚ Pause";
+  };
+  P.load = (fr, auto) => { P.stop(); P.frames = fr; P.i = 0; P.draw(); if (auto) P.play(); };
+  root.querySelector(".ctrl").addEventListener("click", e => {
+    const a = e.target.dataset && e.target.dataset.act; if (!a) return;
+    if (a === "play") return P.play();
+    P.stop();
+    if (a === "step" && P.i < P.frames.length - 1) P.i++;
+    if (a === "end") P.i = P.frames.length - 1;
+    if (a === "reset") P.i = 0;
+    P.draw();
+  });
+  return P;
+}
+function presets(barId, player, list){
+  const btns = [];
+  list.forEach(p => {
+    const b = document.createElement("button"); b.className = "op pre"; b.textContent = p.name;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); player.load(p.frames(), true); });
+    $("#" + barId).appendChild(b); btns.push(b);
+  });
+  btns[0].classList.add("active"); player.load(list[0].frames(), false);
+}
+/* build cumulative frames from a list of [html, note] */
+function cumulative(head, items){
+  const fr = [];
+  for (let k = 0; k <= items.length; k++){
+    if (k === 0 && !head) continue;
+    fr.push({ html: (head || "") + items.slice(0, k).map(it => it[0]).join(""), note: k === 0 ? head && "Start." : items[k-1][1] });
+  }
+  return fr;
+}
+
+/* ============ TAB 1: bit layout ============ */
+function layoutFrames(x, label){
+  const f = fields(x), bs = bitStr(x), fr = [];
+  const head = `<h3>${label}</h3>` + legend("1 bit", "11 bits", "52 bits");
+  const all = o => head + dblRow(x, o) + stat("all 64 bits, in hex", hexStr(x));
+  fr.push({ html: all(), note: `${label} is stored as these 64 bits: ${hexStr(x)}.` });
+  const sS = stat("sign bit", `${f.sign} → ${f.sign ? "negative" : "positive"}`);
+  fr.push({ html: all({ dim: true, hl: ["s"] }) + sS, note: `Sign bit = ${f.sign}: the number is ${f.sign ? "negative" : "positive"}.` });
+  let eS, eNote, mS, mNote, vS, vNote;
+  const efb = bs.slice(1, 12), mfb = bs.slice(12);
+  if (f.ef === 2047){
+    eS = stat("exponent field", `${efb} = 2047 (all ones) → reserved: <b>infinity or NaN</b>`);
+    eNote = "Exponent field is all ones (2047): this is a special value, not 1.m × 2^e.";
+    if (f.mf === 0n){ mS = stat("mantissa", `all zeros → <b>${f.sign ? "−" : "+"}infinity</b>`); mNote = "Mantissa all zeros with exponent all ones means infinity."; }
+    else { mS = stat("mantissa", `${mfb.slice(0, 12)}… (not all zeros) → <b>NaN</b>, "not a number"`); mNote = "Mantissa not all zeros with exponent all ones means NaN."; }
+    vS = stat("value", `<b>${S(x)}</b>`); vNote = `Value: ${S(x)}.`;
+  } else if (f.ef === 0){
+    eS = stat("exponent field", `${efb} = 0 → reserved: <b>zero or subnormal</b>. The hidden bit is 0 and the exponent is fixed at −1022.`);
+    eNote = "Exponent field 0: no hidden 1, and the exponent is −1022 (a subnormal, or zero).";
+    const m = decStr(f.mf, 52);
+    mS = stat("mantissa", `0.${mfb.replace(/0+$/, "") || "0"}₂ (hidden bit is 0) = ${sig(m, 20)}`);
+    mNote = `Significand = 0.mantissa = ${sig(m, 20)}.`;
+    vS = stat("value = 0.mantissa × 2^−1022", `<b>${S(x)}</b><br>exactly ${sig(exact(x), 30)}` + (f.mf === 1n ? `<br>= 2<sup>−1074</sup>, the smallest positive double` : ""));
+    vNote = `Value = ${S(x)}` + (f.mf === 1n ? " = 2^−1074, the smallest positive double." : ".");
+  } else {
+    const e = f.ef - 1023;
+    eS = stat("exponent field", `${efb} = ${f.ef}; subtract the bias 1023 → <b>e = ${S(e)}</b>`);
+    eNote = `Exponent field ${efb} = ${f.ef}; minus the bias 1023 gives e = ${S(e)}.`;
+    const sigN = (1n << 52n) | f.mf, m = decStr(sigN, 52);
+    const mb = mfb.replace(/0+$/, "");
+    mS = stat("mantissa, with the hidden 1 put back", `1.${mb.length > 40 ? mb.slice(0, 40) + "…" : (mb || "0")}₂ = <b>${sig(m, 22)}</b>`);
+    mNote = `Mantissa with the hidden 1: 1.${mb.slice(0, 16) || "0"}${mb.length > 16 ? "…" : ""} in binary = ${sig(m, 22)}.`;
+    const ex = exact(x);
+    vS = stat(`value = ${f.sign ? "−" : ""}${sig(m, 8)} × 2^${S(e)}`, `prints as <b>${S(x)}</b><br>exact stored value: ${sig(ex, 60)}` + (ex.replace("−", "") === S(Math.abs(x)) ? ` <span class="good">(exact, no rounding)</span>` : ` <span class="bad">(not exactly ${S(x)})</span>`));
+    vNote = `Value = ${f.sign ? "−" : ""}${sig(m, 8)} × 2^${S(e)}; exact stored value ${sig(ex, 30)}.`;
+  }
+  fr.push({ html: all({ dim: true, hl: ["e"] }) + sS + eS, note: eNote });
+  fr.push({ html: all({ dim: true, hl: ["m"] }) + sS + eS + mS, note: mNote });
+  fr.push({ html: all() + sS + eS + mS + vS, note: vNote });
+  return fr;
+}
+presets("pre-bits", Player("pl-bits"), [
+  { name: "1.0", frames: () => layoutFrames(1.0, "1.0") },
+  { name: "0.1", frames: () => layoutFrames(0.1, "0.1") },
+  { name: "−2.5", frames: () => layoutFrames(-2.5, "−2.5") },
+  { name: "0.2", frames: () => layoutFrames(0.2, "0.2") },
+  { name: "0.3", frames: () => layoutFrames(0.3, "0.3") },
+  { name: "0.1 + 0.2", frames: () => layoutFrames(0.1 + 0.2, "0.1 + 0.2") },
+  { name: "tiny: 5e−324", frames: () => layoutFrames(5e-324, "smallest subnormal, 5e−324") },
+  { name: "smallest normal", frames: () => layoutFrames(2.2250738585072014e-308, "smallest normal, 2.2250738585072014e−308") },
+  { name: "huge: largest double", frames: () => layoutFrames(1.7976931348623157e308, "largest double, 1.7976931348623157e308") },
+  { name: "+∞", frames: () => layoutFrames(Infinity, "+infinity") },
+  { name: "NaN", frames: () => layoutFrames(NaN, "NaN (from 0/0)") },
+]);
+
+/* ============ TAB 2/3: exact addition with ticks ============ */
+function numberLine(lo, hi, marks){
+  // marks: [{N (BigInt fix), label, color, top}]
+  const L = toFix(lo), H = toFix(hi), W = 900, x0 = 120, x1 = 780;
+  const pos = N => x0 + (x1 - x0) * Number((N - L) * 100000n / (H - L)) / 100000;
+  let s = `<svg viewBox="0 0 ${W} 150"><line x1="40" y1="80" x2="${W - 40}" y2="80" stroke="#1B2430" stroke-width="2"/>`;
+  [[L, lo], [H, hi]].forEach(([N, v]) => { const p = pos(N);
+    s += `<line x1="${p}" y1="62" x2="${p}" y2="98" stroke="#463A73" stroke-width="3"/><text x="${p}" y="118" text-anchor="middle" font-size="12" fill="#463A73">tick: ${S(v)}</text><text x="${p}" y="134" text-anchor="middle" font-size="10.5" fill="#5B6572">last bit ${bitStr(v)[63]}</text>`; });
+  marks.forEach(m => { const p = pos(m.N);
+    s += `<circle cx="${p}" cy="80" r="6" fill="${m.color}"/><line x1="${p}" y1="${m.top ? 30 : 46}" x2="${p}" y2="74" stroke="${m.color}" stroke-dasharray="3 2"/><text x="${p}" y="${m.top ? 24 : 40}" text-anchor="middle" font-size="12" fill="${m.color}">${m.label}</text>`; });
+  return s + `</svg>`;
+}
+function addFrames(a, b, la, lb, o){
+  o = o || {};
+  const r = a + b, Na = toFix(a), Nb = toFix(b), Ns = Na + Nb, Nr = toFix(r);
+  const fr = [];
+  const sa = stat(`${la} is stored as`, sig(exact(a), 40) + (exact(a) === S(a) ? ` <span class="good">(exact)</span>` : "")),
+        sb = stat(`${lb} is stored as`, sig(exact(b), 40) + (exact(b) === S(b) ? ` <span class="good">(exact)</span>` : ""));
+  const ss = stat("true sum of the two stored values (exact whole-number arithmetic)", sig(decStr(Ns), 40));
+  fr.push({ html: sa, note: `${la} is stored as ${sig(exact(a), 24)}.` });
+  fr.push({ html: sa + sb, note: `${lb} is stored as ${sig(exact(b), 24)}.` });
+  fr.push({ html: sa + sb + ss, note: `Their exact sum is ${sig(decStr(Ns), 26)}.` });
+  let lo, hi, line, tickNote;
+  if (Nr === Ns){
+    lo = nextDown(r); hi = nextUp(r);
+    line = stat("the sum is itself a tick", `no rounding needed: <b>${S(r)}</b>`);
+    tickNote = `The exact sum is already a double: no rounding.`;
+  } else {
+    if (Nr > Ns){ lo = nextDown(r); hi = r; } else { lo = r; hi = nextUp(r); }
+    const dlo = Ns - toFix(lo), dhi = toFix(hi) - Ns, tie = dlo === dhi;
+    line = numberLine(lo, hi, [{ N: Ns, label: "exact sum", color: "#C2413B" }].concat(o.target != null ? [{ N: o.targetN, label: o.target, color: "#0F8B8D", top: true }] : [])) +
+      stat("the two neighbouring ticks", `below: ${sig(exact(lo), 26)}<br>above: ${sig(exact(hi), 26)}<br>gap (one tick): ${S(hi - lo)}<br>` +
+        (tie ? `the sum is <b>exactly halfway</b>: a tie, so it goes to the tick whose last bit is 0` : `the sum is nearer the ${dlo < dhi ? "lower" : "upper"} tick`));
+    tickNote = tie ? `The exact sum is exactly halfway between two ticks, ${S(hi - lo)} apart: a tie, which goes to the even one (last bit 0).` : `The exact sum lies between two ticks ${S(hi - lo)} apart; it's nearer the ${dlo < dhi ? "lower" : "upper"} one.`;
+  }
+  fr.push({ html: sa + sb + ss + line, note: tickNote });
+  const res = stat(`${la} + ${lb} in floating point`, `<b>${S(r)}</b>` + (o.cmp ? `<br>${o.cmp(r)}` : ""));
+  fr.push({ html: sa + sb + ss + line + res + (o.after ? o.after(r) : ""), note: `Result: ${S(r)}.` + (o.cmpNote ? " " + o.cmpNote(r) : "") });
+  return fr;
+}
+function tenTenths(){
+  let t = 0; const rows = [];
+  for (let i = 1; i <= 10; i++){ t += 0.1; rows.push([i, t]); }
+  const tbl = k => `<table class="t"><tr><th>after adding 0.1 this many times</th><th>running total</th><th>exact stored value</th></tr>` + rows.slice(0, k).map(([i, v]) => `<tr${i === k ? ' class="cur"' : ""}><td>${i}</td><td${S(v) !== (i / 10).toString() ? ' class="bad"' : ""}>${S(v)}</td><td>${sig(exact(v), 22)}</td></tr>`).join("") + `</table>`;
+  const fr = rows.map(([i, v]) => ({ html: tbl(i), note: `after ${i}: ${S(v)}` }));
+  fr.push({ html: tbl(10) + vd("bad", `total == 1.0 → ${rows[9][1] === 1.0}`) + `<div class="note">Ten small rounding errors don't cancel. Compare with a tolerance instead: |total − 1| = ${S(Math.abs(rows[9][1] - 1))}, far below 1e−9.</div>`, note: `total == 1.0 is ${rows[9][1] === 1.0}; isclose would say true.` });
+  return fr;
+}
+function patriot(){
+  // 0.1 chopped to 23 binary places (24-bit fixed-point register)
+  const chopped = Math.floor(0.1 * 2 ** 23) / 2 ** 23, err = 0.1 - chopped, ticks = 100 * 3600 * 10, drift = err * ticks;
+  return cumulative("", [
+    [stat("0.1 cut off after 23 binary places", `${S(chopped)}`), `0.1 chopped to 23 binary places = ${S(chopped)}.`],
+    [stat("error per tenth of a second", `0.1 − that = <b>${err.toExponential(2)}</b> s`), `Short by ${err.toExponential(2)} s every tick.`],
+    [stat("ticks in 100 hours", `100 × 3600 × 10 = ${ticks.toLocaleString("en-US")}`), `100 hours is ${ticks.toLocaleString("en-US")} tenths.`],
+    [stat("clock drift", `${err.toExponential(4)} × ${ticks.toLocaleString("en-US")} = <b>${drift.toFixed(3)} s</b>`), `Drift: ${drift.toFixed(3)} s.`],
+    [stat("distance a Scud covers in that time (≈ 1,676 m/s)", `<b>≈ ${Math.round(drift * 1676)} m</b>`) + `<div class="note">Dhahran, 1991: the range gate looked in the wrong place.</div>`, `At about 1,676 m/s that is about ${Math.round(drift * 1676)} m.`],
+  ]);
+}
+// the true 0.3 (not the stored one), as a fraction of 2^-1074, for marking on the number line
+const TRUE03 = (3n * (1n << 1074n)) / 10n;
+presets("pre-add", Player("pl-add"), [
+  { name: "0.1 + 0.2 vs 0.3", frames: () => addFrames(0.1, 0.2, "0.1", "0.2", { target: "true 0.3", targetN: TRUE03,
+      cmp: r => `the stored 0.3 is ${sig(exact(0.3), 26)}, the tick just below<br>${S(r)} == 0.3 → <span class="bad">${r === 0.3}</span>; gap = ${S(r - 0.3)} (one tick)`,
+      cmpNote: r => `0.1 + 0.2 == 0.3 is ${r === 0.3}; they are neighbouring ticks ${S(r - 0.3)} apart.` }) },
+  { name: "0.5 + 0.25 (exact)", frames: () => addFrames(0.5, 0.25, "0.5", "0.25", { cmp: r => `== 0.75 → <span class="good">${r === 0.75}</span>: sums of powers of 2 are exact`, cmpNote: r => `== 0.75 is ${r === 0.75}.` }) },
+  { name: "ten 0.1s", frames: tenTenths },
+  { name: "Patriot clock (1991)", frames: patriot },
+]);
+
+/* ============ TAB 3: epsilon and rounding ============ */
+function roundHalfEven(v){ const f = Math.floor(v), d = v - f; return d > 0.5 ? f + 1 : d < 0.5 ? f : (f % 2 === 0 ? f : f + 1); }
+function bankers(){
+  const vals = [0.5, 1.5, 2.5, 3.5, 4.5];
+  return cumulative(stat("rule", "a value exactly halfway goes to the <b>even</b> neighbour (Python's <code>round</code>, and IEEE 754's default)"),
+    vals.map(v => [stat(`round(${v})`, `${Math.floor(v)} or ${Math.floor(v) + 1}? halfway → even → <b>${roundHalfEven(v)}</b>`), `round(${v}) = ${roundHalfEven(v)}`]).concat([[`<div class="note">Rounding every half <i>up</i> would push sums upward on average. Going to even rounds up half the time and down half the time.</div>`, "Up half the time, down half the time: no drift."]]));
+}
+function r2675(){
+  const ex = exact(2.675);
+  return cumulative("", [
+    [stat("you typed", "2.675, apparently halfway between 2.67 and 2.68"), "2.675 looks like a tie."],
+    [stat("but it is stored as", sig(ex, 52)), `Stored as ${sig(ex, 30)}.`],
+    [stat("compare with the halfway point 2.675", `${sig(ex, 20)} <span class="bad">&lt;</span> 2.675 → it's below halfway`), "The stored value is just below the halfway point."],
+    [stat("round(2.675, 2)", `<b>2.67</b>`) + `<div class="note">Not a rounding bug: there was never a tie to break.</div>`, "round(2.675, 2) = 2.67."],
+  ]);
+}
+presets("pre-eps", Player("pl-eps"), [
+  { name: "1 + 2⁻⁵²", frames: () => addFrames(1, 2 ** -52, "1", "2⁻⁵²", { cmp: r => `== 1 → <span class="good">${r === 1}</span>: a full tick survives. Machine epsilon = ${S(r - 1)}`, cmpNote: r => `1 + 2^−52 == 1 is ${r === 1}; epsilon = ${S(r - 1)}.` }) },
+  { name: "1 + 2⁻⁵³ (a tie)", frames: () => addFrames(1, 2 ** -53, "1", "2⁻⁵³", { cmp: r => `== 1 → <span class="bad">${r === 1}</span>: exactly half a tick, tie goes to even (1.0)`, cmpNote: r => `1 + 2^−53 == 1 is ${r === 1}.` }) },
+  { name: "1 + 1e−16", frames: () => addFrames(1, 1e-16, "1", "1e−16", { cmp: r => `== 1 → <span class="bad">${r === 1}</span>: less than half a tick vanishes`, cmpNote: r => `1 + 1e−16 == 1 is ${r === 1}.` }) },
+  { name: "2⁵³ + 1", frames: () => addFrames(2 ** 53, 1, "2⁵³", "1", { cmp: r => `== 2⁵³ → <span class="bad">${r === 2 ** 53}</span>: above 2⁵³ the ticks are 2 apart, so odd numbers can't be stored. Number.MAX_SAFE_INTEGER = ${Number.MAX_SAFE_INTEGER}`, cmpNote: r => `2^53 + 1 == 2^53 is ${r === 2 ** 53}.` }) },
+  { name: "spacing at 1e16", frames: () => addFrames(1e16, 1, "1e16", "1", { cmp: r => `== 1e16 → <span class="bad">${r === 1e16}</span>; tick spacing at 1e16 = ${S(ulp(1e16))}`, cmpNote: r => `1e16 + 1 == 1e16 is ${r === 1e16}; ticks are ${S(ulp(1e16))} apart.` }) },
+  { name: "round(2.5) → 2", frames: bankers },
+  { name: "round(2.675, 2)", frames: r2675 },
+]);
+
+/* ============ TAB 4: edges ============ */
+function exprFrames(list){
+  // list of [expression label, value, note, cls]
+  return cumulative("", list.map(([lab, v, note, cls]) => [stat(lab, `<span class="${cls || ""}">${typeof v === "number" ? S(v) : v}</span>` + (typeof v === "number" ? dblRow(v) : "")), `${lab} = ${typeof v === "number" ? S(v) : v}. ${note || ""}`]));
+}
+const MAX = 1.7976931348623157e308;
+presets("pre-edge", Player("pl-edge"), [
+  { name: "largest × 10", frames: () => exprFrames([["largest double", MAX, "(2 − 2^−52) × 2^1023."], ["largest × 10", MAX * 10, "Past the top: overflow to infinity.", "bad"]]) },
+  { name: "exp(709) vs exp(710)", frames: () => exprFrames([["exp(709)", Math.exp(709), "Still fits."], ["exp(710)", Math.exp(710), "Overflows (NumPy gives inf; Python's math.exp raises OverflowError).", "bad"]]) },
+  { name: "1e−200 × 1e−200", frames: () => exprFrames([["1e−200", 1e-200, ""], ["1e−200 × 1e−200", 1e-200 * 1e-200, "The true answer, 1e−400, is below the smallest double: underflow to 0.", "bad"]]) },
+  { name: "smallest subnormal ÷ 2", frames: () => exprFrames([["smallest normal, 2^−1022", 2 ** -1022, "Below this, the hidden 1 switches off."], ["smallest subnormal, 2^−1074", 2 ** -1074, "Gradual underflow: precision is given up one bit at a time."], ["5e−324 ÷ 2", 5e-324 / 2, "Halfway to 0 is a tie; it goes to the even tick, 0.", "bad"]]) },
+  { name: "inf − inf, 0 × inf, 0/0", frames: () => exprFrames([["1 / 0", 1 / 0, "(NumPy; plain Python raises ZeroDivisionError.)"], ["−1 / 0", -1 / 0, ""], ["inf − inf", Infinity - Infinity, "No sensible answer: NaN.", "bad"], ["0 × inf", 0 * Infinity, "", "bad"], ["0 / 0", 0 / 0, "", "bad"], ["sqrt(−1)", Math.sqrt(-1), "", "bad"], ["1 / inf", 1 / Infinity, ""]]) },
+  { name: "NaN == NaN", frames: () => { const n = 0 / 0; return exprFrames([["x = 0 / 0", n, ""], ["x == x", String(n === n), "NaN is not equal to anything, even itself.", "bad"], ["x != x", String(n !== n), "So x != x is the classic NaN test.", "good"], ["x + 1, x × 0, max(x, 5) in NumPy", "nan, nan, nan", "One NaN spreads through everything after it: why training 'goes NaN' all at once.", "bad"]]); } },
+]);
+
+/* ============ TAB 5: cancellation ============ */
+function varianceFrames(off){
+  const base = [4, 7, 13, 16], x = base.map(v => v + off), n = 4;
+  const m = (x[0] + x[1] + x[2] + x[3]) / n, sq = x.map(v => v * v), m2 = (sq[0] + sq[1] + sq[2] + sq[3]) / n;
+  const short = m2 - m * m, d = x.map(v => (v - m) * (v - m)), two = (d[0] + d[1] + d[2] + d[3]) / n;
+  const offL = off === 0 ? "0" : "1e" + Math.round(Math.log10(off));
+  const tbl = `<table class="t"><tr><th>x</th><th>x²</th><th>(x − mean)²</th></tr>` + x.map((v, i) => `<tr><td>${S(v)}</td><td>${S(sq[i])}</td><td>${S(d[i])}</td></tr>`).join("") + `</table>`;
+  return cumulative(stat(`data: 4, 7, 13, 16, each plus ${offL}`, tbl), [
+    [stat("mean(x)", S(m)), `mean = ${S(m)}`],
+    [stat("shortcut: mean(x²) − mean(x)²", `${S(m2)} − ${S(m * m)}<br>tick spacing near mean(x²): <b>${S(ulp(m2))}</b>`), `mean(x²) = ${S(m2)}; ticks there are ${S(ulp(m2))} apart.`],
+    [stat("shortcut result", `<span class="${short === 22.5 ? "good" : "bad"}">${S(short)}</span>` + (short === 22.5 ? " ✓" : " ✗")), `Shortcut gives ${S(short)}.`],
+    [stat("two-pass: mean((x − mean)²)", `<span class="good">${S(two)}</span> ✓`) + (short !== 22.5 ? `<div class="note">The true answer, 22.5, is smaller than one tick near ${S(m2)}, so the shortcut can only produce a multiple of ${S(ulp(m2))}. Subtracting the mean first keeps every number small.</div>` : `<div class="note">With small numbers both formulas agree.</div>`), `Two-pass gives ${S(two)}.`],
+  ]);
+}
+function cosFrames(x){
+  const c = Math.cos(x), naive = (1 - c) / (x * x), s = Math.sin(x / 2), stable = 2 * (s * s) / (x * x);
+  return cumulative(stat("x", S(x)), [
+    [stat("cos x", `${S(c)}` + (c === 1 ? ` <span class="bad">(rounded to exactly 1)</span>` : "")), `cos x = ${S(c)}`],
+    [stat("1 − cos x", `${S(1 - c)}` + `<br>true value ≈ x²/2 = ${S(x * x / 2)}`), `1 − cos x = ${S(1 - c)} (should be about ${S(x * x / 2)})`],
+    [stat("naive (1 − cos x) / x²", `<span class="${Math.abs(naive - 0.5) < 1e-3 ? "" : "bad"}">${S(naive)}</span>`), `naive = ${S(naive)}`],
+    [stat("stable 2·sin²(x/2) / x²  (same quantity, no subtraction)", `<span class="good">${S(stable)}</span>`) + `<div class="note">Should approach 0.5 as x shrinks. ${naive === stable ? "" : "Relative error of the naive version: " + (Math.abs(naive - stable) / stable).toExponential(1) + " (one operation's error is about 1e−16)."}</div>`, `stable = ${S(stable)}`],
+  ]);
+}
+function log1pFrames(){
+  const x = 1e-10;
+  return cumulative(stat("x", "1e−10"), [
+    [stat("1 + x", `${S(1 + x)} <span class="bad">(already rounded: digits of x lost)</span>`), `1 + x = ${S(1 + x)}`],
+    [stat("log(1 + x)", `<span class="bad">${S(Math.log(1 + x))}</span> (wrong from the 8th digit)`), `log(1 + x) = ${S(Math.log(1 + x))}`],
+    [stat("log1p(x)", `<span class="good">${S(Math.log1p(x))}</span> ≈ x − x²/2 ✓`), `log1p(x) = ${S(Math.log1p(x))}`],
+    [stat("and the same for eˣ − 1", `exp(x) − 1 = <span class="bad">${S(Math.exp(x) - 1)}</span><br>expm1(x) = <span class="good">${S(Math.expm1(x))}</span>`), `exp(x) − 1 = ${S(Math.exp(x) - 1)}; expm1(x) = ${S(Math.expm1(x))}`],
+  ]);
+}
+presets("pre-canc", Player("pl-canc"), [
+  { name: "variance, offset 1e9", frames: () => varianceFrames(1e9) },
+  { name: "variance, offset 1e8", frames: () => varianceFrames(1e8) },
+  { name: "variance, no offset", frames: () => varianceFrames(0) },
+  { name: "(1−cos x)/x², x = 0.1", frames: () => cosFrames(0.1) },
+  { name: "x = 1e−4", frames: () => cosFrames(1e-4) },
+  { name: "x = 1e−8", frames: () => cosFrames(1e-8) },
+  { name: "x = 1.2e−8", frames: () => cosFrames(1.2e-8) },
+  { name: "log1p and expm1", frames: log1pFrames },
+]);
+
+/* ============ TAB 6: log-sum-exp ============ */
+function bars(p, labels){
+  return p.map((v, i) => `<div class="barrow"><span class="lb">${labels[i]}</span><span class="bar" style="width:${isFinite(v) ? Math.max(1, v * 420) : 0}px${isFinite(v) ? "" : ";background:var(--bad)"}"></span><span>${isFinite(v) ? v.toFixed(4) : S(v)}</span></div>`).join("");
+}
+function lseFrames(z){
+  const ez = z.map(Math.exp), sum = ez.reduce((a, b) => a + b, 0), naiveP = ez.map(v => v / sum), naiveL = Math.log(sum);
+  const m = Math.max(...z), sh = z.map(v => v - m), es = sh.map(Math.exp), ss = es.reduce((a, b) => a + b, 0), p = es.map(v => v / ss), L = m + Math.log(ss);
+  const lab = z.map(v => "z = " + S(v));
+  const bad = v => !isFinite(v) || v === 0 ? "bad" : "";
+  return cumulative(stat("scores z", fmtArr(z)), [
+    [`<h3>Naive</h3>` + stat("e^z", `<span class="${ez.some(v => !isFinite(v) || v === 0) ? "bad" : ""}">${fmtArr(ez)}</span>`), `naive e^z = ${fmtArr(ez)}`],
+    [stat("sum of e^z", `<span class="${bad(sum)}">${S(sum)}</span>`), `naive sum = ${S(sum)}`],
+    [stat("naive softmax = e^z / sum", `<span class="${naiveP.some(v => !isFinite(v)) ? "bad" : ""}">${fmtArr(naiveP, 4)}</span>`) + stat("naive log(sum)", `<span class="${isFinite(naiveL) ? "" : "bad"}">${S(naiveL)}</span>`), `naive softmax = ${fmtArr(naiveP, 4)}, naive log-sum-exp = ${S(naiveL)}`],
+    [`<h3>Stable</h3>` + stat("subtract the max (" + S(m) + ")", fmtArr(sh)), `subtract max ${S(m)}: ${fmtArr(sh)}`],
+    [stat("e^(z − max)", fmtArr(es, 4)), `exponentiate: ${fmtArr(es, 4)}`],
+    [stat("sum", ss.toFixed(4)), `sum = ${ss.toFixed(4)} (at least 1, always)`],
+    [stat("softmax", fmtArr(p, 4)) + bars(p, lab), `softmax = ${fmtArr(p, 4)}`],
+    [stat("logsumexp = max + log(sum)", `${S(m)} + ${S(Math.log(ss))} = <span class="good">${S(L)}</span>`) + stat("log-softmax = z − logsumexp (what PyTorch's cross_entropy computes)", fmtArr(z.map(v => v - L), 4)), `logsumexp = ${S(L)}`],
+  ]);
+}
+presets("pre-lse", Player("pl-lse"), [
+  { name: "[1000, 1001, 1002]", frames: () => lseFrames([1000, 1001, 1002]) },
+  { name: "[−1000, −1001, −1002]", frames: () => lseFrames([-1000, -1001, -1002]) },
+  { name: "[2, 1, 0.1]", frames: () => lseFrames([2, 1, 0.1]) },
+]);
+
+/* ============ TAB 7: log-probabilities ============ */
+function logpFrames(n){
+  const checks = [10, 100, 500, 1000, 1022, 1060, 1074, 1075, 2000].filter(k => k <= n);
+  if (!checks.includes(n)) checks.push(n);
+  let p = 1, k = 0; const rows = [];
+  checks.forEach(c => { while (k < c){ p *= 0.5; k++; } rows.push([c, p]); });
+  const tbl = j => `<table class="t"><tr><th>flips multiplied</th><th>product 0.5ⁿ</th><th>sum of logs n·ln 0.5</th></tr>` + rows.slice(0, j).map(([c, v], i) => `<tr${i === j - 1 ? ' class="cur"' : ""}><td>${c}</td><td class="${v === 0 ? "bad" : c > 1022 ? "" : ""}">${S(v)}${c > 1022 && v > 0 ? " (subnormal)" : ""}</td><td class="good">${S(c * Math.log(0.5))}</td></tr>`).join("") + `</table>`;
+  const fr = rows.map(([c, v], i) => ({ html: tbl(i + 1), note: `0.5^${c} = ${S(v)}; ${c}·ln 0.5 = ${S(c * Math.log(0.5))}` }));
+  const last = rows[rows.length - 1][1];
+  fr.push({ html: tbl(rows.length) + (last === 0 ? vd("bad", `The product hit 0.0: every comparison between models is now 0 vs 0.`) : vd("meh", `Still nonzero, but only just.`)) + `<div class="note">The log column stays an ordinary number forever (true value of 0.5<sup>${n}</sup> is about 10<sup>${S(+(n * Math.log10(0.5)).toFixed(2))}</sup>). That's why every likelihood is stored and maximized as a log.</div>`, note: `Logs: ${S(n * Math.log(0.5))}; ten to the ${S(+(n * Math.log10(0.5)).toFixed(2))}.` });
+  return fr;
+}
+presets("pre-logp", Player("pl-logp"), [
+  { name: "n = 1074", frames: () => logpFrames(1074) },
+  { name: "n = 1075", frames: () => logpFrames(1075) },
+  { name: "n = 2000", frames: () => logpFrames(2000) },
+]);
+
+/* ============ TAB 8: half precision ============ */
+const FMT = { f32: { n: "float32", e: 8, m: 23 }, f16: { n: "float16", e: 5, m: 10 }, bf16: { n: "bfloat16", e: 8, m: 7 } };
+function exactLog2Floor(a){ let e = Math.floor(Math.log2(a)); if (2 ** e > a) e--; if (2 ** (e + 1) <= a) e++; return e; }
+function roundHalfEvenInt(v){ return roundHalfEven(v); }
+function toFmt(x, F){
+  if (!isFinite(x) || x === 0) return x;
+  const bias = 2 ** (F.e - 1) - 1, emin = 1 - bias, emax = bias, a = Math.abs(x);
+  let e = Math.max(exactLog2Floor(a), emin);
+  const q = 2 ** (e - F.m);
+  let r = roundHalfEvenInt(a / q) * q;
+  const max = (2 - 2 ** -F.m) * 2 ** emax;
+  if (r > max) r = Infinity;
+  return x < 0 ? -r : r;
+}
+function fmtBits(r, F){
+  const bias = 2 ** (F.e - 1) - 1, emin = 1 - bias;
+  const s = (r < 0 || Object.is(r, -0)) ? "1" : "0", a = Math.abs(r);
+  let ef, mf;
+  if (a === Infinity){ ef = 2 ** F.e - 1; mf = 0; }
+  else if (isNaN(a)){ ef = 2 ** F.e - 1; mf = 1; }
+  else if (a === 0){ ef = 0; mf = 0; }
+  else if (a < 2 ** emin){ ef = 0; mf = a / 2 ** (emin - F.m); }
+  else { const e = exactLog2Floor(a); ef = e + bias; mf = a / 2 ** (e - F.m) - 2 ** F.m; }
+  return s + ef.toString(2).padStart(F.e, "0") + Math.round(mf).toString(2).padStart(F.m, "0");
+}
+function halfFrames(x, lab, extra){
+  const fr = [];
+  let acc = stat("value", lab);
+  fr.push({ html: acc, note: `Store ${lab} in three formats.` });
+  ["f32", "f16", "bf16"].forEach(k => {
+    const F = FMT[k], r = toFmt(x, F), err = r - x;
+    const cls = !isFinite(r) || (r === 0 && x !== 0) ? "bad" : "";
+    acc += `<h3>${F.n} (1 / ${F.e} / ${F.m})</h3>` + legend("1", String(F.e), String(F.m)) + bitsRow(fmtBits(r, F), [1, F.e], { wide: true }) +
+      stat("stored as", `<span class="${cls}">${S(r)}</span>` + (isFinite(r) ? ` &nbsp; error ${err === 0 ? "0 (exact)" : S(err)}` : "") + (cls ? (isFinite(r) ? " ← underflowed to zero" : " ← overflowed") : ""));
+    fr.push({ html: acc, note: `${F.n}: ${S(r)}` + (cls ? (isFinite(r) ? " (underflow)" : " (overflow)") : "") });
+  });
+  if (extra) fr.push({ html: acc + extra.html, note: extra.note });
+  return fr;
+}
+function lossScale(){
+  const g = 1e-8, s = 1024, F = FMT.f16, raw = toFmt(g, F), scaled = toFmt(g * s, F);
+  return cumulative(stat("a small gradient", "1e−8"), [
+    [stat("in float16", `<span class="bad">${S(raw)}</span> (smallest float16 subnormal is 2⁻²⁴ ≈ ${S(2 ** -24)})`) + bitsRow(fmtBits(raw, F), [1, 5], { wide: true }), `float16(1e−8) = ${S(raw)}: lost.`],
+    [stat("multiply the loss (so every gradient) by 1024 first", `1e−8 × 1024 = ${S(g * s)}`), "Loss scaling: multiply by 1024."],
+    [stat("in float16 now", `<span class="good">${S(scaled)}</span> survives`) + bitsRow(fmtBits(scaled, F), [1, 5], { wide: true }), `float16(1.024e−5) = ${S(scaled)}: kept.`],
+    [stat("divide back out in float32", `${S(Math.fround(scaled / s))} ≈ 1e−8`) + `<div class="note">bfloat16 skips this dance: it stores 1e−8 directly as ${S(toFmt(g, FMT.bf16))}, because its range is float32's.</div>`, `Unscale in float32: ${S(Math.fround(scaled / s))}.`],
+  ]);
+}
+function f16add(){
+  const F = FMT.f16, r = toFmt(2048 + 1, F);
+  return cumulative(stat("a float16 weight", "2048"), [
+    [stat("tick spacing in float16 at 2048", `${S(2 ** (11 - 10))}`), "Between 2048 and 4096, float16's ticks are 2 apart."],
+    [stat("2048 + 1 = 2049, rounded to float16", `2049 is halfway between 2048 and 2050 → tie → even → <span class="bad">${S(r)}</span>`), `2048 + 1 = ${S(r)} in float16.`],
+    [`<div class="note">The update vanished. This is why mixed precision keeps a float32 master copy of the weights: small updates are added there, where 2048 + 1 = ${S(Math.fround(2048 + 1))}.</div>`, "Keep a float32 master copy."],
+  ]);
+}
+presets("pre-half", Player("pl-half"), [
+  { name: "0.1", frames: () => halfFrames(0.1, "0.1") },
+  { name: "70,000", frames: () => halfFrames(70000, "70,000") },
+  { name: "1e−8 (a small gradient)", frames: () => halfFrames(1e-8, "1e−8") },
+  { name: "65,504 (float16's max)", frames: () => halfFrames(65504, "65,504") },
+  { name: "loss scaling × 1024", frames: lossScale },
+  { name: "2048 + 1 in float16", frames: f16add },
+]);
+
+/* ============ TAB 9: Kahan ============ */
+function kahanFrames(first, x, count, lab, truth){
+  // first: initial value added before the repeated x's (or null)
+  const steps = [];
+  let tot = 0, c = 0, naive = 0;
+  const seq = k => (first != null ? (k === 0 ? first : x) : x);
+  const total = count + (first != null ? 1 : 0);
+  const SHOW = 6;
+  for (let k = 0; k < total; k++){
+    const v = seq(k); naive += v;
+    const y = v - c, t = tot + y; c = (t - tot) - y; tot = t;
+    if (k < SHOW) steps.push([k + 1, v, naive, y, t, c]);
+  }
+  const tbl = j => `<table class="t"><tr><th>#</th><th>add</th><th>plain total</th><th>y = x − c</th><th>Kahan total</th><th>c (rounding error, taken back next time)</th></tr>` + steps.slice(0, j).map((r, i) => `<tr${i === j - 1 ? ' class="cur"' : ""}><td>${r[0]}</td><td>${S(r[1])}</td><td>${S(r[2])}</td><td>${S(r[3])}</td><td>${S(r[4])}</td><td>${S(r[5])}</td></tr>`).join("") + `</table>`;
+  const fr = steps.map((r, i) => ({ html: stat("sum", lab) + tbl(i + 1), note: `step ${r[0]}: plain ${S(r[2])}, Kahan ${S(r[4])}, c = ${S(r[5])}` }));
+  fr.push({ html: stat("sum", lab) + tbl(steps.length) + (total > SHOW ? `<div class="note">… ${(total - SHOW).toLocaleString("en-US")} more additions, run live …</div>` : "") +
+    `<div class="twin"><div>${stat("plain loop", `<span class="${naive === truth ? "good" : "bad"}">${S(naive)}</span>`)}</div><div>${stat("Kahan", `<span class="${tot === truth ? "good" : "bad"}">${S(tot)}</span>`)}</div><div>${stat("true", S(truth))}</div></div>`,
+    note: `After ${total.toLocaleString("en-US")} additions: plain ${S(naive)}, Kahan ${S(tot)}.` });
+  return fr;
+}
+presets("pre-kahan", Player("pl-kahan"), [
+  { name: "ten 0.1s", frames: () => kahanFrames(null, 0.1, 10, "0.1 added 10 times", 1) },
+  { name: "ten million 0.1s", frames: () => kahanFrames(null, 0.1, 10000000, "0.1 added 10,000,000 times", 1000000) },
+  { name: "1 + ten million × 1e−16", frames: () => kahanFrames(1, 1e-16, 10000000, "1, then 1e−16 added 10,000,000 times", 1.000000001) },
+]);
+
+})();
+</script>
+</body>
+</html>

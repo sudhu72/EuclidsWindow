@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joint Distributions and Covariance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95; --bad:#D9636B; --good:#0F8B8D;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1000px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:18px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  button.op{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .verdict{ font-family:"IBM Plex Mono", monospace; font-size:13.5px; background:var(--accent-soft); border-radius:10px; padding:14px 16px; margin-top:14px; line-height:1.75; overflow-wrap:anywhere; }
+  .verdict b{ color:var(--accent); }
+  .big{ font-size:19px; font-weight:700; }
+  svg{ width:100%; height:auto; display:block; margin:10px auto; background:#F5F4F0; border-radius:10px; }
+  table.jt{ border-collapse:collapse; margin:14px auto; font-family:"IBM Plex Mono",monospace; font-size:14px; }
+  table.jt th, table.jt td{ border:1px solid var(--line); padding:8px 14px; text-align:center; transition:background .2s; }
+  table.jt th{ background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  table.jt td.marg{ font-weight:700; background:#FAF7EC; }
+  table.jt td.hl{ background:#FBE3B0; font-weight:700; }
+  table.jt td.bad{ background:#F8D7D9; }
+  table.jt td.ok{ background:#D5EFEF; }
+  .tables{ display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+  .tables > div{ text-align:center; font-size:12.5px; color:var(--ink-soft); }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Joint Distributions and Covariance</div>
+    <h1>Two Random Things at Once</h1>
+    <p>Four verified demos: read marginals and conditionals off a joint table; watch covariance and correlation summarize a cloud of points (and miss a U-shape completely); watch Var(X + Y) = Var X + Var Y + 2 Cov add up or cancel; and build the multivariate normal from a round hill of 1-D bell curves.</p>
+    <p style="font-size:13px; margin-top:8px; color:var(--ink-soft);">Every worked example in the tutorial is a one-click button. Each panel reads top to bottom: <b>what's happening</b>, a <b>try this</b>, and <b>why it matters</b>.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="table">Joint Table</button>
+    <button class="tab" data-tab="scatter">Scatter &amp; Correlation</button>
+    <button class="tab" data-tab="varsum">Var(X + Y)</button>
+    <button class="tab" data-tab="mvn">Bivariate Normal</button>
+  </div>
+
+  <!-- ============ TAB: JOINT TABLE ============ -->
+  <div class="panel active" id="panel-table">
+    <div class="card">
+      <h2>The Joint Table, Its Margins, and One Slice</h2>
+      <p class="sub"><b>What's happening:</b> each cell is P(coffees and sleep). Adding across a row or down a column gives the totals in the margins: the <b>marginal</b> distributions. Keeping one row and rescaling it to add to 1 gives a <b>conditional</b> distribution.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click through the four buttons in order; each one is a worked example from Parts 1 and 2.</p>
+      <div class="row">
+        <button class="op active" id="jtJoint">Joint table and its margins</button>
+        <button class="op" id="jtCond">Condition on 2 coffees</button>
+        <button class="op" id="jtIndep">Independence check</button>
+        <button class="op" id="jtCov">Covariance from the table</button>
+      </div>
+      <div class="tables" id="jtTables"></div>
+      <div class="verdict" id="jtVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> every conditional probability, every Bayes calculation, and every "is A linked to B?" question is a question about a joint table: its margins, its slices, and whether it equals the product of its margins.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: SCATTER & CORRELATION ============ -->
+  <div class="panel" id="panel-scatter">
+    <div class="card">
+      <h2>Covariance: Which Quadrants Win?</h2>
+      <p class="sub"><b>What's happening:</b> the cross-hairs go through the two means. Points in the teal quadrants (both above or both below their means) add positive products (X − μ<sub>X</sub>)(Y − μ<sub>Y</sub>); points in the red quadrants add negative ones. Covariance is the average product; correlation divides out both standard deviations. The histograms on the top and right edges are the two <b>marginals</b>.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> compare ρ = 0.8 with ρ = −0.8, then click <em>Y = X²</em>: a perfect relationship with correlation ≈ 0.</p>
+      <div class="row">
+        <button class="op active" id="sc0">ρ = 0</button>
+        <button class="op" id="sc8">ρ = 0.8</button>
+        <button class="op" id="scm8">ρ = −0.8</button>
+        <button class="op" id="scSq">Y = X²: zero correlation, total dependence</button>
+        <button class="op" id="scStu">Five students: the deviation products</button>
+      </div>
+      <svg id="scSvg" viewBox="0 0 640 520" role="img" aria-label="Scatter plot with marginal histograms"></svg>
+      <div class="verdict" id="scVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> correlation is the most-quoted number in data analysis, and it only ever measures a straight-line trend. The U-shape preset is the reason to always look at the cloud.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: VAR(X+Y) ============ -->
+  <div class="panel" id="panel-varsum">
+    <div class="card">
+      <h2>Var(X + Y) = Var X + Var Y + 2 Cov(X, Y)</h2>
+      <p class="sub"><b>What's happening:</b> two stocks, each with standard deviation 0.2 (variance 0.04). Left: the cloud of their yearly returns. Right: the histogram of the pair's total return X + Y. Below: the three pieces of the variance identity, with the covariance piece positive (stacking up) or negative (cancelling).</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> step from ρ = +1 down to ρ = −1 and watch the right-hand histogram narrow until it is a single spike. Then try the students' preset, which uses the same identity to find the regression slope.</p>
+      <div class="row">
+        <button class="op active" id="vs1">ρ = +1</button>
+        <button class="op" id="vs05">ρ = +0.5</button>
+        <button class="op" id="vs0">ρ = 0</button>
+        <button class="op" id="vsm05">ρ = −0.5</button>
+        <button class="op" id="vsm1">ρ = −1</button>
+        <button class="op" id="vsStu">Students: score − 6 × hours</button>
+      </div>
+      <svg id="vsSvg" viewBox="0 0 640 400" role="img" aria-label="Variance of a sum"></svg>
+      <div class="verdict" id="vsVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> diversification, portfolio risk w<sup>T</sup>Σw, error propagation in engineering, and the bias–variance algebra are all this one squared bracket.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BIVARIATE NORMAL ============ -->
+  <div class="panel" id="panel-mvn">
+    <div class="card">
+      <h2>The Multivariate Normal, Built From a Round Hill</h2>
+      <p class="sub"><b>What's happening:</b> start with two independent standard normals Z (a round hill), push them through a matrix A to get X = A Z with covariance Σ = A A<sup>T</sup>, and read the density by undoing the map: squared distance becomes (x − μ)<sup>T</sup>Σ<sup>−1</sup>(x − μ) and the height is divided by √det Σ. Ellipses are contours at Mahalanobis distance 1, 2 and 3.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> go through the buttons left to right: they follow Part 5 step by step.</p>
+      <div class="row">
+        <button class="op active" id="mvRound">Step 1: round hill (independent)</button>
+        <button class="op" id="mvStretch">Stretch: Σ = diag(4, 1)</button>
+        <button class="op" id="mvTilt">Step 2: tilt with A (ρ = 0.8)</button>
+        <button class="op" id="mvMaha">Same distance, different likelihood</button>
+        <button class="op" id="mvMarg">Marginal of X</button>
+        <button class="op" id="mvCond">Conditional slice at x = 1</button>
+        <button class="op" id="mvEll">Ellipses: 39% and 86%</button>
+      </div>
+      <svg id="mvSvg" viewBox="0 0 640 560" role="img" aria-label="Bivariate normal"></svg>
+      <div class="verdict" id="mvVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> this density, with its Σ<sup>−1</sup> and √det Σ, is the scoring rule inside LDA, QDA and every Gaussian mixture model, and its conditional slice is the regression line and the Kalman filter update.</div>
+    </div>
+  </div>
+
+  <footer>
+    <b>Fully offline &amp; private</b> — all logic and styling are inlined; nothing is sent anywhere (only Google Fonts is requested, degrading gracefully to system fonts). Companion to <a href="../joint-distributions-and-covariance.md">Joint Distributions and Covariance</a> in the <a href="../README.md">Building Mathematical Intuition</a> series.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg", MONO = "IBM Plex Mono, monospace";
+  function el(tag, attrs, text){
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  }));
+  function presetGroup(map, first){
+    Object.keys(map).forEach(id => document.getElementById(id).addEventListener("click", function(){
+      Object.keys(map).forEach(k => document.getElementById(k).classList.remove("active"));
+      this.classList.add("active"); map[id]();
+    }));
+    map[first]();
+  }
+  function mulberry32(seed){
+    let s = seed;
+    return function(){ s|=0; s=(s+0x6D2B79F5)|0; let t=Math.imul(s^(s>>>15),1|s); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+  }
+  function normals(n, seed){
+    const r = mulberry32(seed), out = new Float64Array(n);
+    for (let i=0;i<n;i+=2){
+      const u1 = 1-r(), u2 = r(), R = Math.sqrt(-2*Math.log(u1));
+      out[i] = R*Math.cos(2*Math.PI*u2); if (i+1<n) out[i+1] = R*Math.sin(2*Math.PI*u2);
+    }
+    return out;
+  }
+  const f4 = v => v.toFixed(4), f3 = v => v.toFixed(3);
+  function stats2(xs, ys){
+    const n = xs.length; let mx=0, my=0; for (let i=0;i<n;i++){ mx+=xs[i]; my+=ys[i]; } mx/=n; my/=n;
+    let vx=0, vy=0, c=0; for (let i=0;i<n;i++){ const a=xs[i]-mx, b=ys[i]-my; vx+=a*a; vy+=b*b; c+=a*b; }
+    vx/=n; vy/=n; c/=n; return {mx, my, vx, vy, cov:c, rho:c/Math.sqrt(vx*vy)};
+  }
+  function phi(z){ return Math.exp(-z*z/2)/Math.sqrt(2*Math.PI); }
+
+  /* =========================================================
+     TAB: JOINT TABLE
+     ========================================================= */
+  const J = [[0.30,0.10],[0.20,0.15],[0.05,0.20]];
+  const rowsL = ["0 coffees","1 coffee","2 coffees"], colsL = ["slept well","slept badly"];
+  const px = J.map(r => r[0]+r[1]), py = [0,1].map(j => J.reduce((s,r)=>s+r[j],0));
+  function tableHTML(M, title, cls, showMarg){
+    let h = `<div><table class="jt"><tr><th></th>${colsL.map(c=>`<th>${c}</th>`).join("")}${showMarg?"<th>row total</th>":""}</tr>`;
+    M.forEach((r,i) => {
+      h += `<tr><th>${rowsL[i]}</th>${r.map((v,j)=>`<td class="${cls?cls(i,j):""}">${typeof v==="string"?v:v.toFixed(v<0.1&&v>0&&String(v).length>5?4:2)}</td>`).join("")}${showMarg?`<td class="marg">${px[i].toFixed(2)}</td>`:""}</tr>`;
+    });
+    if (showMarg) h += `<tr><th>column total</th>${py.map(v=>`<td class="marg">${v.toFixed(2)}</td>`).join("")}<td class="marg">${(px[0]+px[1]+px[2]).toFixed(2)}</td></tr>`;
+    return h + `</table>${title}</div>`;
+  }
+  const jtT = document.getElementById("jtTables"), jtV = document.getElementById("jtVerdict");
+  function jtJoint(){
+    jtT.innerHTML = tableHTML(J, "joint P(coffees and sleep), with margins", null, true);
+    jtV.innerHTML = `<b>1.</b> Each cell is a joint probability, e.g. P(2 coffees and slept well) = <b>0.05</b>. All six cells add to <b>${(J.flat().reduce((a,b)=>a+b,0)).toFixed(2)}</b>.<br>`+
+      `<b>2.</b> Row totals (add across): P(0, 1, 2 coffees) = <b>${px.map(v=>v.toFixed(2)).join(", ")}</b>. Column totals (add down): P(well, badly) = <b>${py.map(v=>v.toFixed(2)).join(", ")}</b>.<br>`+
+      `<b>3.</b> Those totals, written in the table's margins, are the <b>marginal</b> distributions: each variable on its own.`;
+  }
+  function jtCond(){
+    const r = J[2], t = px[2];
+    const C = J.map((row,i) => i===2 ? [`${row[0].toFixed(2)} → ${(row[0]/t).toFixed(2)}`, `${row[1].toFixed(2)} → ${(row[1]/t).toFixed(2)}`] : row.map(v=>v.toFixed(2)));
+    jtT.innerHTML = tableHTML(C, "keep the 2-coffee row, divide by its total 0.25", (i,j)=>i===2?"hl":"", true);
+    jtV.innerHTML = `<b>1.</b> Shrink the universe to "2 coffees": the row holds 0.05 and 0.20, total <b>${t.toFixed(2)}</b>.<br>`+
+      `<b>2.</b> Rescale so it adds to 1: P(slept well | 2 coffees) = 0.05 / 0.25 = <span class="big">${(r[0]/t).toFixed(2)}</span>, P(badly | 2 coffees) = <b>${(r[1]/t).toFixed(2)}</b>.<br>`+
+      `<b>3.</b> Other rows: P(well | 1 coffee) = 0.20/0.35 = <b>${f3(J[1][0]/px[1])}</b>, P(well | 0 coffees) = 0.30/0.40 = <b>${(J[0][0]/px[0]).toFixed(2)}</b>. The marginal 0.55 is none of these.`;
+  }
+  function jtIndep(){
+    const P = J.map((r,i) => r.map((v,j) => px[i]*py[j]));
+    const cls = (i,j) => Math.abs(J[i][j]-P[i][j])<1e-9 ? "ok" : "bad";
+    jtT.innerHTML = tableHTML(J, "real joint table", cls, false) + tableHTML(P.map(r=>r.map(v=>v.toFixed(4))), "what independence would force: row total × column total", cls, false);
+    jtV.innerHTML = `<b>1.</b> Independent means every cell = row total × column total.<br>`+
+      `<b>2.</b> Corner cell: P(2 coffees) × P(slept well) = 0.25 × 0.55 = <b>${f4(px[2]*py[0])}</b>, but the real cell is <b>0.05</b>.<br>`+
+      `<b>3.</b> No cell matches (all red), so coffee and sleep are <b>not independent</b> in this data. (Whether coffee <i>causes</i> bad sleep is a separate question.)`;
+  }
+  function jtCov(){
+    const x=[0,1,2], y=[1,0];
+    let EX=0,EY=0,EXY=0,EX2=0,EY2=0;
+    J.forEach((r,i)=>r.forEach((v,j)=>{ EX+=v*x[i]; EY+=v*y[j]; EXY+=v*x[i]*y[j]; EX2+=v*x[i]*x[i]; EY2+=v*y[j]*y[j]; }));
+    const cov=EXY-EX*EY, vx=EX2-EX*EX, vy=EY2-EY*EY;
+    const C = J.map((r,i)=>r.map((v,j)=>`${v.toFixed(2)} × ${x[i]}×${y[j]}`));
+    jtT.innerHTML = tableHTML(C, "cell × (coffees × sleep), with well = 1, badly = 0", (i,j)=>(x[i]*y[j]>0)?"hl":"", false);
+    jtV.innerHTML = `<b>1.</b> Code good sleep as Y = 1, bad as 0. E[X] = 0.35×1 + 0.25×2 = <b>${f4(EX)}</b>; E[Y] = <b>${f4(EY)}</b>.<br>`+
+      `<b>2.</b> E[XY]: only the highlighted cells have XY ≠ 0: 0.20×1 + 0.05×2 = <b>${f4(EXY)}</b>.<br>`+
+      `<b>3.</b> Cov = E[XY] − E[X]E[Y] = ${f4(EXY)} − ${f4(EX)}×${f4(EY)} = <span class="big">${f4(cov)}</span> (negative: more coffee, less good sleep).<br>`+
+      `<b>4.</b> Var X = ${f4(vx)}, Var Y = ${f4(vy)} → correlation ρ = ${f4(cov)} / √(${f4(vx)}×${f4(vy)}) = <b>${f3(cov/Math.sqrt(vx*vy))}</b>.`;
+  }
+  presetGroup({jtJoint, jtCond, jtIndep, jtCov}, "jtJoint");
+
+  /* =========================================================
+     TAB: SCATTER & CORRELATION
+     ========================================================= */
+  const scSvg = document.getElementById("scSvg"), scV = document.getElementById("scVerdict");
+  const NPTS = 1500, Z1 = normals(NPTS, 101), Z2 = normals(NPTS, 202);
+  function corrSample(rho){
+    const xs = Array.from(Z1), ys = Array.from(Z1, (z,i) => rho*z + Math.sqrt(1-rho*rho)*Z2[i]);
+    return {xs, ys};
+  }
+  function drawScatter(xs, ys, cfg){
+    scSvg.innerHTML = "";
+    const L=60, R=500, T=110, B=480; // main box
+    const X = v => L + (v-cfg.xmin)/(cfg.xmax-cfg.xmin)*(R-L);
+    const Y = v => B - (v-cfg.ymin)/(cfg.ymax-cfg.ymin)*(B-T);
+    const s = stats2(xs, ys);
+    // quadrant shading
+    const qx = X(s.mx), qy = Y(s.my);
+    scSvg.appendChild(el("rect",{x:qx,y:T,width:R-qx,height:qy-T,fill:"var(--c1)","fill-opacity":0.07}));
+    scSvg.appendChild(el("rect",{x:L,y:qy,width:qx-L,height:B-qy,fill:"var(--c1)","fill-opacity":0.07}));
+    scSvg.appendChild(el("rect",{x:L,y:T,width:qx-L,height:qy-T,fill:"var(--bad)","fill-opacity":0.07}));
+    scSvg.appendChild(el("rect",{x:qx,y:qy,width:R-qx,height:B-qy,fill:"var(--bad)","fill-opacity":0.07}));
+    scSvg.appendChild(el("rect",{x:L,y:T,width:R-L,height:B-T,fill:"none",stroke:"var(--ink-soft)"}));
+    (cfg.xticks||[]).forEach(t => { scSvg.appendChild(el("text",{x:X(t),y:B+16,"text-anchor":"middle","font-size":10.5,"font-family":MONO,fill:"var(--ink-soft)"},String(t))); });
+    (cfg.yticks||[]).forEach(t => { scSvg.appendChild(el("text",{x:L-6,y:Y(t)+4,"text-anchor":"end","font-size":10.5,"font-family":MONO,fill:"var(--ink-soft)"},String(t))); });
+    scSvg.appendChild(el("text",{x:R,y:B+32,"text-anchor":"end","font-size":11,"font-family":MONO,fill:"var(--ink-soft)"},cfg.xlabel||"X →"));
+    scSvg.appendChild(el("text",{x:L+4,y:T-8+(-0),"font-size":11,"font-family":MONO,fill:"var(--ink-soft)"},""));
+    scSvg.appendChild(el("text",{x:14,y:(T+B)/2,"font-size":11,"font-family":MONO,fill:"var(--ink-soft)",transform:`rotate(-90 14 ${(T+B)/2})`,"text-anchor":"middle"},cfg.ylabel||"Y →"));
+    for (let i=0;i<xs.length;i++){
+      const a=(xs[i]-s.mx)*(ys[i]-s.my);
+      if (xs[i]<cfg.xmin||xs[i]>cfg.xmax||ys[i]<cfg.ymin||ys[i]>cfg.ymax) continue;
+      scSvg.appendChild(el("circle",{cx:X(xs[i]),cy:Y(ys[i]),r:cfg.r||2.3,fill:a>=0?"var(--c1)":"var(--bad)","fill-opacity":cfg.r?0.9:0.55}));
+    }
+    scSvg.appendChild(el("line",{x1:qx,y1:T,x2:qx,y2:B,stroke:"var(--ink)","stroke-width":1.2,"stroke-dasharray":"5,4"}));
+    scSvg.appendChild(el("line",{x1:L,y1:qy,x2:R,y2:qy,stroke:"var(--ink)","stroke-width":1.2,"stroke-dasharray":"5,4"}));
+    // marginal histograms
+    const nb = cfg.bins||30;
+    function hist(vals, lo, hi){ const b=new Array(nb).fill(0); vals.forEach(v=>{ const k=Math.floor((v-lo)/(hi-lo)*nb); if(k>=0&&k<nb) b[k]++; }); return b; }
+    const hx = hist(xs, cfg.xmin, cfg.xmax), hy = hist(ys, cfg.ymin, cfg.ymax);
+    const mxh = Math.max(...hx,1), myh = Math.max(...hy,1);
+    hx.forEach((c,k) => { const x0=L+(R-L)*k/nb, w=(R-L)/nb-1, h=c/mxh*80; scSvg.appendChild(el("rect",{x:x0,y:T-6-h,width:w,height:h,fill:"var(--c3)","fill-opacity":0.6})); });
+    hy.forEach((c,k) => { const y1=B-(B-T)*(k+1)/nb, h=(B-T)/nb-1, w=c/myh*110; scSvg.appendChild(el("rect",{x:R+8,y:y1,width:w,height:h,fill:"var(--c2)","fill-opacity":0.7})); });
+    scSvg.appendChild(el("text",{x:L,y:16,"font-size":11,"font-family":MONO,fill:"var(--c3)","font-weight":600},"marginal of X (top) ↓"));
+    scSvg.appendChild(el("text",{x:R+8,y:T-12,"font-size":11,"font-family":MONO,fill:"#9A7413","font-weight":600},"marginal of Y →"));
+    if (cfg.extra) cfg.extra(X, Y);
+    return s;
+  }
+  function scCorr(rho){
+    return () => {
+      const {xs, ys} = corrSample(rho);
+      const s = drawScatter(xs, ys, {xmin:-3.5,xmax:3.5,ymin:-3.5,ymax:3.5,xticks:[-3,-2,-1,0,1,2,3],yticks:[-3,-2,-1,0,1,2,3]});
+      let pos=0; for(let i=0;i<xs.length;i++) if((xs[i]-s.mx)*(ys[i]-s.my)>=0) pos++;
+      scV.innerHTML = `<b>1.</b> ${NPTS.toLocaleString()} points drawn with true correlation ρ = <b>${rho}</b> (both variances 1).<br>`+
+        `<b>2.</b> ${pos} points in the teal (positive-product) quadrants, ${NPTS-pos} in the red ones.<br>`+
+        `<b>3.</b> Sample covariance = average product = <b>${f4(s.cov)}</b>; correlation = Cov/(σ<sub>X</sub>σ<sub>Y</sub>) = <span class="big">${f3(s.rho)}</span> (true value ${rho}).<br>`+
+        `<b>4.</b> The marginals (edges) look the same bell shape in every ρ preset: the relationship lives only in the joint cloud.`;
+    };
+  }
+  function scSq(){
+    const half = Array.from(Z1.slice(0, NPTS/2)), xs = half.concat(half.map(v=>-v)), ys = xs.map(v=>v*v); // mirrored pairs (x, -x)
+    const s = drawScatter(xs, ys, {xmin:-3.5,xmax:3.5,ymin:-0.5,ymax:9,xticks:[-3,-2,-1,0,1,2,3],yticks:[0,2,4,6,8],ylabel:"Y = X² →"});
+    const BZ=normals(1000000, 1111), bigR=stats2(BZ, Array.from(BZ, v=>v*v)).rho;
+    const xd=[-1,0,1], cd = xd.reduce((a,v)=>a+v*v*v,0)/3 - (xd.reduce((a,v)=>a+v,0)/3)*(xd.reduce((a,v)=>a+v*v,0)/3);
+    scV.innerHTML = `<b>1.</b> Y is completely determined by X (Y = X²), the strongest possible dependence.<br>`+
+      `<b>2.</b> But the right half of the U is in teal quadrants and the left half in red: they cancel. Correlation over 1,000,000 draws = <span class="big">${f4(bigR)}</span> (the ${NPTS.toLocaleString()} plotted points come in mirror pairs x and −x, so their own correlation is exactly ${Math.abs(s.rho)<5e-4?"0":f3(s.rho)}).<br>`+
+      `<b>3.</b> Exact discrete version, X = −1, 0, 1 equally likely: Cov = E[X³] − E[X]E[X²] = <b>${cd}</b>. Zero correlation does <i>not</i> mean independence.`;
+  }
+  function scStu(){
+    const xs=[1,2,3,4,5], ys=[52,60,61,70,77];
+    const s = drawScatter(xs, ys, {xmin:0,xmax:6,ymin:45,ymax:85,xticks:[0,1,2,3,4,5,6],yticks:[50,60,70,80],r:7,bins:12,xlabel:"hours studied →",ylabel:"exam score →",
+      extra:(X,Y)=>{ xs.forEach((x,i)=>{ const p=(x-3)*(ys[i]-64); scSvg.appendChild(el("text",{x:X(x)+10,y:Y(ys[i])-8,"font-size":11.5,"font-family":MONO,"font-weight":600,fill:"var(--ink)",stroke:"#fff","stroke-width":4,"paint-order":"stroke"},`(${x-3})(${ys[i]-64}) = ${p}`)); }); }});
+    const sum = xs.reduce((a,x,i)=>a+(x-3)*(ys[i]-64),0);
+    scV.innerHTML = `<b>1.</b> Means: 3 hours, 64 points (the cross-hairs).<br>`+
+      `<b>2.</b> Deviation products: 24, 4, 0, 6, 26 → sum <b>${sum}</b>. Average over 5 students: Cov = <span class="big">${s.cov}</span> (sample version ÷4: <b>${sum/4}</b>).<br>`+
+      `<b>3.</b> σ<sub>hours</sub> = √${s.vx} = ${f3(Math.sqrt(s.vx))}, σ<sub>score</sub> = √${s.vy.toFixed(1)} = ${f3(Math.sqrt(s.vy))} → ρ = 12/(${f3(Math.sqrt(s.vx))}×${f3(Math.sqrt(s.vy))}) = <b>${f3(s.rho)}</b>.`;
+  }
+  presetGroup({sc0:scCorr(0), sc8:scCorr(0.8), scm8:scCorr(-0.8), scSq, scStu}, "sc0");
+
+  /* =========================================================
+     TAB: VAR(X+Y)
+     ========================================================= */
+  const vsSvg = document.getElementById("vsSvg"), vsV = document.getElementById("vsVerdict");
+  const BIG = 200000, BZ1 = normals(BIG, 303), BZ2 = normals(BIG, 404);
+  function vsDraw(xs, ys, sums, cfg){
+    vsSvg.innerHTML = "";
+    // left scatter
+    const L=50, R=290, T=20, B=260;
+    const X=v=>L+(v-cfg.lo)/(cfg.hi-cfg.lo)*(R-L), Y=v=>B-(v-cfg.lo)/(cfg.hi-cfg.lo)*(B-T);
+    vsSvg.appendChild(el("rect",{x:L,y:T,width:R-L,height:B-T,fill:"none",stroke:"var(--ink-soft)"}));
+    cfg.ticks.forEach(t=>{ vsSvg.appendChild(el("text",{x:X(t),y:B+14,"text-anchor":"middle","font-size":10,"font-family":MONO,fill:"var(--ink-soft)"},String(t))); vsSvg.appendChild(el("text",{x:L-5,y:Y(t)+4,"text-anchor":"end","font-size":10,"font-family":MONO,fill:"var(--ink-soft)"},String(t))); });
+    for (let i=0;i<Math.min(900,xs.length);i++) vsSvg.appendChild(el("circle",{cx:X(xs[i]),cy:Y(ys[i]),r:cfg.r||2,fill:"var(--c3)","fill-opacity":0.5}));
+    vsSvg.appendChild(el("text",{x:(L+R)/2,y:B+30,"text-anchor":"middle","font-size":11,"font-family":MONO,fill:"var(--ink-soft)"},cfg.xl));
+    // right histogram
+    const L2=340, R2=620;
+    const nb=40, b=new Array(nb).fill(0);
+    sums.forEach(v=>{ const k=Math.floor((v-cfg.slo)/(cfg.shi-cfg.slo)*nb); if(k>=0&&k<nb) b[k]++; });
+    const mb=Math.max(...b,1);
+    vsSvg.appendChild(el("line",{x1:L2,y1:B,x2:R2,y2:B,stroke:"var(--ink-soft)"}));
+    b.forEach((c,k)=>{ const h=c/mb*(B-T-20); vsSvg.appendChild(el("rect",{x:L2+(R2-L2)*k/nb,y:B-h,width:(R2-L2)/nb-1,height:h,fill:"var(--c1)","fill-opacity":0.7})); });
+    cfg.sticks.forEach(t=>vsSvg.appendChild(el("text",{x:L2+(t-cfg.slo)/(cfg.shi-cfg.slo)*(R2-L2),y:B+14,"text-anchor":"middle","font-size":10,"font-family":MONO,fill:"var(--ink-soft)"},String(t))));
+    vsSvg.appendChild(el("text",{x:(L2+R2)/2,y:B+30,"text-anchor":"middle","font-size":11,"font-family":MONO,fill:"var(--ink-soft)"},cfg.sl));
+    // decomposition bar
+    const y0=318, scale=cfg.barScale;
+    const parts=cfg.parts; let x=50;
+    vsSvg.appendChild(el("text",{x:50,y:y0-10,"font-size":11.5,"font-family":MONO,fill:"var(--ink)","font-weight":600},cfg.barTitle));
+    parts.forEach(p=>{
+      const w=Math.abs(p[0])*scale;
+      if (p[0]>=0){ vsSvg.appendChild(el("rect",{x,y:y0,width:w,height:26,fill:p[1],"fill-opacity":0.85})); vsSvg.appendChild(el("text",{x:x+w/2,y:y0+42,"text-anchor":"middle","font-size":10.5,"font-family":MONO,fill:"var(--ink)"},p[2])); x+=w; }
+      else { vsSvg.appendChild(el("rect",{x:x-w,y:y0+2,width:w,height:22,fill:"#fff",stroke:p[1],"stroke-width":2,"stroke-dasharray":"4,3"})); vsSvg.appendChild(el("text",{x:x-w/2,y:y0+42,"text-anchor":"middle","font-size":10.5,"font-family":MONO,fill:"var(--bad)"},p[2])); x-=w; }
+    });
+    vsSvg.appendChild(el("line",{x1:x,y1:y0-6,x2:x,y2:y0+32,stroke:"var(--ink)","stroke-width":2.5}));
+    vsSvg.appendChild(el("text",{x:x+6,y:y0-8,"font-size":11.5,"font-family":MONO,fill:"var(--ink)","font-weight":700},cfg.total));
+  }
+  function vsRho(rho){
+    return () => {
+      const s=0.2, xs=new Float64Array(BIG), ys=new Float64Array(BIG), sums=new Float64Array(BIG);
+      for (let i=0;i<BIG;i++){ xs[i]=s*BZ1[i]; ys[i]=s*(rho*BZ1[i]+Math.sqrt(Math.max(0,1-rho*rho))*BZ2[i]); sums[i]=xs[i]+ys[i]; }
+      let m=0; for (let i=0;i<BIG;i++) m+=sums[i]; m/=BIG; let v=0; for (let i=0;i<BIG;i++) v+=(sums[i]-m)**2; v/=BIG;
+      const cov=rho*s*s, V0=0.04+0.04+2*cov, V=Math.abs(V0)<1e-12?0:V0;
+      vsDraw(xs, ys, sums, {lo:-0.8,hi:0.8,ticks:[-0.6,-0.3,0,0.3,0.6],xl:"stock X return → (Y up)",slo:-1.4,shi:1.4,sticks:[-1.2,-0.6,0,0.6,1.2],sl:"total return X + Y →",
+        barScale:2500, barTitle:"Var X + Var Y + 2 Cov:",
+        parts:[[0.04,"var(--c3)","Var X 0.04"],[0.04,"var(--c2)","Var Y 0.04"],[2*cov,cov>=0?"var(--c1)":"var(--bad)",`2Cov ${(2*cov>=0?"+":"")}${(2*cov).toFixed(2)}`]],
+        total:`= ${V.toFixed(2)}`});
+      vsV.innerHTML = `<b>1.</b> Each stock: sd 0.2, variance 0.04. Correlation ρ = <b>${rho}</b> → Cov = ρ × 0.2 × 0.2 = <b>${cov.toFixed(2)}</b>.<br>`+
+        `<b>2.</b> Var(X + Y) = 0.04 + 0.04 + 2×(${cov.toFixed(2)}) = <span class="big">${V.toFixed(2)}</span>, sd of the pair = √${V.toFixed(2)} = <b>${f3(Math.sqrt(Math.max(0,V)))}</b>.<br>`+
+        `<b>3.</b> Simulated over ${BIG.toLocaleString()} years: Var(X + Y) = <b>${f4(v)}</b>.<br>`+
+        `<b>4.</b> ${rho===1?"No diversification: the pair is one stock held twice (0.4 = 0.2 + 0.2).":rho===-1?"Perfect hedge: every loss in one is an equal gain in the other, so the total never moves.":`Risk of the pair ${f3(Math.sqrt(V))} < 0.2 + 0.2 = 0.4: diversification.`}`;
+    };
+  }
+  function vsStu(){
+    const h=[1,2,3,4,5], sc=[52,60,61,70,77], res=sc.map((v,i)=>v-6*h[i]);
+    const m=res.reduce((a,b)=>a+b,0)/5, v=res.reduce((a,b)=>a+(b-m)**2,0)/5;
+    vsSvg.innerHTML="";
+    const L=50, R=290, T=20, B=260;
+    const X=t=>L+(t-0)/(6-0)*(R-L), Y=t=>B-(t-45)/(85-45)*(B-T);
+    vsSvg.appendChild(el("rect",{x:L,y:T,width:R-L,height:B-T,fill:"none",stroke:"var(--ink-soft)"}));
+    [0,1,2,3,4,5,6].forEach(t=>vsSvg.appendChild(el("text",{x:X(t),y:B+14,"text-anchor":"middle","font-size":10,"font-family":MONO,fill:"var(--ink-soft)"},String(t))));
+    [50,60,70,80].forEach(t=>vsSvg.appendChild(el("text",{x:L-5,y:Y(t)+4,"text-anchor":"end","font-size":10,"font-family":MONO,fill:"var(--ink-soft)"},String(t))));
+    vsSvg.appendChild(el("line",{x1:X(0),y1:Y(46),x2:X(6),y2:Y(82),stroke:"var(--c1)","stroke-width":2.4}));
+    h.forEach((x,i)=>{ vsSvg.appendChild(el("line",{x1:X(x),y1:Y(sc[i]),x2:X(x),y2:Y(46+6*x),stroke:"var(--bad)","stroke-width":2})); vsSvg.appendChild(el("circle",{cx:X(x),cy:Y(sc[i]),r:6,fill:"var(--c3)"})); });
+    vsSvg.appendChild(el("text",{x:(L+R)/2,y:B+30,"text-anchor":"middle","font-size":11,"font-family":MONO,fill:"var(--ink-soft)"},"hours → (score up); line slope 6"));
+    const L2=340,R2=620;
+    vsSvg.appendChild(el("text",{x:L2,y:40,"font-size":11.5,"font-family":MONO,fill:"var(--ink)","font-weight":600},"leftover score − 6 × hours:"));
+    res.forEach((r,i)=>vsSvg.appendChild(el("text",{x:L2,y:66+i*22,"font-size":12,"font-family":MONO,fill:"var(--ink)"},`${sc[i]} − 6×${h[i]} = ${r}`)));
+    vsSvg.appendChild(el("text",{x:L2,y:66+5*22+10,"font-size":12,"font-family":MONO,fill:"var(--accent)","font-weight":700},`mean ${m}, variance ${v.toFixed(1)}`));
+    const y0=318, scale=2.2;
+    vsSvg.appendChild(el("text",{x:50,y:y0-10,"font-size":11.5,"font-family":MONO,fill:"var(--ink)","font-weight":600},"Var(score) + 36·Var(hours) − 2·6·Cov:"));
+    vsSvg.appendChild(el("rect",{x:50,y:y0,width:74.8*scale,height:26,fill:"var(--c2)","fill-opacity":0.85}));
+    vsSvg.appendChild(el("rect",{x:50+74.8*scale,y:y0,width:72*scale,height:26,fill:"var(--c3)","fill-opacity":0.85}));
+    vsSvg.appendChild(el("rect",{x:50+2.8*scale,y:y0+30,width:144*scale,height:18,fill:"#fff",stroke:"var(--bad)","stroke-width":2,"stroke-dasharray":"4,3"}));
+    vsSvg.appendChild(el("text",{x:50+37*scale,y:y0+17,"text-anchor":"middle","font-size":10.5,"font-family":MONO,fill:"var(--ink)"},"74.8"));
+    vsSvg.appendChild(el("text",{x:50+(74.8+36)*scale,y:y0+17,"text-anchor":"middle","font-size":10.5,"font-family":MONO,fill:"#fff"},"36 × 2 = 72"));
+    vsSvg.appendChild(el("text",{x:50+74.8*scale,y:y0+43,"text-anchor":"middle","font-size":10.5,"font-family":MONO,fill:"var(--bad)"},"− 2 × 6 × 12 = −144"));
+    vsSvg.appendChild(el("line",{x1:50+2.8*scale,y1:y0-6,x2:50+2.8*scale,y2:y0+56,stroke:"var(--ink)","stroke-width":2.5}));
+    vsSvg.appendChild(el("text",{x:50+2.8*scale+4,y:y0+70,"font-size":11.5,"font-family":MONO,fill:"var(--ink)","font-weight":700},"= 2.8 left over"));
+    vsV.innerHTML = `<b>1.</b> Var(aX + bY) = a²Var X + b²Var Y + 2ab Cov with a = −6 (hours), b = 1 (score): 74.8 + 36×2 − 2×6×12 = <span class="big">2.8</span>.<br>`+
+      `<b>2.</b> Direct check on the five leftovers ${res.join(", ")}: variance = <b>${v.toFixed(1)}</b>.<br>`+
+      `<b>3.</b> 6 = Cov/Var(hours) = 12/2 is the regression slope, the weight that leaves the least variance. Explained fraction 1 − 2.8/74.8 = <b>${f4(1-2.8/74.8)}</b> = ρ² = 0.98110² = <b>${f4(0.981104910251593**2)}</b>.`;
+  }
+  presetGroup({vs1:vsRho(1), vs05:vsRho(0.5), vs0:vsRho(0), vsm05:vsRho(-0.5), vsm1:vsRho(-1), vsStu}, "vs1");
+
+  /* =========================================================
+     TAB: BIVARIATE NORMAL
+     ========================================================= */
+  const mvSvg = document.getElementById("mvSvg"), mvV = document.getElementById("mvVerdict");
+  const MN = 2000, MZ1 = normals(MN, 505), MZ2 = normals(MN, 606);
+  const mL=60, mR=600, mT=20, mB=500, lim=4;
+  const MX = v => mL + (v+lim)/(2*lim)*(mR-mL), MY = v => mB - (v+lim)/(2*lim)*(mB-mT);
+  function mvFrame(){
+    mvSvg.innerHTML = "";
+    mvSvg.appendChild(el("rect",{x:mL,y:mT,width:mR-mL,height:mB-mT,fill:"none",stroke:"var(--ink-soft)"}));
+    for (let t=-lim;t<=lim;t++){
+      mvSvg.appendChild(el("line",{x1:MX(t),y1:mT,x2:MX(t),y2:mB,stroke:"rgba(27,36,48,0.06)"}));
+      mvSvg.appendChild(el("line",{x1:mL,y1:MY(t),x2:mR,y2:MY(t),stroke:"rgba(27,36,48,0.06)"}));
+      mvSvg.appendChild(el("text",{x:MX(t),y:mB+16,"text-anchor":"middle","font-size":10.5,"font-family":MONO,fill:"var(--ink-soft)"},String(t)));
+      mvSvg.appendChild(el("text",{x:mL-6,y:MY(t)+4,"text-anchor":"end","font-size":10.5,"font-family":MONO,fill:"var(--ink-soft)"},String(t)));
+    }
+    mvSvg.appendChild(el("text",{x:mR,y:mB+34,"text-anchor":"end","font-size":11,"font-family":MONO,fill:"var(--ink-soft)"},"x →"));
+    mvSvg.appendChild(el("text",{x:mL+4,y:mT+14,"font-size":11,"font-family":MONO,fill:"var(--ink-soft)"},"y ↑"));
+  }
+  function mvPoints(A, color, op, r){
+    for (let i=0;i<MN;i++){ const x=A[0][0]*MZ1[i]+A[0][1]*MZ2[i], y=A[1][0]*MZ1[i]+A[1][1]*MZ2[i]; if (Math.abs(x)<lim&&Math.abs(y)<lim) mvSvg.appendChild(el("circle",{cx:MX(x),cy:MY(y),r:r||1.9,fill:color,"fill-opacity":op})); }
+  }
+  function mvEllipses(S, radii, color){
+    // eigen-decomposition of symmetric 2x2
+    const a=S[0][0], b=S[0][1], d=S[1][1];
+    const tr=a+d, det=a*d-b*b, disc=Math.sqrt(tr*tr/4-det);
+    const l1=tr/2+disc, l2=tr/2-disc;
+    const ang = Math.abs(b)<1e-12 ? (a>=d?0:Math.PI/2) : Math.atan2(l1-a, b);
+    radii.forEach(rr=>{
+      let dpath="";
+      for (let k=0;k<=120;k++){ const t=2*Math.PI*k/120; const u=rr*Math.sqrt(l1)*Math.cos(t), v=rr*Math.sqrt(l2)*Math.sin(t);
+        const x=u*Math.cos(ang)-v*Math.sin(ang), y=u*Math.sin(ang)+v*Math.cos(ang); dpath+=(k?"L":"M")+MX(x).toFixed(1)+","+MY(y).toFixed(1); }
+      mvSvg.appendChild(el("path",{d:dpath,fill:"none",stroke:color,"stroke-width":2}));
+    });
+    return {l1,l2,ang};
+  }
+  function lab(x,y,str,color,anchor,dx,dy){ mvSvg.appendChild(el("text",{x:MX(x)+(dx||0),y:MY(y)+(dy||0),"text-anchor":anchor||"start","font-size":12,"font-family":MONO,"font-weight":600,fill:color||"var(--ink)",stroke:"#fff","stroke-width":4,"paint-order":"stroke"},str)); }
+  function dens(x,y,S){ const det=S[0][0]*S[1][1]-S[0][1]**2; const i00=S[1][1]/det, i11=S[0][0]/det, i01=-S[0][1]/det; const q=x*x*i00+2*x*y*i01+y*y*i11; return {q, f:Math.exp(-q/2)/(2*Math.PI*Math.sqrt(det)), det}; }
+  const S8=[[1,0.8],[0.8,1]], A8=[[1,0],[0.8,0.6]];
+  function mvRound(){
+    mvFrame(); mvPoints([[1,0],[0,1]],"var(--c3)",0.45); mvEllipses([[1,0],[0,1]],[1,2,3],"var(--c1)");
+    mvSvg.appendChild(el("circle",{cx:MX(1),cy:MY(1),r:6,fill:"var(--c2)",stroke:"#fff","stroke-width":1.5})); lab(1,1,"(1, 1)","var(--ink)","start",10,-8);
+    const p=phi(1)*phi(1);
+    mvV.innerHTML=`<b>1.</b> Z₁, Z₂ independent standard normals, so the joint density is the product φ(z₁)φ(z₂) = (1/2π)·e^(−(z₁² + z₂²)/2).<br>`+
+      `<b>2.</b> It depends only on z₁² + z₂², the squared distance from the centre: a round hill with circular contours (r = 1, 2, 3 drawn).<br>`+
+      `<b>3.</b> At (1, 1): φ(1)² = ${f4(phi(1))}² = <b>${(p).toFixed(5)}</b> = e^(−1)/(2π) = <b>${(Math.exp(-1)/(2*Math.PI)).toFixed(5)}</b>. Peak 1/(2π) = <b>${(1/(2*Math.PI)).toFixed(4)}</b>.`;
+  }
+  function mvStretch(){
+    const S=[[4,0],[0,1]]; mvFrame(); mvPoints([[2,0],[0,1]],"var(--c3)",0.45); mvEllipses(S,[1,2],"var(--c1)");
+    const a=dens(2,0,S), b=dens(0,2,S);
+    mvSvg.appendChild(el("circle",{cx:MX(2),cy:MY(0),r:6,fill:"var(--c2)",stroke:"#fff","stroke-width":1.5})); lab(2,0,`(2, 0): f = ${f4(a.f)}`,"var(--ink)","start",8,-10);
+    mvSvg.appendChild(el("circle",{cx:MX(0),cy:MY(2),r:6,fill:"var(--bad)",stroke:"#fff","stroke-width":1.5})); lab(0,2,`(0, 2): f = ${f4(b.f)}`,"var(--ink)","start",8,-10);
+    mvV.innerHTML=`<b>1.</b> A = diag(2, 1) stretches x by 2: X = 2Z₁, Y = Z₂, so Σ = A Aᵀ = diag(4, 1), det Σ = 4.<br>`+
+      `<b>2.</b> The hill is twice as wide, so to keep total volume 1 its peak drops by √det Σ = 2: 1/(2π·2) = <b>${f4(1/(4*Math.PI))}</b>.<br>`+
+      `<b>3.</b> (2, 0) is 1 sd out along the wide axis (f = <b>${f4(a.f)}</b>); (0, 2) is 2 sd out along the narrow one (f = <b>${f4(b.f)}</b>). Same ruler distance, very different density.`;
+  }
+  function mvTilt(){
+    mvFrame();
+    mvPoints([[1,0],[0,1]],"var(--ink-soft)",0.18,1.5);
+    mvPoints(A8,"var(--c3)",0.5);
+    mvEllipses([[1,0],[0,1]],[1],"var(--ink-soft)");
+    const e=mvEllipses(S8,[1,2,3],"var(--c1)");
+    for (let i=0;i<12;i++){ const z1=MZ1[i], z2=MZ2[i], x=z1, y=0.8*z1+0.6*z2; if(Math.abs(x)<lim&&Math.abs(y)<lim&&Math.abs(z2)<lim){ mvSvg.appendChild(el("line",{x1:MX(z1),y1:MY(z2),x2:MX(x),y2:MY(y),stroke:"var(--c2)","stroke-width":1.6})); mvSvg.appendChild(el("circle",{cx:MX(x),cy:MY(y),r:3.5,fill:"var(--c2)"})); } }
+    let sxx=0,syy=0,sxy=0; for(let i=0;i<MN;i++){ const x=MZ1[i], y=0.8*MZ1[i]+0.6*MZ2[i]; sxx+=x*x; syy+=y*y; sxy+=x*y; }
+    mvV.innerHTML=`<b>1.</b> A = [[1, 0], [0.8, 0.6]] maps each grey Z point to a purple X point (gold arrows show 12 of them): X = Z₁, Y = 0.8Z₁ + 0.6Z₂.<br>`+
+      `<b>2.</b> Σ = A Aᵀ = [[1, 0.8], [0.8, 1]] (this A is Σ's Cholesky factor). Sample check from ${MN} points: Var X ≈ ${f3(sxx/MN)}, Var Y ≈ ${f3(syy/MN)}, Cov ≈ ${f3(sxy/MN)}.<br>`+
+      `<b>3.</b> det A = 1×0.6 − 0×0.8 = <b>0.6</b> = √det Σ = √0.36: every patch of area is squeezed to 0.6 of its size, so heights rise by 1/0.6. Peak = 1/(2π·0.6) = <b>${f4(1/(2*Math.PI*0.6))}</b>.<br>`+
+      `<b>4.</b> Ellipse axes are Σ's eigenvectors: eigenvalues <b>${f3(e.l1)}</b> and <b>${f3(e.l2)}</b>, half-widths √1.8 = ${f3(Math.sqrt(e.l1))} along (1, 1) and √0.2 = ${f3(Math.sqrt(e.l2))} along (1, −1).`;
+  }
+  function mvMaha(){
+    mvFrame(); mvPoints(A8,"var(--c3)",0.35); mvEllipses(S8,[1,2,3],"var(--c1)");
+    const a=dens(1,1,S8), b=dens(1,-1,S8), o=dens(0,0,S8);
+    [[1,1,"var(--c2)"],[1,-1,"var(--bad)"]].forEach(p=>{ mvSvg.appendChild(el("line",{x1:MX(0),y1:MY(0),x2:MX(p[0]),y2:MY(p[1]),stroke:p[2],"stroke-width":2.5})); mvSvg.appendChild(el("circle",{cx:MX(p[0]),cy:MY(p[1]),r:7,fill:p[2],stroke:"#fff","stroke-width":1.5})); });
+    lab(1,1,`(1, 1): Mahalanobis ${f3(Math.sqrt(a.q))}`,"var(--ink)","start",10,-6);
+    lab(1,-1,`(1, −1): Mahalanobis ${f3(Math.sqrt(b.q))}`,"var(--ink)","start",10,14);
+    mvV.innerHTML=`<b>1.</b> Both points are √2 = <b>1.414</b> from the centre by ruler.<br>`+
+      `<b>2.</b> Mahalanobis² = (x−μ)ᵀΣ⁻¹(x−μ) with Σ⁻¹ = (1/0.36)[[1, −0.8], [−0.8, 1]]: (1, 1) → 0.4/0.36 = <b>${f4(a.q)}</b>; (1, −1) → 3.6/0.36 = <b>${f4(b.q)}</b>.<br>`+
+      `<b>3.</b> Density: centre <b>${(o.f).toFixed(5)}</b>, (1, 1) <b>${(a.f).toFixed(5)}</b>, (1, −1) <b>${(b.f).toFixed(5)}</b>. Ratio <span class="big">${(a.f/b.f).toFixed(1)}×</span>.<br>`+
+      `<b>4.</b> Along the cloud's long axis is ordinary; across its narrow axis is rare. That is why LDA, QDA and GMMs measure distance with Σ⁻¹.`;
+  }
+  function mvMarg(){
+    mvFrame(); mvPoints(A8,"var(--c3)",0.3); mvEllipses(S8,[1,2],"var(--c1)");
+    // integrate density over y numerically for a grid of x, draw along the bottom
+    let d="", at1=0;
+    for (let k=0;k<=160;k++){ const x=-lim+2*lim*k/160; let s=0; const n=800, lo=-10, hi=10, h=(hi-lo)/n; for(let j=0;j<=n;j++){ const w=(j===0||j===n)?0.5:1; s+=w*dens(x,lo+j*h,S8).f; } s*=h; d+=(k?"L":"M")+MX(x).toFixed(1)+","+(mB-s*420).toFixed(1); }
+    { let s=0; const n=4000, lo=-10, hi=10, h=(hi-lo)/n; for(let j=0;j<=n;j++){ const w=(j===0||j===n)?0.5:1; s+=w*dens(1,lo+j*h,S8).f; } at1=s*h; }
+    mvSvg.appendChild(el("path",{d,fill:"none",stroke:"var(--c2)","stroke-width":3}));
+    let d2=""; for (let k=0;k<=160;k++){ const x=-lim+2*lim*k/160; d2+=(k?"L":"M")+MX(x).toFixed(1)+","+(mB-phi(x)*420).toFixed(1); }
+    mvSvg.appendChild(el("path",{d:d2,fill:"none",stroke:"var(--ink)","stroke-width":1.4,"stroke-dasharray":"5,4"}));
+    mvSvg.appendChild(el("line",{x1:MX(1),y1:mT,x2:MX(1),y2:mB,stroke:"var(--c2)","stroke-width":1.2,"stroke-dasharray":"3,3"}));
+    lab(1,-lim,`∫ f(1, y) dy = ${f4(at1)}`,"var(--ink)","start",8,-180);
+    mvV.innerHTML=`<b>1.</b> Marginal of X = add the joint density up along each vertical line: f<sub>X</sub>(x) = ∫ f(x, y) dy (gold curve, computed by numerical integration).<br>`+
+      `<b>2.</b> At x = 1: ∫ f(1, y) dy = <b>${(at1).toFixed(5)}</b>, and the 1-D standard normal φ(1) = <b>${(phi(1)).toFixed(5)}</b> (dashed curve). They coincide everywhere.<br>`+
+      `<b>3.</b> A tilted bivariate normal has ordinary 1-D normal marginals: the tilt lives only in the joint.`;
+  }
+  function mvCond(){
+    mvFrame(); mvPoints(A8,"var(--c3)",0.18);
+    mvEllipses(S8,[1,2],"var(--c1)");
+    // highlight sampled points in the slice from a bigger sample
+    const N=400000, Z1=normals(N,707), Z2=normals(N,808); let n=0,s=0,s2=0;
+    for (let i=0;i<N;i++){ const x=Z1[i]; if (Math.abs(x-1)<0.02){ const y=0.8*Z1[i]+0.6*Z2[i]; n++; s+=y; s2+=y*y; if(n<=400) mvSvg.appendChild(el("circle",{cx:MX(x),cy:MY(y),r:2.6,fill:"var(--c2)","fill-opacity":0.85})); } }
+    const m=s/n, v=s2/n-m*m;
+    mvSvg.appendChild(el("rect",{x:MX(0.98),y:mT,width:MX(1.02)-MX(0.98),height:mB-mT,fill:"var(--c2)","fill-opacity":0.25}));
+    // conditional density drawn sideways at x=1
+    let d=""; for (let k=0;k<=120;k++){ const y=-lim+2*lim*k/120; const f=Math.exp(-((y-0.8)**2)/(2*0.36))/Math.sqrt(2*Math.PI*0.36); d+=(k?"L":"M")+(MX(1)+f*140).toFixed(1)+","+MY(y).toFixed(1); }
+    mvSvg.appendChild(el("path",{d,fill:"none",stroke:"var(--bad)","stroke-width":2.6}));
+    // regression line E[Y|X=x]=0.8x
+    mvSvg.appendChild(el("line",{x1:MX(-lim),y1:MY(-0.8*lim),x2:MX(lim),y2:MY(0.8*lim),stroke:"var(--ink)","stroke-width":1.6,"stroke-dasharray":"6,4"}));
+    mvSvg.appendChild(el("circle",{cx:MX(1),cy:MY(0.8),r:6,fill:"var(--bad)",stroke:"#fff","stroke-width":1.5}));
+    lab(1,0.8,"E[Y | X = 1] = 0.8","var(--ink)","end",-10,-10);
+    lab(-3.6,-3.2,"dashed: regression line y = 0.8x","var(--ink-soft)","start",0,0);
+    mvV.innerHTML=`<b>1.</b> Slice the tilted hill at x = 1 and rescale: the slice is a normal (red, drawn sideways).<br>`+
+      `<b>2.</b> Formula: mean μ<sub>Y</sub> + ρ(σ<sub>Y</sub>/σ<sub>X</sub>)(x − μ<sub>X</sub>) = 0.8 × 1 = <span class="big">0.8</span>; variance σ<sub>Y</sub>²(1 − ρ²) = 1 − 0.64 = <b>0.36</b>.<br>`+
+      `<b>3.</b> Sampled: of ${N.toLocaleString()} points, the ${n} with |x − 1| < 0.02 (gold) have y-mean <b>${f3(m)}</b> and variance <b>${f3(v)}</b>.<br>`+
+      `<b>4.</b> The conditional means trace the straight line y = 0.8x, the regression line. Galton's regression to the mean: with ρ = 0.5, a father 2 sd tall predicts a son 0.5 × 2 = <b>1</b> sd tall.`;
+  }
+  function mvEll(){
+    mvFrame(); mvPoints(A8,"var(--c3)",0.45); mvEllipses(S8,[1,2],"var(--c1)");
+    const N=200000, Z1=normals(N,909), Z2=normals(N,1010); let in1=0,in2=0;
+    for (let i=0;i<N;i++){ const q=Z1[i]*Z1[i]+Z2[i]*Z2[i]; /* Mahalanobis of AZ equals |Z| */ if(q<=1) in1++; if(q<=4) in2++; }
+    let c1=0,c2=0; for (let i=0;i<MN;i++){ const x=MZ1[i], y=0.8*MZ1[i]+0.6*MZ2[i]; const q=dens(x,y,S8).q; if(q<=1) c1++; if(q<=4) c2++; }
+    lab(0.9,1.75,"Mahalanobis 1","var(--c1)","start",0,0); lab(1.9,3.4,"Mahalanobis 2","var(--c1)","start",0,0);
+    mvV.innerHTML=`<b>1.</b> Contours of equal density are ellipses of equal Mahalanobis distance r. Undoing A turns them into circles of radius r around Z's centre.<br>`+
+      `<b>2.</b> So P(inside r) is the round hill's: 1 − e^(−r²/2). r = 1: <b>${f4(1-Math.exp(-0.5))}</b>; r = 2: <b>${f4(1-Math.exp(-2))}</b>.<br>`+
+      `<b>3.</b> Sampled (${N.toLocaleString()} points): inside 1 = <b>${f4(in1/N)}</b>, inside 2 = <b>${f4(in2/N)}</b>. Of the ${MN} drawn: ${c1} and ${c2}.<br>`+
+      `<b>4.</b> A 95% ellipse needs r = √(chi-square 95% point, 2 df) = <b>2.448</b>: the "2 sigma" rule of 1-D does not carry over to 2-D.`;
+  }
+  presetGroup({mvRound, mvStretch, mvTilt, mvMaha, mvMarg, mvCond, mvEll}, "mvRound");
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Linear regression, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --purple:#b39ddb; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:920px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:8px 0;}
+  .slider-row label{font-size:12px;color:var(--chalk-dim);min-width:230px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:70px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:520px;height:auto;}
+
+  table.dtbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.dtbl th, table.dtbl td{border:1px solid var(--border);padding:6px 8px;text-align:center;}
+  table.dtbl th{color:var(--chalk-dim);font-weight:700;}
+  table.dtbl td.sig{color:var(--green);font-weight:700;}
+  table.dtbl td.nsig{color:var(--coral);}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:140px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:15px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;white-space:pre-line;}
+  .legend{display:flex;justify-content:center;gap:18px;font-size:11.5px;color:var(--chalk-dim);margin-top:2px;flex-wrap:wrap;}
+  .legend span.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Linear Regression, Live</h1>
+  <p class="sub">Companion to <b>linear_regression_feynman.md</b>. Four demos: closed-form vs. gradient descent converging to the identical point, regression diagnostics on three dataset shapes, coefficient inference (SE/t/p/CI), and multicollinearity's shared VIF/condition-number/SE blowup.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="t1">Closed-Form vs. Gradient Descent</button>
+    <button class="tab-btn" data-tab="t2">Diagnostics</button>
+    <button class="tab-btn" data-tab="t3">Coefficient Inference</button>
+    <button class="tab-btn" data-tab="t4">Multicollinearity</button>
+  </div>
+
+  <div class="tabpage active" id="t1">
+    <div class="panel">
+      <h2>The hiker and the teleporter — two roads, one destination</h2>
+      <p class="sub">Fixed dataset x=[0,1,2,3,4], y=[1,3,2,5,4] (reused from continuity-and-extrema.md). The closed form is a teleporter: one formula, straight to w*=0.8, b*=1.4. Gradient descent is a hiker: many small steps across the (w,b) plane, arriving at the identical point.</p>
+      <div class="row">
+        <button class="op" id="btnTeleport" onclick="runTeleport()">Teleport (closed form)</button>
+        <button class="op" id="btnWalk" onclick="runWalk()">Walk (gradient descent)</button>
+      </div>
+      <div class="slider-row"><label for="lr">Learning rate (for Walk)</label><input type="range" id="lr" min="0.01" max="0.3" step="0.01" value="0.1"><output id="lrOut">0.10</output></div>
+      <div class="slider-row"><label for="steps">Steps (for Walk)</label><input type="range" id="steps" min="5" max="500" step="5" value="100"><output id="stepsOut">100</output></div>
+      <svg id="gdsvg" viewBox="0 0 480 260"></svg>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">closed form (w*, b*)</div><div class="num">0.8000, 1.4000</div></div>
+        <div class="metric coral"><div class="lbl">this run's (w, b)</div><div class="num" id="gdWB">—</div></div>
+        <div class="metric amber"><div class="lbl">distance to closed form</div><div class="num" id="gdDist">—</div></div>
+      </div>
+      <div class="story-line" id="t1story"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t2">
+    <div class="panel">
+      <h2>Does the residual pattern look like noise, or like a confession?</h2>
+      <div class="row">
+        <button class="op active" id="btnClean" onclick="setDataset('clean')">Clean linear</button>
+        <button class="op" id="btnCurve" onclick="setDataset('curve')">Curved (quadratic)</button>
+        <button class="op" id="btnHetero" onclick="setDataset('hetero')">Heteroscedastic</button>
+      </div>
+      <svg id="fitsvg" viewBox="0 0 480 200"></svg>
+      <svg id="residsvg" viewBox="0 0 480 160"></svg>
+      <div class="story-line" id="t2story"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t3">
+    <div class="panel">
+      <h2>Is a coefficient real, or noise?</h2>
+      <p class="sub">True model: y = 2 + 1.5·x1 − 0.8·x2 + noise. Drag sample size and noise scale and watch the standard error, t-statistic, p-value, and 95% CI for x1's coefficient respond.</p>
+      <div class="slider-row"><label for="nSlider">Sample size n</label><input type="range" id="nSlider" min="10" max="300" step="5" value="50"><output id="nOut">50</output></div>
+      <div class="slider-row"><label for="noiseSlider">Noise scale</label><input type="range" id="noiseSlider" min="0.2" max="5" step="0.1" value="2.0"><output id="noiseOut">2.0</output></div>
+      <table class="dtbl" id="inferenceTable"></table>
+      <div class="story-line" id="t3story"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t4">
+    <div class="panel">
+      <h2>Two correlated predictors, one shared symptom</h2>
+      <div class="slider-row"><label for="rhoSlider">Correlation ρ between x1 and x2</label><input type="range" id="rhoSlider" min="0" max="0.99" step="0.01" value="0.5"><output id="rhoOut">0.50</output></div>
+      <table class="dtbl" id="vifTable"></table>
+      <div class="story-line" id="t4story"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>linear_regression_feynman.md</b>
+    (<a href="../supervised/linear_regression_feynman.md">linear_regression_feynman.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const svgNS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs){ const e=document.createElementNS(svgNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---------- shared helpers ----------
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function gaussianFrom(rng){
+    let u=0,v=0; while(u===0)u=rng(); while(v===0)v=rng();
+    return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+  }
+  function matInverse(A){
+    const n = A.length;
+    const M = A.map((row,i)=> row.concat(row.map((_,j)=> i===j?1:0)));
+    for(let col=0; col<n; col++){
+      let piv = col;
+      for(let r=col+1;r<n;r++) if(Math.abs(M[r][col])>Math.abs(M[piv][col])) piv=r;
+      [M[col],M[piv]] = [M[piv],M[col]];
+      const pv = M[col][col];
+      for(let k=0;k<2*n;k++) M[col][k]/=pv;
+      for(let r=0;r<n;r++){
+        if(r===col) continue;
+        const f = M[r][col];
+        for(let k=0;k<2*n;k++) M[r][k]-=f*M[col][k];
+      }
+    }
+    return M.map(row=>row.slice(n));
+  }
+  function matVec(A,v){ return A.map(row=> row.reduce((s,a,j)=>s+a*v[j],0)); }
+  function transpose(A){ return A[0].map((_,j)=>A.map(row=>row[j])); }
+  function matMul(A,B){
+    const r=A.length, c=B[0].length, k=B.length;
+    const out=[];
+    for(let i=0;i<r;i++){ const row=[]; for(let j=0;j<c;j++){ let s=0; for(let m=0;m<k;m++) s+=A[i][m]*B[m][j]; row.push(s); } out.push(row); }
+    return out;
+  }
+  function fitOLS(X,y){
+    const Xt = transpose(X);
+    const XtX = matMul(Xt, X);
+    const XtXinv = matInverse(XtX);
+    const Xty = matVec(Xt, y);
+    const beta = matVec(XtXinv, Xty);
+    return {beta, XtXinv};
+  }
+
+  // t-distribution (Lanczos gamma + tangent-substitution integration), matching statistics-toolkit.md's verified critical values
+  function gammaLn(x){
+    const g=[676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+    if(x<0.5) return Math.log(Math.PI/Math.sin(Math.PI*x)) - gammaLn(1-x);
+    x-=1;
+    let a=0.99999999999980993;
+    const t=x+7.5;
+    for(let i=0;i<8;i++) a+=g[i]/(x+i+1);
+    return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+  }
+  function tDensity(x,df){
+    const lc = gammaLn((df+1)/2) - gammaLn(df/2) - 0.5*Math.log(df*Math.PI);
+    return Math.exp(lc)*Math.pow(1+x*x/df, -(df+1)/2);
+  }
+  function tCdf(x, df){
+    const scale = Math.sqrt(df) || 1;
+    const uMax = Math.atan(x/scale);
+    const nSeg = 2000;
+    const lo = -Math.PI/2 + 1e-9;
+    const h = (uMax-lo)/nSeg;
+    function f(u){ const xx=scale*Math.tan(u); const dxdu=scale/(Math.cos(u)*Math.cos(u)); return tDensity(xx,df)*dxdu; }
+    let s = 0.5*(f(lo)+f(uMax));
+    for(let i=1;i<nSeg;i++) s+=f(lo+i*h);
+    return s*h;
+  }
+  function tCritical95(df){
+    let lo=0, hi=1000;
+    for(let i=0;i<60;i++){ const mid=(lo+hi)/2; if(tCdf(mid,df)<0.975) lo=mid; else hi=mid; }
+    return (lo+hi)/2;
+  }
+  function tPValueTwoTailed(tstat, df){
+    const p1 = 1 - tCdf(Math.abs(tstat), df);
+    return Math.min(1, 2*p1);
+  }
+
+  // ---------- TAB 1: CLOSED FORM vs GRADIENT DESCENT ----------
+  const X1 = [0,1,2,3,4], Y1 = [1,3,2,5,4];
+  const CLOSED_W = 0.8, CLOSED_B = 1.4;
+  function runGD(lr, steps){
+    let w=0, b=0;
+    const n = X1.length;
+    const traj = [];
+    for(let s=0;s<steps;s++){
+      let gw=0, gb=0;
+      for(let i=0;i<n;i++){
+        const err = Y1[i]-(w*X1[i]+b);
+        gw += -2*X1[i]*err/n;
+        gb += -2*err/n;
+      }
+      w -= lr*gw; b -= lr*gb;
+      if(s % Math.max(1,Math.floor(steps/60))===0 || s===steps-1) traj.push([w,b]);
+    }
+    return {w,b,traj};
+  }
+  const T1_WMIN=-0.1, T1_WMAX=1.0, T1_BMIN=-0.1, T1_BMAX=1.6;
+  const T1_OX=50, T1_OY=220, T1_W=380, T1_H=190;
+  function t1px(w){ return T1_OX + (w-T1_WMIN)/(T1_WMAX-T1_WMIN)*T1_W; }
+  function t1py(b){ return T1_OY - (b-T1_BMIN)/(T1_BMAX-T1_BMIN)*T1_H; }
+  let t1Mode = null, t1Result = null;
+
+  function drawT1Frame(){
+    const svg = document.getElementById('gdsvg'); svg.innerHTML='';
+    svg.appendChild(el('line',{x1:T1_OX,y1:T1_OY,x2:T1_OX+T1_W,y2:T1_OY,stroke:'#7f8f83','stroke-width':1.2}));
+    svg.appendChild(el('line',{x1:T1_OX,y1:T1_OY-T1_H,x2:T1_OX,y2:T1_OY,stroke:'#7f8f83','stroke-width':1.2}));
+    const xl = el('text',{x:T1_OX+T1_W-10,y:T1_OY+18,'font-size':'10.5','font-family':'JetBrains Mono, monospace',fill:'#7f8f83','text-anchor':'end'}); xl.textContent='w →'; svg.appendChild(xl);
+    const yl = el('text',{x:T1_OX+4,y:16,'font-size':'10.5','font-family':'JetBrains Mono, monospace',fill:'#7f8f83'}); yl.textContent='b ↑'; svg.appendChild(yl);
+    // target marker (closed form)
+    const tx=t1px(CLOSED_W), ty=t1py(CLOSED_B);
+    svg.appendChild(el('line',{x1:tx-7,y1:ty,x2:tx+7,y2:ty,stroke:'#8fd19e','stroke-width':2}));
+    svg.appendChild(el('line',{x1:tx,y1:ty-7,x2:tx,y2:ty+7,stroke:'#8fd19e','stroke-width':2}));
+    svg.appendChild(el('circle',{cx:tx,cy:ty,r:9,fill:'none',stroke:'#8fd19e','stroke-width':1.4,opacity:0.6}));
+    const tlbl = el('text',{x:tx+12,y:ty-8,'font-size':'10.5','font-family':'JetBrains Mono, monospace',fill:'#8fd19e'}); tlbl.textContent='closed form (0.8, 1.4)'; svg.appendChild(tlbl);
+    // start marker
+    svg.appendChild(el('circle',{cx:t1px(0),cy:t1py(0),r:4,fill:'#7f8f83'}));
+    return svg;
+  }
+
+  function finishT1(w,b,label){
+    document.getElementById('gdWB').textContent = w.toFixed(4)+', '+b.toFixed(4);
+    const dist = Math.sqrt((w-CLOSED_W)**2+(b-CLOSED_B)**2);
+    document.getElementById('gdDist').textContent = dist.toFixed(5);
+    document.getElementById('t1story').textContent = label;
+  }
+
+  window.runTeleport = function(){
+    t1Mode = 'teleport';
+    const svg = drawT1Frame();
+    svg.appendChild(el('circle',{cx:t1px(CLOSED_W),cy:t1py(CLOSED_B),r:6,fill:'#ffce54'}));
+    finishT1(CLOSED_W, CLOSED_B,
+      'One formula, evaluated once: w*=0.8000, b*=1.4000 — no steps, no learning rate, exact to every decimal place. This is the teleporter.');
+  };
+
+  window.runWalk = function(){
+    t1Mode = 'walk';
+    const lr = parseFloat(document.getElementById('lr').value);
+    const steps = parseInt(document.getElementById('steps').value,10);
+    document.getElementById('lrOut').textContent = lr.toFixed(2);
+    document.getElementById('stepsOut').textContent = steps;
+    const {w,b,traj} = runGD(lr, steps);
+    const svg = drawT1Frame();
+    const pts = traj.map(([tw,tb])=> t1px(tw)+','+t1py(tb));
+    svg.appendChild(el('path',{d:'M '+pts.join(' L '), fill:'none', stroke:'#ff8266','stroke-width':2}));
+    svg.appendChild(el('circle',{cx:t1px(w),cy:t1py(b),r:5,fill:'#ff8266'}));
+    finishT1(w, b,
+      'The hiker took ' + steps + ' steps at learning rate ' + lr.toFixed(2) + ' and landed within ' + Math.sqrt((w-CLOSED_W)**2+(b-CLOSED_B)**2).toFixed(5) +
+      ' of the identical point the teleporter reached in one click — guaranteed by continuity-and-extrema.md’s convexity proof: only one basin exists, so the walk always ends up here too.');
+  };
+
+  ['lr','steps'].forEach(id=>document.getElementById(id).addEventListener('input', ()=>{ if(t1Mode==='walk') runWalk(); }));
+  runTeleport();
+
+  // ---------- TAB 2: DIAGNOSTICS ----------
+  let currentDataset = 'clean';
+  function buildDataset(kind){
+    const rng = mulberry32(11);
+    if(kind==='clean'){
+      const n=40; const x=[], y=[];
+      for(let i=0;i<n;i++){ const xi=rng()*10; x.push(xi); y.push(2*xi+5+gaussianFrom(rng)*1.5); }
+      return {x,y};
+    }
+    if(kind==='curve'){
+      const x=[-2,-1,0,1,2];
+      const y=x.map(xi=>0.5*xi*xi+2*xi+1);
+      return {x,y};
+    }
+    // hetero
+    const n=200; const x=[], y=[];
+    for(let i=0;i<n;i++){ const xi=1+rng()*9; x.push(xi); y.push(2*xi+5+gaussianFrom(rng)*0.3*xi); }
+    return {x,y};
+  }
+  function renderT2(){
+    const {x,y} = buildDataset(currentDataset);
+    const n = x.length;
+    const X = x.map(xi=>[1,xi]);
+    const {beta} = fitOLS(X,y);
+    const [b0,b1] = beta;
+    const pred = x.map(xi=>b0+b1*xi);
+    const resid = y.map((yi,i)=>yi-pred[i]);
+
+    const svg1 = document.getElementById('fitsvg'); svg1.innerHTML='';
+    const xmin=Math.min(...x), xmax=Math.max(...x), ymin=Math.min(...y), ymax=Math.max(...y);
+    const OX=40,OY=170,W=420,H=140;
+    function px(v){ return OX + (v-xmin)/(xmax-xmin||1)*W; }
+    function py(v){ return OY - (v-ymin)/(ymax-ymin||1)*H; }
+    svg1.appendChild(el('line',{x1:OX,y1:OY,x2:OX+W,y2:OY,stroke:'#7f8f83','stroke-width':1.2}));
+    svg1.appendChild(el('line',{x1:OX,y1:OY-H,x2:OX,y2:OY,stroke:'#7f8f83','stroke-width':1.2}));
+    x.forEach((xi,i)=> svg1.appendChild(el('circle',{cx:px(xi),cy:py(y[i]),r:3,fill:'#7fb3d5',opacity:0.75})));
+    const lineXs=[xmin,xmax];
+    svg1.appendChild(el('path',{d:'M '+lineXs.map(xi=>px(xi)+','+py(b0+b1*xi)).join(' L '), fill:'none', stroke:'#ff8266','stroke-width':2.2}));
+
+    const svg2 = document.getElementById('residsvg'); svg2.innerHTML='';
+    const OX2=40, OY2=80, W2=420, H2=60;
+    const rmax = Math.max(...resid.map(Math.abs), 1e-6)*1.15;
+    svg2.appendChild(el('line',{x1:OX2,y1:OY2,x2:OX2+W2,y2:OY2,stroke:'#7f8f83','stroke-width':1.2}));
+    x.forEach((xi,i)=>{
+      const px2 = OX2 + (xi-xmin)/(xmax-xmin||1)*W2;
+      const py2 = OY2 - (resid[i]/rmax)*H2;
+      svg2.appendChild(el('circle',{cx:px2,cy:py2,r:3,fill:'#8fd19e'}));
+    });
+    const lbl = el('text',{x:OX2,y:16,'font-size':'11','font-family':'JetBrains Mono, monospace',fill:'#f4f1e8'});
+    lbl.textContent = 'residuals vs. x (zero line = perfect fit)'; svg2.appendChild(lbl);
+
+    const stories = {
+      clean: 'Residuals scatter randomly around zero at every x — no pattern, exactly what a correctly-shaped linear model should leave behind.',
+      curve: 'Residuals trace a clean U-shape: [' + resid.map(r=>r.toFixed(2)).join(', ') + '] — the model confessing, in its own leftovers, that the truth is curved, not straight.',
+      hetero: 'Residuals fan out wider as x grows — the funnel shape of heteroscedasticity, breaking Part 4’s one-size-fits-all standard error.'
+    };
+    document.getElementById('t2story').textContent = stories[currentDataset];
+  }
+  window.setDataset = function(kind){
+    currentDataset = kind;
+    ['btnClean','btnCurve','btnHetero'].forEach(id=>document.getElementById(id).classList.remove('active'));
+    document.getElementById(kind==='clean'?'btnClean':kind==='curve'?'btnCurve':'btnHetero').classList.add('active');
+    renderT2();
+  };
+  renderT2();
+
+  // ---------- TAB 3: COEFFICIENT INFERENCE ----------
+  function renderT3(){
+    const n = parseInt(document.getElementById('nSlider').value,10);
+    const noise = parseFloat(document.getElementById('noiseSlider').value);
+    document.getElementById('nOut').textContent = n;
+    document.getElementById('noiseOut').textContent = noise.toFixed(1);
+    const rng = mulberry32(7);
+    const x1=[], x2=[], y=[];
+    for(let i=0;i<n;i++){
+      const a = gaussianFrom(rng), b2 = gaussianFrom(rng);
+      x1.push(a); x2.push(b2);
+      y.push(2 + 1.5*a - 0.8*b2 + gaussianFrom(rng)*noise);
+    }
+    const X = x1.map((v,i)=>[1,v,x2[i]]);
+    const p = 3, df = n-p;
+    const {beta, XtXinv} = fitOLS(X,y);
+    const pred = X.map(row=> row.reduce((s,v,j)=>s+v*beta[j],0));
+    const sse = y.reduce((s,yi,i)=>s+(yi-pred[i])**2,0);
+    const sigma2 = sse/df;
+    const names = ['intercept','x1','x2'];
+    const tcrit = tCritical95(df);
+    let html = '<tr><th>coef</th><th>β̂</th><th>SE</th><th>t</th><th>p-value</th><th>95% CI</th></tr>';
+    for(let j=0;j<3;j++){
+      const se = Math.sqrt(sigma2*XtXinv[j][j]);
+      const t = beta[j]/se;
+      const pval = tPValueTwoTailed(t, df);
+      const lo = beta[j]-tcrit*se, hi = beta[j]+tcrit*se;
+      const sig = pval<0.05;
+      html += `<tr><td>${names[j]}</td><td>${beta[j].toFixed(4)}</td><td>${se.toFixed(4)}</td><td>${t.toFixed(3)}</td>` +
+              `<td class="${sig?'sig':'nsig'}">${pval.toFixed(4)}</td><td>[${lo.toFixed(3)}, ${hi.toFixed(3)}]</td></tr>`;
+    }
+    document.getElementById('inferenceTable').innerHTML = html;
+    document.getElementById('t3story').textContent =
+      'n=' + n + ', df=' + df + ', t-critical(97.5%)=' + tcrit.toFixed(3) + '. ' +
+      (df<10 ? 'With so few degrees of freedom, standard errors are wide and coefficients need a large effect to look significant.' :
+       'With this many degrees of freedom, the t-distribution is close to the plain normal — significance mostly tracks effect size vs. noise.');
+  }
+  ['nSlider','noiseSlider'].forEach(id=>document.getElementById(id).addEventListener('input', renderT3));
+  renderT3();
+
+  // ---------- TAB 4: MULTICOLLINEARITY ----------
+  function renderT4(){
+    const rho = parseFloat(document.getElementById('rhoSlider').value);
+    document.getElementById('rhoOut').textContent = rho.toFixed(2);
+    const rng = mulberry32(3);
+    const n=200;
+    const x1=[], x2=[];
+    for(let i=0;i<n;i++){
+      const a = gaussianFrom(rng);
+      x1.push(a);
+      x2.push(rho*a + Math.sqrt(Math.max(0,1-rho*rho))*gaussianFrom(rng));
+    }
+    const X = x1.map((v,i)=>[1,v,x2[i]]);
+    const Xt = transpose(X);
+    const XtX = matMul(Xt,X);
+    const XtXinv2 = matInverse(XtX);
+    const se1 = Math.sqrt(XtXinv2[1][1]); // sigma=1 assumed for illustration
+
+    // VIF: regress x1 on [1, x2]
+    const Xaux = x2.map(v=>[1,v]);
+    const {beta:baux} = fitOLS(Xaux, x1);
+    const predAux = Xaux.map(row=>row[0]*baux[0]+row[1]*baux[1]);
+    const ssRes = x1.reduce((s,v,i)=>s+(v-predAux[i])**2,0);
+    const mean1 = x1.reduce((a,b)=>a+b,0)/n;
+    const ssTot = x1.reduce((s,v)=>s+(v-mean1)**2,0);
+    const r2aux = 1-ssRes/ssTot;
+    const vif = 1/(1-r2aux);
+
+    // condition number via power iteration on X^T X eigenvalues (2-norm cond of X, approx via singular values of X)
+    // approximate cond(X) as sqrt(max eig / min eig of XtX)
+    function eigMaxMin(A){
+      const n2 = A.length;
+      let v = new Array(n2).fill(1);
+      function matv(v){ return A.map(row=>row.reduce((s,a,j)=>s+a*v[j],0)); }
+      let lambdaMax=1;
+      for(let it=0;it<200;it++){ v = matv(v); const norm=Math.sqrt(v.reduce((s,x)=>s+x*x,0)); v=v.map(x=>x/norm); lambdaMax=norm; }
+      // shift-invert-ish for min eigenvalue: use inverse power iteration
+      const Ainv = matInverse(A);
+      let v2 = new Array(n2).fill(1);
+      let lambdaMinInv=1;
+      for(let it=0;it<200;it++){ v2 = matv2(Ainv,v2); const norm=Math.sqrt(v2.reduce((s,x)=>s+x*x,0)); v2=v2.map(x=>x/norm); lambdaMinInv=norm; }
+      function matv2(M,v){ return M.map(row=>row.reduce((s,a,j)=>s+a*v[j],0)); }
+      return {lambdaMax, lambdaMin: 1/lambdaMinInv};
+    }
+    const {lambdaMax, lambdaMin} = eigMaxMin(XtX);
+    const condX = Math.sqrt(Math.abs(lambdaMax/lambdaMin));
+
+    document.getElementById('vifTable').innerHTML =
+      '<tr><th>ρ</th><th>R²(x1 on x2)</th><th>VIF</th><th>cond(X)</th><th>SE(β̂₁), σ=1</th></tr>' +
+      `<tr><td>${rho.toFixed(2)}</td><td>${r2aux.toFixed(4)}</td><td>${vif.toFixed(2)}</td><td>${condX.toFixed(2)}</td><td>${se1.toFixed(4)}</td></tr>`;
+    document.getElementById('t4story').textContent =
+      'As ρ climbs toward 1, VIF, the condition number, and the coefficient’s own standard error all grow together — the same disease, three different symptoms. ' +
+      (vif>10 ? 'VIF > 10: conventionally worth real concern.' : vif>5 ? 'VIF > 5: already worth a second look.' : 'VIF is comfortably low here.');
+  }
+  document.getElementById('rhoSlider').addEventListener('input', renderT4);
+  renderT4();
+})();
+</script>
+</body>
+</html>

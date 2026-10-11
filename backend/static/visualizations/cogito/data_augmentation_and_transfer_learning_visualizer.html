@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Data Augmentation and Transfer Learning, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:230px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:90px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:480px;height:auto;}
+
+  .flex2{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;}
+  .flex2 > div{flex:1;min-width:260px;max-width:480px;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Data Augmentation and Transfer Learning, live</h1>
+  <p class="sub">Two companion demos: retrain a tiny classifier live and watch its memorized-position weight spike spread into real generalization as augmented copies are added; and apply a frozen, already-learned kernel to a new task it fits, then one it doesn't.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="aug">Augmentation &amp; Generalization</button>
+    <button class="tab-btn" data-tab="transfer">Frozen Kernel Transfer</button>
+  </div>
+
+  <!-- ==================== TAB 1: AUGMENTATION ==================== -->
+  <div class="tabpage active" id="tab-aug">
+    <div class="panel">
+      <h2>Same 8 Original Images, More Synthetic Variety</h2>
+      <p class="sub">Vertical bars always start at column 2; horizontal bars always start at row 2, in the ORIGINAL 8 training images — a deliberately small, position-frozen dataset. The held-out test set uses positions never in that original 8.</p>
+      <div class="slider-row"><label for="aCopies">Augmented copies per image</label><input type="range" id="aCopies" min="0" max="24" step="1" value="0"><output id="aCopiesOut">0</output></div>
+      <div class="row"><button class="op" onclick="retrain()">Retrain (new random augmentation draw)</button></div>
+
+      <div class="flex2">
+        <div>
+          <h2 style="font-size:14px;text-align:center;">Learned weights, reshaped to 6×8</h2>
+          <svg id="aHeatmap" viewBox="0 0 320 240"></svg>
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">training accuracy</div><div class="num" id="aTrainAcc">—</div></div>
+        <div class="metric coral"><div class="lbl">held-out test accuracy</div><div class="num" id="aTestAcc">—</div></div>
+        <div class="metric amber"><div class="lbl">total training examples</div><div class="num" id="aCount">—</div></div>
+      </div>
+      <div class="story-line" id="aStory"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: TRANSFER ==================== -->
+  <div class="tabpage" id="tab-transfer">
+    <div class="panel">
+      <h2>One Frozen Kernel, Two New Images It Never Trained On</h2>
+      <p class="sub">This is the exact kernel <code>cnn_and_audio_networks_feynman.md</code> Part 4B learned from random noise on ONE specific image. Zero retraining happens here — just applying it to brand-new data.</p>
+      <div class="row">
+        <button class="op active" id="btnVert" onclick="setTransferMode('vertical')">Vertical edge (related task)</button>
+        <button class="op" id="btnHoriz" onclick="setTransferMode('horizontal')">Horizontal edge (mismatched task)</button>
+      </div>
+      <div class="slider-row" id="colSliderRow"><label for="tCol">Edge column (vertical case only)</label><input type="range" id="tCol" min="1" max="5" step="1" value="4"><output id="tColOut">4</output></div>
+
+      <svg id="tSvg" viewBox="0 0 480 220"></svg>
+
+      <div class="metric-row">
+        <div class="metric green"><div class="lbl">max |response|</div><div class="num" id="tMaxResp">—</div></div>
+        <div class="metric amber"><div class="lbl">vs. the OTHER test case</div><div class="num" id="tRatio">—</div></div>
+      </div>
+      <div class="story-line" id="tStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Data Augmentation and Transfer Learning — The Feynman Way</b>
+    (<a href="../deep_learning/data_augmentation_and_transfer_learning_feynman.md">data_augmentation_and_transfer_learning_feynman.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function el(tag, attrs, text){
+    const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ==================== TAB 1: AUGMENTATION ====================
+  const H=6, W=8, BRIGHT=1.0, DIM=0.05;
+  function gauss(sd){
+    let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+    return sd * Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v);
+  }
+  function makeVertical(col){
+    const img = new Array(H*W).fill(DIM);
+    for(let r=0;r<H;r++) img[r*W+col] = BRIGHT;
+    return img.map(v => v + gauss(0.03));
+  }
+  function makeHorizontal(row){
+    const img = new Array(H*W).fill(DIM);
+    for(let c=0;c<W;c++) img[row*W+c] = BRIGHT;
+    return img.map(v => v + gauss(0.03));
+  }
+  function sigmoid(z){ return 1/(1+Math.exp(-z)); }
+  function trainLogReg(X, y, epochs, lr){
+    const n = X.length, d = X[0].length;
+    let w = new Array(d).fill(0).map(()=> (Math.random()-0.5)*0.02);
+    let b = 0;
+    for(let e=0;e<epochs;e++){
+      const gradW = new Array(d).fill(0);
+      let gradB = 0;
+      for(let i=0;i<n;i++){
+        let z = b;
+        for(let k=0;k<d;k++) z += X[i][k]*w[k];
+        const p = sigmoid(z);
+        const err = p - y[i];
+        for(let k=0;k<d;k++) gradW[k] += err*X[i][k];
+        gradB += err;
+      }
+      for(let k=0;k<d;k++) w[k] -= lr*gradW[k]/n;
+      b -= lr*gradB/n;
+    }
+    return {w,b};
+  }
+  function accuracy(model, X, y){
+    let correct=0;
+    for(let i=0;i<X.length;i++){
+      let z = model.b;
+      for(let k=0;k<X[i].length;k++) z += X[i][k]*model.w[k];
+      const pred = sigmoid(z) >= 0.5 ? 1 : 0;
+      if(pred===y[i]) correct++;
+    }
+    return correct/X.length;
+  }
+
+  // fixed original 8, and fixed held-out test set (mirrors the tutorial's Python experiment)
+  function buildOriginal(){
+    const X=[], y=[];
+    for(let i=0;i<4;i++){ X.push(makeVertical(2)); y.push(0); }
+    for(let i=0;i<4;i++){ X.push(makeHorizontal(2)); y.push(1); }
+    return {X,y};
+  }
+  function buildTestSet(){
+    const X=[], y=[];
+    [0,1,3,4,5,6,7].forEach(c => { X.push(makeVertical(c)); y.push(0); });
+    [0,1,3,4,5].forEach(r => { X.push(makeHorizontal(r)); y.push(1); });
+    return {X,y};
+  }
+  function drawHeatmap(w){
+    const svg = document.getElementById("aHeatmap");
+    svg.innerHTML = "";
+    const cellW = 320/W, cellH = 200/H;
+    const maxAbs = Math.max(0.01, ...w.map(Math.abs));
+    for(let r=0;r<H;r++){
+      for(let c=0;c<W;c++){
+        const v = w[r*W+c];
+        const t = v/maxAbs; // -1..1
+        const color = t >= 0 ? `rgba(255,206,84,${Math.min(1,Math.abs(t))})` : `rgba(122,179,213,${Math.min(1,Math.abs(t))})`;
+        svg.appendChild(el("rect",{x:c*cellW+2,y:r*cellH+2,width:cellW-4,height:cellH-4,fill:color,stroke:"rgba(244,241,232,0.15)"}));
+      }
+    }
+    svg.appendChild(el("text",{x:160,y:225,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)"},"amber = pushes toward 'horizontal'   blue = pushes toward 'vertical'"));
+  }
+
+  const TEST = buildTestSet();
+  function retrain(){
+    const nCopies = parseInt(document.getElementById("aCopies").value,10);
+    document.getElementById("aCopiesOut").textContent = nCopies;
+    const orig = buildOriginal();
+    let X = orig.X.slice(), y = orig.y.slice();
+    for(let i=0;i<nCopies;i++){ X.push(makeVertical(Math.floor(Math.random()*W))); y.push(0); }
+    for(let i=0;i<nCopies;i++){ X.push(makeHorizontal(Math.floor(Math.random()*H))); y.push(1); }
+    const model = trainLogReg(X, y, 1200, 0.5);
+    const trainAcc = accuracy(model, X, y);
+    const testAcc = accuracy(model, TEST.X, TEST.y);
+    document.getElementById("aTrainAcc").textContent = trainAcc.toFixed(3);
+    document.getElementById("aTestAcc").textContent = testAcc.toFixed(3);
+    document.getElementById("aCount").textContent = X.length;
+    document.getElementById("aStory").textContent = nCopies===0
+      ? "Zero augmentation: watch the weight heatmap spike at exactly row 2 and column 2 — pure position memorization."
+      : `${nCopies*2} synthetic copies added. Held-out test accuracy: ${(testAcc*100).toFixed(1)}%.`;
+    drawHeatmap(model.w);
+  }
+  document.getElementById("aCopies").addEventListener("input", retrain);
+  window.retrain = retrain;
+  retrain();
+
+  // ==================== TAB 2: TRANSFER ====================
+  const K = [
+    [-0.9888, -0.0305,  1.1013],
+    [-0.9411,  0.1162,  0.9057],
+    [-1.0702, -0.0857,  0.9931],
+  ];
+  function conv2dValid(img, kernel){
+    const kh=kernel.length, kw=kernel[0].length;
+    const ih=img.length, iw=img[0].length;
+    const oh=ih-kh+1, ow=iw-kw+1;
+    const out = [];
+    for(let i=0;i<oh;i++){
+      const row=[];
+      for(let j=0;j<ow;j++){
+        let s=0;
+        for(let a=0;a<kh;a++) for(let b=0;b<kw;b++) s += img[i+a][j+b]*kernel[a][b];
+        row.push(s);
+      }
+      out.push(row);
+    }
+    return out;
+  }
+  function makeVerticalImg(col){
+    const rows=5, cols=7;
+    const img=[];
+    for(let r=0;r<rows;r++){
+      const row=[];
+      for(let c=0;c<cols;c++) row.push(c < col ? 1 : 6);
+      img.push(row);
+    }
+    return img;
+  }
+  const HORIZ_IMG = [
+    [2,2,2,2,2],[2,2,2,2,2],[8,8,8,8,8],[8,8,8,8,8],[8,8,8,8,8]
+  ];
+  let transferMode = "vertical";
+  let lastVertMax = null, lastHorizMax = null;
+  function drawTransfer(img, out){
+    const svg = document.getElementById("tSvg");
+    svg.innerHTML = "";
+    const cell = 28;
+    const imgX0 = 20, imgY0 = 20;
+    const maxImgVal = Math.max(...img.flat());
+    img.forEach((row,i)=>row.forEach((v,j)=>{
+      const t = v/maxImgVal;
+      svg.appendChild(el("rect",{x:imgX0+j*cell,y:imgY0+i*cell,width:cell-2,height:cell-2,fill:`rgba(244,241,232,${0.15+0.7*t})`,stroke:"rgba(244,241,232,0.2)"}));
+    }));
+    svg.appendChild(el("text",{x:imgX0, y:imgY0-8, "font-size":11, fill:"var(--chalk-dim)"},"input image"));
+
+    const outX0 = imgX0 + img[0].length*cell + 40;
+    const maxAbs = Math.max(0.01, ...out.flat().map(Math.abs));
+    out.forEach((row,i)=>row.forEach((v,j)=>{
+      const t = v/maxAbs;
+      const color = t>=0 ? `rgba(143,209,158,${Math.min(1,Math.abs(t))})` : `rgba(255,130,102,${Math.min(1,Math.abs(t))})`;
+      svg.appendChild(el("rect",{x:outX0+j*cell,y:imgY0+i*cell,width:cell-2,height:cell-2,fill:color,stroke:"rgba(244,241,232,0.2)"}));
+      svg.appendChild(el("text",{x:outX0+j*cell+cell/2-1,y:imgY0+i*cell+cell/2+4,"text-anchor":"middle","font-size":9,fill:"var(--chalk)"}, v.toFixed(1)));
+    }));
+    svg.appendChild(el("text",{x:outX0, y:imgY0-8, "font-size":11, fill:"var(--chalk-dim)"},"frozen kernel's output"));
+  }
+  function updateTransfer(){
+    let img, out;
+    if(transferMode==="vertical"){
+      const col = parseInt(document.getElementById("tCol").value,10);
+      img = makeVerticalImg(col);
+      out = conv2dValid(img, K);
+      lastVertMax = Math.max(...out.flat().map(Math.abs));
+    } else {
+      img = HORIZ_IMG;
+      out = conv2dValid(img, K);
+      lastHorizMax = Math.max(...out.flat().map(Math.abs));
+    }
+    const curMax = transferMode==="vertical" ? lastVertMax : lastHorizMax;
+    document.getElementById("tMaxResp").textContent = curMax.toFixed(3);
+    if(lastVertMax!==null && lastHorizMax!==null){
+      const ratio = transferMode==="vertical" ? (lastVertMax/lastHorizMax) : (lastHorizMax/lastVertMax);
+      document.getElementById("tRatio").textContent = ratio.toFixed(2)+"x";
+    } else {
+      document.getElementById("tRatio").textContent = "switch tabs to compare";
+    }
+    document.getElementById("tStory").textContent = transferMode==="vertical"
+      ? "The kernel learned on a DIFFERENT image, at a DIFFERENT position, still fires cleanly at this new boundary — zero retraining."
+      : "Same frozen kernel, a genuinely different task (horizontal instead of vertical) — the response is far weaker and doesn't cleanly locate anything.";
+    drawTransfer(img, out);
+  }
+  window.setTransferMode = function(mode){
+    transferMode = mode;
+    document.getElementById("btnVert").classList.toggle("active", mode==="vertical");
+    document.getElementById("btnHoriz").classList.toggle("active", mode==="horizontal");
+    document.getElementById("colSliderRow").style.display = mode==="vertical" ? "flex" : "none";
+    updateTransfer();
+  };
+  document.getElementById("tCol").addEventListener("input", () => {
+    document.getElementById("tColOut").textContent = document.getElementById("tCol").value;
+    updateTransfer();
+  });
+  updateTransfer();
+  // prime both max values so the ratio metric works immediately
+  transferMode = "horizontal"; updateTransfer();
+  transferMode = "vertical"; document.getElementById("btnVert").classList.add("active"); document.getElementById("btnHoriz").classList.remove("active"); updateTransfer();
+})();
+</script>
+</body>
+</html>

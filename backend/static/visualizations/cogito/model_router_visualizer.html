@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Model router, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --purple:#b39ddb; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:920px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  h3{font-family:'Kalam',cursive;font-size:15px;margin:18px 0 8px;color:var(--chalk-dim);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:8px 0;}
+  .slider-row label{font-size:12px;color:var(--chalk-dim);min-width:230px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:70px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:560px;height:auto;}
+
+  .bars{display:flex;justify-content:center;gap:18px;margin:14px 0;flex-wrap:wrap;}
+  .bar-col{text-align:center;width:90px;}
+  .bar-track{height:120px;width:34px;margin:0 auto;background:rgba(244,241,232,0.06);border-radius:6px;position:relative;display:flex;align-items:flex-end;overflow:hidden;}
+  .bar-fill{width:100%;border-radius:6px 6px 0 0;transition:height 0.15s;}
+  .bar-lbl{font-size:11px;color:var(--chalk-dim);margin-top:6px;}
+  .bar-val{font-family:'Kalam',cursive;font-size:14px;color:var(--chalk);}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+  .metric.purple .num{color:var(--purple);}
+
+  table.bintbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.bintbl th, table.bintbl td{border:1px solid var(--border);padding:6px 8px;text-align:center;}
+  table.bintbl th{color:var(--chalk-dim);font-weight:700;}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;white-space:pre-line;}
+  .legend{display:flex;justify-content:center;gap:18px;font-size:11.5px;color:var(--chalk-dim);margin-top:2px;flex-wrap:wrap;}
+  .legend span.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Model Router, Live</h1>
+  <p class="sub">Companion to <b>model_router_feynman.md</b>. Three demos: the Choice/Score/Noul decision shapes computed exactly, threshold economics traced live under a noisy confidence signal, and why an overconfident router silently breaks that threshold math.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="t1">Three Decision Shapes</button>
+    <button class="tab-btn" data-tab="t2">Threshold Economics</button>
+    <button class="tab-btn" data-tab="t3">Calibration Matters</button>
+  </div>
+
+  <div class="tabpage active" id="t1">
+    <div class="panel">
+      <h2>Choice — which team?</h2>
+      <div class="slider-row"><label for="fRefund">has "refund" word</label><input type="range" id="fRefund" min="0" max="1" step="1" value="1"><output id="fRefundOut">1</output></div>
+      <div class="slider-row"><label for="fError">has "error" word</label><input type="range" id="fError" min="0" max="1" step="1" value="0"><output id="fErrorOut">0</output></div>
+      <div class="slider-row"><label for="fLogin">has "login" word</label><input type="range" id="fLogin" min="0" max="1" step="1" value="0"><output id="fLoginOut">0</output></div>
+      <div class="slider-row"><label for="fLen">message length (z-score)</label><input type="range" id="fLen" min="-2" max="2" step="0.1" value="0.3"><output id="fLenOut">0.3</output></div>
+      <div class="bars" id="choiceBars"></div>
+      <div class="story-line" id="choiceStory"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Score — how severe (0–10)?</h2>
+      <div class="slider-row"><label for="sevPeak">features suggest peak severity</label><input type="range" id="sevPeak" min="0" max="10" step="0.5" value="7"><output id="sevPeakOut">7.0</output></div>
+      <div class="slider-row"><label for="sevSpread">confidence spread (lower = sharper)</label><input type="range" id="sevSpread" min="0.05" max="0.6" step="0.01" value="0.15"><output id="sevSpreadOut">0.15</output></div>
+      <svg id="scoresvg" viewBox="0 0 560 200"></svg>
+      <div class="metric-row"><div class="metric amber"><div class="lbl">E[severity]</div><div class="num" id="scoreExp">—</div></div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Noul — is it urgent?</h2>
+      <div class="slider-row"><label for="nDays">days waiting (z-score)</label><input type="range" id="nDays" min="-2" max="3" step="0.1" value="1.4"><output id="nDaysOut">1.4</output></div>
+      <div class="slider-row"><label for="nEsc">contains escalation word</label><input type="range" id="nEsc" min="0" max="1" step="1" value="1"><output id="nEscOut">1</output></div>
+      <div class="slider-row"><label for="nSent">sentiment negativity</label><input type="range" id="nSent" min="0" max="1" step="0.05" value="0.6"><output id="nSentOut">0.6</output></div>
+      <div class="metric-row"><div class="metric coral"><div class="lbl">P(urgent)</div><div class="num" id="noulOut">—</div></div></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t2">
+    <div class="panel">
+      <h2>A noisy router's real cost/success tradeoff</h2>
+      <p class="sub">70% of tasks are truly easy. The router's stated confidence that a task is easy is correlated with truth but imperfect (mean 0.80 on truly-easy tasks, 0.35 on truly-hard ones). Drag τ — "route to the cheap model only if confidence ≥ τ."</p>
+      <div class="row"><button class="op" onclick="resampleT2()">Resample 20,000 tasks</button></div>
+      <div class="slider-row"><label for="tauSlider">Threshold τ</label><input type="range" id="tauSlider" min="0" max="1.01" step="0.01" value="0.6"><output id="tauOut">0.60</output></div>
+      <svg id="threshsvg" viewBox="0 0 560 320"></svg>
+      <div class="legend"><span><span class="sw" style="background:#ff8266"></span>cost ($, right scale not shown — see metric)</span><span><span class="sw" style="background:#8fd19e"></span>success rate</span></div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">expected cost / task</div><div class="num" id="t2cost">—</div></div>
+        <div class="metric green"><div class="lbl">expected success</div><div class="num" id="t2succ">—</div></div>
+        <div class="metric amber"><div class="lbl">% routed to cheap model</div><div class="num" id="t2frac">—</div></div>
+      </div>
+      <div class="story-line" id="t2story"></div>
+    </div>
+  </div>
+
+  <div class="tabpage" id="t3">
+    <div class="panel">
+      <h2>Same discrimination, different honesty</h2>
+      <p class="sub">Each task's true probability of being easy is drawn once; the actual outcome is a real coin flip at that exact probability, so honestly reporting it is perfectly calibrated by construction. Drag the overconfidence dial to stretch reported confidence away from 50% without changing a single decision.</p>
+      <div class="row"><button class="op" onclick="resampleT3()">Resample 40,000 tasks</button></div>
+      <div class="slider-row"><label for="overconfSlider">Overconfidence strength (1.0 = honest)</label><input type="range" id="overconfSlider" min="1.0" max="2.5" step="0.05" value="1.7"><output id="overconfOut">1.70</output></div>
+      <table class="bintbl" id="calBinTable"></table>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">calibrated @ τ=0.85: cost</div><div class="num" id="calCost">—</div></div>
+        <div class="metric blue"><div class="lbl">calibrated @ τ=0.85: success</div><div class="num" id="calSucc">—</div></div>
+        <div class="metric coral"><div class="lbl">overconfident @ τ=0.85: cost</div><div class="num" id="ocCost">—</div></div>
+        <div class="metric coral"><div class="lbl">overconfident @ τ=0.85: success</div><div class="num" id="ocSucc">—</div></div>
+      </div>
+      <div class="story-line" id="t3story"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>model_router_feynman.md</b>
+    (<a href="../deep_learning/model_router_feynman.md">model_router_feynman.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const svgNS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs){
+    const e = document.createElementNS(svgNS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function softmax(scores){
+    const m = Math.max(...scores);
+    const ex = scores.map(s=>Math.exp(s-m));
+    const sum = ex.reduce((a,b)=>a+b,0);
+    return ex.map(e=>e/sum);
+  }
+  function sigmoid(z){ return 1/(1+Math.exp(-z)); }
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ================= TAB 1 =================
+  const CHOICE_W = [
+    [ 2.5, -0.5, -0.5,  0.1],
+    [-0.8,  2.2, -0.4,  0.2],
+    [-0.9, -0.6,  2.6,  0.0],
+  ];
+  const CHOICE_LABELS = ['billing','technical','account'];
+  const CHOICE_COLORS = ['#7fb3d5','#ff8266','#8fd19e'];
+
+  function renderChoice(){
+    const x = [
+      parseFloat(document.getElementById('fRefund').value),
+      parseFloat(document.getElementById('fError').value),
+      parseFloat(document.getElementById('fLogin').value),
+      parseFloat(document.getElementById('fLen').value),
+    ];
+    ['fRefund','fError','fLogin','fLen'].forEach(id=>{
+      document.getElementById(id+'Out').textContent = document.getElementById(id).value;
+    });
+    const scores = CHOICE_W.map(row=> row.reduce((s,w,i)=>s+w*x[i],0));
+    const probs = softmax(scores);
+    const container = document.getElementById('choiceBars');
+    container.innerHTML = '';
+    probs.forEach((p,i)=>{
+      const col = document.createElement('div'); col.className='bar-col';
+      const track = document.createElement('div'); track.className='bar-track';
+      const fill = document.createElement('div'); fill.className='bar-fill';
+      fill.style.height = (p*100).toFixed(1)+'%';
+      fill.style.background = CHOICE_COLORS[i];
+      track.appendChild(fill);
+      col.appendChild(track);
+      const lbl = document.createElement('div'); lbl.className='bar-lbl'; lbl.textContent = CHOICE_LABELS[i];
+      const val = document.createElement('div'); val.className='bar-val'; val.textContent = (p*100).toFixed(1)+'%';
+      col.appendChild(val); col.appendChild(lbl);
+      container.appendChild(col);
+    });
+    const top = CHOICE_LABELS[probs.indexOf(Math.max(...probs))];
+    document.getElementById('choiceStory').textContent =
+      'Raw scores: ' + scores.map(s=>s.toFixed(3)).join(', ') + '. Routed to: ' + top + '.';
+  }
+  ['fRefund','fError','fLogin','fLen'].forEach(id=>document.getElementById(id).addEventListener('input', renderChoice));
+  renderChoice();
+
+  const OXs=40, OYs=170, Ws=480, Hs=130;
+  function pxs(i){ return OXs + i/10*Ws; }
+  function pys(p, maxp){ return OYs - (p/maxp)*Hs; }
+  function renderScore(){
+    const peak = parseFloat(document.getElementById('sevPeak').value);
+    const spread = parseFloat(document.getElementById('sevSpread').value);
+    document.getElementById('sevPeakOut').textContent = peak.toFixed(1);
+    document.getElementById('sevSpreadOut').textContent = spread.toFixed(2);
+    const levels = Array.from({length:11}, (_,i)=>i);
+    const k = 0.15*(0.15/spread)*(0.15/spread); // keep default spread=0.15 matching k=0.15 exactly
+    const raw = levels.map(lv => -k*(lv-peak)*(lv-peak));
+    const p = softmax(raw);
+    const expSeverity = levels.reduce((s,lv,i)=>s+lv*p[i],0);
+    const svg = document.getElementById('scoresvg'); svg.innerHTML='';
+    svg.appendChild(el('line',{x1:OXs,y1:OYs,x2:OXs+Ws,y2:OYs,stroke:'#7f8f83','stroke-width':1.2}));
+    const maxp = Math.max(...p)*1.15;
+    levels.forEach((lv,i)=>{
+      const barW = Ws/11 - 8;
+      const bx = pxs(lv)+4;
+      const by = pys(p[i], maxp);
+      svg.appendChild(el('rect',{x:bx, y:by, width:barW, height:(OYs-by), fill:'#ffce54', opacity:0.85, rx:2}));
+      const t = el('text',{x:bx+barW/2, y:OYs+16,'font-size':'10','font-family':'JetBrains Mono, monospace',fill:'#7f8f83','text-anchor':'middle'});
+      t.textContent = lv; svg.appendChild(t);
+    });
+    const mx = OXs + expSeverity/10*Ws;
+    svg.appendChild(el('line',{x1:mx,y1:OYs,x2:mx,y2:OYs-Hs-10,stroke:'#8fd19e','stroke-width':1.6,'stroke-dasharray':'4,3'}));
+    document.getElementById('scoreExp').textContent = expSeverity.toFixed(4);
+  }
+  ['sevPeak','sevSpread'].forEach(id=>document.getElementById(id).addEventListener('input', renderScore));
+  renderScore();
+
+  const NOUL_W = [0.9, 1.6, 0.7], NOUL_B = -1.2;
+  function renderNoul(){
+    const x = [
+      parseFloat(document.getElementById('nDays').value),
+      parseFloat(document.getElementById('nEsc').value),
+      parseFloat(document.getElementById('nSent').value),
+    ];
+    document.getElementById('nDaysOut').textContent = x[0].toFixed(1);
+    document.getElementById('nEscOut').textContent = x[1];
+    document.getElementById('nSentOut').textContent = x[2].toFixed(2);
+    const z = NOUL_W.reduce((s,w,i)=>s+w*x[i],0) + NOUL_B;
+    document.getElementById('noulOut').textContent = (sigmoid(z)*100).toFixed(2)+'%';
+  }
+  ['nDays','nEsc','nSent'].forEach(id=>document.getElementById(id).addEventListener('input', renderNoul));
+  renderNoul();
+
+  // ================= TAB 2: THRESHOLD ECONOMICS =================
+  const COST_CHEAP=0.001, COST_EXP=0.02;
+  const SUCC_CHEAP_EASY=0.95, SUCC_CHEAP_HARD=0.40, SUCC_EXP_EASY=0.99, SUCC_EXP_HARD=0.95;
+  let t2sample = null;
+  function gaussian(mean, std){
+    let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+    return mean + std*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+  }
+  function makeT2Sample(n){
+    const isEasy = new Array(n), conf = new Array(n);
+    for(let i=0;i<n;i++){
+      const easy = Math.random() < 0.7;
+      isEasy[i] = easy;
+      let c = easy ? gaussian(0.80,0.15) : gaussian(0.35,0.15);
+      conf[i] = Math.max(0, Math.min(1, c));
+    }
+    return {isEasy, conf};
+  }
+  function evalTau(sample, tau){
+    const n = sample.isEasy.length;
+    let costSum=0, succSum=0, cheapCount=0;
+    for(let i=0;i<n;i++){
+      const routeCheap = sample.conf[i] >= tau;
+      if(routeCheap) cheapCount++;
+      costSum += routeCheap ? COST_CHEAP : COST_EXP;
+      const easy = sample.isEasy[i];
+      let s;
+      if(routeCheap) s = easy ? SUCC_CHEAP_EASY : SUCC_CHEAP_HARD;
+      else s = easy ? SUCC_EXP_EASY : SUCC_EXP_HARD;
+      succSum += s;
+    }
+    return {cost: costSum/n, succ: succSum/n, frac: cheapCount/n};
+  }
+  const OXt=40, OYt=280, Wt=480, Ht=220;
+  function pxt(tau){ return OXt + tau/1.01*Wt; }
+  function pyt_cost(c){ return OYt - (c/0.02)*Ht; }
+  function pyt_succ(s){ return OYt - s*Ht; }
+  function renderT2(){
+    const tau = parseFloat(document.getElementById('tauSlider').value);
+    document.getElementById('tauOut').textContent = tau.toFixed(2);
+    if(!t2sample) t2sample = makeT2Sample(20000);
+    const svg = document.getElementById('threshsvg'); svg.innerHTML='';
+    svg.appendChild(el('line',{x1:OXt,y1:OYt,x2:OXt+Wt,y2:OYt,stroke:'#7f8f83','stroke-width':1.2}));
+    svg.appendChild(el('line',{x1:OXt,y1:OYt-Ht,x2:OXt,y2:OYt,stroke:'#7f8f83','stroke-width':1.2}));
+    const taus = []; for(let tt=0; tt<=1.011; tt+=0.02) taus.push(tt);
+    let costPts=[], succPts=[];
+    taus.forEach(tt=>{
+      const r = evalTau(t2sample, tt);
+      costPts.push(pxt(tt)+','+pyt_cost(r.cost));
+      succPts.push(pxt(tt)+','+pyt_succ(r.succ));
+    });
+    svg.appendChild(el('path',{d:'M '+costPts.join(' L '), fill:'none', stroke:'#ff8266','stroke-width':2.2}));
+    svg.appendChild(el('path',{d:'M '+succPts.join(' L '), fill:'none', stroke:'#8fd19e','stroke-width':2.2}));
+    const cur = evalTau(t2sample, tau);
+    const mx = pxt(tau);
+    svg.appendChild(el('line',{x1:mx,y1:OYt,x2:mx,y2:OYt-Ht,stroke:'#ffce54','stroke-width':1.3,'stroke-dasharray':'4,3'}));
+    svg.appendChild(el('circle',{cx:mx,cy:pyt_cost(cur.cost),r:4.5,fill:'#ff8266'}));
+    svg.appendChild(el('circle',{cx:mx,cy:pyt_succ(cur.succ),r:4.5,fill:'#8fd19e'}));
+    document.getElementById('t2cost').textContent = '$'+cur.cost.toFixed(5);
+    document.getElementById('t2succ').textContent = (cur.succ*100).toFixed(2)+'%';
+    document.getElementById('t2frac').textContent = (cur.frac*100).toFixed(1)+'%';
+    document.getElementById('t2story').textContent =
+      'At τ='+tau.toFixed(2)+', '+(cur.frac*100).toFixed(1)+'% of tasks go to the cheap model. ' +
+      'Cost and success move together as τ changes — there is no threshold that beats this curve, only a point chosen on it.';
+  }
+  document.getElementById('tauSlider').addEventListener('input', renderT2);
+  window.resampleT2 = function(){ t2sample = makeT2Sample(20000); renderT2(); };
+  renderT2();
+
+  // ================= TAB 3: CALIBRATION MATTERS =================
+  let t3sample = null;
+  function betaTwoTwo(){
+    // Beta(2,2) == median of 3 uniforms (order statistic identity)
+    const a=Math.random(), b=Math.random(), c=Math.random();
+    return [a,b,c].sort((x,y)=>x-y)[1];
+  }
+  function makeT3Sample(n){
+    const pTrue=new Array(n), isEasy=new Array(n);
+    for(let i=0;i<n;i++){
+      const p = betaTwoTwo();
+      pTrue[i]=p;
+      isEasy[i] = Math.random() < p;
+    }
+    return {pTrue, isEasy};
+  }
+  function binReport(conf, isEasy, lo, hi){
+    let n=0, hit=0;
+    for(let i=0;i<conf.length;i++){
+      if(conf[i]>=lo && conf[i]<hi){ n++; if(isEasy[i]) hit++; }
+    }
+    return {n, actual: n? hit/n : NaN};
+  }
+  function renderT3(){
+    const strength = parseFloat(document.getElementById('overconfSlider').value);
+    document.getElementById('overconfOut').textContent = strength.toFixed(2);
+    if(!t3sample) t3sample = makeT3Sample(40000);
+    const calibrated = t3sample.pTrue;
+    const overconf = t3sample.pTrue.map(p=> Math.max(0, Math.min(1, 0.5+strength*(p-0.5))));
+
+    const bins = [[0.05,0.15],[0.45,0.55],[0.85,0.95]];
+    let html = '<tr><th>bin (stated)</th><th>calibrated: actual</th><th>overconfident: actual</th></tr>';
+    bins.forEach(([lo,hi])=>{
+      const rc = binReport(calibrated, t3sample.isEasy, lo, hi);
+      const ro = binReport(overconf, t3sample.isEasy, lo, hi);
+      html += `<tr><td>~${((lo+hi)/2*100).toFixed(0)}%</td><td>${(rc.actual*100).toFixed(1)}%</td><td>${(ro.actual*100).toFixed(1)}%</td></tr>`;
+    });
+    document.getElementById('calBinTable').innerHTML = html;
+
+    const TAU=0.85;
+    function fixedTau(conf){
+      const n=conf.length; let costSum=0, succSum=0;
+      for(let i=0;i<n;i++){
+        const routeCheap = conf[i]>=TAU;
+        costSum += routeCheap?COST_CHEAP:COST_EXP;
+        const easy = t3sample.isEasy[i];
+        succSum += routeCheap ? (easy?SUCC_CHEAP_EASY:SUCC_CHEAP_HARD) : (easy?SUCC_EXP_EASY:SUCC_EXP_HARD);
+      }
+      return {cost:costSum/n, succ:succSum/n};
+    }
+    const rc = fixedTau(calibrated), ro = fixedTau(overconf);
+    document.getElementById('calCost').textContent = '$'+rc.cost.toFixed(5);
+    document.getElementById('calSucc').textContent = (rc.succ*100).toFixed(2)+'%';
+    document.getElementById('ocCost').textContent = '$'+ro.cost.toFixed(5);
+    document.getElementById('ocSucc').textContent = (ro.succ*100).toFixed(2)+'%';
+    document.getElementById('t3story').textContent =
+      'At the identical rule "route cheap if confidence ≥ 0.85": the overconfident router looks cheaper ($' + ro.cost.toFixed(5) +
+      ' vs $' + rc.cost.toFixed(5) + ') but only because it is shipping genuinely uncertain requests to the cheap model while still calling that "85% sure" — success drops from ' +
+      (rc.succ*100).toFixed(2) + '% to ' + (ro.succ*100).toFixed(2) + '%.';
+  }
+  document.getElementById('overconfSlider').addEventListener('input', renderT3);
+  window.resampleT3 = function(){ t3sample = makeT3Sample(40000); renderT3(); };
+  renderT3();
+})();
+</script>
+</body>
+</html>

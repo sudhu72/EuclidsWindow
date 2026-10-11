@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Categorical encoding, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --purple:#b39ddb; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{overflow-x:hidden;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:920px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.5;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .row .lead{font-size:11.5px;color:var(--chalk-dim);}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  button:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+  input[type=range]{width:220px;accent-color:#7fb3d5;}
+
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:14px auto;width:100%;max-width:640px;height:auto;}
+
+  .tblwrap{overflow-x:auto;max-width:100%;}
+  table.dtbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.dtbl th, table.dtbl td{border:1px solid var(--border);padding:6px 8px;text-align:center;}
+  table.dtbl th{color:var(--chalk-dim);font-weight:700;}
+  table.dtbl tr.hl td{background:rgba(127,179,213,0.16);color:var(--chalk);font-weight:700;}
+  table.dtbl tr.dimrow td{color:var(--chalk-dim);}
+  table.dtbl td.pos{color:var(--green);}
+  table.dtbl td.neg{color:var(--coral);}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:130px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:16px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;white-space:pre-line;line-height:1.55;}
+  .calc{font-size:12.5px;line-height:1.75;margin:10px 0;color:var(--chalk);}
+  .calc b{color:var(--amber);}
+  .legend{display:flex;justify-content:center;gap:18px;font-size:11.5px;color:var(--chalk-dim);margin-top:2px;flex-wrap:wrap;}
+  .legend span.sw{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle;}
+  .note{font-size:11.5px;color:var(--chalk-dim);border-left:3px solid var(--amber);padding:6px 10px;margin:12px 0 0;line-height:1.5;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;line-height:1.5;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Categorical Encoding, Live</h1>
+  <p class="sub">Companion to <b>feature_engineering_and_encoding_feynman.md</b>. Seven demos, and every worked example in the tutorial is one button: ordinal vs. one-hot, target encoding with smoothing, out-of-fold encoding, the noise-leak experiment, frequency encoding, the hashing trick, and high-cardinality columns. Tabs 1, 2, 3, 5 and 6 compute every number live in this page; tabs 4 and 7 show results measured with scikit-learn 1.7.2.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="t1">1 · Ordinal vs. one-hot</button>
+    <button class="tab-btn" data-tab="t2">2 · Target encoding</button>
+    <button class="tab-btn" data-tab="t3">3 · Out-of-fold</button>
+    <button class="tab-btn" data-tab="t4">4 · Noise leak</button>
+    <button class="tab-btn" data-tab="t5">5 · Frequency</button>
+    <button class="tab-btn" data-tab="t6">6 · Hashing trick</button>
+    <button class="tab-btn" data-tab="t7">7 · High cardinality</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <div class="tabpage active" id="t1">
+    <div class="panel">
+      <h2>Numbering colours invents an order; one-hot doesn't</h2>
+      <p class="sub">Nine rows, three per colour; the target y is high for green only. The x-axis is the number each encoding gives the colour. The amber line/steps are the model's predictions.</p>
+      <div class="row" id="t1Btns">
+        <button class="op" data-k="ord1">Ordinal red=0, green=1, blue=2</button>
+        <button class="op" data-k="ord2">Ordinal red=0, blue=1, green=2</button>
+        <button class="op" data-k="oh">One-hot</button>
+        <button class="op" data-k="tree1">Tree depth 1 on red=0,green=1,blue=2</button>
+        <button class="op" data-k="tree2">Tree depth 2 on red=0,green=1,blue=2</button>
+      </div>
+      <svg id="t1svg" viewBox="0 0 640 300" aria-label="Colour example"></svg>
+      <div class="metric-row">
+        <div class="metric amber"><div class="lbl">R² (1 = perfect)</div><div class="num" id="t1R2">—</div></div>
+        <div class="metric blue"><div class="lbl">prediction red / green / blue</div><div class="num" id="t1Pred">—</div></div>
+      </div>
+      <div class="story-line" id="t1story" aria-live="polite">Pick an encoding.</div>
+    </div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div class="tabpage" id="t2">
+    <div class="panel">
+      <h2>Target encoding: each city becomes its average y, pulled toward the prior</h2>
+      <p class="sub">The twelve rows from the tutorial. encoding = (sum of y + m × prior) / (n + m), prior = overall mean of y. m is the number of imaginary "average" rows each city starts with.</p>
+      <div class="row" id="t2Btns">
+        <button class="op" data-m="0">m = 0 (raw mean)</button>
+        <button class="op" data-m="2">m = 2</button>
+        <button class="op" data-m="10">m = 10</button>
+      </div>
+      <div class="row"><span class="lead">or drag m:</span><input type="range" id="t2m" min="0" max="30" step="1" value="2"><span id="t2mv" class="lead">m = 2</span></div>
+      <svg id="t2svg" viewBox="0 0 640 260" aria-label="Encodings per city"></svg>
+      <div class="legend"><span><span class="sw" style="background:#7f8f83"></span>raw mean (m = 0)</span><span><span class="sw" style="background:#ffce54"></span>smoothed encoding</span><span><span class="sw" style="background:#7fb3d5"></span>prior 0.5</span></div>
+      <div class="tblwrap"><table class="dtbl" id="t2tbl"></table></div>
+      <div class="story-line" id="t2story" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3 -->
+  <div class="tabpage" id="t3">
+    <div class="panel">
+      <h2>Out-of-fold: no row is allowed to see its own label</h2>
+      <p class="sub">Same twelve rows, m = 2. Three folds: rows 1–4, 5–8, 9–12. To encode a fold, use only the other two folds' rows. A city missing from the other folds gets the prior.</p>
+      <div class="row" id="t3Btns">
+        <button class="op" data-k="in">In-fold (leaky)</button>
+        <button class="op" data-k="f0">Hold out fold 1</button>
+        <button class="op" data-k="f1">Hold out fold 2</button>
+        <button class="op" data-k="f2">Hold out fold 3</button>
+        <button class="op" data-k="oof">Full out-of-fold column</button>
+      </div>
+      <div class="calc" id="t3calc"></div>
+      <div class="tblwrap"><table class="dtbl" id="t3tbl"></table></div>
+      <div class="metric-row">
+        <div class="metric coral"><div class="lbl">corr(in-fold encoding, y)</div><div class="num" id="t3cin">—</div></div>
+        <div class="metric green"><div class="lbl">corr(out-of-fold encoding, y)</div><div class="num" id="t3coof">—</div></div>
+      </div>
+      <div class="story-line" id="t3story" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- TAB 4 -->
+  <div class="tabpage" id="t4">
+    <div class="panel">
+      <h2>Target-encoding pure noise: a fake AUC of 0.874</h2>
+      <p class="sub">2,000 rows, a random user-ID column (1,000 possible IDs, 859 appear), coin-flip labels independent of the ID. Logistic regression on the target-encoded ID. Honest answer: AUC ≈ 0.5. Measured with scikit-learn 1.7.2 (TargetEncoder, LogisticRegression, 5-fold stratified CV).</p>
+      <div class="row" id="t4Btns">
+        <button class="op" data-k="cv">Cross-validation</button>
+        <button class="op" data-k="tt">Train vs. test</button>
+        <button class="op" data-k="smooth">Does smoothing fix it?</button>
+        <button class="op" data-k="coef">What the model learned</button>
+      </div>
+      <svg id="t4svg" viewBox="0 0 640 280" aria-label="AUC bars"></svg>
+      <div class="story-line" id="t4story" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- TAB 5 -->
+  <div class="tabpage" id="t5">
+    <div class="panel">
+      <h2>Frequency encoding: each city becomes how common it is</h2>
+      <p class="sub">No labels are used, so there is nothing to leak. The blind spot: cities with equal counts become identical.</p>
+      <div class="row" id="t5Btns">
+        <button class="op" data-k="base">Count the twelve rows</button>
+        <button class="op" data-k="tie">Add cities E and F, 3 rows each</button>
+      </div>
+      <div class="tblwrap"><table class="dtbl" id="t5tbl"></table></div>
+      <div class="story-line" id="t5story" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- TAB 6 -->
+  <div class="tabpage" id="t6">
+    <div class="panel">
+      <h2>The hashing trick: column = |hash| mod k</h2>
+      <p class="sub">This page runs MurmurHash3 (32-bit, seed 0), the same hash scikit-learn's FeatureHasher uses, on each string's UTF-8 bytes. Colliding cities share a colour.</p>
+      <div class="row" id="t6Btns">
+        <button class="op" data-k="16">6 cities → 16 columns</button>
+        <button class="op" data-k="8">6 cities → 8 columns</button>
+        <button class="op" data-k="4">6 cities → 4 columns</button>
+        <button class="op" data-k="ids">1,000 user IDs vs. the birthday formula</button>
+      </div>
+      <svg id="t6svg" viewBox="0 0 640 220" aria-label="Hash buckets"></svg>
+      <div class="tblwrap"><table class="dtbl" id="t6tbl"></table></div>
+      <div class="story-line" id="t6story" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- TAB 7 -->
+  <div class="tabpage" id="t7">
+    <div class="panel">
+      <h2>High cardinality: too many columns, too few rows each, strangers at test time</h2>
+      <p class="sub">The noise data from tab 4, split 70/30 (1,400 training rows, 600 test rows). Measured with scikit-learn's OneHotEncoder.</p>
+      <div class="row" id="t7Btns">
+        <button class="op" data-k="cols">Column explosion</button>
+        <button class="op" data-k="rare">Rare levels</button>
+        <button class="op" data-k="unseen">Unseen at test time</button>
+        <button class="op" data-k="lump">Lump rare levels (min_frequency)</button>
+      </div>
+      <svg id="t7svg" viewBox="0 0 640 260" aria-label="High cardinality bars"></svg>
+      <div class="story-line" id="t7story" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <a href="../foundations/feature_engineering_and_encoding_feynman.md">feature_engineering_and_encoding_feynman.md</a>. Open directly in any browser: no install, nothing sent anywhere (only Google Fonts is requested, falling back to system fonts offline).
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const C = {chalk:'#f4f1e8', dim:'#7f8f83', amber:'#ffce54', coral:'#ff8266', green:'#8fd19e', blue:'#7fb3d5', purple:'#b39ddb'};
+  const FONT = 'JetBrains Mono, monospace';
+  const $ = id => document.getElementById(id);
+  function el(tag, attrs, text){
+    const e = document.createElementNS(svgNS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function adder(svg){ return (tag, attrs, text) => { const e = el(tag, attrs, text); svg.appendChild(e); return e; }; }
+  function setActive(buttons, active){ buttons.forEach(b => b.classList.toggle('active', b === active)); }
+  const f3 = v => v.toFixed(3);
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tabpage').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      $(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // generic horizontal-ish vertical bar chart
+  function bars(svg, items, ymax, opts){
+    svg.innerHTML = '';
+    const add = adder(svg);
+    const W = 640, H = +svg.getAttribute('viewBox').split(' ')[3], l = 56, r = 16, t = 22, b = 52;
+    const py = v => H - b - v / ymax * (H - t - b);
+    (opts.ticks || []).forEach(v => {
+      add('line', {x1: l, x2: W - r, y1: py(v), y2: py(v), stroke: C.chalk, 'stroke-opacity': 0.07});
+      add('text', {x: l - 8, y: py(v) + 4, 'text-anchor': 'end', 'font-size': 11, 'font-family': FONT, fill: C.dim}, opts.tfmt ? opts.tfmt(v) : v);
+    });
+    add('line', {x1: l, y1: H - b, x2: W - r, y2: H - b, stroke: C.dim});
+    const slot = (W - l - r) / items.length, bw = Math.min(80, slot * 0.6);
+    items.forEach((it, i) => {
+      const cx = l + slot * (i + 0.5);
+      add('rect', {x: cx - bw / 2, y: py(it.v), width: bw, height: Math.max(0, H - b - py(it.v)), fill: it.c, 'fill-opacity': 0.85, rx: 3});
+      add('text', {x: cx, y: py(it.v) - 6, 'text-anchor': 'middle', 'font-size': 12, 'font-family': FONT, fill: C.chalk, 'font-weight': 700}, it.lab);
+      String(it.name).split('\n').forEach((line, j) => add('text', {x: cx, y: H - b + 16 + j * 13, 'text-anchor': 'middle', 'font-size': 10.5, 'font-family': FONT, fill: C.dim}, line));
+    });
+    if (opts.ref !== undefined){
+      add('line', {x1: l, x2: W - r, y1: py(opts.ref), y2: py(opts.ref), stroke: C.blue, 'stroke-dasharray': '5 4', 'stroke-width': 1.5});
+      add('text', {x: W - r - 4, y: py(opts.ref) - 5, 'text-anchor': 'end', 'font-size': 11, 'font-family': FONT, fill: C.blue}, opts.refLab);
+    }
+  }
+
+  // ================= TAB 1 =================
+  const COL = ['red','red','red','green','green','green','blue','blue','blue'];
+  const Y1 = [1.0,1.2,0.8,5.0,5.2,4.8,2.0,2.2,1.8];
+  const COLHEX = {red: C.coral, green: C.green, blue: C.blue};
+  const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+  function r2(y, p){ const m = mean(y); let ss = 0, sr = 0; y.forEach((v, i) => { ss += (v - m) ** 2; sr += (v - p[i]) ** 2; }); return 1 - sr / ss; }
+  function ols(x, y){ const mx = mean(x), my = mean(y); let sxy = 0, sxx = 0; x.forEach((v, i) => { sxy += (v - mx) * (y[i] - my); sxx += (v - mx) ** 2; }); const b1 = sxy / sxx; return {b0: my - b1 * mx, b1}; }
+  // greedy regression tree on one feature, depth-limited
+  function tree(x, y, idx, depth){
+    const ys = idx.map(i => y[i]), m = mean(ys);
+    if (depth === 0 || idx.length < 2) return {leaf: m};
+    const vals = [...new Set(idx.map(i => x[i]))].sort((a, b) => a - b);
+    let best = null;
+    for (let k = 0; k < vals.length - 1; k++){
+      const th = (vals[k] + vals[k + 1]) / 2;
+      const L = idx.filter(i => x[i] <= th), R = idx.filter(i => x[i] > th);
+      const sse = a => { const mm = mean(a.map(i => y[i])); return a.reduce((s, i) => s + (y[i] - mm) ** 2, 0); };
+      const s = sse(L) + sse(R);
+      if (!best || s < best.s - 1e-12) best = {s, th, L, R};
+    }
+    if (!best) return {leaf: m};
+    return {th: best.th, l: tree(x, y, best.L, depth - 1), r: tree(x, y, best.R, depth - 1)};
+  }
+  const tpred = (t, v) => t.leaf !== undefined ? t.leaf : (v <= t.th ? tpred(t.l, v) : tpred(t.r, v));
+  const CODE1 = {red: 0, green: 1, blue: 2}, CODE2 = {red: 0, blue: 1, green: 2};
+  function t1Compute(k){
+    const code = k === 'ord2' ? CODE2 : CODE1;
+    const x = COL.map(c => code[c]);
+    let predOf;
+    if (k === 'ord1' || k === 'ord2'){ const f = ols(x, Y1); predOf = v => f.b0 + f.b1 * v; }
+    else if (k === 'oh'){ const gm = {}; ['red','green','blue'].forEach(c => gm[c] = mean(Y1.filter((_, i) => COL[i] === c))); predOf = v => gm[Object.keys(CODE1).find(c => CODE1[c] === v)]; }
+    else { const t = tree(x, Y1, x.map((_, i) => i), k === 'tree1' ? 1 : 2); predOf = v => tpred(t, v); }
+    const p = x.map(predOf);
+    return {code, x, predOf, R2: r2(Y1, p), byColour: ['red','green','blue'].map(c => predOf(code[c]))};
+  }
+  const T1STORY = {
+    ord1: 'A straight line through codes 0, 1, 2 must rise or fall steadily, but y goes up (green) and back down (blue). Best line: 2.167 + 0.5 × code. It nearly misses the whole pattern.',
+    ord2: 'Same three labels, different order: now the codes happen to increase with y (red 1, blue 2, green 5), so the line fits much better. The model\'s quality depended on an arbitrary ordering.',
+    oh: 'One-hot gives each colour its own 0/1 column, so the linear model learns one number per colour: exactly the group means 1.0, 5.0, 2.0. The leftover 0.009 is the within-colour noise.',
+    tree1: 'A depth-1 tree makes one split on the bad ordinal code (between 0 and 1), so green and blue are lumped together. Better than the line, but not perfect.',
+    tree2: 'A depth-2 tree makes two splits, at 0.5 and 1.5, separating all three codes. That is one prediction per colour, the same answer as one-hot. Trees pay for a bad order with extra splits, not with a wrong answer.'
+  };
+  function renderT1(k){
+    const svg = $('t1svg'); svg.innerHTML = ''; const add = adder(svg);
+    const W = 640, H = 300, l = 52, r = 20, t = 16, b = 46;
+    const px = v => l + (v + 0.5) / 3 * (W - l - r), py = v => H - b - v / 6 * (H - t - b);
+    [0, 1, 2, 3, 4, 5, 6].forEach(v => { add('line', {x1: l, x2: W - r, y1: py(v), y2: py(v), stroke: C.chalk, 'stroke-opacity': 0.07}); add('text', {x: l - 8, y: py(v) + 4, 'text-anchor': 'end', 'font-size': 11, 'font-family': FONT, fill: C.dim}, v); });
+    add('line', {x1: l, y1: H - b, x2: W - r, y2: H - b, stroke: C.dim});
+    add('text', {x: 14, y: (t + H - b) / 2, 'text-anchor': 'middle', 'font-size': 11, 'font-family': FONT, fill: C.dim, transform: `rotate(-90 14 ${(t + H - b) / 2})`}, 'y');
+    if (!k){ $('t1R2').textContent = '—'; $('t1Pred').textContent = '—'; return; }
+    const res = t1Compute(k);
+    const order = Object.keys(res.code).sort((a, b) => res.code[a] - res.code[b]);
+    order.forEach(c => add('text', {x: px(res.code[c]), y: H - b + 18, 'text-anchor': 'middle', 'font-size': 11.5, 'font-family': FONT, fill: COLHEX[c]}, k === 'oh' ? c + ' (own column)' : c + ' = ' + res.code[c]));
+    if (k === 'ord1' || k === 'ord2'){
+      add('line', {x1: px(-0.4), y1: py(res.predOf(-0.4)), x2: px(2.4), y2: py(res.predOf(2.4)), stroke: C.amber, 'stroke-width': 2.5});
+    } else {
+      [0, 1, 2].forEach(v => add('line', {x1: px(v - 0.4), x2: px(v + 0.4), y1: py(res.predOf(v)), y2: py(res.predOf(v)), stroke: C.amber, 'stroke-width': 3}));
+    }
+    COL.forEach((c, i) => { const j = i % 3; add('circle', {cx: px(res.code[c]) + (j - 1) * 14, cy: py(Y1[i]), r: 6, fill: COLHEX[c], stroke: '#0c1a23'}); });
+    $('t1R2').textContent = f3(res.R2);
+    $('t1Pred').textContent = res.byColour.map(f3).join(' / ');
+    $('t1story').textContent = T1STORY[k];
+  }
+  const t1Btns = [...document.querySelectorAll('#t1Btns button')];
+  t1Btns.forEach(b => b.addEventListener('click', () => { setActive(t1Btns, b); renderT1(b.dataset.k); }));
+  renderT1(null);
+
+  // ================= TAB 2 =================
+  const CITY = 'ABACBADBACBA'.split('');
+  const Y = [1,0,1,0,0,0,1,1,1,0,0,1];
+  const LEVELS = ['A','B','C','D'];
+  function menc(rows, m){
+    const prior = mean(rows.map(i => Y[i]));
+    const out = {};
+    LEVELS.forEach(c => {
+      const k = rows.filter(i => CITY[i] === c), n = k.length, s = k.reduce((a, i) => a + Y[i], 0);
+      out[c] = {n, s, enc: (n + m) > 0 ? (s + m * prior) / (n + m) : prior};
+    });
+    return {prior, out};
+  }
+  const ALL = Y.map((_, i) => i);
+  function renderT2(m){
+    $('t2m').value = m; $('t2mv').textContent = 'm = ' + m;
+    const raw = menc(ALL, 0), sm = menc(ALL, m);
+    const svg = $('t2svg'); svg.innerHTML = ''; const add = adder(svg);
+    const W = 640, H = 260, l = 52, r = 20, t = 16, b = 40;
+    const py = v => H - b - v * (H - t - b), slot = (W - l - r) / 4;
+    [0, 0.25, 0.5, 0.75, 1].forEach(v => { add('line', {x1: l, x2: W - r, y1: py(v), y2: py(v), stroke: C.chalk, 'stroke-opacity': 0.07}); add('text', {x: l - 8, y: py(v) + 4, 'text-anchor': 'end', 'font-size': 11, 'font-family': FONT, fill: C.dim}, v.toFixed(2)); });
+    add('line', {x1: l, x2: W - r, y1: py(0.5), y2: py(0.5), stroke: C.blue, 'stroke-dasharray': '5 4'});
+    LEVELS.forEach((c, i) => {
+      const cx = l + slot * (i + 0.5);
+      add('rect', {x: cx - 34, y: py(raw.out[c].enc), width: 28, height: H - b - py(raw.out[c].enc), fill: C.dim, 'fill-opacity': 0.6, rx: 3});
+      add('rect', {x: cx + 2, y: py(sm.out[c].enc), width: 28, height: H - b - py(sm.out[c].enc), fill: C.amber, 'fill-opacity': 0.9, rx: 3});
+      add('text', {x: cx + 16, y: py(sm.out[c].enc) - 6, 'text-anchor': 'middle', 'font-size': 11.5, 'font-family': FONT, fill: C.amber, 'font-weight': 700}, f3(sm.out[c].enc));
+      add('text', {x: cx, y: H - b + 18, 'text-anchor': 'middle', 'font-size': 11.5, 'font-family': FONT, fill: C.dim}, `city ${c} (n=${sm.out[c].n})`);
+    });
+    let html = '<tr><th>city</th><th>rows n</th><th>sum of y</th><th>raw mean</th><th>(sum + m × prior) / (n + m)</th><th>encoding</th></tr>';
+    LEVELS.forEach(c => { const o = sm.out[c]; html += `<tr><td>${c}</td><td>${o.n}</td><td>${o.s}</td><td>${f3(o.s / o.n)}</td><td>(${o.s} + ${m} × ${sm.prior}) / (${o.n} + ${m}) = ${o.s + m * sm.prior} / ${o.n + m}</td><td><b>${f3(o.enc)}</b></td></tr>`; });
+    $('t2tbl').innerHTML = html;
+    const st = {0: 'm = 0 is plain target encoding: D (one row) gets 1.000 and C (two rows) gets 0.000, the most extreme numbers resting on the least evidence.',
+      2: 'm = 2: two imaginary rows at the prior 0.5 per city. D drops to 0.667, below A\'s 0.714, because A\'s 0.8 rests on five rows and D\'s 1.0 on one. scikit-learn\'s TargetEncoder(smooth=2.0) gives exactly these four numbers.',
+      10: 'm = 10: ten imaginary average rows swamp every city. All four encodings crowd toward 0.5; the column now carries little information.'};
+    $('t2story').textContent = st[m] || `m = ${m}: bigger m pulls every city closer to the prior 0.5; small cities move most.`;
+  }
+  const t2Btns = [...document.querySelectorAll('#t2Btns button')];
+  t2Btns.forEach(b => b.addEventListener('click', () => { setActive(t2Btns, b); renderT2(+b.dataset.m); }));
+  $('t2m').addEventListener('input', e => { const m = +e.target.value; setActive(t2Btns, t2Btns.find(b => +b.dataset.m === m)); renderT2(m); });
+  renderT2(2); setActive(t2Btns, t2Btns[1]);
+
+  // ================= TAB 3 =================
+  const FOLDS = [[0,1,2,3],[4,5,6,7],[8,9,10,11]];
+  const INF = ALL.map(i => menc(ALL, 2).out[CITY[i]].enc);
+  const OOF = new Array(12);
+  const FOLDENC = FOLDS.map(f => { const tr = ALL.filter(i => !f.includes(i)); const e = menc(tr, 2); f.forEach(i => OOF[i] = e.out[CITY[i]].enc); return e; });
+  function corr(a, b){ const ma = mean(a), mb = mean(b); let sab = 0, saa = 0, sbb = 0; a.forEach((v, i) => { sab += (v - ma) * (b[i] - mb); saa += (v - ma) ** 2; sbb += (b[i] - mb) ** 2; }); return sab / Math.sqrt(saa * sbb); }
+  const CIN = corr(INF, Y), COOF = corr(OOF, Y);
+  function renderT3(k){
+    $('t3cin').textContent = f3(CIN); $('t3coof').textContent = k === 'in' ? '—' : f3(COOF);
+    const fi = k && k[0] === 'f' ? +k[1] : -1;
+    let calc = '';
+    if (k === 'in'){
+      const e = menc(ALL, 2);
+      calc = 'Encodings from <b>all 12 rows</b> (each row included in its own city\'s average): ' + LEVELS.map(c => `${c} = (${e.out[c].s} + 1)/(${e.out[c].n} + 2) = <b>${f3(e.out[c].enc)}</b>`).join(', ');
+    } else if (fi >= 0){
+      const e = FOLDENC[fi], other = ALL.filter(i => !FOLDS[fi].includes(i)).map(i => i + 1);
+      calc = `Encoding rows ${FOLDS[fi][0] + 1}–${FOLDS[fi][3] + 1} from rows ${other.join(', ')} only (prior ${e.prior}): ` +
+        LEVELS.map(c => e.out[c].n === 0 ? `${c} not present → prior <b>${f3(e.prior)}</b>` : `${c} = (${e.out[c].s} + 1)/(${e.out[c].n} + 2) = <b>${f3(e.out[c].enc)}</b>`).join(', ');
+    } else if (k === 'oof') calc = 'Every row\'s encoding was computed from the two folds it is not in. Compare the last two columns.';
+    $('t3calc').innerHTML = calc;
+    let html = '<tr><th>row</th><th>fold</th><th>city</th><th>y</th><th>in-fold (leaky)</th><th>out-of-fold</th></tr>';
+    ALL.forEach(i => {
+      const fold = Math.floor(i / 4);
+      const show = k === 'oof' || (fi >= 0 && fold <= fi);
+      const cls = fi >= 0 ? (fold === fi ? 'hl' : 'dimrow') : ((i === 5 || i === 6) && k === 'oof' ? 'hl' : '');
+      html += `<tr class="${cls}"><td>${i + 1}</td><td>${fold + 1}</td><td>${CITY[i]}</td><td class="${Y[i] ? 'pos' : 'neg'}">${Y[i]}</td><td>${f3(INF[i])}</td><td>${show ? f3(OOF[i]) : ''}</td></tr>`;
+    });
+    $('t3tbl').innerHTML = html;
+    const st = {
+      in: 'Row 6 (A, y = 0) and row 7 (D, y = 1) both get encodings that include their own label. Row 7 is the only D, so its 0.667 is high because row 7 itself is a 1.',
+      f0: 'Fold 1 held out: A and B each appear 3 times in rows 5–12, C once, D once.',
+      f1: 'Fold 2 held out: D never appears in rows 1–4 or 9–12, so row 7 gets the prior 0.500. Row 6 (A, y = 0) gets 0.833, computed only from the other A rows, which are all 1s.',
+      f2: 'Fold 3 held out: same counts as fold 1, so the same encodings.',
+      oof: `Correlation with y drops from ${f3(CIN)} (in-fold) to ${f3(COOF)} (out-of-fold). City A really does have more 1s, so some honest signal survives; the gap was each row's own label echoing back.`
+    };
+    $('t3story').textContent = k ? st[k] : 'Pick a step.';
+  }
+  const t3Btns = [...document.querySelectorAll('#t3Btns button')];
+  t3Btns.forEach(b => b.addEventListener('click', () => { setActive(t3Btns, b); renderT3(b.dataset.k); }));
+  renderT3(null);
+
+  // ================= TAB 4 (measured) =================
+  const T4 = {
+    cv: {items: [{name: 'encode all rows,\nthen 5-fold CV', v: 0.874, c: C.coral}, {name: 'TargetEncoder in a\nPipeline, CV', v: 0.485, c: C.green}], ymax: 1, ref: 0.5,
+      story: 'Encoding all 2,000 rows before cross-validation gives CV AUC 0.874 on labels that are pure coin flips. Refitting the encoder inside each fold (a Pipeline) gives 0.485: the truth, nothing to learn.'},
+    tt: {items: [{name: 'in-fold: train', v: 0.912, c: C.coral}, {name: 'in-fold: test', v: 0.538, c: C.coral}, {name: 'fit_transform\n(OOF): train', v: 0.505, c: C.green}, {name: 'fit_transform\n(OOF): test', v: 0.462, c: C.green}], ymax: 1, ref: 0.5,
+      story: '70/30 split. fit(X_train).transform(X_train) lets each row see its own label: train AUC 0.912, test 0.538 (accuracy 79.9% vs. 53.7%). TargetEncoder.fit_transform cross-fits internally: train 0.505, test 0.462, honest and both near 0.5.'},
+    smooth: {items: [{name: 'smooth = 0.0001', v: 0.874, c: C.coral}, {name: 'smooth = "auto"', v: 0.874, c: C.coral}, {name: 'smooth = 10', v: 0.860, c: C.coral}, {name: 'pipeline\n(smooth = 10)', v: 0.482, c: C.green}], ymax: 1, ref: 0.5,
+      story: 'Leaky CV AUC barely moves with smoothing: 0.874, 0.874, 0.860. Smoothing weakens the echo of each row\'s own label but cannot remove it. Only out-of-fold fitting does (0.482 with smooth = 10 inside a pipeline).'},
+    coef: {items: [{name: 'weight on in-fold\nencoding', v: 7.02, c: C.coral}, {name: 'weight on OOF\nencoding', v: 0.06, c: C.green, lab: '−0.06'}], ymax: 8, ticks: [0, 2, 4, 6, 8],
+      story: 'Logistic regression leans hard on the leaky feature (weight 7.02) and correctly ignores the honest one (weight −0.06; bar shows its size). Correlation of encoding with y on the training rows: 0.73 in-fold, −0.01 out-of-fold.'}
+  };
+  function renderT4(k){
+    const d = T4[k];
+    bars($('t4svg'), d.items.map(it => Object.assign({lab: it.lab || (d.ymax === 1 ? it.v.toFixed(3) : it.v.toFixed(2))}, it)), d.ymax,
+      {ticks: d.ticks || [0, 0.25, 0.5, 0.75, 1], tfmt: v => d.ymax === 1 ? v.toFixed(2) : v, ref: d.ref, refLab: 'AUC 0.5 = coin flip'});
+    $('t4story').textContent = d.story;
+  }
+  const t4Btns = [...document.querySelectorAll('#t4Btns button')];
+  t4Btns.forEach(b => b.addEventListener('click', () => { setActive(t4Btns, b); renderT4(b.dataset.k); }));
+  renderT4('cv'); setActive(t4Btns, t4Btns[0]);
+
+  // ================= TAB 5 =================
+  function renderT5(k){
+    const cities = k === 'tie' ? CITY.concat(['E','E','E','F','F','F']) : CITY;
+    const lv = k === 'tie' ? ['A','B','C','D','E','F'] : LEVELS, n = cities.length;
+    const cnt = {}; lv.forEach(c => cnt[c] = cities.filter(x => x === c).length);
+    let html = '<tr><th>city</th><th>count</th><th>frequency = count / ' + n + '</th></tr>';
+    lv.forEach(c => { const tie = lv.some(o => o !== c && cnt[o] === cnt[c]); html += `<tr class="${tie ? 'hl' : ''}"><td>${c}</td><td>${cnt[c]}</td><td>${cnt[c]} / ${n} = <b>${f3(cnt[c] / n)}</b></td></tr>`; });
+    $('t5tbl').innerHTML = html;
+    $('t5story').textContent = k === 'tie'
+      ? `With 18 rows, E and F both appear 3 times, so both encode to ${f3(3 / 18)}: the model can never tell them apart through this column, however differently their customers behave. That is why frequency encoding usually sits alongside another encoding.`
+      : 'A = 5/12, B = 4/12, C = 2/12, D = 1/12. No y was used, so this column cannot leak the target. A city never seen in training simply gets count 0.';
+  }
+  const t5Btns = [...document.querySelectorAll('#t5Btns button')];
+  t5Btns.forEach(b => b.addEventListener('click', () => { setActive(t5Btns, b); renderT5(b.dataset.k); }));
+  renderT5('base'); setActive(t5Btns, t5Btns[0]);
+
+  // ================= TAB 6 =================
+  function utf8(s){ return Array.from(new TextEncoder().encode(s)); }
+  function murmur3(str, seed){
+    const data = utf8(str), len = data.length, nb = len >> 2;
+    let h = seed >>> 0; const c1 = 0xcc9e2d51, c2 = 0x1b873593;
+    for (let i = 0; i < nb; i++){
+      let k = data[4 * i] | (data[4 * i + 1] << 8) | (data[4 * i + 2] << 16) | (data[4 * i + 3] << 24);
+      k = Math.imul(k, c1); k = (k << 15) | (k >>> 17); k = Math.imul(k, c2);
+      h ^= k; h = (h << 13) | (h >>> 19); h = (Math.imul(h, 5) + 0xe6546b64) | 0;
+    }
+    let k1 = 0; const tail = nb * 4;
+    switch (len & 3){
+      case 3: k1 ^= data[tail + 2] << 16; // falls through
+      case 2: k1 ^= data[tail + 1] << 8;  // falls through
+      case 1: k1 ^= data[tail]; k1 = Math.imul(k1, c1); k1 = (k1 << 15) | (k1 >>> 17); k1 = Math.imul(k1, c2); h ^= k1;
+    }
+    h ^= len; h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+    return h | 0; // signed 32-bit, like sklearn.utils.murmurhash3_32(positive=False)
+  }
+  const CITIES6 = ['Austin','Boston','Chicago','Denver','Seattle','Miami'];
+  const PY_HASH = {Austin: -2048163005, Boston: -2127964253, Chicago: 841071078, Denver: 1380905182, Seattle: -1828250166, Miami: -677353183};
+  const PAL = [C.amber, C.coral, C.green, C.purple, C.blue, '#e0a3c8'];
+  function renderT6(k){
+    const svg = $('t6svg'); svg.innerHTML = ''; const add = adder(svg);
+    if (k === 'ids'){
+      svg.setAttribute('viewBox', '0 0 640 60');
+      const toks = []; for (let i = 0; i < 1000; i++) toks.push('user_' + i);
+      const hs = toks.map(t => murmur3(t, 0));
+      let html = '<tr><th>columns k</th><th>columns used (live)</th><th>formula k(1−(1−1/k)ⁿ)</th><th>levels sharing a column (live)</th><th>formula 1−(1−1/k)ⁿ⁻¹</th></tr>';
+      [256, 1024, 4096, 16384, 65536].forEach(K => {
+        const b = hs.map(h => Math.abs(h) % K), cnt = new Map(); b.forEach(v => cnt.set(v, (cnt.get(v) || 0) + 1));
+        const shared = b.filter(v => cnt.get(v) > 1).length / 1000;
+        html += `<tr class="${K === 1024 ? 'hl' : ''}"><td>${K.toLocaleString()}</td><td>${cnt.size}</td><td>${(K * (1 - Math.pow(1 - 1 / K, 1000))).toFixed(1)}</td><td>${(100 * shared).toFixed(1)}%</td><td>${(100 * (1 - Math.pow(1 - 1 / K, 999))).toFixed(1)}%</td></tr>`;
+      });
+      $('t6tbl').innerHTML = html;
+      add('text', {x: 320, y: 34, 'text-anchor': 'middle', 'font-size': 12, 'font-family': FONT, fill: C.dim}, 'Hashing user_0 … user_999 live with MurmurHash3, at five column counts');
+      $('t6story').textContent = 'Even with 1,024 columns for 1,000 levels, about 60% of levels share a column (only 652 columns get used): random scattering clumps, the birthday problem. Collisions become rare only with many times more columns than levels.';
+      return;
+    }
+    svg.setAttribute('viewBox', '0 0 640 220');
+    const K = +k, W = 640, l = 20, r = 20, bw = (W - l - r) / K;
+    const rows = CITIES6.map(c => { const h = murmur3(c, 0); return {c, h, col: Math.abs(h) % K, sign: h < 0 ? '−' : '+'}; });
+    const byCol = {}; rows.forEach(o => (byCol[o.col] = byCol[o.col] || []).push(o));
+    const colour = {}; let pi = 0; Object.keys(byCol).forEach(c => { colour[c] = byCol[c].length > 1 ? PAL[pi++ % PAL.length] : C.dim; });
+    for (let j = 0; j < K; j++){
+      const x = l + j * bw, used = byCol[j];
+      add('rect', {x: x + 2, y: 30, width: bw - 4, height: 150, fill: used ? colour[j] : 'none', 'fill-opacity': used ? 0.18 : 0, stroke: used ? colour[j] : C.dim, 'stroke-opacity': used ? 0.9 : 0.35, rx: 4});
+      add('text', {x: x + bw / 2, y: 200, 'text-anchor': 'middle', 'font-size': 11, 'font-family': FONT, fill: C.dim}, j);
+      (used || []).forEach((o, q) => add('text', {x: x + bw / 2, y: 52 + q * 18, 'text-anchor': 'middle', 'font-size': K > 8 ? 9.5 : 12, 'font-family': FONT, fill: C.chalk}, o.c.slice(0, K > 8 ? 4 : 10) + o.sign));
+    }
+    add('text', {x: 320, y: 18, 'text-anchor': 'middle', 'font-size': 11.5, 'font-family': FONT, fill: C.dim}, `${K} columns (bucket number below; + / − is the sign written into the column)`);
+    let html = '<tr><th>city</th><th>MurmurHash3 (this page)</th><th>scikit-learn value</th><th>|hash| mod ' + K + '</th><th>sign</th></tr>';
+    rows.forEach(o => { html += `<tr class="${byCol[o.col].length > 1 ? 'hl' : ''}"><td>${o.c}</td><td>${o.h.toLocaleString()}</td><td>${PY_HASH[o.c] === o.h ? 'match' : 'MISMATCH ' + PY_HASH[o.c]}</td><td><b>${o.col}</b></td><td>${o.sign}</td></tr>`; });
+    $('t6tbl').innerHTML = html;
+    const groups = Object.values(byCol).filter(g => g.length > 1).map(g => g.map(o => o.c).join(' & ') + ' share column ' + g[0].col);
+    $('t6story').textContent = `${groups.join('; ')}.` + (K === 16 ? ' Chicago (+) and Seattle (−) collide with opposite signs, so their mix-ups tend to cancel in sums instead of piling up.' : ' Fewer columns, more collisions.');
+  }
+  const t6Btns = [...document.querySelectorAll('#t6Btns button')];
+  t6Btns.forEach(b => b.addEventListener('click', () => { setActive(t6Btns, b); renderT6(b.dataset.k); }));
+  renderT6('16'); setActive(t6Btns, t6Btns[0]);
+
+  // ================= TAB 7 (measured) =================
+  const T7 = {
+    cols: {items: [{name: 'training rows', v: 1400, c: C.blue}, {name: 'distinct IDs\n= one-hot columns', v: 760, c: C.coral}], ymax: 1600, ticks: [0, 400, 800, 1200, 1600],
+      story: '1,400 training rows contain 760 different IDs, so one-hot creates 760 columns, almost all zeros: more than one new column for every two rows.'},
+    rare: {items: [{name: 'IDs seen once', v: 348, c: C.coral}, {name: 'IDs seen 2+ times', v: 412, c: C.blue}], ymax: 800, ticks: [0, 200, 400, 600, 800],
+      story: '348 of the 760 IDs (45.8%) appear in exactly one training row; the most common ID appears only 6 times. One weight per ID means learning from one or two examples each.'},
+    unseen: {items: [{name: 'test rows with\na known ID', v: 79, c: C.blue, lab: '79%'}, {name: 'test rows with\nan unseen ID', v: 21, c: C.coral, lab: '21%'}], ymax: 100, ticks: [0, 25, 50, 75, 100],
+      story: '21% of the 600 test rows carry an ID the training set never saw. One-hot has no column for them; handle_unknown="ignore" gives them all zeros.'},
+    lump: {items: [{name: 'plain one-hot', v: 760, c: C.coral}, {name: 'min_frequency=4', v: 55, c: C.amber}, {name: 'min_frequency=5', v: 13, c: C.green}], ymax: 800, ticks: [0, 200, 400, 600, 800],
+      story: 'OneHotEncoder(min_frequency=k) keeps only IDs seen at least k times and merges the rest into one "infrequent" column: 760 columns become 55 (k = 4) or 13 (k = 5).'}
+  };
+  function renderT7(k){
+    const d = T7[k];
+    bars($('t7svg'), d.items.map(it => Object.assign({lab: it.lab || it.v.toLocaleString()}, it)), d.ymax, {ticks: d.ticks, tfmt: v => k === 'unseen' ? v + '%' : v});
+    $('t7story').textContent = d.story;
+  }
+  const t7Btns = [...document.querySelectorAll('#t7Btns button')];
+  t7Btns.forEach(b => b.addEventListener('click', () => { setActive(t7Btns, b); renderT7(b.dataset.k); }));
+  renderT7('cols'); setActive(t7Btns, t7Btns[0]);
+
+  window.__ENC_CHECK__ = {t1: k => t1Compute(k), menc: m => menc(ALL, m), INF, OOF, CIN, COOF, murmur3};
+})();
+</script>
+</body>
+</html>

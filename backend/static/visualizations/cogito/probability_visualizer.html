@@ -91,6 +91,9 @@
     <button class="tab" data-tab="baserate">Base-Rate Explorer</button>
     <button class="tab" data-tab="variance">Variance Comparer</button>
     <button class="tab" data-tab="binompois">Binomial &amp; Poisson</button>
+    <button class="tab" data-tab="jensen">Jensen's Inequality</button>
+    <button class="tab" data-tab="totexp">Total Probability &amp; Expectation</button>
+    <button class="tab" data-tab="ineq">Markov &amp; Chebyshev</button>
   </div>
 
   <!-- ============ TAB 1: AND/OR TREE ============ -->
@@ -309,6 +312,66 @@
       <svg id="poisSvg" viewBox="0 0 640 220" role="img" aria-label="Poisson distribution bar chart"></svg>
       <div class="verdict" id="poisVerdict"></div>
       <div class="caption"><b>Why it matters:</b> call-center arrivals, typos per page, and radioactive decays are all classically modeled this way -- and the forced mean-equals-variance signature is a real diagnostic real statisticians actually check.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: JENSEN'S INEQUALITY ============ -->
+  <div class="panel" id="panel-jensen">
+    <div class="card">
+      <h2>Average of the Outputs vs. Output at the Average</h2>
+      <p class="sub"><b>What's happening:</b> for a curve that bends upward (<em>convex</em>, like <span class="formula">x²</span>), the average of the outputs is at least the output at the average: <span class="formula">E[f(X)] ≥ f(E[X])</span>. For a curve that bends downward (<em>concave</em>, like <span class="formula">ln x</span>) it flips. The picture: join the points on the curve with a straight chord. Averaging the outputs means standing on the chord; plugging in the average means standing on the curve.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> each button below plays one fully worked example from the tutorial, every number computed live. Start with <em>x² with X = 1 or 9</em> and read the gap of 16 off the red segment, then click <em>ln x with X = 1 or 9</em> and watch the chord drop <em>below</em> the curve.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="jnSq">x² with X = 1 or 9</button>
+        <button class="op" id="jnLn">ln x with X = 1 or 9</button>
+        <button class="op" id="jnThree">Three points 2, 4, 8</button>
+        <button class="op" id="jnKL">KL ≥ 0 is Jensen</button>
+        <button class="op" id="jnTan">The tangent line: ln x ≤ x − 1</button>
+        <button class="op" id="jnVol">Volatility drag: +50% then −50%</button>
+      </div>
+      <svg id="jnSvg" viewBox="0 0 640 380" role="img" aria-label="Jensen's inequality plot"></svg>
+      <div class="verdict" id="jnVerdict" style="overflow-wrap:anywhere;"></div>
+      <div class="caption"><b>Why it matters:</b> Jensen is the one rule behind variance ≥ 0, the geometric mean ≤ the arithmetic mean, KL ≥ 0, the EM algorithm never lowering its likelihood, and the ELBO. It is also the "flaw of averages": feed an <em>average</em> input into a curved formula and you do not get the average output.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: TOTAL PROBABILITY & EXPECTATION ============ -->
+  <div class="panel" id="panel-totexp">
+    <div class="card">
+      <h2>Break a Hard Average Into Easy Pieces</h2>
+      <p class="sub"><b>What's happening:</b> pretend you know one extra fact (which factory, which class, how many coins), solve the easy problem inside each case, then average the answers, weighting each case by how likely it is. That's the law of total probability, the law of total expectation (tower rule, <span class="formula">E[X] = E[E[X | Y]]</span>), and the law of total variance (<span class="formula">Var X = E[Var(X|Y)] + Var(E[X|Y])</span>).</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> each button plays one worked example from §3.5 with every number computed live. Start with <em>Three factories</em>, then <em>Die then coins</em> and <em>Law of total variance</em>, which use the same game.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="teFac">Three factories: P(defective) = 0.021</button>
+        <button class="op" id="teSch">School average: 75, not 80</button>
+        <button class="op" id="teDic">Two dice: E[first | sum]</button>
+        <button class="op" id="teTow">Die then coins: tower rule</button>
+        <button class="op" id="teVr">Law of total variance</button>
+        <button class="op" id="teGeo">Geometric: first-step trick</button>
+      </div>
+      <svg id="teSvg" viewBox="0 0 640 380" role="img" aria-label="Total probability and expectation plot"></svg>
+      <div class="verdict" id="teVerdict" style="overflow-wrap:anywhere;"></div>
+      <div class="caption"><b>Why it matters:</b> the Markov-chain "expected steps" equations, RL's Bellman equation, ANOVA and R², compound insurance claims, and Bayesian hierarchical models are all these three laws.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: MARKOV & CHEBYSHEV ============ -->
+  <div class="panel" id="panel-ineq">
+    <div class="card">
+      <h2>Guarantees From Almost Nothing</h2>
+      <p class="sub"><b>What's happening:</b> Markov's inequality, <span class="formula">P(X ≥ a) ≤ E[X]/a</span> for X ≥ 0, needs only the mean. Chebyshev's, <span class="formula">P(|X − μ| ≥ kσ) ≤ 1/k²</span>, is Markov applied to (X − μ)². Hoeffding is Markov applied to an exponential. Red is always the guaranteed bound; the other colours are what real distributions actually do.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> each button plays one worked example from §3.6. Start with the <em>income analogy</em>, then see how loose the bound is on real distributions, then the one case where it's exact, and finish with the <em>ladder</em> from Markov to Hoeffding.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" id="inInc">Markov: income analogy</button>
+        <button class="op" id="inMk">Markov on an exponential (mean 2)</button>
+        <button class="op" id="inCh">Chebyshev vs. normal, Laplace, exponential, uniform</button>
+        <button class="op" id="inTi">Chebyshev is tight: the three-point distribution</button>
+        <button class="op" id="inLl">Law of Large Numbers from Chebyshev</button>
+        <button class="op" id="inLa">Markov → Chebyshev → Chernoff → Hoeffding: 60+ heads in 100</button>
+      </div>
+      <svg id="inSvg" viewBox="0 0 640 380" role="img" aria-label="Markov and Chebyshev inequality plot"></svg>
+      <div class="verdict" id="inVerdict" style="overflow-wrap:anywhere;"></div>
+      <div class="caption"><b>Why it matters:</b> tail-latency guarantees from an average, distribution-free control limits, the proof of the Law of Large Numbers, and (via Hoeffding) every generalization bound in learning theory.</div>
     </div>
   </div>
 
@@ -1057,6 +1120,492 @@
   }
   bpLam.addEventListener("input", renderPoisson);
   renderPoisson();
+
+  /* =========================================================
+     TAB — JENSEN'S INEQUALITY (one-click worked presets)
+     ========================================================= */
+  const jnSvg = document.getElementById("jnSvg");
+  const JW = 640, JH = 380, jPadL = 50, jPadR = 18, jPadT = 16, jPadB = 40;
+  const mono = "IBM Plex Mono, monospace";
+  function jnFrame(cfg){
+    // cfg: xmin,xmax,ymin,ymax,xticks,yticks,xlabel
+    jnSvg.innerHTML = "";
+    const X = x => jPadL + (x-cfg.xmin)/(cfg.xmax-cfg.xmin)*(JW-jPadL-jPadR);
+    const Y = y => JH-jPadB - (y-cfg.ymin)/(cfg.ymax-cfg.ymin)*(JH-jPadT-jPadB);
+    const defs = el("defs",{});
+    const cp = el("clipPath",{id:"jnClip"});
+    cp.appendChild(el("rect",{x:jPadL,y:jPadT,width:JW-jPadL-jPadR,height:JH-jPadT-jPadB}));
+    defs.appendChild(cp); jnSvg.appendChild(defs);
+    cfg.yticks.forEach(v => {
+      jnSvg.appendChild(el("line",{x1:jPadL,y1:Y(v),x2:JW-jPadR,y2:Y(v),stroke:"rgba(27,36,48,0.08)"}));
+      jnSvg.appendChild(el("text",{x:jPadL-6,y:Y(v)+4,"text-anchor":"end","font-size":10.5,"font-family":mono,fill:"var(--ink-soft)"}, String(v)));
+    });
+    cfg.xticks.forEach(v => {
+      jnSvg.appendChild(el("line",{x1:X(v),y1:JH-jPadB,x2:X(v),y2:JH-jPadB+4,stroke:"var(--ink-soft)"}));
+      jnSvg.appendChild(el("text",{x:X(v),y:JH-jPadB+16,"text-anchor":"middle","font-size":10.5,"font-family":mono,fill:"var(--ink-soft)"}, String(v)));
+    });
+    jnSvg.appendChild(el("line",{x1:jPadL,y1:JH-jPadB,x2:JW-jPadR,y2:JH-jPadB,stroke:"var(--ink-soft)"}));
+    jnSvg.appendChild(el("line",{x1:jPadL,y1:jPadT,x2:jPadL,y2:JH-jPadB,stroke:"var(--ink-soft)"}));
+    if (cfg.ymin < 0 && cfg.ymax > 0)
+      jnSvg.appendChild(el("line",{x1:jPadL,y1:Y(0),x2:JW-jPadR,y2:Y(0),stroke:"rgba(27,36,48,0.35)"}));
+    if (cfg.xlabel)
+      jnSvg.appendChild(el("text",{x:JW-jPadR,y:JH-6,"text-anchor":"end","font-size":11,"font-family":mono,fill:"var(--ink-soft)"}, cfg.xlabel));
+    const api = {
+      X, Y,
+      curve(f, x0, x1, color, width, dash){
+        let d = "", on = false;
+        for (let i=0;i<=400;i++){
+          const x = x0 + (x1-x0)*i/400, y = f(x);
+          if (!isFinite(y) || y < cfg.ymin-1 || y > cfg.ymax+1){ on = false; continue; }
+          d += (on ? "L" : "M") + X(x).toFixed(2) + "," + Y(y).toFixed(2) + " "; on = true;
+        }
+        const a = {d, fill:"none", stroke:color, "stroke-width":width||2.6, "clip-path":"url(#jnClip)"};
+        if (dash) a["stroke-dasharray"] = dash;
+        jnSvg.appendChild(el("path", a));
+      },
+      seg(x1,y1,x2,y2,color,width,dash){
+        const a = {x1:X(x1),y1:Y(y1),x2:X(x2),y2:Y(y2),stroke:color,"stroke-width":width||2,"clip-path":"url(#jnClip)"};
+        if (dash) a["stroke-dasharray"] = dash;
+        jnSvg.appendChild(el("line", a));
+      },
+      poly(pts,color){
+        jnSvg.appendChild(el("polygon",{points:pts.map(p=>X(p[0])+","+Y(p[1])).join(" "),fill:color,"fill-opacity":0.12,stroke:color,"stroke-width":2}));
+      },
+      dot(x,y,color,r){
+        jnSvg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:r||6,fill:color,stroke:"#fff","stroke-width":1.6}));
+      },
+      label(x,y,str,color,anchor,dx,dy,weight){
+        jnSvg.appendChild(el("text",{x:X(x)+(dx||0),y:Y(y)+(dy||0),"text-anchor":anchor||"start","font-size":11.5,"font-family":mono,
+          "font-weight":weight||"600",fill:color||"var(--ink)",stroke:"#fff","stroke-width":4,"paint-order":"stroke","stroke-linejoin":"round"}, str));
+      },
+      legend(px, py, rows){
+        // rows: [color, text, dashed?] drawn in pixel space inside a white box
+        const w = rows.reduce((m,r)=>Math.max(m, r[1].length),0)*6.6 + 40, h = rows.length*18 + 10;
+        jnSvg.appendChild(el("rect",{x:px,y:py,width:w,height:h,rx:8,fill:"#fff","fill-opacity":0.94,stroke:"var(--line)"}));
+        rows.forEach((r,i) => {
+          const yy = py + 16 + i*18;
+          const a = {x1:px+10,y1:yy-4,x2:px+28,y2:yy-4,stroke:r[0],"stroke-width":3};
+          if (r[2]) a["stroke-dasharray"] = "5,3";
+          jnSvg.appendChild(el("line",a));
+          jnSvg.appendChild(el("text",{x:px+34,y:yy,"font-size":11,"font-family":mono,fill:"var(--ink)"}, r[1]));
+        });
+      }
+    };
+    return api;
+  }
+  const C_CURVE = "var(--pred)", C_PT = "var(--pA)", C_CHORD = "var(--pB)", C_GAP = "var(--bad)";
+  const f4 = v => v.toFixed(4);
+
+  function jnSquare(){
+    const xs = [1,9], w = [0.5,0.5];
+    const EX = xs[0]*w[0] + xs[1]*w[1];
+    const EfX = xs[0]**2*w[0] + xs[1]**2*w[1];
+    const fEX = EX**2;
+    const varX = w[0]*(xs[0]-EX)**2 + w[1]*(xs[1]-EX)**2;
+    const g = jnFrame({xmin:0,xmax:10,ymin:0,ymax:90,xticks:[0,1,2,3,4,5,6,7,8,9,10],yticks:[0,20,40,60,80],xlabel:"x →"});
+    g.curve(x=>x*x, 0, 10, C_CURVE);
+    g.seg(xs[0],1,xs[1],81,C_CHORD,2.4);
+    g.seg(EX,0,EX,EfX,"var(--ink-soft)",1.2,"4,4");
+    g.seg(EX,fEX,EX,EfX,C_GAP,4);
+    g.dot(1,1,C_PT); g.dot(9,81,C_PT);
+    g.dot(EX,EfX,C_CHORD,7); g.dot(EX,fEX,C_CURVE,7);
+    g.label(1,1,"(1, 1)",C_PT,"end",-10,-8);
+    g.label(9,81,"(9, 81)",C_PT,"end",-12,4);
+    g.label(EX,EfX,"E[X²] = "+EfX,"var(--ink)","end",-12,-6);
+    g.label(EX,fEX,"(E[X])² = "+fEX,"var(--ink)","start",12,16);
+    g.label(EX,(EfX+fEX)/2,"gap "+(EfX-fEX),C_GAP,"end",-10,12,"700");
+    g.label(EX,0,"E[X] = "+EX,"var(--ink-soft)","start",6,-8);
+    g.legend(jPadL+10, jPadT+8, [[C_CURVE,"f(x) = x² (convex, bends up)"],[C_CHORD,"chord joining the two outcomes"],[C_GAP,"gap = E[X²] − (E[X])²"]]);
+    document.getElementById("jnVerdict").innerHTML =
+      `<b>1.</b> X is 1 or 9, each with probability 0.5, so E[X] = (1 + 9)/2 = <b>${EX}</b>.<br>`+
+      `<b>2.</b> Average of the outputs (on the chord): E[X²] = (1 + 81)/2 = <b>${EfX}</b>.<br>`+
+      `<b>3.</b> Output at the average (on the curve): (E[X])² = ${EX}² = <b>${fEX}</b>.<br>`+
+      `<b>4.</b> ${EfX} ≥ ${fEX}, gap = <span class="big">${EfX-fEX}</span>. Variance directly: ((1−5)² + (9−5)²)/2 = <b>${varX}</b>. Same number, so "Var(X) = E[X²] − (E[X])² ≥ 0" <i>is</i> Jensen for x².`;
+  }
+
+  function jnLog19(){
+    const xs = [1,9];
+    const EX = (xs[0]+xs[1])/2;
+    const ElnX = (Math.log(xs[0])+Math.log(xs[1]))/2;
+    const lnEX = Math.log(EX);
+    const geo = Math.exp(ElnX);
+    const g = jnFrame({xmin:0,xmax:10,ymin:-0.5,ymax:2.5,xticks:[0,1,2,3,4,5,6,7,8,9,10],yticks:[-0.5,0,0.5,1,1.5,2,2.5],xlabel:"x →"});
+    g.curve(Math.log, 0.01, 10, C_CURVE);
+    g.seg(1,0,9,Math.log(9),C_CHORD,2.4);
+    g.seg(EX,-0.5,EX,lnEX,"var(--ink-soft)",1.2,"4,4");
+    g.seg(geo,-0.5,geo,ElnX,"var(--pA)",1.2,"4,4");
+    g.seg(geo,ElnX,EX,ElnX,"var(--pA)",1.6,"4,4");
+    g.seg(EX,ElnX,EX,lnEX,C_GAP,4);
+    g.dot(1,0,C_PT); g.dot(9,Math.log(9),C_PT);
+    g.dot(EX,ElnX,C_CHORD,7); g.dot(EX,lnEX,C_CURVE,7); g.dot(geo,ElnX,C_PT,5);
+    g.label(1,0,"(1, 0)",C_PT,"start",10,16);
+    g.label(9,Math.log(9),"(9, 2.1972)",C_PT,"end",-10,-10);
+    g.label(EX,lnEX,"ln E[X] = "+f4(lnEX),"var(--ink)","end",-10,-10);
+    g.label(EX,ElnX,"E[ln X] = "+f4(ElnX),"var(--ink)","start",10,18);
+    g.label(EX,(ElnX+lnEX)/2,"gap "+f4(lnEX-ElnX),C_GAP,"end",-10,8,"700");
+    g.label(geo,-0.5,"geo mean "+geo.toFixed(4).replace(/\.?0+$/,""),"var(--pA)","end",-4,-8);
+    g.label(EX,-0.5,"arith mean "+EX,"var(--ink-soft)","start",4,-8);
+    g.legend(JW-jPadR-258, JH-jPadB-116, [[C_CURVE,"f(x) = ln x (concave, bends down)"],[C_CHORD,"chord: now BELOW the curve"],[C_GAP,"gap = ln E[X] − E[ln X]"],["var(--pA)","undo the log: e^E[ln X]",true]]);
+    document.getElementById("jnVerdict").innerHTML =
+      `<b>1.</b> Same X (1 or 9, equally likely), E[X] = <b>${EX}</b>. Now f(x) = ln x, which bends down, so the inequality flips.<br>`+
+      `<b>2.</b> Average of the outputs (on the chord): E[ln X] = (ln 1 + ln 9)/2 = (0 + ${f4(Math.log(9))})/2 = <b>${f4(ElnX)}</b>.<br>`+
+      `<b>3.</b> Output at the average (on the curve): ln E[X] = ln 5 = <b>${f4(lnEX)}</b>. ${f4(ElnX)} ≤ ${f4(lnEX)}.<br>`+
+      `<b>4.</b> Undo the logs: geometric mean = e^${f4(ElnX)} = √(1×9) = <span class="big">${geo.toFixed(4).replace(/\.?0+$/,"")}</span> ≤ arithmetic mean = <span class="big">${EX}</span>. The dashed teal path reads it off the curve: follow E[ln X] across until it hits ln x, at x = 3.`;
+  }
+
+  function jnThree(){
+    const xs = [2,4,8];
+    const EX = xs.reduce((s,v)=>s+v,0)/3;
+    const ElnX = xs.reduce((s,v)=>s+Math.log(v),0)/3;
+    const lnEX = Math.log(EX);
+    const geo = Math.exp(ElnX);
+    const g = jnFrame({xmin:0,xmax:10,ymin:0,ymax:2.5,xticks:[0,1,2,3,4,5,6,7,8,9,10],yticks:[0,0.5,1,1.5,2,2.5],xlabel:"x →"});
+    g.curve(Math.log, 0.01, 10, C_CURVE);
+    g.poly(xs.map(x=>[x,Math.log(x)]), C_CHORD);
+    g.seg(EX,0,EX,lnEX,"var(--ink-soft)",1.2,"4,4");
+    g.seg(geo,0,geo,ElnX,"var(--pA)",1.2,"4,4");
+    g.seg(EX,ElnX,EX,lnEX,C_GAP,4);
+    xs.forEach(x => g.dot(x,Math.log(x),C_PT));
+    g.dot(EX,ElnX,C_CHORD,7); g.dot(EX,lnEX,C_CURVE,7);
+    g.label(2,Math.log(2),"(2, 0.6931)",C_PT,"start",8,20);
+    g.label(8,Math.log(8),"(8, 2.0794)",C_PT,"end",-10,-10);
+    g.label(EX,lnEX,"ln E[X] = "+f4(lnEX),"var(--ink)","end",-8,-12);
+    g.seg(EX,ElnX,6.3,1.12,C_CHORD,1.2,"2,2");
+    g.label(6.3,1.12,"E[ln X] = "+f4(ElnX),"var(--ink)","start",4,4);
+    g.seg(EX,(ElnX+lnEX)/2,6.3,0.9,C_GAP,1.2,"2,2");
+    g.label(6.3,0.9,"gap "+f4(lnEX-ElnX),C_GAP,"start",4,4,"700");
+    g.label(geo,0,"geo 4","var(--pA)","end",-4,-8);
+    g.label(EX,0,"arith 4.667","var(--ink-soft)","start",4,-8);
+    g.legend(jPadL+10, jPadT+8, [[C_CURVE,"f(x) = ln x"],[C_CHORD,"triangle of chords: the average"],[C_CHORD,"   of the 3 points lies inside it"],[C_GAP,"gap = ln E[X] − E[ln X]"]]);
+    document.getElementById("jnVerdict").innerHTML =
+      `<b>1.</b> X is 2, 4 or 8, each with probability 1/3. E[X] = (2 + 4 + 8)/3 = <b>${EX.toFixed(3)}</b>.<br>`+
+      `<b>2.</b> With three points the chords form a triangle, and the average point (${EX.toFixed(3)}, E[ln X]) sits inside it, below the concave curve.<br>`+
+      `<b>3.</b> E[ln X] = (${f4(Math.log(2))} + ${f4(Math.log(4))} + ${f4(Math.log(8))})/3 = <b>${f4(ElnX)}</b> ≤ ln E[X] = ln ${EX.toFixed(3)} = <b>${f4(lnEX)}</b>.<br>`+
+      `<b>4.</b> Undo the logs: geometric mean = ∛(2×4×8) = ∛64 = <span class="big">${geo.toFixed(4).replace(/\.?0+$/,"")}</span> ≤ arithmetic mean = <span class="big">${EX.toFixed(3)}</span>.`;
+  }
+
+  function jnKL(){
+    const p = [0.9,0.1], q = [0.6,0.4];
+    const r = [q[0]/p[0], q[1]/p[1]];
+    const f = x => -Math.log(x);
+    const Er = p[0]*r[0] + p[1]*r[1];
+    const KL = p[0]*f(r[0]) + p[1]*f(r[1]);
+    const KLdirect = p[0]*Math.log(p[0]/q[0]) + p[1]*Math.log(p[1]/q[1]);
+    const g = jnFrame({xmin:0,xmax:4.5,ymin:-1.6,ymax:1.6,xticks:[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5],yticks:[-1.5,-1,-0.5,0,0.5,1,1.5],xlabel:"x = q/p →"});
+    g.curve(f, 0.01, 4.5, C_CURVE);
+    g.seg(r[0],f(r[0]),r[1],f(r[1]),C_CHORD,2.4);
+    g.seg(Er,-1.6,Er,KL,"var(--ink-soft)",1.2,"4,4");
+    g.seg(Er,f(Er),Er,KL,C_GAP,4);
+    g.dot(r[0],f(r[0]),C_PT,6+4*p[0]); g.dot(r[1],f(r[1]),C_PT,6+4*p[1]);
+    g.dot(Er,KL,C_CHORD,7); g.dot(Er,f(Er),C_CURVE,7);
+    g.label(r[0],f(r[0]),"rain: q/p = 0.6/0.9 = "+f4(r[0])+"  (weight 0.9)",C_PT,"start",12,-10);
+    g.label(r[1],f(r[1]),"no rain: 0.4/0.1 = 4  (weight 0.1)",C_PT,"end",-14,16);
+    g.label(Er,KL,"KL = E_p[−ln(q/p)] = "+f4(KL),"var(--ink)","start",12,-2);
+    g.label(Er,f(Er),"−ln 1 = 0","var(--ink)","end",-10,18);
+    g.label(Er,-1.6,"E_p[q/p] = "+Er.toFixed(4).replace(/\.?0+$/,""),"var(--ink-soft)","start",6,-8);
+    g.legend(JW-jPadR-262, jPadT+8, [[C_CURVE,"f(x) = −ln x (convex, bends up)"],[C_CHORD,"chord, weighted 0.9 / 0.1 by p"],[C_GAP,"gap = KL(p‖q) ≥ 0"]]);
+    document.getElementById("jnVerdict").innerHTML =
+      `<b>1.</b> True p = (0.9, 0.1), forecast q = (0.6, 0.4). The ratios q/p are ${f4(r[0])} and ${r[1]}.<br>`+
+      `<b>2.</b> Average of q/p under p: 0.9 × ${f4(r[0])} + 0.1 × 4 = 0.6 + 0.4 = <b>${Er.toFixed(4).replace(/\.?0+$/,"")}</b> exactly (it is just Σq = 1).<br>`+
+      `<b>3.</b> KL(p‖q) = E_p[−ln(q/p)] = 0.9 × ${f4(f(r[0]))} + 0.1 × (${f4(f(r[1]))}) = <span class="big">${f4(KL)}</span> nats (direct Σ p ln(p/q) = ${f4(KLdirect)}).<br>`+
+      `<b>4.</b> −ln is convex, so Jensen says the average of the outputs (chord, ${f4(KL)}) ≥ the output at the average (curve, −ln 1 = <b>0</b>). Hence KL ≥ 0.`;
+  }
+
+  function jnTangent(){
+    const pts = [0.5,2,4];
+    const g = jnFrame({xmin:0,xmax:5,ymin:-2,ymax:4,xticks:[0,0.5,1,2,3,4,5],yticks:[-2,-1,0,1,2,3,4],xlabel:"x →"});
+    g.curve(x=>x-1, 0, 5, C_CHORD, 2.4);
+    g.curve(Math.log, 0.01, 5, C_CURVE);
+    pts.forEach(x => {
+      g.seg(x,Math.log(x),x,x-1,C_GAP,3.5);
+      g.dot(x,Math.log(x),C_CURVE,5.5); g.dot(x,x-1,C_CHORD,5.5);
+    });
+    g.dot(1,0,"var(--ink)",6);
+    g.label(1,0,"touch at (1, 0)","var(--ink)","start",10,18);
+    g.label(0.5,Math.log(0.5),"ln 0.5 = "+Math.log(0.5).toFixed(3),C_CURVE,"start",10,14);
+    g.label(0.5,-0.5,"−0.5",C_CHORD,"end",-10,-4);
+    g.label(2,Math.log(2),"ln 2 = "+Math.log(2).toFixed(3),C_CURVE,"start",10,14);
+    g.label(2,1,"1",C_CHORD,"end",-10,-4);
+    g.label(4,Math.log(4),"ln 4 = "+Math.log(4).toFixed(3),C_CURVE,"start",10,14);
+    g.label(4,3,"3",C_CHORD,"end",-10,-4);
+    g.legend(jPadL+10, jPadT+8, [[C_CURVE,"ln x (concave)"],[C_CHORD,"x − 1: tangent at x = 1"],[C_GAP,"gap (x − 1) − ln x ≥ 0"]]);
+    const rows = pts.map(x => `ln ${x} = <b>${Math.log(x).toFixed(3)}</b> ≤ ${x} − 1 = <b>${x-1}</b> &nbsp;(gap ${(x-1-Math.log(x)).toFixed(3)})`);
+    document.getElementById("jnVerdict").innerHTML =
+      `<b>1.</b> The line x − 1 touches ln x at x = 1 (both 0, both with slope 1). ln x bends down, so it stays under its tangent everywhere.<br>`+
+      rows.map((s,i)=>`<b>${i+2}.</b> ${s}<br>`).join("")+
+      `<b>5.</b> This is the one fact Gibbs' proof uses, term by term with x = q/p. A concave curve lying below its tangent is the same shape fact as its chords lying below it, which is Jensen.`;
+  }
+
+  function jnVol(){
+    const up = 1.5, down = 0.5;
+    const wealth = [1, up, up*down];
+    const arithRate = (up-1 + down-1)/2;
+    const geoFactor = Math.sqrt(up*down);
+    const geoRate = geoFactor - 1;
+    const meanLog = (Math.log(up)+Math.log(down))/2;
+    const g = jnFrame({xmin:-0.15,xmax:2.35,ymin:0.6,ymax:1.6,xticks:[0,1,2],yticks:[0.6,0.8,1,1.2,1.4,1.6],xlabel:"period →"});
+    g.seg(0,1,2,1,C_CHORD,2.2,"6,4");
+    g.seg(0,1,1,geoFactor,C_CURVE,2.2,"6,4"); g.seg(1,geoFactor,2,geoFactor**2,C_CURVE,2.2,"6,4");
+    g.seg(0,wealth[0],1,wealth[1],C_PT,3); g.seg(1,wealth[1],2,wealth[2],C_PT,3);
+    g.seg(2,wealth[2],2,1,C_GAP,4);
+    wealth.forEach((w,i) => g.dot(i,w,C_PT,6.5));
+    g.dot(1,geoFactor,C_CURVE,5);
+    g.label(0,1,"start 1",C_PT,"start",8,-10);
+    g.label(1,up,"× 1.5 → "+up,C_PT,"start",10,4);
+    g.label(2,wealth[2],"× 0.5 → "+wealth[2],C_PT,"end",-10,22);
+    g.label(0.35,1,"0% average says: still 1",C_CHORD,"start",0,-8);
+    g.label(1,geoFactor,"√0.75 = "+geoFactor.toFixed(3),C_CURVE,"start",8,-10);
+    g.label(2,(1+wealth[2])/2,"lost 25%",C_GAP,"start",8,4,"700");
+    g.legend(jPadL+10, JH-jPadB-80, [[C_PT,"actual wealth 1 → 1.5 → 0.75"],[C_CHORD,"average return 0% per period",true],[C_CURVE,"geometric rate −13.4% per period",true]]);
+    document.getElementById("jnVerdict").innerHTML =
+      `<b>1.</b> Gain 50% (× ${up}) then lose 50% (× ${down}). Average return = (+50% − 50%)/2 = <b>${(arithRate*100).toFixed(1)}%</b> per period.<br>`+
+      `<b>2.</b> Actual wealth: 1 → ${up} → ${up} × ${down} = <span class="big">${wealth[2]}</span>, a 25% loss.<br>`+
+      `<b>3.</b> The rate that really compounds is the geometric mean: √${wealth[2]} − 1 = <span class="big">${(geoRate*100).toFixed(1)}%</span> per period (${geoFactor.toFixed(4)}² = ${(geoFactor**2).toFixed(2)}).<br>`+
+      `<b>4.</b> Jensen on concave ln: average of ln(growth) = (ln 1.5 + ln 0.5)/2 = <b>${f4(meanLog)}</b> ≤ ln(average growth factor 1.0) = <b>0</b>. e^${f4(meanLog)} = ${Math.exp(meanLog).toFixed(4)}, the same geometric factor. That shortfall is <b>volatility drag</b>.`;
+  }
+
+  const jnPresets = {jnSq:jnSquare, jnLn:jnLog19, jnThree:jnThree, jnKL:jnKL, jnTan:jnTangent, jnVol:jnVol};
+  Object.keys(jnPresets).forEach(id => document.getElementById(id).addEventListener("click", function(){
+    Object.keys(jnPresets).forEach(k => document.getElementById(k).classList.remove("active"));
+    this.classList.add("active");
+    jnPresets[id]();
+  }));
+  jnSquare();
+
+  /* =========================================================
+     TABS — TOTAL PROBABILITY & EXPECTATION, and MARKOV & CHEBYSHEV
+     (shared plotting frame)
+     ========================================================= */
+  {
+  const MONO = "IBM Plex Mono, monospace";
+  const PW = 640, PH = 380, pL = 56, pR = 20, pT = 20, pB = 42;
+  function frame(svg, cfg){
+    svg.innerHTML = "";
+    const ylog = !!cfg.ylog;
+    const yv = v => ylog ? Math.log10(Math.max(v, 1e-300)) : v;
+    const X = x => pL + (x-cfg.xmin)/(cfg.xmax-cfg.xmin)*(PW-pL-pR);
+    const Y = y => PH-pB - (yv(y)-yv(cfg.ymin))/(yv(cfg.ymax)-yv(cfg.ymin))*(PH-pT-pB);
+    const cid = svg.id + "Clip";
+    const defs = el("defs",{}); const cp = el("clipPath",{id:cid});
+    cp.appendChild(el("rect",{x:pL,y:pT-2,width:PW-pL-pR,height:PH-pT-pB+2})); defs.appendChild(cp); svg.appendChild(defs);
+    (cfg.yticks||[]).forEach(v => {
+      svg.appendChild(el("line",{x1:pL,y1:Y(v),x2:PW-pR,y2:Y(v),stroke:"rgba(27,36,48,0.08)"}));
+      svg.appendChild(el("text",{x:pL-6,y:Y(v)+4,"text-anchor":"end","font-size":10.5,"font-family":MONO,fill:"var(--ink-soft)"}, cfg.yfmt ? cfg.yfmt(v) : String(v)));
+    });
+    (cfg.xticks||[]).forEach(v => {
+      const lab = Array.isArray(v) ? v[1] : String(v), xv = Array.isArray(v) ? v[0] : v;
+      svg.appendChild(el("line",{x1:X(xv),y1:PH-pB,x2:X(xv),y2:PH-pB+4,stroke:"var(--ink-soft)"}));
+      svg.appendChild(el("text",{x:X(xv),y:PH-pB+16,"text-anchor":"middle","font-size":10.5,"font-family":MONO,fill:"var(--ink-soft)"}, lab));
+    });
+    svg.appendChild(el("line",{x1:pL,y1:PH-pB,x2:PW-pR,y2:PH-pB,stroke:"var(--ink-soft)"}));
+    svg.appendChild(el("line",{x1:pL,y1:pT,x2:pL,y2:PH-pB,stroke:"var(--ink-soft)"}));
+    if (cfg.xlabel) svg.appendChild(el("text",{x:PW-pR,y:PH-6,"text-anchor":"end","font-size":11,"font-family":MONO,fill:"var(--ink-soft)"}, cfg.xlabel));
+    if (cfg.ylabel) svg.appendChild(el("text",{x:pL+6,y:pT-6,"font-size":11,"font-family":MONO,fill:"var(--ink-soft)"}, cfg.ylabel));
+    return {
+      X, Y,
+      bar(x0, x1, y0, y1, color, op){ const yt=Y(Math.max(y0,y1)), yb=Y(Math.min(y0,y1)); svg.appendChild(el("rect",{x:X(x0),y:yt,width:Math.max(0,X(x1)-X(x0)),height:Math.max(0,yb-yt),fill:color,"fill-opacity":op===undefined?0.8:op,"clip-path":`url(#${cid})`})); },
+      curve(f, x0, x1, color, width, dash){
+        let d="", on=false;
+        for (let i=0;i<=400;i++){ const x=x0+(x1-x0)*i/400, y=f(x); if(!isFinite(y) || y>cfg.ymax*1.02 || (cfg.ylog && y<=0)){ on=false; continue; } d+=(on?"L":"M")+X(x).toFixed(2)+","+Y(y).toFixed(2)+" "; on=true; }
+        const a={d,fill:"none",stroke:color,"stroke-width":width||2.5,"clip-path":`url(#${cid})`}; if(dash) a["stroke-dasharray"]=dash; svg.appendChild(el("path",a));
+      },
+      seg(x1,y1,x2,y2,color,width,dash){ const a={x1:X(x1),y1:Y(y1),x2:X(x2),y2:Y(y2),stroke:color,"stroke-width":width||2,"clip-path":`url(#${cid})`}; if(dash) a["stroke-dasharray"]=dash; svg.appendChild(el("line",a)); },
+      dot(x,y,color,r){ svg.appendChild(el("circle",{cx:X(x),cy:Y(y),r:r||5,fill:color,stroke:"#fff","stroke-width":1.4})); },
+      label(x,y,str,color,anchor,dx,dy,size){ svg.appendChild(el("text",{x:X(x)+(dx||0),y:Y(y)+(dy||0),"text-anchor":anchor||"start","font-size":size||11.5,"font-family":MONO,"font-weight":600,fill:color||"var(--ink)",stroke:"#fff","stroke-width":4,"paint-order":"stroke","stroke-linejoin":"round"}, str)); },
+      legend(px, py, rows){
+        const w = rows.reduce((m,r)=>Math.max(m,r[1].length),0)*6.6+40, h=rows.length*18+10;
+        svg.appendChild(el("rect",{x:px,y:py,width:w,height:h,rx:8,fill:"#fff","fill-opacity":0.94,stroke:"var(--line)"}));
+        rows.forEach((r,i)=>{ const yy=py+16+i*18; const a={x1:px+10,y1:yy-4,x2:px+28,y2:yy-4,stroke:r[0],"stroke-width":r[2]?2.5:7}; if(r[2]) a["stroke-dasharray"]="5,3"; svg.appendChild(el("line",a)); svg.appendChild(el("text",{x:px+34,y:yy,"font-size":11,"font-family":MONO,fill:"var(--ink)"}, r[1])); });
+      }
+    };
+  }
+  function presetGroup(map, first){
+    Object.keys(map).forEach(id => document.getElementById(id).addEventListener("click", function(){
+      Object.keys(map).forEach(k => document.getElementById(k).classList.remove("active"));
+      this.classList.add("active"); map[id]();
+    }));
+    map[first]();
+  }
+  const f4 = v => v.toFixed(4);
+  const C1="var(--pA)", C2="var(--pB)", C3="var(--pred)", CBAD="var(--bad)";
+  function choose(n,k){ let r=1; for(let i=1;i<=k;i++) r=r*(n-k+i)/i; return r; }
+  function erfL(x){ const s=x>=0?1:-1; x=Math.abs(x); const t=1/(1+0.3275911*x); const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x); return s*y; }
+  function normSF(z){ // upper tail, accurate in the far tail via continued-fraction-free asymptotics for big z
+    if (z < 5) return 0.5*(1-erfL(z/Math.SQRT2));
+    const p = Math.exp(-z*z/2)/(z*Math.sqrt(2*Math.PI)); return p*(1-1/(z*z)+3/(z**4));
+  }
+  function lgam(n){ let s=0; for(let i=2;i<=n;i++) s+=Math.log(i); return s; } // log n! for integers
+  function binomSF(n,p,kmin){ // P(K >= kmin)
+    let s=0; for(let k=kmin;k<=n;k++) s+=Math.exp(lgam(n)-lgam(k)-lgam(n-k)+k*Math.log(p)+(n-k)*Math.log(1-p)); return s;
+  }
+  function binomTwoSidedFrac(n,p,eps){ // P(|K/n - p| > eps)
+    let s=0; for(let k=0;k<=n;k++){ if (Math.abs(k/n-p) > eps+1e-12) s+=Math.exp(lgam(n)-lgam(k)-lgam(n-k)+k*Math.log(p)+(n-k)*Math.log(1-p)); } return s;
+  }
+
+  /* ---------- TOTAL PROBABILITY & EXPECTATION ---------- */
+  const teSvg = document.getElementById("teSvg"), teV = document.getElementById("teVerdict");
+  function teFactory(){
+    const F=[["A",0.5,0.01,C1],["B",0.3,0.02,C2],["C",0.2,0.05,C3]];
+    const g=frame(teSvg,{xmin:0,xmax:1,ymin:0,ymax:0.06,xticks:[[0,"0"],[0.5,"0.5"],[0.8,"0.8"],[1,"1"]],yticks:[0,0.01,0.02,0.03,0.04,0.05,0.06],xlabel:"share of all bulbs (width) →",ylabel:"defect rate"});
+    let x=0, tot=0;
+    F.forEach(f=>{ g.bar(x+0.004,x+f[1]-0.004,0,f[2],f[3],0.75); g.label(x+f[1]/2,f[2],`${f[0]}: ${f[1]} × ${f[2]} = ${(f[1]*f[2]).toFixed(3)}`,"var(--ink)","middle",0,-8); x+=f[1]; tot+=f[1]*f[2]; });
+    g.seg(0,tot,1,tot,CBAD,2.4,"6,4"); g.label(0.02,tot,`overall defect rate = total area = ${tot.toFixed(3)}`,CBAD,"start",0,-8);
+    g.legend(pL+12,pT+6,[[C1,"factory A (50% of bulbs, 1% bad)"],[C2,"factory B (30%, 2% bad)"],[C3,"factory C (20%, 5% bad)"]]);
+    teV.innerHTML=`<b>1.</b> Law of total probability: P(defective) = Σ P(defective | factory)·P(factory) = area of all three blocks.<br>`+
+      `<b>2.</b> 0.5×0.01 + 0.3×0.02 + 0.2×0.05 = 0.005 + 0.006 + 0.010 = <span class="big">${tot.toFixed(3)}</span>.<br>`+
+      `<b>3.</b> Bayes backward, "which factory made this defective bulb?": A ${f4(0.005/tot)}, B ${f4(0.006/tot)}, C <b>${f4(0.010/tot)}</b>. The smallest supplier is the biggest culprit.`;
+  }
+  function teSchool(){
+    const g=frame(teSvg,{xmin:0,xmax:40,ymin:0,ymax:100,xticks:[0,10,20,30,40],yticks:[0,20,40,60,80,100],xlabel:"students (width) →",ylabel:"class average"});
+    g.bar(0.3,9.7,0,90,C1,0.75); g.bar(10.3,39.7,0,70,C2,0.75);
+    g.label(5,90,"10 students, avg 90","var(--ink)","middle",0,-8); g.label(25,70,"30 students, avg 70","var(--ink)","middle",0,-8);
+    g.seg(0,75,40,75,C3,2.6); g.label(39,75,"weighted average 75","var(--pred)","end",0,16);
+    g.seg(0,80,40,80,CBAD,2,"6,4"); g.label(39,80,"naive (90 + 70)/2 = 80","var(--bad)","end",0,-8);
+    teV.innerHTML=`<b>1.</b> Each class average counts in proportion to its share of the school: 10/40 = 0.25 and 30/40 = 0.75.<br>`+
+      `<b>2.</b> School average = 0.25×90 + 0.75×70 = (10×90 + 30×70)/40 = <span class="big">75</span>, not the naive 80.<br>`+
+      `<b>3.</b> That is E[X] = Σ E[X | group]·P(group): the law of total expectation in one line.`;
+  }
+  function teDice(){
+    const g=frame(teSvg,{xmin:1.5,xmax:12.5,ymin:0,ymax:6.6,xticks:[2,3,4,5,6,7,8,9,10,11,12],yticks:[0,1,2,3,4,5,6],xlabel:"sum S of two dice →",ylabel:"first die X"});
+    for (let s=2;s<=12;s++){
+      for (let a=1;a<=6;a++){ const b=s-a; if(b>=1&&b<=6) g.dot(s,a,s===8?C2:"rgba(27,36,48,0.25)",s===8?5:3.5); }
+    }
+    g.curve(s=>s/2,2,12,C3,2.4);
+    for (let s=2;s<=12;s++){ let n=0,t=0; for(let a=1;a<=6;a++){ const b=s-a; if(b>=1&&b<=6){n++;t+=a;} } g.dot(s,t/n,C3,6.5); }
+    g.label(8,4,"E[X | S = 8] = 4","var(--pred)","start",10,4);
+    g.legend(pL+12,pT+6,[["rgba(27,36,48,0.35)","every equally likely (X, S) world"],[C2,"the 5 worlds with S = 8"],[C3,"E[X | S = s]: average of each column"]]);
+    let rows=""; for (let s=2;s<=12;s++){ let n=0,t=0; for(let a=1;a<=6;a++){ const b=s-a; if(b>=1&&b<=6){n++;t+=a;} } rows+=`${s}→${(t/n).toFixed(1)} `; }
+    teV.innerHTML=`<b>1.</b> Shrink to S = 8: worlds (2,6),(3,5),(4,4),(5,3),(6,2). Average the first die: (2+3+4+5+6)/5 = <span class="big">4</span>.<br>`+
+      `<b>2.</b> Every column: ${rows}. Always exactly s/2, by symmetry (the two dice are interchangeable).<br>`+
+      `<b>3.</b> E[X | S] is a rule from S to a number, so it's a random variable itself. Averaging it over S gives back E[X] = 3.5 (the tower rule).`;
+  }
+  function dieCoins(){
+    const dist=new Array(7).fill(0);
+    for (let n=1;n<=6;n++) for (let h=0;h<=n;h++) dist[h]+=choose(n,h)/(6*2**n);
+    const EH=dist.reduce((s,p,h)=>s+h*p,0), EH2=dist.reduce((s,p,h)=>s+h*h*p,0);
+    return {dist,EH,VH:EH2-EH*EH};
+  }
+  function teTower(){
+    const {dist,EH}=dieCoins();
+    const g=frame(teSvg,{xmin:0.3,xmax:6.7,ymin:0,ymax:3.5,xticks:[1,2,3,4,5,6],yticks:[0,0.5,1,1.5,2,2.5,3,3.5],xlabel:"die roll N = number of coins →",ylabel:"E[H | N]"});
+    for (let n=1;n<=6;n++){ g.bar(n-0.32,n+0.32,0,n/2,C1,0.75); g.label(n,n/2,`${n}/2 = ${(n/2).toFixed(1)}`,"var(--ink)","middle",0,-8); }
+    g.seg(0.3,EH,6.7,EH,C3,2.6); g.label(0.5,EH,`average of the bars, each weighted 1/6 = ${EH.toFixed(4)}`,"var(--pred)","start",0,-8);
+    teV.innerHTML=`<b>1.</b> Pretend you know N: flipping N fair coins gives E[H | N] = N/2 (the bars).<br>`+
+      `<b>2.</b> Average over the die: E[H] = E[N/2] = (0.5+1+1.5+2+2.5+3)/6 = 3.5/2 = <span class="big">1.75</span>.<br>`+
+      `<b>3.</b> Check by brute force over all 126 (die, coin-sequence) worlds: P(H = 0..6) = ${dist.map(p=>p.toFixed(4)).join(", ")} → E[H] = <b>${EH.toFixed(4)}</b>.`;
+  }
+  function teVar(){
+    const {EH,VH}=dieCoins();
+    const within=3.5/4, between=(35/12)/4;
+    const g=frame(teSvg,{xmin:0.3,xmax:9.2,ymin:0,ymax:5.2,xticks:[1,2,3,4,5,6,[8,"decomp."]],yticks:[0,1,2,3,4,5],xlabel:"N →",ylabel:"heads H"});
+    for (let n=1;n<=6;n++){
+      const sd=Math.sqrt(n)/2;
+      g.seg(n,Math.max(0,n/2-sd),n,n/2+sd,C2,7);
+      g.dot(n,n/2,C1,6);
+    }
+    g.seg(0.3,EH,6.7,EH,C3,2,"6,4"); g.label(0.4,EH,"overall mean 1.75","var(--pred)","start",0,-6);
+    // stacked decomposition bar at x=8, scaled so 1 unit of variance = 2 units of height
+    const sc=2;
+    g.bar(7.55,8.45,0,within*sc,C2,0.85); g.bar(7.55,8.45,within*sc,(within+between)*sc,C1,0.85);
+    g.label(8.5,within*sc/2,"within 0.875","var(--ink)","start",2,4,10.5);
+    g.label(8.5,within*sc+between*sc/2,"between 0.729","var(--ink)","start",2,4,10.5);
+    g.label(8,(within+between)*sc,`Var = ${VH.toFixed(4)}`,"var(--ink)","middle",0,-8,10.5);
+    g.legend(pL+12,pT+6,[[C1,"group average E[H | N] = N/2"],[C2,"±1 sd within each group: Var(H|N) = N/4"]]);
+    teV.innerHTML=`<b>1.</b> Within groups: E[Var(H | N)] = E[N/4] = 3.5/4 = <b>${within.toFixed(4)}</b>.<br>`+
+      `<b>2.</b> Between groups: Var(E[H | N]) = Var(N/2) = (35/12)/4 = <b>${between.toFixed(4)}</b>.<br>`+
+      `<b>3.</b> Sum ${within.toFixed(4)} + ${between.toFixed(4)} = <span class="big">${(within+between).toFixed(4)}</span>; brute-force variance of H = <b>${VH.toFixed(4)}</b> (= 77/48).<br>`+
+      `<b>4.</b> The trap: Binomial(3.5, ½) would give only ${within.toFixed(3)}, missing the ${(100*between/(within+between)).toFixed(0)}% of spread that comes from N itself being random.`;
+  }
+  function teGeom(){
+    const p=0.25;
+    const g=frame(teSvg,{xmin:0.3,xmax:16.7,ymin:0,ymax:0.3,xticks:[1,2,4,6,8,10,12,14,16],yticks:[0,0.05,0.1,0.15,0.2,0.25,0.3],xlabel:"trial of first success k →",ylabel:"P(X = k)"});
+    let EX=0; for (let k=1;k<=2000;k++) EX+=k*(1-p)**(k-1)*p;
+    for (let k=1;k<=16;k++){ const pk=(1-p)**(k-1)*p; g.bar(k-0.35,k+0.35,0,pk,C1,0.75); }
+    g.seg(4,0,4,0.28,C3,2.6); g.label(4,0.28,"E[X] = 1/p = 4","var(--pred)","start",6,4);
+    teV.innerHTML=`<b>1.</b> Condition on the first flip. Success (prob p = 0.25): X = 1. Failure (prob 0.75): one trial spent, and the rest is a fresh copy, so E[X | fail] = 1 + E[X].<br>`+
+      `<b>2.</b> Tower rule: E[X] = 0.25·1 + 0.75·(1 + E[X]) → 0.25·E[X] = 1 → E[X] = <span class="big">4</span>.<br>`+
+      `<b>3.</b> Brute force Σ k·P(X = k) over 2,000 terms = <b>${EX.toFixed(4)}</b>. The Markov-chain "expected flips" equations and RL's Bellman equation are this same move.`;
+  }
+  presetGroup({teFac:teFactory, teSch:teSchool, teDic:teDice, teTow:teTower, teVr:teVar, teGeo:teGeom}, "teFac");
+
+  /* ---------- MARKOV & CHEBYSHEV ---------- */
+  const inSvg = document.getElementById("inSvg"), inV = document.getElementById("inVerdict");
+  function inIncome(){
+    const g=frame(inSvg,{xmin:0,xmax:1,ymin:0,ymax:600,xticks:[[0,"0"],[0.5,"0.5"],[0.9,"0.9"],[1,"1"]],yticks:[0,100,200,300,400,500,600],xlabel:"fraction of the town (width) →",ylabel:"income, $1000s"});
+    g.bar(0.9,1,0,500,C2,0.8); g.seg(0,1.5,0.9,1.5,C1,6);
+    g.seg(0,50,1,50,C3,2.6); g.label(0.02,50,"average income $50k","var(--pred)","start",0,-8);
+    g.label(0.95,500,"10% at $500k","var(--ink)","middle",0,-8); g.label(0.45,0,"90% earn $0 (the most extreme case)","var(--ink)","middle",0,-10);
+    inV.innerHTML=`<b>1.</b> Incomes can't be negative. If more than a fraction a of people earned ≥ $500k, they alone would add more than a × 500 to the average.<br>`+
+      `<b>2.</b> Average is 50, so a × 500 ≤ 50 → a ≤ <span class="big">0.1</span>. Markov: P(X ≥ a) ≤ E[X]/a = 50/500.<br>`+
+      `<b>3.</b> This drawing is the worst case: 90% earn nothing, 10% earn exactly $500k. Mean = 0.1 × 500 = <b>50</b>, and P(X ≥ 500) = <b>0.1</b>, exactly the bound. So Markov can't be improved without more information.`;
+  }
+  function inMarkovExp(){
+    const m=2;
+    const g=frame(inSvg,{xmin:0,xmax:12,ymin:0,ymax:1.05,xticks:[0,2,4,6,8,10,12],yticks:[0,0.2,0.4,0.6,0.8,1],xlabel:"threshold a →",ylabel:"P(X ≥ a)"});
+    g.curve(a=>Math.min(1,m/a),0.05,12,CBAD,2.6,"6,4");
+    g.curve(a=>Math.exp(-a/m),0,12,C1,2.8);
+    [4,6,10].forEach(a=>{ g.dot(a,m/a,CBAD,5); g.dot(a,Math.exp(-a/m),C1,5); g.seg(a,Math.exp(-a/m),a,m/a,"var(--ink-soft)",1.2,"2,3"); g.label(a,m/a,`${(m/a).toFixed(4)}`,CBAD,"middle",0,-10,10.5); g.label(a,Math.exp(-a/m),`${Math.exp(-a/m).toFixed(4)}`,"var(--pA)","start",6,14,10.5); });
+    g.legend(PW-pR-320,pT+6,[[CBAD,"Markov bound E[X]/a = 2/a",true],[C1,"true tail of an exponential, mean 2"]]);
+    inV.innerHTML=`<b>1.</b> X exponential with mean 2, so the true tail is P(X ≥ a) = e^(−a/2). Markov knows only the mean: P(X ≥ a) ≤ 2/a.<br>`+
+      `<b>2.</b> a = 4: bound <b>0.5000</b>, actual <b>${f4(Math.exp(-2))}</b> · a = 6: bound <b>0.3333</b>, actual <b>${f4(Math.exp(-3))}</b> · a = 10: bound <b>0.2000</b>, actual <b>${f4(Math.exp(-5))}</b>.<br>`+
+      `<b>3.</b> Always above the truth (a guarantee), and the bound shrinks only like 1/a while the real tail shrinks exponentially.`;
+  }
+  function inCheb(){
+    const ks=[1.5,2,3];
+    const dists=[["bound 1/k²",k=>1/(k*k),CBAD],["normal",k=>2*normSF(k),C1],["Laplace",k=>Math.exp(-k*Math.SQRT2),C3],["exponential",k=>Math.exp(-(1+k))+(k<1?1-Math.exp(-(1-k)):0),C2],["uniform",k=>Math.max(0,1-k/Math.sqrt(3)),"var(--ink-soft)"]];
+    const g=frame(inSvg,{xmin:0,xmax:3,ymin:0,ymax:0.5,xticks:[[0.5,"k = 1.5"],[1.5,"k = 2"],[2.5,"k = 3"]],yticks:[0,0.1,0.2,0.3,0.4,0.5],ylabel:"P(|X − μ| ≥ kσ)"});
+    const bw=0.16;
+    ks.forEach((k,i)=>dists.forEach((d,j)=>{ const x0=i+0.1+j*bw, v=d[1](k); g.bar(x0,x0+bw-0.02,0,v,d[2],0.85); if(j===0) g.label(x0+bw/2,v,v.toFixed(4),"var(--bad)","middle",0,-6,10); }));
+    g.legend(PW-pR-190,pT+6,dists.map(d=>[d[2],d[0]]));
+    const row=d=>ks.map(k=>f4(d[1](k))).join(" / ");
+    inV.innerHTML=`<b>1.</b> Chebyshev = Markov applied to (X − μ)²: P(|X − μ| ≥ kσ) ≤ σ²/(kσ)² = 1/k², for every distribution with a variance.<br>`+
+      `<b>2.</b> k = 1.5 / 2 / 3, all distributions scaled to variance 1:<br>`+
+      dists.map(d=>`&nbsp;&nbsp;${d[0].padEnd(12," ")}: <b>${row(d)}</b>`).join("<br>")+`<br>`+
+      `<b>3.</b> Every real distribution sits under the red bars. Fat tails (Laplace) get closer to the bound than the normal does; the uniform never gets that far out at all.`;
+  }
+  function inTight(){
+    const g=frame(inSvg,{xmin:-3,xmax:3,ymin:0,ymax:0.85,xticks:[-3,-2,-1,0,1,2,3],yticks:[0,0.2,0.4,0.6,0.8],xlabel:"x →",ylabel:"P(X = x)"});
+    [[-2,1/8,C2],[0,3/4,C1],[2,1/8,C2]].forEach(b=>{ g.bar(b[0]-0.18,b[0]+0.18,0,b[1],b[2],0.85); g.label(b[0],b[1],b[1]===0.75?"3/4":"1/8","var(--ink)","middle",0,-8); });
+    g.seg(-2,0,-2,0.82,CBAD,1.4,"4,3"); g.seg(2,0,2,0.82,CBAD,1.4,"4,3");
+    g.label(2,0.8,"μ ± 2σ","var(--bad)","start",6,4);
+    const v=(1/8)*4+(1/8)*4;
+    inV.innerHTML=`<b>1.</b> Mean 0. Variance = (1/8)(−2)² + (3/4)(0)² + (1/8)(2)² = <b>${v}</b>, so σ = 1.<br>`+
+      `<b>2.</b> P(|X| ≥ 2σ) = 1/8 + 1/8 = <span class="big">0.25</span>, and Chebyshev's bound at k = 2 is 1/2² = <b>0.25</b>.<br>`+
+      `<b>3.</b> Equal: this distribution puts every bit of its "far" probability exactly at the edge, so no general bound using only the mean and variance can do better.`;
+  }
+  function inLLN(){
+    const v=35/12;
+    const g=frame(inSvg,{xmin:1,xmax:5,ymin:1e-4,ymax:1,ylog:true,xticks:[[1,"10"],[2,"100"],[3,"1,000"],[4,"10,000"],[5,"100,000"]],yticks:[1e-4,1e-3,1e-2,0.1,1],yfmt:t=>t>=0.01?String(t):t.toExponential(0),xlabel:"rolls n (log scale) →",ylabel:"P(|avg − 3.5| ≥ ε)"});
+    g.curve(L=>Math.min(1,v/(10**L*0.05*0.05)),1,5,CBAD,2.6,"6,4");
+    g.curve(L=>2*normSF(0.05/Math.sqrt(v/10**L)),1,5,C1,2.6);
+    g.curve(L=>Math.min(1,v/(10**L*0.1*0.1)),1,5,C2,2.2,"6,4");
+    g.curve(L=>2*normSF(0.1/Math.sqrt(v/10**L)),1,5,C3,2.2);
+    g.dot(4,v/(1e4*0.0025),CBAD,6); g.label(4,v/(1e4*0.0025),"0.1167","var(--bad)","start",8,-6);
+    g.dot(4,2*normSF(0.05/Math.sqrt(v/1e4)),C1,6); g.label(4,2*normSF(0.05/Math.sqrt(v/1e4)),"≈0.0034","var(--pA)","start",8,14);
+    g.legend(pL+12,PH-pB-90,[[CBAD,"Chebyshev bound, ε = 0.05",true],[C1,"actual (bell-curve approx.), ε = 0.05"],[C2,"Chebyshev bound, ε = 0.1",true],[C3,"actual, ε = 0.1"]]);
+    const nCheb=Math.ceil(v/(0.05*0.01)), nCLT=Math.ceil(1.96*1.96*v/0.01);
+    inV.innerHTML=`<b>1.</b> The average of n die rolls has mean 3.5 and variance σ²/n = (35/12)/n. Chebyshev: P(|avg − 3.5| ≥ ε) ≤ (35/12)/(nε²) → 0 as n grows. That <i>is</i> the Law of Large Numbers, proved.<br>`+
+      `<b>2.</b> n = 10,000, ε = 0.05: bound <b>${f4(v/(1e4*0.0025))}</b>, actual about <b>${f4(2*normSF(0.05/Math.sqrt(v/1e4)))}</b>.<br>`+
+      `<b>3.</b> Rolls needed to be 95% sure of landing within 0.1: Chebyshev <b>${nCheb.toLocaleString()}</b>, the bell-curve (CLT) estimate <b>${nCLT.toLocaleString()}</b>. That's the cost of assuming nothing about the shape.`;
+  }
+  function inLadder(){
+    const n=100,t=10;
+    // Chernoff with the exact coin mgf: min over u of (cosh(u/2))^n e^(-u t)
+    let best=1, bu=0; for (let i=1;i<=20000;i++){ const u=i*0.0001*5; const val=Math.exp(n*Math.log(Math.cosh(u/2))-u*t); if(val<best){best=val;bu=u;} }
+    const rows=[["Markov on the head count: 50/60",50/60,CBAD],["Chebyshev, variance 25: 25/10²",0.25,C2],[`Chernoff, exact coin average (best s = ${bu.toFixed(4)})`,best,C3],["Hoeffding: e^(−2·10²/100)",Math.exp(-2*t*t/n),C1],["exact Binomial(100, ½)",binomSF(100,0.5,60),"var(--ink)"]];
+    const g=frame(inSvg,{xmin:0,xmax:5,ymin:1e-2,ymax:1,ylog:true,xticks:[[0.5,"Markov"],[1.5,"Chebyshev"],[2.5,"Chernoff"],[3.5,"Hoeffding"],[4.5,"exact"]],yticks:[0.01,0.02,0.05,0.1,0.2,0.5,1],ylabel:"P(60+ heads) ≤"});
+    rows.forEach((r,i)=>{ g.bar(i+0.15,i+0.85,1e-2,r[1],r[2],0.8); g.label(i+0.5,r[1],f4(r[1]),"var(--ink)","middle",0,-6); });
+    const ch1k=250/1e4, ho1k=Math.exp(-2*100*100/1000), ex1k=binomSF(1000,0.5,600);
+    const pacC50=0.25/(50*0.0225), pacH50=2*Math.exp(-2*50*0.0225), pacC200=0.25/(200*0.0225), pacH200=2*Math.exp(-2*200*0.0225);
+    inV.innerHTML=`<b>1.</b> Same question, 100 fair flips, P(60 or more heads), each tool using a bit more about the variable:<br>`+
+      rows.map(r=>`&nbsp;&nbsp;${r[0]}: <b>${f4(r[1])}</b>`).join("<br>")+`<br>`+
+      `<b>2.</b> Chernoff/Hoeffding = Markov applied to e^(s·(sum − mean)), then the best s. Hoeffding's lemma swaps the exact cosh for the simpler e^(s²/8) per flip.<br>`+
+      `<b>3.</b> Scale shows the 1/n vs e^(−n) gap: 1,000 flips, 600+ heads: Chebyshev ≤ <b>${ch1k.toFixed(3)}</b>, Hoeffding ≤ <b>${ho1k.toExponential(2)}</b>, exact <b>${ex1k.toExponential(2)}</b>.<br>`+
+      `<b>4.</b> PAC file's example (risk 0.3, ε = 0.15), worst-case Chebyshev vs Hoeffding: n = 50: <b>${f4(pacC50)}</b> vs <b>${f4(pacH50)}</b> (exact ${f4(binomTwoSidedFrac(50,0.3,0.15))}); n = 200: <b>${f4(pacC200)}</b> vs <b>${pacH200.toExponential(2)}</b>.`;
+  }
+  presetGroup({inInc:inIncome, inMk:inMarkovExp, inCh:inCheb, inTi:inTight, inLl:inLLN, inLa:inLadder}, "inInc");
+  }
+
 })();
 </script>
 </body>

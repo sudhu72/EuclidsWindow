@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automatic Differentiation, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.op:disabled{ opacity:.4; cursor:not-allowed; }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12px; color:var(--ink-soft); min-width:150px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:52px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.8; white-space:pre-line; }
+  .nodebox{ display:inline-block; border:2px solid var(--line); border-radius:10px; padding:8px 14px; margin:4px; font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:#fff; }
+  .nodebox.active{ border-color:var(--accent); background:var(--accent-soft); }
+  .nodebox.done{ border-color:var(--c1); }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px; margin-top:24px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion visualizer</div>
+    <h1>Automatic Differentiation, Made Visible</h1>
+    <p>Three tabs, each companion to <b>Automatic Differentiation &amp; Computational Graphs — The Feynman Way</b>: dual numbers propagating a derivative forward through an expression, a small computational graph's forward and backward passes, and the pass-count trade-off between forward-mode and reverse-mode.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dual">Dual Numbers</button>
+    <button class="tab" data-tab="graph">Reverse-Mode Graph</button>
+    <button class="tab" data-tab="tradeoff">Forward vs. Reverse</button>
+  </div>
+
+  <!-- TAB 1: DUAL NUMBERS -->
+  <div class="panel active" id="panel-dual">
+    <div class="card">
+      <h2>f(x) = sin(x) · x², differentiated by dual-number arithmetic</h2>
+      <p class="sub">Drag <span class="formula">x</span>. The dual number is seeded as <span class="formula">(x, 1)</span> — value x, tangent 1 — and every operation propagates both, live.</p>
+      <div class="row"><label>x</label><input type="range" id="dualx" min="0.1" max="3" step="0.01" value="1.5"><span class="readout" id="dualx-r">1.50</span></div>
+      <svg id="dualsvg" viewBox="0 0 480 220"></svg>
+      <div class="steplog" id="dual-readout"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: REVERSE-MODE GRAPH -->
+  <div class="panel" id="panel-graph">
+    <div class="card">
+      <h2>f(x,y) = (x·y + sin(x))·y — forward pass, then backward pass</h2>
+      <p class="sub">Defaults reproduce the tutorial's worked example exactly: x=2, y=3. Step through the forward pass, then the backward pass, watching every local gradient accumulate.</p>
+      <div class="row"><label>x</label><input type="range" id="gx" min="0.5" max="4" step="0.1" value="2"><span class="readout" id="gx-r">2.0</span></div>
+      <div class="row"><label>y</label><input type="range" id="gy" min="0.5" max="4" step="0.1" value="3"><span class="readout" id="gy-r">3.0</span></div>
+      <div class="row">
+        <button class="op" id="btn-forward">▶ Forward pass</button>
+        <button class="op" id="btn-backward" disabled>◀ Backward pass</button>
+        <button class="op" id="btn-reset">↺ Reset</button>
+      </div>
+      <div id="nodes"></div>
+      <div class="steplog" id="graph-readout"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: FORWARD VS REVERSE -->
+  <div class="panel" id="panel-tradeoff">
+    <div class="card">
+      <h2>Which mode needs fewer passes for the full Jacobian?</h2>
+      <p class="sub">Forward-mode needs one pass per <b>input</b>; reverse-mode needs one pass per <b>output</b>. Drag n (inputs) and m (outputs) and watch the cheaper mode highlight itself live.</p>
+      <div class="row"><label>n (inputs)</label><input type="range" id="tn" min="1" max="1000000" step="1" value="1000000"><span class="readout" id="tn-r">1,000,000</span></div>
+      <div class="row"><label>m (outputs)</label><input type="range" id="tm" min="1" max="1000000" step="1" value="1"><span class="readout" id="tm-r">1</span></div>
+      <div class="steplog" id="tradeoff-readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Automatic Differentiation &amp; Computational Graphs — The Feynman Way</b> (<code>../automatic-differentiation.md</code>). All defaults reproduce the tutorial's own Python-verified worked examples exactly.
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+const svgNS='http://www.w3.org/2000/svg';
+function el(tag,attrs){ const e=document.createElementNS(svgNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+// ---------- TAB 1: DUAL NUMBERS ----------
+function renderDual(){
+  const x = parseFloat(document.getElementById('dualx').value);
+  document.getElementById('dualx-r').textContent = x.toFixed(2);
+
+  // dual number arithmetic: (val, eps)
+  const dmul = (a,b) => [a[0]*b[0], a[0]*b[1] + a[1]*b[0]];
+  const dsin = (a) => [Math.sin(a[0]), Math.cos(a[0])*a[1]];
+
+  const seed = [x, 1];
+  const sinPart = dsin(seed);
+  const sqPart = dmul(seed, seed);
+  const f = dmul(sinPart, sqPart);
+
+  const analytic_f = Math.sin(x)*x*x;
+  const analytic_fp = Math.cos(x)*x*x + Math.sin(x)*2*x;
+
+  const svg = document.getElementById('dualsvg'); svg.innerHTML='';
+  const stages = [
+    ['seed x', seed],
+    ['sin(x)', sinPart],
+    ['x·x', sqPart],
+    ['sin(x)·(x·x)', f]
+  ];
+  stages.forEach((s,i)=>{
+    const bx = 20 + i*115;
+    svg.appendChild(el('rect',{x:bx,y:70,width:100,height:70,rx:8,fill:'#fff',stroke:'#463A73','stroke-width':1.5}));
+    const t1=el('text',{x:bx+50,y:92,'font-size':'11','font-family':'IBM Plex Mono, monospace',fill:'#5B6572','text-anchor':'middle'});
+    t1.textContent=s[0]; svg.appendChild(t1);
+    const t2=el('text',{x:bx+50,y:112,'font-size':'12.5','font-family':'IBM Plex Mono, monospace',fill:'#1B2430','font-weight':'700','text-anchor':'middle'});
+    t2.textContent='val='+s[1][0].toFixed(3); svg.appendChild(t2);
+    const t3=el('text',{x:bx+50,y:128,'font-size':'12.5','font-family':'IBM Plex Mono, monospace',fill:'#0F8B8D','font-weight':'700','text-anchor':'middle'});
+    t3.textContent='eps='+s[1][1].toFixed(3); svg.appendChild(t3);
+    if(i<stages.length-1){
+      svg.appendChild(el('line',{x1:bx+100,y1:105,x2:bx+115,y2:105,stroke:'#B7BEC4','stroke-width':2,'marker-end':'url(#arrow2)'}));
+    }
+  });
+  const defs=el('defs',{});
+  defs.innerHTML='<marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#B7BEC4"/></marker>';
+  svg.appendChild(defs);
+
+  document.getElementById('dual-readout').textContent =
+    'dual number result: f('+x.toFixed(2)+') = '+f[0].toFixed(6)+'   f\'('+x.toFixed(2)+') = '+f[1].toFixed(6)+'\n'+
+    'analytic check:     f('+x.toFixed(2)+') = '+analytic_f.toFixed(6)+'   f\'('+x.toFixed(2)+') = '+analytic_fp.toFixed(6)+
+    (Math.abs(f[1]-analytic_fp)<1e-9 ? '\n→ exact match' : '');
+}
+document.getElementById('dualx').addEventListener('input', renderDual);
+renderDual();
+
+// ---------- TAB 2: REVERSE-MODE GRAPH ----------
+let graphState = {};
+function computeGraph(){
+  const x = parseFloat(document.getElementById('gx').value);
+  const y = parseFloat(document.getElementById('gy').value);
+  const a = x*y;
+  const b = Math.sin(x);
+  const c = a+b;
+  const f = c*y;
+  return {x,y,a,b,c,f};
+}
+function renderNodes(stage){
+  const g = computeGraph();
+  graphState = g;
+  const wrap = document.getElementById('nodes');
+  wrap.innerHTML='';
+  const nodeList = [
+    ['x', g.x.toFixed(2)], ['y', g.y.toFixed(2)],
+    ['a=x·y', g.a.toFixed(3)], ['b=sin(x)', g.b.toFixed(3)],
+    ['c=a+b', g.c.toFixed(3)], ['f=c·y', g.f.toFixed(3)]
+  ];
+  nodeList.forEach(([label,val])=>{
+    const box = document.createElement('span');
+    box.className = 'nodebox' + (stage>=1 ? ' done':'');
+    box.textContent = label+' = '+val;
+    wrap.appendChild(box);
+  });
+}
+function renderGraphReadout(stage){
+  const g = graphState;
+  let txt = 'forward pass: x='+g.x.toFixed(2)+' y='+g.y.toFixed(2)+' -> a='+g.a.toFixed(3)+' b='+g.b.toFixed(3)+' c='+g.c.toFixed(3)+' f='+g.f.toFixed(3);
+  if(stage>=2){
+    const df_df = 1.0;
+    const df_dc = df_df * g.y;
+    const df_dy_via_f = df_df * g.c;
+    const df_da = df_dc * 1.0;
+    const df_db = df_dc * 1.0;
+    const df_dx_via_a = df_da * g.y;
+    const df_dy_via_a = df_da * g.x;
+    const df_dx_via_b = df_db * Math.cos(g.x);
+    const df_dx = df_dx_via_a + df_dx_via_b;
+    const df_dy = df_dy_via_a + df_dy_via_f;
+    const an_dx = g.y*g.y + g.y*Math.cos(g.x);
+    const an_dy = 2*g.x*g.y + Math.sin(g.x);
+    txt += '\n\nbackward pass:\n∂f/∂c = '+df_dc.toFixed(3)+'  (reused for both a and b)\n∂f/∂x = '+df_dx.toFixed(6)+'   analytic check: '+an_dx.toFixed(6)+
+      '\n∂f/∂y = '+df_dy.toFixed(6)+'   analytic check: '+an_dy.toFixed(6)+
+      (Math.abs(df_dx-an_dx)<1e-9 && Math.abs(df_dy-an_dy)<1e-9 ? '\n→ exact match, both partials' : '');
+  }
+  document.getElementById('graph-readout').textContent = txt;
+}
+let stage = 0;
+function resetGraph(){
+  stage = 0;
+  renderNodes(0);
+  document.getElementById('graph-readout').textContent = 'click "Forward pass" to begin';
+  document.getElementById('btn-forward').disabled = false;
+  document.getElementById('btn-backward').disabled = true;
+}
+document.getElementById('btn-forward').addEventListener('click', ()=>{
+  stage = 1;
+  renderNodes(1);
+  renderGraphReadout(1);
+  document.getElementById('btn-forward').disabled = true;
+  document.getElementById('btn-backward').disabled = false;
+});
+document.getElementById('btn-backward').addEventListener('click', ()=>{
+  stage = 2;
+  renderGraphReadout(2);
+  document.getElementById('btn-backward').disabled = true;
+});
+document.getElementById('btn-reset').addEventListener('click', resetGraph);
+['gx','gy'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', (e)=>{
+    document.getElementById(id+'-r').textContent = parseFloat(e.target.value).toFixed(1);
+    resetGraph();
+  });
+});
+resetGraph();
+
+// ---------- TAB 3: FORWARD VS REVERSE ----------
+function renderTradeoff(){
+  const n = parseInt(document.getElementById('tn').value);
+  const m = parseInt(document.getElementById('tm').value);
+  document.getElementById('tn-r').textContent = n.toLocaleString();
+  document.getElementById('tm-r').textContent = m.toLocaleString();
+  const ratio = n <= m ? (m/n) : (n/m);
+  document.getElementById('tradeoff-readout').textContent =
+    'forward-mode passes needed: n = '+n.toLocaleString()+'\n'+
+    'reverse-mode passes needed: m = '+m.toLocaleString()+'\n\n'+
+    (n===m ? 'tied -- neither mode has an advantage' :
+     n < m ? 'forward-mode wins, by a factor of '+ratio.toFixed(1)+'x' :
+             'reverse-mode wins, by a factor of '+ratio.toFixed(1)+'x')+
+    '\n\n(a neural network\'s scalar loss over millions of params is n=1,000,000, m=1 -- reverse-mode wins by 1,000,000x, exactly why every framework defaults to it)';
+}
+['tn','tm'].forEach(id=> document.getElementById(id).addEventListener('input', renderTradeoff));
+renderTradeoff();
+</script>
+</body>
+</html>

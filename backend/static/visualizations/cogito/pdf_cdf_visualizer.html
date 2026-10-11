@@ -61,13 +61,15 @@
   <header>
     <div class="eyebrow">Companion to PDFs and CDFs</div>
     <h1>PDFs and CDFs, Made Visible</h1>
-    <p>Four verified demos: watch a density's area-so-far trace a live CDF; build uniform and exponential distributions from their sliders; watch the normal distribution's CDF come from the error function, not a shortcut; and watch inverse-CDF sampling turn plain uniform randomness into any shape you like.</p>
+    <p>Six verified demos: watch a density's area-so-far trace a live CDF; build uniform and exponential distributions from their sliders; wait for the k-th event with the Gamma distribution (and meet chi-square and Gamma–Poisson conjugacy); watch the normal distribution's CDF come from the error function, not a shortcut; read every moment off one function and turn sums into products with moment generating functions; and watch inverse-CDF sampling turn plain uniform randomness into any shape you like.</p>
   </header>
 
   <div class="tabs">
     <button class="tab active" data-tab="explorer">PDF ↔ CDF Explorer</button>
     <button class="tab" data-tab="builder">Uniform &amp; Exponential Builder</button>
+    <button class="tab" data-tab="gamma">Gamma: Waiting for the k-th Event</button>
     <button class="tab" data-tab="normal">Normal CDF via erf</button>
+    <button class="tab" data-tab="mgf">Moment Generating Functions</button>
     <button class="tab" data-tab="sampling">Inverse-CDF Sampling</button>
   </div>
 
@@ -130,6 +132,32 @@
     </div>
   </div>
 
+  <!-- ============ TAB: GAMMA ============ -->
+  <div class="panel" id="panel-gamma">
+    <div class="card">
+      <h2>Waiting for the k-th Event</h2>
+      <p class="sub"><b>What's happening:</b> the Gamma distribution is the wait until the <i>k</i>-th event of a steady random stream (rate λ per minute): the sum of <i>k</i> independent exponential gaps. Shape α = k sets the curve's form; rate λ only stretches the time axis. The same family is the chi-square distribution, and the conjugate prior for a Poisson rate.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> every button replays one worked example from Part 3b, with every number computed live. Start with <em>Third call</em>, then compare it to <em>k = 1 is the exponential</em>. The sliders let you explore your own shape and rate afterwards.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-gpreset="g3call">Third call (k = 3, λ = 0.5)</button>
+        <button class="op" data-gpreset="g1">k = 1 is the exponential</button>
+        <button class="op" data-gpreset="gchi2">Chi-square, 2 degrees of freedom</button>
+        <button class="op" data-gpreset="gchi1">Chi-square, 1 degree: 3.84</button>
+        <button class="op" data-gpreset="gpost">Gamma–Poisson update: Gamma(2,1) → Gamma(22,6)</button>
+        <button class="op" data-gpreset="gnb">Overdispersion: Gamma-mixed Poisson</button>
+      </div>
+      <div id="gammaSliders">
+        <div class="row"><label>shape α (= k)</label><input type="range" id="gShape" min="0.5" max="10" step="0.5" value="3"><span class="readout" id="gShapeOut">3.0</span></div>
+        <div class="row"><label>rate λ</label><input type="range" id="gRate" min="0.1" max="2" step="0.05" value="0.5"><span class="readout" id="gRateOut">0.50</span></div>
+        <div class="row"><label>shade P(T ≤ x), x =</label><input type="range" id="gX" min="0" max="30" step="0.01" value="4"><span class="readout" id="gXOut">4.00</span></div>
+      </div>
+      <svg id="gammaSvg" viewBox="0 0 600 320"></svg>
+      <div class="legend" id="gammaLegend"></div>
+      <div class="verdict" id="gammaVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> staffing a help desk, spare-part reliability, the chi-square test, and Bayesian A/B tests on rates are all this one curve. And a Poisson whose rate is itself Gamma-distributed gives the Negative Binomial, the standard fix for overdispersed counts.</div>
+    </div>
+  </div>
+
   <!-- ============ TAB: NORMAL CDF VIA ERF ============ -->
   <div class="panel" id="panel-normal">
     <div class="card">
@@ -141,6 +169,34 @@
       <svg id="normalSvg" viewBox="0 0 600 260"></svg>
       <div class="verdict" id="normalVerdict"></div>
       <div class="caption"><b>Why it matters:</b> this exact erf-based Φ(x) is the same function Quantitative Finance's Black-Scholes formula and parametric VaR both call — built here once, reused there twice.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: MOMENT GENERATING FUNCTIONS ============ -->
+  <div class="panel" id="panel-mgf">
+    <div class="card">
+      <h2>Moment Generating Functions: Every Moment in One Function</h2>
+      <p class="sub"><b>What's happening:</b> the MGF is M(t) = E[e^(tX)]. Its slope at t = 0 is the mean, its second derivative there is E[X²], and so on. The trick that makes it famous: for independent pieces, the MGF of a sum is the <i>product</i> of their MGFs, so sums of random variables become multiplication.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with <em>Exponential</em> and read the slope (2) and curvature (8) off the curve at t = 0, the mean and E[X²] from Part 3. Then <em>Sum of two normals</em>: 200,000 simulated sums land exactly on the Normal(15, 5²) curve the MGF product predicts. Finish with <em>Chernoff</em> to see the bound from 03 · Probability §3.6 as the lowest point of a curve.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-mgf="exp">Exponential: slopes at 0 are the moments</button>
+        <button class="op" data-mgf="norm">Normal MGF: μ = 10, σ = 3</button>
+        <button class="op" data-mgf="sum">Sum of two normals is normal</button>
+        <button class="op" data-mgf="gamma">Three exponentials = Gamma(3, 0.5)</button>
+        <button class="op" data-mgf="pois">Binomial → Poisson (n = 10, 100, 1,000)</button>
+        <button class="op" data-mgf="chern">Chernoff: 60+ heads in 100</button>
+      </div>
+      <div class="row" id="mgfNrow" style="gap:6px; display:none;">
+        <span style="font-size:12.5px; color:var(--ink-soft);">trials n (λ = np = 3):</span>
+        <button class="op" data-mgfn="10">n = 10</button>
+        <button class="op" data-mgfn="100">n = 100</button>
+        <button class="op" data-mgfn="1000">n = 1,000</button>
+        <button class="op" data-mgfn="10000">n = 10,000</button>
+      </div>
+      <svg id="mgfSvg" viewBox="0 0 600 320"></svg>
+      <div class="legend" id="mgfLegend"></div>
+      <div class="verdict" id="mgfVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the product rule proves that independent normals add to a normal, that k exponential waits add to a Gamma, and that a Binomial with many rare trials becomes a Poisson, all without a convolution integral; and e^(−sa)·M(s) is the Chernoff bound used to size A/B tests and analyse randomized algorithms.</div>
     </div>
   </div>
 
@@ -514,6 +570,380 @@
   });
   document.getElementById("sampleReset").addEventListener("click", () => { sampledDraws = []; renderSampling(); });
   renderSampling();
+
+  /* =========================================================
+     TAB: GAMMA — waiting for the k-th event
+     ========================================================= */
+  function lgammaFn(z){
+    // Lanczos approximation (g=7, n=9)
+    const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+    if (z<0.5) return Math.log(Math.PI/Math.sin(Math.PI*z)) - lgammaFn(1-z);
+    z-=1; let x=c[0];
+    for (let i=1;i<9;i++) x+=c[i]/(z+i);
+    const t=z+7.5;
+    return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(t)-t+Math.log(x);
+  }
+  function gammaPDF(x,a,rate){
+    if (x<0) return 0;
+    if (x===0) return a<1 ? Infinity : (a===1 ? rate : 0);
+    return Math.exp(a*Math.log(rate)+(a-1)*Math.log(x)-rate*x-lgammaFn(a));
+  }
+  function gammaP(a,x){ // regularized lower incomplete gamma
+    if (x<=0) return 0;
+    const gln=lgammaFn(a);
+    if (x<a+1){
+      let ap=a, sum=1/a, del=sum;
+      for (let n=0;n<500;n++){ ap+=1; del*=x/ap; sum+=del; if (Math.abs(del)<Math.abs(sum)*1e-15) break; }
+      return sum*Math.exp(-x+a*Math.log(x)-gln);
+    }
+    let b=x+1-a, c=1/1e-300, d=1/b, h=d;
+    for (let i=1;i<500;i++){
+      const an=-i*(i-a); b+=2;
+      d=an*d+b; if (Math.abs(d)<1e-300) d=1e-300;
+      c=b+an/c; if (Math.abs(c)<1e-300) c=1e-300;
+      d=1/d; const del=d*c; h*=del; if (Math.abs(del-1)<1e-15) break;
+    }
+    return 1-Math.exp(-x+a*Math.log(x)-gln)*h;
+  }
+  function gammaCDF(x,a,rate){ return gammaP(a, rate*x); }
+  function gammaQuantile(p,a,rate){
+    let lo=0, hi=Math.max(10,(a+20*Math.sqrt(a)+20)/rate);
+    for (let i=0;i<200;i++){ const mid=(lo+hi)/2; if (gammaCDF(mid,a,rate)<p) lo=mid; else hi=mid; }
+    return (lo+hi)/2;
+  }
+  function poisPMF(k,mu){ return Math.exp(k*Math.log(mu)-mu-lgammaFn(k+1)); }
+  function nbPMF(k,r,p){ // number of failures before r successes, success prob p
+    return Math.exp(lgammaFn(k+r)-lgammaFn(k+1)-lgammaFn(r)+r*Math.log(p)+k*Math.log(1-p));
+  }
+
+  const gShape=document.getElementById("gShape"), gRate=document.getElementById("gRate"), gX=document.getElementById("gX");
+  const gShapeOut=document.getElementById("gShapeOut"), gRateOut=document.getElementById("gRateOut"), gXOut=document.getElementById("gXOut");
+  const gammaSvg=document.getElementById("gammaSvg");
+  let gMode="g3call";
+  const SIM_N=200000;
+
+  function gAxes(xMin,xMax,yMax,xticks,xlabel){
+    const W=600,H=320,padL=46,padR=20,padT=20,padB=40;
+    const X=v=>padL+(v-xMin)/(xMax-xMin)*(W-padL-padR);
+    const Y=v=>H-padB-(v/yMax)*(H-padT-padB);
+    gammaSvg.innerHTML="";
+    gammaSvg.appendChild(el("line",{x1:padL,y1:Y(0),x2:W-padR,y2:Y(0),stroke:"var(--ink)","stroke-width":1}));
+    gammaSvg.appendChild(el("line",{x1:padL,y1:Y(0),x2:padL,y2:padT,stroke:"var(--ink)","stroke-width":1}));
+    xticks.forEach(t=>{
+      gammaSvg.appendChild(el("line",{x1:X(t),y1:Y(0),x2:X(t),y2:Y(0)+5,stroke:"var(--ink)"}));
+      gammaSvg.appendChild(el("text",{x:X(t),y:Y(0)+18,"text-anchor":"middle","font-size":11,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink-soft)"},String(t)));
+    });
+    gammaSvg.appendChild(el("text",{x:W-padR,y:H-6,"text-anchor":"end","font-size":11,"font-family":"IBM Plex Mono, monospace",fill:"var(--ink-soft)"},xlabel));
+    return {X,Y,W,H,padL,padR,padT,padB};
+  }
+  function gCurve(g,fn,xMin,xMax,yMax,color,width,dash){
+    let d="", started=false;
+    for (let i=0;i<=400;i++){
+      const xv=xMin+(xMax-xMin)*i/400; let yv=fn(xv);
+      if (!isFinite(yv) || yv>yMax){ started=false; continue; }
+      d+=`${started?"L":"M"}${g.X(xv).toFixed(2)},${g.Y(yv).toFixed(2)} `; started=true;
+    }
+    const a={d,fill:"none",stroke:color,"stroke-width":width||2.5};
+    if (dash) a["stroke-dasharray"]=dash;
+    gammaSvg.appendChild(el("path",a));
+  }
+  function gShade(g,fn,a,b,yMax,color){
+    let d=`M${g.X(a)},${g.Y(0)} `;
+    for (let i=0;i<=300;i++){ const xv=a+(b-a)*i/300; let yv=fn(xv); if(!isFinite(yv)) yv=yMax; d+=`L${g.X(xv).toFixed(2)},${g.Y(Math.min(yv,yMax*1.05)).toFixed(2)} `; }
+    d+=`L${g.X(b)},${g.Y(0)} Z`;
+    gammaSvg.appendChild(el("path",{d,fill:color,opacity:0.35}));
+  }
+  function gHist(g,samples,xMax,nb,color){
+    const bw=xMax/nb, bins=new Array(nb).fill(0);
+    samples.forEach(v=>{ const b=Math.floor(v/bw); if(b>=0&&b<nb) bins[b]++; });
+    bins.forEach((c,i)=>{
+      const dens=c/(samples.length*bw);
+      gammaSvg.appendChild(el("rect",{x:g.X(i*bw),y:g.Y(dens),width:Math.max(0,g.X((i+1)*bw)-g.X(i*bw)-1),height:g.Y(0)-g.Y(dens),fill:color,opacity:0.28}));
+    });
+  }
+  function gLegend(rows){
+    document.getElementById("gammaLegend").innerHTML=rows.map(r=>`<span><span class="dot" style="background:${r[0]}"></span> ${r[1]}</span>`).join("");
+  }
+  function sumExpSamples(k,rate,seed){
+    const rand=mulberry32(seed), out=new Array(SIM_N);
+    for (let i=0;i<SIM_N;i++){ let s=0; for (let j=0;j<k;j++) s+=-Math.log(1-rand())/rate; out[i]=s; }
+    return out;
+  }
+  function sumSqNormalSamples(nu,seed){
+    const rand=mulberry32(seed), out=new Array(SIM_N);
+    for (let i=0;i<SIM_N;i++){
+      let s=0;
+      for (let j=0;j<nu;j++){ const u1=1-rand(), u2=rand(); const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); s+=z*z; }
+      out[i]=s;
+    }
+    return out;
+  }
+  const simCache={};
+  function cached(key,fn){ if(!simCache[key]) simCache[key]=fn(); return simCache[key]; }
+
+  function renderGammaDensity(opts){
+    const a=parseFloat(gShape.value), rate=parseFloat(gRate.value), x=parseFloat(gX.value);
+    gShapeOut.textContent=a.toFixed(1); gRateOut.textContent=rate.toFixed(2); gXOut.textContent=x.toFixed(2);
+    const mean=a/rate, vr=a/(rate*rate);
+    const xMax=opts.xMax||Math.max(4,Math.ceil((mean+5*Math.sqrt(vr))));
+    const pdf=v=>gammaPDF(v,a,rate);
+    let yMax=0; for(let i=1;i<=400;i++){ const v=pdf(xMax*i/400); if(isFinite(v)) yMax=Math.max(yMax,v); }
+    if (opts.yCap) yMax=Math.min(yMax,opts.yCap);
+    yMax*=1.15;
+    const step=xMax<=10?1:(xMax<=30?5:10), ticks=[]; for(let t=0;t<=xMax+1e-9;t+=step) ticks.push(t);
+    const g=gAxes(0,xMax,yMax,ticks,opts.xlabel||"t (minutes) →");
+    if (opts.samples){ gHist(g,opts.samples,xMax,60,"var(--accent)"); }
+    gShade(g,pdf,0,Math.min(x,xMax),yMax,"var(--pB)");
+    gCurve(g,pdf,0,xMax,yMax,"var(--accent)",2.6);
+    if (opts.overlay) gCurve(g,opts.overlay.fn,0,xMax,yMax,opts.overlay.color,2,"6,4");
+    gammaSvg.appendChild(el("line",{x1:g.X(Math.min(x,xMax)),y1:g.Y(0),x2:g.X(Math.min(x,xMax)),y2:g.padT,stroke:"var(--ink)","stroke-width":1,"stroke-dasharray":"3,3"}));
+    const F=gammaCDF(x,a,rate);
+    const rows=[["var(--accent)",`Gamma(shape ${a}, rate ${rate}) density`],["var(--pB)",`shaded area = P(T ≤ ${x}) = ${F.toFixed(4)}`]];
+    if (opts.samples) rows.push(["var(--accent)", `histogram of ${SIM_N.toLocaleString()} simulated draws (pale bars)`]);
+    if (opts.overlay) rows.push([opts.overlay.color, opts.overlay.label]);
+    gLegend(rows);
+    let html=`Gamma(shape α = <b>${a}</b>, rate λ = <b>${rate}</b>): mean α/λ = <b>${mean.toFixed(4)}</b> · variance α/λ² = <b>${vr.toFixed(4)}</b>`+
+      (a>=1?` · mode (α−1)/λ = <b>${((a-1)/rate).toFixed(4)}</b>`:` · density → ∞ at 0 (shape < 1)`)+`<br>`+
+      `P(T ≤ ${x}) via the Gamma CDF = <b>${F.toFixed(6)}</b>`;
+    if (opts.samples){
+      const frac=opts.samples.filter(v=>v<=x).length/opts.samples.length;
+      const m=opts.samples.reduce((s,v)=>s+v,0)/opts.samples.length;
+      html+=` · simulated = <b>${frac.toFixed(4)}</b> (simulated mean ${m.toFixed(4)})`;
+    }
+    if (opts.extra) html+="<br>"+opts.extra(a,rate,x,F);
+    document.getElementById("gammaVerdict").innerHTML=html;
+  }
+
+  function renderGammaPosterior(){
+    const a0=2,b0=1,data=[3,5,4,6,2],n=data.length,sx=data.reduce((s,v)=>s+v,0);
+    const a1=a0+sx,b1=b0+n, xMax=8;
+    const prior=v=>gammaPDF(v,a0,b0), post=v=>gammaPDF(v,a1,b1), lik=v=>gammaPDF(v,sx+1,n); // likelihood rescaled to area 1
+    let yMax=0; for(let i=1;i<=400;i++){ const v=xMax*i/400; yMax=Math.max(yMax,post(v),lik(v),prior(v)); } yMax*=1.15;
+    const g=gAxes(0,xMax,yMax,[0,1,2,3,4,5,6,7,8],"λ, errors per day →");
+    const lo=gammaQuantile(0.025,a1,b1), hi=gammaQuantile(0.975,a1,b1);
+    gShade(g,post,lo,hi,yMax,"var(--pB)");
+    gCurve(g,prior,0,xMax,yMax,"var(--good)",2.4,"6,4");
+    gCurve(g,lik,0,xMax,yMax,"var(--warn)",2.2,"2,3");
+    gCurve(g,post,0,xMax,yMax,"var(--accent)",2.8);
+    [[a0/b0,"var(--good)"],[sx/n,"var(--warn)"],[a1/b1,"var(--accent)"]].forEach(m=>{
+      gammaSvg.appendChild(el("line",{x1:g.X(m[0]),y1:g.Y(0),x2:g.X(m[0]),y2:g.Y(0)-12,stroke:m[1],"stroke-width":3}));
+    });
+    gLegend([["var(--good)","prior Gamma(2, 1), mean 2"],["var(--warn)","likelihood of 3,5,4,6,2 (rescaled), peak 4.0"],["var(--accent)","posterior Gamma(22, 6)"],["var(--pB)","95% credible interval"]]);
+    document.getElementById("gammaVerdict").innerHTML=
+      `<b>1.</b> Prior Gamma(α = ${a0}, β = ${b0}): like ${a0} errors over ${b0} pretend day; mean ${(a0/b0).toFixed(1)}.<br>`+
+      `<b>2.</b> Data: ${data.join(", ")} → Σx = <b>${sx}</b> errors over n = <b>${n}</b> days; MLE = ${sx}/${n} = <b>${(sx/n).toFixed(1)}</b>.<br>`+
+      `<b>3.</b> λ^(α−1)e^(−βλ) × λ^(Σx)e^(−nλ) = λ^(${a0}+${sx}−1) e^(−(${b0}+${n})λ) → posterior <b>Gamma(${a1}, ${b1})</b>.<br>`+
+      `<b>4.</b> Posterior mean ${a1}/${b1} = <span style="font-size:18px;font-weight:700">${(a1/b1).toFixed(3)}</span> · peak (MAP) ${(a1-1)}/${b1} = <b>${((a1-1)/b1).toFixed(3)}</b> · 95% credible interval [<b>${lo.toFixed(3)}</b>, <b>${hi.toFixed(3)}</b>].`;
+  }
+
+  function renderGammaNB(){
+    const r=2, beta=1, p=beta/(1+beta), kMax=12;
+    const key="nb";
+    const counts=cached(key,()=>{
+      const rand=mulberry32(7), c=new Array(60).fill(0), N=SIM_N; let s=0,s2=0;
+      for (let i=0;i<N;i++){
+        const lam=(-Math.log(1-rand())-Math.log(1-rand()))/beta; // Gamma(2, rate 1) = sum of 2 exponentials
+        let L=Math.exp(-lam), k=0, prod=rand(); while(prod>L){ k++; prod*=rand(); }
+        if (k<60) c[k]++; s+=k; s2+=k*k;
+      }
+      return {c, mean:s/N, vr:s2/N-(s/N)**2, N};
+    });
+    let yMax=0; for(let k=0;k<=kMax;k++) yMax=Math.max(yMax,nbPMF(k,r,p),poisPMF(k,2)); yMax*=1.2;
+    const ticks=[]; for(let k=0;k<=kMax;k++) ticks.push(k);
+    const g=gAxes(-0.5,kMax+0.5,yMax,ticks,"count per day →");
+    for (let k=0;k<=kMax;k++){
+      const w=(g.X(1)-g.X(0))*0.36;
+      const pn=poisPMF(k,2), nb=nbPMF(k,r,p), sim=counts.c[k]/counts.N;
+      gammaSvg.appendChild(el("rect",{x:g.X(k)-w,y:g.Y(pn),width:w,height:g.Y(0)-g.Y(pn),fill:"var(--good)",opacity:0.75}));
+      gammaSvg.appendChild(el("rect",{x:g.X(k),y:g.Y(nb),width:w,height:g.Y(0)-g.Y(nb),fill:"var(--accent)",opacity:0.75}));
+      gammaSvg.appendChild(el("circle",{cx:g.X(k)+w/2,cy:g.Y(sim),r:3.5,fill:"var(--warn)"}));
+    }
+    gLegend([["var(--good)","plain Poisson(2): variance 2"],["var(--accent)","Negative Binomial = Poisson with Gamma(2,1) rate: variance 4"],["var(--warn)",`simulated mixture, ${counts.N.toLocaleString()} days`]]);
+    document.getElementById("gammaVerdict").innerHTML=
+      `<b>1.</b> Each day draws its own rate λ ~ Gamma(2, rate 1) (mean 2), then a count ~ Poisson(λ).<br>`+
+      `<b>2.</b> Theory: mean α/β = <b>2</b>, variance α/β + α/β² = 2 + 2 = <b>4</b>: twice the mean, which a plain Poisson forbids.<br>`+
+      `<b>3.</b> Simulated: mean <b>${counts.mean.toFixed(3)}</b>, variance <b>${counts.vr.toFixed(3)}</b>. P(0): Negative Binomial ${nbPMF(0,r,p).toFixed(4)}, simulated ${(counts.c[0]/counts.N).toFixed(4)}, plain Poisson ${poisPMF(0,2).toFixed(4)}.<br>`+
+      `<b>4.</b> More zeros <i>and</i> a longer right tail than the Poisson: that is what overdispersion looks like.`;
+  }
+
+  function setGSliders(a,rate,x){ gShape.value=a; gRate.value=rate; gX.value=x; }
+  const gPresets={
+    g3call(){
+      setGSliders(3,0.5,4);
+      renderGammaDensity({xMax:20, samples:cached("e3",()=>sumExpSamples(3,0.5,11)),
+        overlay:{fn:v=>gammaPDF(v,1,0.5),color:"var(--good)",label:"first call only (exponential, k = 1), for comparison"},
+        extra:()=>`Counting check: "third call by t = 4" = "at least 3 Poisson(λ·4 = 2) arrivals" = 1 − e^(−2)(1 + 2 + 2²/2) = 1 − 5e^(−2) = <b>${(1-5*Math.exp(-2)).toFixed(6)}</b>. Density at 4: <b>${gammaPDF(4,3,0.5).toFixed(6)}</b>.`});
+    },
+    g1(){
+      setGSliders(1,0.5,2);
+      renderGammaDensity({xMax:14, extra:()=>`Shape 1 is Part 3's exponential: 1 − e^(−λx) = 1 − e^(−1) = <b>${(1-Math.exp(-1)).toFixed(6)}</b>, the same number.`});
+    },
+    gchi2(){
+      setGSliders(1,0.5,3);
+      renderGammaDensity({xMax:14, xlabel:"Z₁² + Z₂² →", samples:cached("c2",()=>sumSqNormalSamples(2,21)),
+        extra:()=>`χ² with ν = 2 is Gamma(ν/2 = 1, rate ½): an exponential with mean 2. Pale bars: ${SIM_N.toLocaleString()} simulated sums of two squared standard normals.`});
+    },
+    gchi1(){
+      setGSliders(0.5,0.5,3.84);
+      renderGammaDensity({xMax:8, yCap:1.2, xlabel:"Z² →", samples:cached("c1",()=>sumSqNormalSamples(1,31)),
+        extra:(a,r,x,F)=>`χ² with ν = 1 is Gamma(½, rate ½): one squared normal. 3.84 ≈ 1.96², the normal's two-sided 95% cut-off, so P(Z² ≤ 3.84) = P(|Z| ≤ 1.96) = <b>${F.toFixed(6)}</b>.`});
+    },
+    gpost(){ renderGammaPosterior(); },
+    gnb(){ renderGammaNB(); }
+  };
+  function setGActive(id){ document.querySelectorAll("[data-gpreset]").forEach(b=>b.classList.toggle("active", b.dataset.gpreset===id)); }
+  document.querySelectorAll("[data-gpreset]").forEach(btn=>btn.addEventListener("click",()=>{
+    gMode=btn.dataset.gpreset; setGActive(gMode);
+    document.getElementById("gammaSliders").style.display=(gMode==="gpost"||gMode==="gnb")?"none":"block";
+    gPresets[gMode]();
+  }));
+  [gShape,gRate,gX].forEach(inp=>inp.addEventListener("input",()=>{
+    gMode="custom"; setGActive(null);
+    renderGammaDensity({});
+  }));
+  gPresets.g3call();
+
+})();
+</script>
+<script>
+/* ===== Moment Generating Functions tab (self-contained) ===== */
+(function(){
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent, text){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; if (parent) parent.appendChild(e); return e; }
+  const svg = document.getElementById("mgfSvg"), V = document.getElementById("mgfVerdict"), LEG = document.getElementById("mgfLegend"), NROW = document.getElementById("mgfNrow");
+  const W = 600, H = 320;
+  function chart(o){
+    const pad = { l:58, r:18, t:18, b:44 };
+    const sx = x => pad.l + (x - o.xmin)/(o.xmax - o.xmin)*(W - pad.l - pad.r);
+    const sy = y => H - pad.b - (y - o.ymin)/(o.ymax - o.ymin)*(H - pad.t - pad.b);
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    (o.xticks||[]).forEach(x => { el("line",{x1:sx(x),x2:sx(x),y1:pad.t,y2:H-pad.b,stroke:"#E6E9E8"},svg); el("text",{x:sx(x),y:H-pad.b+16,"text-anchor":"middle","font-size":11,fill:"#5B6572","font-family":"IBM Plex Mono, monospace"},svg,o.xfmt?o.xfmt(x):String(x)); });
+    (o.yticks||[]).forEach(y => { el("line",{x1:pad.l,x2:W-pad.r,y1:sy(y),y2:sy(y),stroke:"#E6E9E8"},svg); el("text",{x:pad.l-6,y:sy(y)+4,"text-anchor":"end","font-size":11,fill:"#5B6572","font-family":"IBM Plex Mono, monospace"},svg,o.yfmt?o.yfmt(y):String(y)); });
+    el("line",{x1:pad.l,x2:W-pad.r,y1:H-pad.b,y2:H-pad.b,stroke:"#9AA3AD"},svg); el("line",{x1:pad.l,x2:pad.l,y1:pad.t,y2:H-pad.b,stroke:"#9AA3AD"},svg);
+    if (o.xlabel) el("text",{x:(pad.l+W-pad.r)/2,y:H-8,"text-anchor":"middle","font-size":12,fill:"#1B2430"},svg,o.xlabel);
+    if (o.ylabel) el("text",{x:14,y:(pad.t+H-pad.b)/2,"text-anchor":"middle","font-size":12,fill:"#1B2430",transform:`rotate(-90 14 ${(pad.t+H-pad.b)/2})`},svg,o.ylabel);
+    return { sx, sy, pad, o };
+  }
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+  function curve(g, f, a, b, attrs, n){ n = n || 300; let d = ""; for (let i = 0; i <= n; i++){ const x = a + (b-a)*i/n, y = f(x); if (!isFinite(y)) continue; d += (d ? "L" : "M") + g.sx(x).toFixed(2) + "," + g.sy(clamp(y, g.o.ymin, g.o.ymax)).toFixed(2); } return el("path", Object.assign({ d, fill:"none" }, attrs), svg); }
+  function T(x, y, s, a){ return el("text", Object.assign({ x, y, "font-size":11.5, fill:"#1B2430", "font-family":"IBM Plex Mono, monospace" }, a||{}), svg, s); }
+  function dot(g, x, y, col){ return el("circle", { cx:g.sx(x), cy:g.sy(y), r:5.5, fill:col, stroke:"#fff", "stroke-width":2 }, svg); }
+  const leg = items => { LEG.innerHTML = items.map(([c,l]) => `<span><span class="dot" style="background:${c}"></span>${l}</span>`).join(""); };
+  function simpson(f, a, b, n){ n = n || 4000; const h = (b-a)/n; let s = f(a) + f(b); for (let i = 1; i < n; i++) s += f(a + i*h) * (i % 2 ? 4 : 2); return s*h/3; }
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function gaussGen(seed){ const r=mulberry32(seed); return function(){ let u=r(); while(u<=0) u=r(); const v=r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }; }
+  function lnGamma(z){ const c=[676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7]; if (z < 0.5) return Math.log(Math.PI/Math.sin(Math.PI*z)) - lnGamma(1-z); z -= 1; let x = 0.99999999999980993; for (let i = 0; i < 8; i++) x += c[i]/(z+i+1); const t = z + 7.5; return 0.5*Math.log(2*Math.PI) + (z+0.5)*Math.log(t) - t + Math.log(x); }
+  function erf(x){ const s = x < 0 ? -1 : 1; x = Math.abs(x); let sum = x, term = x, k = 0; if (x < 3){ while (Math.abs(term) > 1e-17*Math.abs(sum)){ k++; term *= -x*x/k; sum += term/(2*k+1); } return s*2/Math.sqrt(Math.PI)*sum; } let t = 1/(1+0.5*x); const y = t*Math.exp(-x*x-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277))))))))); return s*(1-y); }
+  const Phi = z => 0.5*(1 + erf(z/Math.SQRT2));
+  const f4 = x => x.toFixed(4), f6 = x => x.toFixed(6);
+
+  function drawExp(){
+    const lam = 0.5, M = t => lam/(lam - t);
+    const g = chart({ xmin:-1, xmax:0.5, ymin:0, ymax:6, xticks:[-1,-0.75,-0.5,-0.25,0,0.25,0.5], yticks:[0,1,2,3,4,5,6], xlabel:"t", ylabel:"M(t) = E[e^(tX)]" });
+    el("line",{x1:g.sx(0.5),x2:g.sx(0.5),y1:g.sy(6),y2:g.sy(0),stroke:"#D9636B","stroke-dasharray":"4 4"},svg);
+    T(g.sx(0.5)-6, g.sy(5.6), "t = λ: M blows up", { "text-anchor":"end", fill:"#D9636B" });
+    curve(g, M, -1, 0.4999, { stroke:"var(--accent)", "stroke-width":2.8 });
+    curve(g, t => 1 + 2*t, -0.5, 0.35, { stroke:"var(--good)", "stroke-width":2, "stroke-dasharray":"6 4" });
+    curve(g, t => 1 + 2*t + 4*t*t, -0.6, 0.3, { stroke:"var(--pB)", "stroke-width":1.8, "stroke-dasharray":"2 3" });
+    dot(g, 0, 1, "var(--accent)"); dot(g, 0.2, M(0.2), "var(--pB)");
+    T(g.sx(0.2)+8, g.sy(M(0.2))+4, "M(0.2) = " + M(0.2).toFixed(4));
+    T(g.sx(-0.95), g.sy(5.2), "tangent at 0: slope 2 = E[X]", { fill:"var(--good)", "font-weight":600 });
+    const num = simpson(x => lam*Math.exp((0.2-lam)*x), 0, 200, 20000);
+    const h = 1e-3, d1 = (M(h) - M(-h))/(2*h), d2 = (M(h) - 2*M(0) + M(-h))/(h*h);
+    leg([["var(--accent)","M(t) = λ/(λ − t), λ = 0.5"],["var(--good)","tangent 1 + 2t"],["var(--pB)","second-order fit 1 + 2t + 8t²/2"]]);
+    V.innerHTML = `M(0.2): numerical integral of e^(0.2x)·0.5e^(−0.5x) = <b>${f6(num)}</b>; formula 0.5/0.3 = <b>${f6(M(0.2))}</b><br>M′(0) ≈ <b>${f4(d1)}</b> = 1/λ = E[X] &nbsp;·&nbsp; M″(0) ≈ <b>${f4(d2)}</b> = 2/λ² = E[X²]<br>Var = ${d2.toFixed(0)} − ${d1.toFixed(0)}² = <b>${(d2-d1*d1).toFixed(2)}</b> = 1/λ², with no integration by parts<br><span style="font-family:Inter, sans-serif; font-size:13px;">For t ≥ 0.5 the integral never settles (cut off at x = 200 with t = 0.6 it is already ${simpson(x => lam*Math.exp(0.1*x), 0, 200, 20000).toExponential(2)}). An MGF only needs to exist near t = 0.</span>`;
+  }
+  function drawNorm(){
+    const mu = 10, s = 3, M = t => Math.exp(mu*t + s*s*t*t/2);
+    const g = chart({ xmin:-0.3, xmax:0.3, ymin:0, ymax:30, xticks:[-0.3,-0.2,-0.1,0,0.1,0.2,0.3], yticks:[0,5,10,15,20,25,30], xlabel:"t", ylabel:"M(t)" });
+    curve(g, M, -0.3, 0.3, { stroke:"var(--accent)", "stroke-width":2.8 });
+    curve(g, t => 1 + 10*t, -0.1, 0.25, { stroke:"var(--good)", "stroke-width":2, "stroke-dasharray":"6 4" });
+    dot(g, 0, 1, "var(--accent)"); dot(g, 0.1, M(0.1), "var(--pB)");
+    T(g.sx(0.1)-8, g.sy(M(0.1))-8, "M(0.1) = " + f4(M(0.1)), { "text-anchor":"end" });
+    const pdf = x => Math.exp(-(x-mu)*(x-mu)/(2*s*s))/(s*Math.sqrt(2*Math.PI));
+    const num = simpson(x => Math.exp(0.1*x)*pdf(x), -40, 60, 20000);
+    const h = 1e-4, d1 = (M(h)-M(-h))/(2*h), d2 = (M(h)-2*M(0)+M(-h))/(h*h);
+    leg([["var(--accent)","M(t) = exp(μt + σ²t²/2)"],["var(--good)","tangent 1 + 10t"]]);
+    V.innerHTML = `M(0.1): integral of e^(0.1x) against the Normal(10, 3²) density = <b>${f6(num)}</b>; formula = <b>${f6(M(0.1))}</b><br>M′(0) ≈ <b>${f4(d1)}</b> = μ &nbsp;·&nbsp; M″(0) ≈ <b>${d2.toFixed(3)}</b> = σ² + μ² = 9 + 100<br><span style="font-family:Inter, sans-serif; font-size:13px;">Completing the square in the exponent gives the closed form. Its log, μt + σ²t²/2, is a parabola: that's the fingerprint of a normal distribution.</span>`;
+  }
+  let SUM = null;
+  function drawSum(){
+    if (!SUM){ const g = gaussGen(15), N = 200000; SUM = new Float64Array(N); for (let i = 0; i < N; i++) SUM[i] = (10 + 3*g()) + (5 + 4*g()); }
+    const N = SUM.length; let m = 0; for (let i = 0; i < N; i++) m += SUM[i]; m /= N;
+    let v = 0, c = 0, e = 0; for (let i = 0; i < N; i++){ v += (SUM[i]-m)*(SUM[i]-m); if (SUM[i] <= 20) c++; e += Math.exp(0.1*SUM[i]); } v /= N;
+    const g = chart({ xmin:-5, xmax:35, ymin:0, ymax:0.09, xticks:[-5,0,5,10,15,20,25,30,35], yticks:[0,0.02,0.04,0.06,0.08], xlabel:"X + Y", ylabel:"density", yfmt:y=>y.toFixed(2) });
+    const lo = -5, hi = 35, bins = 80, w = (hi-lo)/bins, cnt = new Array(bins).fill(0);
+    for (let i = 0; i < N; i++){ const k = Math.floor((SUM[i]-lo)/w); if (k >= 0 && k < bins) cnt[k]++; }
+    cnt.forEach((n,k) => { const d = n/(N*w); el("rect",{x:g.sx(lo+k*w),y:g.sy(d),width:g.sx(lo+(k+1)*w)-g.sx(lo+k*w)-0.6,height:g.sy(0)-g.sy(d),fill:"var(--good)",opacity:0.45},svg); });
+    curve(g, x => Math.exp(-(x-15)*(x-15)/50)/(5*Math.sqrt(2*Math.PI)), -5, 35, { stroke:"var(--accent)", "stroke-width":2.8 });
+    curve(g, x => Math.exp(-(x-15)*(x-15)/98)/(7*Math.sqrt(2*Math.PI)), -5, 35, { stroke:"#D9636B", "stroke-width":1.6, "stroke-dasharray":"5 4" });
+    el("line",{x1:g.sx(20),x2:g.sx(20),y1:g.sy(0.09),y2:g.sy(0),stroke:"#1B2430","stroke-dasharray":"3 4"},svg);
+    T(g.sx(20)+6, g.sy(0.085), "x = 20 (one SD above)");
+    const t = 0.1, MX = Math.exp(10*t + 9*t*t/2), MY = Math.exp(5*t + 16*t*t/2), MS = Math.exp(15*t + 25*t*t/2);
+    leg([["var(--good)","200,000 simulated X + Y (seed 15)"],["var(--accent)","Normal(15, 5²) from the MGF product"],["#D9636B","wrong guess: SD 3 + 4 = 7"]]);
+    V.innerHTML = `X ~ Normal(10, 3²), Y ~ Normal(5, 4²), independent<br>M_X(t)·M_Y(t) = exp(10t + 9t²/2)·exp(5t + 16t²/2) = exp(15t + 25t²/2) → <b>Normal(15, 5²)</b><br>at t = 0.1: product <b>${f6(MX*MY)}</b> = Normal(15, 25) MGF <b>${f6(MS)}</b><br>simulation: mean <b>${m.toFixed(3)}</b>, SD <b>${Math.sqrt(v).toFixed(3)}</b>, P(X + Y ≤ 20) = <b>${f4(c/N)}</b> vs Φ(1) = <b>${f4(Phi(1))}</b>, average e^(0.1(X+Y)) = ${f4(e/N)}<br><span style="font-family:Inter, sans-serif; font-size:13px;">Variances add (9 + 16 = 25), standard deviations don't (5, not 7). The tutorial's 1,000,000-draw NumPy run gave 0.8416; this seeded 200,000-draw run is within ordinary sampling noise of Φ(1).</span>`;
+  }
+  function drawGamma(){
+    const lam = 0.5, M1 = t => lam/(lam-t), M3 = t => Math.pow(M1(t), 3);
+    const g = chart({ xmin:-0.5, xmax:0.4, ymin:0, ymax:12, xticks:[-0.5,-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4], yticks:[0,2,4,6,8,10,12], xlabel:"t", ylabel:"MGF", xfmt:x=>x.toFixed(1) });
+    curve(g, M1, -0.5, 0.4, { stroke:"var(--good)", "stroke-width":2.2 });
+    curve(g, M3, -0.5, 0.4, { stroke:"var(--accent)", "stroke-width":2.8 });
+    const gpdf = x => x <= 0 ? 0 : Math.pow(lam,3)*x*x*Math.exp(-lam*x)/2;
+    const pts = [-0.4,-0.2,0,0.1,0.2,0.3];
+    const nums = pts.map(t => simpson(x => Math.exp(t*x)*gpdf(x), 0, 400, 20000));
+    pts.forEach((t,i) => dot(g, t, nums[i], "var(--pB)"));
+    T(g.sx(0.2)-8, g.sy(M3(0.2))-6, "(0.5/0.3)³ = " + M3(0.2).toFixed(4), { "text-anchor":"end" });
+    leg([["var(--good)","one exponential gap: λ/(λ − t)"],["var(--accent)","product of three: (λ/(λ − t))³"],["var(--pB)","numerical integral against the Gamma(3, rate 0.5) density"]]);
+    V.innerHTML = `Each gap: M(t) = 0.5/(0.5 − t). Three independent gaps: M(t)³.<br>at t = 0.2: (0.5/0.3)³ = <b>${f6(M3(0.2))}</b> &nbsp;·&nbsp; ∫ e^(0.2x)·Gamma(3, 0.5) density dx = <b>${f6(nums[4])}</b><br>derivatives of M³ at 0: mean = 3 × 2 = <b>6</b>, E[X²] = ${((M3(1e-4)-2+M3(-1e-4))/1e-8).toFixed(2)}, so variance <b>${(((M3(1e-4)-2+M3(-1e-4))/1e-8)-36).toFixed(2)}</b> = 3 × 4<br><span style="font-family:Inter, sans-serif; font-size:13px;">The gold dots (the Gamma's own MGF, integrated numerically) sit on the cubed curve: the sum of three exponential waits is the Gamma of Part 3b, by one multiplication.</span>`;
+  }
+  let PN = 10;
+  function binPmf(k, n, p){ if (k > n) return 0; return Math.exp(lnGamma(n+1) - lnGamma(k+1) - lnGamma(n-k+1) + k*Math.log(p) + (n-k)*Math.log(1-p)); }
+  function poisPmf(k, L){ return Math.exp(-L + k*Math.log(L) - lnGamma(k+1)); }
+  function drawPois(){
+    NROW.style.display = "flex";
+    NROW.querySelectorAll("[data-mgfn]").forEach(b => b.classList.toggle("active", +b.dataset.mgfn === PN));
+    const L = 3, n = PN, p = L/n, t = 0.5;
+    const g = chart({ xmin:-0.5, xmax:10.5, ymin:0, ymax:0.3, xticks:[0,1,2,3,4,5,6,7,8,9,10], yticks:[0,0.05,0.1,0.15,0.2,0.25,0.3], xlabel:"count k", ylabel:"P(X = k)", yfmt:y=>y.toFixed(2) });
+    for (let k = 0; k <= 10; k++){
+      const b = binPmf(k,n,p), q = poisPmf(k,L);
+      el("rect",{x:g.sx(k-0.38),y:g.sy(b),width:g.sx(0.36)-g.sx(0),height:g.sy(0)-g.sy(b),fill:"var(--good)",opacity:0.75},svg);
+      el("rect",{x:g.sx(k+0.02),y:g.sy(q),width:g.sx(0.36)-g.sx(0),height:g.sy(0)-g.sy(q),fill:"var(--accent)",opacity:0.75},svg);
+    }
+    let gap = 0; for (let k = 0; k <= Math.min(n, 60); k++) gap = Math.max(gap, Math.abs(binPmf(k,n,p) - poisPmf(k,L)));
+    const MB = Math.pow(1 - p + p*Math.exp(t), n), MP = Math.exp(L*(Math.exp(t)-1));
+    leg([["var(--good)",`Binomial(n = ${n.toLocaleString()}, p = ${p})`],["var(--accent)","Poisson(λ = 3)"]]);
+    const rows = [10,100,1000,10000].map(nn => { const pp = L/nn; let gg = 0; for (let k = 0; k <= Math.min(nn,60); k++) gg = Math.max(gg, Math.abs(binPmf(k,nn,pp) - poisPmf(k,L))); return `${nn === n ? "<b>→</b> " : "&nbsp;&nbsp;"}n = ${nn.toLocaleString()}: MGF ${f6(Math.pow(1-pp+pp*Math.exp(t), nn))}, P(X = 2) ${f6(binPmf(2,nn,pp))}, largest gap ${gg.toPrecision(3)}`; }).join("<br>");
+    V.innerHTML = `Binomial MGF (1 − p + p·e^t)^n with p = λ/n = (1 + λ(e^t − 1)/n)^n → exp(λ(e^t − 1)), the Poisson MGF<br>at t = 0.5: Binomial <b>${f6(MB)}</b> vs Poisson <b>${f6(MP)}</b> &nbsp;·&nbsp; P(X = 2): <b>${f6(binPmf(2,n,p))}</b> vs <b>${f6(poisPmf(2,L))}</b> &nbsp;·&nbsp; largest gap between the tables <b>${gap.toPrecision(3)}</b><br>${rows}<br><span style="font-family:Inter, sans-serif; font-size:13px;">Click the n buttons: each tenfold increase in trials shrinks the gap about tenfold. It's the same limit as (1 + r/n)^n → e^r, compound interest.</span>`;
+  }
+  function drawChern(){
+    const f = s => Math.exp(-60*s)*Math.pow((1+Math.exp(s))/2, 100);
+    const g = chart({ xmin:0, xmax:1.2, ymin:0, ymax:1.1, xticks:[0,0.2,0.4,0.6,0.8,1.0,1.2], yticks:[0,0.2,0.4,0.6,0.8,1.0], xlabel:"s (your choice)", ylabel:"bound e^(−60s)·M(s)", xfmt:x=>x.toFixed(1), yfmt:y=>y.toFixed(1) });
+    curve(g, f, 0, 1.2, { stroke:"var(--accent)", "stroke-width":2.8 });
+    // exact answer
+    let exact = 0; for (let k = 60; k <= 100; k++) exact += Math.exp(lnGamma(101) - lnGamma(k+1) - lnGamma(101-k) - 100*Math.LN2);
+    el("line",{x1:g.sx(0),x2:g.sx(1.2),y1:g.sy(exact),y2:g.sy(exact),stroke:"var(--good)","stroke-width":2,"stroke-dasharray":"6 4"},svg);
+    T(g.sx(1.18), g.sy(exact)-6, "exact P(≥ 60 heads) = " + f4(exact), { "text-anchor":"end", fill:"var(--good)", "font-weight":600 });
+    // golden section for minimum
+    let a = 0, b = 1.2; const gr = (Math.sqrt(5)-1)/2; let c = b - gr*(b-a), d = a + gr*(b-a);
+    for (let i = 0; i < 200; i++){ if (f(c) < f(d)) b = d; else a = c; c = b - gr*(b-a); d = a + gr*(b-a); }
+    const sBest = (a+b)/2;
+    [0.2, 0.8].forEach(s => { dot(g, s, f(s), "var(--pB)"); T(g.sx(s)+8, g.sy(f(s))-6, "s = " + s + ": " + f4(f(s))); });
+    dot(g, sBest, f(sBest), "#D9636B");
+    T(g.sx(sBest), g.sy(f(sBest))+22, "best s = " + sBest.toFixed(4) + ": " + f4(f(sBest)), { "text-anchor":"middle", fill:"#D9636B", "font-weight":700 });
+    leg([["var(--accent)","Chernoff bound for every s"],["var(--good)","the true answer"]]);
+    V.innerHTML = `100 fair flips, X = number of heads, M(s) = ((1 + e^s)/2)^100 (product of 100 coin MGFs)<br>Markov on e^(sX): P(X ≥ 60) ≤ e^(−60s)·M(s) for every s &gt; 0<br>s = 0.2 → <b>${f4(f(0.2))}</b> · s = 0.8 → <b>${f4(f(0.8))}</b> · best s = ln 1.5 = <b>${sBest.toFixed(4)}</b> → <span class="big" style="color:#D9636B">${f4(f(sBest))}</span><br>exact answer: <b>${f4(exact)}</b><br><span style="font-family:Inter, sans-serif; font-size:13px;">The same 0.1335 as the Chernoff row in 03 · Probability §3.6. The MGF is the E[e^(sX)] in that bound, and the product rule is what makes it computable for a sum.</span>`;
+  }
+  const DRAW = { exp:drawExp, norm:drawNorm, sum:drawSum, gamma:drawGamma, pois:drawPois, chern:drawChern };
+  function render(key){
+    document.querySelectorAll("#panel-mgf [data-mgf]").forEach(b => b.classList.toggle("active", b.dataset.mgf === key));
+    if (key !== "pois") NROW.style.display = "none";
+    DRAW[key]();
+  }
+  document.querySelectorAll("#panel-mgf [data-mgf]").forEach(b => b.addEventListener("click", () => render(b.dataset.mgf)));
+  NROW.querySelectorAll("[data-mgfn]").forEach(b => b.addEventListener("click", () => { PN = +b.dataset.mgfn; render("pois"); }));
+  render("exp");
+  window.__MGF = { render };
 })();
 </script>
 </body>

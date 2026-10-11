@@ -72,7 +72,11 @@
     <button class="tab active" data-tab="dist">Distributions &amp; Summary Stats</button>
     <button class="tab" data-tab="galton">Galton Board</button>
     <button class="tab" data-tab="sampling">Sampling Distribution</button>
+    <button class="tab" data-tab="ci">Confidence Interval Builder</button>
     <button class="tab" data-tab="hyp">Hypothesis Testing</button>
+    <button class="tab" data-tab="chi">Chi-Square Test</button>
+    <button class="tab" data-tab="anova">One-Way ANOVA</button>
+    <button class="tab" data-tab="mt">Multiple Testing</button>
     <button class="tab" data-tab="corr">Correlation &amp; Simpson's Paradox</button>
     <button class="tab" data-tab="dof">Degrees of Freedom</button>
   </div>
@@ -166,6 +170,49 @@
     </div>
   </div>
 
+  <!-- ============ TAB 3b: CONFIDENCE INTERVAL BUILDER ============ -->
+  <div class="panel" id="panel-ci">
+    <div class="card">
+      <h2>Build a Confidence Interval, One Line of Arithmetic at a Time</h2>
+      <p class="sub"><b>What's happening:</b> the recipe is <span class="formula">interval = estimate ± (critical value) × SE</span>, with <span class="formula">SE = σ/√n</span>. Each button below plays one fully worked scenario from the doc: the bell curve is where the sample mean would land if you redid the sampling, the shaded band is the interval, and every step of the arithmetic is written out underneath. No pen and paper needed.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with "95% z-interval", then press "Double the sample" and "Quadruple the sample" — the faint dashed box stays behind as the original n=36 interval, so you can see doubling the data only trims about 29% while four times the data halves it.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-ci="z95">95% z-interval (σ known)</button>
+        <button class="op" data-ci="z90">Same, 90%</button>
+        <button class="op" data-ci="z99">Same, 99%</button>
+        <button class="op" data-ci="t95">σ unknown → t-interval (df=35)</button>
+        <button class="op" data-ci="n72">Double the sample (n=72)</button>
+        <button class="op" data-ci="n144">Quadruple the sample (n=144)</button>
+      </div>
+      <svg id="ciSvg" viewBox="0 0 700 260"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--accent)"></span>sampling bell curve of x̄ (width = SE)</span>
+        <span><span class="sw" style="background:var(--c1); height:10px; opacity:.5;"></span>the interval</span>
+        <span><span class="sw" style="background:var(--ink-soft)"></span>dashed: original n=36, 95% interval</span>
+      </div>
+      <div class="verdict" id="ciVerdict"></div>
+      <div class="caption"><b>Critical values used</b> (from the doc's table): 90% two-sided 1.645 · 95% two-sided 1.960 · 99% two-sided 2.576 · 95% one-sided 1.645 · 80% power 0.842. t: df=30 → 2.042, df=35 → 2.030, df=100 → 1.984.</div>
+    </div>
+
+    <div class="card">
+      <h2>Does "95%" Actually Hold? Test It by Simulation</h2>
+      <p class="sub"><b>What's happening:</b> each button draws thousands of fresh samples of n=36 from a population whose true mean is known, builds the t-interval <span class="formula">x̄ ± 2.030 × s/√36</span> from each one, and counts how often the interval catches the truth. The chart shows the first 100 intervals: <span class="good-t">teal</span> caught the true mean (vertical line), <span class="bad-t">red</span> missed it.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> run the bell-shaped test (lands near 95%), then the skewed test — same recipe, same n, and the catch rate drops noticeably below 95%, with the misses piling up on one side.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op" data-cov="bell">Coverage test: bell-shaped population</button>
+        <button class="op" data-cov="skew">Coverage test: skewed population</button>
+      </div>
+      <svg id="covSvg" viewBox="0 0 700 440"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--c1)"></span>interval contains the true mean</span>
+        <span><span class="sw" style="background:var(--c3)"></span>interval misses it</span>
+        <span><span class="sw" style="background:var(--ink)"></span>true mean</span>
+      </div>
+      <div class="verdict" id="covVerdict">Press a coverage-test button to run the simulation.</div>
+      <div class="caption"><b>Why it matters:</b> the "95%" is a promise about the <em>method</em> over many repetitions, not about any one interval — and the promise leans on the Central Limit Theorem, so a strongly skewed population at modest n quietly breaks it. Simulations use a fixed-seed random generator, so every click reproduces the same result.</div>
+    </div>
+  </div>
+
   <!-- ============ TAB 4: HYPOTHESIS TESTING ============ -->
   <div class="panel" id="panel-hyp">
     <div class="card">
@@ -186,6 +233,77 @@
       <svg id="hypSvg" viewBox="0 0 700 220"></svg>
       <div class="verdict" id="hypVerdict"></div>
       <div class="caption"><b>Why it matters:</b> a p-value is never "the probability the null hypothesis is true" — it's "how likely this data would be, if the null hypothesis were true."</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4b: CHI-SQUARE TEST ============ -->
+  <div class="panel" id="panel-chi">
+    <div class="card">
+      <h2>The Chi-Square Test, Run for Real</h2>
+      <p class="sub"><b>What's happening:</b> each button loads one table of counts from the doc and runs the whole test, every line of arithmetic written out: the counts you'd <em>expect</em> if nothing were going on, how far each real count sits from its expected one, the total (the χ² statistic), the degrees of freedom, and the p-value. Top chart: solid bars are the real counts, dashed outlines are the expected counts, and the number under each pair is that cell's share of χ². Bottom chart: the chi-square curve for "nothing going on", with the p-value shaded in red.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> start with "Three landing pages" (χ² = 7.80, p = 0.020). Then press "Same rates, 10× the visitors": the conversion rates are identical, but χ² jumps to 78 and the p-value collapses, while the effect size (Cramér's V) doesn't move at all.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-chi="pages">Three landing pages (2×3)</button>
+        <button class="op" data-chi="ab">Just A vs B (2×2, Yates)</button>
+        <button class="op" data-chi="x10">Same rates, 10× the visitors</button>
+        <button class="op" data-chi="small">Too-small counts (warning)</button>
+        <button class="op" data-chi="die">Is this die fair? (goodness of fit)</button>
+      </div>
+      <svg id="chiBarsSvg" viewBox="0 0 700 230"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--c1); height:10px;"></span>observed count</span>
+        <span><span class="sw" style="border:1.5px dashed var(--ink); height:10px; background:none;"></span>expected count if nothing is going on</span>
+      </div>
+      <svg id="chiDistSvg" viewBox="0 0 700 210" style="margin-top:12px;"></svg>
+      <div class="verdict" id="chiVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> the chi-square test only answers "are these counts too lopsided to blame on chance?" It never says <em>which</em> cell is responsible (read the per-cell shares for that), and with enough data it will flag even a tiny, useless difference.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4c: ONE-WAY ANOVA ============ -->
+  <div class="panel" id="panel-anova">
+    <div class="card">
+      <h2>One-Way ANOVA, Run for Real</h2>
+      <p class="sub"><b>What's happening:</b> crop yields from three fertilizers, five plots each (the kind of field trial Fisher invented ANOVA for). Each dot is one plot; the short colored bar is that group's mean, the dashed line is the grand mean of all 15 plots. ANOVA asks: are the group means further apart than the plot-to-plot wobble inside each group would explain? Every step of the arithmetic is written out below the chart.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> run "Three fertilizers" (F = 11.67, p = 0.0015), then "Same means, 3× the wobble": the three means haven't moved an inch, yet F drops to 1.30 and the result is no longer significant, because the noise inside the groups grew. Then press "Which pairs differ? (Tukey)" to see the follow-up question ANOVA itself can't answer.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-anova="fert">Three fertilizers</button>
+        <button class="op" data-anova="noisy">Same means, 3× the wobble</button>
+        <button class="op" data-anova="two">Only two groups: F = t²</button>
+        <button class="op" data-anova="tukey">Which pairs differ? (Tukey)</button>
+        <button class="op" data-anova="manyt">Why not just run 3 t-tests?</button>
+      </div>
+      <svg id="anovaSvg" viewBox="0 0 700 250"></svg>
+      <svg id="anovaFSvg" viewBox="0 0 700 210" style="margin-top:12px;"></svg>
+      <div class="verdict" id="anovaVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> a significant F says "at least one group mean differs", nothing more. Which ones, by how much, and whether it matters are separate questions (post-hoc tests, effect sizes, judgment).</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: MULTIPLE TESTING ============ -->
+  <div class="panel" id="panel-mt">
+    <div class="card">
+      <h2>Multiple Testing: Bonferroni, Holm, Benjamini–Hochberg</h2>
+      <p class="sub"><b>What's happening:</b> every test is another lottery ticket for a false positive. <b>Bonferroni</b> and <b>Holm</b> control the <i>family-wise error rate</i> (the chance of even one false discovery); <b>Benjamini–Hochberg</b> controls the <i>false discovery rate</i> (the expected share of your discoveries that are false). The first four buttons apply each rule to a 10-metric A/B dashboard; the next four to 1,000 simulated tests where only the first 50 are real effects.</p>
+      <p class="sub" style="margin-bottom:14px;"><b>Try this:</b> click through the four dashboard buttons and watch the bar change shape (flat, stepping up, a rising line). Then run "1,000 tests, 50 real: no correction" and count the red dots: 49 false positives, more than the 44 real effects found. Bonferroni removes every red dot, but also most of the real ones; BH keeps 19 real ones with a single red dot.</p>
+      <div class="row" style="gap:6px;">
+        <button class="op active" data-mt="hnone">Dashboard: no correction</button>
+        <button class="op" data-mt="hbonf">Dashboard: Bonferroni</button>
+        <button class="op" data-mt="hholm">Dashboard: Holm</button>
+        <button class="op" data-mt="hbh">Dashboard: Benjamini–Hochberg</button>
+      </div>
+      <div class="row" style="gap:6px;">
+        <button class="op" data-mt="snone">1,000 tests, 50 real: no correction</button>
+        <button class="op" data-mt="sbonf">1,000 tests: Bonferroni</button>
+        <button class="op" data-mt="sholm">1,000 tests: Holm</button>
+        <button class="op" data-mt="sbh">1,000 tests: BH</button>
+        <button class="op" data-mt="avg">Average over 500 runs</button>
+        <button class="op" data-mt="anova">Back to ANOVA: 3 t-tests with Bonferroni</button>
+      </div>
+      <svg id="mtSvg" viewBox="0 0 700 320"></svg>
+      <div class="legend" id="mtLegend"></div>
+      <div class="verdict" id="mtVerdict"></div>
+      <div class="caption"><b>Why it matters:</b> genome-wide studies use p &lt; 5×10⁻⁸ (Bonferroni for a million tests); gene screens and experimentation dashboards report BH "q-values"; clinical trials must control the family-wise error across their endpoints.</div>
     </div>
   </div>
 
@@ -706,6 +824,507 @@
   }
   dofDdof.addEventListener("input", renderDdof);
   renderDdof();
+
+  /* =========================================================
+     TAB 3b — CONFIDENCE INTERVAL BUILDER
+     ========================================================= */
+  function fmtT(v){ return (Math.round(v*1000)/1000).toFixed(3).replace(/0+$/,"").replace(/\.$/,""); }
+  const CI_XBAR = 170.0, CI_SIGMA = 6;
+  const CI_BASE_HALF = 1.96 * CI_SIGMA/Math.sqrt(36); // n=36, 95% z half-width = 1.96
+  const CI_PRESETS = {
+    z95:  {n:36,  crit:1.960, critName:"z₀.₀₂₅ (95% two-sided)", conf:"95%", kind:"z",
+           note:`That's the "between 168 and 172" from the doc's opening paragraph, now actually computed.`},
+    z90:  {n:36,  crit:1.645, critName:"z₀.₀₅ (90% two-sided)", conf:"90%", kind:"z",
+           note:`Lower confidence → smaller multiplier → narrower net. You accept a 10% miss rate in exchange for a tighter range.`},
+    z99:  {n:36,  crit:2.576, critName:"z₀.₀₀₅ (99% two-sided)", conf:"99%", kind:"z",
+           note:`Higher confidence → bigger multiplier → wider net. Being more sure costs precision.`},
+    t95:  {n:36,  crit:2.030, critName:"t (df = 36 − 1 = 35, 95% two-sided)", conf:"95%", kind:"t",
+           note:`σ unknown, so it was estimated by s = 6. Estimating one more thing makes the net a hair wider than the z-interval [168.04, 171.96]. As n grows, t shrinks toward 1.96 (df=30: 2.042, df=100: 1.984).`},
+    n72:  {n:72,  crit:1.960, critName:"z₀.₀₂₅ (95% two-sided)", conf:"95%", kind:"z",
+           note:`Double the data, but the SE only shrinks by √2 ≈ 1.414, so the interval is only about 29% narrower, not 50%.`},
+    n144: {n:144, crit:1.960, critName:"z₀.₀₂₅ (95% two-sided)", conf:"95%", kind:"z",
+           note:`Four times the data divides the SE by √4 = 2, so the interval finally gets half as wide. The square-root law: precision is expensive.`}
+  };
+  function normPdf(z){ return Math.exp(-0.5*z*z)/Math.sqrt(2*Math.PI); }
+  function renderCI(key){
+    const P = CI_PRESETS[key];
+    const svg = document.getElementById("ciSvg");
+    svg.innerHTML = "";
+    const W=700,H=260,padL=30,padR=30,padT=46,padB=40;
+    const plotW=W-padL-padR, plotH=H-padT-padB, baseY=padT+plotH;
+    const xmin=164, xmax=176;
+    const px = v => padL + (v-xmin)/(xmax-xmin)*plotW;
+    const se = CI_SIGMA/Math.sqrt(P.n);
+    const half = P.crit*se, lo = CI_XBAR-half, hi = CI_XBAR+half;
+    const peak = normPdf(0)/se;
+    const maxPeak = normPdf(0)/(CI_SIGMA/Math.sqrt(144));
+    const py = d => baseY - (d/maxPeak)*plotH;
+    // shaded interval under the curve
+    let area = `M ${px(lo)} ${baseY}`;
+    for(let i=0;i<=80;i++){ const x = lo+(hi-lo)*i/80; area += ` L ${px(x)} ${py(normPdf((x-CI_XBAR)/se)/se)}`; }
+    area += ` L ${px(hi)} ${baseY} Z`;
+    svg.appendChild(el("path",{d:area,fill:"var(--c1)",["fill-opacity"]:0.35}));
+    // curve
+    let d = "";
+    for(let i=0;i<=240;i++){ const x = xmin+(xmax-xmin)*i/240; d += (i?" L ":"M ")+px(x)+" "+py(normPdf((x-CI_XBAR)/se)/se); }
+    svg.appendChild(el("path",{d,fill:"none",stroke:"var(--accent)",["stroke-width"]:2.2}));
+    // reference: original n=36 95% interval
+    if(key!=="z95"){
+      svg.appendChild(el("rect",{x:px(CI_XBAR-CI_BASE_HALF),y:baseY+6,width:px(CI_XBAR+CI_BASE_HALF)-px(CI_XBAR-CI_BASE_HALF),height:8,fill:"none",stroke:"var(--ink-soft)",["stroke-width"]:1.2,["stroke-dasharray"]:"4 3"}));
+    }
+    // axis + ticks
+    svg.appendChild(el("line",{x1:padL,y1:baseY,x2:W-padR,y2:baseY,stroke:"var(--ink)",["stroke-width"]:1.4}));
+    for(let v=xmin; v<=xmax; v++){
+      svg.appendChild(el("line",{x1:px(v),y1:baseY,x2:px(v),y2:baseY+4,stroke:"var(--ink)",["stroke-width"]:1}));
+      svg.appendChild(txt(px(v),baseY+28,String(v),"var(--ink-soft)",11));
+    }
+    // interval bounds + estimate
+    [[lo,"start"],[hi,"end"]].forEach(([v]) => svg.appendChild(el("line",{x1:px(v),y1:padT-6,x2:px(v),y2:baseY,stroke:"var(--c1)",["stroke-width"]:2})));
+    svg.appendChild(txt(px(lo)-4,padT-10,fmtT(lo),"var(--c1)",12,"end","700"));
+    svg.appendChild(txt(px(hi)+4,padT-10,fmtT(hi),"var(--c1)",12,"start","700"));
+    svg.appendChild(el("line",{x1:px(CI_XBAR),y1:py(peak),x2:px(CI_XBAR),y2:baseY,stroke:"var(--accent)",["stroke-width"]:1.4,["stroke-dasharray"]:"3 3"}));
+    svg.appendChild(txt(px(CI_XBAR),py(peak)-8,"x̄ = 170.0","var(--accent)",11,"middle","700"));
+    svg.appendChild(txt(padL,14,`Sampling distribution of x̄ (n=${P.n}) · shaded = ${P.conf} ${P.kind}-interval`,"var(--ink-soft)",11,"start","600"));
+    // arithmetic
+    const sName = P.kind==="t" ? "s" : "σ";
+    const seLine = P.n===36 ? `${sName}/√n = 6/√36 = 6/6 = <b>1.0</b>`
+      : `${sName}/√n = 6/√${P.n} = 6/${fmtT(Math.sqrt(P.n))} = <b>${fmtT(se)}</b>`;
+    const width = hi-lo, baseWidth = 2*CI_BASE_HALF;
+    let cmp = "";
+    if(key==="n72"||key==="n144"){
+      const pct = (1-width/baseWidth)*100;
+      cmp = `<br>5. <b>Compare</b> to n=36: width ${fmtT(baseWidth)} → ${fmtT(width)}, ratio ${fmtT(width/baseWidth)} = 1/√${P.n/36} → <span class="big">${pct.toFixed(1)}% narrower</span>`;
+    }
+    document.getElementById("ciVerdict").innerHTML =
+      `1. <b>Estimate</b>: x̄ = 170.0 cm (n = ${P.n})<br>`+
+      `2. <b>Standard error</b>: SE = ${seLine} cm<br>`+
+      `3. <b>Critical value</b>: ${P.critName} = <b>${P.crit.toFixed(3)}</b><br>`+
+      `4. <b>Interval</b>: 170.0 ± ${P.crit.toFixed(3)} × ${P.n===36?"1.0":fmtT(se)} = 170.0 ± ${fmtT(half)} = <span class="big">[${fmtT(lo)}, ${fmtT(hi)}]</span> &nbsp;(width ${fmtT(width)} cm)`+
+      cmp + `<br><span style="font-family:Inter, sans-serif; font-size:13px;">${P.note}</span>`;
+    document.querySelectorAll("#panel-ci [data-ci]").forEach(b => b.classList.toggle("active", b.dataset.ci===key));
+  }
+  document.querySelectorAll("#panel-ci [data-ci]").forEach(btn => btn.addEventListener("click", () => renderCI(btn.dataset.ci)));
+  renderCI("z95");
+
+  // ---- coverage simulation (seeded, reproducible) ----
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  const COV_RUNS = 10000, COV_N = 36, COV_T = 2.030, COV_SHOW = 100;
+  const COV_CFG = {
+    bell: {seed:2024, mu:170, label:"bell-shaped (normal) population, mean 170, σ 6", doc:"95.06%"},
+    skew: {seed:21,   mu:10,  label:"heavily skewed (exponential) population, mean 10 — like waiting times", doc:"92.9%"}
+  };
+  function runCoverage(kind){
+    const C = COV_CFG[kind], rng = mulberry32(C.seed);
+    const draw = kind==="bell"
+      ? () => { let u=0,v=0; while(u===0)u=rng(); while(v===0)v=rng(); return 170 + 6*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+      : () => { let u=0; while(u===0)u=rng(); return -Math.log(u)*10; };
+    const shown = []; let hits=0, missLow=0, missHigh=0;
+    const x = new Array(COV_N);
+    for(let r=0;r<COV_RUNS;r++){
+      let s=0; for(let i=0;i<COV_N;i++){ x[i]=draw(); s+=x[i]; }
+      const m = s/COV_N; let ss=0; for(let i=0;i<COV_N;i++) ss+=(x[i]-m)*(x[i]-m);
+      const h = COV_T*Math.sqrt(ss/(COV_N-1))/Math.sqrt(COV_N);
+      const ok = m-h<=C.mu && C.mu<=m+h;
+      if(ok) hits++; else if(m+h<C.mu) missLow++; else missHigh++;
+      if(r<COV_SHOW) shown.push({lo:m-h, hi:m+h, m, ok});
+    }
+    return {C, shown, hits, missLow, missHigh};
+  }
+  function renderCoverage(kind){
+    const R = runCoverage(kind), C = R.C;
+    const svg = document.getElementById("covSvg");
+    svg.innerHTML = "";
+    const W=700,H=440,padL=30,padR=30,padT=26,padB=30, plotW=W-padL-padR, plotH=H-padT-padB;
+    let span = 0; R.shown.forEach(s => { span = Math.max(span, Math.abs(s.lo-C.mu), Math.abs(s.hi-C.mu)); });
+    span *= 1.05;
+    const xmin=C.mu-span, xmax=C.mu+span;
+    const px = v => padL + (v-xmin)/(xmax-xmin)*plotW;
+    const rowH = plotH/COV_SHOW;
+    R.shown.forEach((s,i) => {
+      const y = padT + i*rowH + rowH/2;
+      svg.appendChild(el("line",{x1:px(s.lo),y1:y,x2:px(s.hi),y2:y,stroke:s.ok?"var(--c1)":"var(--c3)",["stroke-width"]:s.ok?2.2:3,["stroke-linecap"]:"round",["stroke-opacity"]:s.ok?0.75:1}));
+      svg.appendChild(el("circle",{cx:px(s.m),cy:y,r:1.4,fill:"var(--ink)"}));
+    });
+    svg.appendChild(el("line",{x1:px(C.mu),y1:padT-6,x2:px(C.mu),y2:padT+plotH,stroke:"var(--ink)",["stroke-width"]:1.6}));
+    svg.appendChild(txt(px(C.mu),padT-10,"true mean = "+C.mu,"var(--ink)",11,"middle","700"));
+    svg.appendChild(el("line",{x1:padL,y1:padT+plotH+4,x2:W-padR,y2:padT+plotH+4,stroke:"var(--line)",["stroke-width"]:1.2}));
+    [xmin,(xmin+C.mu)/2,C.mu,(xmax+C.mu)/2,xmax].forEach(v => svg.appendChild(txt(px(v),padT+plotH+20,v.toFixed(1),"var(--ink-soft)",11)));
+    const shownHits = R.shown.filter(s=>s.ok).length;
+    const pct = 100*R.hits/COV_RUNS;
+    const good = pct >= 94.5;
+    document.getElementById("covVerdict").innerHTML =
+      `Population: <b>${C.label}</b>. Each interval: x̄ ± 2.030 × s/√36.<br>`+
+      `First 100 intervals shown: <b>${shownHits}</b> caught the true mean, <b>${100-shownHits}</b> missed.<br>`+
+      `Long run, <b>${COV_RUNS.toLocaleString()}</b> samples of n=36: <span class="big ${good?'good-t':'bad-t'}">${pct.toFixed(2)}%</span> caught the true mean `+
+      (good ? `<span class="good-t">— right on the promised 95%.</span>` : `<span class="bad-t">— noticeably below the promised 95%.</span>`)+`<br>`+
+      `Misses: <b>${R.missLow}</b> intervals sat entirely below the truth, <b>${R.missHigh}</b> entirely above`+
+      (kind==="skew" ? ` — lopsided: skewed samples that happen to miss the long tail give a low mean <em>and</em> a small s, so the net lands too low and too narrow.` : ` — balanced, as a symmetric population should give.`)+`<br>`+
+      `<span style="font-family:Inter, sans-serif; font-size:13px;">The doc's check used 20,000 samples and got <b>${C.doc}</b>; this seeded run of ${COV_RUNS.toLocaleString()} lands close to it (different random draws, same behavior).</span>`;
+    document.querySelectorAll("#panel-ci [data-cov]").forEach(b => b.classList.toggle("active", b.dataset.cov===kind));
+  }
+  document.querySelectorAll("#panel-ci [data-cov]").forEach(btn => btn.addEventListener("click", () => renderCoverage(btn.dataset.cov)));
+  renderCoverage("bell");
+
+  /* =========================================================
+     TAB 4b/4c — CHI-SQUARE TEST and ONE-WAY ANOVA (exact distribution tails)
+     ========================================================= */
+  function lnGamma(z){ const g=7, c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+    if(z<0.5) return Math.log(Math.PI/Math.sin(Math.PI*z)) - lnGamma(1-z);
+    z-=1; let x=c[0]; for(let i=1;i<g+2;i++) x+=c[i]/(z+i); const t=z+g+0.5;
+    return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(t)-t+Math.log(x); }
+  function gammaP(a,x){ // regularized lower incomplete gamma
+    if(x<=0) return 0;
+    if(x<a+1){ let sum=1/a, del=sum, ap=a; for(let n=0;n<500;n++){ ap+=1; del*=x/ap; sum+=del; if(Math.abs(del)<Math.abs(sum)*1e-15) break; } return sum*Math.exp(-x+a*Math.log(x)-lnGamma(a)); }
+    return 1-gammaQcf(a,x); }
+  function gammaQcf(a,x){ let b=x+1-a, c=1/1e-300, d=1/b, h=d;
+    for(let i=1;i<500;i++){ const an=-i*(i-a); b+=2; d=an*d+b; if(Math.abs(d)<1e-300)d=1e-300; c=b+an/c; if(Math.abs(c)<1e-300)c=1e-300; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<1e-15) break; }
+    return Math.exp(-x+a*Math.log(x)-lnGamma(a))*h; }
+  function chi2Sf(x,k){ if(x<=0) return 1; const a=k/2, y=x/2; return (y<a+1) ? 1-gammaP(a,y) : gammaQcf(a,y); }
+  function chi2Pdf(x,k){ if(x<=0) return 0; return Math.exp((k/2-1)*Math.log(x)-x/2-(k/2)*Math.log(2)-lnGamma(k/2)); }
+  function betacf(a,b,x){ let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap; if(Math.abs(d)<1e-300)d=1e-300; d=1/d; let h=d;
+    for(let m=1;m<500;m++){ const m2=2*m; let aa=m*(b-m)*x/((qam+m2)*(a+m2)); d=1+aa*d; if(Math.abs(d)<1e-300)d=1e-300; c=1+aa/c; if(Math.abs(c)<1e-300)c=1e-300; d=1/d; h*=d*c;
+      aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2)); d=1+aa*d; if(Math.abs(d)<1e-300)d=1e-300; c=1+aa/c; if(Math.abs(c)<1e-300)c=1e-300; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<1e-15) break; }
+    return h; }
+  function betaI(a,b,x){ if(x<=0) return 0; if(x>=1) return 1;
+    const bt=Math.exp(lnGamma(a+b)-lnGamma(a)-lnGamma(b)+a*Math.log(x)+b*Math.log(1-x));
+    return (x<(a+1)/(a+b+2)) ? bt*betacf(a,b,x)/a : 1-bt*betacf(b,a,1-x)/b; }
+  function fSf(f,d1,d2){ if(f<=0) return 1; return betaI(d2/2,d1/2,d2/(d2+d1*f)); }
+  function fPdf(f,d1,d2){ if(f<=0) return 0; return Math.exp(0.5*(d1*Math.log(d1*f)+d2*Math.log(d2)-(d1+d2)*Math.log(d1*f+d2)) - Math.log(f) - (lnGamma(d1/2)+lnGamma(d2/2)-lnGamma((d1+d2)/2))); }
+  function invSf(sf, alpha){ let lo=0, hi=1; while(sf(hi)>alpha) hi*=2; for(let i=0;i<200;i++){ const m=(lo+hi)/2; if(sf(m)>alpha) lo=m; else hi=m; } return (lo+hi)/2; }
+  function f3(v){ return v.toFixed(3); }
+  function fp(p){ return p<0.0001 ? p.toExponential(2) : p.toFixed(4); }
+  // draw a density curve with the right tail beyond `obs` shaded and the 5% critical value marked
+  function drawTailCurve(svg, pdf, obs, crit, xmax, label, p){
+    svg.innerHTML="";
+    const W=700,H=210,padL=40,padR=24,padT=30,padB=34, plotW=W-padL-padR, plotH=H-padT-padB, baseY=padT+plotH;
+    const px=v=>padL+Math.min(v,xmax)/xmax*plotW;
+    let ymax=0; const pts=[];
+    for(let i=1;i<=300;i++){ const x=xmax*i/300; const y=pdf(x); pts.push([x,y]); if(isFinite(y)&&x>xmax*0.005) ymax=Math.max(ymax,y); }
+    ymax*=1.1;
+    const py=y=>baseY-Math.min(y,ymax)/ymax*plotH;
+    if(obs<xmax){
+      let a=`M ${px(obs)} ${baseY}`; for(let i=0;i<=120;i++){ const x=obs+(xmax-obs)*i/120; a+=` L ${px(x)} ${py(pdf(x))}`; } a+=` L ${px(xmax)} ${baseY} Z`;
+      svg.appendChild(el("path",{d:a,fill:"var(--c3)",["fill-opacity"]:0.45}));
+    }
+    let d=""; pts.forEach(([x,y],i)=>{ d+=(i?" L ":"M ")+px(x)+" "+py(y); });
+    svg.appendChild(el("path",{d,fill:"none",stroke:"var(--accent)",["stroke-width"]:2.2}));
+    svg.appendChild(el("line",{x1:padL,y1:baseY,x2:W-padR,y2:baseY,stroke:"var(--ink)",["stroke-width"]:1.4}));
+    const step = xmax<=8?1:(xmax<=20?2:5);
+    for(let v=0; v<=xmax+1e-9; v+=step){ svg.appendChild(txt(px(v),baseY+16,String(v),"var(--ink-soft)",10.5)); }
+    svg.appendChild(el("line",{x1:px(crit),y1:padT,x2:px(crit),y2:baseY,stroke:"var(--c2)",["stroke-width"]:1.6,["stroke-dasharray"]:"5 3"}));
+    svg.appendChild(txt(px(crit),padT-4,"5% cut-off "+f3(crit),"var(--c2)",11,"middle","700"));
+    const ox=px(obs);
+    svg.appendChild(el("line",{x1:ox,y1:padT+10,x2:ox,y2:baseY,stroke:"var(--c3)",["stroke-width"]:2.4}));
+    svg.appendChild(txt(Math.min(ox,W-padR-4), baseY+30, (obs>xmax?"observed "+f3(obs)+" (off the chart) →":"observed "+f3(obs))+"   p = "+fp(p), "var(--c3)", 11.5, obs>xmax?"end":(ox>W-200?"end":"middle"),"700"));
+    svg.appendChild(txt(padL,14,label,"var(--ink-soft)",11,"start","600"));
+  }
+
+  const CHI_PRESETS = {
+    pages:{kind:"indep", rows:["converted","did not"], cols:["Page A","Page B","Page C"], obs:[[30,45,25],[170,155,175]],
+      note:`Conversion rates: A 15.0%, B 22.5%, C 12.5%. The test says this spread is unlikely under "the page makes no difference" (about a 2% chance). It does <b>not</b> say B is the winner: the biggest single share of χ² is B's converted cell (4.083), which is a hint, not a test. Checked: <span class="formula">scipy.stats.chi2_contingency</span> gives 7.800, p = 0.0202, df = 2. A permutation check (shuffle which page each of the 600 visitors saw, 20,000 times) lands on p ≈ 0.021.`},
+    ab:{kind:"indep", rows:["converted","did not"], cols:["Page A","Page B"], obs:[[30,45],[170,155]], yates:true,
+      note:`With only two pages, df = 1, and the plain χ² (3.692) is exactly the square of the two-proportion z-statistic (z = 1.922, z² = 3.692, same p = 0.0547). For 2×2 tables <span class="formula">chi2_contingency</span> applies <b>Yates' continuity correction</b> by default (shrink each |O − E| by 0.5 before squaring), giving 3.216 and p = 0.0729. Pass <span class="formula">correction=False</span> to get the plain 3.692.`},
+    x10:{kind:"indep", rows:["converted","did not"], cols:["Page A","Page B","Page C"], obs:[[300,450,250],[1700,1550,1750]],
+      note:`Every count is 10× the first table, so the conversion rates are <b>identical</b> (15.0%, 22.5%, 12.5%). χ² scales with the amount of data, so it's 10× bigger (78.0) and p falls to about 1.15 × 10⁻¹⁷. Cramér's V, an effect-size measure that divides the sample size back out, is 0.114 in both tables: the <em>size</em> of the difference never changed, only how sure we are that it's not chance.`},
+    small:{kind:"indep", rows:["converted","did not"], cols:["Page A","Page B","Page C"], obs:[[3,5,2],[17,15,18]],
+      note:`χ² = 1.68, p = 0.432, but the bigger story is the warning: three expected counts are only 3.33. The smooth chi-square curve is an approximation that needs expected counts of roughly 5 or more in each cell. Below that, use an exact test (Fisher's exact test for 2×2 tables) or a permutation test instead of trusting this p-value.`},
+    die:{kind:"gof", cols:["1","2","3","4","5","6"], obs:[8,9,12,11,6,14], expected:[10,10,10,10,10,10],
+      note:`Goodness of fit: one row of counts, compared with a fixed expected pattern (a fair die: 60 rolls ÷ 6 = 10 per face). df = 6 − 1 = 5, because once five face counts are known the sixth is forced by the total of 60. χ² = 4.2, p = 0.521: these counts are perfectly ordinary for a fair die. Checked: <span class="formula">scipy.stats.chisquare</span> gives 4.2, p = 0.5210. (Not significant is not the same as "proved fair": 60 rolls can't detect a slightly loaded die.)`}
+  };
+  function renderChi(key){
+    const P=CHI_PRESETS[key];
+    let obs, exp, rowT=null, colT=null, N, df, cells=[];
+    if(P.kind==="indep"){
+      obs=P.obs; rowT=obs.map(r=>r.reduce((a,b)=>a+b,0)); colT=obs[0].map((_,j)=>obs.reduce((a,r)=>a+r[j],0)); N=rowT.reduce((a,b)=>a+b,0);
+      exp=obs.map((r,i)=>r.map((_,j)=>rowT[i]*colT[j]/N)); df=(obs.length-1)*(obs[0].length-1);
+      obs.forEach((r,i)=>r.forEach((o,j)=>cells.push({lab:P.cols[j]+" · "+P.rows[i], o, e:exp[i][j], i, j})));
+    } else {
+      obs=[P.obs]; exp=[P.expected]; N=P.obs.reduce((a,b)=>a+b,0); df=P.obs.length-1;
+      P.obs.forEach((o,j)=>cells.push({lab:"face "+P.cols[j], o, e:P.expected[j]}));
+    }
+    cells.forEach(c=>{ c.contrib=(c.o-c.e)*(c.o-c.e)/c.e; c.yates=Math.pow(Math.max(0,Math.abs(c.o-c.e)-0.5),2)/c.e; });
+    const chi=cells.reduce((a,c)=>a+c.contrib,0), p=chi2Sf(chi,df), crit=invSf(x=>chi2Sf(x,df),0.05);
+    // ---- bar chart
+    const svg=document.getElementById("chiBarsSvg"); svg.innerHTML="";
+    const W=700,H=230,padL=20,padR=20,padT=26,baseY=176, plotH=baseY-padT-14;
+    const maxV=Math.max(...cells.map(c=>Math.max(c.o,c.e)));
+    const gw=(W-padL-padR)/cells.length, bw=Math.min(34,gw*0.32);
+    cells.forEach((c,i)=>{
+      const cx=padL+gw*i+gw/2, ho=c.o/maxV*plotH, he=c.e/maxV*plotH;
+      svg.appendChild(el("rect",{x:cx-bw-2,y:baseY-ho,width:bw,height:ho,fill:"var(--c1)",["fill-opacity"]:0.75}));
+      svg.appendChild(el("rect",{x:cx+2,y:baseY-he,width:bw,height:he,fill:"none",stroke:"var(--ink)",["stroke-width"]:1.3,["stroke-dasharray"]:"4 3"}));
+      svg.appendChild(txt(cx-bw/2-2,baseY-ho-5,String(c.o),"var(--c1)",10.5,"middle","700"));
+      svg.appendChild(txt(cx+bw/2+2,baseY-he-5,(Math.round(c.e*100)/100).toString(),"var(--ink-soft)",10,"middle"));
+      const labParts=c.lab.split(" · ");
+      svg.appendChild(txt(cx,baseY+15,labParts[0],"var(--ink)",10.5,"middle","600"));
+      if(labParts[1]) svg.appendChild(txt(cx,baseY+28,labParts[1],"var(--ink-soft)",10,"middle"));
+      svg.appendChild(txt(cx,baseY+(labParts[1]?44:32),"+"+f3(c.contrib),c.contrib>=1?"var(--c3)":"var(--ink-soft)",11,"middle","700"));
+    });
+    svg.appendChild(el("line",{x1:padL,y1:baseY,x2:W-padR,y2:baseY,stroke:"var(--ink)",["stroke-width"]:1.2}));
+    svg.appendChild(txt(padL,14,"observed vs expected, and each cell's share (O−E)²/E of χ²","var(--ink-soft)",11,"start","600"));
+    // ---- tail curve
+    const xmax=Math.max(10, Math.ceil(crit*2), df*3);
+    drawTailCurve(document.getElementById("chiDistSvg"), x=>chi2Pdf(x,df), chi, crit, xmax, `chi-square curve with df = ${df}: where χ² lands when nothing is going on`, p);
+    // ---- arithmetic
+    const ex=cells.reduce((b,c)=>c.contrib>b.contrib?c:b,cells[0]);
+    let h="";
+    if(P.kind==="indep"){
+      h+=`1. <b>Totals</b>: rows ${P.rows.map((r,i)=>r+" "+rowT[i]).join(", ")}; columns ${P.cols.map((c,j)=>c+" "+colT[j]).join(", ")}; grand total N = ${N}<br>`;
+      const ei=ex.i, ej=ex.j;
+      h+=`2. <b>Expected</b> = row total × column total ÷ N. e.g. ${ex.lab}: ${rowT[ei]} × ${colT[ej]} ÷ ${N} = <b>${f3(ex.e)}</b>. All expected: ${exp.map(r=>"["+r.map(f3).join(", ")+"]").join(" ")}<br>`;
+    } else {
+      h+=`1. <b>Total</b>: N = ${N} rolls<br>2. <b>Expected</b> under "fair die": ${N} ÷ 6 = <b>10</b> per face<br>`;
+    }
+    h+=`3. <b>Each cell's share</b> (O − E)² ÷ E, largest: ${ex.lab}: (${ex.o} − ${f3(ex.e)})² ÷ ${f3(ex.e)} = <b>${f3(ex.contrib)}</b><br>`;
+    h+=`4. <b>χ²</b> = sum of all shares = ${cells.map(c=>f3(c.contrib)).join(" + ")} = <span class="big">${f3(chi)}</span><br>`;
+    h+= P.kind==="indep" ? `5. <b>Degrees of freedom</b> = (rows − 1) × (columns − 1) = (${P.obs.length} − 1) × (${P.obs[0].length} − 1) = <b>${df}</b><br>`
+                         : `5. <b>Degrees of freedom</b> = categories − 1 = 6 − 1 = <b>${df}</b><br>`;
+    h+=`6. <b>p-value</b> = P(χ²<sub>${df}</sub> ≥ ${f3(chi)}) = <span class="big">${fp(p)}</span>${df===2?` &nbsp;(for df = 2 this is exactly e<sup>−χ²/2</sup> = e<sup>−${(chi/2).toFixed(2)}</sup>)`:""} &nbsp;·&nbsp; 5% cut-off ${f3(crit)} → ${p<0.05?'<span class="bad-t">reject "no association"</span>':'<span class="good-t">no evidence against "nothing going on"</span>'}<br>`;
+    if(P.kind==="indep"){ const V=Math.sqrt(chi/(N*(Math.min(P.obs.length,P.obs[0].length)-1))); h+=`7. <b>Effect size</b>: Cramér's V = √(χ² ÷ (N × (min(rows, cols) − 1))) = √(${f3(chi)} ÷ ${N}) = <b>${f3(V)}</b> (0 = no association, 1 = perfect)<br>`; }
+    if(P.yates){ const cy=cells.reduce((a,c)=>a+c.yates,0); h+=`8. <b>Yates-corrected</b> χ² = Σ (|O − E| − 0.5)² ÷ E = <b>${f3(cy)}</b>, p = <b>${fp(chi2Sf(cy,1))}</b> (scipy's default for 2×2)<br>`; }
+    const smallE=cells.filter(c=>c.e<5).length;
+    if(smallE) h+=`<span class="bad-t">⚠ ${smallE} cell(s) have expected count below 5 (smallest ${f3(Math.min(...cells.map(c=>c.e)))}): the chi-square curve is not a trustworthy approximation here.</span><br>`;
+    h+=`<span style="font-family:Inter, sans-serif; font-size:13px;">${P.note}</span>`;
+    document.getElementById("chiVerdict").innerHTML=h;
+    document.querySelectorAll("#panel-chi [data-chi]").forEach(b=>b.classList.toggle("active",b.dataset.chi===key));
+  }
+  document.querySelectorAll("#panel-chi [data-chi]").forEach(b=>b.addEventListener("click",()=>renderChi(b.dataset.chi)));
+  renderChi("pages");
+
+  const FERT = {names:["Fertilizer A","Fertilizer B","Fertilizer C"], data:[[20,22,19,24,20],[25,27,24,28,26],[22,21,23,24,20]]};
+  const ANOVA_PRESETS = {
+    fert:{g:FERT, note:`Checked: <span class="formula">scipy.stats.f_oneway</span> gives F = 11.667, p = 0.00153. Assumption checks on this data: Levene's test for equal spreads p = 0.954 (no sign of unequal spreads); Shapiro-Wilk on the residuals p = 0.206 (no sign of non-normal noise).`},
+    noisy:{g:{names:FERT.names, data:[[18,24,15,30,18],[23,29,20,32,26],[22,19,25,28,16]]},
+      note:`Every plot's distance from its own group mean was tripled, so the three means (21, 26, 22) and the between-group sum of squares (70) are <b>unchanged</b>. The within-group sum of squares grows 9× (36 → 324), MSW grows from 3 to 27, and F falls from 11.67 to 1.30 (p = 0.309). Same signal, more noise: no longer distinguishable from chance. Checked with <span class="formula">f_oneway</span>.`},
+    two:{g:{names:["Fertilizer A","Fertilizer C"], data:[[20,22,19,24,20],[22,21,23,24,20]]}, two:true,
+      note:`With exactly two groups ANOVA and the ordinary two-sample t-test are the same test: t = −0.877 (pooled-variance <span class="formula">scipy.stats.ttest_ind</span>), t² = 0.769 = F, and both give p = 0.406. ANOVA is the t-test generalized to any number of groups.`},
+    tukey:{g:FERT, tukey:true,
+      note:`ANOVA said "at least one mean differs". Tukey's HSD (honestly significant difference) answers "which?" while keeping the overall false-alarm rate at 5%: a pair differs if its means are more than HSD = q × √(MSW ÷ n) = 3.773 × √(3 ÷ 5) = <b>2.922</b> apart, where q = 3.773 is the studentized-range cut-off for 3 groups and 12 within-group df. Checked with <span class="formula">scipy.stats.tukey_hsd</span>: B−A = 5 (p = 0.0017), B−C = 4 (p = 0.0086), C−A = 1 (p = 0.643).`},
+    manyt:{g:FERT, manyt:true,
+      note:`Simulation from the doc: 20,000 experiments where all three groups truly have the <b>same</b> mean (5 normal values each). Running all three pairwise t-tests and shouting "significant!" if any p &lt; 0.05 gave a false alarm <b>12.25%</b> of the time. One ANOVA on the same data: <b>4.85%</b>, right at the promised 5%. (If the three tests were independent the rate would be 1 − 0.95³ = 14.26%; they share data, so it's a bit lower, but still far above 5%.)`}
+  };
+  function anovaStats(g){
+    const k=g.data.length, ns=g.data.map(a=>a.length), N=ns.reduce((a,b)=>a+b,0);
+    const means=g.data.map(a=>a.reduce((s,x)=>s+x,0)/a.length);
+    const grand=g.data.flat().reduce((s,x)=>s+x,0)/N;
+    const ssbParts=means.map((m,i)=>ns[i]*(m-grand)*(m-grand)), ssb=ssbParts.reduce((a,b)=>a+b,0);
+    const sswParts=g.data.map((a,i)=>a.reduce((s,x)=>s+(x-means[i])*(x-means[i]),0)), ssw=sswParts.reduce((a,b)=>a+b,0);
+    const dfb=k-1, dfw=N-k, msb=ssb/dfb, msw=ssw/dfw, F=msb/msw;
+    return {k,ns,N,means,grand,ssbParts,ssb,sswParts,ssw,dfb,dfw,msb,msw,F,p:fSf(F,dfb,dfw)};
+  }
+  function n2(v){ return Math.abs(v-Math.round(v))<1e-9?String(Math.round(v)):v.toFixed(3); }
+  function renderAnova(key){
+    const P=ANOVA_PRESETS[key], g=P.g, S=anovaStats(g);
+    const colors=["var(--c1)","var(--c4)","var(--c2)"];
+    // ---- dot plot
+    const svg=document.getElementById("anovaSvg"); svg.innerHTML="";
+    const W=700,H=250,padL=46,padR=20,padT=26,padB=34, plotH=H-padT-padB, baseY=padT+plotH;
+    const all=g.data.flat(), lo=Math.min(12,Math.min(...all)-1), hi=Math.max(34,Math.max(...all)+1);
+    const py=v=>baseY-(v-lo)/(hi-lo)*plotH;
+    for(let v=Math.ceil(lo/2)*2; v<=hi; v+=2){ svg.appendChild(el("line",{x1:padL,y1:py(v),x2:W-padR,y2:py(v),stroke:"var(--line)",["stroke-width"]:0.8})); svg.appendChild(txt(padL-6,py(v)+4,String(v),"var(--ink-soft)",10,"end")); }
+    const gw=(W-padL-padR)/S.k;
+    g.data.forEach((a,i)=>{
+      const cx=padL+gw*i+gw/2, col=colors[g.names[i].endsWith("C")?2:(g.names[i].endsWith("B")?1:0)];
+      a.forEach((x,j)=>{ const dx=(j-(a.length-1)/2)*14; svg.appendChild(el("line",{x1:cx+dx,y1:py(x),x2:cx+dx,y2:py(S.means[i]),stroke:col,["stroke-width"]:1,["stroke-opacity"]:0.45})); svg.appendChild(el("circle",{cx:cx+dx,cy:py(x),r:5,fill:col,["fill-opacity"]:0.8})); });
+      svg.appendChild(el("line",{x1:cx-48,y1:py(S.means[i]),x2:cx+48,y2:py(S.means[i]),stroke:col,["stroke-width"]:3.5}));
+      svg.appendChild(txt(cx+54,py(S.means[i])+4,"mean "+n2(S.means[i]),col,11,"start","700"));
+      svg.appendChild(txt(cx,baseY+20,g.names[i],"var(--ink)",11.5,"middle","600"));
+    });
+    svg.appendChild(el("line",{x1:padL,y1:py(S.grand),x2:W-padR,y2:py(S.grand),stroke:"var(--ink)",["stroke-width"]:1.3,["stroke-dasharray"]:"6 4"}));
+    svg.appendChild(txt(padL+4,py(S.grand)-5,"grand mean "+n2(S.grand),"var(--ink)",11,"start","700"));
+    svg.appendChild(txt(padL,14,"yield per plot (thin lines = each plot's distance from its own group mean: the within-group wobble)","var(--ink-soft)",11,"start","600"));
+    // ---- lower chart
+    const fs=document.getElementById("anovaFSvg");
+    if(P.tukey){
+      fs.innerHTML=""; const pairs=[["B − A",5,0.0017],["B − C",4,0.0086],["C − A",1,0.643]], HSD=3.772928965726967*Math.sqrt(S.msw/5);
+      const x0=150, sc=(700-x0-60)/6;
+      pairs.forEach(([lab,d,pv],i)=>{ const y=40+i*50; const sig=d>HSD;
+        fs.appendChild(el("rect",{x:x0,y:y,width:d*sc,height:26,fill:sig?"var(--c3)":"var(--c1)",["fill-opacity"]:0.6}));
+        fs.appendChild(txt(x0-10,y+18,lab,"var(--ink)",12,"end","700"));
+        fs.appendChild(txt(x0+d*sc+8,y+18,`gap ${d}  (p = ${pv})  ${sig?"differs":"could be chance"}`,sig?"var(--c3)":"var(--ink-soft)",11.5,"start","700")); });
+      fs.appendChild(el("line",{x1:x0+HSD*sc,y1:28,x2:x0+HSD*sc,y2:190,stroke:"var(--c2)",["stroke-width"]:2,["stroke-dasharray"]:"5 3"}));
+      fs.appendChild(txt(x0+HSD*sc,200,"HSD = "+f3(HSD),"var(--c2)",11.5,"middle","700"));
+      fs.appendChild(txt(10,14,"Tukey's HSD: which pairs of means are further apart than the honest cut-off?","var(--ink-soft)",11,"start","600"));
+    } else if(P.manyt){
+      fs.innerHTML=""; const bars=[["one ANOVA",4.85,"var(--c1)"],["any of 3 t-tests",12.25,"var(--c3)"],["1 − 0.95³ (if independent)",14.26,"var(--ink-soft)"]];
+      const x0=210, sc=(700-x0-90)/16;
+      bars.forEach(([lab,v,c],i)=>{ const y=40+i*50; fs.appendChild(el("rect",{x:x0,y,width:v*sc,height:26,fill:c,["fill-opacity"]:0.6})); fs.appendChild(txt(x0-10,y+18,lab,"var(--ink)",12,"end","700")); fs.appendChild(txt(x0+v*sc+8,y+18,v.toFixed(2)+"% false alarms","var(--ink)",11.5,"start","700")); });
+      fs.appendChild(el("line",{x1:x0+5*sc,y1:28,x2:x0+5*sc,y2:190,stroke:"var(--c2)",["stroke-width"]:2,["stroke-dasharray"]:"5 3"}));
+      fs.appendChild(txt(x0+5*sc,200,"promised 5%","var(--c2)",11.5,"middle","700"));
+      fs.appendChild(txt(10,14,"20,000 simulated experiments with NO real difference: how often does each approach cry wolf?","var(--ink-soft)",11,"start","600"));
+    } else {
+      const crit=invSf(x=>fSf(x,S.dfb,S.dfw),0.05);
+      drawTailCurve(fs, x=>fPdf(x,S.dfb,S.dfw), S.F, crit, Math.max(8,Math.ceil(S.F*1.15)), `F curve with (${S.dfb}, ${S.dfw}) degrees of freedom: where F lands when all group means are truly equal`, S.p);
+    }
+    // ---- arithmetic
+    const crit=invSf(x=>fSf(x,S.dfb,S.dfw),0.05);
+    let h=`1. <b>Group means</b>: ${g.names.map((nm,i)=>nm.replace("Fertilizer ","")+" = "+n2(S.means[i])).join(", ")}; <b>grand mean</b> of all ${S.N} plots = ${n2(S.grand)}<br>`;
+    h+=`2. <b>Between-group</b> sum of squares SSB = Σ n × (group mean − grand mean)² = ${S.means.map((m,i)=>`${S.ns[i]}×(${n2(m)}−${n2(S.grand)})²`).join(" + ")} = ${S.ssbParts.map(n2).join(" + ")} = <b>${n2(S.ssb)}</b><br>`;
+    h+=`3. <b>Within-group</b> sum of squares SSW = Σ (plot − its own group mean)² = ${S.sswParts.map(n2).join(" + ")} = <b>${n2(S.ssw)}</b> &nbsp;(check: total SS = ${n2(S.ssb+S.ssw)} = SSB + SSW)<br>`;
+    h+=`4. <b>Degrees of freedom</b>: between = groups − 1 = ${S.k} − 1 = <b>${S.dfb}</b>; within = plots − groups = ${S.N} − ${S.k} = <b>${S.dfw}</b><br>`;
+    h+=`5. <b>Mean squares</b>: MSB = ${n2(S.ssb)} ÷ ${S.dfb} = <b>${n2(S.msb)}</b>; MSW = ${n2(S.ssw)} ÷ ${S.dfw} = <b>${n2(S.msw)}</b><br>`;
+    h+=`6. <b>F</b> = MSB ÷ MSW = ${n2(S.msb)} ÷ ${n2(S.msw)} = <span class="big">${f3(S.F)}</span><br>`;
+    h+=`7. <b>p-value</b> = P(F<sub>${S.dfb},${S.dfw}</sub> ≥ ${f3(S.F)}) = <span class="big">${fp(S.p)}</span> &nbsp;·&nbsp; 5% cut-off ${f3(crit)} → ${S.p<0.05?'<span class="bad-t">at least one mean differs</span>':'<span class="good-t">no evidence the means differ</span>'}<br>`;
+    h+=`8. <b>Effect size</b>: η² = SSB ÷ total SS = ${n2(S.ssb)} ÷ ${n2(S.ssb+S.ssw)} = <b>${f3(S.ssb/(S.ssb+S.ssw))}</b> (share of all the variation explained by which group a plot is in)<br>`;
+    if(P.two){ const sp2=S.msw, t=(S.means[0]-S.means[1])/Math.sqrt(sp2*(1/S.ns[0]+1/S.ns[1])); h+=`9. <b>t-test on the same two groups</b>: t = (${n2(S.means[0])} − ${n2(S.means[1])}) ÷ √(${n2(sp2)} × (1/5 + 1/5)) = <b>${f3(t)}</b>, and t² = <b>${f3(t*t)}</b> = F<br>`; }
+    h+=`<span style="font-family:Inter, sans-serif; font-size:13px;">${P.note}</span>`;
+    document.getElementById("anovaVerdict").innerHTML=h;
+    document.querySelectorAll("#panel-anova [data-anova]").forEach(b=>b.classList.toggle("active",b.dataset.anova===key));
+  }
+  document.querySelectorAll("#panel-anova [data-anova]").forEach(b=>b.addEventListener("click",()=>renderAnova(b.dataset.anova)));
+  renderAnova("fert");
+})();
+</script>
+<script>
+/* ===== Multiple Testing tab (self-contained) ===== */
+(function(){
+  "use strict";
+  const NS="http://www.w3.org/2000/svg";
+  function el(tag,attrs,parent,text){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(text!==undefined) e.textContent=text; if(parent) parent.appendChild(e); return e; }
+  function T(parent,x,y,s,o){ return el("text",Object.assign({x,y,"font-family":"IBM Plex Mono, monospace","font-size":11,fill:"#1B2430","text-anchor":"middle"},o||{}),parent,s); }
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function gaussGen(seed){ const r=mulberry32(seed); return function(){ let u=r(); while(u<=0) u=r(); const v=r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }; }
+  const COF=[-1.3026537197817094,6.4196979235649026e-1,1.9476473204185836e-2,-9.561514786808631e-3,-9.46595344482036e-4,3.66839497852761e-4,4.2523324806907e-5,-2.0278578112534e-5,-1.624290004647e-6,1.303655835580e-6,1.5626441722e-8,-8.5238095915e-8,6.529054439e-9,5.059343495e-9,-9.91364156e-10,-2.27365122e-10,9.6467911e-11,2.394038e-12,-6.886027e-12,8.94487e-13,3.13092e-13,-1.12708e-13,3.81e-16,7.106e-15,-1.523e-15,-9.4e-17,1.21e-16,-2.8e-17];
+  function erfc(x){ if(x<0) return 2-erfc(-x); let d=0,dd=0; const t=2/(2+x), ty=4*t-2; for(let j=COF.length-1;j>0;j--){ const tmp=d; d=ty*d-dd+COF[j]; dd=tmp; } return t*Math.exp(-x*x+0.5*(COF[0]+ty*d)-dd); }
+  const pTwo=z=>erfc(Math.abs(z)/Math.SQRT2);
+  const order=p=>p.map((x,i)=>i).sort((i,j)=>p[i]-p[j]);
+  function rNone(p,a){ return p.map(x=>x<=a); }
+  function rBonf(p,a){ return p.map(x=>x<=a/p.length); }
+  function rHolm(p,a){ const m=p.length,o=order(p),rej=new Array(m).fill(false); for(let k=0;k<m;k++){ if(p[o[k]]<=a/(m-k)) rej[o[k]]=true; else break; } return rej; }
+  function rBH(p,q){ const m=p.length,o=order(p); let kmax=-1; for(let k=0;k<m;k++) if(p[o[k]]<=(k+1)*q/m) kmax=k; const rej=new Array(m).fill(false); for(let k=0;k<=kmax;k++) rej[o[k]]=true; return rej; }
+  const RULES={none:rNone,bonf:rBonf,holm:rHolm,bh:rBH};
+  const NAMES={none:"No correction",bonf:"Bonferroni",holm:"Holm",bh:"Benjamini–Hochberg"};
+  const A=0.05, M=1000, R=50, EFF=3, SEED=4;
+  function simZ(seed){ const g=gaussGen(seed); const z=[]; for(let i=0;i<M;i++) z.push(g()+(i<R?EFF:0)); return z; }
+  function tally(rej){ let V=0,S=0; rej.forEach((r,i)=>{ if(r){ if(i<R) S++; else V++; } }); return {V,S,N:V+S}; }
+  const HAND=[0.0001,0.0040,0.0060,0.0095,0.0201,0.0278,0.0298,0.0421,0.0459,0.3240];
+  const fmtp=p=>p<0.001? p.toExponential(2) : p.toFixed(4);
+  const pct=x=>(100*x).toFixed(1)+"%";
+  const svg=document.getElementById("mtSvg"), V=document.getElementById("mtVerdict"), L=document.getElementById("mtLegend");
+  function clear(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+  const W=700,H=320,pl=64,pr=20,pt=20,pb=46;
+  // ---- hand-worked dashboard
+  function drawHand(rule){
+    clear();
+    const p=HAND, m=p.length, rej=RULES[rule](p,A);
+    const lo=-4.3, hi=0;   // log10 scale
+    const sx=k=>pl+(k-0.5)/m*(W-pl-pr), sy=v=>pt+(hi-Math.log10(v))/(hi-lo)*(H-pt-pb);
+    [1e-4,1e-3,1e-2,0.05,0.1,1].forEach(v=>{ el("line",{x1:pl,x2:W-pr,y1:sy(v),y2:sy(v),stroke:"#E3E7E6"},svg); T(svg,pl-6,sy(v)+4,String(v),{"text-anchor":"end",fill:"#5B6572"}); });
+    for(let k=1;k<=m;k++) T(svg,sx(k),H-pb+16,String(k),{fill:"#5B6572"});
+    T(svg,(pl+W-pr)/2,H-8,"rank k (p-values sorted smallest to largest)",{"font-size":12});
+    T(svg,14,(pt+H-pb)/2,"p-value (log scale)",{"font-size":12,transform:`rotate(-90 14 ${(pt+H-pb)/2})`});
+    // the rule's bar
+    let bar=[]; let label="";
+    if(rule==="none"){ bar=p.map(()=>A); label="every test vs 0.05"; }
+    if(rule==="bonf"){ bar=p.map(()=>A/m); label="every test vs 0.05/10 = 0.005"; }
+    if(rule==="holm"){ bar=p.map((x,k)=>A/(m-k)); label="k-th smallest vs 0.05/(11−k), stop at first failure"; }
+    if(rule==="bh"){ bar=p.map((x,k)=>(k+1)*A/m); label="k-th smallest vs k × 0.005; take the largest k under the line"; }
+    const d=bar.map((v,k)=>(k?"L":"M")+sx(k+1).toFixed(1)+","+sy(v).toFixed(1)).join("");
+    el("path",{d,fill:"none",stroke:"var(--c3)","stroke-width":2.5,"stroke-dasharray":rule==="none"||rule==="bonf"?"0":"5 4"},svg);
+    bar.forEach((v,k)=>el("circle",{cx:sx(k+1),cy:sy(v),r:3,fill:"var(--c3)"},svg));
+    T(svg,pl+10,pt+12,NAMES[rule]+"'s bar: "+label,{"text-anchor":"start",fill:"var(--c3)","font-weight":600});
+    let stopAt=-1; if(rule==="holm"){ for(let k=0;k<m;k++){ if(!(p[k]<=bar[k])){ stopAt=k; break; } } }
+    p.forEach((x,k)=>{
+      el("circle",{cx:sx(k+1),cy:sy(x),r:8,fill:rej[k]?"var(--accent)":"#fff",stroke:rej[k]?"var(--accent)":"#9AA3AD","stroke-width":2},svg);
+      T(svg,sx(k+1),sy(x)-13,fmtp(x),{"font-size":10,fill:"#1B2430"});
+    });
+    if(stopAt>=0) T(svg,sx(stopAt+1),sy(p[stopAt])+24,"stop here",{"font-size":11,"font-weight":700,fill:"var(--c3)"});
+    L.innerHTML=`<span><span class="dot" style="background:var(--accent);width:12px;height:12px;border-radius:50%;display:inline-block"></span>called significant</span><span><span style="width:12px;height:12px;border:2px solid #9AA3AD;border-radius:50%;display:inline-block"></span>not significant</span><span><span class="sw" style="background:var(--c3)"></span>${NAMES[rule]}'s bar</span>`;
+    let rows=p.map((x,k)=>`${String(k+1).padStart(2," ")}. p = ${x.toFixed(4)} vs ${bar[k].toFixed(5)} → ${rej[k]?'<span class="good-t">significant</span>':'not'}`).join("<br>");
+    const counts=Object.keys(RULES).map(r=>`${NAMES[r]} <b>${RULES[r](p,A).filter(Boolean).length}</b>`).join(" · ");
+    let note="";
+    if(rule==="none") note="Nine of ten metrics look like winners. If all ten were pure noise you'd still expect a false alarm 1 − 0.95¹⁰ = <b>40.1%</b> of the time.";
+    if(rule==="bonf") note="Each test gets an equal 1/10 share of the 5% budget. Only 0.0001 and 0.0040 clear 0.005.";
+    if(rule==="holm") note="Rank 1 vs 0.05/10, rank 2 vs 0.05/9 = 0.00556, rank 3 vs 0.05/8 = 0.00625 (0.0060 passes: one more than Bonferroni), rank 4 vs 0.05/7 = 0.00714 fails, so Holm stops.";
+    if(rule==="bh") note="Ranks 1–7 sit under the rising line k × 0.005 (rank 7: 0.0298 ≤ 0.035); rank 8 (0.0421 > 0.040) does not. BH calls the 7 smallest significant. SciPy's BH-adjusted p-values agree: the 7th is 0.0426, the 8th 0.051.";
+    V.innerHTML=`<b>${NAMES[rule]}</b>: ${label}<br>${rows}<br><br>Called significant: ${counts}<br><span style="font-family:Inter, sans-serif; font-size:13px;">${note}</span>`;
+  }
+  // ---- 1,000 tests Manhattan-style
+  let Z=null, P=null;
+  function drawSim(rule){
+    clear();
+    if(!Z){ Z=simZ(SEED); P=Z.map(pTwo); }
+    const rej=RULES[rule](P,A), t=tally(rej);
+    const yMax=8, sx=i=>pl+(i+0.5)/M*(W-pl-pr), sy=v=>pt+(yMax-Math.min(v,yMax))/yMax*(H-pt-pb);
+    el("rect",{x:sx(0)-2,y:pt,width:sx(R)-sx(0),height:H-pt-pb,fill:"rgba(15,139,141,0.10)"},svg);
+    T(svg,sx(R/2),pt+12,"50 real",{"font-size":10.5,fill:"var(--c1)","font-weight":700});
+    [0,1,2,3,4,5,6,7,8].forEach(v=>{ el("line",{x1:pl,x2:W-pr,y1:sy(v),y2:sy(v),stroke:"#E3E7E6"},svg); T(svg,pl-6,sy(v)+4,String(v),{"text-anchor":"end",fill:"#5B6572"}); });
+    [0,200,400,600,800,1000].forEach(i=>T(svg,pl+i/M*(W-pl-pr),H-pb+16,String(i),{fill:"#5B6572"}));
+    T(svg,(pl+W-pr)/2,H-8,"test number (tests 1–50 are real effects, 51–1,000 pure noise)",{"font-size":12});
+    T(svg,14,(pt+H-pb)/2,"−log10(p)",{"font-size":12,transform:`rotate(-90 14 ${(pt+H-pb)/2})`});
+    // threshold line: the largest p rejected / the bar
+    let cut, cutLabel;
+    if(rule==="none"){ cut=A; cutLabel="p ≤ 0.05"; }
+    else if(rule==="bonf"){ cut=A/M; cutLabel="p ≤ 0.05/1000 = 0.00005"; }
+    else if(rule==="holm"){ const n=t.N; cut=A/(M-n); cutLabel=`stops at rank ${n+1}: bar 0.05/${M-n} = ${(A/(M-n)).toExponential(2)}`; }
+    else { const n=t.N; cut=n*A/M; cutLabel=`largest k under the line: k = ${n}, bar ${n} × 0.05/1000 = ${cut.toFixed(4)}`; }
+    el("line",{x1:pl,x2:W-pr,y1:sy(-Math.log10(cut)),y2:sy(-Math.log10(cut)),stroke:"var(--c3)","stroke-width":2,"stroke-dasharray":"6 4"},svg);
+    T(svg,W-pr-4,sy(-Math.log10(cut))-6,cutLabel,{"text-anchor":"end",fill:"var(--c3)","font-weight":600});
+    P.forEach((p,i)=>{
+      const real=i<R, y=sy(-Math.log10(p));
+      if(real) el("circle",{cx:sx(i),cy:y,r:3.6,fill:rej[i]?"var(--c1)":"#fff",stroke:"var(--c1)","stroke-width":1.4},svg);
+      else el("circle",{cx:sx(i),cy:y,r:rej[i]?4:2.2,fill:rej[i]?"var(--c3)":"#B9C0C7"},svg);
+    });
+    L.innerHTML=`<span><span style="width:10px;height:10px;background:var(--c1);border-radius:50%;display:inline-block"></span>real effect found</span><span><span style="width:10px;height:10px;border:1.5px solid var(--c1);border-radius:50%;display:inline-block"></span>real effect missed</span><span><span style="width:10px;height:10px;background:var(--c3);border-radius:50%;display:inline-block"></span>false positive</span><span><span style="width:8px;height:8px;background:#B9C0C7;border-radius:50%;display:inline-block"></span>noise, correctly ignored</span>`;
+    const all=Object.keys(RULES).map(r=>{ const c=tally(RULES[r](P,A)); return `${NAMES[r].padEnd(19," ")} called ${String(c.N).padStart(3," ")} · real found ${String(c.S).padStart(2," ")}/50 · false positives ${String(c.V).padStart(2," ")} · false share ${pct(c.N?c.V/c.N:0)}`; }).join("<br>");
+    let note={
+      none:"About 5% of the 950 noise tests (expect 47.5) slip under 0.05 by luck: here 49, more than the 44 real effects found. Over half the list is false.",
+      bonf:"The bar z ≥ 4.06 is so strict that a real effect of z ≈ 3 clears it only 14.6% of the time: 8 found, but not a single false positive.",
+      holm:"Holm loosens the bar after each success, but with 1,000 tests 0.05/1000 and 0.05/992 are nearly the same: it finds the same 8 here.",
+      bh:"BH accepts a small share of false discoveries in exchange for power: 19 real effects with 1 false positive, a false share of exactly 5.0%."
+    }[rule];
+    V.innerHTML=`<b>${NAMES[rule]}</b> on 1,000 tests (seed ${SEED}; z = noise + 3 for tests 1–50, pure noise otherwise; two-sided p-values)<br>called significant <span class="big">${t.N}</span> · real found <b>${t.S}</b> of 50 · false positives <span class="${t.V?'bad-t':'good-t'}">${t.V}</span> · false share <b>${pct(t.N?t.V/t.N:0)}</b><br><br>${all}<br><br><span style="font-family:Inter, sans-serif; font-size:13px;">${note}</span>`;
+  }
+  // ---- average over 500 runs
+  function drawAvg(){
+    clear();
+    const N=500, acc={}; Object.keys(RULES).forEach(r=>acc[r]={V:0,S:0,F:0,any:0});
+    for(let s=1001;s<1001+N;s++){ const p=simZ(s).map(pTwo); Object.keys(RULES).forEach(r=>{ const c=tally(RULES[r](p,A)); acc[r].V+=c.V; acc[r].S+=c.S; acc[r].F+=c.N?c.V/c.N:0; acc[r].any+=c.V>0?1:0; }); }
+    Object.values(acc).forEach(a=>{ a.V/=N; a.S/=N; a.F/=N; a.any/=N; });
+    const keys=Object.keys(RULES), gw=(W-pl-pr)/4, yMax=50, sy=v=>pt+(yMax-v)/yMax*(H-pt-pb);
+    [0,10,20,30,40,50].forEach(v=>{ el("line",{x1:pl,x2:W-pr,y1:sy(v),y2:sy(v),stroke:"#E3E7E6"},svg); T(svg,pl-6,sy(v)+4,String(v),{"text-anchor":"end",fill:"#5B6572"}); });
+    T(svg,14,(pt+H-pb)/2,"average count per run",{"font-size":12,transform:`rotate(-90 14 ${(pt+H-pb)/2})`});
+    keys.forEach((k,i)=>{
+      const x0=pl+i*gw+gw*0.18, bw=gw*0.3;
+      el("rect",{x:x0,y:sy(acc[k].S),width:bw,height:sy(0)-sy(acc[k].S),fill:"var(--c1)"},svg);
+      el("rect",{x:x0+bw+4,y:sy(acc[k].V),width:bw,height:Math.max(1,sy(0)-sy(acc[k].V)),fill:"var(--c3)"},svg);
+      T(svg,x0+bw/2,sy(acc[k].S)-5,acc[k].S.toFixed(2),{"font-size":10.5});
+      T(svg,x0+bw*1.5+4,sy(acc[k].V)-5,acc[k].V.toFixed(acc[k].V<1?3:2),{"font-size":10.5});
+      T(svg,pl+i*gw+gw/2,H-pb+16,NAMES[k],{"font-size":11.5});
+    });
+    L.innerHTML=`<span><span class="sw" style="background:var(--c1);height:10px"></span>real effects found (of 50)</span><span><span class="sw" style="background:var(--c3);height:10px"></span>false positives (of 950 noise tests)</span>`;
+    V.innerHTML=`Averaged over <b>${N}</b> seeded runs of the 1,000-test experiment:<br>`+keys.map(k=>`${NAMES[k].padEnd(19," ")} false positives <b>${acc[k].V.toFixed(acc[k].V<1?3:2)}</b> · real found <b>${acc[k].S.toFixed(2)}</b> · false-discovery share <b>${pct(acc[k].F)}</b> · P(≥ 1 false positive) <b>${pct(acc[k].any)}</b>`).join("<br>")+`<br><br><span style="font-family:Inter, sans-serif; font-size:13px;">Each rule keeps its own promise. Bonferroni and Holm: at least one false positive in under 5% of runs (family-wise error). BH: under 5% of the list is false on average (false discovery rate), while finding almost three times as many real effects, at the price of usually letting one false positive in.</span>`;
+  }
+  // ---- ANOVA: 3 pairwise t-tests
+  function drawAnova(){
+    clear();
+    const crit=[2.3060041352041662, 3.015761836887166]; // two-sided t criticals, df = 8, alpha 0.05 and 0.05/3
+    const g=gaussGen(1908), reps=20000; let none=0,bon=0;
+    for(let r=0;r<reps;r++){
+      const G=[[],[],[]]; for(let k=0;k<3;k++) for(let i=0;i<5;i++) G[k].push(g());
+      const m=G.map(a=>a.reduce((s,x)=>s+x,0)/5), v=G.map((a,k)=>a.reduce((s,x)=>s+(x-m[k])**2,0)/4);
+      const tmax=Math.max(...[[0,1],[0,2],[1,2]].map(([a,b])=>Math.abs(m[a]-m[b])/Math.sqrt(((v[a]+v[b])/2)*(2/5))));
+      if(tmax>crit[0]) none++; if(tmax>crit[1]) bon++;
+    }
+    const vals=[["3 t-tests, no correction",none/reps,"var(--c3)"],["3 t-tests, Bonferroni (p ≤ 0.0167 each)",bon/reps,"var(--c1)"],["independent tests would give 1 − 0.95³",1-Math.pow(0.95,3),"#B9C0C7"]];
+    const yMax=0.16, sy=v=>pt+(yMax-v)/yMax*(H-pt-pb), gw=(W-pl-pr)/3;
+    [0,0.04,0.08,0.12,0.16].forEach(v=>{ el("line",{x1:pl,x2:W-pr,y1:sy(v),y2:sy(v),stroke:"#E3E7E6"},svg); T(svg,pl-6,sy(v)+4,(v*100).toFixed(0)+"%",{"text-anchor":"end",fill:"#5B6572"}); });
+    el("line",{x1:pl,x2:W-pr,y1:sy(0.05),y2:sy(0.05),stroke:"var(--accent)","stroke-width":2,"stroke-dasharray":"6 4"},svg);
+    T(svg,W-pr-4,sy(0.05)-6,"the promised 5%",{"text-anchor":"end",fill:"var(--accent)","font-weight":600});
+    vals.forEach(([nm,v,c],i)=>{ const x0=pl+i*gw+gw*0.25, bw=gw*0.5; el("rect",{x:x0,y:sy(v),width:bw,height:sy(0)-sy(v),fill:c},svg); T(svg,x0+bw/2,sy(v)-6,(100*v).toFixed(i===0?3:2)+"%",{"font-size":12,"font-weight":700}); T(svg,x0+bw/2,H-pb+16,nm,{"font-size":10}); });
+    T(svg,14,(pt+H-pb)/2,"false-alarm rate",{"font-size":12,transform:`rotate(-90 14 ${(pt+H-pb)/2})`});
+    L.innerHTML="";
+    V.innerHTML=`20,000 experiments, three groups of 5 drawn from the <i>same</i> normal distribution (seed 1908). For each, run all three pooled t-tests (df = 8) and count a false alarm if any is significant.<br>no correction: <span class="bad-t">${none.toLocaleString("en-US")} of 20,000 = ${(100*none/reps).toFixed(3)}%</span> &nbsp;·&nbsp; Bonferroni (|t| &gt; ${crit[1].toFixed(3)}, i.e. p ≤ 0.05/3): <span class="good-t">${bon.toLocaleString("en-US")} of 20,000 = ${(100*bon/reps).toFixed(2)}%</span><br><span style="font-family:Inter, sans-serif; font-size:13px;">Holm gives exactly the same rate here: when every null is true, both make at least one rejection exactly when the smallest p-value is below 0.05/3. The tutorial's earlier simulation (a different seed) got 12.25% uncorrected; the gap is sampling noise.</span>`;
+  }
+  function render(key){
+    document.querySelectorAll("#panel-mt [data-mt]").forEach(b=>b.classList.toggle("active",b.dataset.mt===key));
+    if(key[0]==="h") drawHand({hnone:"none",hbonf:"bonf",hholm:"holm",hbh:"bh"}[key]);
+    else if(key[0]==="s") drawSim({snone:"none",sbonf:"bonf",sholm:"holm",sbh:"bh"}[key]);
+    else if(key==="avg") drawAvg(); else drawAnova();
+  }
+  document.querySelectorAll("#panel-mt [data-mt]").forEach(b=>b.addEventListener("click",()=>render(b.dataset.mt)));
+  render("hnone");
+  window.__MT={simZ,pTwo,rBonf,rHolm,rBH,tally,HAND,render};
 })();
 </script>
 </body>

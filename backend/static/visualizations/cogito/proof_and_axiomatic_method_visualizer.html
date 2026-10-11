@@ -48,6 +48,34 @@
   .score{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--ink-soft); }
   footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
   footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+  /* ---- Counting Toolkit + Recurrences & Catalan (step-through presets, shared engine) ---- */
+  .sp .sp-presets{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .sp .sp-presets .grp{ width:100%; font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); margin-top:4px; }
+  .sp button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .sp .sp-ctrl{ display:flex; gap:8px; align-items:center; padding:10px 12px; background:#F5F4F0; border-radius:10px; margin-bottom:14px; }
+  .sp .sp-ctrl .sp-count{ margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  .sp .sp-stage{ min-height:160px; padding:4px 0; }
+  .sp .sp-log{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.75; max-height:240px; overflow:auto; }
+  .sp .sp-log div{ color:var(--ink-soft); } .sp .sp-log div.cur{ color:var(--ink); font-weight:600; }
+  .sp .bx{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13.5px; margin-bottom:10px; line-height:1.8; }
+  .sp .bx .k{ display:block; color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+  .sp .bx b{ color:var(--accent); }
+  .sp .chips{ display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 10px; }
+  .sp .chip{ font-family:"IBM Plex Mono",monospace; font-size:14px; padding:5px 9px; border-radius:8px; border:1px solid var(--line); background:#fff; }
+  .sp .chip.hi{ background:var(--accent-soft); border-color:var(--accent); }
+  .sp .chip.ok{ background:#E3F4EC; border-color:#1E8A5A; }
+  .sp .chip.no{ background:#FBE9E8; border-color:#C2413B; opacity:.8; }
+  .sp .chip.dim{ opacity:.35; }
+  .sp table.t{ border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:13px; width:100%; margin:6px 0; }
+  .sp table.t th, .sp table.t td{ border-bottom:1px solid var(--line); padding:4px 8px; text-align:left; }
+  .sp table.t th{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  .sp table.t tr.cur td{ background:var(--accent-soft); }
+  .sp .barc{ display:inline-block; height:13px; background:#0F8B8D; border-radius:3px; vertical-align:middle; }
+  .sp .good{ color:#1E8A5A; font-weight:700; } .sp .bad{ color:#C2413B; font-weight:700; }
+  .sp .minis{ display:flex; flex-wrap:wrap; gap:8px; }
+  .sp .mini{ border:1px solid var(--line); border-radius:8px; padding:4px; background:#fff; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:11px; }
+  .sp .mini.ok{ border-color:#1E8A5A; background:#F1FAF5; } .sp .mini.no{ border-color:#C2413B; background:#FDF3F2; }
+  .sp .star{ color:#D9A62E; } .sp .barch{ color:var(--accent); font-weight:700; }
 </style>
 </head>
 <body>
@@ -62,6 +90,7 @@
     <button class="tab active" data-tab="euclid">Euclid's Tower</button>
     <button class="tab" data-tab="numtheory">Number-Theory Tower</button>
     <button class="tab" data-tab="quiz">Which Technique Fits?</button>
+    <button class="tab" data-tab="strong">Strong Induction</button>
   </div>
 
   <!-- ============ TAB: EUCLID'S TOWER ============ -->
@@ -98,6 +127,18 @@
         <button class="op" id="quizNext">Next claim</button>
         <span class="score" id="quizScore">Score: 0 / 0</span>
       </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: STRONG INDUCTION (§8.1) ============ -->
+  <div class="panel sp" id="panel-strong">
+    <div class="card">
+      <h2>Strong Induction: lean on every floor below, not just the last one</h2>
+      <p class="sub"><b>What's happening:</b> every worked example from §8.1 as a one-click preset, each ending with a brute-force check computed live in this page. Use Step, Play, Jump to end or Reset.</p>
+      <div class="sp-presets"></div>
+      <div class="sp-ctrl"><button class="op" data-sp="step">Step ▸</button><button class="op" data-sp="play">▶ Play</button><button class="op" data-sp="end">Jump to end ⏭</button><button class="op" data-sp="reset">↺ Reset</button><span class="sp-count"></span></div>
+      <div class="sp-stage"></div>
+      <div class="sp-log"></div>
     </div>
   </div>
 
@@ -266,5 +307,141 @@
   renderQuiz();
 })();
 </script>
+<script>
+/* ================= STRONG INDUCTION (presets for proof-and-axiomatic-method.md §8.1) ================= */
+(function(){
+  "use strict";
+  // ---------- shared helpers ----------
+  const C = (n, k) => { if (k < 0 || k > n) return 0; let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return Math.round(r); };
+  const CB = (n, k) => { if (k < 0 || k > n) return 0n; let r = 1n; for (let i = 0; i < k; i++) r = r * BigInt(n - i) / BigInt(i + 1); return r; };
+  const fact = n => { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; };
+  const box = (k, v) => `<div class="bx">${k ? `<span class="k">${k}</span>` : ""}${v}</div>`;
+  const chip = (t, cls) => `<span class="chip${cls ? " " + cls : ""}">${t}</span>`;
+  const sup = x => String(x).replace(/\d/g, d => "⁰¹²³⁴⁵⁶⁷⁸⁹"[d]).replace("-", "⁻");
+  const cum = items => items.map((_, k) => ({ html: items.slice(0, k + 1).map(i => i[0]).join(""), note: items[k][1] }));
+  const ok = b => b ? `<span class="good">✓ match</span>` : `<span class="bad">✗ mismatch</span>`;
+  function* tuples(k, lo, hi){ const t = Array(k).fill(lo); while (true){ yield t.slice(); let i = k - 1; while (i >= 0 && t[i] === hi){ t[i] = lo; i--; } if (i < 0) return; t[i]++; } }
+  function perms(arr){ if (arr.length <= 1) return [arr.slice()]; const out = []; arr.forEach((x, i) => { perms(arr.slice(0, i).concat(arr.slice(i + 1))).forEach(p => out.push([x].concat(p))); }); return out; }
+  const pmul = (a, b) => { const r = Array(a.length + b.length - 1).fill(0); a.forEach((x, i) => b.forEach((y, j) => { r[i + j] += x * y; })); return r; };
+  const polyStr = (c, lo) => c.map((v, i) => v ? `${v === 1 && i ? "" : v}${i ? "x" + (i === 1 ? "" : sup(i)) : ""}` : "").filter(Boolean).join(" + ");
+  const barRow = (lab, v, scale, extra) => `<tr><td>${lab}</td><td>${v}</td><td><span class="barc" style="width:${Math.max(1, v * scale)}px"></span></td>${extra !== undefined ? `<td>${extra}</td>` : ""}</tr>`;
+
+  // ---------- engine: one per panel ----------
+  function makeStepper(panelId, groups){
+    const panel = document.getElementById(panelId);
+    const stage = panel.querySelector(".sp-stage"), log = panel.querySelector(".sp-log"), cnt = panel.querySelector(".sp-count"), pb = panel.querySelector('[data-sp="play"]');
+    const P = { frames: [], i: 0, t: null };
+    P.draw = () => { const f = P.frames[P.i]; if (!f) return; stage.innerHTML = f.html;
+      log.innerHTML = P.frames.slice(0, P.i + 1).map((g, j) => g.note ? `<div class="${j === P.i ? "cur" : ""}">${g.note}</div>` : "").join(""); log.scrollTop = log.scrollHeight;
+      cnt.textContent = `step ${P.i + 1} of ${P.frames.length}`; };
+    P.stop = () => { clearTimeout(P.t); P.t = null; pb.textContent = "▶ Play"; };
+    P.play = () => { if (P.t){ P.stop(); return; } if (P.i >= P.frames.length - 1){ P.i = 0; P.draw(); }
+      const tick = () => { if (P.i >= P.frames.length - 1){ P.stop(); return; } P.i++; P.draw(); P.t = setTimeout(tick, 1000); };
+      P.t = setTimeout(tick, 800); pb.textContent = "❚❚ Pause"; };
+    P.load = (fr, auto) => { P.stop(); P.frames = fr; P.i = 0; P.draw(); if (auto) P.play(); };
+    panel.querySelector(".sp-ctrl").addEventListener("click", e => {
+      const a = e.target.dataset && e.target.dataset.sp; if (!a) return;
+      if (a === "play") return P.play();
+      P.stop(); if (a === "step" && P.i < P.frames.length - 1) P.i++; if (a === "end") P.i = P.frames.length - 1; if (a === "reset") P.i = 0; P.draw();
+    });
+    const bar = panel.querySelector(".sp-presets"), btns = [];
+    groups.forEach(([gname, list]) => {
+      const g = document.createElement("div"); g.className = "grp"; g.textContent = gname; bar.appendChild(g);
+      list.forEach(([name, fn]) => { const b = document.createElement("button"); b.className = "op pre"; b.textContent = name;
+        b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); P.load(fn(), true); });
+        bar.appendChild(b); btns.push(b); });
+    });
+    btns[0].classList.add("active"); P.load(groups[0][1][0][1](), false);
+  }
+
+
+  const makeable = (n, a, b) => { for (let k = 0; k * b <= n; k++) if ((n - k * b) % a === 0) return [(n - k * b) / a, k]; return null; };
+  const combo = (n, a, b) => { const m = makeable(n, a, b); if (!m) return ""; return Array(m[0]).fill(a).concat(Array(m[1]).fill(b)).join("+"); };
+  function scan(a, b, upto, big){
+    const fr = [{ html: box(`which amounts can ${a}-cent and ${b}-cent stamps make exactly?`, "check every amount, one at a time"), note: `Stamps ${a} and ${b}.` }];
+    for (let n = 1; n <= upto; n++){
+      const chips = []; for (let m = 1; m <= n; m++){ const c = makeable(m, a, b); chips.push(chip(`${m}${c ? " = " + combo(m, a, b) : " ✗"}`, c ? "ok" : "no")); }
+      fr.push({ html: fr[0].html + `<div class="chips">${chips.join("")}</div>`, note: `${n}: ${makeable(n, a, b) ? combo(n, a, b) : "impossible"}` });
+    }
+    const bad = []; for (let n = 1; n <= 200; n++) if (!makeable(n, a, b)) bad.push(n);
+    let all = true; for (let n = Math.max(...bad) + 1; n <= big; n++) if (!makeable(n, a, b)) all = false;
+    fr.push({ html: fr[fr.length - 1].html + box("brute force", `impossible amounts from 1 to 200: <b>${bad.join(", ")}</b><br>every amount from ${Math.max(...bad) + 1} to ${big} can be made: ${ok(all)}<br>largest impossible = ${a}·${b} − ${a} − ${b} = <b>${a * b - a - b}</b> ${ok(a * b - a - b === Math.max(...bad))}`), note: `impossible: ${bad.join(", ")}` });
+    return fr;
+  }
+  function build(){
+    const proved = []; const fr = [];
+    const head = box("claim: every amount ≥ 12 can be made from 4s and 5s", "base cases 12, 13, 14, 15; strong step: n − 4 is already proved, add a 4");
+    const show = (hi) => `<div class="chips">${proved.map(([n, why]) => chip(`${n}: ${why}`, n === hi ? "hi" : "ok")).join("")}</div>`;
+    [[12, "4+4+4"], [13, "4+4+5"], [14, "4+5+5"], [15, "5+5+5"]].forEach(([n, w]) => { proved.push([n, w + " (base)"]); fr.push({ html: head + show(n), note: `base case ${n} = ${w}` }); });
+    for (let n = 16; n <= 31; n++){ proved.push([n, `(${n - 4}) + 4`]); fr.push({ html: head + show(n), note: `${n}: ${n - 4} is already proved (it's ≥ 12 and < ${n}), add one 4` }); }
+    let all = true; for (let n = 12; n <= 10000; n++) if (!makeable(n, 4, 5)) all = false;
+    fr.push({ html: fr[fr.length - 1].html + box("checked by brute force", `every amount from 12 to 10,000 can be made ${ok(all)}`), note: "12..10000 all makeable" });
+    return fr;
+  }
+  function tooFew(){
+    const proved = new Set([12]); const fr = [{ html: box("a broken proof: only one base case, 12", "step: if n − 4 is proved, so is n"), note: "Base case 12 only." }];
+    const row = () => { const c = []; for (let n = 12; n <= 31; n++) c.push(chip(String(n), proved.has(n) ? "ok" : "no")); return `<div class="chips">${c.join("")}</div>`; };
+    for (let n = 13; n <= 31; n++){ const okk = proved.has(n - 4); if (okk) proved.add(n);
+      fr.push({ html: fr[0].html + row() + box(`try ${n}`, `needs ${n - 4}: ${okk ? "<span class='good'>proved</span>, so " + n + " is proved" : "<span class='bad'>never proved</span>, so the proof says nothing about " + n}`), note: `${n}: needs ${n - 4} → ${okk ? "proved" : "stuck"}` }); }
+    fr.push({ html: fr[0].html + row() + box("diagnosis", "the step reaches back 4 places, so it needs 4 base cases. With only 12, the proof reaches 12, 16, 20, 24, 28 and nothing else; it first fails at <b>13</b>. Add 13, 14, 15 as base cases and every amount is covered."), note: "First failure: 13." });
+    return fr;
+  }
+  // factor trees
+  const split = n => { for (let d = 2; d * d <= n; d++) if (n % d === 0) return [d, n / d]; return null; };
+  const isPrime = n => n >= 2 && !split(n);
+  function treeOf(n, chooser){ const s = chooser ? chooser(n) : split(n); return s ? { v: n, k: [treeOf(s[0], chooser), treeOf(s[1], chooser)] } : { v: n, k: [] }; }
+  function leaves(t){ return t.k.length ? leaves(t.k[0]).concat(leaves(t.k[1])) : [t.v]; }
+  function treeSvg(t, depthShown){
+    let x = 0; const nodes = []; const lay = (u, d) => { if (u.k.length && d < depthShown){ const a = lay(u.k[0], d + 1), b = lay(u.k[1], d + 1); u.x = (a.x + b.x) / 2; u.c = [a, b]; } else { u.x = x++; u.c = []; } u.d = d; nodes.push(u); return u; };
+    lay(t, 0); const W = 64, H = 54, w = x * W + 20, h = (Math.max(...nodes.map(q => q.d)) + 1) * H + 10;
+    let s = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="width:${w}px;max-width:100%;height:auto">`;
+    const cx = q => 10 + q.x * W + W / 2, cy = q => 22 + q.d * H;
+    nodes.forEach(q => q.c.forEach(c => { s += `<line x1="${cx(q)}" y1="${cy(q)}" x2="${cx(c)}" y2="${cy(c)}" stroke="#5B6572" stroke-width="1.5"/>`; }));
+    nodes.forEach(q => { const p = isPrime(q.v) && !q.c.length; s += `<rect x="${cx(q) - 26}" y="${cy(q) - 14}" width="52" height="26" rx="8" fill="${p ? "#E3F4EC" : "#EFEBFA"}" stroke="${p ? "#1E8A5A" : "#463A73"}"/><text x="${cx(q)}" y="${cy(q) + 5}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13">${q.v}</text>`; });
+    return s + "</svg>";
+  }
+  const depth = t => t.k.length ? 1 + Math.max(depth(t.k[0]), depth(t.k[1])) : 0;
+  function factorFrames(n, chooser, label){
+    const t = treeOf(n, chooser), D = depth(t), fr = [];
+    for (let d = 0; d <= D; d++) fr.push({ html: box(label || `split ${n} into two smaller factors, again and again`, "green = prime (can't be split); each split leans on the claim for two smaller numbers, not for n − 1") + treeSvg(t, d), note: d === 0 ? `${n}` : `level ${d}` });
+    const L = leaves(t).sort((a, b) => a - b), prod = L.reduce((a, b) => a * b, 1);
+    fr.push({ html: fr[fr.length - 1].html + box("collect the primes", `${n} = <b>${L.join(" · ")}</b>; product = ${prod} ${ok(prod === n && L.every(isPrime))}`), note: `${n} = ${L.join("·")}` });
+    return fr;
+  }
+  function f360(){
+    const intro = [{ html: box("ordinary induction would hand you 359", `359 is ${isPrime(359) ? "prime" : "not prime"}: knowing it's a product of primes tells you nothing about 360, which isn't built from 359`), note: "359 is no help." }];
+    const ch = n => n === 360 ? [18, 20] : n === 20 ? [4, 5] : split(n);
+    const main = factorFrames(360, ch, "strong induction: 360 = 18 × 20, both far below 359").map(f => ({ html: intro[0].html + f.html, note: f.note }));
+    const other = treeOf(360, n => n === 360 ? [2, 180] : split(n)), L2 = leaves(other).sort((a, b) => a - b);
+    const last = main[main.length - 1];
+    main.push({ html: last.html + box("split it differently: 360 = 2 × 180", treeSvg(other, 9) + `primes: <b>${L2.join(" · ")}</b>, the same six ${ok(L2.join() === leaves(treeOf(360, ch)).sort((a, b) => a - b).join())} (that it never depends on the split is the uniqueness half, number theory §13.2)`), note: "2 × 180 gives the same primes." });
+    return intro.concat(main);
+  }
+  const f1001 = () => factorFrames(1001), f2026 = () => factorFrames(2026);
+  function allTo(){
+    const N = 20000; let good = 0, maxLen = 0, arg = 0;
+    for (let n = 2; n <= N; n++){ const L = leaves(treeOf(n)); if (L.reduce((a, b) => a * b, 1) === n && L.every(isPrime)) good++; if (L.length > maxLen){ maxLen = L.length; arg = n; } }
+    const samples = [97, 360, 1001, 2026, 4096, 9999, 19999].map(n => chip(`${n} = ${leaves(treeOf(n)).sort((a, b) => a - b).join("·")}`, "ok")).join("");
+    return cum([
+      [box("run the proof's own recipe on every number", "split into two factors if you can; if you can't, it's prime"), "Recursive split on 2..20000."],
+      [box("samples", `<div class="chips">${samples}</div>`), "samples"],
+      [box("result", `<b>${good}</b> of ${N - 1} numbers from 2 to ${N} came out as a list of primes multiplying back to the number ${ok(good === N - 1)}; the longest list was ${maxLen} primes, for ${arg}`), `${good}/${N - 1} verified`],
+    ]);
+  }
+  function fibLess(){
+    const F = [0, 1]; for (let i = 2; i <= 30; i++) F.push(F[i - 1] + F[i - 2]);
+    const rows = F.map((f, n) => [n, f, 2 ** n, n < 2 ? "base case" : `F${n - 1} + F${n - 2} < 2^${n - 1} + 2^${n - 2} < 2^${n}`]);
+    const tbl = j => `<table class="t"><tr><th>n</th><th>Fₙ</th><th>2ⁿ</th><th>why</th><th></th></tr>` + rows.slice(0, j).map((r, i) => `<tr${i === j - 1 ? ' class="cur"' : ""}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[1] < r[2] ? "✓" : "✗"}</td></tr>`).join("") + `</table>`;
+    const head = box("claim: Fₙ < 2ⁿ for every n ≥ 0", "the step uses the two cases below, so it needs two base cases, F₀ and F₁");
+    return rows.map((r, i) => ({ html: head + tbl(i + 1), note: `n = ${r[0]}: ${r[1]} < ${r[2]}` }));
+  }
+  makeStepper("panel-strong", [
+    ["postage stamps", [["scan 1–20 with 4¢ and 5¢", () => scan(4, 5, 20, 10000)], ["build 12–31 by strong induction", build], ["only one base case → fails at 13", tooFew], ["3¢ and 5¢ stamps", () => scan(3, 5, 12, 10000)]]],
+    ["every n ≥ 2 is a product of primes", [["360 = 18 × 20 (and why 359 is no help)", f360], ["1001", f1001], ["2026", f2026], ["check every n from 2 to 20,000", allTo]]],
+    ["recurrences", [["Fₙ < 2ⁿ, two base cases", fibLess]]],
+  ]);
+})();
+</script>
+
 </body>
 </html>

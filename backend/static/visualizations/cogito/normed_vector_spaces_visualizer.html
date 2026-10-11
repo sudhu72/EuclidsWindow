@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Normed Vector Spaces, Made Visible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c1:#0F8B8D; --c2:#D9A62E; --c3:#D9636B; --c4:#5B4B95;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1040px; margin:0 auto; padding:40px 20px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(26px, 4.5vw, 38px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:720px; font-size:15px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 16px; cursor:pointer; transition: background .15s, color .15s, border-color .15s; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:20px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:13.5px; margin:0 0 16px; }
+  .formula{ font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--accent); }
+  .caption{ font-size:12px; color:var(--ink-soft); margin-top:8px; }
+  button.op{ font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:7px 12px; cursor:pointer; transition:background .15s; }
+  button.op:hover{ background:var(--accent-soft); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row label{ font-size:12px; color:var(--ink-soft); min-width:150px; }
+  input[type=range]{ flex:1; min-width:120px; accent-color:var(--accent); }
+  input[type=checkbox]{ accent-color:var(--accent); }
+  .readout{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:6px; padding:2px 8px; min-width:52px; text-align:center; }
+  svg{ width:100%; height:auto; display:block; background:#F5F4F0; border-radius:10px; }
+  .steplog{ font-family:"IBM Plex Mono", monospace; font-size:12.5px; background:var(--accent-soft); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.8; white-space:pre-line; }
+  table.rt{ border-collapse:collapse; width:100%; font-size:13px; margin-top:8px; }
+  table.rt td, table.rt th{ border:1px solid var(--line); padding:7px 10px; text-align:left; background:#fff; }
+  table.rt th{ background:var(--accent-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); }
+  footer{ font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px; margin-top:24px; }
+  footer a{ color:var(--accent); } footer b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion visualizer</div>
+    <h1>Normed Vector Spaces, Made Visible</h1>
+    <p>Two tabs, each companion to <b>Normed Vector Spaces &amp; the Lp Family — The Feynman Way</b>: the unit ball's shape morphing continuously from a diamond through a circle into a square as p changes, and a live Lp-norm calculator on a real vector.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="morph">Unit Ball Morph</button>
+    <button class="tab" data-tab="calc">Norm Calculator</button>
+  </div>
+
+  <!-- TAB 1: UNIT BALL MORPH -->
+  <div class="panel active" id="panel-morph">
+    <div class="card">
+      <h2>The Lp unit ball: one formula, a continuum of shapes</h2>
+      <p class="sub">Drag p. At p=1 the boundary is a diamond; at p=2, a perfect circle; as p grows large, it approaches a flat-sided square. Toggle L&infin; to see the exact limiting case.</p>
+      <div class="row"><label>p</label><input type="range" id="pval" min="1" max="10" step="0.1" value="1"><span class="readout" id="pval-r">1.0</span></div>
+      <div class="row"><label><input type="checkbox" id="infToggle"> Show L&infin; (max norm) boundary</label></div>
+      <svg id="morphsvg" viewBox="0 0 420 420"></svg>
+      <div class="caption" id="morph-caption"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: NORM CALCULATOR -->
+  <div class="panel" id="panel-calc">
+    <div class="card">
+      <h2>Lp norm of a vector, computed live</h2>
+      <p class="sub">Defaults reproduce the tutorial's worked example exactly: v=(3,-4) &rarr; L1=7.0, L2=5.0, L&infin;=4.0.</p>
+      <div class="row"><label>v&#8321; (x)</label><input type="range" id="vx" min="-10" max="10" step="0.5" value="3"><span class="readout" id="vx-r">3.0</span></div>
+      <div class="row"><label>v&#8322; (y)</label><input type="range" id="vy" min="-10" max="10" step="0.5" value="-4"><span class="readout" id="vy-r">-4.0</span></div>
+      <table class="rt">
+        <tr><th>p</th><th>‖v‖_p</th></tr>
+        <tr><td>1 (Manhattan)</td><td id="norm-p1"></td></tr>
+        <tr><td>1.5</td><td id="norm-p15"></td></tr>
+        <tr><td>2 (Euclidean)</td><td id="norm-p2"></td></tr>
+        <tr><td>3</td><td id="norm-p3"></td></tr>
+        <tr><td>10</td><td id="norm-p10"></td></tr>
+        <tr><td>&infin; (max)</td><td id="norm-pinf"></td></tr>
+      </table>
+      <div class="caption">Notice the norm shrinks monotonically as p grows, converging to the L&infin; (max-coordinate) value — verified in the tutorial to 13 decimal places by p=100.</div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>Normed Vector Spaces &amp; the Lp Family — The Feynman Way</b> (<code>../normed-vector-spaces.md</code>). All defaults reproduce the tutorial's own Python-verified worked examples exactly.
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+const svgNS='http://www.w3.org/2000/svg';
+function el(tag,attrs){ const e=document.createElementNS(svgNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+function lpNorm2D(x,y,p){
+  if(p===Infinity) return Math.max(Math.abs(x),Math.abs(y));
+  return Math.pow(Math.pow(Math.abs(x),p)+Math.pow(Math.abs(y),p), 1/p);
+}
+function lpNormN(vals,p){
+  if(p===Infinity) return Math.max(...vals.map(Math.abs));
+  return Math.pow(vals.reduce((s,v)=>s+Math.pow(Math.abs(v),p),0), 1/p);
+}
+
+// ---------- TAB 1: UNIT BALL MORPH ----------
+function renderMorph(){
+  const p = parseFloat(document.getElementById('pval').value);
+  document.getElementById('pval-r').textContent = p.toFixed(1);
+  const showInf = document.getElementById('infToggle').checked;
+
+  const svg = document.getElementById('morphsvg'); svg.innerHTML='';
+  const scale = 150, ox=210, oy=210;
+  svg.appendChild(el('line',{x1:ox-190,y1:oy,x2:ox+190,y2:oy,stroke:'#D9E0DE'}));
+  svg.appendChild(el('line',{x1:ox,y1:oy-190,x2:ox,y2:oy+190,stroke:'#D9E0DE'}));
+
+  function boundaryPath(pp,color,dash){
+    const pts=[];
+    const N=100;
+    for(let i=0;i<=N;i++){
+      const theta = (i/N)*2*Math.PI;
+      const cx=Math.cos(theta), cy=Math.sin(theta);
+      const norm = lpNorm2D(cx,cy,pp);
+      const r = 1/norm;
+      pts.push([ox+r*cx*scale, oy-r*cy*scale]);
+    }
+    const d = 'M '+pts.map(pt=>pt[0].toFixed(2)+' '+pt[1].toFixed(2)).join(' L ')+' Z';
+    svg.appendChild(el('path',{d, fill: color+'22', stroke:color, 'stroke-width':2.5, 'stroke-dasharray': dash?'6,4':'none'}));
+  }
+
+  boundaryPath(p, '#463A73', false);
+  if(showInf) boundaryPath(Infinity, '#D9636B', true);
+
+  // mark the 45-degree boundary point explicitly
+  const theta45 = Math.PI/4;
+  const cx=Math.cos(theta45), cy=Math.sin(theta45);
+  const r45 = 1/lpNorm2D(cx,cy,p);
+  const px = ox+r45*cx*scale, py = oy-r45*cy*scale;
+  svg.appendChild(el('circle',{cx:px,cy:py,r:6,fill:'#0F8B8D'}));
+  const lbl = el('text',{x:px+10,y:py-8,'font-size':'11.5','font-family':'IBM Plex Mono, monospace',fill:'#0F8B8D','font-weight':'700'});
+  lbl.textContent = '('+(r45*cx).toFixed(3)+', '+(r45*cy).toFixed(3)+')';
+  svg.appendChild(lbl);
+
+  const shapeName = p<1.3 ? 'diamond-like' : (p>1.8 && p<2.2 ? 'circle' : (p>6 ? 'near-square' : 'rounded square'));
+  document.getElementById('morph-caption').textContent =
+    'p = '+p.toFixed(1)+' -> boundary at 45° sits at '+'('+(r45*cx).toFixed(4)+', '+(r45*cy).toFixed(4)+') -- shape: '+shapeName+
+    (showInf ? ' (red dashed: the L∞ limiting square)' : '');
+}
+document.getElementById('pval').addEventListener('input', renderMorph);
+document.getElementById('infToggle').addEventListener('change', renderMorph);
+renderMorph();
+
+// ---------- TAB 2: NORM CALCULATOR ----------
+function renderCalc(){
+  const vx = parseFloat(document.getElementById('vx').value);
+  const vy = parseFloat(document.getElementById('vy').value);
+  document.getElementById('vx-r').textContent = vx.toFixed(1);
+  document.getElementById('vy-r').textContent = vy.toFixed(1);
+  const v = [vx,vy];
+  document.getElementById('norm-p1').textContent = lpNormN(v,1).toFixed(4);
+  document.getElementById('norm-p15').textContent = lpNormN(v,1.5).toFixed(4);
+  document.getElementById('norm-p2').textContent = lpNormN(v,2).toFixed(4);
+  document.getElementById('norm-p3').textContent = lpNormN(v,3).toFixed(4);
+  document.getElementById('norm-p10').textContent = lpNormN(v,10).toFixed(4);
+  document.getElementById('norm-pinf').textContent = lpNormN(v,Infinity).toFixed(4);
+}
+['vx','vy'].forEach(id=> document.getElementById(id).addEventListener('input', renderCalc));
+renderCalc();
+</script>
+</body>
+</html>

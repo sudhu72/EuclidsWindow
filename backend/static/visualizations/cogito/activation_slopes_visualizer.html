@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Activation slopes &amp; saturation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;line-height:1.55;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+  h3{font-family:'Kalam',cursive;font-size:16px;margin:0 0 4px;font-weight:400;text-align:center;}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);
+    background:var(--bg-panel);color:var(--chalk-dim);border-radius:8px;padding:9px 16px;cursor:pointer;}
+  .tab-btn.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  .tab-btn:hover{border-color:var(--chalk-dim);}
+  .tabpage{display:none;}
+  .tabpage.active{display:block;}
+
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op.active{background:var(--blue);color:#0c1a23;border-color:var(--blue);}
+  button.op:hover{border-color:var(--chalk-dim);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .row-label{width:100%;text-align:center;font-size:11.5px;color:var(--chalk-dim);margin-bottom:-4px;}
+
+  .slider-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+  .slider-row label{font-size:12.5px;color:var(--chalk-dim);min-width:200px;}
+  .slider-row output{font-family:'Kalam',cursive;color:var(--amber);min-width:70px;text-align:right;}
+  input[type="range"]{width:100%;}
+
+  .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11.5px;color:var(--chalk-dim);margin:4px 0 10px;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .sw{width:18px;height:3px;display:inline-block;border-radius:2px;}
+
+  .plots{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;}
+  .plotcard{border:1px solid var(--border);border-radius:8px;padding:10px 8px 8px;}
+  svg{background:rgba(244,241,232,0.03);border-radius:8px;display:block;margin:6px auto;width:100%;height:auto;}
+  svg text{font-family:'JetBrains Mono',monospace;}
+  .plotnums{font-size:12px;text-align:center;line-height:1.6;}
+  .plotnums b{font-family:'Kalam',cursive;font-size:15px;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:150px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:17px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+  .metric.chalk .num{color:var(--chalk);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;line-height:1.6;}
+  .story-line b{color:var(--chalk);}
+  .tablewrap{overflow-x:auto;}
+  table.datatable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+  table.datatable th, table.datatable td{border:1px solid var(--border);padding:6px 7px;text-align:center;}
+  table.datatable th{color:var(--chalk-dim);font-family:'Kalam',cursive;font-weight:400;font-size:13px;}
+  table.datatable tr.hl td{background:rgba(255,206,84,0.12);color:var(--amber);}
+  .ok{color:var(--green);}
+  .bad{color:var(--coral);}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+
+  @media (max-width:600px){
+    body{padding:20px 16px 48px;}
+    .panel{padding:16px 12px;}
+    .slider-row{flex-wrap:wrap;gap:6px;}
+    .slider-row label{min-width:0;width:100%;}
+    .metric{min-width:130px;flex:1 1 130px;}
+    table.datatable{font-size:10.5px;}
+    table.datatable th, table.datatable td{padding:5px 3px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Activation slopes &amp; saturation</h1>
+  <p class="sub">Companion to §2.4.2 of the Feynman ML/DL/LLM tutorial. Backprop multiplies the blame by each activation's own local slope: σ'(z) = σ(z)(1 − σ(z)), tanh'(z) = 1 − tanh²(z), and ReLU's slope is 1 for z &gt; 0 and 0 for z &lt; 0. Every number below is computed live from those formulas and checked against the tutorial's table. Every worked example is one click.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="point">1 · Slope at a point</button>
+    <button class="tab-btn" data-tab="layers">2 · Through N layers</button>
+    <button class="tab-btn" data-tab="dying">3 · Dying ReLU vs Leaky ReLU</button>
+  </div>
+
+  <!-- ==================== TAB 1: SLOPE AT A POINT ==================== -->
+  <div class="tabpage active" id="tab-point">
+    <div class="panel">
+      <h2>Pick an input z and read each activation's slope there</h2>
+      <div class="row">
+        <div class="row-label">One-click worked examples (the tutorial's table rows, plus a negative input)</div>
+        <button class="op zp" data-z="0">z = 0</button>
+        <button class="op zp" data-z="1">z = 1</button>
+        <button class="op zp" data-z="2">z = 2</button>
+        <button class="op zp" data-z="5">z = 5</button>
+        <button class="op zp" data-z="-3">z = −3</button>
+      </div>
+      <div class="slider-row"><label for="zSlider">Or drag the input z</label><input type="range" id="zSlider" min="-6" max="6" step="0.1" value="0"><output id="zOut">0.0</output></div>
+
+      <div class="legend">
+        <span><i class="sw" style="background:var(--amber)"></i>activation f(z)</span>
+        <span><i class="sw" style="background:var(--coral)"></i>its slope f'(z)</span>
+        <span><i class="sw" style="background:var(--blue)"></i>tangent line at z (steepness = slope)</span>
+      </div>
+
+      <div class="plots">
+        <div class="plotcard"><h3>Sigmoid σ(z)</h3><svg id="plotSig" viewBox="0 0 300 210"></svg><div class="plotnums" id="numSig"></div></div>
+        <div class="plotcard"><h3>Tanh</h3><svg id="plotTanh" viewBox="0 0 300 210"></svg><div class="plotnums" id="numTanh"></div></div>
+        <div class="plotcard"><h3>ReLU max(0, z)</h3><svg id="plotRelu" viewBox="0 0 300 210"></svg><div class="plotnums" id="numRelu"></div></div>
+      </div>
+      <div class="story-line" id="pointStory"></div>
+    </div>
+
+    <div class="panel">
+      <h2>The tutorial's table, recomputed live</h2>
+      <div class="tablewrap">
+        <table class="datatable" id="slopeTable"></table>
+      </div>
+      <div class="story-line" id="tableCheck"></div>
+      <div class="story-line" id="tanhIdentity"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: THROUGH N LAYERS ==================== -->
+  <div class="tabpage" id="tab-layers">
+    <div class="panel">
+      <h2>How much blame survives N stacked layers?</h2>
+      <div class="row">
+        <div class="row-label">One-click: play the blame's trip backward through N layers</div>
+        <button class="op np" data-n="1">1 layer</button>
+        <button class="op np" data-n="3">3 layers</button>
+        <button class="op np" data-n="5">5 layers</button>
+        <button class="op np" data-n="10">10 layers</button>
+      </div>
+      <div class="slider-row"><label for="nSlider">Or drag the number of layers</label><input type="range" id="nSlider" min="1" max="20" step="1" value="10"><output id="nOut">10</output></div>
+
+      <div class="legend" id="layerLegend"></div>
+      <svg id="layerPlot" viewBox="0 0 640 330" style="max-width:720px"></svg>
+      <div class="metric-row" id="layerMetrics"></div>
+      <div class="story-line" id="layerStory"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Layer by layer (surviving fraction of the blame = slope<sup>layers</sup>)</h2>
+      <div class="tablewrap"><table class="datatable" id="layerTable"></table></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: DYING RELU ==================== -->
+  <div class="tabpage" id="tab-dying">
+    <div class="panel">
+      <h2>One neuron whose input stays negative for every example</h2>
+      <p class="story-line" style="margin-top:0">Toy neuron (illustrative numbers): z = x + b, with bias b starting at <b>−3</b>, five training inputs x = 0.5, 1, 1.5, 2, 2.5 (so every z is negative: −2.5 … −0.5), target output 1 for every example, squared-error loss, learning rate 1. Only the bias learns. The two versions differ in exactly one number: the slope for negative inputs — <b>0</b> for ReLU, <b>0.01</b> for Leaky ReLU.</p>
+      <div class="row">
+        <div class="row-label">One-click worked examples</div>
+        <button class="op dp" data-mode="one">One backward step (both)</button>
+        <button class="op dp" data-mode="relu">Train ReLU 80 steps</button>
+        <button class="op dp" data-mode="leaky">Train Leaky ReLU 80 steps</button>
+        <button class="op dp" data-mode="both">Both, side by side</button>
+      </div>
+      <div class="tablewrap"><table class="datatable" id="stepTable"></table></div>
+      <div class="metric-row" id="dyingMetrics"></div>
+      <svg id="biasPlot" viewBox="0 0 640 280" style="max-width:720px"></svg>
+      <div class="story-line" id="dyingStory"></div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <b>§2.4.2 of ml_deep_learning_llm_feynman_tutorial.md</b>
+    (<a href="../deep_learning/ml_deep_learning_llm_feynman_tutorial.md">ml_deep_learning_llm_feynman_tutorial.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const isNarrow = () => window.innerWidth < 600;
+  const C = {amber:"#ffce54", coral:"#ff8266", green:"#8fd19e", blue:"#7fb3d5", chalk:"#f4f1e8", dim:"#7f8f83", grid:"rgba(244,241,232,0.10)", bg:"#16221c"};
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---------- the formulas ----------
+  const sig   = z => 1/(1+Math.exp(-z));
+  const dsig  = z => { const s = sig(z); return s*(1-s); };
+  const tanh  = z => Math.tanh(z);
+  const dtanh = z => { const t = Math.tanh(z); return 1 - t*t; };
+  const relu  = z => Math.max(0, z);
+  const drelu = z => z > 0 ? 1 : 0;   // at exactly 0 it's a kink: 0 or 1
+
+  function fmt(v, d){
+    if (v === 0) return (0).toFixed(d === undefined ? 4 : d);
+    const a = Math.abs(v);
+    if (a < 0.001 && a >= 1e-5) return v.toFixed(5);
+    if (a < 0.001) return v.toExponential(2).replace("e-", "×10⁻").replace(/⁻0?(\d+)$/, (m,p)=>"⁻"+sup(p));
+    return v.toFixed(d === undefined ? 4 : d);
+  }
+  function sup(s){ const m = {"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"}; return String(s).split("").map(c=>m[c]||c).join(""); }
+  function el(tag, attrs, parent){
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function txt(parent, x, y, s, attrs){
+    const t = el("text", Object.assign({x, y, fill:C.dim, "font-size":10}, attrs||{}), parent);
+    t.textContent = s; return t;
+  }
+
+  // ---------- tabs ----------
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tabpage").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  // =====================================================================
+  // TAB 1
+  // =====================================================================
+  const PLOTS = [
+    {id:"plotSig",  num:"numSig",  f:sig,  df:dsig,  ymin:-1.2, ymax:1.2, name:"sigmoid"},
+    {id:"plotTanh", num:"numTanh", f:tanh, df:dtanh, ymin:-1.2, ymax:1.2, name:"tanh"},
+    {id:"plotRelu", num:"numRelu", f:relu, df:drelu, ymin:-1.2, ymax:6.2, name:"ReLU"}
+  ];
+  const PX = {l:28, r:8, t:10, b:22, w:300, h:210};
+  const ZMIN = -6, ZMAX = 6;
+
+  function mapper(p){
+    const sx = z => PX.l + (z - ZMIN)/(ZMAX - ZMIN)*(PX.w - PX.l - PX.r);
+    const sy = y => PX.t + (p.ymax - y)/(p.ymax - p.ymin)*(PX.h - PX.t - PX.b);
+    return {sx, sy};
+  }
+  function pathFor(fn, m, p){
+    let d = "";
+    for (let i = 0; i <= 240; i++){
+      const z = ZMIN + (ZMAX-ZMIN)*i/240;
+      let y = fn(z);
+      y = Math.max(p.ymin, Math.min(p.ymax, y));
+      d += (i ? "L" : "M") + m.sx(z).toFixed(2) + "," + m.sy(y).toFixed(2);
+    }
+    return d;
+  }
+
+  function drawPoint(z){
+    PLOTS.forEach(p => {
+      const svg = document.getElementById(p.id);
+      svg.innerHTML = "";
+      const m = mapper(p);
+      const clipId = "clip-" + p.id;
+      const defs = el("defs", {}, svg);
+      const cp = el("clipPath", {id:clipId}, defs);
+      el("rect", {x:PX.l, y:PX.t, width:PX.w-PX.l-PX.r, height:PX.h-PX.t-PX.b}, cp);
+      // grid
+      const yt = p.name === "ReLU" ? [0,2,4,6] : [-1,-0.5,0,0.5,1];
+      yt.forEach(v => {
+        el("line", {x1:PX.l, x2:PX.w-PX.r, y1:m.sy(v), y2:m.sy(v), stroke: v===0 ? "rgba(244,241,232,0.3)" : C.grid, "stroke-width":1}, svg);
+        txt(svg, PX.l-4, m.sy(v)+3, String(v), {"text-anchor":"end", "font-size":9});
+      });
+      [-6,-4,-2,0,2,4,6].forEach(v => {
+        el("line", {x1:m.sx(v), x2:m.sx(v), y1:PX.t, y2:PX.h-PX.b, stroke: v===0 ? "rgba(244,241,232,0.3)" : C.grid, "stroke-width":1}, svg);
+        txt(svg, m.sx(v), PX.h-8, String(v), {"text-anchor":"middle", "font-size":9});
+      });
+      const g = el("g", {"clip-path":"url(#"+clipId+")"}, svg);
+      // derivative + function
+      el("path", {d:pathFor(p.df, m, p), stroke:C.coral, "stroke-width":2, fill:"none", "stroke-dasharray":"5 3"}, g);
+      el("path", {d:pathFor(p.f, m, p), stroke:C.amber, "stroke-width":2.5, fill:"none"}, g);
+      // tangent line
+      const y0 = p.f(z), s = p.df(z);
+      const kink = (p.name === "ReLU" && Math.abs(z) < 1e-9);
+      if (!kink){
+        const span = p.name === "ReLU" ? 2.5 : 2.2;
+        const za = z - span, zb = z + span;
+        el("line", {x1:m.sx(za), y1:m.sy(y0 + s*(za - z)), x2:m.sx(zb), y2:m.sy(y0 + s*(zb - z)), stroke:C.blue, "stroke-width":2}, g);
+      }
+      // vertical guide + markers
+      el("line", {x1:m.sx(z), x2:m.sx(z), y1:PX.t, y2:PX.h-PX.b, stroke:"rgba(244,241,232,0.25)", "stroke-dasharray":"2 3"}, g);
+      el("circle", {cx:m.sx(z), cy:m.sy(Math.max(p.ymin, Math.min(p.ymax, s))), r:4, fill:C.coral, stroke:C.bg, "stroke-width":1.5}, g);
+      el("circle", {cx:m.sx(z), cy:m.sy(Math.max(p.ymin, Math.min(p.ymax, y0))), r:5, fill:C.amber, stroke:C.bg, "stroke-width":1.5}, g);
+
+      const nb = document.getElementById(p.num);
+      const slopeStr = kink ? "0 or 1 (a kink)" : fmt(s);
+      nb.innerHTML = `output <b style="color:var(--amber)">${fmt(y0)}</b> &nbsp;·&nbsp; slope <b style="color:var(--coral)">${slopeStr}</b>`;
+    });
+
+    const s1 = dsig(z), s2 = dtanh(z), s3 = drelu(z);
+    let story;
+    const zs = fmt(z, 1);
+    if (Math.abs(z) < 1e-9){
+      story = `At <b>z = 0</b> both S-curves are at their steepest: sigmoid's slope is <b>0.2500</b> (its maximum — never more), tanh's is <b>1.0000</b> (its maximum). ReLU sits on its kink.`;
+    } else if (z > 0){
+      story = `At <b>z = ${zs}</b>: blame passing backward is multiplied by <b>${fmt(s1)}</b> through a sigmoid, <b>${fmt(s2)}</b> through a tanh, and <b>1</b> through an active ReLU.` +
+        (z >= 4 ? ` The S-curves have gone nearly flat — that's <b>saturation</b>: almost no blame gets through.` : (z >= 2 ? ` The S-curves are already flattening.` : ``));
+    } else {
+      story = `At <b>z = ${zs}</b>: sigmoid slope <b>${fmt(s1)}</b>, tanh slope <b>${fmt(s2)}</b>, ReLU slope <b>0</b> — a negative input gives ReLU a completely flat line (see tab 3 for why that's its own failure mode).` +
+        (z <= -3 ? ` The S-curves saturate on the negative side too.` : ``);
+    }
+    document.getElementById("pointStory").innerHTML = story;
+
+    // highlight table row
+    document.querySelectorAll("#slopeTable tr[data-z]").forEach(tr => {
+      tr.classList.toggle("hl", Math.abs(parseFloat(tr.dataset.z) - z) < 1e-9);
+    });
+  }
+
+  function setZ(z){
+    document.getElementById("zSlider").value = z;
+    document.getElementById("zOut").textContent = z.toFixed(1);
+    document.querySelectorAll(".zp").forEach(b => b.classList.toggle("active", Math.abs(parseFloat(b.dataset.z) - z) < 1e-9));
+    drawPoint(z);
+  }
+  document.querySelectorAll(".zp").forEach(b => b.addEventListener("click", () => setZ(parseFloat(b.dataset.z))));
+  document.getElementById("zSlider").addEventListener("input", e => setZ(parseFloat(e.target.value)));
+
+  // the tutorial's table (expected values) vs live computation
+  const EXPECTED = [
+    {z:0, s:"0.5000", ds:"0.2500", t:"0.0000", dt:"1.0000", r:"0 or 1"},
+    {z:1, s:"0.7311", ds:"0.1966", t:"0.7616", dt:"0.4200", r:"1"},
+    {z:2, s:"0.8808", ds:"0.1050", t:"0.9640", dt:"0.0707", r:"1"},
+    {z:5, s:"0.9933", ds:"0.0066", t:"0.9999", dt:"0.00018", r:"1"}
+  ];
+  function buildSlopeTable(){
+    const tb = document.getElementById("slopeTable");
+    let h = `<tr><th>z</th><th>sigmoid output</th><th>sigmoid slope</th><th>tanh output</th><th>tanh slope</th><th>ReLU slope</th><th>matches tutorial?</th></tr>`;
+    let allOk = true;
+    const rows = EXPECTED.concat([{z:-3}]);
+    rows.forEach(row => {
+      const z = row.z;
+      const live = {s:sig(z).toFixed(4), ds:dsig(z).toFixed(4), t:tanh(z).toFixed(4), dt: z===5 ? dtanh(z).toFixed(5) : dtanh(z).toFixed(4),
+                    r: z===0 ? "0 or 1" : String(drelu(z))};
+      let okCell = "—";
+      if (row.s !== undefined){
+        const ok = live.s===row.s && live.ds===row.ds && live.t===row.t && live.dt===row.dt && live.r===row.r;
+        allOk = allOk && ok;
+        okCell = ok ? `<span class="ok">yes</span>` : `<span class="bad">NO</span>`;
+      } else {
+        okCell = `<span style="color:var(--chalk-dim)">extra row</span>`;
+      }
+      h += `<tr data-z="${z}"><td>${z}</td><td>${live.s}</td><td><b>${live.ds}</b></td><td>${live.t}</td><td><b>${live.dt}</b></td><td>${live.r}</td><td>${okCell}</td></tr>`;
+    });
+    tb.innerHTML = h;
+    document.getElementById("tableCheck").innerHTML = allOk
+      ? `<span class="ok">All four rows recomputed from σ(1 − σ) and 1 − tanh² match the tutorial's table to the printed digits.</span>`
+      : `<span class="bad">Mismatch against the tutorial's table — see the row marked NO.</span>`;
+    const a = tanh(0.7), b = 2*sig(1.4) - 1;
+    document.getElementById("tanhIdentity").innerHTML =
+      `Tanh is a stretched, re-centered sigmoid: tanh(0.7) = <b>${a.toFixed(6)}</b>, and 2σ(1.4) − 1 = <b>${b.toFixed(6)}</b>.`;
+  }
+  buildSlopeTable();
+
+  // =====================================================================
+  // TAB 2
+  // =====================================================================
+  const SERIES = [
+    {key:"sb", label:"sigmoid, best case (z = 0)", short:"σ best", slope: dsig(0), color:C.coral, dash:""},
+    {key:"s2", label:"sigmoid, typical (z = 2)", short:"σ z=2",   slope: dsig(2), color:C.amber, dash:"6 4"},
+    {key:"tb", label:"tanh, best case (z = 0)", short:"tanh best",    slope: dtanh(0), color:C.blue, dash:"3 3"},
+    {key:"t2", label:"tanh, typical (z = 2)", short:"tanh z=2",      slope: dtanh(2), color:C.chalk, dash:"2 4"},
+    {key:"ra", label:"ReLU, active (z > 0)", short:"ReLU on",       slope: drelu(1), color:C.green, dash:""}
+  ];
+  const cssColor = {[C.coral]:"coral",[C.amber]:"amber",[C.blue]:"blue",[C.chalk]:"chalk",[C.green]:"green"};
+  document.getElementById("layerLegend").innerHTML = SERIES.map(s =>
+    `<span><i class="sw" style="background:${s.color}"></i>${s.label}: × ${s.slope === 1 ? "1" : s.slope.toFixed(4)} per layer</span>`).join("");
+
+  let layerTimer = null;
+  let lastLayers = null, lastBias = null;
+  function drawLayers(N, shown){
+    lastLayers = [N, shown];
+    const svg = document.getElementById("layerPlot");
+    svg.innerHTML = "";
+    const narrow = isNarrow(); const W = narrow ? 360 : 640, H = narrow ? 300 : 330, L = narrow ? 50 : 64, R = 12, T = 14, B = 40;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const minVal = Math.pow(SERIES[3].slope, N);   // smallest series
+    const decMin = Math.min(-1, Math.floor(Math.log10(minVal)));
+    const sx = k => L + k/N*(W-L-R);
+    const sy = v => T + (0 - Math.log10(v))/(0 - decMin)*(H-T-B);
+    const step = Math.max(1, Math.ceil(-decMin/8));
+    for (let d = 0; d >= decMin; d -= step){
+      el("line", {x1:L, x2:W-R, y1:sy(Math.pow(10,d)), y2:sy(Math.pow(10,d)), stroke:C.grid}, svg);
+      txt(svg, L-6, sy(Math.pow(10,d))+3, d === 0 ? "1" : "10" + sup(String(d).replace("-","⁻")).replace("⁻⁻","⁻"), {"text-anchor":"end"});
+    }
+    // one-millionth reference
+    if (decMin <= -6){
+      el("line", {x1:L, x2:W-R, y1:sy(1e-6), y2:sy(1e-6), stroke:C.coral, "stroke-opacity":0.45, "stroke-dasharray":"8 4"}, svg);
+      txt(svg, L+6, sy(1e-6)+13, "one millionth", {"text-anchor":"start", fill:C.coral, "font-size":10});
+    }
+    const xstep = N <= 10 ? 1 : 2;
+    for (let k = 0; k <= N; k += xstep){
+      txt(svg, sx(k), H-B+15, String(k), {"text-anchor":"middle"});
+    }
+    txt(svg, (L+W-R)/2, H-6, "layers the blame has passed back through", {"text-anchor":"middle", "font-size":11});
+    txt(svg, 12, T+(H-T-B)/2, "fraction surviving (log scale)", {"text-anchor":"middle", "font-size":10, transform:`rotate(-90 12 ${T+(H-T-B)/2})`});
+
+    SERIES.forEach(s => {
+      let d = "";
+      for (let k = 0; k <= shown; k++){
+        const v = Math.pow(s.slope, k);
+        d += (k ? "L" : "M") + sx(k).toFixed(1) + "," + sy(v).toFixed(1);
+      }
+      el("path", {d, stroke:s.color, "stroke-width": s.key==="ra" ? 5 : 2.5, fill:"none", "stroke-dasharray":s.dash, "stroke-linecap":"round"}, svg);
+      for (let k = 0; k <= shown; k++){
+        el("circle", {cx:sx(k), cy:sy(Math.pow(s.slope,k)), r:3, fill:s.color}, svg);
+      }
+    });
+
+    // metrics
+    const mr = document.getElementById("layerMetrics");
+    mr.innerHTML = SERIES.map(s => {
+      const v = Math.pow(s.slope, shown);
+      return `<div class="metric ${cssColor[s.color]}"><div class="lbl">${s.label}<br>after ${shown} layer${shown===1?"":"s"}</div><div class="num">${fmtFrac(v)}</div></div>`;
+    }).join("");
+
+    const sb = Math.pow(SERIES[0].slope, shown), s2 = Math.pow(SERIES[1].slope, shown);
+    let story = `After <b>${shown}</b> of ${N} layer${N===1?"":"s"}: sigmoid's <i>best</i> case keeps <b>0.25${sup(shown)} = ${fmtFrac(sb)}</b> of the blame` +
+      (sb < 1e-6 ? ` — <b>under one millionth</b>` : ``) +
+      `; a sigmoid at a typical z = 2 keeps <b>${fmtFrac(s2)}</b>. Tanh's best case and an active ReLU both pass <b>1.0</b> — undiminished.`;
+    if (shown === N && N === 1) story += ` One layer of 0.25 is harmless; the damage comes from stacking.`;
+    document.getElementById("layerStory").innerHTML = story;
+
+    // table
+    let h = `<tr><th>layer</th>` + SERIES.map(s => `<th style="color:${s.color}">${isNarrow() ? s.short : s.label.replace(", ","<br>")}</th>`).join("") + `</tr>`;
+    for (let k = 1; k <= N; k++){
+      const cls = k === shown ? ` class="hl"` : ``;
+      h += `<tr${cls}><td>${k}</td>` + SERIES.map(s => `<td>${k <= shown ? fmtFrac(Math.pow(s.slope,k)) : "…"}</td>`).join("") + `</tr>`;
+    }
+    document.getElementById("layerTable").innerHTML = h;
+  }
+  function fmtFrac(v){
+    if (v === 1) return "1.0";
+    if (v >= 0.001) return v.toFixed(v >= 0.1 ? 4 : 6).replace(/0+$/,"").replace(/\.$/,".0");
+    if (v >= 1e-8) return v.toFixed(Math.ceil(-Math.log10(v)) + 1);
+    return fmt(v);
+  }
+  function playLayers(N){
+    if (layerTimer) clearInterval(layerTimer);
+    document.getElementById("nSlider").value = N;
+    document.getElementById("nOut").textContent = N;
+    document.querySelectorAll(".np").forEach(b => b.classList.toggle("active", parseInt(b.dataset.n,10) === N));
+    if (reduceMotion){ drawLayers(N, N); return; }
+    let k = 0;
+    drawLayers(N, 0);
+    layerTimer = setInterval(() => {
+      k++;
+      drawLayers(N, k);
+      if (k >= N){ clearInterval(layerTimer); layerTimer = null; }
+    }, 320);
+  }
+  document.querySelectorAll(".np").forEach(b => b.addEventListener("click", () => playLayers(parseInt(b.dataset.n,10))));
+  document.getElementById("nSlider").addEventListener("input", e => {
+    if (layerTimer){ clearInterval(layerTimer); layerTimer = null; }
+    const N = parseInt(e.target.value,10);
+    document.getElementById("nOut").textContent = N;
+    document.querySelectorAll(".np").forEach(b => b.classList.toggle("active", parseInt(b.dataset.n,10) === N));
+    drawLayers(N, N);
+  });
+
+  // =====================================================================
+  // TAB 3
+  // =====================================================================
+  const XS = [0.5, 1, 1.5, 2, 2.5], B0 = -3, LR = 1, TARGET = 1, STEPS = 80;
+  function actOf(alpha){ return {f: z => z > 0 ? z : alpha*z, df: z => z > 0 ? 1 : alpha}; }
+  function gradB(alpha, b){
+    const a = actOf(alpha); let g = 0;
+    const rows = XS.map(x => {
+      const z = x + b, out = a.f(z), up = out - TARGET, sl = a.df(z), back = up*sl;
+      g += back; return {x, z, out, up, sl, back};
+    });
+    return {g: g/XS.length, rows};
+  }
+  function train(alpha){
+    let b = B0; const hist = [b];
+    for (let t = 0; t < STEPS; t++){ b -= LR*gradB(alpha, b).g; hist.push(b); }
+    return hist;
+  }
+  const HIST = {relu: train(0), leaky: train(0.01)};
+  const wakeStep = HIST.leaky.findIndex(b => b + 2.5 > 0);
+
+  function drawStepTable(){
+    const r = gradB(0, B0).rows, l = gradB(0.01, B0).rows;
+    const n = isNarrow();
+    let h = n ? `<tr><th>x</th><th>z</th><th>dL/da</th><th>ReLU slope</th><th>ReLU blame back</th><th>Leaky slope</th><th>Leaky blame back</th></tr>`
+              : `<tr><th>x</th><th>z = x + b</th><th>dL/d(output)</th><th>ReLU slope</th><th>blame passed back (ReLU)</th><th>Leaky slope</th><th>blame passed back (Leaky)</th></tr>`;
+    r.forEach((row, i) => {
+      h += `<tr><td>${row.x}</td><td>${row.z.toFixed(1)}</td><td>${l[i].up.toFixed(3)}</td><td style="color:var(--coral)"><b>0</b></td><td style="color:var(--coral)">${(row.back===0?0:row.back).toFixed(4)}</td><td style="color:var(--green)"><b>0.01</b></td><td style="color:var(--green)">${l[i].back.toFixed(4)}</td></tr>`;
+    });
+    document.getElementById("stepTable").innerHTML = h;
+  }
+
+  let dyingTimer = null;
+  function drawBias(modes, shown){
+    lastBias = [modes, shown];
+    const svg = document.getElementById("biasPlot");
+    svg.innerHTML = "";
+    const narrow = isNarrow(); const W = narrow ? 360 : 640, H = narrow ? 260 : 280, L = 44, R = 12, T = 14, B = 40, ymin = -3.3, ymax = 0;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const sx = k => L + k/STEPS*(W-L-R);
+    const sy = v => T + (ymax - v)/(ymax - ymin)*(H-T-B);
+    [-3,-2.5,-2,-1.5,-1,-0.5,0].forEach(v => {
+      el("line", {x1:L, x2:W-R, y1:sy(v), y2:sy(v), stroke:C.grid}, svg);
+      txt(svg, L-6, sy(v)+3, String(v), {"text-anchor":"end"});
+    });
+    for (let k = 0; k <= STEPS; k += (narrow ? 20 : 10)) txt(svg, sx(k), H-B+15, String(k), {"text-anchor":"middle"});
+    txt(svg, (L+W-R)/2, H-6, "training step", {"text-anchor":"middle", "font-size":11});
+    txt(svg, 12, T+(H-T-B)/2, "bias b", {"text-anchor":"middle", "font-size":10, transform:`rotate(-90 12 ${T+(H-T-B)/2})`});
+    // the line where the largest input (x = 2.5) turns positive
+    el("line", {x1:L, x2:W-R, y1:sy(-2.5), y2:sy(-2.5), stroke:C.amber, "stroke-opacity":0.5, "stroke-dasharray":"6 4"}, svg);
+    txt(svg, W-R-4, sy(-2.5)-5, narrow ? "above: x = 2.5 gives z > 0" : "above this, x = 2.5 gives z > 0 (neuron wakes)", {"text-anchor":"end", fill:C.amber, "font-size":10});
+    const spec = {relu:{c:C.coral, w:4}, leaky:{c:C.green, w:2.5}};
+    modes.forEach(m => {
+      const hist = HIST[m]; let d = "";
+      for (let k = 0; k <= shown; k++) d += (k ? "L" : "M") + sx(k).toFixed(1) + "," + sy(hist[k]).toFixed(1);
+      el("path", {d, stroke:spec[m].c, "stroke-width":spec[m].w, fill:"none", "stroke-linecap":"round"}, svg);
+      el("circle", {cx:sx(shown), cy:sy(hist[shown]), r:5, fill:spec[m].c, stroke:C.bg, "stroke-width":1.5}, svg);
+    });
+  }
+  function dyingMetrics(modes, shown){
+    const cards = [];
+    if (modes.includes("relu")) cards.push(`<div class="metric coral"><div class="lbl">ReLU bias after ${shown} step${shown===1?"":"s"}</div><div class="num">${HIST.relu[shown].toFixed(4)}</div></div>`);
+    if (modes.includes("leaky")) cards.push(`<div class="metric green"><div class="lbl">Leaky ReLU bias after ${shown} step${shown===1?"":"s"}</div><div class="num">${HIST.leaky[shown].toFixed(4)}</div></div>`);
+    document.getElementById("dyingMetrics").innerHTML = cards.join("");
+  }
+  function playDying(mode){
+    if (dyingTimer){ clearInterval(dyingTimer); dyingTimer = null; }
+    document.querySelectorAll(".dp").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+    drawStepTable();
+    const gR = gradB(0, B0).g, gL = gradB(0.01, B0).g;
+    if (mode === "one"){
+      const modes = ["relu","leaky"];
+      drawBias(modes, 1); dyingMetrics(modes, 1);
+      document.getElementById("dyingStory").innerHTML =
+        `Every example wants the output bigger (dL/d(output) ≈ −1), but under <b style="color:var(--coral)">ReLU</b> that blame is multiplied by a slope of <b>0</b>, so the bias gradient is exactly <b>${Math.abs(gR).toFixed(4)}</b> and b stays at −3. Under <b style="color:var(--green)">Leaky ReLU</b> the slope is <b>0.01</b>, so a trickle survives: gradient <b>${gL.toFixed(5)}</b>, and one step moves b from −3 to <b>${HIST.leaky[1].toFixed(5)}</b>.`;
+      return;
+    }
+    const modes = mode === "both" ? ["relu","leaky"] : [mode];
+    const finish = () => {
+      let s;
+      if (mode === "relu") s = `<b style="color:var(--coral)">Dead ReLU:</b> after ${STEPS} steps b is still exactly <b>${HIST.relu[STEPS].toFixed(4)}</b>. Every z stays negative, every slope is 0, so every gradient is 0 — the neuron never updates again, no matter how long you train.`;
+      else if (mode === "leaky") s = `<b style="color:var(--green)">Leaky ReLU:</b> the 0.01 slope lets b creep up (about 0.01 per step) until step <b>${wakeStep}</b>, when x = 2.5 finally gives z &gt; 0. That example's slope jumps to 1, full blame flows, and b settles at <b>${HIST.leaky[STEPS].toFixed(4)}</b> — the neuron recovered.`;
+      else s = `Same neuron, same data, one number different. <b style="color:var(--coral)">ReLU</b> (slope 0 for negatives) stays frozen at b = <b>${HIST.relu[STEPS].toFixed(4)}</b>. <b style="color:var(--green)">Leaky ReLU</b> (slope 0.01) wakes at step <b>${wakeStep}</b> and settles at b = <b>${HIST.leaky[STEPS].toFixed(4)}</b>.`;
+      document.getElementById("dyingStory").innerHTML = s;
+    };
+    if (reduceMotion){ drawBias(modes, STEPS); dyingMetrics(modes, STEPS); finish(); return; }
+    let k = 0;
+    drawBias(modes, 0); dyingMetrics(modes, 0);
+    document.getElementById("dyingStory").innerHTML = "Training…";
+    dyingTimer = setInterval(() => {
+      k += 2; if (k > STEPS) k = STEPS;
+      drawBias(modes, k); dyingMetrics(modes, k);
+      if (k >= STEPS){ clearInterval(dyingTimer); dyingTimer = null; finish(); }
+    }, 40);
+  }
+  document.querySelectorAll(".dp").forEach(b => b.addEventListener("click", () => playDying(b.dataset.mode)));
+
+  let wasNarrow = isNarrow();
+  window.addEventListener("resize", () => {
+    if (isNarrow() === wasNarrow) return;
+    wasNarrow = isNarrow();
+    if (lastLayers) drawLayers(lastLayers[0], lastLayers[1]);
+    if (lastBias){ drawStepTable(); drawBias(lastBias[0], lastBias[1]); }
+  });
+
+  // ---------- initial state ----------
+  setZ(0);
+  drawLayers(10, 10);
+  document.getElementById("nOut").textContent = 10;
+  document.querySelector('.np[data-n="10"]').classList.add("active");
+  playDying("one");
+})();
+</script>
+</body>
+</html>

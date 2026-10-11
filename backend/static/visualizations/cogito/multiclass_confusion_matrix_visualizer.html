@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Multiclass confusion matrix, live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16221c; --bg-panel:#1b2b23; --chalk:#f4f1e8; --chalk-dim:#7f8f83;
+    --amber:#ffce54; --coral:#ff8266; --green:#8fd19e; --blue:#7fb3d5; --purple:#b39ddb; --border:rgba(244,241,232,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--chalk);font-family:'JetBrains Mono',monospace;padding:32px 24px 60px;}
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-family:'Kalam',cursive;font-weight:700;font-size:26px;margin:0 0 4px;color:var(--chalk);}
+  .sub{color:var(--chalk-dim);font-size:13px;margin:0 0 20px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:20px;}
+  h2{font-family:'Kalam',cursive;font-size:18px;margin:0 0 10px;color:var(--chalk);}
+
+  table.cm{border-collapse:collapse;margin:14px auto;}
+  table.cm th, table.cm td{border:1px solid var(--border);text-align:center;padding:6px;}
+  table.cm th{color:var(--chalk-dim);font-size:11.5px;font-weight:700;}
+  table.cm input{width:52px;background:var(--bg);color:var(--amber);border:1px solid var(--border);border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:14px;text-align:center;padding:4px;}
+  table.cm td.diag input{color:var(--green);}
+  .row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  button.op{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg-panel);color:var(--chalk);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  button.op:hover{border-color:var(--chalk-dim);}
+
+  table.metrics{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+  table.metrics th, table.metrics td{border:1px solid var(--border);padding:6px 8px;text-align:center;}
+  table.metrics th{color:var(--chalk-dim);font-weight:700;}
+
+  .metric-row{display:flex;justify-content:center;gap:14px;margin:14px 0 6px;flex-wrap:wrap;}
+  .metric{text-align:center;border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:130px;}
+  .metric .lbl{font-size:10.5px;color:var(--chalk-dim);}
+  .metric .num{font-family:'Kalam',cursive;font-size:15px;margin-top:4px;}
+  .metric.blue .num{color:var(--blue);}
+  .metric.coral .num{color:var(--coral);}
+  .metric.green .num{color:var(--green);}
+  .metric.amber .num{color:var(--amber);}
+
+  .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:20px;white-space:pre-line;}
+  footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
+  footer a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Multiclass Confusion Matrix, Live</h1>
+  <p class="sub">Companion to <b>model_evaluation_metrics_feynman.md</b>, Part 6. Rows = actual class, columns = predicted class. Edit any cell and watch per-class precision/recall/F1, plus macro, weighted, and micro averages, recompute live.</p>
+
+  <div class="panel">
+    <h2>Confusion matrix (rows = actual, columns = predicted)</h2>
+    <div class="row"><button class="op" onclick="loadPreset()">Reset to verified preset</button></div>
+    <table class="cm" id="cmTable"></table>
+    <table class="metrics" id="perClassTable"></table>
+    <div class="metric-row">
+      <div class="metric blue"><div class="lbl">macro F1</div><div class="num" id="macroF1">—</div></div>
+      <div class="metric amber"><div class="lbl">weighted F1</div><div class="num" id="weightedF1">—</div></div>
+      <div class="metric green"><div class="lbl">micro F1 (= accuracy)</div><div class="num" id="microF1">—</div></div>
+      <div class="metric coral"><div class="lbl">accuracy</div><div class="num" id="accOut">—</div></div>
+    </div>
+    <div class="story-line" id="story"></div>
+  </div>
+
+  <footer>
+    Companion to <b>model_evaluation_metrics_feynman.md</b>, Part 6
+    (<a href="../supervised/model_evaluation_metrics_feynman.md">model_evaluation_metrics_feynman.md</a>). Open directly in any browser — no install, nothing sent anywhere.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const CLASSES = ['cat','dog','bird'];
+  const PRESET = [[30,5,5],[8,45,2],[1,2,2]];
+  const n = CLASSES.length;
+
+  function buildTable(){
+    const tbl = document.getElementById('cmTable');
+    let html = '<tr><th></th><th colspan="'+n+'">predicted</th></tr><tr><th>actual</th>';
+    CLASSES.forEach(c=>html+='<th>'+c+'</th>');
+    html+='</tr>';
+    for(let i=0;i<n;i++){
+      html += '<tr><th>'+CLASSES[i]+'</th>';
+      for(let j=0;j<n;j++){
+        html += '<td'+(i===j?' class="diag"':'')+'><input type="number" min="0" id="cm_'+i+'_'+j+'" value="'+PRESET[i][j]+'"></td>';
+      }
+      html += '</tr>';
+    }
+    tbl.innerHTML = html;
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++)
+      document.getElementById('cm_'+i+'_'+j).addEventListener('input', render);
+  }
+
+  function readMatrix(){
+    const M = [];
+    for(let i=0;i<n;i++){
+      const row=[];
+      for(let j=0;j<n;j++) row.push(Math.max(0, parseInt(document.getElementById('cm_'+i+'_'+j).value,10) || 0));
+      M.push(row);
+    }
+    return M;
+  }
+
+  function render(){
+    const M = readMatrix();
+    let total = 0;
+    M.forEach(row=>row.forEach(v=>total+=v));
+    const TP=[], FP=[], FN=[], support=[];
+    for(let i=0;i<n;i++){
+      TP.push(M[i][i]);
+      let fp=0, fn=0, sup=0;
+      for(let k=0;k<n;k++){
+        sup += M[i][k];
+        if(k!==i){ fn += M[i][k]; fp += M[k][i]; }
+      }
+      FP.push(fp); FN.push(fn); support.push(sup);
+    }
+    const prec=[], rec=[], f1=[];
+    for(let i=0;i<n;i++){
+      const p = (TP[i]+FP[i])>0 ? TP[i]/(TP[i]+FP[i]) : 0;
+      const r = (TP[i]+FN[i])>0 ? TP[i]/(TP[i]+FN[i]) : 0;
+      const f = (p+r)>0 ? 2*p*r/(p+r) : 0;
+      prec.push(p); rec.push(r); f1.push(f);
+    }
+    let html = '<tr><th>class</th><th>TP</th><th>FP</th><th>FN</th><th>precision</th><th>recall</th><th>F1</th><th>support</th></tr>';
+    for(let i=0;i<n;i++){
+      html += `<tr><td>${CLASSES[i]}</td><td>${TP[i]}</td><td>${FP[i]}</td><td>${FN[i]}</td><td>${prec[i].toFixed(4)}</td><td>${rec[i].toFixed(4)}</td><td>${f1[i].toFixed(4)}</td><td>${support[i]}</td></tr>`;
+    }
+    document.getElementById('perClassTable').innerHTML = html;
+
+    const macroF1 = f1.reduce((a,b)=>a+b,0)/n;
+    let weightedF1 = 0;
+    for(let i=0;i<n;i++) weightedF1 += f1[i]*support[i];
+    weightedF1 = total>0 ? weightedF1/total : 0;
+
+    const TPtot = TP.reduce((a,b)=>a+b,0), FPtot = FP.reduce((a,b)=>a+b,0), FNtot = FN.reduce((a,b)=>a+b,0);
+    const microP = (TPtot+FPtot)>0 ? TPtot/(TPtot+FPtot) : 0;
+    const microR = (TPtot+FNtot)>0 ? TPtot/(TPtot+FNtot) : 0;
+    const microF1 = (microP+microR)>0 ? 2*microP*microR/(microP+microR) : 0;
+    const accuracy = total>0 ? TPtot/total : 0;
+
+    document.getElementById('macroF1').textContent = macroF1.toFixed(4);
+    document.getElementById('weightedF1').textContent = weightedF1.toFixed(4);
+    document.getElementById('microF1').textContent = microF1.toFixed(4);
+    document.getElementById('accOut').textContent = accuracy.toFixed(4);
+
+    document.getElementById('story').textContent =
+      'Micro-F1 equals accuracy exactly (both ' + microF1.toFixed(4) + ') — always true for single-label multiclass. ' +
+      'Macro-F1 (' + macroF1.toFixed(4) + ') treats every class equally regardless of size; weighted-F1 (' + weightedF1.toFixed(4) +
+      ') reflects how common each class actually is. The bigger the gap between macro and weighted, the more a rare class is dragging macro down.';
+  }
+
+  window.loadPreset = function(){
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++) document.getElementById('cm_'+i+'_'+j).value = PRESET[i][j];
+    render();
+  };
+
+  buildTable();
+  render();
+})();
+</script>
+</body>
+</html>

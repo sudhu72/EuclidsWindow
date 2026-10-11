@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affine Transformations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF1F0; --card:#FFFFFF; --ink:#1B2430; --ink-soft:#5B6572; --line:#D9E0DE;
+    --accent:#463A73; --accent-soft:#EFEBFA;
+    --c0:#6B7280; --c1:#0F8B8D; --c2:#D9A62E; --c3:#5B4B95;
+    --good:#1E8A5A; --bad:#C2413B;
+    --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink); font-family:"Inter", system-ui, sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:980px; margin:0 auto; padding:40px 16px 80px; }
+  header{ margin-bottom:28px; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; font-weight:600; }
+  h1{ font-family:"Fraunces", serif; font-weight:600; font-size:clamp(28px, 5vw, 42px); margin:0 0 12px; letter-spacing:-0.01em; }
+  header p{ color:var(--ink-soft); max-width:680px; font-size:15.5px; margin:0; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab{ font-family:"Inter", sans-serif; font-size:14px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:20px; padding:9px 18px; cursor:pointer; }
+  .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab:not(.active):hover{ background:var(--accent-soft); }
+  .panel{ display:none; } .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; box-shadow:0 1px 2px rgba(20,20,30,0.03); margin-bottom:16px; }
+  h2{ font-family:"Fraunces", serif; font-size:22px; font-weight:600; margin:0 0 6px; }
+  .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 18px; }
+  .sub code, .caption code{ font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--accent-soft); padding:1px 5px; border-radius:4px; color:var(--ink); }
+  .caption{ font-size:13px; color:var(--ink-soft); margin-top:12px; line-height:1.6; }
+  button.op{ font-family:"Inter", sans-serif; font-size:13px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  button.op:hover{ background:var(--accent-soft); border-color:var(--accent); }
+  button.op.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .presetbar{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .presetlabel{ font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); margin:4px 0 8px; }
+  .layout{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .layout > .plot{ flex:1 1 380px; min-width:0; }
+  .layout > .side{ flex:1 1 260px; min-width:0; }
+  svg{ width:100%; height:auto; display:block; background:#FBFCFC; border:1px solid var(--line); border-radius:10px; }
+  .stat{ background:#F5F4F0; border-radius:10px; padding:10px 14px; font-family:"IBM Plex Mono",monospace; font-size:13px; margin-bottom:10px; line-height:1.7; }
+  .stat .k{ color:var(--ink-soft); font-size:11px; text-transform:uppercase; letter-spacing:.06em; display:block; }
+  .test{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .test:last-child{ border-bottom:none; }
+  .test .mark{ font-family:"IBM Plex Mono",monospace; font-weight:600; width:18px; flex-shrink:0; }
+  .test.ok .mark{ color:var(--good); } .test.bad .mark{ color:var(--bad); }
+  .test .detail{ font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft); }
+  .verdict{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin-top:12px; }
+  .verdict.ok{ color:var(--good); } .verdict.bad{ color:var(--bad); }
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-soft); margin-top:10px; }
+  .legend span::before{ content:""; display:inline-block; width:12px; height:3px; margin-right:6px; vertical-align:middle; background:currentColor; }
+  .lg-orig{ color:#B8C0C8; } .lg-new{ color:var(--c1); } .lg-origin{ color:var(--bad); } .lg-house{ color:var(--c2); }
+  /* homogeneous */
+  .mv{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-family:"IBM Plex Mono",monospace; font-size:15px; margin:10px 0 6px; }
+  .mat{ display:grid; gap:4px 14px; padding:8px 12px; border-left:2px solid var(--ink); border-right:2px solid var(--ink); border-radius:4px; }
+  .mat3{ grid-template-columns:repeat(3, 2.2em); } .mat1{ grid-template-columns:2.2em; }
+  .mat div{ text-align:center; padding:2px 0; border-radius:4px; transition:background .25s; }
+  .hl{ background:#FCEFC8; }
+  .hlb{ background:#D6F0EF; }
+  .steplog{ font-family:"IBM Plex Mono",monospace; font-size:13px; background:#F5F4F0; border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.9; min-height:120px; white-space:pre-wrap; }
+  .twin{ display:flex; gap:16px; flex-wrap:wrap; }
+  .twin > div{ flex:1 1 300px; min-width:0; }
+  .twin h3{ font-family:"Fraunces",serif; font-size:16px; margin:0 0 8px; font-weight:600; }
+  footer{ font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:20px; margin-top:30px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Companion to Affine Transformations</div>
+    <h1>Linear Maps That Are Allowed to Move</h1>
+    <p>An affine map is a matrix followed by a shift: <b>T(x) = A·x + b</b>. Every example below is a one-click preset. Click a button and watch it happen; there's nothing to drag.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="la">1 · Linear vs. Affine</button>
+    <button class="tab" data-tab="hom">2 · Homogeneous Coordinates</button>
+    <button class="tab" data-tab="order">3 · Order Matters</button>
+    <button class="tab" data-tab="nn">4 · Why Layers Need Activations</button>
+  </div>
+
+  <!-- ============ TAB 1 ============ -->
+  <div class="panel active" id="panel-la">
+    <div class="card">
+      <h2>Does the origin stay put?</h2>
+      <p class="sub">Grey is the original grid and house. Teal and gold are the result. The red dot marks where the origin <code>(0,0)</code> ends up. A linear map always leaves it pinned; an affine map with <code>b ≠ 0</code> moves it.</p>
+      <div class="presetlabel">linear presets (b = 0)</div>
+      <div class="presetbar" id="linPresets"></div>
+      <div class="presetlabel">affine presets (b ≠ 0)</div>
+      <div class="presetbar" id="affPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="laSvg" viewBox="0 0 400 400" role="img" aria-label="Grid transformed by the selected map"></svg>
+          <div class="legend"><span class="lg-orig">original</span><span class="lg-new">transformed grid</span><span class="lg-house">house</span><span class="lg-origin">where (0,0) lands</span></div>
+        </div>
+        <div class="side">
+          <div class="stat" id="laMatrix"></div>
+          <div id="laTests"></div>
+          <div class="verdict" id="laVerdict"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2 ============ -->
+  <div class="panel" id="panel-hom">
+    <div class="card">
+      <h2>Add a 1, and the shift becomes plain multiplication</h2>
+      <p class="sub">Write the point <code>(x, y)</code> as <code>(x, y, 1)</code>. Put <code>A</code> in the top-left of a 3×3 matrix and <code>b</code> in its last column. Multiplying adds "x copies of column 1 + y copies of column 2 + 1 copy of column 3", so the shift column gets added exactly once.</p>
+      <div class="presetlabel">choose the point's last coordinate</div>
+      <div class="presetbar" id="homW"></div>
+      <div class="presetlabel">then step through the multiplication</div>
+      <div class="presetbar" id="homSteps"></div>
+      <div class="mv" id="homMV"></div>
+      <div class="steplog" id="homLog">Pick <b>Position (x, y, 1)</b>, then click <b>Step 1</b>.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3 ============ -->
+  <div class="panel" id="panel-order">
+    <div class="card">
+      <h2>"Rotate then shift" vs. "shift then rotate"</h2>
+      <p class="sub">The same two steps, rotate 90° around the origin and shift 3 to the right, done in opposite orders. The dot starts at <code>(1, 0)</code>.</p>
+      <div class="presetbar" id="orderPresets"></div>
+      <div class="twin">
+        <div><h3>Rotate first, then shift</h3><svg id="ordA" viewBox="0 0 320 320" role="img" aria-label="Rotate then shift"></svg><div class="stat" id="ordAOut">—</div></div>
+        <div><h3>Shift first, then rotate</h3><svg id="ordB" viewBox="0 0 320 320" role="img" aria-label="Shift then rotate"></svg><div class="stat" id="ordBOut">—</div></div>
+      </div>
+      <div class="caption" id="orderCaption">Click <b>Run both</b> to watch each order play out in two steps.</div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4 ============ -->
+  <div class="panel" id="panel-nn">
+    <div class="card">
+      <h2>Stacked affine layers stay flat. An activation bends them.</h2>
+      <p class="sub">A grid of inputs goes through two dense layers, <code>W₁x + b₁</code> then <code>W₂(·) + b₂</code>. Without an activation, the two layers merge into one affine map, so grid lines stay perfectly straight. Put <code>tanh</code> between them and the lines curve.</p>
+      <div class="presetbar" id="nnPresets"></div>
+      <div class="layout">
+        <div class="plot"><svg id="nnSvg" viewBox="0 0 400 400" role="img" aria-label="Grid after neural network layers"></svg></div>
+        <div class="side"><div class="stat" id="nnInfo"></div><div class="caption" id="nnCaption"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Companion to <code>math/affine-transformations.md</code>. The numbers in the tests, the homogeneous-coordinate example, and the order example all match values checked in that file (for example, <code>T(u+v) = (12, 2)</code> vs. <code>T(u)+T(v) = (15, 3)</code>; rotate-then-shift lands at <code>(3, 1)</code>, shift-then-rotate at <code>(0, 4)</code>).
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  $("#panel-" + t.dataset.tab).classList.add("active");
+}));
+
+/* ---------- helpers ---------- */
+const apply = (A, b, p) => [A[0][0]*p[0] + A[0][1]*p[1] + b[0], A[1][0]*p[0] + A[1][1]*p[1] + b[1]];
+const fmt = x => { const r = Math.round(x*1000)/1000; return (Object.is(r,-0)?0:r).toString(); };
+const vec = p => `(${fmt(p[0])}, ${fmt(p[1])})`;
+const eq = (p, q) => Math.abs(p[0]-q[0]) < 1e-9 && Math.abs(p[1]-q[1]) < 1e-9;
+
+function makeView(svg, xmin, xmax, ymin, ymax, size){
+  const W = size, H = size;
+  const sx = x => (x - xmin) / (xmax - xmin) * W;
+  const sy = y => H - (y - ymin) / (ymax - ymin) * H;
+  return { svg, sx, sy, W, H, xmin, xmax, ymin, ymax };
+}
+function el(tag, attrs, parent){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function polyline(view, pts, attrs){
+  const d = pts.map(p => `${view.sx(p[0]).toFixed(2)},${view.sy(p[1]).toFixed(2)}`).join(" ");
+  return el("polyline", Object.assign({ points: d, fill: "none" }, attrs), view.svg);
+}
+function polygon(view, pts, attrs){
+  const d = pts.map(p => `${view.sx(p[0]).toFixed(2)},${view.sy(p[1]).toFixed(2)}`).join(" ");
+  return el("polygon", Object.assign({ points: d }, attrs), view.svg);
+}
+function dot(view, p, r, fill){ return el("circle", { cx: view.sx(p[0]), cy: view.sy(p[1]), r, fill }, view.svg); }
+function axes(view){
+  el("line", { x1: view.sx(view.xmin), y1: view.sy(0), x2: view.sx(view.xmax), y2: view.sy(0), stroke: "#9AA3AD", "stroke-width": 1 }, view.svg);
+  el("line", { x1: view.sx(0), y1: view.sy(view.ymin), x2: view.sx(0), y2: view.sy(view.ymax), stroke: "#9AA3AD", "stroke-width": 1 }, view.svg);
+}
+function gridLines(range, step, samples){
+  const lines = [];
+  for (let c = -range; c <= range + 1e-9; c += step){
+    const h = [], v = [];
+    for (let i = 0; i <= samples; i++){
+      const t = -range + (2*range) * i / samples;
+      h.push([t, c]); v.push([c, t]);
+    }
+    lines.push(h, v);
+  }
+  return lines;
+}
+const HOUSE = [[0,0],[1,0],[1,1],[0.5,1.6],[0,1]];
+
+/* ============ TAB 1 ============ */
+const r45 = Math.SQRT1_2;
+const LA_PRESETS = {
+  lin: [
+    { name: "Stretch x by 2", A: [[2,0],[0,1]], b: [0,0] },
+    { name: "Shear", A: [[1,1],[0,1]], b: [0,0] },
+    { name: "Rotate 45°", A: [[r45,-r45],[r45,r45]], b: [0,0] },
+    { name: "Stretch + shear (the doc's A)", A: [[2,1],[0,1]], b: [0,0] },
+  ],
+  aff: [
+    { name: "Pure shift by (3, 1)", A: [[1,0],[0,1]], b: [3,1] },
+    { name: "Doc example: A·x + (3, 1)", A: [[2,1],[0,1]], b: [3,1] },
+    { name: "Rotate 90° + shift (rigid)", A: [[0,-1],[1,0]], b: [2,2] },
+  ],
+};
+const laView = makeView($("#laSvg"), -5, 8, -5, 8, 400);
+let laToken = 0;
+
+function drawLA(A, b){
+  const v = laView; v.svg.innerHTML = "";
+  axes(v);
+  gridLines(3, 1, 2).forEach(l => polyline(v, l, { stroke: "#D5DADF", "stroke-width": 1 }));
+  polygon(v, HOUSE, { fill: "none", stroke: "#B8C0C8", "stroke-width": 1.5, "stroke-dasharray": "4 3" });
+  gridLines(3, 1, 2).forEach(l => polyline(v, l.map(p => apply(A, b, p)), { stroke: "var(--c1)", "stroke-width": 1.2, opacity: 0.75 }));
+  polygon(v, HOUSE.map(p => apply(A, b, p)), { fill: "rgba(217,166,46,0.25)", stroke: "var(--c2)", "stroke-width": 2 });
+  dot(v, [0,0], 4, "#9AA3AD");
+  dot(v, apply(A, b, [0,0]), 6, "var(--bad)");
+}
+function showLAInfo(P){
+  const { A, b } = P;
+  $("#laMatrix").innerHTML =
+    `<span class="k">A (linear part)</span>[[${fmt(A[0][0])}, ${fmt(A[0][1])}], [${fmt(A[1][0])}, ${fmt(A[1][1])}]]<br>` +
+    `<span class="k">b (shift)</span>${vec(b)}<br>` +
+    `<span class="k">det(A) = area scale</span>${fmt(A[0][0]*A[1][1] - A[0][1]*A[1][0])}`;
+  const u = [1,2], w = [3,-1];
+  const T = p => apply(A, b, p);
+  const T0 = T([0,0]);
+  const Tsum = T([u[0]+w[0], u[1]+w[1]]), sumT = [T(u)[0]+T(w)[0], T(u)[1]+T(w)[1]];
+  const T2u = T([2*u[0], 2*u[1]]), twoTu = [2*T(u)[0], 2*T(u)[1]];
+  const tests = [
+    { ok: eq(T0, [0,0]), label: "Origin stays put: T(0,0) = (0,0)?", detail: `T(0,0) = ${vec(T0)}` },
+    { ok: eq(Tsum, sumT), label: "Adding passes through: T(u+v) = T(u)+T(v)?", detail: `u=(1,2), v=(3,−1): ${vec(Tsum)} vs ${vec(sumT)}` },
+    { ok: eq(T2u, twoTu), label: "Scaling passes through: T(2u) = 2·T(u)?", detail: `${vec(T2u)} vs ${vec(twoTu)}` },
+  ];
+  $("#laTests").innerHTML = tests.map(t =>
+    `<div class="test ${t.ok ? "ok" : "bad"}"><div class="mark">${t.ok ? "✓" : "✗"}</div><div>${t.label}<div class="detail">${t.detail}</div></div></div>`).join("");
+  const allOk = tests.every(t => t.ok);
+  const vd = $("#laVerdict");
+  if (allOk){ vd.className = "verdict ok"; vd.textContent = "Linear: the origin is pinned, and all three tests pass."; }
+  else { vd.className = "verdict bad"; vd.textContent = `Affine, not linear: every failing gap equals b = ${vec(b)}, the shift counted one time too many.`; }
+}
+async function runLA(P){
+  const my = ++laToken;
+  showLAInfo(P);
+  const I = [[1,0],[0,1]];
+  const steps = 24;
+  for (let i = 1; i <= steps; i++){
+    if (my !== laToken) return;
+    const t = i / steps, e = t*t*(3 - 2*t);
+    const At = [[I[0][0] + (P.A[0][0]-I[0][0])*e, I[0][1] + (P.A[0][1]-I[0][1])*e],
+                [I[1][0] + (P.A[1][0]-I[1][0])*e, I[1][1] + (P.A[1][1]-I[1][1])*e]];
+    drawLA(At, [P.b[0]*e, P.b[1]*e]);
+    await sleep(22);
+  }
+}
+function buildLAPresets(){
+  const all = [];
+  [["lin", "#linPresets"], ["aff", "#affPresets"]].forEach(([k, sel]) => {
+    LA_PRESETS[k].forEach(P => {
+      const btn = document.createElement("button");
+      btn.className = "op"; btn.textContent = P.name;
+      btn.addEventListener("click", () => { all.forEach(x => x.classList.remove("active")); btn.classList.add("active"); runLA(P); });
+      $(sel).appendChild(btn); all.push(btn);
+    });
+  });
+  all[0].classList.add("active");
+}
+buildLAPresets();
+drawLA([[1,0],[0,1]], [0,0]);
+showLAInfo(LA_PRESETS.lin[0]);
+runLA(LA_PRESETS.lin[0]);
+
+/* ============ TAB 2 ============ */
+const HM = [[2,1,3],[0,1,1],[0,0,1]];
+const HP = [1,2];
+let homW = 1, homStep = 0;
+
+function renderHom(highlightCol){
+  const v = [HP[0], HP[1], homW];
+  let m = `<div class="mat mat3">`;
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++){
+    const cls = (highlightCol === c) ? (c === 2 ? "hlb" : "hl") : "";
+    m += `<div class="${cls}">${HM[r][c]}</div>`;
+  }
+  m += `</div>`;
+  let x = `<div class="mat mat1">`;
+  for (let r = 0; r < 3; r++) x += `<div class="${highlightCol === r ? (r === 2 ? "hlb" : "hl") : ""}">${v[r]}</div>`;
+  x += `</div>`;
+  const out = [0,1,2].map(r => HM[r][0]*v[0] + HM[r][1]*v[1] + HM[r][2]*v[2]);
+  const o = `<div class="mat mat1">${out.map(q => `<div>${homStep >= 3 ? q : "?"}</div>`).join("")}</div>`;
+  $("#homMV").innerHTML = m + `<span>·</span>` + x + `<span>=</span>` + o;
+}
+function homLogFor(step){
+  const w = homW;
+  const lines = [];
+  lines.push(`point = (${HP[0]}, ${HP[1]}, ${w})   ${w === 1 ? "← a POSITION (last coordinate 1)" : "← a DIRECTION (last coordinate 0)"}`);
+  if (step >= 1) lines.push(`step 1: x · column 1 = ${HP[0]} · (2, 0, 0) = (${2*HP[0]}, 0, 0)`);
+  if (step >= 2) lines.push(`step 2: + y · column 2 = ${HP[1]} · (1, 1, 0) = (${HP[1]}, ${HP[1]}, 0)`);
+  if (step >= 3){
+    lines.push(`step 3: + ${w} · column 3 = ${w} · (3, 1, 1) = (${3*w}, ${w}, ${w})   ← the shift column, added ${w === 1 ? "exactly ONCE" : "ZERO times"}`);
+    const out = [2*HP[0] + HP[1] + 3*w, HP[1] + w, w];
+    lines.push(``);
+    lines.push(`result = (${out[0]}, ${out[1]}, ${out[2]})  →  drop the last coordinate: (${out[0]}, ${out[1]})`);
+    lines.push(w === 1
+      ? `✓ matches T(u) = A·u + b = (4, 2) + (3, 1) = (7, 3). The shift happened by pure multiplication.`
+      : `The shift vanished: only A acted, giving A·u = (4, 2). Graphics code does this on purpose, since directions shouldn't move.`);
+  }
+  return lines.join("\n");
+}
+function buildHom(){
+  const wDefs = [{ t: "Position (x, y, 1)", w: 1 }, { t: "Direction (x, y, 0)", w: 0 }];
+  const wBtns = [];
+  wDefs.forEach(d => {
+    const btn = document.createElement("button"); btn.className = "op" + (d.w === 1 ? " active" : ""); btn.textContent = d.t;
+    btn.addEventListener("click", () => { wBtns.forEach(x => x.classList.remove("active")); btn.classList.add("active"); homW = d.w; homStep = 0; renderHom(-1); $("#homLog").textContent = homLogFor(0) + "\n\nClick Step 1."; });
+    $("#homW").appendChild(btn); wBtns.push(btn);
+  });
+  const sDefs = [
+    { t: "Step 1: x · column 1", s: 1, col: 0 },
+    { t: "Step 2: + y · column 2", s: 2, col: 1 },
+    { t: "Step 3: + last · column 3", s: 3, col: 2 },
+    { t: "Show all at once", s: 3, col: -1 },
+  ];
+  const sBtns = [];
+  sDefs.forEach(d => {
+    const btn = document.createElement("button"); btn.className = "op"; btn.textContent = d.t;
+    btn.addEventListener("click", () => { sBtns.forEach(x => x.classList.remove("active")); btn.classList.add("active"); homStep = d.s; renderHom(d.col); $("#homLog").textContent = homLogFor(d.s); });
+    $("#homSteps").appendChild(btn); sBtns.push(btn);
+  });
+  renderHom(-1);
+}
+buildHom();
+
+/* ============ TAB 3 ============ */
+const ordViewA = makeView($("#ordA"), -4, 6, -2, 8, 320);
+const ordViewB = makeView($("#ordB"), -4, 6, -2, 8, 320);
+const ROT = p => [-p[1], p[0]];
+const SH = p => [p[0] + 3, p[1]];
+let ordToken = 0;
+
+function drawOrd(view, housePts, dotPt, ghosts){
+  view.svg.innerHTML = "";
+  gridLines(4, 1, 2).forEach(l => polyline(view, l.map(p => [p[0] + 1, p[1] + 3]), { stroke: "#E3E7EA", "stroke-width": 1 }));
+  axes(view);
+  ghosts.forEach(g => polygon(view, g, { fill: "none", stroke: "#B8C0C8", "stroke-width": 1.2, "stroke-dasharray": "4 3" }));
+  polygon(view, housePts, { fill: "rgba(217,166,46,0.25)", stroke: "var(--c2)", "stroke-width": 2 });
+  dot(view, dotPt, 6, "var(--bad)");
+  const lbl = el("text", { x: view.sx(dotPt[0]) + 9, y: view.sy(dotPt[1]) - 8, "font-size": 12, "font-family": "IBM Plex Mono, monospace", fill: "var(--ink)" }, view.svg);
+  lbl.textContent = vec(dotPt);
+}
+function lerp(a, b, t){ return a.map((p, i) => [p[0] + (b[i][0] - p[0])*t, p[1] + (b[i][1] - p[1])*t]); }
+function rotLerp(pts, ang){ const c = Math.cos(ang), s = Math.sin(ang); return pts.map(p => [c*p[0] - s*p[1], s*p[0] + c*p[1]]); }
+
+async function animate(view, fromHouse, fromDot, kind, ghosts, my){
+  const steps = 22;
+  let lastH = fromHouse, lastD = fromDot;
+  for (let i = 1; i <= steps; i++){
+    if (my !== ordToken) return null;
+    const t = i / steps;
+    let H, D;
+    if (kind === "rot"){ H = rotLerp(fromHouse, t*Math.PI/2); D = rotLerp([fromDot], t*Math.PI/2)[0]; }
+    else { H = lerp(fromHouse, fromHouse.map(SH), t); D = [fromDot[0] + 3*t, fromDot[1]]; }
+    drawOrd(view, H, D, ghosts); lastH = H; lastD = D;
+    await sleep(28);
+  }
+  return [lastH, lastD];
+}
+async function runOrder(which){
+  const my = ++ordToken;
+  const startDot = [1, 0];
+  const base = HOUSE.map(p => [p[0]*0.8 + 0.6, p[1]*0.8 - 0.4]);   // small house sitting around the dot
+  drawOrd(ordViewA, base, startDot, []); drawOrd(ordViewB, base, startDot, []);
+  $("#ordAOut").textContent = "start: dot at (1, 0)"; $("#ordBOut").textContent = "start: dot at (1, 0)";
+  if (which === "reset"){ $("#orderCaption").innerHTML = "Click <b>Run both</b> to watch each order play out in two steps."; return; }
+  await sleep(350); if (my !== ordToken) return;
+  // A: rotate then shift
+  const doA = async () => {
+    let r = await animate(ordViewA, base, startDot, "rot", [base], my); if (!r) return;
+    $("#ordAOut").textContent = `after rotate 90°: ${vec(r[1])}`;
+    await sleep(250);
+    const mid = r[0];
+    r = await animate(ordViewA, r[0], r[1], "shift", [base, mid], my); if (!r) return;
+    $("#ordAOut").textContent = `after rotate 90°: (0, 1)\nthen shift +3: ${vec(r[1])}`;
+  };
+  const doB = async () => {
+    let r = await animate(ordViewB, base, startDot, "shift", [base], my); if (!r) return;
+    $("#ordBOut").textContent = `after shift +3: ${vec(r[1])}`;
+    await sleep(250);
+    const mid = r[0];
+    r = await animate(ordViewB, r[0], r[1], "rot", [base, mid], my); if (!r) return;
+    $("#ordBOut").textContent = `after shift +3: (4, 0)\nthen rotate 90°: ${vec(r[1])}`;
+  };
+  if (which === "both"){ await Promise.all([doA(), doB()]); }
+  else if (which === "A"){ await doA(); }
+  else { await doB(); }
+  if (my !== ordToken) return;
+  if (which === "both") $("#orderCaption").innerHTML = "Same two steps, different order: <b>(3, 1)</b> vs. <b>(0, 4)</b>. In the second order, the shift itself got rotated, so it ended up pointing up instead of right. As 3×3 matrices, rotate-then-shift has shift column (3, 0) and shift-then-rotate has (0, 3).";
+}
+function buildOrder(){
+  const defs = [{ t: "Run both", w: "both" }, { t: "Only: rotate then shift", w: "A" }, { t: "Only: shift then rotate", w: "B" }, { t: "Reset", w: "reset" }];
+  const btns = [];
+  defs.forEach(d => { const b = document.createElement("button"); b.className = "op"; b.textContent = d.t;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); runOrder(d.w); });
+    $("#orderPresets").appendChild(b); btns.push(b); });
+  runOrder("reset");
+}
+buildOrder();
+
+/* ============ TAB 4 ============ */
+const W1 = [[1.2, 0.6],[-0.4, 1.0]], B1 = [0.3, -0.2];
+const W2 = [[0.9, -0.5],[0.7, 0.8]], B2 = [0.1, 0.2];
+const mm = (X, Y) => [[X[0][0]*Y[0][0] + X[0][1]*Y[1][0], X[0][0]*Y[0][1] + X[0][1]*Y[1][1]],
+                      [X[1][0]*Y[0][0] + X[1][1]*Y[1][0], X[1][0]*Y[0][1] + X[1][1]*Y[1][1]]];
+const WC = mm(W2, W1);
+const BC = apply(W2, B2, B1);
+const nnModes = {
+  input:   { t: "Input grid", f: p => p, info: "The inputs: a plain grid from −2 to 2.", cap: "" },
+  layer1:  { t: "Layer 1 only: W₁x + b₁", f: p => apply(W1, B1, p), info: "One affine layer: grid lines stay straight and parallel.", cap: "Stretched, sheared and shifted, but every line is still straight, and parallel lines are still parallel. That's all an affine map can do." },
+  two:     { t: "Two layers, no activation", f: p => apply(W2, B2, apply(W1, B1, p)), info: "Two affine layers in a row, with nothing between them.", cap: "Still perfectly straight. Two affine layers merge into ONE affine map, so the extra layer added nothing new." },
+  merged:  { t: "Compare: the single merged layer", f: p => apply(WC, BC, p), overlay: true, info: `Merged: (W₂W₁)x + (W₂b₁ + b₂)\nW₂W₁ = [[${fmt(WC[0][0])}, ${fmt(WC[0][1])}], [${fmt(WC[1][0])}, ${fmt(WC[1][1])}]]\nshift = ${vec(BC)}`, cap: "The dashed purple grid is the single merged layer. It sits exactly on top of the two-layer teal grid, because they're the same map." },
+  tanh:    { t: "Two layers + tanh between", f: p => { const z = apply(W1, B1, p); return apply(W2, B2, [Math.tanh(z[0]), Math.tanh(z[1])]); }, info: "Layer 1 → tanh → Layer 2.", cap: "Now the lines bend. tanh is deliberately NOT affine, and that bend is what lets deep networks draw curved decision boundaries. Without it, depth buys nothing. (The shape also shrinks because tanh squeezes every value into the range −1 to 1 before layer 2 sees it.)" },
+};
+const nnView = makeView($("#nnSvg"), -4, 4, -4, 4, 400);
+function drawNN(mode){
+  const v = nnView; v.svg.innerHTML = "";
+  axes(v);
+  const lines = gridLines(2, 0.5, 40);
+  const M = nnModes[mode];
+  if (mode === "merged"){
+    lines.forEach(l => polyline(v, l.map(nnModes.two.f), { stroke: "var(--c1)", "stroke-width": 2.2, opacity: 0.8 }));
+    lines.forEach(l => polyline(v, l.map(M.f), { stroke: "var(--c3)", "stroke-width": 1.3, "stroke-dasharray": "5 4" }));
+  } else {
+    lines.forEach(l => polyline(v, l.map(M.f), { stroke: mode === "input" ? "#9AA3AD" : (mode === "tanh" ? "var(--c2)" : "var(--c1)"), "stroke-width": 1.4 }));
+  }
+  $("#nnInfo").textContent = M.info;
+  $("#nnCaption").textContent = M.cap;
+}
+function buildNN(){
+  const btns = [];
+  Object.keys(nnModes).forEach((k, i) => {
+    const b = document.createElement("button"); b.className = "op" + (i === 0 ? " active" : ""); b.textContent = nnModes[k].t;
+    b.addEventListener("click", () => { btns.forEach(x => x.classList.remove("active")); b.classList.add("active"); drawNN(k); });
+    $("#nnPresets").appendChild(b); btns.push(b);
+  });
+  drawNN("input");
+}
+buildNN();
+
+})();
+</script>
+</body>
+</html>

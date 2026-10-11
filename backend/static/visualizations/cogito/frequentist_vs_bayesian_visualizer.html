@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Frequentist vs. Bayesian: procedures vs. beliefs, made live</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,6 +45,14 @@
   .metric.amber .num{color:var(--amber);}
 
   .story-line{text-align:center;font-size:13px;color:var(--chalk-dim);margin-top:12px;min-height:36px;}
+  svg{max-width:100%;height:auto;}
+  .calc{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;background:rgba(244,241,232,0.04);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:14px auto 0;max-width:640px;white-space:pre-wrap;overflow-wrap:anywhere;}
+  .calc .hl{color:var(--amber);font-weight:700;}
+  .calc .g{color:var(--green);font-weight:700;}
+  .calc .c{color:var(--coral);font-weight:700;}
+  .legend{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--chalk-dim);margin-top:8px;}
+  .legend span b{display:inline-block;width:22px;height:0;vertical-align:middle;margin-right:6px;border-top:3px solid;}
+  @media (max-width:600px){ body{padding:20px 16px 40px;} .panel{padding:16px 14px;} }
   footer{font-size:12px;color:var(--chalk-dim);border-top:1px solid var(--border);padding-top:16px;margin-top:10px;}
   footer a{color:var(--blue);}
 </style>
@@ -51,10 +60,11 @@
 <body>
 <div class="wrap">
   <h1>Frequentist vs. Bayesian: procedures vs. beliefs, made live</h1>
-  <p class="sub">Four tabs, matching the tutorial's four verified demonstrations.</p>
+  <p class="sub">Five tabs, matching the tutorial's verified demonstrations.</p>
 
   <div class="tabs">
     <button class="tabbtn active" data-tab="posterior">Posterior Updating</button>
+    <button class="tabbtn" data-tab="conjugacy">Beta Update (Conjugacy)</button>
     <button class="tabbtn" data-tab="coverage">Confidence vs. Credible</button>
     <button class="tabbtn" data-tab="samplesize">Sample Size Planner</button>
     <button class="tabbtn" data-tab="peeking">The Peeking Problem</button>
@@ -82,6 +92,35 @@
         <div class="metric green"><div class="lbl">95% credible interval</div><div class="num" id="mCrI">-</div></div>
       </div>
       <div class="story-line" id="postStory"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: BETA UPDATE (CONJUGACY) ============ -->
+  <div class="tabpanel" id="tab-conjugacy">
+    <div class="panel">
+      <h2>Beta prior + coin flips = Beta posterior: just add the counts</h2>
+      <p class="sub">A Beta(a, b) curve has shape p^(a&minus;1)&middot;(1&minus;p)^(b&minus;1). Read a&minus;1 as "heads already imagined" and b&minus;1 as "tails already imagined". Multiply by the likelihood p^h&middot;(1&minus;p)^t and the exponents add: the posterior is Beta(a+h, b+t). Each button plays one fully worked example from Part 2.</p>
+      <div class="row">
+        <button class="op" data-conj="flat">Flat prior Beta(1,1)</button>
+        <button class="op" data-conj="lean">Leaning prior Beta(5,2)</button>
+        <button class="op" data-conj="strong">Strong "fair coin" prior Beta(50,50)</button>
+      </div>
+      <div class="row">
+        <button class="op" data-conj="u5">Beta(1,1) + 4 heads, 1 tail &rarr; Beta(5,2)</button>
+        <button class="op" data-conj="u20">Beta(1,1) + 11 heads, 9 tails &rarr; Beta(12,10)</button>
+        <button class="op" data-conj="ustrong">Same data, strong prior: Beta(50,50) + 4H 1T</button>
+      </div>
+      <svg id="conjSvg" width="640" height="300" viewBox="0 0 640 300"></svg>
+      <div class="legend" id="conjLegend"></div>
+      <div class="plot-caption">x = candidate coin bias p (0 to 1) &nbsp;&middot;&nbsp; y = density (each curve scaled to area 1)</div>
+      <div class="metric-row">
+        <div class="metric blue"><div class="lbl">prior</div><div class="num" id="cjPrior">-</div></div>
+        <div class="metric coral"><div class="lbl">data (heads, tails)</div><div class="num" id="cjData">-</div></div>
+        <div class="metric green"><div class="lbl">posterior</div><div class="num" id="cjPost">-</div></div>
+        <div class="metric amber"><div class="lbl">mean</div><div class="num" id="cjMean">-</div></div>
+      </div>
+      <div class="calc" id="conjCalc"></div>
+      <div class="story-line" id="conjStory"></div>
     </div>
   </div>
 
@@ -267,6 +306,97 @@
   document.getElementById("btnThreeHeads").addEventListener("click", () => { demoOverride=[1,1,1]; flipCount = 3; renderPosterior(); });
   document.getElementById("btnResetPost").addEventListener("click", () => { demoOverride=null; flipCount = 0; renderPosterior(); });
   renderPosterior();
+
+  /* ============================================================
+     TAB — BETA UPDATE (CONJUGACY)
+     ============================================================ */
+  const CONJ_PRESETS = {
+    flat:    {a:1,  b:1,  h:null, t:null, story:"Beta(1,1): a−1 = 0 imagined heads, b−1 = 0 imagined tails. No lean at all, so the curve is perfectly flat: every bias p is equally plausible."},
+    lean:    {a:5,  b:2,  h:null, t:null, story:"Beta(5,2): 4 imagined heads and 1 imagined tail. The curve leans toward heads (peak at p = 0.8, mean 5/7 = 0.714)."},
+    strong:  {a:50, b:50, h:null, t:null, story:"Beta(50,50): 49 imagined heads and 49 imagined tails. A tall, narrow hump at 0.5, a strong belief that the coin is fair."},
+    u5:      {a:1,  b:1,  h:4,  t:1,  story:"Flat prior + 4 heads and 1 tail. The prior contributes nothing, so the posterior has exactly the likelihood's shape (the coral likelihood curve is hidden right under the green posterior): Beta(5,2), mean 5/7 = 0.714 (the table's n = 5 row)."},
+    u20:     {a:1,  b:1,  h:11, t:9,  story:"Flat prior + 11 heads and 9 tails gives Beta(12,10), mean 12/22 = 0.545 (the table's n = 20 row). More data, so the posterior is narrower than after 5 flips."},
+    ustrong: {a:50, b:50, h:4,  t:1,  story:"Same 5 flips, but starting from Beta(50,50). The data adds only 4 and 1 to exponents that are already 49 and 49, so the posterior Beta(54,51) barely moves off 0.5 (mean ≈ 0.514). A strong prior needs a lot of data to shift."}
+  };
+  function gcd(x,y){ while(y){ [x,y]=[y,x%y]; } return x; }
+  function fracStr(n,d){ const g=gcd(n,d); return (g>1) ? `${n}/${d} = ${n/g}/${d/g}` : `${n}/${d}`; }
+  function curvePath(density, gridN, X, Y){
+    let d="";
+    for(let i=0;i<=gridN;i++){ d += (i===0?"M":"L")+X(i/gridN).toFixed(2)+","+Y(density[i]).toFixed(2)+" "; }
+    return d;
+  }
+  function renderConjugacy(key){
+    const P = CONJ_PRESETS[key];
+    document.querySelectorAll("[data-conj]").forEach(b => b.classList.toggle("active", b.dataset.conj===key));
+    const isUpdate = P.h!==null;
+    const gridN = 1000;
+    const prior = betaDensityGrid(P.a, P.b, gridN);
+    const curves = [{dens:prior.density, color:"var(--blue)", dash:isUpdate?"6 5":null, label:`prior Beta(${P.a},${P.b})`}];
+    let A=P.a, B=P.b;
+    if (isUpdate){
+      A = P.a+P.h; B = P.b+P.t;
+      // likelihood p^h (1-p)^t, rescaled to area 1 (same shape as Beta(h+1, t+1))
+      const lik = betaDensityGrid(P.h+1, P.t+1, gridN);
+      curves.push({dens:lik.density, color:"var(--coral)", dash:"2 4", label:`likelihood p^${P.h}(1−p)^${P.t} (rescaled)`});
+      const post = betaDensityGrid(A, B, gridN);
+      curves.push({dens:post.density, color:"var(--green)", dash:null, label:`posterior Beta(${A},${B})`});
+    }
+    // numerical mean of the drawn posterior (or prior) as a cross-check of the exact fraction
+    const last = curves[curves.length-1].dens;
+    let numMean=0; for(let i=0;i<=gridN;i++) numMean += (i/gridN)*last[i]*(1/gridN);
+    const exactMean = A/(A+B);
+
+    const svg = document.getElementById("conjSvg");
+    svg.innerHTML = "";
+    const W=640,H=300,pad=40;
+    let maxD = 0; curves.forEach(c => { maxD = Math.max(maxD, ...c.dens); });
+    maxD = Math.max(1.5, maxD*1.1);
+    function X(x){ return pad + x*(W-2*pad); }
+    function Y(y){ return H-pad - (y/maxD)*(H-2*pad); }
+    svg.appendChild(el("line",{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:"var(--chalk-dim)","stroke-width":1}));
+    [0,0.25,0.5,0.75,1].forEach(v => {
+      svg.appendChild(el("line",{x1:X(v),y1:H-pad,x2:X(v),y2:H-pad+5,stroke:"var(--chalk-dim)","stroke-width":1}));
+      const t = el("text",{x:X(v),y:H-pad+18,"text-anchor":"middle","font-size":11,fill:"var(--chalk-dim)","font-family":"JetBrains Mono, monospace"});
+      t.textContent = v.toString(); svg.appendChild(t);
+    });
+    curves.forEach(c => {
+      const attrs = {d:curvePath(c.dens, gridN, X, Y), fill:"none", stroke:c.color, "stroke-width":c.dash?2:2.8};
+      if (c.dash) attrs["stroke-dasharray"] = c.dash;
+      svg.appendChild(el("path", attrs));
+    });
+    svg.appendChild(el("line",{x1:X(exactMean),y1:H-pad,x2:X(exactMean),y2:pad*0.5,stroke:"var(--amber)","stroke-width":2,"stroke-dasharray":"4 3"}));
+    const mt = el("text",{x:Math.min(W-pad-10, X(exactMean)+6),y:pad*0.5+10,"font-size":12,fill:"var(--amber)","font-family":"JetBrains Mono, monospace","text-anchor":exactMean>0.8?"end":"start"});
+    mt.textContent = "mean " + exactMean.toFixed(3); svg.appendChild(mt);
+
+    document.getElementById("conjLegend").innerHTML = curves.map(c =>
+      `<span><b style="border-top-color:${c.color};border-top-style:${c.dash?"dashed":"solid"}"></b>${c.label}</span>`).join("") +
+      `<span><b style="border-top-color:var(--amber);border-top-style:dashed"></b>mean</span>`;
+
+    document.getElementById("cjPrior").textContent = `Beta(${P.a},${P.b})`;
+    document.getElementById("cjData").textContent = isUpdate ? `${P.h}H, ${P.t}T` : "none";
+    document.getElementById("cjPost").textContent = isUpdate ? `Beta(${A},${B})` : "-";
+    document.getElementById("cjMean").textContent = exactMean.toFixed(3);
+
+    let html = "";
+    if (!isUpdate){
+      html += `Beta(${P.a},${P.b}) shape:  p^(${P.a}−1) · (1−p)^(${P.b}−1)  =  p^${P.a-1} · (1−p)^${P.b-1}\n`;
+      html += `imagined heads = a − 1 = <span class="hl">${P.a-1}</span>,  imagined tails = b − 1 = <span class="hl">${P.b-1}</span>\n`;
+      html += `mean = a/(a+b) = ${P.a}/(${P.a}+${P.b}) = ${fracStr(P.a, P.a+P.b)} = <span class="g">${exactMean.toFixed(3)}</span>`;
+    } else {
+      html += `prior exponents + data counts = posterior exponents\n`;
+      html += `  heads side:  a + h = ${P.a} + <span class="c">${P.h}</span> = <span class="g">${A}</span>\n`;
+      html += `  tails side:  b + t = ${P.b} + <span class="c">${P.t}</span> = <span class="g">${B}</span>\n`;
+      html += `in powers:  likelihood p^${P.h}(1−p)^${P.t}  ×  prior p^${P.a-1}(1−p)^${P.b-1}\n`;
+      html += `        =  p^(${P.h}+${P.a-1}) (1−p)^(${P.t}+${P.b-1})  =  p^${A-1}(1−p)^${B-1},  a Beta(${A},${B}) shape\n`;
+      html += `posterior = <span class="g">Beta(${A}, ${B})</span>\n`;
+      html += `posterior mean = (a+h)/(a+b+h+t) = ${A}/(${P.a}+${P.b}+${P.h}+${P.t}) = ${fracStr(A, A+B)} = <span class="hl">${exactMean.toFixed(3)}</span>`;
+    }
+    html += `\n(numerical check: area-weighted mean of the drawn curve = ${numMean.toFixed(3)})`;
+    document.getElementById("conjCalc").innerHTML = html;
+    document.getElementById("conjStory").textContent = P.story;
+  }
+  document.querySelectorAll("[data-conj]").forEach(b => b.addEventListener("click", () => renderConjugacy(b.dataset.conj)));
+  renderConjugacy("u5");
 
   /* ============================================================
      TAB 2 — CONFIDENCE VS CREDIBLE

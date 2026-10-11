@@ -26,7 +26,7 @@ function LevelExplain({ item, level }: { item: GalleryItem; level: string }) {
     setStatus("loading");
     streamTutor(
       item.prompt,
-      { learnerLevel: level },
+      { learnerLevel: level, skipCurated: true },
       (tok) => setText((t) => t + tok),
       controller.signal
     )
