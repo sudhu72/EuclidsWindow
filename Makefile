@@ -1,5 +1,5 @@
 PYTHON ?= python3
-API_BASE ?= http://localhost:8000
+API_BASE ?= http://localhost:8010
 LORA_INPUT ?= backend/data/raw_tuning_records.json
 LORA_OUTPUT ?= backend/data/lora_train.jsonl
 LORA_BASE_SAMPLE ?= backend/data/raw_tuning_records.sample.json
@@ -8,17 +8,64 @@ LORA_MERGED_RAW ?= backend/data/raw_tuning_records.merged.json
 LORA_FOLLOWUP_WEIGHT ?= 2
 LORA_SHUFFLE_SEED ?= 42
 LORA_NO_SHUFFLE ?= 0
-LORA_MODEL ?= euclid-math-lora-v1
+LORA_MODEL ?= euclid-tutor:v2
+LORA_BASE_HF ?= Qwen/Qwen3-4B-Instruct-2507
+LORA_BASE_OLLAMA ?= qwen3:4b-instruct
+LORA_VENV ?= .venv-lora
+LORA_PY := $(LORA_VENV)/bin/python
+LORA_EVAL_N ?= 40
 
-.PHONY: help lora-merge-samples lora-prepare lora-prepare-merged lora-train lora-eval
+.PHONY: help lora-merge-samples lora-prepare lora-prepare-merged lora-setup lora-data lora-distill lora-train lora-test lora-pick lora-export lora-eval lora-all app-eval
 
 help:
 	@echo "Available targets:"
-	@echo "  make lora-merge-samples - Merge base + follow-up raw samples with weighting"
-	@echo "  make lora-prepare  - Convert raw records into LoRA JSONL dataset"
-	@echo "  make lora-prepare-merged - Merge samples then convert to LoRA JSONL"
-	@echo "  make lora-train    - Print starter training commands and next steps"
-	@echo "  make lora-eval     - Run quick eval API checks against running app"
+	@echo "  make lora-setup    - Create $(LORA_VENV) with mlx-lm (Apple Silicon; uses Homebrew python3.12, not Anaconda)"
+	@echo "  make lora-data     - Build data/lora/{train,valid,test}.jsonl from curated topics + cogito tutorials"
+	@echo "  make lora-distill  - Teacher (qwen3:8b) answers for the train prompts; keeps only those that beat the base"
+	@echo "  make lora-train    - Train the LoRA adapter (scripts/lora/lora_config.yaml)"
+	@echo "  make lora-test     - Held-out loss/perplexity: base vs. adapter"
+	@echo "  make lora-pick     - Export each checkpoint and pick the best by head-to-head on VALID prompts"
+	@echo "  make lora-export   - Fuse adapter (ADAPTER_FILE=... for a checkpoint) and register it in Ollama as $(LORA_MODEL)"
+	@echo "  make lora-eval     - Head-to-head vs. the base model on held-out topics; prints PROMOTE / KEEP BASE"
+	@echo "  make lora-all      - data -> train -> test -> export -> eval"
+	@echo "  make lora-merge-samples / lora-prepare - Turn reviewed raw tutor records into extra training JSONL"
+	@echo "  make app-eval      - Check the app's eval endpoints at $(API_BASE)"
+
+lora-setup:
+	/opt/homebrew/bin/python3.12 -m venv $(LORA_VENV)
+	$(LORA_VENV)/bin/pip install --upgrade pip mlx-lm
+	# llama.cpp's converter: Ollama can't import Qwen3 safetensors directly
+	[ -d models/lora/tools/llama.cpp ] || git clone --depth 1 https://github.com/ggml-org/llama.cpp models/lora/tools/llama.cpp
+	$(LORA_VENV)/bin/pip install -e models/lora/tools/llama.cpp/gguf-py sentencepiece "transformers>=4.45" torch
+
+lora-data:
+	$(LORA_PY) scripts/lora/build_dataset.py $(if $(LORA_COGITO_QA),--cogito-qa $(LORA_COGITO_QA),) $(if $(LORA_EXTRA),--extra $(LORA_EXTRA),) $(if $(LORA_DISTILLED),--distilled $(LORA_DISTILLED),)
+
+lora-distill:
+	$(LORA_PY) -u scripts/lora/distill.py --base $(LORA_BASE_OLLAMA) 2>&1 | tee -a models/lora/distill.log
+
+lora-train:
+	@mkdir -p models/lora
+	$(LORA_VENV)/bin/mlx_lm.lora -c scripts/lora/lora_config.yaml 2>&1 | tee models/lora/train.log
+
+LORA_TEST_ARGS = --model $(LORA_BASE_HF) --data data/lora --test --mask-prompt --max-seq-length 2048 --test-batches -1
+
+lora-test:
+	@echo "== base model, held-out test set"
+	$(LORA_VENV)/bin/mlx_lm.lora $(LORA_TEST_ARGS) --adapter-path ""
+	@echo "== base + adapter"
+	$(LORA_VENV)/bin/mlx_lm.lora $(LORA_TEST_ARGS) --adapter-path models/lora/adapters
+
+lora-pick:
+	BASE_OLLAMA=$(LORA_BASE_OLLAMA) scripts/lora/pick_checkpoint.sh $(LORA_MODEL)
+
+lora-export:
+	BASE_HF=$(LORA_BASE_HF) BASE_OLLAMA=$(LORA_BASE_OLLAMA) scripts/lora/export_ollama.sh $(LORA_MODEL)
+
+lora-eval:
+	$(LORA_PY) scripts/lora/eval.py --tuned $(LORA_MODEL) --base $(LORA_BASE_OLLAMA) --n $(LORA_EVAL_N)
+
+lora-all: lora-data lora-train lora-test lora-export lora-eval
 
 lora-merge-samples:
 	@$(PYTHON) scripts/merge_lora_samples.py \
@@ -35,23 +82,7 @@ lora-prepare:
 lora-prepare-merged: lora-merge-samples
 	@$(PYTHON) scripts/prepare_lora_dataset.py --input "$(LORA_MERGED_RAW)" --output "$(LORA_OUTPUT)"
 
-lora-train:
-	@echo "LoRA training scaffold"
-	@echo ""
-	@echo "1) Prepare dataset:"
-	@echo "   make lora-prepare LORA_INPUT=backend/data/raw_tuning_records.json"
-	@echo ""
-	@echo "2) Train with your preferred stack (PEFT/TRL/Unsloth) using:"
-	@echo "   - dataset: $(LORA_OUTPUT)"
-	@echo "   - recipe: docs/LORA_TUNING_PLAYBOOK.md"
-	@echo ""
-	@echo "3) Build Ollama model after export:"
-	@echo "   ollama create $(LORA_MODEL) -f Modelfile"
-	@echo "   export LOCAL_LLM_MODEL=$(LORA_MODEL)"
-	@echo ""
-	@echo "Tip: keep versioned model names for rollback (v1, v2, ...)."
-
-lora-eval:
+app-eval:
 	@echo "Checking app health at $(API_BASE)..."
 	@curl -fsS "$(API_BASE)/health" >/dev/null
 	@echo "Health OK"

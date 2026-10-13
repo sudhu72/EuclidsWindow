@@ -1,264 +1,146 @@
 # LoRA Tuning Playbook for Euclid's Window
 
-This playbook gives a practical template to tune a local math model for Euclid's Window using LoRA/QLoRA, evaluate improvements, and serve the tuned model through Ollama.
-
-## 1) Goal and Scope
-
-Tune behavior for:
-
-- clearer step-by-step pedagogy,
-- stronger follow-up flow (less repetition),
-- better formatting consistency,
-- stronger symbolic/math reasoning for your target topics.
-
-Out of scope:
-
-- replacing deterministic visual planner logic,
-- changing API contracts (keep output compatible with existing app behavior).
-
-## 2) Recommended Stack
-
-- **Training**: Hugging Face `transformers` + `peft` + `trl` (or Unsloth)
-- **Precision**: QLoRA (`4-bit` base loading, LoRA adapters)
-- **Serving**: Ollama
-- **Evaluation**: Euclid's Window eval endpoints + offline regression prompts
-
-## 3) Dataset Design
-
-Use instruction-style JSONL examples. Keep each sample short, high signal, and directly aligned to app behavior.
-
-### Minimal JSONL schema
-
-```json
-{"instruction":"Explain Euler identity in plain English.", "input":"Learner level: teen", "output":"..."}
-```
-
-Optional richer schema:
-
-```json
-{"instruction":"...", "input":"...", "output":"...", "tags":["calculus","followup"], "difficulty":"intermediate"}
-```
-
-### Include these data buckets
-
-1. **Core tutor responses**
-   - plain mode, axiomatic mode, both mode
-2. **Follow-up progression**
-   - examples where the second/third turn deepens reasoning instead of repeating
-3. **Error-correction examples**
-   - weak solution -> corrected step-by-step solution
-4. **Topic diversity**
-   - algebra, calculus, linear algebra, graph theory, logic/foundations
-5. **Formatting constraints**
-   - concise bullets, explicit equations, short recap + deeper step
-
-### Data quality checks
-
-- remove duplicates/nearly identical rows,
-- avoid contradictory answers,
-- ensure output length distribution resembles target UI usage (not always long essays).
-
-## 4) Formatting Script (Template)
-
-Create a script to convert app interactions into train-ready JSONL.
-
-```python
-# scripts/prepare_lora_dataset.py
-import json
-from pathlib import Path
-
-def convert(records):
-    out = []
-    for r in records:
-        instruction = r.get("question", "").strip()
-        if not instruction:
-            continue
-        learner = r.get("learner_level", "teen")
-        output = (r.get("answer") or "").strip()
-        if not output:
-            continue
-        out.append(
-            {
-                "instruction": instruction,
-                "input": f"Learner level: {learner}",
-                "output": output,
-            }
-        )
-    return out
-
-if __name__ == "__main__":
-    src = Path("data/raw_tuning_records.json")
-    dst = Path("data/lora_train.jsonl")
-    records = json.loads(src.read_text(encoding="utf-8"))
-    rows = convert(records)
-    with dst.open("w", encoding="utf-8") as f:
-        for row in rows:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
-    print(f"Wrote {len(rows)} rows to {dst}")
-```
-
-## 5) QLoRA Training Configuration (Template)
-
-Typical starting point for a 7B model:
-
-- LoRA rank `r=16` or `32`
-- alpha `16` or `32`
-- dropout `0.05`
-- target modules (example): `q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj`
-- learning rate: `1e-4` to `2e-4`
-- train epochs: `2-4` (start small)
-- context length aligned with usage (e.g., 4096 or 8192)
-
-Example (illustrative):
-
-```python
-from peft import LoraConfig
-
-lora_config = LoraConfig(
-    r=16,
-    lora_alpha=32,
-    lora_dropout=0.05,
-    target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"],
-    bias="none",
-    task_type="CAUSAL_LM",
-)
-```
-
-## 6) Training Loop (Checklist)
-
-1. Split train/validation (e.g., 90/10).
-2. Run a short sanity train (few hundred steps).
-3. Inspect generations on a fixed prompt set before full training.
-4. Train full run.
-5. Save adapter + tokenizer artifacts.
-
-Track:
-
-- validation loss trend,
-- instruction-following quality,
-- qualitative regressions (hallucinations, repetitive follow-ups).
-
-## 7) Merge + Export for Ollama
-
-After training:
-
-1. Merge LoRA adapter into base model (if needed).
-2. Convert merged model to GGUF (toolchain-dependent).
-3. Create Ollama `Modelfile`.
-
-Example:
-
-```text
-FROM /absolute/path/euclid-math-lora-v1.gguf
-PARAMETER temperature 0.2
-PARAMETER top_p 0.9
-PARAMETER num_ctx 8192
-SYSTEM You are a math tutor for Euclid's Window. Be accurate, concise, and pedagogically progressive.
-```
+Tune the local tutor model on the app's own teaching content, check it against
+the base model on topics it never trained on, and only then serve it through
+Ollama. Everything runs on one Apple Silicon Mac with [MLX](https://github.com/ml-explore/mlx-lm).
 
 ```bash
-ollama create euclid-math-lora-v1 -f Modelfile
-ollama run euclid-math-lora-v1
+make lora-setup                                   # once: .venv-lora, mlx-lm, llama.cpp converter
+make lora-data LORA_COGITO_QA=data/lora/cogito_qa.jsonl
+make lora-distill                                 # hours: teacher answers that beat the base
+make lora-data LORA_COGITO_QA=data/lora/cogito_qa.jsonl LORA_DISTILLED=data/lora/distilled.jsonl
+make lora-train && make lora-pick LORA_MODEL=euclid-tutor:v3
+make lora-export LORA_MODEL=euclid-tutor:v3 ADAPTER_FILE=models/lora/adapters/0000NNN_adapters.safetensors
+make lora-eval LORA_MODEL=euclid-tutor:v3        # final verdict on the TEST prompts
 ```
 
-## 8) Integrate with Euclid's Window
+## 1) What gets tuned, and why
 
-Set tuned model:
+Retrieval (library, concept graph, skills) already improves answers without any
+training. LoRA goes one step further: it teaches the local model the *style*
+the app wants — Feynman-method explanations, the four learner levels, LaTeX
+conventions, "say I don't know" — so it needs less prompting to get there.
 
-```bash
-export LOCAL_LLM_MODEL=euclid-math-lora-v1
-```
+- **Base model:** `Qwen/Qwen3-4B-Instruct-2507`, the Hugging Face weights of
+  Ollama's `qwen3:4b-instruct`.
+- **Method:** LoRA (rank 8, scale 10) on the top 8 of 36 transformer blocks,
+  lr 5e-5, loss on the answer tokens only (`mask_prompt`). See
+  `scripts/lora/lora_config.yaml`.
 
-or set in UI:
+## 2) Training data
 
-- Settings -> Local LLM Model
+`scripts/lora/build_dataset.py` builds `data/lora/{train,valid,test}.jsonl`
+(MLX chat format) plus `{train,valid,test}_prompts.jsonl` (question, level,
+reference answer):
 
-Then restart app and verify:
+| Source | Examples | Notes |
+|---|---|---|
+| Curated topics (`backend/data/demo_topics.json`) | 588 | Each topic's hand-written answer at each learner level |
+| Cogito Q&A (`--cogito-qa`, from `rebuild_cogito_qa.py`) | 502 | Tutorial sections rewritten by `qwen3:8b` as standalone question + answer; rejected if they point at unseen context or invent numbers |
+| Raw cogito sections (default without `--cogito-qa`) | ~660 | Used in v1; 44% referred to "above"/earlier parts the model never sees — avoid |
+| `--extra` (optional) | any | Reviewed records in the instruction/input/output schema of `scripts/prepare_lora_dataset.py` |
+| `--distilled` (optional) | kept rows | Replaces the TRAIN answers with teacher answers from `distill.py` (section 3) |
 
-- `/api/settings`
-- `/api/settings/test` (target `ollama`)
+Every example is rendered with the **same prompts the app sends at runtime**,
+imported from the backend: the *tutor* format (`REASONING_SYSTEM_PROMPT` +
+`COMPACT_TEACHING` + `COMPACT_SKILL` + user template) and the *chat* format
+(the system prompt from `routers/chat.py`).
 
-## 9) Evaluate Before Promoting
+The split is **by topic/tutorial** (about 87/5/8), so valid/test measure
+answers on topics the model never saw. Valid prompts pick the checkpoint; test
+prompts are used once, for the final verdict.
 
-Use both:
+## 3) Distillation — `make lora-distill`
 
-1. **Built-in endpoints**
-   - `/api/eval/report`
-   - `/api/eval/history`
-   - `/api/eval/compare`
-2. **Custom regression prompts**
-   - include follow-up flow prompts
-   - include symbolic correctness probes
-   - include edge topics requiring web RAG assist
+Imitating the references doesn't beat the base model (see section 7): the
+judge prefers `qwen3:4b-instruct`'s own answers even to the hand-written
+references. `scripts/lora/distill.py` builds better targets instead. For each
+training prompt:
 
-Promotion criteria example:
+1. the teacher (`qwen3:8b`, thinking on) answers the runtime prompt, with the
+   reference given as private source notes for facts, examples and level;
+2. the base model answers the same prompt without notes;
+3. teacher answers that loop or mention the notes / unseen context are dropped;
+4. the judge compares teacher vs. base in **both orders**; the answer is kept
+   only if it wins both.
 
-- +X% checks pass rate,
-- non-regression on latency budget,
-- improved follow-up quality on curated prompt set.
+It is resumable (re-run to continue) and takes several hours for ~930 prompts
+on an M5 Max. Expect roughly 1 in 5 answers to be kept. Train on the kept rows
+with `make lora-data ... LORA_DISTILLED=data/lora/distilled.jsonl`; with a few
+hundred examples, lower `iters` so the run stays around 2 epochs.
 
-## 10) Versioning and Rollback
+## 4) Train — `make lora-train`
 
-Use semantic model names:
+The adapter is saved to `models/lora/adapters/` every 100 steps and the log
+goes to `models/lora/train.log`. Validation loss is reported every 50 steps, but
+**don't pick the checkpoint by loss** — v1's loss improved a lot while the
+judge preferred the base 35–5. `make lora-test` reports held-out loss for base
+vs. adapter as a cheap sanity check.
 
-- `euclid-math-base`
-- `euclid-math-lora-v1`
-- `euclid-math-lora-v2`
+## 5) Pick and gate — `make lora-pick`, `make lora-eval`
 
-Keep previous stable model available in settings for quick rollback.
+`scripts/lora/pick_checkpoint.sh` exports every checkpoint as
+`<name>-ck<step>`, runs the head-to-head on the **valid** prompts, and writes
+results to `models/lora/checkpoints/<name>/`. Then export the best checkpoint
+under its final name and run `make lora-eval` on the **test** prompts.
 
-## 11) Common Pitfalls
+`scripts/lora/eval.py` asks both Ollama models the same questions with the
+app's prompts (same `repeat_penalty` for both), then:
 
-- Overfitting to one style -> weak generalization
-- Too many near-duplicate prompts -> repetition at inference
-- Training examples that conflict with deterministic planner behavior
-- Ignoring evaluation of follow-up turns (single-turn only)
+- scores each answer by ROUGE-L against the reference,
+- has a judge (`qwen3:8b`, thinking off) pick the better answer **twice, with
+  the order swapped**; a side wins only if it wins both, otherwise it's a tie,
+- counts answers that loop (a sentence repeated 3+ times).
 
-## 12) Security and Licensing
+It prints **PROMOTE** only if the tuned model wins more pairs than it loses
+*and* its ROUGE-L is not lower. Every answer is saved in the report so you can
+read them. `--rejudge <report>` re-scores saved answers without regenerating.
 
-- Remove PII from training corpora
-- Verify base model and dataset license compatibility
-- Document provenance of tuned artifacts
+## 6) Export and serve — `make lora-export`
 
-## 13) Makefile Shortcuts
+`scripts/lora/export_ollama.sh` fuses the adapter (`mlx_lm.fuse --dequantize`;
+`ADAPTER_FILE=` picks a checkpoint), converts to GGUF f16 with llama.cpp's
+`convert_hf_to_gguf.py`, writes a Modelfile with the base model's template and
+parameters plus `repeat_penalty 1.1`, and runs `ollama create --quantize q4_K_M`
+(the base's quantization, so the comparison is fair).
 
-If you use the repository Makefile:
+Exporting does **not** switch the app. If the gate says PROMOTE, select the
+model under **Settings → Local LLM Model** (a saved setting overrides
+`LOCAL_LLM_MODEL`). Keep old versions in Ollama until a newer one has proven
+itself; delete the `-ck<step>` candidates afterwards.
 
-```bash
-cp backend/data/raw_tuning_records.sample.json backend/data/raw_tuning_records.json
-make lora-prepare LORA_INPUT=backend/data/raw_tuning_records.json
-make lora-train
-make lora-eval API_BASE=http://localhost:8000
-```
+## 7) Results so far
 
-For stronger multi-turn flow tuning, start from:
+| Run | Base | Data | vs. base (judge) | Notes |
+|---|---|---|---|---|
+| v1 | Qwen2.5-1.5B | curated + raw cogito sections | 5–35 (test) | 13/40 answers looped; pointed at unseen context |
+| v2a | Qwen3-4B | curated only | best 11–17 (valid) | no loops; copied the curated format (emojis, short) |
+| v2b | Qwen3-4B | curated + 502 cogito Q&A | best 19–51 (valid) | no loops |
+| v3 | Qwen3-4B | distilled (section 3) | in progress | |
 
-```bash
-cp backend/data/raw_tuning_records.followup.sample.json backend/data/raw_tuning_records.json
-make lora-prepare LORA_INPUT=backend/data/raw_tuning_records.json
-```
+v1–v2 verdicts used a single random-order judgment; later runs judge both orders.
 
-To combine base + follow-up sets with weighting:
+**Why v2 lost:** the references themselves lose to the base 27–43 under the
+same judge (median length: base 3,166 chars, reference 1,229). Imitating them
+can't win, which is what motivated distillation.
 
-```bash
-make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_OUTPUT=backend/data/lora_train.jsonl
-```
+**Base model comparison:** `qwen3:4b-instruct` beat `qwen2.5:1.5b` 50–1
+(41 ties, both-order judging) on the 92 test prompts, with no loops, at
+similar generation speed. It is the stronger local tutor even untuned.
 
-For reproducible ordering across runs, set a fixed seed:
+## 8) Pitfalls
 
-```bash
-make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_SHUFFLE_SEED=42 LORA_OUTPUT=backend/data/lora_train.jsonl
-```
-
-To disable shuffling and preserve deterministic concatenation order:
-
-```bash
-make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_NO_SHUFFLE=1 LORA_OUTPUT=backend/data/lora_train.jsonl
-```
-
-This runs:
-
-1. `scripts/merge_lora_samples.py` (builds `backend/data/raw_tuning_records.merged.json`)
-2. `scripts/prepare_lora_dataset.py` (converts merged raw JSON -> JSONL)
-
----
+- **Use Homebrew Python, not Anaconda, for `.venv-lora`.** Anaconda ships MPICH,
+  and MLX aborts ("MLX requires Open MPI but this is MPICH").
+- **Ollama can't import Qwen3 safetensors** ("unsupported architecture
+  Qwen3ForCausalLM"); the export converts to GGUF first.
+- **Take the template from `ollama show --modelfile`**, not `--template`: for
+  qwen3 the latter prints raw Jinja, which Ollama can't parse.
+- **The judge has a strong position bias** — `qwen3:8b` picks answer A most of
+  the time regardless of content. Always judge both orders.
+- **The judge favours longer answers** despite being told not to. If you want
+  short answers (kids/teen), read the saved pairs yourself before trusting it.
+- **Re-run `make lora-data` after a cogito sync** (and `rebuild_cogito_qa.py`
+  for new tutorials).
+- **Licensing:** Qwen3-4B-Instruct-2507 is Apache-2.0. The training content is
+  this project's own (curated topics, cogito tutorials).

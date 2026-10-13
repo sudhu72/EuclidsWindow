@@ -454,71 +454,26 @@ The model can be switched at runtime from the Settings tab without restarting th
 See:
 
 - `docs/OLLAMA_TUNING.md` for quick Ollama tuning defaults
-- `docs/LORA_TUNING_PLAYBOOK.md` for full LoRA/QLoRA training-to-serving workflow
+- `docs/LORA_TUNING_PLAYBOOK.md` for the LoRA data -> train -> eval -> serve workflow
 
-## Local Model Tuning (LoRA / QLoRA)
+## Local Model Tuning (LoRA)
 
-You can tune a local math model for this app using LoRA adapters, then serve the tuned model through Ollama.
-
-### What LoRA gives you here
-
-- Better adherence to Euclid's Window response style (structured math explanations)
-- Improved domain behavior on your custom prompt/eval set
-- Lower compute cost versus full-model fine-tuning
-
-### Practical workflow
-
-1. **Pick a base model** (example: `qwen2.5-math:7b` family).
-2. **Prepare training data** from your target interactions:
-   - tutor QA pairs,
-   - prompt-collection style step-by-step responses,
-   - failure/regression examples from eval runs.
-3. **Run QLoRA training** (typically with Hugging Face PEFT/TRL or Unsloth).
-4. **Merge adapter into base model** (or keep adapter + base for runtime frameworks that support it).
-5. **Export to GGUF** for Ollama serving (if your toolchain requires conversion).
-6. **Create an Ollama model** and point app settings to it.
-
-### Minimal serving step (after training/export)
-
-Create `Modelfile`:
-
-```text
-FROM /absolute/path/to/your-tuned-model.gguf
-PARAMETER temperature 0.2
-PARAMETER top_p 0.9
-PARAMETER num_ctx 8192
-SYSTEM You are a math tutor for Euclid's Window. Be concise, accurate, and structured.
-```
-
-Build and test:
+The local tutor model can be fine-tuned on the app's own teaching content with LoRA, on an Apple Silicon Mac using [MLX](https://github.com/ml-explore/mlx-lm):
 
 ```bash
-ollama create euclid-math-lora -f Modelfile
-ollama run euclid-math-lora
+make lora-setup    # once: .venv-lora with mlx-lm
+make lora-all      # data -> train -> test -> export -> eval
 ```
 
-Configure app to use tuned model:
+- **Data** (`make lora-data`): the curated topics at all four learner levels, plus cogito tutorial sections rewritten as standalone Q&A. Each example uses the same prompts the app sends at runtime. The split is by topic, so the test set measures answers on topics the model never trained on.
+- **Distillation** (`make lora-distill`): a stronger teacher (`qwen3:8b`) answers the training prompts with the references as private notes; only answers that beat the base model are kept as training targets.
+- **Training** (`make lora-train`, `make lora-pick`): a LoRA adapter on `Qwen/Qwen3-4B-Instruct-2507`, the weights behind `qwen3:4b-instruct`; each checkpoint is exported and the best one is picked by head-to-head on validation prompts.
+- **Gate** (`make lora-eval`): a head-to-head between the tuned and base Ollama models on held-out topics (ROUGE-L against the references plus a `qwen3:8b` judge run in both answer orders). It prints PROMOTE only if the tuned model wins.
+- **Serving** (`make lora-export`): fuse the adapter, convert to GGUF, then `ollama create`. Export does not switch the app. Pick the model under **Settings → Local LLM Model** once it has passed the gate.
 
-```bash
-export LOCAL_LLM_MODEL=euclid-math-lora
-```
+So far no tuned model has beaten its base (v1 and v2 lost; distillation-based v3 is in progress).
 
-or set it in the UI under **Settings → Local LLM Model**.
-
-### Evaluation loop (recommended)
-
-- Run app eval endpoints (`/api/eval/report`, `/api/eval/history`, `/api/eval/compare`)
-- Track improvements in:
-  - checks pass rate,
-  - visualization coverage,
-  - latency/timeout behavior,
-  - quality on follow-up flow prompts.
-
-### Notes
-
-- Ollama itself is primarily an inference/runtime layer; LoRA training is usually done in external training frameworks, then imported.
-- Keep a baseline model (e.g., `euclid-math-base`) and tuned variants (e.g., `euclid-math-lora-v1`) for safe rollback.
-- Respect base model license constraints when distributing tuned weights.
+See `docs/LORA_TUNING_PLAYBOOK.md` for details and pitfalls.
 
 ## Main User Flows
 
@@ -712,11 +667,12 @@ docker compose run --rm euclids-window sh -lc "pip install -q -r /app/backend/re
 Use the Makefile helpers:
 
 ```bash
-cp backend/data/raw_tuning_records.sample.json backend/data/raw_tuning_records.json
-make lora-prepare LORA_INPUT=backend/data/raw_tuning_records.json
-make lora-train
-make lora-eval API_BASE=http://localhost:8000
+make lora-all                      # data -> train -> test -> export -> eval (see the playbook for the distillation flow)
+make lora-eval LORA_MODEL=euclid-tutor:v3   # re-run the head-to-head for another version
+make app-eval                      # check the app's eval endpoints
 ```
+
+The raw-record helpers below build extra training rows from reviewed tutor conversations; feed the output in with `make lora-data LORA_EXTRA=backend/data/lora_train.jsonl`.
 
 Optional (follow-up-focused dataset for conversational flow tuning):
 
@@ -793,4 +749,4 @@ make lora-prepare-merged LORA_FOLLOWUP_WEIGHT=2 LORA_NO_SHUFFLE=1 LORA_OUTPUT=ba
 - This project prioritizes local-first learning and iterative pedagogical improvements.
 - Prompt collections, concept graph, and render jobs are designed to support long learning sessions.
 - `docs/OLLAMA_TUNING.md` contains model-specific tuning guidance for stricter output behavior.
-- `docs/LORA_TUNING_PLAYBOOK.md` contains the full LoRA/QLoRA training-to-serving workflow.
+- `docs/LORA_TUNING_PLAYBOOK.md` contains the LoRA data -> train -> eval -> serve workflow.

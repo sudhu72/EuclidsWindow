@@ -1,0 +1,33 @@
+# mlx_lm.lora config for the Euclid's Window tutor adapter.
+# Base = HF weights of Ollama's qwen3:4b-instruct (Qwen3-4B-Instruct-2507,
+# Q4_K_M in Ollama). Run via `make lora-train`; data comes from `make lora-data`.
+#
+# History: v1 was Qwen2.5-1.5B, lr 1e-4, rank 16, 16 layers, raw cogito
+# sections. Held-out loss improved (2.22 -> 1.78) but the judge preferred the
+# base 35-5: the 1.5B model copied the style, looped, and pointed at context it
+# never saw. v2 = bigger base, gentler update, rebuilt standalone data, and the
+# checkpoint is picked by the head-to-head eval on valid prompts, not by loss.
+model: "Qwen/Qwen3-4B-Instruct-2507"
+train: true
+data: "data/lora"
+adapter_path: "models/lora/adapters"
+fine_tune_type: lora
+seed: 7
+
+iters: 300
+batch_size: 4
+learning_rate: 5.0e-5
+max_seq_length: 2048
+mask_prompt: true          # learn the answers, not the (long, fixed) prompts
+grad_checkpoint: true
+num_layers: 8              # adapt only the top 8 of 36 blocks
+
+lora_parameters:
+  rank: 8
+  scale: 10.0
+  dropout: 0.05
+
+steps_per_report: 20
+steps_per_eval: 50
+val_batches: -1
+save_every: 100            # candidates for scripts/lora/pick_checkpoint.sh
