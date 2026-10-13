@@ -8,7 +8,7 @@ services:
     environment:
       LOCAL_AI_ENABLED: "true"
       LOCAL_LLM_PROVIDER: "ollama"
-      LOCAL_LLM_MODEL: "qwen2.5:1.5b"
+      LOCAL_LLM_MODEL: "${LOCAL_LLM_MODEL:-qwen3:4b-instruct}"
       LOCAL_POLYA_MODEL: "${LOCAL_POLYA_MODEL:-qwen3:4b-instruct}"
       LOCAL_POLYA_OLYMPIAD_MODEL: "${LOCAL_POLYA_OLYMPIAD_MODEL:-qwen3:8b}"
       LOCAL_DISCOVER_MODEL: "${LOCAL_DISCOVER_MODEL:-qwen3:8b}"

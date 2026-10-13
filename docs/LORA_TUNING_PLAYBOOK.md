@@ -116,17 +116,26 @@ itself; delete the `-ck<step>` candidates afterwards.
 | v1 | Qwen2.5-1.5B | curated + raw cogito sections | 5–35 (test) | 13/40 answers looped; pointed at unseen context |
 | v2a | Qwen3-4B | curated only | best 11–17 (valid) | no loops; copied the curated format (emojis, short) |
 | v2b | Qwen3-4B | curated + 502 cogito Q&A | best 19–51 (valid) | no loops |
-| v3 | Qwen3-4B | distilled (section 3) | in progress | |
+| v3 | Qwen3-4B | 303 distilled answers, 160 iters | 10–7 (valid, step 80); **9–10, 73 ties (test)** | no loops; ROUGE-L 0.153 vs 0.139; answers ~16% shorter; even with the base, not promoted |
 
-v1–v2 verdicts used a single random-order judgment; later runs judge both orders.
+v1–v2 verdicts used a single random-order judgment; v3 and later judge both orders.
+
+**v3 takeaway:** distillation closed the gap (v2b lost 19–51; v3 is a coin flip)
+but didn't open a lead. Most pairs are split verdicts, so this judge can't
+separate the two models. Next levers: more kept examples (2+ teacher samples per
+prompt; only 22 kids-level rows were kept), a stronger teacher, or a stronger
+judge.
 
 **Why v2 lost:** the references themselves lose to the base 27–43 under the
 same judge (median length: base 3,166 chars, reference 1,229). Imitating them
 can't win, which is what motivated distillation.
 
 **Base model comparison:** `qwen3:4b-instruct` beat `qwen2.5:1.5b` 50–1
-(41 ties, both-order judging) on the 92 test prompts, with no loops, at
-similar generation speed. It is the stronger local tutor even untuned.
+(41 ties, both-order judging) on the 92 test prompts. Through the app itself
+(`scripts/lora/app_eval.py`, which drives `/api/ai/tutor/stream` and switches
+the saved setting per model) it won 26–1 (13 ties) on 40 valid prompts, with
+0 looping answers vs. 5; first token 0.8 s vs. 0.7 s, full answer 12.8 s vs.
+5.6 s median. The app's default local model is now `qwen3:4b-instruct`.
 
 ## 8) Pitfalls
 
