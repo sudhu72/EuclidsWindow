@@ -137,6 +137,16 @@ the saved setting per model) it won 26–1 (13 ties) on 40 valid prompts, with
 0 looping answers vs. 5; first token 0.8 s vs. 0.7 s, full answer 12.8 s vs.
 5.6 s median. The app's default local model is now `qwen3:4b-instruct`.
 
+**Newer small models (Oct 2026).** As the *tutor* (thinking off, 70 valid
+prompts vs. `qwen3:4b-instruct`): Qwen3.5-4B 3–16, Gemma 4 E4B 2–18, Qwen3.5-9B
+3–10 — all lose; the Qwen3.5 models think out loud when thinking is off. For the
+*thinking* roles, Qwen3.5-9B beat `qwen3:8b` on standalone answers (15–4 with a
+non-Qwen judge; `qwen3:8b` judging its own answers called ties), but in the real
+Pólya olympiad flow it was slower (65–204 s per call vs. 40–122 s), its verifier
+step never reached a verdict, and it caught a planted algebra error only vaguely.
+`qwen3:8b` stays for Pólya olympiad and Discover. Test candidates in the app's
+actual multi-step flows, not just on single answers.
+
 ## 8) Pitfalls
 
 - **Use Homebrew Python, not Anaconda, for `.venv-lora`.** Anaconda ships MPICH,
@@ -147,6 +157,12 @@ the saved setting per model) it won 26–1 (13 ties) on 40 valid prompts, with
   qwen3 the latter prints raw Jinja, which Ollama can't parse.
 - **The judge has a strong position bias** — `qwen3:8b` picks answer A most of
   the time regardless of content. Always judge both orders.
+- **A judge from the same family as a contestant is biased** — `qwen3:8b`
+  judging `qwen3:8b` vs. `qwen3.5:9b` mostly called ties. Use a cross-family
+  judge (`eval.py --rejudge <report> --judge <model>`).
+- **Thinking tokens count against `num_predict` and `num_ctx`.** With the
+  ~5.5k-token olympiad prompt at `num_ctx` 8192, a thinking model can run out
+  mid-thought and return nothing; `eval.py --think` uses 16k / 8k.
 - **The judge favours longer answers** despite being told not to. If you want
   short answers (kids/teen), read the saved pairs yourself before trusting it.
 - **Re-run `make lora-data` after a cogito sync** (and `rebuild_cogito_qa.py`

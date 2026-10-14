@@ -225,8 +225,8 @@ class PolyaService:
             sympy_results,
             task=task,
             timeout_seconds=timeout,
-            num_predict=3000 if olympiad else 700,
-            num_ctx=8192 if olympiad else 4096,
+            num_predict=6000 if olympiad else 700,
+            num_ctx=16384 if olympiad else 4096,
         )
         if revised and str(revised.get("feedback") or "").strip():
             return revised, True, True
@@ -254,6 +254,9 @@ class PolyaService:
         ]
         # Olympiad sessions route to a stronger (often thinking-mode) model,
         # which needs a bigger token budget and timeout for its reasoning.
+        # The full preludes make the prompt ~5.5k tokens, and thinking counts
+        # against both limits: at num_ctx 8192 qwen3.5:9b ran out of context
+        # mid-thought and returned no answer.
         olympiad = difficulty == "olympiad"
         task = "polya_olympiad" if olympiad else "polya"
 
@@ -275,8 +278,8 @@ class PolyaService:
                 messages,
                 task=task,
                 timeout_seconds=240 if olympiad else 120,
-                num_predict=3000 if olympiad else num_predict,
-                num_ctx=8192 if olympiad else 4096,
+                num_predict=6000 if olympiad else num_predict,
+                num_ctx=16384 if olympiad else 4096,
                 temperature=0.4 if attempt == 0 else 0.6,
             )
             if raw:

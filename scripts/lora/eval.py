@@ -59,7 +59,8 @@ Do not prefer an answer just because it is longer.
 Reply with ONLY a JSON object: {{"winner": "A" | "B" | "tie", "reason": "<one sentence>"}}"""
 
 
-def ollama_chat(base_url: str, model: str, messages: list[dict], options: dict, think: bool | None = False) -> str:
+def ollama_chat(base_url: str, model: str, messages: list[dict], options: dict, think: bool | None = False,
+                attempts: int = 3) -> str:
     body = {"model": model, "messages": messages, "stream": False, "options": options}
     if think is not None:
         body["think"] = think
@@ -70,7 +71,10 @@ def ollama_chat(base_url: str, model: str, messages: list[dict], options: dict, 
             return json.loads(r.read())["message"]["content"].strip()
     except urllib.error.HTTPError as exc:
         if exc.code == 400 and think is not None:  # model without a thinking toggle
-            return ollama_chat(base_url, model, messages, options, think=None)
+            return ollama_chat(base_url, model, messages, options, think=None, attempts=attempts)
+        if exc.code >= 500 and attempts > 1:  # model load failed while others swap in/out
+            time.sleep(10)
+            return ollama_chat(base_url, model, messages, options, think=think, attempts=attempts - 1)
         raise
 
 
@@ -125,6 +129,8 @@ def main() -> None:
     ap.add_argument("--base", default="qwen3:4b-instruct", help="the untuned model the adapter was trained from")
     ap.add_argument("--repeat-penalty", type=float, default=1.1,
                     help="applied to BOTH models so the Modelfile setting doesn't decide the comparison")
+    ap.add_argument("--think", action="store_true",
+                    help="let BOTH models think before answering (for reasoning-model roles)")
     ap.add_argument("--judge", default="qwen3:8b")
     ap.add_argument("--ollama", default="http://localhost:11434")
     ap.add_argument("--n", type=int, default=40, help="held-out prompts to evaluate")
@@ -140,6 +146,8 @@ def main() -> None:
     rng.shuffle(items)
     items = items[: args.n]
     gen_opts = {"temperature": 0.2, "num_ctx": 4096, "num_predict": 900, "repeat_penalty": args.repeat_penalty}
+    if args.think:  # thinking tokens count against num_predict
+        gen_opts.update(num_ctx=16384, num_predict=8000)
     old = {}
     if args.rejudge:
         prev = json.loads(args.rejudge.read_text())
@@ -157,8 +165,8 @@ def main() -> None:
             fmt = tutor_messages if r["format"] == "tutor_messages" else chat_messages
         else:
             msgs = fmt(it["question"], it["level"], "")[:-1]  # drop the empty assistant turn
-            base_ans = ollama_chat(args.ollama, args.base, msgs, gen_opts)
-            tuned_ans = ollama_chat(args.ollama, args.tuned, msgs, gen_opts)
+            base_ans = ollama_chat(args.ollama, args.base, msgs, gen_opts, think=args.think)
+            tuned_ans = ollama_chat(args.ollama, args.tuned, msgs, gen_opts, think=args.think)
         verdict = judge(args.ollama, args.judge, it, base_ans, tuned_ans)
         tally[verdict] += 1
         row = dict(question=it["question"], level=it["level"], source=it["source"], format=fmt.__name__,

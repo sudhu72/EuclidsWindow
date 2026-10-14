@@ -195,8 +195,11 @@ class VerifierService:
             ],
             task=task,
             timeout_seconds=timeout_seconds,
-            num_predict=600,
-            num_ctx=4096,
+            # Olympiad sessions use a thinking model; its reasoning counts
+            # against num_predict, and at 600 it can run out before writing a
+            # verdict, leaving the reply unverified.
+            num_predict=4000 if task == "polya_olympiad" else 600,
+            num_ctx=8192 if task == "polya_olympiad" else 4096,
             temperature=0.2,
         )
         issues: List[str] = []

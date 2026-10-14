@@ -85,13 +85,14 @@ class DiscoveryService:
             raw = self._engine.chat_json(
                 messages,
                 task="discover",  # routes to the stronger local_discover_model (qwen3:8b)
-                timeout_seconds=180,  # qwen3:8b is a slower "thinking" model
+                timeout_seconds=180,  # the discover model is a slower "thinking" model
                 # Grounding gives the model real material to elaborate on (good),
                 # but a verbose "know" field can then eat the whole budget before
                 # later fields are written (bad) — sized up from 2000 so a
                 # 7-field schema with library excerpts to draw from still fits.
-                num_predict=2800,
-                num_ctx=8192,
+                # Thinking tokens count against both limits, hence the room.
+                num_predict=6000,
+                num_ctx=16384,
                 temperature=0.4 if attempt == 0 else 0.6,
             )
             if raw and raw.get("byhand") and raw.get("discover"):
