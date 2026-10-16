@@ -334,6 +334,14 @@ export default function Lesson({
             onExchange={recordExchange}
           />
           <VizPanel topic={topic || lastAnswer.slice(0, 80)} answerText={lastAnswer} />
+          {lastAnswer.trim() && (
+            <Animation
+              key={lastAnswer.slice(0, 120)}
+              topic={qa[qa.length - 2]?.content || topic || lastAnswer.slice(0, 80)}
+              level={level}
+              context={lastAnswer}
+            />
+          )}
           <Scratchpad question={topic || "Check this working"} />
         </div>
       )}
@@ -394,7 +402,12 @@ export default function Lesson({
               <>
                 <Markdown>{scene.narration || ""}</Markdown>
                 <Classmate q={scene.classmate_question} a={scene.classmate_answer} />
-                <Animation topic={`${lesson.topic} — ${section?.title || ""}`} level={level} />
+                <Animation
+                  key={idx}
+                  topic={`${lesson.topic} — ${section?.title || ""}`}
+                  level={level}
+                  context={scene.narration || ""}
+                />
               </>
             )}
           </div>

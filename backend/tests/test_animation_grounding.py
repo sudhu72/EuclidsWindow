@@ -28,7 +28,7 @@ def test_llm_path_receives_graph_context(monkeypatch):
 
     monkeypatch.setattr(pipeline, "_plan_scene", fake_plan_scene)
     monkeypatch.setattr(pipeline, "_llm_generate", fake_llm_generate)
-    monkeypatch.setattr(pipeline, "_render_with_retry", lambda code, topic, source: None)
+    monkeypatch.setattr(pipeline, "_render_with_retry", lambda code, topic, source, **kw: None)
 
     pipeline.generate("Euler's Identity", context="a request about complex exponentials")
 
@@ -382,7 +382,7 @@ def test_heuristic_phase_unaffected_by_graph_context(monkeypatch):
 
     monkeypatch.setattr(pipeline, "_heuristic_code", fake_heuristic)
     monkeypatch.setattr(pipeline._llm, "is_available", lambda: False)
-    monkeypatch.setattr(pipeline, "_render_with_retry", lambda code, topic, source: None)
+    monkeypatch.setattr(pipeline, "_render_with_retry", lambda code, topic, source, **kw: None)
 
     pipeline.generate("some topic", context="plain caller context")
 

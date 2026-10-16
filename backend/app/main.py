@@ -40,6 +40,7 @@ from .routers.tutor_stream import router as tutor_stream_router
 from .routers.quest import router as quest_router
 from .ai.viz_agent import VizAgent
 from .ai.animation_pipeline import AnimationPipeline
+from .ai.animation_story import StoryAnimator
 from .ai.checker import SymbolicChecker
 from .ai.handwriting import HandwritingService
 from .ai.web_rag import WebMathRAG
@@ -1054,7 +1055,22 @@ async def ai_visualize(payload: VisualizationOnDemandRequest) -> VisualizationOn
         )
 
     # payload.style == "animation"
-    # Strategy: try pre-built scene first, then dynamic pipeline
+    # Story mode: a multi-act narrated video, always a background job.
+    if payload.mode == "story" and payload.async_render:
+        job = manim_service.start_task(
+            payload.question,
+            lambda job_id, progress: story_animator.generate(
+                payload.question, payload.context, payload.learner_level, job_id, progress
+            ),
+        )
+        return VisualizationOnDemandResponse(
+            message="Story animation started in background.",
+            animation_id=job["id"],
+            status=job["status"],
+            progress=job["progress"],
+        )
+
+    # Quick mode: try pre-built scene first, then dynamic pipeline
     scene_name = _pick_animation_scene(payload.question)
 
     # --- Path A: pre-built named scene ---
@@ -1107,7 +1123,7 @@ async def ai_visualize(payload: VisualizationOnDemandRequest) -> VisualizationOn
     pipeline_viz = await asyncio.to_thread(
         animation_pipeline.generate,
         payload.question,
-        "",
+        payload.context,
         learner_level=payload.learner_level,
         quality=payload.quality,
         output_format=payload.output_format,
@@ -1138,7 +1154,7 @@ async def ai_animate(payload: VisualizationOnDemandRequest):
     pipeline_viz = await asyncio.to_thread(
         animation_pipeline.generate,
         payload.question,
-        "",
+        payload.context,
         learner_level=payload.learner_level,
         quality=payload.quality,
         output_format=payload.output_format,
@@ -2265,6 +2281,7 @@ from .models import AnimationRenderRequest, AnimationResponse, AnimationListResp
 
 manim_service = ManimService()
 animation_pipeline = AnimationPipeline()
+story_animator = StoryAnimator(animation_pipeline)
 
 # Mount animations static directory
 ANIMATIONS_DIR = BASE_DIR / "static" / "animations"

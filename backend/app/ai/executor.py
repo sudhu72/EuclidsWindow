@@ -76,7 +76,7 @@ with open(r\"{output_file}\", 'w', encoding='utf-8') as handle:
         return payload
 
     def execute_manim_detailed(
-        self, code: str, title: str
+        self, code: str, title: str, output_format: str = "gif"
     ) -> Tuple[Optional[VisualizationPayload], Optional[str]]:
         """Render a Manim scene, returning (payload, error).
 
@@ -87,7 +87,7 @@ with open(r\"{output_file}\", 'w', encoding='utf-8') as handle:
             return None, "No code provided"
 
         animation_id = f"manim-{uuid4().hex[:12]}"
-        output_format = "gif"
+        output_format = "mp4" if output_format == "mp4" else "gif"
         destination = ANIMATIONS_DIR / f"{animation_id}.{output_format}"
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -101,7 +101,7 @@ with open(r\"{output_file}\", 'w', encoding='utf-8') as handle:
                 "-ql",
                 str(script_path),
                 "GeneratedScene",
-                "--format=gif",
+                f"--format={output_format}",
                 "--media_dir",
                 tmpdir,
                 "-o",

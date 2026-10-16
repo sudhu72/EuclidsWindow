@@ -59,6 +59,7 @@ Euclid's Window is a local-first math tutoring platform that combines structured
   - Instant Plotly charts via deterministic visual planner (keyword-matched)
   - VizAgent auto-generation from LLM answer text (Plotly, Mermaid, geometric SVG)
   - **Dynamic Manim animation pipeline**: heuristic template matching for 14+ math topics (derivatives, integrals, linear transforms, Taylor series, Fourier, complex numbers, etc.); for novel topics, a lightweight scene-planning pass storyboards the animation's beats before any code is written, code generation is grounded with a known-good worked example and adapts to the learner's level (kids/teen/college/adult), and generated code goes through static validation — including a LaTeX brace-balance check — plus iterative error recovery before an expensive render is attempted. The plan-then-code split and few-shot grounding are adapted from [Math-To-Manim](https://github.com/HarleyCoops/Math-To-Manim)'s staged reasoning pipeline and the ["Manimator" paper](https://arxiv.org/abs/2507.14306) (arXiv:2507.14306), scaled down to a single optional, best-effort planning call so it still runs well on CPU-only local models
+  - **Story videos** (the default for **Animate this** in lessons and under tutor answers): a narrated, multi-act MP4 of about 45–75 seconds built from what the tutor just said. One call storyboards a title, an opening question, 4–6 acts (visual, narration subtitle, length) and a recap, using the tutor's own running example and numbers. Each act is a short scene written against a `StoryScene` base that draws the act label and subtitle and rejects anything that runs off-frame, and it goes through the same validators and repair loop. Acts are written and rendered in parallel, an act that still fails becomes a title card, and ffmpeg joins everything (`backend/app/ai/animation_story.py`). Pass `"mode": "quick"` to `/api/ai/visualize` for the original single short clip
   - Matrix Lab animation generator — renders user-defined matrix transformations as Manim GIFs directly from the lab UI
   - Animation rendering via Manim (background jobs with progress polling)
   - Diffusion image generation (Stable Diffusion, optional GPU)
@@ -243,6 +244,7 @@ EuclidsWindow/
 │   │   │   ├── visual_planner.py    # Deterministic Plotly planner (20+ templates)
 │   │   │   ├── executor.py          # Plotly/Manim code sandbox execution
 │   │   │   ├── animation_pipeline.py # Dynamic Manim pipeline (template + LLM + retry)
+│   │   │   ├── animation_story.py   # Story mode: storyboard -> parallel acts -> one MP4
 │   │   │   ├── manim_templates.py   # 14+ reusable Manim scene templates
 │   │   │   ├── prompts.py           # LLM prompts + level-aware instructions
 │   │   │   ├── coordinator.py       # Multi-agent coordination

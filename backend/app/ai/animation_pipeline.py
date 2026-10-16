@@ -323,7 +323,7 @@ class AnimationPipeline:
         # only shapes the LLM path below, not the template fast path.
         code = self._heuristic_code(topic, context)
         if code is not None:
-            payload = self._render_with_retry(code, topic, "template")
+            payload = self._render_with_retry(code, topic, "template", output_format=output_format)
             if payload is not None:
                 return payload
 
@@ -342,7 +342,7 @@ class AnimationPipeline:
             plan = self._plan_scene(topic, llm_context, learner_level)
             llm_code = self._llm_generate(topic, llm_context, learner_level, plan)
             if llm_code is not None:
-                payload = self._render_with_retry(llm_code, topic, "llm")
+                payload = self._render_with_retry(llm_code, topic, "llm", output_format=output_format)
                 if payload is not None:
                     return payload
 
@@ -350,15 +350,20 @@ class AnimationPipeline:
         # renders, so the learner gets a clean visual instead of a broken one.
         logger.info("AnimationPipeline: using guaranteed generic fallback")
         generic = build_generic_scene(topic, context)
-        return self._render_with_retry(generic, topic, "generic")
+        return self._render_with_retry(generic, topic, "generic", output_format=output_format)
 
     # ------------------------------------------------------------------
     # Phase 1: heuristic template selection
     # ------------------------------------------------------------------
 
     def _heuristic_code(self, topic: str, context: str) -> Optional[str]:
-        """Match topic to a known template and fill it."""
-        q = (topic + " " + context).lower()
+        """Match topic to a known template and fill it.
+
+        Matches the topic only: callers now pass the tutor's full answer as
+        context, and a paragraph of prose trips generic keywords ("limit",
+        "approach", "sine", "vector") on almost any topic.
+        """
+        q = topic.lower()
 
         matched_key: Optional[str] = None
         for keywords, key in _TOPIC_KEYWORDS:
@@ -586,8 +591,10 @@ class AnimationPipeline:
                 }
             ],
             task="codegen",
-            timeout_seconds=90,
-            num_predict=4000,
+            timeout_seconds=180,
+            # 12000 (was 4000): Claude spent all 4000 thinking on a story act
+            # and wrote no code; local models stop on their own well before this.
+            num_predict=12000,
             num_ctx=12000,  # up to 14000 chars of visible code needs headroom
             temperature=0.2,
         )
@@ -607,9 +614,11 @@ class AnimationPipeline:
         code: str,
         topic: str,
         source: str,
+        output_format: str = "gif",
+        max_retries: int = MAX_RETRIES,
     ) -> Optional[VisualizationPayload]:
-        """Render Manim code; on failure, try LLM fix up to MAX_RETRIES times."""
-        for attempt in range(1 + MAX_RETRIES):
+        """Render Manim code; on failure, try LLM fix up to max_retries times."""
+        for attempt in range(1 + max_retries):
             logger.info(f"AnimationPipeline: render attempt {attempt + 1} (source={source})")
 
             # Fail fast on invalid/unsafe code before paying for a render
@@ -618,14 +627,16 @@ class AnimationPipeline:
                 logger.warning(f"AnimationPipeline: validation failed: {validation_error}")
                 payload, error = None, validation_error
             else:
-                payload, error = self._executor.execute_manim_detailed(code, title=topic)
+                payload, error = self._executor.execute_manim_detailed(
+                    code, title=topic, output_format=output_format
+                )
             if payload is not None:
                 payload.data["pipeline_source"] = source
                 payload.data["attempt"] = attempt + 1
                 return payload
 
             # On failure, feed the real render error back to the LLM
-            if attempt < MAX_RETRIES and self._llm.is_available():
+            if attempt < max_retries and self._llm.is_available():
                 error_msg = error or f"Manim render failed on attempt {attempt + 1}"
                 fixed = self._llm_fix(code, error_msg)
                 if fixed:

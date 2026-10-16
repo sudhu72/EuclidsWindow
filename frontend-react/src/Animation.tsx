@@ -8,14 +8,23 @@ import {
 } from "./animateApi";
 
 /**
- * On-demand Manim animation for a topic.
+ * On-demand Manim animation for a topic: by default a narrated, multi-act
+ * story video built from `context` (the lesson scene or tutor answer).
  *
  * Queues the render and polls it, so a slow clip reports progress instead of
  * holding a request open for minutes. If the backend declines to queue one
  * (no animation id came back), it falls back to the synchronous pipeline,
  * which always produces something.
  */
-export default function Animation({ topic, level = "teen" }: { topic: string; level?: string }) {
+export default function Animation({
+  topic,
+  level = "teen",
+  context = "",
+}: {
+  topic: string;
+  level?: string;
+  context?: string;
+}) {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [viz, setViz] = useState<ManimViz | null>(null);
   const [job, setJob] = useState<AnimationJob | null>(null);
@@ -27,7 +36,7 @@ export default function Animation({ topic, level = "teen" }: { topic: string; le
     setJob(null);
     setViz(null);
     try {
-      const id = await queueAnimation(topic, level);
+      const id = await queueAnimation(topic, level, context);
       if (id) {
         const done = await pollAnimation(id, setJob);
         if (done.status === "completed" && done.url) {
@@ -42,7 +51,7 @@ export default function Animation({ topic, level = "teen" }: { topic: string; le
         if (done.error) throw new Error(done.error);
       }
       // Nothing queued — render inline instead.
-      const v = await animate(topic, level);
+      const v = await animate(topic, level, context);
       if (!v) throw new Error("No animation could be produced.");
       setViz(v);
       setState("done");
@@ -58,14 +67,16 @@ export default function Animation({ topic, level = "teen" }: { topic: string; le
     <div className="anim">
       {state !== "done" && (
         <button className="btn anim-btn" onClick={() => void run()} disabled={state === "loading"}>
-          {state === "loading" ? "🎬 Rendering animation…" : "🎬 Animate this"}
+          {state === "loading" ? "🎬 Rendering animation…" : "🎬 Animate this (story video)"}
         </button>
       )}
 
       {state === "loading" && job && (
         <div className="viz-progress">
           <div className="viz-progress-bar" style={{ width: `${Math.max(6, job.progress)}%` }} />
-          <span className="viz-progress-label">{job.status} · {job.progress}%</span>
+          <span className="viz-progress-label">
+            {job.stage || job.status} · {job.progress}%
+          </span>
         </div>
       )}
 
@@ -76,7 +87,7 @@ export default function Animation({ topic, level = "teen" }: { topic: string; le
           {viz?.data?.format === "gif" ? (
             <img src={url} alt={viz?.title || "animation"} />
           ) : (
-            <video src={url} controls autoPlay loop muted />
+            <video src={url} controls autoPlay muted playsInline />
           )}
           <button className="link" onClick={() => setState("idle")}>
             re-render

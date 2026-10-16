@@ -468,6 +468,7 @@ class AnimationResponse(BaseModel):
     status: str  # pending, rendering, completed, error
     progress: int = 0
     scene_name: Optional[str] = None
+    stage: Optional[str] = None  # human-readable step of a story render
     url: Optional[str] = None
     format: Optional[str] = None
     error: Optional[str] = None
@@ -531,6 +532,12 @@ class VisualizationOnDemandRequest(BaseModel):
     output_format: str = Field("gif", pattern="^(gif|mp4)$")
     async_render: bool = True
     learner_level: str = Field("teen", pattern="^(kids|teen|college|adult)$")
+    # Animation only. "story" = a multi-act narrated video (~45-75 s, rendered
+    # as a background job); "quick" = the original single short clip.
+    mode: str = Field("story", pattern="^(story|quick)$")
+    # What the tutor/lesson said about the topic, so the animation follows the
+    # same example, numbers and order instead of inventing its own.
+    context: str = Field("", max_length=8000)
 
 
 class VisualizationOnDemandResponse(BaseModel):

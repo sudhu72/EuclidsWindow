@@ -1,5 +1,11 @@
 // On-demand Manim animation.
 //
+// Story mode (the default for queued renders) builds a narrated, multi-act
+// video (~45-75 s): a storyboard, an opening question, 4-6 animated acts and
+// a recap, joined into one MP4. Pass the lesson/tutor text as `context` so
+// the video follows the same example. It takes a few minutes, so it always
+// runs as a job and reports `stage` while polling.
+//
 // Two routes exist. /api/ai/animate runs the pipeline (template -> LLM ->
 // generic fallback) synchronously and always returns a clip, which is fine for
 // short renders but holds the request open. /api/ai/visualize with
@@ -18,6 +24,7 @@ export interface AnimationJob {
   status: string; // pending | rendering | completed | error
   progress: number;
   scene_name?: string | null;
+  stage?: string | null;
   url?: string | null;
   format?: string | null;
   error?: string | null;
@@ -39,13 +46,14 @@ async function json<T>(resp: Response): Promise<T> {
 }
 
 /** Synchronous render — kept for short clips and as the queue's fallback. */
-export async function animate(topic: string, level = "teen"): Promise<ManimViz | null> {
+export async function animate(topic: string, level = "teen", context = ""): Promise<ManimViz | null> {
   const d = await json<{ visualization?: ManimViz | null }>(
     await fetch("/api/ai/animate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         question: topic, quality: "low", output_format: "gif", learner_level: level,
+        mode: "quick", context: context.slice(0, 8000),
       }),
     })
   );
@@ -54,7 +62,12 @@ export async function animate(topic: string, level = "teen"): Promise<ManimViz |
 }
 
 /** Queue an animation for a topic. Returns the id to poll, if one was queued. */
-export async function queueAnimation(topic: string, level = "teen"): Promise<string | null> {
+export async function queueAnimation(
+  topic: string,
+  level = "teen",
+  context = "",
+  mode: "story" | "quick" = "story"
+): Promise<string | null> {
   const d = await json<{ animation_id?: string | null }>(
     await fetch("/api/ai/visualize", {
       method: "POST",
@@ -66,6 +79,8 @@ export async function queueAnimation(topic: string, level = "teen"): Promise<str
         output_format: "gif",
         async_render: true,
         learner_level: level,
+        mode,
+        context: context.slice(0, 8000),
       }),
     })
   );
@@ -108,7 +123,7 @@ export async function pollAnimation(
   id: string,
   onProgress: (job: AnimationJob) => void,
   intervalMs = 2000,
-  timeoutMs = 300000
+  timeoutMs = 900000 // story renders take a few minutes
 ): Promise<AnimationJob> {
   const started = Date.now();
   for (;;) {

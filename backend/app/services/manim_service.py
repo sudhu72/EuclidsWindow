@@ -8,7 +8,8 @@ import sys
 import tempfile
 import threading
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
+from uuid import uuid4
 
 from ..cache import cache
 from ..logging_config import logger
@@ -285,6 +286,51 @@ class ManimService:
             progress=100,
             error=result.get("error") or "Animation rendering failed",
         )
+
+    def start_task(
+        self,
+        title: str,
+        work: Callable[[str, Callable[[int, str], None]], Optional[Dict[str, Any]]],
+    ) -> Dict[str, Any]:
+        """Run arbitrary render work (e.g. a multi-act story) as a polled job.
+
+        ``work(job_id, progress)`` gets the job id (to name its output file,
+        so the cache/delete lookups by id find it) and a ``progress(pct,
+        stage)`` callback, and returns ``{"url", "format"}`` or None.
+        """
+        job_id = f"story-{uuid4().hex[:12]}"
+        with self._jobs_lock:
+            self._jobs[job_id] = {
+                "id": job_id,
+                "scene_name": title,
+                "status": "queued",
+                "progress": 2,
+                "stage": "Queued",
+                "url": None,
+                "format": None,
+                "error": None,
+            }
+        self._executor.submit(self._run_task, job_id, work)
+        return self.get_animation_status(job_id)
+
+    def _run_task(self, job_id: str, work: Callable) -> None:
+        self._update_job(job_id, status="running", progress=4)
+
+        def progress(pct: int, stage: str) -> None:
+            self._update_job(job_id, progress=max(4, min(int(pct), 99)), stage=stage)
+
+        try:
+            result = work(job_id, progress)
+        except Exception as exc:  # noqa: BLE001 - surface any failure to the poller
+            logger.exception(f"Animation task {job_id} failed")
+            self._update_job(job_id, status="error", progress=100, error=str(exc))
+            return
+        if result and result.get("url"):
+            self._update_job(job_id, status="completed", progress=100, stage="Done",
+                             url=result["url"], format=result.get("format"), error=None)
+        else:
+            self._update_job(job_id, status="error", progress=100,
+                             error="Could not produce an animation for this topic")
 
     def _update_job(self, animation_id: str, **updates) -> None:
         with self._jobs_lock:
