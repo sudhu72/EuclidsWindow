@@ -19,7 +19,7 @@ RAFT_CONTAINER ?= euclidswindow-euclids-window-1
 RAFT_DIR ?= /app/backend/data/state/raft
 RAFT_ARGS ?=
 
-.PHONY: lora-raft-build lora-raft-train lora-raft-export lora-raft-eval
+.PHONY: lora-raft-build lora-raft-train lora-raft-export lora-raft-eval lora-agent
 .PHONY: help lora-merge-samples lora-prepare lora-prepare-merged lora-setup lora-data lora-distill lora-train lora-test lora-pick lora-export lora-eval lora-all app-eval
 
 help:
@@ -37,6 +37,7 @@ help:
 	@echo "  make lora-raft-train - RAFT: train on data/lora/raft (scripts/lora/raft_config.yaml)"
 	@echo "  make lora-raft-export LORA_MODEL=euclid-tutor:raft1 [ADAPTER_FILE=...] - register the RAFT adapter in Ollama"
 	@echo "  make lora-raft-eval LORA_MODEL=euclid-tutor:raft1 [RAFT_SPLIT=valid] - two-judge gate + citation checks"
+	@echo "  make lora-agent    - Start the tuning helper used by Settings -> Model tuning (keep it running)"
 	@echo "  make lora-merge-samples / lora-prepare - Turn reviewed raw tutor records into extra training JSONL"
 	@echo "  make app-eval      - Check the app's eval endpoints at $(API_BASE)"
 
@@ -119,3 +120,8 @@ lora-raft-export:
 lora-raft-eval:
 	docker cp scripts/lora/raft.py $(RAFT_CONTAINER):/tmp/raft.py
 	docker exec -w /app/backend $(RAFT_CONTAINER) python -u /tmp/raft.py eval --data $(RAFT_DIR) --tuned $(LORA_MODEL) --split $(or $(RAFT_SPLIT),test) 2>&1 | grep -v "| INFO" | tee models/lora/raft/eval_$(or $(RAFT_SPLIT),test).log
+
+# Tuning helper for Settings -> Model tuning: runs build/train/export/gate on
+# this Mac when the app asks. Leave it running in a terminal.
+lora-agent:
+	python3 scripts/lora/agent.py

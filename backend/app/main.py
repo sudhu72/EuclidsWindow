@@ -32,6 +32,7 @@ from .routers.ai_media import (
 )
 from .routers.polya import router as polya_router
 from .routers.library import router as library_router
+from .routers.tuning import router as tuning_router
 from .routers.graph import router as graph_router
 from .routers.chat import router as chat_router
 from .routers.voice import router as voice_router
@@ -223,6 +224,7 @@ app.add_middleware(RateLimitMiddleware)
 app.include_router(ai_media_router)
 app.include_router(polya_router)
 app.include_router(library_router)
+app.include_router(tuning_router)
 app.include_router(graph_router)
 app.include_router(chat_router)
 app.include_router(voice_router)

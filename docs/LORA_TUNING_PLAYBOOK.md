@@ -183,6 +183,30 @@ judges to prefer the tuned model and no more fabricated citations or loops
 than the base. Baseline from the smoke test: `qwen3:4b-instruct` cited a
 source 0/2 times despite the prompt asking it to.
 
+### From the UI: Settings → Model tuning
+
+The same pipeline runs from **Settings → Model tuning**, all-local and free by
+default: `qwen3:8b` writes questions and teacher answers, and `qwen3:8b` and
+`llama3.1:8b` judge (two families, so neither judge is grading its own
+family's style). Claude can be chosen as teacher or judge; the panel shows
+the estimated cost and asks you to confirm it first.
+
+Training needs the Mac's GPU, which the app container can't reach, so a small
+helper does the work on the host. Start it once and leave it running:
+
+```bash
+make lora-agent     # scripts/lora/agent.py on 127.0.0.1:8765
+```
+
+A run builds the data, trains for ~2 epochs with checkpoints at the halfway
+point and the end, exports both, keeps the one with more net wins on the
+validation prompts, gates it on the test prompts, and keeps the winner in
+Ollama as `euclid-tutor:<run-id>`. The tutor is never switched automatically:
+**Use this model** appears only after a PROMOTE verdict, and
+`/api/tuning/promote` refuses any other run. Run state and logs are in
+`models/lora/agent/`; data and adapters in `data/lora/runs/` and
+`models/lora/runs/`.
+
 ## 8) Pitfalls
 
 - **Use Homebrew Python, not Anaconda, for `.venv-lora`.** Anaconda ships MPICH,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import TuningPanel from "./TuningPanel";
 import {
   AgentInfo,
   AppSettings,
@@ -413,6 +414,11 @@ export default function Settings() {
               Test music
             </button>
           </div>
+        </section>
+
+        <section className="set-group">
+          <h4>Model tuning</h4>
+          <TuningPanel />
         </section>
 
         <section className="set-group">

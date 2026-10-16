@@ -119,10 +119,10 @@ Reply with ONLY a JSON object: {{"winner": "A" | "B" | "tie", "reason": "<one se
 
 
 # ----------------------------------------------------------------------------
-def claude_key() -> tuple[str, str]:
+def claude_key(required: bool = True) -> tuple[str, str]:
     eff = SettingsStore().get_effective_settings()
     key = eff.get(CLOUD_PROVIDERS["anthropic"]["key_setting"])
-    if not key:
+    if not key and required:
         sys.exit("No Anthropic API key saved in Settings")
     model = resolve_cloud_model("anthropic", eff.get("cloud_llm_model")) if eff.get("llm_provider") == "anthropic" \
         else resolve_cloud_model("anthropic", None)
@@ -139,11 +139,12 @@ def claude(key: str, model: str, messages: list[dict], max_tokens: int, attempts
     raise RuntimeError(f"Claude ({model}) returned nothing after {attempts} attempts")
 
 
-def ollama(model: str, messages: list[dict], num_predict: int = 1200, num_ctx: int = 4096) -> str:
-    """Same options as the streaming tutor (routers/tutor_stream.py)."""
+def ollama(model: str, messages: list[dict], num_predict: int = 1200, num_ctx: int = 4096,
+           think: bool = False, temperature: float = 0.4) -> str:
+    """Defaults = the streaming tutor's options (routers/tutor_stream.py)."""
     base = (get_settings().local_llm_base_url or "http://host.docker.internal:11434").rstrip("/")
-    body = {"model": model, "messages": messages, "stream": False, "think": False,
-            "options": {"temperature": 0.4, "num_predict": num_predict, "num_ctx": num_ctx}}
+    body = {"model": model, "messages": messages, "stream": False, "think": think,
+            "options": {"temperature": temperature, "num_predict": num_predict, "num_ctx": num_ctx}}
     for i in range(3):
         try:
             req = urllib.request.Request(f"{base}/api/chat", data=json.dumps(body).encode(),
@@ -160,14 +161,31 @@ def ollama(model: str, messages: list[dict], num_predict: int = 1200, num_ctx: i
     raise RuntimeError("unreachable")
 
 
+def is_claude(spec: str) -> bool:
+    return spec == "claude" or spec.startswith("claude-")
+
+
+def generate(spec: str, key: str, cloud_model: str, messages: list[dict], max_tokens: int) -> str:
+    """One answer from the teacher/question writer: "claude" (the Settings
+    model), an explicit claude-* id, or any local Ollama model (thinking on —
+    the teacher should reason before it writes the target answer)."""
+    if is_claude(spec):
+        return claude(key, cloud_model if spec == "claude" else spec, messages, max_tokens)
+    text = ollama(spec, messages, num_predict=8000, num_ctx=16384, think=True, temperature=0.3)
+    if not text:
+        raise RuntimeError(f"{spec} returned nothing")
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+
 def loops(text: str) -> bool:
     sents = [x.strip() for x in re.split(r"(?<=[.!?])\s+", text) if len(x.strip()) > 30]
     return any(sents.count(x) >= 3 for x in set(sents))
 
 
 def _norm(source: str) -> str:
-    """Citation key ignoring case and file extension."""
-    return re.sub(r"\.(pdf|md|txt)$", "", source.strip().lower())
+    """Citation key ignoring case, file extension and a URL's scheme/www/slash."""
+    key = re.sub(r"\.(pdf|md|txt)$", "", source.strip().lower())
+    return re.sub(r"^(https?://)?(www\.)?", "", key).rstrip("/")
 
 
 def excerpt_sources(system: str) -> dict[str, str]:
@@ -183,7 +201,10 @@ def _resolve(cited: str, allowed: dict[str, str]) -> str | None:
         return allowed[key]
     best, score = None, 0.0
     for k, label in allowed.items():
-        r = 1.0 if k.startswith(key) or key.startswith(k) else difflib.SequenceMatcher(None, key, k).ratio()
+        # prefix ("Calculus for Dummies 1001"), a short name inside a URL or
+        # file name ("Lamar.edu", "Clark" for ...Theory-Clark.pdf), else fuzzy
+        r = 1.0 if k.startswith(key) or key.startswith(k) or (len(key) >= 4 and (key in k or k.endswith(key))) \
+            else difflib.SequenceMatcher(None, key, k).ratio()
         if r > score:
             best, score = label, r
     return best if score >= 0.6 else None
@@ -235,14 +256,18 @@ def sample_passages(sources: list[str], per_source: int, seed: int) -> list[dict
     return out
 
 
-def write_questions(key: str, model: str, passages: list[dict]) -> list[dict]:
+def write_questions(spec: str, key: str, model: str, passages: list[dict]) -> list[dict]:
     out = []
     for i in range(0, len(passages), 5):
         batch = passages[i:i + 5]
         listing = "\n\n".join(f"Passage {k + 1} ({p['source']}, p.{p['page']}):\n{p['text'][:1100]}"
                               for k, p in enumerate(batch))
-        raw = claude(key, model, [{"role": "user", "content": QUESTION_PROMPT.format(n=len(batch), passages=listing)}],
-                     max_tokens=6000)
+        try:
+            raw = generate(spec, key, model, [{"role": "user", "content":
+                                               QUESTION_PROMPT.format(n=len(batch), passages=listing)}], 6000)
+        except Exception as exc:  # noqa: BLE001 - lose this batch, keep going
+            print(f"  error: {exc}", flush=True)
+            continue
         m = re.search(r"\[.*\]", raw, re.DOTALL)
         try:
             items = json.loads(m.group(0)) if m else []
@@ -260,8 +285,8 @@ def write_questions(key: str, model: str, passages: list[dict]) -> list[dict]:
 def build(args) -> None:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    key, model = claude_key()
-    print(f"teacher: {model}", flush=True)
+    key, model = claude_key(required=is_claude(args.teacher))
+    print(f"teacher: {model if args.teacher == 'claude' else args.teacher}", flush=True)
     if args.split_only and not (out / "questions.jsonl").exists():
         sys.exit("--split-only needs an existing build")
     qfile, rows_file = out / "questions.jsonl", out / "rows.jsonl"
@@ -270,7 +295,7 @@ def build(args) -> None:
         passages = sample_passages(args.sources, args.per_source, args.seed)
         if args.limit:
             passages = passages[: args.limit]
-        qs = write_questions(key, model, passages)
+        qs = write_questions(args.teacher, key, model, passages)
         qfile.write_text("".join(json.dumps(q, ensure_ascii=False) + "\n" for q in qs))
     questions = [json.loads(line) for line in qfile.read_text().splitlines() if line.strip()]
     done = set()
@@ -285,7 +310,7 @@ def build(args) -> None:
         try:
             msgs = service.build_reasoning_messages(q["question"], None, None, q["level"])
             teacher_msgs = [{"role": "system", "content": msgs[0]["content"] + TEACHER_NOTE}, msgs[1]]
-            ans = claude(key, model, teacher_msgs, max_tokens=12000)
+            ans = generate(args.teacher, key, model, teacher_msgs, max_tokens=12000)
         except Exception as exc:  # noqa: BLE001 - retried on the next run
             print(f"  error: {exc}", flush=True)
             return
@@ -341,7 +366,7 @@ def judge_once(judge: str, key: str, item: dict, a: str, b: str) -> str:
     prompt = JUDGE_PROMPT.format(level=item["level"], excerpts=excerpts, question=item["question"],
                                  a=a[:3500], b=b[:3500])
     msgs = [{"role": "user", "content": prompt}]
-    raw = claude(key, judge, msgs, max_tokens=4000) if judge.startswith("claude") else \
+    raw = claude(key, judge, msgs, max_tokens=4000) if is_claude(judge) else \
         ollama(judge, msgs, num_predict=200, num_ctx=8192)
     m = re.search(r'"winner"\s*:\s*"(A|B|tie)"', raw, re.I)
     return m.group(1).upper() if m else "TIE"
@@ -354,12 +379,12 @@ def judge_pair(judge: str, key: str, item: dict, base: str, tuned: str) -> str:
 
 
 def evaluate(args) -> None:
-    key, _ = claude_key()
+    judges = args.judges or [JUDGE_HAIKU, args.local_judge]
+    key, _ = claude_key(required=any(is_claude(j) for j in judges))
     data = Path(args.data)
     items = [json.loads(line) for line in (data / f"{args.split}_prompts.jsonl").read_text().splitlines() if line.strip()]
     random.Random(args.seed).shuffle(items)
     items = items[: args.n]
-    judges = [JUDGE_HAIKU, args.local_judge]
     tally = {j: {"tuned": 0, "base": 0, "tie": 0} for j in judges}
     rows, t0 = [], time.time()
     for i, it in enumerate(items, 1):
@@ -386,6 +411,7 @@ def evaluate(args) -> None:
     summary = {"tuned": args.tuned, "base": args.base, "split": args.split, "n": len(rows),
                "judges": tally, "base_stats": cb, "tuned_stats": ct,
                "verdict": "PROMOTE" if promote else "KEEP BASE", "minutes": round((time.time() - t0) / 60, 1)}
+    summary["judge_models"] = judges
     report = data / f"eval_{args.split}_{args.tuned.replace(':', '_')}.json"
     report.write_text(json.dumps({"summary": summary, "rows": rows}, indent=2, ensure_ascii=False))
     print(json.dumps(summary, indent=2))
@@ -400,13 +426,17 @@ def main() -> None:
     b.add_argument("--per-source", type=int, default=90)
     b.add_argument("--limit", type=int, default=0, help="cap passages (smoke test)")
     b.add_argument("--workers", type=int, default=4)
-    b.add_argument("--split-only", action="store_true", help="re-check and re-split existing rows; no Claude calls")
+    b.add_argument("--split-only", action="store_true", help="re-check and re-split existing rows; no model calls")
     b.add_argument("--seed", type=int, default=17)
+    b.add_argument("--teacher", default="claude",
+                   help='"claude" (Settings model), a claude-* id, or a local Ollama model, e.g. qwen3:8b ($0)')
     e = sub.add_parser("eval")
     e.add_argument("--data", default="/app/backend/data/state/raft")
     e.add_argument("--tuned", required=True)
     e.add_argument("--base", default="qwen3:4b-instruct")
     e.add_argument("--local-judge", default="qwen3:8b")
+    e.add_argument("--judges", nargs="+", default=None,
+                   help="override both judges, e.g. qwen3:8b llama3.1:8b for an all-local gate")
     e.add_argument("--split", default="test", choices=("valid", "test"))
     e.add_argument("--n", type=int, default=60)
     e.add_argument("--seed", type=int, default=3)

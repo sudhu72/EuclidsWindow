@@ -10,7 +10,7 @@ adapter_path: "models/lora/raft/adapters"
 fine_tune_type: lora
 seed: 7
 
-iters: 250
+iters: 210
 batch_size: 4
 learning_rate: 5.0e-5
 max_seq_length: 4096
