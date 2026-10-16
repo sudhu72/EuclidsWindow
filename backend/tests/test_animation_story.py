@@ -10,7 +10,8 @@ def _story(n_acts=4, seconds=9):
         "title": "Bayes at the Clinic",
         "hook": "A test is 99% accurate and says you're sick. Should you panic?",
         "acts": [
-            {"title": f"Act {i}", "visual": "1000 dots, 10 turn red", "narration": "Start with 1000 people.",
+            {"title": f"Act {i}", "visual": "1000 dots, 10 turn red",
+             "narration": "Start with a crowd of one thousand people. " * 6,
              "seconds": seconds}
             for i in range(n_acts)
         ],
@@ -62,3 +63,17 @@ def test_parse_story_strips_emoji_and_drops_unfit_equations():
     assert story["key_equation"] == ""
     raw["key_equation"] = "x" * 200
     assert parse_story(json.dumps(raw))["key_equation"] == ""
+
+
+def test_narration_reads_math_symbols_aloud():
+    from app.ai.narration import speakable
+
+    assert speakable("Area = πr² ≈ 3.14 × r^2") == "Area = pi r squared is about 3.14 times r squared"
+    assert speakable("**Bold** and `code`") == "Bold and code"
+
+
+def test_parse_story_rejects_thin_narration():
+    raw = _story()
+    for a in raw["acts"]:
+        a["narration"] = "Too short to fill an act."
+    assert parse_story(json.dumps(raw)) is None

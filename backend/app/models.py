@@ -538,6 +538,8 @@ class VisualizationOnDemandRequest(BaseModel):
     # What the tutor/lesson said about the topic, so the animation follows the
     # same example, numbers and order instead of inventing its own.
     context: str = Field("", max_length=8000)
+    # Story mode: speak the narration as a voice-over (offline TTS).
+    narrate: bool = True
 
 
 class VisualizationOnDemandResponse(BaseModel):

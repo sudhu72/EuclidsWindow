@@ -48,6 +48,15 @@ RUN mkdir -p /app/backend/data/context_db
 # doesn't block for ~10s while it fetches 80 MB.
 RUN python -c "import chromadb; c=chromadb.Client(); col=c.get_or_create_collection('warmup'); col.add(ids=['w'],documents=['warmup']); c.delete_collection('warmup')"
 
+# Kokoro-82M voice (Apache-2.0) for story-animation voice-overs, ~350 MB.
+# Baked in so narration works offline; narration.py degrades to silent videos
+# if these files are missing.
+RUN mkdir -p /app/models/kokoro \
+    && curl -sSfL -o /app/models/kokoro/kokoro-v1.0.onnx \
+        https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx \
+    && curl -sSfL -o /app/models/kokoro/voices-v1.0.bin \
+        https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
+
 WORKDIR /app/backend
 
 ENV PYTHONUNBUFFERED=1

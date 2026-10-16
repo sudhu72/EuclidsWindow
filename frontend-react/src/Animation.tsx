@@ -87,7 +87,10 @@ export default function Animation({
           {viz?.data?.format === "gif" ? (
             <img src={url} alt={viz?.title || "animation"} />
           ) : (
-            <video src={url} controls autoPlay muted playsInline />
+            // Not muted: story videos carry a voice-over. The click on
+            // "Animate this" counts as user activation, so autoplay with sound
+            // is allowed; if a browser still blocks it, the controls remain.
+            <video src={url} controls autoPlay playsInline />
           )}
           <button className="link" onClick={() => setState("idle")}>
             re-render

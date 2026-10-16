@@ -60,7 +60,7 @@ def test_visualize_on_demand_animation_story_job(client, monkeypatch):
     # never calls an LLM or renders.
     seen = {}
 
-    def fake_generate(topic, context, level, job_id, progress):
+    def fake_generate(topic, context, level, job_id, progress, narrate=True):
         seen.update(topic=topic, context=context, level=level)
         progress(50, "Act 1 of 1 ready")
         return {"url": f"/animations/{job_id}.mp4", "format": "mp4"}

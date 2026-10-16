@@ -26,3 +26,5 @@ openai>=2.0
 pypdf>=4.0
 python-multipart>=0.0.9
 httpx==0.28.1
+# Offline voice-over for story animations (backend/app/ai/narration.py)
+kokoro-onnx==0.6.1

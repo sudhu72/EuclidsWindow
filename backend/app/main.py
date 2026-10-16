@@ -1060,7 +1060,8 @@ async def ai_visualize(payload: VisualizationOnDemandRequest) -> VisualizationOn
         job = manim_service.start_task(
             payload.question,
             lambda job_id, progress: story_animator.generate(
-                payload.question, payload.context, payload.learner_level, job_id, progress
+                payload.question, payload.context, payload.learner_level, job_id, progress,
+                narrate=payload.narrate,
             ),
         )
         return VisualizationOnDemandResponse(

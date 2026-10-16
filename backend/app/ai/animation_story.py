@@ -19,11 +19,18 @@ video into small, independently rendered pieces:
    subtitle, so the model only animates the middle of the frame. Acts are
    written and rendered in parallel. An act that still fails after repairs
    becomes a plain title card, so one bad act never sinks the video.
-4. Joining — ffmpeg concatenates the parts into one MP4.
+4. Voice-over — the hook, each act's narration and the recap are spoken by
+   an offline TTS (narration.py). Acts play at half speed (rendered at 30
+   fps, slowed 2x to 15 fps) because generated scenes went by too fast.
+   Speech is synthesized first and each act's code is asked to run half its
+   narration's length, so the slowed act ends with its voice; each part is
+   then muxed with its audio (frozen last frame / silence pads any gap).
+5. Joining — ffmpeg concatenates the parts into one MP4.
 """
 
 import json
 import re
+import shutil
 import subprocess
 import tempfile
 import textwrap
@@ -33,6 +40,7 @@ from typing import Callable, Optional
 
 from ..logging_config import logger
 from .animation_pipeline import CODEGEN_SYSTEM_PROMPT, FEWSHOT_EXAMPLE, FEWSHOT_EXAMPLE_2, AnimationPipeline
+from . import narration
 from .executor import ANIMATIONS_DIR
 from .manim_templates import SCENE_PREAMBLE
 from .prompts import LEVEL_INSTRUCTIONS
@@ -40,6 +48,18 @@ from .prompts import LEVEL_INSTRUCTIONS
 Progress = Callable[[int, str], None]
 
 ACT_WORKERS = 3
+# Acts play at half speed (0.5x): rendered at ACT_FPS, slowed by ACT_SLOWDOWN,
+# so motion stays at the normal 15 fps while every move takes twice as long.
+# At normal speed the generated scenes (mostly 1 s moves) went by too fast.
+ACT_SLOWDOWN = 2.0
+ACT_FPS = 30
+# With a voice-over, each act is slowed by whatever factor makes it end with
+# its narration (generated scenes rarely hit the requested length), kept
+# within this band so it always reads as roughly half speed. When the
+# narration is still shorter than the slowed act, it is re-spoken slower,
+# down to MIN_VOICE_STRETCH, rather than leaving the act to run in silence.
+SLOWDOWN_RANGE = (1.8, 2.5)
+MIN_VOICE_STRETCH = 0.85
 ACT_MAX_RETRIES = 2  # per act; a failed act degrades to a card, not a failed video
 
 STORY_PLAN_SYSTEM_PROMPT = textwrap.dedent("""\
@@ -53,7 +73,7 @@ Output ONLY a JSON object, no markdown fences, no commentary, shaped exactly lik
     {
       "title": "act name, under 26 characters",
       "visual": "what the animation shows and how it moves: concrete shapes, positions, numbers, colors. Under 45 words.",
-      "narration": "what the narrator says during this act, 1-2 plain sentences, under 28 words",
+      "narration": "what the narrator says during this act: 2-3 plain sentences, 35 to 50 words (about 15 seconds spoken), describing things in the order they appear on screen",
       "seconds": 9
     }
   ],
@@ -70,7 +90,9 @@ Story rules:
   same order of ideas.
 - Each act shows one idea with something MOVING or CHANGING on screen —
   geometry before algebra. Never an act that is just text.
-- 7 to 12 seconds per act.
+- 7 to 12 seconds per act (it will be played at half speed, under the narration).
+- Narration is the voice-over: EVERY act's narration must be 35-50 words.
+  Count them. Shorter narration leaves the animation running in silence.
 """)
 
 STORY_PLAN_PROMPT_TEMPLATE = textwrap.dedent("""\
@@ -96,7 +118,7 @@ class StoryScene(Scene):
         label.to_corner(UL, buff=0.3)
         self.add(label)
         if self.CAPTION:
-            cap = Text(self.CAPTION, font=MONO, font_size=22, color=WHITE, line_spacing=0.8)
+            cap = Text(self.CAPTION, font=MONO, font_size=19, color=WHITE, line_spacing=0.8)
             if cap.width > 12.8:
                 cap.scale_to_fit_width(12.8)
             cap.to_edge(DOWN, buff=0.25)
@@ -215,7 +237,7 @@ EQUATION_BLOCK = '''        eq = MathTex({eq!r}, font_size=46, color=ACCENT)
 '''
 
 
-def _wrap(text: str, width: int = 56, max_lines: int = 3) -> str:
+def _wrap(text: str, width: int = 68, max_lines: int = 4) -> str:
     lines = textwrap.wrap(" ".join(str(text).split()), width=width)
     if len(lines) > max_lines:
         lines = lines[:max_lines]
@@ -263,6 +285,9 @@ def parse_story(raw: str) -> Optional[dict]:
     if not isinstance(acts, list) or not (3 <= len(acts) <= 7):
         return None
     clean = []
+    words = [len(str((a or {}).get("narration", "")).split()) for a in acts if isinstance(a, dict)]
+    if words and sum(words) / len(words) < 26:  # voice-over too thin for half-speed acts
+        return None
     for a in acts:
         if not isinstance(a, dict) or not a.get("visual") or not a.get("title"):
             return None
@@ -273,7 +298,7 @@ def parse_story(raw: str) -> Optional[dict]:
         clean.append({
             "title": _clip(a["title"], 40),
             "visual": _clip(a["visual"], 400),
-            "narration": _clip(a.get("narration", ""), 220),
+            "narration": _clip(a.get("narration", ""), 380),
             "seconds": round(max(6.0, min(seconds, 13.0)), 1),
         })
     return {
@@ -294,7 +319,7 @@ class StoryAnimator:
 
     # ------------------------------------------------------------------
     def generate(self, topic: str, context: str, learner_level: str, job_id: str,
-                 progress: Progress) -> Optional[dict]:
+                 progress: Progress, narrate: bool = True) -> Optional[dict]:
         """Render the story to ANIMATIONS_DIR/<job_id>.mp4; returns {url, format}.
 
         Falls back to the single-clip pipeline when the LLM is unavailable or
@@ -322,34 +347,75 @@ class StoryAnimator:
             done[0] += 1
             progress(10 + int(80 * done[0] / (n + 2)), stage)
 
+        recap = story["recap"] or story["acts"][-1]["narration"]
+        hook = story["hook"] or topic
+        work = Path(tempfile.mkdtemp(prefix="story-"))
+        # Voice-over first: it's fast (~8x real time) and its length tells each
+        # act how long to run, so picture and speech end together.
+        audio: list[Optional[Path]] = [None] * (n + 2)
+        speech = [0.0] * (n + 2)
+        if narrate and narration.available():
+            progress(8, "Recording the voice-over")
+            lines = [f"{title}. {hook}", *(a["narration"] for a in acts), f"The big idea. {recap}"]
+            for k, line in enumerate(lines):
+                dur = narration.synthesize(line, work / f"voice_{k}.wav", level)
+                if dur:
+                    audio[k], speech[k] = work / f"voice_{k}.wav", dur
+
+        def card_hold(k: int, base: float) -> float:
+            """Card length is ~base s plus hold; stretch the hold to fit the speech."""
+            return round(max(2.0, speech[k] + 0.8 - base), 1)
+
         progress(10, f"Storyboard ready: {n} acts. Animating…")
-        parts[0] = self._render_card(card_scene(title, story["hook"] or topic, hold=2.5), topic)
+        parts[0] = self._render_card(card_scene(title, hook, hold=card_hold(0, 4.7)), topic)
         tick("Opening question ready")
 
         def act_job(i: int) -> None:
-            parts[i + 1] = self._render_act(topic, story, i, level)
+            # Code length before the 0.5x slowdown: half the speech, so the slowed
+            # act ends with its narration (capped by the scene-length validator).
+            # Generated scenes overrun the requested length by ~20%, so ask for
+            # that much less; the mux step then needs close to the full 2x.
+            spoken = round((speech[i + 1] + 1.0) / (ACT_SLOWDOWN * 1.2), 1) if speech[i + 1] else acts[i]["seconds"]
+            seconds = min(14.0, max(5.0, spoken))
+            parts[i + 1] = self._render_act(topic, story, i, level, seconds)
             tick(f"Act {i + 1} of {n} ready")
 
         with ThreadPoolExecutor(ACT_WORKERS) as pool:
             list(pool.map(act_job, range(n)))
 
-        recap = story["recap"] or story["acts"][-1]["narration"]
         outro = None
         if story["key_equation"]:
             outro = self._render_card(card_scene("The big idea", recap, head_color="ACCENT",
-                                                 equation=story["key_equation"], hold=3.0), topic)
+                                                 equation=story["key_equation"], hold=card_hold(-1, 6.2)), topic)
         parts[-1] = outro or self._render_card(card_scene("The big idea", recap, head_color="ACCENT",
-                                                          hold=3.0), topic)
+                                                          hold=card_hold(-1, 4.7)), topic)
         tick("Recap ready")
 
         progress(94, "Joining the acts")
-        files = [p for p in parts if p is not None]
-        if not files:
-            return None
+        files = []
+        for k, part in enumerate(parts):
+            if part is None:
+                continue
+            if audio[k] and self._fps(part) >= ACT_FPS - 1:
+                # Narration too short for the half-speed act: say it more slowly.
+                shown = self._duration(part) * SLOWDOWN_RANGE[0]
+                if speech[k] + 0.8 < shown:
+                    stretch = max(MIN_VOICE_STRETCH, (speech[k] + 0.8) / shown)
+                    line = acts[k - 1]["narration"]
+                    dur = narration.synthesize(line, audio[k], level, stretch=stretch)
+                    if dur:
+                        speech[k] = dur
+            # Every part gets the same treatment (speed, 15 fps, an audio track,
+            # silent if needed) so the join sees identical streams.
+            final = work / f"part_{k}.mp4"
+            if self._mux(part, audio[k], speech[k], final) or self._mux(part, None, 0.0, final):
+                files.append(final)
+            part.unlink(missing_ok=True)
         out = ANIMATIONS_DIR / f"{job_id}.mp4"
-        ok = self._concat(files, out)
+        ok = bool(files) and self._concat(files, out, with_audio=True)
         for p in files:
             p.unlink(missing_ok=True)
+        shutil.rmtree(work, ignore_errors=True)
         if not ok:
             return None
         return {"url": f"/animations/{out.name}", "format": "mp4"}
@@ -381,7 +447,8 @@ class StoryAnimator:
             logger.warning(f"StoryAnimator: storyboard unusable (attempt {attempt + 1})")
         return None
 
-    def _render_act(self, topic: str, story: dict, i: int, level: str) -> Optional[Path]:
+    def _render_act(self, topic: str, story: dict, i: int, level: str,
+                    seconds: Optional[float] = None) -> Optional[Path]:
         acts = story["acts"]
         act = acts[i]
         base = STORY_SCENE_BASE.format(
@@ -393,7 +460,7 @@ class StoryAnimator:
             {"role": "user", "content": ACT_PROMPT_TEMPLATE.format(
                 level_instruction=LEVEL_INSTRUCTIONS[level], n=len(acts), topic=topic, outline=outline,
                 i=i + 1, title=act["title"], visual=act["visual"], narration=act["narration"],
-                seconds=act["seconds"])},
+                seconds=seconds or act["seconds"])},
         ]
         code = None
         for attempt in range(2):
@@ -407,12 +474,12 @@ class StoryAnimator:
                 break
         if code:
             payload = self._pipeline._render_with_retry(code, topic, f"act_{i + 1}", output_format="mp4",
-                                                         max_retries=ACT_MAX_RETRIES)
+                                                         max_retries=ACT_MAX_RETRIES, frame_rate=ACT_FPS)
             if payload is not None:
                 return ANIMATIONS_DIR / Path(payload.data["url"]).name
             logger.warning(f"StoryAnimator: act {i + 1} failed to render, using a title card")
         return self._render_card(card_scene(act["title"], act["narration"] or act["visual"],
-                                            hold=max(2.0, act["seconds"] - 5)), topic)
+                                            hold=max(2.0, (seconds or act["seconds"]) - 5)), topic)
 
     def _render_card(self, code: str, topic: str) -> Optional[Path]:
         payload, error = self._pipeline._executor.execute_manim_detailed(code, title=topic, output_format="mp4")
@@ -422,12 +489,62 @@ class StoryAnimator:
         return ANIMATIONS_DIR / Path(payload.data["url"]).name
 
     @staticmethod
-    def _concat(files: list[Path], out: Path) -> bool:
+    def _duration(path: Path) -> float:
+        res = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+                              str(path)], capture_output=True, text=True, timeout=30)
+        try:
+            return float(res.stdout.strip())
+        except ValueError:
+            return 0.0
+
+    @staticmethod
+    def _fps(path: Path) -> float:
+        res = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                              "stream=r_frame_rate", "-of", "csv=p=0", str(path)],
+                             capture_output=True, text=True, timeout=30)
+        try:
+            num, _, den = res.stdout.strip().partition("/")
+            return float(num) / float(den or 1)
+        except ValueError:
+            return 15.0
+
+    @classmethod
+    def _mux(cls, video: Path, voice: Optional[Path], speech: float, out: Path) -> bool:
+        """Finish one part: slow animated acts (rendered at ACT_FPS) to about
+        half speed — exactly to their narration's length when there is one —
+        add the voice (or silence), and if the speech still runs past the
+        picture, hold the last frame until it finishes."""
+        length = cls._duration(video)
+        factor = 1.0
+        if cls._fps(video) >= ACT_FPS - 1:  # an animated act, not a card
+            factor = ACT_SLOWDOWN
+            if voice and length:
+                lo, hi = SLOWDOWN_RANGE
+                factor = min(hi, max(lo, (speech + 0.8) / length))
+        shown = length * factor
+        if factor != 1.0:
+            logger.info(f"StoryAnimator: act {video.name} {length:.1f}s x{factor:.2f} for {speech:.1f}s of speech")
+        total = max(shown, speech + 0.4 if voice else 0.0)
+        pad = max(0.0, total - shown)
+        audio_in = ["-i", str(voice)] if voice else ["-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono"]
+        cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", str(video), *audio_in, "-filter_complex",
+               f"[0:v]setpts={factor}*PTS,fps=15,tpad=stop_mode=clone:stop_duration={pad:.2f}[v];[1:a]apad[a]",
+               "-map", "[v]", "-map", "[a]", "-t", f"{total:.2f}",
+               "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ar", "24000", "-ac", "1", str(out)]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        if res.returncode != 0:
+            logger.error(f"StoryAnimator: finishing part failed: {res.stderr[-400:]}")
+            return False
+        return True
+
+    @staticmethod
+    def _concat(files: list[Path], out: Path, with_audio: bool = False) -> bool:
         with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as lst:
             for f in files:
                 lst.write(f"file '{f}'\n")
+        audio = ["-c:a", "aac", "-ar", "24000", "-ac", "1"] if with_audio else []
         cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst.name,
-               "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(out)]
+               "-c:v", "libx264", "-pix_fmt", "yuv420p", *audio, "-movflags", "+faststart", str(out)]
         try:
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
         finally:

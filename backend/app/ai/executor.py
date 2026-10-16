@@ -76,7 +76,7 @@ with open(r\"{output_file}\", 'w', encoding='utf-8') as handle:
         return payload
 
     def execute_manim_detailed(
-        self, code: str, title: str, output_format: str = "gif"
+        self, code: str, title: str, output_format: str = "gif", frame_rate: Optional[int] = None
     ) -> Tuple[Optional[VisualizationPayload], Optional[str]]:
         """Render a Manim scene, returning (payload, error).
 
@@ -102,6 +102,7 @@ with open(r\"{output_file}\", 'w', encoding='utf-8') as handle:
                 str(script_path),
                 "GeneratedScene",
                 f"--format={output_format}",
+                *([f"--frame_rate={frame_rate}"] if frame_rate else []),
                 "--media_dir",
                 tmpdir,
                 "-o",

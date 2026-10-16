@@ -616,6 +616,7 @@ class AnimationPipeline:
         source: str,
         output_format: str = "gif",
         max_retries: int = MAX_RETRIES,
+        frame_rate: Optional[int] = None,
     ) -> Optional[VisualizationPayload]:
         """Render Manim code; on failure, try LLM fix up to max_retries times."""
         for attempt in range(1 + max_retries):
@@ -628,7 +629,7 @@ class AnimationPipeline:
                 payload, error = None, validation_error
             else:
                 payload, error = self._executor.execute_manim_detailed(
-                    code, title=topic, output_format=output_format
+                    code, title=topic, output_format=output_format, frame_rate=frame_rate
                 )
             if payload is not None:
                 payload.data["pipeline_source"] = source
