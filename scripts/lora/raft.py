@@ -32,6 +32,7 @@ the data back out. Subcommands:
 from __future__ import annotations
 
 import argparse
+import difflib
 import hashlib
 import json
 import random
@@ -63,7 +64,8 @@ DEFAULT_SOURCES = [
 ]
 LEVELS = ("kids", "teen", "college", "adult")
 JUDGE_HAIKU = "claude-haiku-4-5-20251001"
-CITE_RE = re.compile(r"\[([^\[\]]+?),\s*p\.?\s*(\d+)\]")
+# [source, p.12] — also [source, p.41, p.359] (several pages in one bracket).
+CITE_RE = re.compile(r"\[([^\[\],]+?),\s*(p\.?\s*\d+(?:\s*,\s*p\.?\s*\d+)*)\]")
 
 QUESTION_PROMPT = """Below are {n} passages from math books in a learner's library.
 For EACH passage, write one question a real learner might ask a math tutor
@@ -164,8 +166,7 @@ def loops(text: str) -> bool:
 
 
 def _norm(source: str) -> str:
-    """Citation key ignoring case and file extension ("Calculus II for Dummies"
-    and "Calculus II for Dummies.pdf" are the same source)."""
+    """Citation key ignoring case and file extension."""
     return re.sub(r"\.(pdf|md|txt)$", "", source.strip().lower())
 
 
@@ -174,18 +175,40 @@ def excerpt_sources(system: str) -> dict[str, str]:
     return {_norm(m.group(1)): m.group(1).strip() for m in CITE_RE.finditer(system)}
 
 
+def _resolve(cited: str, allowed: dict[str, str]) -> str | None:
+    """The excerpt a citation means, tolerating abbreviations Claude uses
+    ("Calc II for Dummies", "Calculus for Dummies 1001"); None = fabricated."""
+    key = _norm(cited)
+    if key in allowed:
+        return allowed[key]
+    best, score = None, 0.0
+    for k, label in allowed.items():
+        r = 1.0 if k.startswith(key) or key.startswith(k) else difflib.SequenceMatcher(None, key, k).ratio()
+        if r > score:
+            best, score = label, r
+    return best if score >= 0.6 else None
+
+
 def citation_stats(answer: str, system: str) -> dict:
     allowed = excerpt_sources(system)
-    cited = [_norm(m.group(1)) for m in CITE_RE.finditer(answer)]
+    cited = [m.group(1) for m in CITE_RE.finditer(answer)]
     return {"had_excerpts": bool(allowed), "cites": len(cited),
-            "fabricated": sum(1 for c in cited if c not in allowed)}
+            "fabricated": sum(1 for c in cited if _resolve(c, allowed) is None)}
 
 
 def canonical_citations(answer: str, system: str) -> str:
-    """Rewrite near-miss labels to the exact excerpt label, so the student
-    learns one citation format."""
+    """Rewrite abbreviated / multi-page citations to the exact excerpt label,
+    one page per bracket, so the student learns one citation format."""
     allowed = excerpt_sources(system)
-    return CITE_RE.sub(lambda m: f"[{allowed.get(_norm(m.group(1)), m.group(1).strip())}, p.{m.group(2)}]", answer)
+
+    def fix(m: re.Match) -> str:
+        label = _resolve(m.group(1), allowed)
+        if label is None:
+            return m.group(0)
+        pages = re.findall(r"\d+", m.group(2))
+        return ", ".join(f"[{label}, p.{p}]" for p in pages)
+
+    return CITE_RE.sub(fix, answer)
 
 
 def split_of(group: str) -> str:
@@ -239,6 +262,8 @@ def build(args) -> None:
     out.mkdir(parents=True, exist_ok=True)
     key, model = claude_key()
     print(f"teacher: {model}", flush=True)
+    if args.split_only and not (out / "questions.jsonl").exists():
+        sys.exit("--split-only needs an existing build")
     qfile, rows_file = out / "questions.jsonl", out / "rows.jsonl"
 
     if not qfile.exists():
@@ -251,7 +276,7 @@ def build(args) -> None:
     done = set()
     if rows_file.exists():
         done = {json.loads(line)["question"] for line in rows_file.read_text().splitlines() if line.strip()}
-    todo = [q for q in questions if q["question"] not in done]
+    todo = [] if args.split_only else [q for q in questions if q["question"] not in done]
     print(f"{len(questions)} questions, {len(done)} done, {len(todo)} to answer", flush=True)
 
     service, lock, tally = GenerativeTutorService(), threading.Lock(), {}
@@ -283,6 +308,11 @@ def build(args) -> None:
         list(pool.map(work, todo))
 
     rows = [json.loads(line) for line in rows_file.read_text().splitlines() if line.strip()]
+    for r in rows:  # re-check with the current citation matcher (it has improved)
+        if r["reject"] in (None, "fabricated_citation"):
+            r["answer"] = canonical_citations(r["answer"], r["messages"][0]["content"])
+            r["citations"] = citation_stats(r["answer"], r["messages"][0]["content"])
+            r["reject"] = "fabricated_citation" if r["citations"]["fabricated"] else None
     splits: dict[str, list] = {"train": [], "valid": [], "test": []}
     for r in rows:
         if not r["reject"]:
@@ -370,6 +400,7 @@ def main() -> None:
     b.add_argument("--per-source", type=int, default=90)
     b.add_argument("--limit", type=int, default=0, help="cap passages (smoke test)")
     b.add_argument("--workers", type=int, default=4)
+    b.add_argument("--split-only", action="store_true", help="re-check and re-split existing rows; no Claude calls")
     b.add_argument("--seed", type=int, default=17)
     e = sub.add_parser("eval")
     e.add_argument("--data", default="/app/backend/data/state/raft")
