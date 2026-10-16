@@ -15,6 +15,11 @@ LORA_VENV ?= .venv-lora
 LORA_PY := $(LORA_VENV)/bin/python
 LORA_EVAL_N ?= 40
 
+RAFT_CONTAINER ?= euclidswindow-euclids-window-1
+RAFT_DIR ?= /app/backend/data/state/raft
+RAFT_ARGS ?=
+
+.PHONY: lora-raft-build lora-raft-train lora-raft-export lora-raft-eval
 .PHONY: help lora-merge-samples lora-prepare lora-prepare-merged lora-setup lora-data lora-distill lora-train lora-test lora-pick lora-export lora-eval lora-all app-eval
 
 help:
@@ -28,6 +33,10 @@ help:
 	@echo "  make lora-export   - Fuse adapter (ADAPTER_FILE=... for a checkpoint) and register it in Ollama as $(LORA_MODEL)"
 	@echo "  make lora-eval     - Head-to-head vs. the base model on held-out topics; prints PROMOTE / KEEP BASE"
 	@echo "  make lora-all      - data -> train -> test -> export -> eval"
+	@echo "  make lora-raft-build - RAFT: Claude-written answers to tutor prompts WITH library excerpts (RAFT_ARGS='--limit 20' to smoke test)"
+	@echo "  make lora-raft-train - RAFT: train on data/lora/raft (scripts/lora/raft_config.yaml)"
+	@echo "  make lora-raft-export LORA_MODEL=euclid-tutor:raft1 [ADAPTER_FILE=...] - register the RAFT adapter in Ollama"
+	@echo "  make lora-raft-eval LORA_MODEL=euclid-tutor:raft1 [RAFT_SPLIT=valid] - two-judge gate + citation checks"
 	@echo "  make lora-merge-samples / lora-prepare - Turn reviewed raw tutor records into extra training JSONL"
 	@echo "  make app-eval      - Check the app's eval endpoints at $(API_BASE)"
 
@@ -92,3 +101,21 @@ app-eval:
 	@echo "Fetching eval history..."
 	@curl -fsS "$(API_BASE)/api/eval/history" | $(PYTHON) -m json.tool >/dev/null
 	@echo "Eval history endpoint OK"
+
+# --- RAFT calculus experiment (scripts/lora/raft.py; runs inside the app container,
+# which has the Chroma library and the saved Claude key) ---
+lora-raft-build:
+	docker cp scripts/lora/raft.py $(RAFT_CONTAINER):/tmp/raft.py
+	docker exec -w /app/backend $(RAFT_CONTAINER) python -u /tmp/raft.py build --out $(RAFT_DIR) $(RAFT_ARGS) 2>&1 | grep -v "| INFO" | tee -a models/lora/raft_build.log
+	@mkdir -p data/lora/raft && for f in train valid test valid_prompts test_prompts; do docker cp $(RAFT_CONTAINER):$(RAFT_DIR)/$$f.jsonl data/lora/raft/; done
+
+lora-raft-train:
+	@mkdir -p models/lora/raft
+	$(LORA_VENV)/bin/mlx_lm.lora -c scripts/lora/raft_config.yaml 2>&1 | tee models/lora/raft/train.log
+
+lora-raft-export:
+	ADAPTERS=$(CURDIR)/models/lora/raft/adapters BASE_HF=$(LORA_BASE_HF) BASE_OLLAMA=$(LORA_BASE_OLLAMA) scripts/lora/export_ollama.sh $(LORA_MODEL)
+
+lora-raft-eval:
+	docker cp scripts/lora/raft.py $(RAFT_CONTAINER):/tmp/raft.py
+	docker exec -w /app/backend $(RAFT_CONTAINER) python -u /tmp/raft.py eval --data $(RAFT_DIR) --tuned $(LORA_MODEL) --split $(or $(RAFT_SPLIT),test) 2>&1 | grep -v "| INFO" | tee models/lora/raft/eval_$(or $(RAFT_SPLIT),test).log

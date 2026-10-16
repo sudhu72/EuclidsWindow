@@ -147,6 +147,42 @@ step never reached a verdict, and it caught a planted algebra error only vaguely
 `qwen3:8b` stays for Pólya olympiad and Discover. Test candidates in the app's
 actual multi-step flows, not just on single answers.
 
+## 7b) RAFT experiment — tuning on library excerpts
+
+Tuning on raw library text would repeat v1 (raw sections lost 5–35), and
+retrieval already gives the tutor the books' facts. What tuning *can* teach is
+a habit: use the retrieved excerpts well. `scripts/lora/raft.py` builds
+retrieval-augmented fine-tuning data from the calculus PDFs in the library:
+
+1. samples passages from the chosen books (`--sources`, `--per-source`);
+2. Claude writes one standalone learner question per passage, with a level;
+3. the app's own `build_reasoning_messages` builds the **runtime** prompt for
+   it, including the excerpts the library really retrieves (relevant or not);
+4. Claude answers that prompt, citing the relevant excerpts as `[source, p.N]`
+   and ignoring the rest; answers that loop, run long, or cite a source that
+   wasn't retrieved are dropped (near-miss labels are normalised first);
+5. splits by (book, 25-page block) into train/valid/test.
+
+It runs inside the app container (Chroma library + saved Claude key):
+
+```bash
+make lora-raft-build RAFT_ARGS="--limit 20"   # smoke test (well under $1)
+make lora-raft-build                          # ~500 questions; Claude cost roughly $30-50
+make lora-raft-train                          # scripts/lora/raft_config.yaml -> models/lora/raft/adapters
+make lora-raft-export LORA_MODEL=euclid-tutor:raft1 ADAPTER_FILE=models/lora/raft/adapters/0000NNN_adapters.safetensors
+make lora-raft-eval LORA_MODEL=euclid-tutor:raft1 RAFT_SPLIT=valid   # pick the checkpoint
+make lora-raft-eval LORA_MODEL=euclid-tutor:raft1                    # final, on test
+```
+
+The gate uses **two judges from different families** (Claude Haiku and
+`qwen3:8b`), each in both orders, because Claude wrote the training answers and
+a Claude-only judge would favour their style. It also measures citations
+directly: how often an answer cites a source when excerpts were retrieved, and
+how many citations name a source that wasn't retrieved. PROMOTE requires both
+judges to prefer the tuned model and no more fabricated citations or loops
+than the base. Baseline from the smoke test: `qwen3:4b-instruct` cited a
+source 0/2 times despite the prompt asking it to.
+
 ## 8) Pitfalls
 
 - **Use Homebrew Python, not Anaconda, for `.venv-lora`.** Anaconda ships MPICH,

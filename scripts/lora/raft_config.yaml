@@ -1,0 +1,29 @@
+# mlx_lm.lora config for the RAFT calculus experiment (scripts/lora/raft.py).
+# Same base and gentle update as v3; differences: the data are runtime tutor
+# prompts WITH retrieved library excerpts (longer, hence max_seq_length 4096)
+# and Claude-written answers that cite the relevant excerpts. Separate adapter
+# dir so v3's adapters stay intact. Aim for ~2 epochs: iters ~= train_rows / 2.
+model: "Qwen/Qwen3-4B-Instruct-2507"
+train: true
+data: "data/lora/raft"
+adapter_path: "models/lora/raft/adapters"
+fine_tune_type: lora
+seed: 7
+
+iters: 250
+batch_size: 4
+learning_rate: 5.0e-5
+max_seq_length: 4096
+mask_prompt: true
+grad_checkpoint: true
+num_layers: 8
+
+lora_parameters:
+  rank: 8
+  scale: 10.0
+  dropout: 0.05
+
+steps_per_report: 20
+steps_per_eval: 50
+val_batches: -1
+save_every: 50

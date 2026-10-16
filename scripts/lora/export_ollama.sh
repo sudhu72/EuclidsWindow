@@ -15,7 +15,7 @@ BASE_OLLAMA="${BASE_OLLAMA:-qwen3:4b-instruct}"  # template + parameters are cop
 QUANT="${QUANT:-q4_K_M}"                     # match the base model's quantization
 REPEAT_PENALTY="${REPEAT_PENALTY:-1.1}"      # v1 looped on 13/40 answers
 ADAPTER_FILE="${ADAPTER_FILE:-}"             # e.g. models/lora/adapters/0000200_adapters.safetensors
-ADAPTERS="$ROOT/models/lora/adapters"
+ADAPTERS="${ADAPTERS:-$ROOT/models/lora/adapters}"   # RAFT: models/lora/raft/adapters
 FUSED="$ROOT/models/lora/fused"
 GGUF="$ROOT/models/lora/fused.f16.gguf"
 # Ollama (0.33) can't import Qwen3 safetensors ("unsupported architecture
