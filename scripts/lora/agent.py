@@ -205,7 +205,7 @@ def pipeline(opts: dict) -> None:
         for k, name in enumerate(cands):
             step_status("pick", "running", f"judging {name} on validation prompts")
             res = last_json(raft("eval", "--data", cdir, "--tuned", name, "--split", "valid",
-                                 "--n", str(opts["eval_n"]), "--judges", *judges))
+                                 "--n", str(opts["eval_n"]), "--base", opts["base"], "--judges", *judges))
             scores[name] = sum(t["tuned"] - t["base"] for t in res["judges"].values())
             update(progress=75 + 8 * (k + 1), valid={**state["run"].get("valid", {}), name: res})
         best = max(cands, key=lambda c: scores[c])
@@ -214,7 +214,7 @@ def pipeline(opts: dict) -> None:
         # --- gate on test ------------------------------------------------------
         step_status("gate", "running", f"judging {best} on held-out test prompts")
         res = last_json(raft("eval", "--data", cdir, "--tuned", best, "--split", "test",
-                             "--n", str(opts["eval_n"]), "--judges", *judges))
+                             "--n", str(opts["eval_n"]), "--base", opts["base"], "--judges", *judges))
         step_status("gate", "done", res["verdict"])
         update(progress=97, test=res)
 
@@ -288,7 +288,9 @@ class Handler(BaseHTTPRequestHandler):
                 opts = {"sources": [str(s) for s in body["sources"]], "per_source": int(body.get("per_source", 30)),
                         "teacher": str(body.get("teacher", "qwen3:8b")),
                         "judges": [str(j) for j in body.get("judges", ["qwen3:8b", "llama3.1:8b"])][:2],
-                        "eval_n": int(body.get("eval_n", 40))}
+                        "eval_n": int(body.get("eval_n", 40)),
+                        # gate against the tutor the app uses now, not a fixed model
+                        "base": str(body.get("base") or "qwen3:4b-instruct")}
                 if not opts["sources"]:
                     raise ValueError("choose at least one book")
                 self._send(200, start(opts))

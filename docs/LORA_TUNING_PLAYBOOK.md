@@ -185,11 +185,18 @@ source 0/2 times despite the prompt asking it to.
 
 ### From the UI: Settings → Model tuning
 
-The same pipeline runs from **Settings → Model tuning**, all-local and free by
-default: `qwen3:8b` writes questions and teacher answers, and `qwen3:8b` and
-`llama3.1:8b` judge (two families, so neither judge is grading its own
-family's style). Claude can be chosen as teacher or judge; the panel shows
-the estimated cost and asks you to confirm it first.
+The same pipeline runs from **Settings → Model tuning**. `qwen3:8b` writes
+questions and teacher answers for free; Claude can be chosen as teacher or
+judge, and the panel shows the estimated cost and asks you to confirm it first.
+Each new model is gated against the tutor the app uses now (Settings → local
+model), not a fixed base.
+
+Judges default to `llama3.1:8b` + Claude Haiku (about $0.50 a run) when a
+Claude key is saved, else `llama3.1:8b` + `qwen3:8b`. A judge from the tutor's
+own family favours it: `qwen3:8b` preferred `qwen3:4b-instruct` in every gate,
+while Haiku (21–14) and `llama3.1:8b` (11–4) both preferred `raft1-ck200` on
+the same 55 test prompts. The panel warns when a judge shares the tutor's
+family. `mistral:7b` is not usable as a judge (54/55 ties).
 
 Training needs the Mac's GPU, which the app container can't reach, so a small
 helper does the work on the host. Start it once and leave it running:

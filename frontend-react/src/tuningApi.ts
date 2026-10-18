@@ -60,9 +60,12 @@ export const startTuning = async (opts: TuningRun["options"]) => json<TuningRun>
 export const cancelTuning = async () => json<{ cancelling: boolean }>(await post("/api/tuning/cancel"));
 export const promoteTuned = async () => json<{ local_llm_model: string }>(await post("/api/tuning/promote"));
 
-/** Model family, for spotting judges that would favour their own family. */
+/** Model family, for spotting judges that would favour their own family.
+ *  euclid-tutor models are LoRA tunes of Qwen3-4B. */
 export const family = (model: string) =>
-  model.startsWith("claude") ? "claude" : model.split(":")[0].replace(/[\d.]+$/, "").toLowerCase();
+  model.startsWith("claude") ? "claude" :
+  model.startsWith("euclid-tutor") ? "qwen" :
+  model.split(":")[0].replace(/[\d.]+$/, "").toLowerCase();
 
 /**
  * Rough cost and time for a run, from measured runs on an M-series Mac:

@@ -68,6 +68,9 @@ export default function TuningPanel() {
   const est = estimate(options);
   const sameFamily = family(judges[0]) === family(judges[1]);
   const teacherBias = judges.some((j) => family(j) === family(teacher));
+  const tutorFamilyJudge = opts.current_model
+    ? judges.find((j) => family(j) === family(opts.current_model!))
+    : undefined;
   const modelChoices = (extra: string[]) => [...extra, ...opts.local_models];
   const claudeTeacher = opts.claude_available ? ["claude"] : [];
   const claudeJudge = opts.claude_available ? [opts.claude_judge] : [];
@@ -156,7 +159,14 @@ export default function TuningPanel() {
             </label>
           ))}
           {sameFamily && <p className="tune-warn">Both judges are from the same model family; a judge tends to favour its own family. Pick two different families.</p>}
-          {!sameFamily && teacherBias && (
+          {!sameFamily && tutorFamilyJudge && (
+            <p className="tune-warn">
+              {tutorFamilyJudge} is from the same family as the current tutor ({opts.current_model}) and tends to
+              favour it, which can hide a real improvement.{" "}
+              {opts.claude_available ? "Claude Haiku is a neutral choice." : "Pick a judge from another family if one is installed."}
+            </p>
+          )}
+          {!sameFamily && !tutorFamilyJudge && teacherBias && (
             <p className="set-hint">A judge shares the teacher's family and may favour the tuned model's learned style; the other judge balances it.</p>
           )}
 

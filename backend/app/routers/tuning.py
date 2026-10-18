@@ -64,12 +64,17 @@ async def tuning_options() -> Dict[str, Any]:
     except Exception:  # noqa: BLE001 - Ollama down: the UI still loads
         local = []
     eff = SettingsStore().get_effective_settings()
+    claude = bool(eff.get(CLOUD_PROVIDERS["anthropic"]["key_setting"]))
+    # A judge from the tutor's own family (Qwen) favours the base: qwen3:8b
+    # preferred qwen3:4b-instruct in every gate, while Claude Haiku and
+    # llama3.1:8b both preferred raft1-ck200. Default to judges outside it.
+    judges = ["llama3.1:8b", CLAUDE_HAIKU] if claude else ["llama3.1:8b", "qwen3:8b"]
     return {
         "books": books,
         "local_models": [m for m in local if "embed" not in m and not m.endswith(":cloud")],
-        "claude_available": bool(eff.get(CLOUD_PROVIDERS["anthropic"]["key_setting"])),
+        "claude_available": claude,
         "claude_judge": CLAUDE_HAIKU,
-        "defaults": {"teacher": "qwen3:8b", "judges": ["qwen3:8b", "llama3.1:8b"], "per_source": 30, "eval_n": 40},
+        "defaults": {"teacher": "qwen3:8b", "judges": judges, "per_source": 30, "eval_n": 40},
         "current_model": eff.get("local_llm_model"),
     }
 
@@ -84,10 +89,13 @@ class TuningStart(BaseModel):
 
 @router.post("/api/tuning/start")
 async def tuning_start(req: TuningStart) -> Dict[str, Any]:
+    eff = SettingsStore().get_effective_settings()
     uses_claude = req.teacher.startswith("claude") or any(j.startswith("claude") for j in req.judges)
-    if uses_claude and not SettingsStore().get_effective_settings().get(CLOUD_PROVIDERS["anthropic"]["key_setting"]):
+    if uses_claude and not eff.get(CLOUD_PROVIDERS["anthropic"]["key_setting"]):
         raise HTTPException(status_code=400, detail="Claude was chosen but no Anthropic API key is saved")
-    return await asyncio.to_thread(_agent, "POST", "/start", req.model_dump())
+    # The gate compares the new model with the tutor the app uses now.
+    body = {**req.model_dump(), "base": eff.get("local_llm_model") or "qwen3:4b-instruct"}
+    return await asyncio.to_thread(_agent, "POST", "/start", body)
 
 
 @router.post("/api/tuning/cancel")

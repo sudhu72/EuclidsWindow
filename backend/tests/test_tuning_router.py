@@ -45,3 +45,26 @@ def test_start_with_claude_needs_a_key(client, monkeypatch):
     monkeypatch.setattr(tuning, "_agent", lambda *a, **k: pytest.fail("should not reach the helper"))
     r = client.post("/api/tuning/start", json={"sources": ["a.pdf"], "teacher": "claude"})
     assert r.status_code == 400
+
+
+@pytest.mark.parametrize("key,judges", [("sk-test", ["llama3.1:8b", tuning.CLAUDE_HAIKU]),
+                                        (None, ["llama3.1:8b", "qwen3:8b"])])
+def test_default_judges_avoid_the_tutor_family_when_claude_is_available(client, monkeypatch, key, judges):
+    setting = tuning.CLOUD_PROVIDERS["anthropic"]["key_setting"]
+    monkeypatch.setattr(tuning.SettingsStore, "get_effective_settings", lambda self: {setting: key})
+
+    async def no_models():
+        raise RuntimeError("ollama down")
+
+    monkeypatch.setattr("app.main.list_ollama_models", no_models)
+    monkeypatch.setattr(tuning, "get_library", lambda: type("L", (), {"list_docs": lambda self: []})())
+    assert client.get("/api/tuning/options").json()["defaults"]["judges"] == judges
+
+
+def test_start_gates_against_the_current_tutor(client, monkeypatch):
+    monkeypatch.setattr(tuning.SettingsStore, "get_effective_settings",
+                        lambda self: {"local_llm_model": "euclid-tutor:raft1-ck200"})
+    sent = {}
+    monkeypatch.setattr(tuning, "_agent", lambda method, path, body=None: sent.update(body) or {"id": "r"})
+    client.post("/api/tuning/start", json={"sources": ["a.pdf"], "judges": ["llama3.1:8b", "qwen3:8b"]})
+    assert sent["base"] == "euclid-tutor:raft1-ck200"
