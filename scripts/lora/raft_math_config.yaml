@@ -1,0 +1,31 @@
+# mlx_lm.lora config: the RAFT calculus data (scripts/lora/raft.py, Claude
+# teacher) on a math-specialist base instead of the tutor's Qwen3-4B.
+# Hyperparameters follow the common MLX recipe for a 7B math tutor
+# (600 iters, lr 1e-5, 16 layers, batch 4). That is ~5.8 epochs of 417 rows,
+# so checkpoints are saved every 150 steps and picked on validation.
+# Qwen2.5-Math-7B-Instruct has a 4096-token context; the longest RAFT row is
+# ~2750 tokens.
+model: "Qwen/Qwen2.5-Math-7B-Instruct"
+train: true
+data: "data/lora/raft"
+adapter_path: "models/lora/raft_math/adapters"
+fine_tune_type: lora
+seed: 7
+
+iters: 600
+batch_size: 4
+learning_rate: 1.0e-5
+max_seq_length: 4096
+mask_prompt: true
+grad_checkpoint: true
+num_layers: 16
+
+lora_parameters:
+  rank: 8
+  scale: 10.0
+  dropout: 0.05
+
+steps_per_report: 20
+steps_per_eval: 150
+val_batches: -1
+save_every: 150

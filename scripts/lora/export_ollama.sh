@@ -21,7 +21,10 @@ GGUF="$ROOT/models/lora/fused.f16.gguf"
 # Ollama (0.33) can't import Qwen3 safetensors ("unsupported architecture
 # Qwen3ForCausalLM"), so convert with llama.cpp first; works for Qwen2.5 too.
 CONVERT="$ROOT/models/lora/tools/llama.cpp/convert_hf_to_gguf.py"
+# Ollama >= 0.40 refuses --quantize on GGUF imports, so quantize with llama.cpp.
+QUANTIZE="$ROOT/models/lora/tools/llama.cpp/build/bin/llama-quantize"
 [ -f "$CONVERT" ] || { echo "Missing $CONVERT — run make lora-setup." >&2; exit 1; }
+[ -x "$QUANTIZE" ] || { echo "Missing $QUANTIZE — run make lora-setup." >&2; exit 1; }
 
 [ -f "$ADAPTERS/adapters.safetensors" ] || { echo "No adapter at $ADAPTERS — run make lora-train first." >&2; exit 1; }
 
@@ -43,9 +46,15 @@ echo "==> Converting to GGUF (f16)"
 "$VENV/python" "$CONVERT" "$FUSED" --outtype f16 --outfile "$GGUF" > "$ROOT/models/lora/convert.log" 2>&1 \
   || { tail -20 "$ROOT/models/lora/convert.log" >&2; exit 1; }
 
+echo "==> Quantizing GGUF to $QUANT"
+QGGUF="$ROOT/models/lora/fused.$QUANT.gguf"
+"$QUANTIZE" "$GGUF" "$QGGUF" "$QUANT" > "$ROOT/models/lora/quantize.log" 2>&1 \
+  || { tail -20 "$ROOT/models/lora/quantize.log" >&2; exit 1; }
+rm -f "$GGUF"
+
 echo "==> Writing Modelfile (template from $BASE_OLLAMA)"
 {
-  echo "FROM $GGUF"
+  echo "FROM $QGGUF"
   # Take TEMPLATE from --modelfile: `ollama show --template` prints the raw
   # Jinja chat template for some models (qwen3), which Ollama can't parse.
   ollama show --modelfile "$BASE_OLLAMA" | awk '/^TEMPLATE """/{on=1} on{print} on && /"""$/ && !/^TEMPLATE """.*"""$/ && NR>1 && seen{exit} on{seen=1}' 
@@ -55,7 +64,7 @@ echo "==> Writing Modelfile (template from $BASE_OLLAMA)"
   echo "PARAMETER repeat_penalty $REPEAT_PENALTY"
 } > "$ROOT/models/lora/Modelfile"
 
-echo "==> ollama create $NAME (quantize $QUANT)"
-ollama create "$NAME" -f "$ROOT/models/lora/Modelfile" --quantize "$QUANT"
-rm -f "$GGUF"   # Ollama keeps its own quantized copy
+echo "==> ollama create $NAME ($QUANT)"
+ollama create "$NAME" -f "$ROOT/models/lora/Modelfile"
+rm -f "$QGGUF"   # Ollama keeps its own copy
 echo "Done. Compare against the base with: make lora-eval LORA_MODEL=$NAME"

@@ -46,7 +46,9 @@ lora-setup:
 	$(LORA_VENV)/bin/pip install --upgrade pip mlx-lm
 	# llama.cpp's converter: Ollama can't import Qwen3 safetensors directly
 	[ -d models/lora/tools/llama.cpp ] || git clone --depth 1 https://github.com/ggml-org/llama.cpp models/lora/tools/llama.cpp
-	$(LORA_VENV)/bin/pip install -e models/lora/tools/llama.cpp/gguf-py sentencepiece "transformers>=4.45" torch
+	$(LORA_VENV)/bin/pip install -e models/lora/tools/llama.cpp/gguf-py sentencepiece "transformers>=4.45" torch cmake
+	# Ollama >= 0.40 only quantizes safetensors imports, so quantize the GGUF here
+	cd models/lora/tools/llama.cpp && $(abspath $(LORA_VENV))/bin/cmake -B build -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_SERVER=OFF && $(abspath $(LORA_VENV))/bin/cmake --build build --target llama-quantize -j
 
 lora-data:
 	$(LORA_PY) scripts/lora/build_dataset.py $(if $(LORA_COGITO_QA),--cogito-qa $(LORA_COGITO_QA),) $(if $(LORA_EXTRA),--extra $(LORA_EXTRA),) $(if $(LORA_DISTILLED),--distilled $(LORA_DISTILLED),)
